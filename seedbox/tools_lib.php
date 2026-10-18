@@ -10,6 +10,9 @@ const ST_RES   = '/tmp/qbt_tools_res.json';
 const ST_JAR   = '/tmp/qbt_tools_cookie.txt';
 
 require_once __DIR__ . '/moveprog.php';
+require_once __DIR__ . '/i18n.php';
+// the texts the pages show, in the page language (lang/en.json); Discord texts use st_l()
+function st_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 function st_dir() { $d = getenv('DBX_ST_DIR'); return ($d !== false && $d !== '') ? $d : ST_DIR; }
 
 function st_json_read($f, $def = []) {
@@ -333,7 +336,7 @@ function st_arr($which, $path, $method = 'GET', $json = null, $timeout = 60) {
 
 function st_prowlarr_search($q) {
     [$c, $j, $e] = st_arr('prowlarr', '/search?type=search&limit=100&query=' . rawurlencode($q), 'GET', null, 90);
-    if ($e || !is_array($j)) { return [null, $e ?: 'bad response']; }
+    if ($e || !is_array($j)) { return [null, $e ?: st_tr('e.bad_resp')]; }
     $out = [];
     foreach ($j as $r) {
         if (!is_array($r) || strtolower((string)($r['protocol'] ?? 'torrent')) !== 'torrent') { continue; }
@@ -426,9 +429,9 @@ function st_ntool($j) { return (($j['mode'] ?? '') === 'repl') ? 'find' : 'upd';
 function st_notify($level, $title, $desc = '', $fields = [], $force = false, $tool = '', $opts = []) {
     $cfg = st_cfg(); $hook = (string)($cfg['dc_hook'] ?? '');
     $on = $tool !== '' ? !empty($cfg['dc_' . $tool]) : (!empty($cfg['dc_find']) || !empty($cfg['dc_upd']) || !empty($cfg['dc_rep']));
-    if (!$force && !$on) { return [false, 'Discord messages are switched off for this tool']; }
+    if (!$force && !$on) { return [false, st_tr('e.dc_off')]; }
     if (getenv('DBX_ST_DC')) { $hook = getenv('DBX_ST_DC'); } // test hook
-    elseif (!st_dc_hook_ok($hook)) { return [false, 'no Discord webhook set']; }
+    elseif (!st_dc_hook_ok($hook)) { return [false, st_tr('e.dc_nohook')]; }
     $col = ['rd' => 0xE5534B, 'a' => 0xD9921F, 'g' => 0x3FA24A, 'i' => 0x4A90E2];
     $host = @gethostname();
     $e = ['title' => mb_substr($title, 0, 250), 'color' => $opts['color'] ?? ($col[$level] ?? $col['i']), 'timestamp' => gmdate('c'), 'footer' => ['text' => trim(($host ? $host . ' · ' : '') . 'Seedbox')]];
@@ -445,9 +448,9 @@ function st_notify($level, $title, $desc = '', $fields = [], $force = false, $to
         if ($code === 429) { $d = json_decode((string)$body, true); $w = is_array($d) && isset($d['retry_after']) ? (float)$d['retry_after'] : 2.0; if ($try === 0 && $w <= 5.0) { usleep((int)(($w + 0.3) * 1000000)); continue; } }
         return [false, $er ? 'network error ' . $er : 'Discord HTTP ' . $code];
     }
-    return [false, 'Discord did not accept the message'];
+    return [false, st_tr('e.dc_refused')];
 }
 function st_missing_files($hash) { $r = []; foreach ((array)st_qb_json('/api/v2/torrents/files?hash=' . rawurlencode($hash)) as $f) { if ((float)($f['progress'] ?? 1) < 0.999) { $r[] = (float)$f['size'] * (1 - (float)$f['progress']); } } return $r; }
-function st_missing_txt($inc) { return count($inc) . ' file' . (count($inc) === 1 ? '' : 's') . ' (' . st_sz(array_sum($inc)) . ')'; }
+function st_missing_txt($inc) { return st_tr('job.n_files', ['n' => count($inc), 's' => st_sz(array_sum($inc))]); }
 function st_sz($b) { $b = (float)$b; return $b >= 1e6 ? st_gb($b) : max(1, round($b / 1e3)) . ' KB'; }
 function st_gb($b) { $b = (float)$b; return $b >= 1e9 ? round($b / 1e9, 1) . ' GB' : round($b / 1e6) . ' MB'; }

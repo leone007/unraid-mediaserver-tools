@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zy">
+<!ENTITY version   "2026.10.99zz">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zz
+- The texts of the tile, the widget settings page and the Seedbox Tools page (also the messages of the scans, searches and replacements) come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet. Discord messages keep their own language setting
+
 ###2026.10.99zy
 - Language block: saving failed with csrf token mismatch (Unraid checks the token itself and then removes it from the request); fixed
 ###2026.10.99zx
@@ -588,6 +591,14 @@ exit 0
 
 <FILE Name="&plugdir;/lang_save.php">
 <INLINE><![CDATA[@@SRC:common/lang_save.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/i18n.php">
+<INLINE><![CDATA[@@SRC:common/i18n.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang/en.json">
+<INLINE><![CDATA[@@SRC:seedbox/lang/en.json@@]]></INLINE>
 </FILE>
 
 <!-- Permissions + done -->

@@ -38,6 +38,8 @@ if (!preg_match('#^https?://[^\s"<>]+$#i', $webui)) { $webui = ''; }
 
 $base = "http://$host:$port";
 require_once __DIR__ . '/moveprog.php';
+require_once __DIR__ . '/i18n.php';
+$qx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile (lang/en.json)
 $jar  = '/tmp/qbt_widget_cookie.txt';
 
 // UI preferences are returned with every response, even errors
@@ -151,25 +153,25 @@ foreach ($data as $t) {
     $issue = null;   // [severity, kind, badge, reason]
     switch ($state) {
         case 'error':
-            $issue = ['red', 'error', 'Error', 'Torrent is in an error state'];
+            $issue = ['red', 'error', $qx_T('iss.error'), $qx_T('iss.error_why')];
             break;
         case 'missingFiles':
-            $issue = ['red', 'missing', 'Missing', 'Files missing on disk'];
+            $issue = ['red', 'missing', $qx_T('iss.missing'), $qx_T('iss.missing_why')];
             break;
         case 'pausedUP':
         case 'stoppedUP':
-            $issue = ['red', 'paused', ($state === 'pausedUP') ? 'Paused' : 'Stopped', 'Not seeding'];
+            $issue = ['red', 'paused', ($state === 'pausedUP') ? $qx_T('iss.paused') : $qx_T('iss.stopped'), $qx_T('iss.not_seeding')];
             break;
         case 'pausedDL':
         case 'stoppedDL':
-            $issue = ['red', 'paused', ($state === 'pausedDL') ? 'Paused' : 'Stopped', 'Download not running'];
+            $issue = ['red', 'paused', ($state === 'pausedDL') ? $qx_T('iss.paused') : $qx_T('iss.stopped'), $qx_T('iss.dl_stopped')];
             break;
         case 'queuedDL':
         case 'queuedUP':
-            $issue = ['amber', 'queued', 'Queued', 'Waiting for a slot'];
+            $issue = ['amber', 'queued', $qx_T('iss.queued'), $qx_T('iss.queued_why')];
             break;
         case 'unknown':
-            $issue = ['red', 'unknown', 'Unknown', 'Unknown state'];
+            $issue = ['red', 'unknown', $qx_T('iss.unknown'), $qx_T('iss.unknown_why')];
             break;
     }
 
@@ -227,7 +229,7 @@ $sf0 = getenv('DBX_ST_DIR') ? $wd0 . '/tools_state_live.json' : '/tmp/qbt_tools_
 $ws0 = is_file($sf0) ? json_decode((string)@file_get_contents($sf0), true) : null;
 if (is_array($ws0)) {
     $byh = []; foreach ($data as $t) { $byh[strtolower((string)($t['hash'] ?? ''))] = $t; }
-    $lbl = ['grabbed' => 'Queued', 'downloading' => 'Downloading', 'importing' => 'Importing', 'imported' => 'Finishing', 'done' => 'Repacked', 'blocked' => 'Stuck'];
+    $lbl = ['grabbed' => $qx_T('rep.grabbed'), 'downloading' => $qx_T('rep.downloading'), 'importing' => $qx_T('rep.importing'), 'imported' => $qx_T('rep.imported'), 'done' => $qx_T('rep.done'), 'blocked' => $qx_T('rep.blocked')];
     foreach (array_reverse((array)($ws0['packjobs'] ?? [])) as $pj) {
         $st = (string)($pj['stage'] ?? ''); $fin = in_array($st, ['done', 'failed'], true);
         if ($fin && ($st === 'failed' || time() - (int)($pj['t'] ?? 0) > 900)) { continue; }
@@ -236,13 +238,13 @@ if (is_array($ws0)) {
         $pp = $st === 'done' || $st === 'imported' || $st === 'importing' ? 1.0 : ($pt ? (float)$pt['progress'] : 0.0);
         $pw = false; if ($pt && (string)$pt['state'] === 'moving') { [$pp, $pe, $pw] = st_move_info($pt); }
         $badge = $lbl[$st] ?? $st; $col = ['grabbed' => 'grey', 'downloading' => 'orange', 'importing' => 'blue', 'imported' => 'blue', 'done' => 'green', 'blocked' => 'red'][$st] ?? 'grey';
-        if ($pt && (string)$pt['state'] === 'moving' && in_array($st, ['grabbed', 'downloading'], true)) { $badge = 'Moving'; $col = 'grey'; }
+        if ($pt && (string)$pt['state'] === 'moving' && in_array($st, ['grabbed', 'downloading'], true)) { $badge = $qx_T('rep.moving'); $col = 'grey'; }
         $why = $nm;
-        if ($pt && in_array($st, ['grabbed', 'downloading'], true)) { $why .= $pw ? ' · waiting to move' : ' · ' . number_format($pp * 100, 1, '.', '') . '%'; }
-        elseif ($st === 'importing') { $why .= ': season files deleted, waiting for Sonarr'; }
+        if ($pt && in_array($st, ['grabbed', 'downloading'], true)) { $why .= $pw ? ' · ' . $qx_T('rep.wait_move') : ' · ' . number_format($pp * 100, 1, '.', '') . '%'; }
+        elseif ($st === 'importing') { $why .= ': ' . $qx_T('rep.wait_sonarr'); }
         elseif ($st === 'blocked') { $why .= ': ' . (string)($pj['msg'] ?? ''); }
         $rep[] = ['name' => 'Season Repacker', 'col' => $col, 'badge' => $badge, 'reason' => $why,
-            'tip' => $fin ? $nm . ' is repacked by Season Repacker' : $nm . ' is being repacked by Season Repacker', 'href' => '/Settings/SeedboxTools#stt-t-rep'];
+            'tip' => $fin ? $qx_T('rep.tip_done', ['n' => $nm]) : $qx_T('rep.tip_run', ['n' => $nm]), 'href' => '/Settings/SeedboxTools#stt-t-rep'];
     }
 }
 
@@ -261,11 +263,11 @@ usort($att, function ($a, $b) {
 });
 
 if ($conn === 'firewalled') {
-    array_unshift($att, ['name' => 'qBittorrent connection', 'sev' => 'amber', 'kind' => 'conn',
-        'badge' => 'Firewalled', 'reason' => 'Incoming port not reachable, check port forwarding']);
+    array_unshift($att, ['name' => $qx_T('iss.conn_name'), 'sev' => 'amber', 'kind' => 'conn',
+        'badge' => $qx_T('pill.firewalled'), 'reason' => $qx_T('iss.firewalled_why')]);
 } elseif ($conn === 'disconnected') {
-    array_unshift($att, ['name' => 'qBittorrent connection', 'sev' => 'red', 'kind' => 'disc',
-        'badge' => 'Disconnected', 'reason' => 'No connection to the network']);
+    array_unshift($att, ['name' => $qx_T('iss.conn_name'), 'sev' => 'red', 'kind' => 'disc',
+        'badge' => $qx_T('pill.disconnected'), 'reason' => $qx_T('iss.disc_why')]);
 }
 
 // ---- Seedbox tools block: three permanent rows (Find my torrent, Shape up (was Update me), Season Repacker) -----------------------
@@ -275,10 +277,10 @@ if (!is_array($wst)) { $wst = []; }
 $tcfg = is_file($wdir . '/tools.json') ? json_decode((string)@file_get_contents($wdir . '/tools.json'), true) : null; if (!is_array($tcfg)) { $tcfg = []; }
 $tagOf = function ($k, $def) use ($tcfg) { $v = trim((string)($tcfg[$k] ?? '')); return $v !== '' ? mb_substr($v, 0, 60) : $def; };
 $jr = function ($f) { $x = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($x) ? $x : []; };
-$ago = function ($t) {
+$ago = function ($t) use ($qx_T) {
     $d = time() - (int)$t; if ($t <= 0) { return ''; }
-    if ($d < 90) { return 'just now'; } if ($d < 5400) { return round($d / 60) . ' min ago'; }
-    if ($d < 129600) { return round($d / 3600) . ' h ago'; } return round($d / 86400) . ' days ago';
+    if ($d < 90) { return $qx_T('ago.now'); } if ($d < 5400) { return $qx_T('ago.min', ['n' => round($d / 60)]); }
+    if ($d < 129600) { return $qx_T('ago.h', ['n' => round($d / 3600)]); } return $qx_T('ago.days', ['n' => round($d / 86400)]);
 };
 $locked = function ($n) { $f = @fopen('/tmp/qbt_tools_' . $n . '.lock', 'c'); if (!$f) { return false; } $l = !flock($f, LOCK_EX | LOCK_NB); if (!$l) { flock($f, LOCK_UN); } fclose($f); return $l; };
 $running = function ($f) { return (($f['state'] ?? '') === 'running' && time() - (int)($f['t'] ?? 0) < 1800) ? (string)($f['msg'] ?? '') : null; };
@@ -300,20 +302,20 @@ if (($fnd['state'] ?? '') === 'ready' && isset($fnd['items']) && is_array($fnd['
     $fn = (int)($fs['nosd'] ?? 0); $fp = (int)($fs['pass'] ?? 0);
 }
 $ftot = $fr + $fn + $fp; $parts = [];
-if ($fr) { $parts[] = $fr . ' removed from tracker'; } if ($fn) { $parts[] = $fn . ' not seeded'; } if ($fp) { $parts[] = $fp . ' passkey'; }
-if (($rm = $running($fnd)) !== null) { $fb = ['Scanning', 'orange', $rm, '']; }
-elseif (!$fknown) { $fb = ['Not scanned yet', 'grey', '']; }
-elseif ($ftot > 0) { $fb = [$ftot . ' to fix', 'amber', implode(' · ', $parts), 'scanned ' . $ago($ft)]; }
-else { $fb = ['All seeded', 'grey', 'scanned ' . $ago($ft)]; }
-$tools[] = ['_k' => 'find', '_rel' => $fb[1] !== 'grey' || !$fknown, '_t' => $ft, 'name' => 'Find my torrent', 'tag' => $tagOf('tag_find', 'keeps your seed healthy 😉'), 'tagtip' => 'keeps every file seeding · no file left unseeded',
-    'col' => $fb[1], 'badge' => $fb[0], 'reason' => $fb[2], 'when' => $fb[3] ?? '', 'tip' => 'Open Seedbox Tools, Find my torrent', 'href' => '/Settings/SeedboxTools#stt-t-find'];
+if ($fr) { $parts[] = $qx_T('tl.n_removed', ['n' => $fr]); } if ($fn) { $parts[] = $qx_T('tl.n_not_seeded', ['n' => $fn]); } if ($fp) { $parts[] = $qx_T('tl.n_passkey', ['n' => $fp]); }
+if (($rm = $running($fnd)) !== null) { $fb = [$qx_T('tl.scanning'), 'orange', $rm, '']; }
+elseif (!$fknown) { $fb = [$qx_T('tl.not_scanned'), 'grey', '']; }
+elseif ($ftot > 0) { $fb = [$qx_T('tl.to_fix', ['n' => $ftot]), 'amber', implode(' · ', $parts), $qx_T('tl.scanned', ['t' => $ago($ft)])]; }
+else { $fb = [$qx_T('tl.all_seeded'), 'grey', $qx_T('tl.scanned', ['t' => $ago($ft)])]; }
+$tools[] = ['_k' => 'find', '_rel' => $fb[1] !== 'grey' || !$fknown, '_t' => $ft, 'name' => 'Find my torrent', 'tag' => $tagOf('tag_find', $qx_T('tl.tag_find')), 'tagtip' => $qx_T('tl.tip_find'),
+    'col' => $fb[1], 'badge' => $fb[0], 'reason' => $fb[2], 'when' => $fb[3] ?? '', 'tip' => $qx_T('tl.open', ['n' => 'Find my torrent']), 'href' => '/Settings/SeedboxTools#stt-t-find'];
 // Update me
 $ucol = 'grey'; $uwhen = '';
 $ud = $jr('/tmp/qbt_tools_upd.json'); $us = (array)($wst['sum']['upd'] ?? []);
 if (($ud['state'] ?? '') === 'ready' && isset($ud['items']) && is_array($ud['items'])) { $un = count($ud['items']); $ut = max((int)($us['t'] ?? 0), (int)($ud['t'] ?? 0)); }
 elseif ($us) { $un = (int)($us['n'] ?? 0); $ut = (int)($us['t'] ?? 0); } else { $un = -1; $ut = 0; }
-if (($rm = $running($ud)) !== null) { $ub = ['Scanning', $rm]; $ucol = 'orange'; }
-elseif ($un < 0) { $ub = ['Not scanned yet', '']; }
+if (($rm = $running($ud)) !== null) { $ub = [$qx_T('tl.scanning'), $rm]; $ucol = 'orange'; }
+elseif ($un < 0) { $ub = [$qx_T('tl.not_scanned'), '']; }
 elseif ($un > 0) {
     // the offers come from the background search: torrents of the list with a release that is smaller, a better HDR format or a higher resolution
     $ures = $jr('/tmp/qbt_tools_res.json'); $uoff = 0; $udone = 0;
@@ -323,16 +325,16 @@ elseif ($un > 0) {
         $udone++;
         foreach ((array)($rr['rows'] ?? []) as $rw) { if (!empty($rw['cats']) && ((int)($rw['res'] ?? 0) > 0 || (int)($ux['cur_res'] ?? 0) <= 0)) { $uoff++; break; } }
     }
-    $ub = $udone > 0 ? [$uoff . ' offer' . ($uoff === 1 ? '' : 's'), 'searched ' . $udone . ' of ' . $un] : [$un . ' to search', 'scanned ' . $ago($ut)];
-    if ($udone > 0 && $ut > 0) { $uwhen = 'scanned ' . $ago($ut); } // the reason line shows the search, the scan time goes under it
+    $ub = $udone > 0 ? [$qx_T('tl.offers', ['n' => $uoff]), $qx_T('tl.searched', ['d' => $udone, 'n' => $un])] : [$qx_T('tl.to_search', ['n' => $un]), $qx_T('tl.scanned', ['t' => $ago($ut)])];
+    if ($udone > 0 && $ut > 0) { $uwhen = $qx_T('tl.scanned', ['t' => $ago($ut)]); } // the reason line shows the search, the scan time goes under it
     if ($uoff > 0) { $ucol = 'green'; }
-    elseif ($udone < $un && $locked('updbg')) { $ub = ['Scanning', 'searched ' . $udone . ' of ' . $un]; $ucol = 'orange'; } // the background search is running
+    elseif ($udone < $un && $locked('updbg')) { $ub = [$qx_T('tl.scanning'), $qx_T('tl.searched', ['d' => $udone, 'n' => $un])]; $ucol = 'orange'; } // the background search is running
 }
-else { $ub = ['Nothing to shape up', 'scanned ' . $ago($ut)]; }
-$tools[] = ['_k' => 'upd', '_rel' => $ucol !== 'grey' || $un < 0, '_t' => $ut, 'name' => 'Shape up', 'tag' => $tagOf('tag_upd', 'slimmer or stronger, in better shape'), 'tagtip' => 'smaller, better HDR or higher resolution · never a lower quality',
-    'col' => $ucol ?? 'grey', 'badge' => $ub[0], 'reason' => $ub[1], 'when' => $uwhen, 'tip' => 'Open Seedbox Tools, Shape up', 'href' => '/Settings/SeedboxTools#stt-t-upd'];
+else { $ub = [$qx_T('tl.nothing_upd'), $qx_T('tl.scanned', ['t' => $ago($ut)])]; }
+$tools[] = ['_k' => 'upd', '_rel' => $ucol !== 'grey' || $un < 0, '_t' => $ut, 'name' => 'Shape up', 'tag' => $tagOf('tag_upd', $qx_T('tl.tag_upd')), 'tagtip' => $qx_T('tl.tip_upd'),
+    'col' => $ucol ?? 'grey', 'badge' => $ub[0], 'reason' => $ub[1], 'when' => $uwhen, 'tip' => $qx_T('tl.open', ['n' => 'Shape up']), 'href' => '/Settings/SeedboxTools#stt-t-upd'];
 // Season Repacker: the running / finished jobs, or the idle line
-if ($rep) { $rep[0]['tag'] = $tagOf('tag_rep', 'keeps your data tidy'); $rep[0]['tagtip'] = 'one torrent per season · keeps seasons in one piece'; foreach ($rep as $r) { $tools[] = array_merge(['_k' => 'rep', '_rel' => true, '_t' => time()], $r); } }
+if ($rep) { $rep[0]['tag'] = $tagOf('tag_rep', $qx_T('tl.tag_rep')); $rep[0]['tagtip'] = $qx_T('tl.tip_rep'); foreach ($rep as $r) { $tools[] = array_merge(['_k' => 'rep', '_rel' => true, '_t' => time()], $r); } }
 else {
     $sp = $jr('/tmp/qbt_tools_sp.json'); $rs = (array)($wst['sum']['rep'] ?? []);
     if (($sp['state'] ?? '') === 'ready' && empty($sp['filter']) && isset($sp['items']) && is_array($sp['items'])) { $rn = count($sp['items']); $rt = max((int)($rs['t'] ?? 0), (int)($sp['t'] ?? 0)); }
@@ -342,11 +344,11 @@ else {
     $abIt = array_values(array_filter((array)($jr($wdir . '/sp_ab.json')['items'] ?? []), function ($x) use ($abBusy) { return empty($x['dismissed']) && time() - (int)($x['t'] ?? 0) < 7 * 86400 && !isset($abBusy[$x['key'] ?? '']); }));
     usort($abIt, function ($a, $b) { return (int)$b['t'] <=> (int)$a['t']; });
     $abN = count($abIt); $abNames = array_map(function ($x) { return $x['title'] . ' S' . str_pad((string)$x['season'], 2, '0', STR_PAD_LEFT); }, array_slice($abIt, 0, 2));
-    if (($rm = $running($sp)) !== null) { $rb = ['Scanning', 'orange', $rm]; }
-    elseif ($abN > 0) { $rb = [$abN . ' pack' . ($abN === 1 ? '' : 's') . ' from autobrr', 'green', implode(' · ', $abNames) . ($abN > 2 ? ' · +' . ($abN - 2) : ''), 'latest ' . $ago((int)$abIt[0]['t'])]; }
-    elseif ($rn < 0) { $rb = ['Not scanned yet', 'grey', '']; } elseif ($rn > 0) { $rb = [$rn . ' season' . ($rn === 1 ? '' : 's') . ' can be repacked', 'grey', 'scanned ' . $ago($rt)]; } else { $rb = ['Nothing to repack', 'grey', 'scanned ' . $ago($rt)]; }
-    $tools[] = ['_k' => 'rep', '_rel' => $rb[1] !== 'grey' || $rn != 0, '_t' => $rt, 'name' => 'Season Repacker', 'tag' => $tagOf('tag_rep', 'keeps your data tidy'), 'tagtip' => 'one torrent per season · keeps seasons in one piece',
-        'col' => $rb[1], 'badge' => $rb[0], 'reason' => $rb[2], 'when' => $rb[3] ?? '', 'tip' => 'Open Seedbox Tools, Season repacker', 'href' => '/Settings/SeedboxTools#stt-t-rep'];
+    if (($rm = $running($sp)) !== null) { $rb = [$qx_T('tl.scanning'), 'orange', $rm]; }
+    elseif ($abN > 0) { $rb = [$qx_T('tl.packs_ab', ['n' => $abN]), 'green', implode(' · ', $abNames) . ($abN > 2 ? ' · +' . ($abN - 2) : ''), $qx_T('tl.latest', ['t' => $ago((int)$abIt[0]['t'])])]; }
+    elseif ($rn < 0) { $rb = [$qx_T('tl.not_scanned'), 'grey', '']; } elseif ($rn > 0) { $rb = [$qx_T('tl.seasons', ['n' => $rn]), 'grey', $qx_T('tl.scanned', ['t' => $ago($rt)])]; } else { $rb = [$qx_T('tl.nothing_rep'), 'grey', $qx_T('tl.scanned', ['t' => $ago($rt)])]; }
+    $tools[] = ['_k' => 'rep', '_rel' => $rb[1] !== 'grey' || $rn != 0, '_t' => $rt, 'name' => 'Season Repacker', 'tag' => $tagOf('tag_rep', $qx_T('tl.tag_rep')), 'tagtip' => $qx_T('tl.tip_rep'),
+        'col' => $rb[1], 'badge' => $rb[0], 'reason' => $rb[2], 'when' => $rb[3] ?? '', 'tip' => $qx_T('tl.open', ['n' => 'Season Repacker']), 'href' => '/Settings/SeedboxTools#stt-t-rep'];
 }
 
 // which rows show (item 54, Seedbox Tools settings 'Show on the Dashboard'): always / only when relevant (something to do,

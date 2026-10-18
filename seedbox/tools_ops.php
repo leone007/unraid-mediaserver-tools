@@ -48,16 +48,16 @@ function st_find_rank($cands, $unit, $tol) {
 // removed them) get candidates from Prowlarr.
 function st_find_scan($auto = false) {
     $cfg = st_cfg(); $state = st_state();
-    st_progress(ST_FIND, 'running', 'Reading qBittorrent...', ['items' => []]);
+    st_progress(ST_FIND, 'running', st_tr('run.qb'), ['items' => []]);
     { // a new scan forgets the earlier replacement searches of this tool (the Update me results use other keys)
         $old = st_json_read(ST_RES, []); foreach (array_keys((array)$old) as $k) { if (preg_match('/^f[0-9a-f]{12}$/', (string)$k)) { unset($old[$k]); } }
         st_json_write(ST_RES, $old);
     }
     $tor = st_qb_torrents();
-    if ($tor === null) { st_progress(ST_FIND, 'error', 'Cannot read the torrent list from qBittorrent (check the Seedbox settings).'); return; }
+    if ($tor === null) { st_progress(ST_FIND, 'error', st_tr('run.qb_fail')); return; }
     $content = [];
     foreach ($tor as $t) { $p = st_to_host((string)($t['content_path'] ?? ''), $cfg); if ($p !== '') { $content[] = rtrim($p, '/'); } }
-    st_progress(ST_FIND, 'running', 'Reading the downloads folders...');
+    st_progress(ST_FIND, 'running', st_tr('run.dirs'));
     $units = st_units($cfg['roots']);
     $items = [];
     $ign = array_flip($state['ignored']);
@@ -68,11 +68,11 @@ function st_find_scan($auto = false) {
         $items[] = ['id' => 'f' . count($items), 'key' => 'f' . substr(md5($u['path']), 0, 12), 'path' => $u['path'], 'name' => $u['name'], 'root' => $u['root'], 'size' => $u['size'], 'why' => 'not seeded', 'old' => '', 'cands' => [], 'searched' => false];
     }
     // torrents whose tracker no longer knows them
-    st_progress(ST_FIND, 'running', 'Checking the trackers...');
+    st_progress(ST_FIND, 'running', st_tr('run.trk'));
     $n = 0; $tot = count($tor);
     foreach ($tor as $t) {
         if ((float)($t['progress'] ?? 0) < 1) { continue; }
-        if ((++$n) % 40 === 0) { st_progress(ST_FIND, 'running', 'Checking the trackers (' . $n . ' of ' . $tot . ')...'); }
+        if ((++$n) % 40 === 0) { st_progress(ST_FIND, 'running', st_tr('run.trk_n', ['n' => $n, 'm' => $tot])); }
         $tr = st_qb_json('/api/v2/torrents/trackers?hash=' . rawurlencode((string)$t['hash']));
         // dead = a tracker answers "unregistered" (qBittorrent 5: status 4 not working or 5 tracker error) and none works
         $dead = false; $msg = ''; $works = false; $passOnly = true;
@@ -87,7 +87,7 @@ function st_find_scan($auto = false) {
         if (isset($ign[$p])) { continue; }
         $items[] = ['id' => 'f' . count($items), 'key' => 'f' . substr(md5($p), 0, 12), 'path' => $p, 'name' => (string)$t['name'], 'root' => basename(dirname($p)), 'size' => (float)$t['size'], 'why' => $passOnly ? 'passkey rejected' : 'tracker removed it', 'pass' => $passOnly, 'old' => (string)$t['hash'], 'dead_msg' => $msg, 'cands' => [], 'searched' => false];
     }
-    st_json_write(ST_FIND, ['state' => 'running', 't' => time(), 'msg' => 'Searching...', 'items' => $items, 'done' => 0, 'total' => count($items)]);
+    st_json_write(ST_FIND, ['state' => 'running', 't' => time(), 'msg' => st_tr('f.searching'), 'items' => $items, 'done' => 0, 'total' => count($items)]);
     foreach ($items as $i => &$it) {
         $found = [];
         $err = '';
@@ -103,7 +103,7 @@ function st_find_scan($auto = false) {
         $it['cands'] = st_find_rank($found, $it, (float)$cfg['find_tol']);
         $it['searched'] = true;
         $cur = st_json_read(ST_FIND, []);
-        $cur['items'] = $items; $cur['done'] = $i + 1; $cur['t'] = time(); $cur['msg'] = 'Searching ' . ($i + 1) . ' of ' . count($items) . '...';
+        $cur['items'] = $items; $cur['done'] = $i + 1; $cur['t'] = time(); $cur['msg'] = st_tr('run.search_n', ['n' => $i + 1, 'm' => count($items)]);
         st_json_write(ST_FIND, $cur);
         if ($err !== '' && strpos($err, 'not configured') !== false) { break; }
     }
@@ -128,7 +128,7 @@ function st_find_scan($auto = false) {
         }
         $index = $todo ? st_arr_index(true) : null;
         foreach ($todo as $k => $u) {
-            $cur = st_json_read(ST_FIND, []); $cur['msg'] = 'Looking up replacement releases ' . ($k + 1) . ' of ' . count($todo) . '...'; $cur['t'] = time(); st_json_write(ST_FIND, $cur);
+            $cur = st_json_read(ST_FIND, []); $cur['msg'] = st_tr('run.repl_n', ['n' => $k + 1, 'm' => count($todo)]); $cur['t'] = time(); st_json_write(ST_FIND, $cur);
             st_find_repl_unit($u, $index, true);
         }
     }
@@ -214,10 +214,10 @@ function st_find_add($itemId, $idx) {
     $cfg = st_cfg(); $find = st_json_read(ST_FIND, []);
     $item = null;
     foreach ((array)($find['items'] ?? []) as $it) { if ($it['id'] === $itemId) { $item = $it; } }
-    if (!$item || !isset($item['cands'][$idx])) { return [false, 'unknown item or candidate']; }
+    if (!$item || !isset($item['cands'][$idx])) { return [false, st_tr('e.unknown_item')]; }
     $c = $item['cands'][$idx];
     $dl = (string)$c['dl'];
-    if ($dl === '') { return [false, 'the result has no download link']; }
+    if ($dl === '') { return [false, st_tr('e.nolink')]; }
     $hash = ''; $urls = ''; $file = '';
     if (stripos($dl, 'magnet:') === 0) { $urls = $dl; $hash = st_magnet_hash($dl); }
     else {
@@ -225,15 +225,15 @@ function st_find_add($itemId, $idx) {
         if (in_array($code, [301, 302, 303, 307, 308], true) && preg_match('/^location:\s*(magnet:[^\r\n]+)/im', $hdr, $m)) { $urls = trim($m[1]); $hash = st_magnet_hash($urls); }
         else {
             if ($code >= 300 && $code < 400 && preg_match('/^location:\s*(\S+)/im', $hdr, $m)) { [$code, $body, $err, $hdr] = st_http('GET', trim($m[1]), ['timeout' => 60, 'follow' => true]); }
-            if ($code !== 200 || $body === '' || $body[0] !== 'd') { return [false, 'could not download the .torrent file (' . ($err ?: 'HTTP ' . $code) . ')']; }
+            if ($code !== 200 || $body === '' || $body[0] !== 'd') { return [false, st_tr('e.dl_torrent', ['e' => $err ?: 'HTTP ' . $code])]; }
             $hash = st_torrent_hash($body);
             $file = tempnam('/tmp', 'qbtt'); file_put_contents($file, $body);
         }
     }
-    if ($hash === '') { if ($file) { @unlink($file); } return [false, 'could not read the torrent hash']; }
+    if ($hash === '') { if ($file) { @unlink($file); } return [false, st_tr('e.hash')]; }
     $exists = null;
     foreach ((array)st_qb_torrents() as $t) { if (strtolower((string)$t['hash']) === $hash) { $exists = $t; } }
-    if ($exists) { if ($file) { @unlink($file); } return [false, 'this torrent is already in qBittorrent (' . $exists['name'] . ')']; }
+    if ($exists) { if ($file) { @unlink($file); } return [false, st_tr('e.exists', ['n' => $exists['name']])]; }
     $save = st_to_qb(dirname($item['path']), $cfg);
     $post = ['savepath' => $save, 'paused' => 'true', 'stopped' => 'true', 'skip_checking' => 'false', 'autoTMM' => 'false', 'useDownloadPath' => 'false', 'tags' => 'findmytorrent']; // useDownloadPath=false: never move the files to qBittorrent's incomplete folder (that would break hardlinks)
     $cat = st_category_for($item['path'], $item['name']);
@@ -247,10 +247,10 @@ function st_find_add($itemId, $idx) {
     if ($urls !== '') { $post['urls'] = $urls; }
     [$code, $b, $e] = st_qb('/api/v2/torrents/add', $post, $file !== '' ? ['torrents' => $file] : null);
     if ($file) { @unlink($file); }
-    if ($code !== 200) { return [false, 'qBittorrent refused it (' . ($e ?: 'HTTP ' . $code) . ')']; }
+    if ($code !== 200) { return [false, st_tr('e.qb_refused', ['e' => $e ?: 'HTTP ' . $code])]; }
     st_state_update(function (&$state) use ($hash, $c, $item) {
         $state['pending'][] = ['id' => substr(md5($hash . microtime()), 0, 10), 'hash' => $hash, 'name' => $c['title'], 'item' => $item['name'], 'path' => $item['path'], 'replaces' => (string)($item['old'] ?? ''),
-                               't' => time(), 'stage' => 'added', 'rechecked' => 0, 'msg' => 'checking the existing files'];
+                               't' => time(), 'stage' => 'added', 'rechecked' => 0, 'msg' => st_tr('job.checking_files')];
     });
     sleep(1);
     st_qb('/api/v2/torrents/recheck', ['hashes' => $hash]);
@@ -286,7 +286,7 @@ function st_queue_feed() {
         foreach ($s['pending'] as $p) { if (in_array($p['stage'], ['added', 'checking'], true)) { return false; } }
         if (!$s['queue']) {
             $t0 = (int)$s['qstat']['t']; $ok = 0; $bad = []; $partial = 0;
-            foreach ($s['pending'] as $p) { if ((int)$p['t'] < $t0) { continue; } if ($p['stage'] === 'done') { $ok++; if (strpos($p['msg'], 'downloads the missing') !== false) { $partial++; } } elseif ($p['stage'] === 'failed') { $bad[] = $p['item'] . ': ' . $p['msg']; } }
+            foreach ($s['pending'] as $p) { if ((int)$p['t'] < $t0) { continue; } if ($p['stage'] === 'done') { $ok++; if (!empty($p['partial'])) { $partial++; } } elseif ($p['stage'] === 'failed') { $bad[] = $p['item'] . ': ' . $p['msg']; } }
             $s['qstat'] = null;
             return ['sum', $ok, $partial, $bad];
         }
@@ -319,24 +319,24 @@ function st_find_ignore($path) { st_ignored_add($path); }
 function st_find_delete($id) {
     $find = st_json_read(ST_FIND, []); $cfg = st_cfg(); $hit = null;
     foreach ((array)($find['items'] ?? []) as $it) { if (($it['id'] ?? '') === $id) { $hit = $it; } }
-    if (!$hit) { return [false, 'unknown item']; }
+    if (!$hit) { return [false, st_tr('e.unknown_item')]; }
     $p = (string)$hit['path'];
-    if ($p === '' || !file_exists($p)) { return [false, 'the folder is already gone']; }
+    if ($p === '' || !file_exists($p)) { return [false, st_tr('e.gone')]; }
     $root = st_under_roots($p, $cfg);
-    if ($root === false) { return [false, 'not deleting ' . $p . ': it is not inside a configured downloads folder']; }
+    if ($root === false) { return [false, st_tr('e.nodel_root', ['p' => $p])]; }
     $rp = realpath($p); $old = strtolower((string)($hit['old'] ?? ''));
     $tors = st_qb_torrents();
-    if ($tors === null) { return [false, 'qBittorrent did not answer; nothing was deleted']; }
+    if ($tors === null) { return [false, st_tr('e.qb_nodel')]; }
     foreach ($tors as $t) {
         $cp = rtrim(st_to_host((string)($t['content_path'] ?? ''), $cfg), '/');
-        if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0) && strtolower((string)$t['hash']) !== $old) { return [false, 'not deleting ' . $p . ': torrent "' . $t['name'] . '" seeds it']; }
+        if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0) && strtolower((string)$t['hash']) !== $old) { return [false, st_tr('e.nodel_seed', ['p' => $p, 't' => $t['name']])]; }
     }
     if ($old !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $old, 'deleteFiles' => 'false']); st_watch_forget($old); }
     $days = (int)($cfg['trash_days'] ?? 0);
     if ($days > 0) {
         $tr = $root . '/' . ST_TRASH; @mkdir($tr, 0777, true);
-        if (!@rename($rp, $tr . '/' . date('YmdHis') . '_' . basename($rp))) { return [false, 'could not move ' . $p . ' to the trash folder']; }
-    } elseif (!st_rm_tree($rp)) { return [false, 'could not delete ' . $p]; }
+        if (!@rename($rp, $tr . '/' . date('YmdHis') . '_' . basename($rp))) { return [false, st_tr('e.notrash', ['p' => $p])]; }
+    } elseif (!st_rm_tree($rp)) { return [false, st_tr('e.nodelete', ['p' => $p])]; }
     st_find_prune();
     return [true, ''];
 }
@@ -395,7 +395,7 @@ function st_auto_due() {
 function st_tick() {
     st_trash_purge();
     st_auto_due();
-    try { st_ab_poll(); } catch (Throwable $e) { $w = st_json_read(ST_AB, []); $w['t'] = time(); $w['err'] = 'unexpected error: ' . $e->getMessage(); st_json_write(ST_AB, $w); }
+    try { st_ab_poll(); } catch (Throwable $e) { $w = st_json_read(ST_AB, []); $w['t'] = time(); $w['err'] = st_tr('e.unexpected', ['e' => $e->getMessage()]); st_json_write(ST_AB, $w); }
     try { st_bot_poll(); } catch (Throwable $e) { /* Discord unreachable: the next minute tries again */ }
     st_upd_prune(st_qb_torrents()); // only touches a finished (ready) Shape up list
     $state = st_state(); $orig = $state; $changed = false;
@@ -411,9 +411,9 @@ function st_tick() {
         foreach ($state['pending'] as &$p) {
             if (!in_array($p['stage'], ['added', 'checking'], true)) { continue; }
             $t = $by[$p['hash']] ?? null;
-            if (!$t) { if (time() - $p['t'] > 600) { $p['stage'] = 'failed'; $p['msg'] = 'the torrent disappeared from qBittorrent'; $changed = true; } continue; }
+            if (!$t) { if (time() - $p['t'] > 600) { $p['stage'] = 'failed'; $p['msg'] = st_tr('job.gone'); $changed = true; } continue; }
             $st = (string)$t['state'];
-            if (preg_match('/^(checking|allocating|moving|metaDL|forcedMetaDL)/', $st)) { $p['stage'] = 'checking'; $p['msg'] = 'checking ' . round(((float)$t['progress']) * 100) . '%'; $changed = true; continue; }
+            if (preg_match('/^(checking|allocating|moving|metaDL|forcedMetaDL)/', $st)) { $p['stage'] = 'checking'; $p['msg'] = st_tr('job.checking', ['p' => round(((float)$t['progress']) * 100)]); $changed = true; continue; }
             if (!$p['rechecked'] && (float)$t['progress'] < 1) {
                 // the first check may not have run on a stopped torrent: ask once more, then judge
                 $p['rechecked'] = 1; $p['t'] = time(); st_qb('/api/v2/torrents/recheck', ['hashes' => $p['hash']]); $changed = true; continue;
@@ -433,8 +433,8 @@ function st_tick() {
                     $inc = st_missing_files($p['hash']);
                     if ($inc && count($inc) <= 20) { $missing = st_missing_txt($inc); }
                 }
-                $p['stage'] = 'done'; $p['msg'] = $full ? 'all files matched, seeding started' : round(((float)$t['progress']) * 100, 2) . '% matched, seeding started; qBittorrent downloads the missing ' . ($missing !== '' ? $missing : st_gb($lack)); $p['t'] = time();
-                if ($p['replaces'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $p['replaces'], 'deleteFiles' => 'false']); $p['msg'] .= '; the old torrent was removed (files kept)'; }
+                $p['stage'] = 'done'; $p['msg'] = $full ? st_tr('job.matched') : st_tr('job.matched_part', ['p' => round(((float)$t['progress']) * 100, 2), 'm' => $missing !== '' ? $missing : st_gb($lack)]); $p['t'] = time(); $p['partial'] = !$full;
+                if ($p['replaces'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $p['replaces'], 'deleteFiles' => 'false']); $p['msg'] .= '; ' . st_tr('job.old_removed'); }
                 $pc = round(((float)$t['progress']) * 100, 2);
                 $hu = $full ? 'A hozzáadott torrent minden fájlja egyezett a letöltött fájlokkal, a seedelés elindult.' : $pc . '%-ban egyezett a torrent a fájlokkal, a seedelés elindult, a hiányzó részt a qBittorrent letölti: ' . ($missing !== '' ? str_replace(' files', ' fájl', str_replace(' file ', ' fájl ', $missing)) : st_gb($lack)) . '.';
                 $en = $full ? 'Every file of the added torrent matched the downloaded files, so seeding started.' : $pc . '% of the torrent matched the files, seeding started; qBittorrent downloads the missing ' . ($missing !== '' ? $missing : st_gb($lack)) . '.';
@@ -443,7 +443,7 @@ function st_tick() {
                     [[st_l('Mappa', 'Folder'), $p['item']], [st_l('Torrent', 'Torrent'), $p['name']]], false, 'find');
             } else {
                 st_qb('/api/v2/torrents/delete', ['hashes' => $p['hash'], 'deleteFiles' => 'false']);
-                $p['stage'] = 'failed'; $p['msg'] = 'the files did not match (' . round(((float)$t['progress']) * 100, 1) . '% found); the torrent was removed, your files are untouched'; $p['t'] = time();
+                $p['stage'] = 'failed'; $p['msg'] = st_tr('job.nomatch', ['p' => round(((float)$t['progress']) * 100, 1)]); $p['t'] = time();
                 empty($state['qstat']) && st_notify('a', st_l('Seedbox: a torrent nem egyezik a fájlokkal', 'Seedbox: the torrent does not match the files'),
                     st_l('A hozzáadott torrent csak ' . round(((float)$t['progress']) * 100, 1) . '%-ban egyezett a letöltött fájlokkal, ezért töröltem a qBittorrentből. A fájlokhoz nem nyúltam.',
                          'The added torrent matched the downloaded files only ' . round(((float)$t['progress']) * 100, 1) . '%, so it was removed from qBittorrent. The files were not touched.'),
@@ -465,7 +465,7 @@ function st_tick() {
             // content nobody seeded: once the replacement is imported the old files go (to the trash, see trash_days)
             if ($j['stage'] === 'imported' && ($j['mode'] ?? '') === 'repl') {
                 [$ok, $m, $mL] = st_cleanup_old($j); $mL = $mL ?? $m;
-                if ($ok) { $j['stage'] = 'cleaned'; $j['msg'] = $m; $j['t'] = time(); } else { $j['msg'] .= '; the old files were not removed: ' . $m; }
+                if ($ok) { $j['stage'] = 'cleaned'; $j['msg'] = $m; $j['t'] = time(); } else { $j['msg'] .= '; ' . st_tr('job.old_kept', ['m' => $m]); }
                 st_notify($ok ? 'g' : 'a', $ok ? st_l('Seedbox: csere kész, régi fájlok eltávolítva', 'Seedbox: replacement done, old files removed') : st_l('Seedbox: a csere kész, de a régi fájlokat nem tudtam eltávolítani', 'Seedbox: replaced, but the old files could not be removed'),
                     st_l('A ' . ucfirst($j['kind']) . ' beimportálta az új kiadást.', ucfirst($j['kind']) . ' imported the new release.') . ' ' . $mL,
                     [[st_l('Cím', 'Title'), $j['title']], [st_l('Új', 'New'), $j['new']], [st_l('Régi', 'Old'), $j['old_name']]], false, st_ntool($j));
@@ -566,16 +566,16 @@ function st_arr_match($vids, $name, $index) {
     }
     if (count($seasons) > 1) {
         $det = []; foreach ($seasons as $k => $l) { $det[] = $l[0]['title'] . ' S' . str_pad((string)$l[0]['season'], 2, '0', STR_PAD_LEFT) . ': ' . count($l) . ' file(s)'; }
-        return ['kind' => '', 'skip' => 'several seasons', 'note' => 'several seasons in one place: not supported yet (' . count($vids) . ' video file(s) here; matches: ' . implode(', ', $det) . ')'];
+        return ['kind' => '', 'skip' => 'several seasons', 'note' => st_tr('u.n_seasons', ['n' => count($vids), 'l' => implode(', ', $det)])];
     }
-    return $vids ? ['kind' => '', 'note' => 'no matching movie or series in Radarr/Sonarr'] : ['kind' => '', 'skip' => 'no video', 'note' => 'no video file'];
+    return $vids ? ['kind' => '', 'note' => st_tr('u.n_nomatch')] : ['kind' => '', 'skip' => 'no video', 'note' => st_tr('u.n_novideo')];
 }
 
 function st_upd_scan() {
     $cfg = st_cfg();
-    st_progress(ST_UPD, 'running', 'Reading qBittorrent...', ['items' => []]);
+    st_progress(ST_UPD, 'running', st_tr('run.qb'), ['items' => []]);
     $tor = st_qb_torrents();
-    if ($tor === null) { st_progress(ST_UPD, 'error', 'Cannot read the torrent list from qBittorrent (check the Seedbox settings).'); return; }
+    if ($tor === null) { st_progress(ST_UPD, 'error', st_tr('run.qb_fail')); return; }
     $minB = (float)$cfg['upd_min_gb'] * 1e9; $minAge = (int)$cfg['upd_min_age'] * 86400;
     $cand = [];
     $out = [];
@@ -584,7 +584,7 @@ function st_upd_scan() {
         $lo = st_lib_out($t, $cfg);
         if ($lo !== '') { // not part of the library: no tracker check, no matching; listed folded with the reason when big and old
             if ((float)$t['size'] >= (float)$cfg['upd_min_gb'] * 1e9 && (time() - (int)($t['added_on'] ?? time())) >= (int)$cfg['upd_min_age'] * 86400) {
-                $out[] = ['hash' => (string)$t['hash'], 'name' => (string)$t['name'], 'size' => (float)$t['size'], 'added' => (int)($t['added_on'] ?? 0), 'dead' => false, 'dead_msg' => '', 'kind' => '', 'note' => '', 'skip' => 'outside the library: ' . $lo];
+                $out[] = ['hash' => (string)$t['hash'], 'name' => (string)$t['name'], 'size' => (float)$t['size'], 'added' => (int)($t['added_on'] ?? 0), 'dead' => false, 'dead_msg' => '', 'kind' => '', 'note' => '', 'skip' => st_tr('u.n_outside', ['l' => $lo])];
             }
             continue;
         }
@@ -600,7 +600,7 @@ function st_upd_scan() {
         if (!$big && !$dead) { continue; }
         $cand[] = ['t' => $t, 'dead' => $dead, 'dead_msg' => $dmsg];
     }
-    st_progress(ST_UPD, 'running', 'Matching with Radarr and Sonarr...', ['total' => count($cand)]);
+    st_progress(ST_UPD, 'running', st_tr('run.match'), ['total' => count($cand)]);
     $index = $cand ? st_arr_index(true) : ['movies' => [], 'eps' => []];
     $items = [];
     foreach ($cand as $x) {
@@ -682,8 +682,8 @@ function st_search_item($key, $it, $mode) {
     $put = function ($state, $msg, $rows = [], $item = null) use ($key, &$info, &$dropped, $mode) {
         st_res_set($key, ['state' => $state, 't' => time(), 'rows' => $rows, 'msg' => $msg, 'item' => $item, 'info' => $info, 'dropped' => $dropped, 'mode' => $mode]);
     };
-    $put('running', 'Searching...');
-    if (empty($it['kind'])) { $put('error', $it['note'] ?? 'This is not matched to Radarr or Sonarr'); return; }
+    $put('running', st_tr('f.searching'));
+    if (empty($it['kind'])) { $put('error', $it['note'] ?? st_tr('u.not_matched')); return; }
     $q = $it['kind'] === 'radarr' ? '/release?movieId=' . $it['arr_id'] : '/release?seriesId=' . $it['arr_id'] . '&seasonNumber=' . $it['season'];
     // a single episode in the library: look for single-episode releases of that episode (a season pack would import the whole season)
     $epMode = false; $epInfo = ''; $epNum = 0;
@@ -700,20 +700,20 @@ function st_search_item($key, $it, $mode) {
         if ($ep1) {
             $epMode = true; $it['ep_id'] = (int)$ep1['id']; $q = '/release?episodeId=' . $it['ep_id'];
             $epNum = (int)($ep1['episodeNumber'] ?? 0);
-            $epInfo = ' (single episode S' . str_pad((string)$it['season'], 2, '0', STR_PAD_LEFT) . 'E' . str_pad((string)(int)($ep1['episodeNumber'] ?? 0), 2, '0', STR_PAD_LEFT) . ')';
-        } else { $epInfo = ' (episode lookup failed, searching the season)'; }
+            $epInfo = ' ' . st_tr('rs.ep1', ['e' => 'S' . str_pad((string)$it['season'], 2, '0', STR_PAD_LEFT) . 'E' . str_pad((string)(int)($ep1['episodeNumber'] ?? 0), 2, '0', STR_PAD_LEFT)]);
+        } else { $epInfo = ' ' . st_tr('rs.ep_fail'); }
     }
     $t0 = microtime(true);
     [$code, $j, $err] = st_arr($it['kind'], $q, 'GET', null, 240);
-    if ($err !== '' || !is_array($j)) { $put('error', $err ?: 'bad response'); return; }
+    if ($err !== '' || !is_array($j)) { $put('error', $err ?: st_tr('e.bad_resp')); return; }
     // what Radarr/Sonarr judged with: the profile of this title (diagnostics for the rejections)
-    $info = ucfirst($it['kind']) . ' returned ' . count($j) . ' releases' . $epInfo . ' in ' . round(microtime(true) - $t0, 1) . ' s';
+    $info = st_tr('rs.returned', ['k' => ucfirst($it['kind']), 'n' => count($j), 'e' => $epInfo, 's' => round(microtime(true) - $t0, 1)]);
     [$c1, $mv] = st_arr($it['kind'], ($it['kind'] === 'radarr' ? '/movie/' : '/series/') . (int)$it['arr_id']);
     if (is_array($mv) && isset($mv['qualityProfileId'])) {
         [$c2, $pf] = st_arr($it['kind'], '/qualityprofile/' . (int)$mv['qualityProfileId']);
-        if (is_array($pf)) { $info .= '. Profile of this title: ' . ($pf['name'] ?? '?') . (isset($pf['language']['name']) ? ', language: ' . $pf['language']['name'] : '') . (isset($pf['upgradeAllowed']) ? ', upgrades ' . ($pf['upgradeAllowed'] ? 'allowed' : 'NOT allowed') : ''); }
+        if (is_array($pf)) { $info .= '. ' . st_tr('rs.profile', ['p' => $pf['name'] ?? '?']) . (isset($pf['language']['name']) ? ', ' . st_tr('rs.lang', ['l' => $pf['language']['name']]) : '') . (isset($pf['upgradeAllowed']) ? ', ' . st_tr($pf['upgradeAllowed'] ? 'rs.upg_yes' : 'rs.upg_no') : ''); }
     }
-    if (is_array($mv) && !empty($mv['originalLanguage']['name'])) { $info .= '. Original language of the title: ' . $mv['originalLanguage']['name']; }
+    if (is_array($mv) && !empty($mv['originalLanguage']['name'])) { $info .= '. ' . st_tr('rs.orig', ['l' => $mv['originalLanguage']['name']]); }
     $saving = (float)$cfg['upd_saving'] / 100;
     $rows = []; $drop = [];
     $dr = function ($k, $r) use (&$drop, &$dropped) { $drop[$k] = ($drop[$k] ?? 0) + 1; if (count($dropped) < 12) { $dropped[] = ['title' => (string)($r['title'] ?? ''), 'why' => $k, 'size' => (float)($r['size'] ?? 0), 'seeders' => (int)($r['seeders'] ?? 0)]; } };
@@ -721,22 +721,22 @@ function st_search_item($key, $it, $mode) {
         if (!is_array($r) || strtolower((string)($r['protocol'] ?? 'torrent')) !== 'torrent') { continue; }
         if ($it['kind'] === 'sonarr') {
             if ($epMode) {
-                if (!empty($r['fullSeason']) || count((array)($r['episodeNumbers'] ?? [])) > 1) { $dr('season pack or multi-episode', $r); continue; }
+                if (!empty($r['fullSeason']) || count((array)($r['episodeNumbers'] ?? [])) > 1) { $dr(st_tr('dr.pack'), $r); continue; }
                 // Sonarr also lists the single-episode releases of the other episodes of the season: only this episode counts
                 $rt = (string)($r['title'] ?? ''); $rs = (int)($r['seasonNumber'] ?? 0); $re = (array)($r['episodeNumbers'] ?? []);
                 if ($epNum > 0) {
                     $okEp = $re ? in_array($epNum, array_map('intval', $re), true) : null;
                     if ($okEp === null && preg_match('/S(\d{1,2})E(\d{1,3})/i', $rt, $mq)) { $okEp = ((int)$mq[2] === $epNum && ((int)$it['season'] <= 0 || (int)$mq[1] === (int)$it['season'])); }
-                    if ($okEp === false || ($rs > 0 && (int)$it['season'] > 0 && $rs !== (int)$it['season'])) { $dr('another episode', $r); continue; }
+                    if ($okEp === false || ($rs > 0 && (int)$it['season'] > 0 && $rs !== (int)$it['season'])) { $dr(st_tr('dr.ep'), $r); continue; }
                 }
-            } elseif (empty($r['fullSeason'])) { $dr('not a season pack', $r); continue; }
+            } elseif (empty($r['fullSeason'])) { $dr(st_tr('dr.notpack'), $r); continue; }
             else {
                 // a season pack of this season only (Sonarr may list packs of other seasons)
                 $rt = (string)($r['title'] ?? ''); $rs = (int)($r['seasonNumber'] ?? 0);
-                if ((int)$it['season'] > 0 && $rs > 0 && $rs !== (int)$it['season']) { $dr('another season', $r); continue; }
+                if ((int)$it['season'] > 0 && $rs > 0 && $rs !== (int)$it['season']) { $dr(st_tr('dr.season'), $r); continue; }
                 if ((int)$it['season'] > 0 && preg_match_all('/(?<![A-Za-z0-9])S(\d{1,2})(?![0-9]|E\d)/i', $rt, $mm2)) {
                     $ss = array_unique(array_map('intval', $mm2[1]));
-                    if (count($ss) !== 1 || $ss[0] !== (int)$it['season']) { $dr('another season', $r); continue; }
+                    if (count($ss) !== 1 || $ss[0] !== (int)$it['season']) { $dr(st_tr('dr.season'), $r); continue; }
                 }
             }
         }
@@ -744,9 +744,9 @@ function st_search_item($key, $it, $mode) {
         if ($size <= 0 || st_norm($title) === st_norm($it['name'])) { continue; }
         $res_ = preg_match('/(2160|1080|720|480|576)[pi]/i', $title) ? st_res_of($title) : max((int)($r['quality']['quality']['resolution'] ?? 0), st_res_of($title)); // Radarr / Sonarr sometimes misjudge names without a resolution (BD25 and the like)
         $hdr = st_hdr_rank($title);
-        if ($it['cur_res'] > 0 && $res_ > 0 && $res_ < $it['cur_res']) { $dr('lower resolution', $r); continue; }
-        if ($mode === 'upd' && $it['cur_res'] > 0 && $res_ <= 0) { $dr('resolution unknown', $r); continue; } // a name Radarr / Sonarr cannot read (Az ötödik elem, 837 MB) is no offer
-        if ($mode !== 'repl' && $hdr < $it['cur_hdr']) { $dr(!st_dv_all() && st_hdr_kind($title) === 'dv' ? 'DV only: no HDR10 fallback for a TV without DV' : 'lower HDR format', $r); continue; } // replacing unseeded content: any HDR format is fine, the same one is listed first
+        if ($it['cur_res'] > 0 && $res_ > 0 && $res_ < $it['cur_res']) { $dr(st_tr('dr.lowres'), $r); continue; }
+        if ($mode === 'upd' && $it['cur_res'] > 0 && $res_ <= 0) { $dr(st_tr('dr.nores'), $r); continue; } // a name Radarr / Sonarr cannot read (Az ötödik elem, 837 MB) is no offer
+        if ($mode !== 'repl' && $hdr < $it['cur_hdr']) { $dr(!st_dv_all() && st_hdr_kind($title) === 'dv' ? st_tr('dr.dvonly') : st_tr('dr.lowhdr'), $r); continue; } // replacing unseeded content: any HDR format is fine, the same one is listed first
         $save = $it['cur_size'] > 0 ? 1 - $size / $it['cur_size'] : 0;
         $cats = [];
         if ($mode === 'upd') {
@@ -755,10 +755,10 @@ function st_search_item($key, $it, $mode) {
             if (!empty($cfg['upd_cat_save']) && $save >= $saving - 1e-9) { $cats[] = 'save'; } // 1e-9: exactly the saving counts (float rounding)
             if (!empty($cfg['upd_cat_hdr']) && $hdr > (int)$it['cur_hdr'] && $fits) { $cats[] = 'hdr'; }
             if (!empty($cfg['upd_cat_res']) && (int)$it['cur_res'] > 0 && $res_ > (int)$it['cur_res'] && $fits) { $cats[] = 'res'; }
-            if (!$cats && empty($it['dead'])) { $dr(($hdr > (int)$it['cur_hdr'] || $res_ > (int)$it['cur_res']) && !$fits ? 'upgrade, but too big' : 'not small enough, no upgrade', $r); continue; }
+            if (!$cats && empty($it['dead'])) { $dr(($hdr > (int)$it['cur_hdr'] || $res_ > (int)$it['cur_res']) && !$fits ? st_tr('dr.upg_big') : st_tr('dr.nosave'), $r); continue; }
         }
-        if ($mode === 'repl' && (int)($r['seeders'] ?? 0) < 1) { $dr('no seeders', $r); continue; }
-        if ($mode === 'repl' && (float)$cfg['repl_max_growth'] > 0 && $it['cur_size'] > 0 && $size > $it['cur_size'] * (1 + (float)$cfg['repl_max_growth'] / 100)) { $dr('too big', $r); continue; }
+        if ($mode === 'repl' && (int)($r['seeders'] ?? 0) < 1) { $dr(st_tr('dr.noseed'), $r); continue; }
+        if ($mode === 'repl' && (float)$cfg['repl_max_growth'] > 0 && $it['cur_size'] > 0 && $size > $it['cur_size'] * (1 + (float)$cfg['repl_max_growth'] / 100)) { $dr(st_tr('dr.big'), $r); continue; }
         $langs = []; foreach ((array)($r['languages'] ?? []) as $l) { $langs[] = (string)($l['name'] ?? ''); }
         $isHun = (bool)(preg_grep('/hungar/i', $langs) || preg_match('/\b(hun|hundub|magyar)\b/i', $title));
         $rows[] = ['guid' => (string)$r['guid'], 'indexer_id' => (int)($r['indexerId'] ?? 0), 'title' => $title, 'size' => $size, 'saving' => round($save * 100, 1),
@@ -780,9 +780,9 @@ function st_search_item($key, $it, $mode) {
     }
     $rows = array_slice($rows, 0, 10);
     $it['mode'] = $mode;
-    $why = ''; if ($drop && count($rows)) { arsort($drop); $parts = []; foreach ($drop as $k => $v) { $parts[] = $v . ' ' . $k; } $info .= '. Filtered out: ' . implode(', ', $parts); }
-    if ($drop) { arsort($drop); $parts = []; foreach ($drop as $k => $v) { $parts[] = $v . ' ' . $k; } $why = ' Filtered out: ' . implode(', ', $parts) . '.'; }
-    $put('ready', count($rows) ? '' : 'No release meets the conditions. ' . $info . '.' . $why, $rows, $it);
+    $why = ''; if ($drop && count($rows)) { arsort($drop); $parts = []; foreach ($drop as $k => $v) { $parts[] = $v . ' ' . $k; } $info .= '. ' . st_tr('rs.filtered_out', ['l' => implode(', ', $parts)]); }
+    if ($drop) { arsort($drop); $parts = []; foreach ($drop as $k => $v) { $parts[] = $v . ' ' . $k; } $why = ' ' . st_tr('rs.filtered_out', ['l' => implode(', ', $parts)]) . '.'; }
+    $put('ready', count($rows) ? '' : st_tr('rs.no_offer') . ' ' . $info . '.' . $why, $rows, $it);
 }
 
 // ---- background check: after a scan every listed torrent is searched, one every ~90 seconds (the trackers must not see a burst),
@@ -822,14 +822,14 @@ function st_upd_bg_spawn() {
 function st_upd_search($hash) {
     $upd = st_json_read(ST_UPD, []);
     foreach ((array)($upd['items'] ?? []) as $x) { if ($x['hash'] === $hash) { $x['old_hash'] = $hash; $x['old_path'] = ''; st_search_item($hash, $x, 'upd'); return; } }
-    st_search_item($hash, ['kind' => '', 'note' => 'This torrent is not in the last scan'], 'upd');
+    st_search_item($hash, ['kind' => '', 'note' => st_tr('u.n_notscan')], 'upd');
 }
 
 // Replacement for a folder or file that nobody seeds (or whose tracker removed the torrent)
 function st_find_repl_search($itemId) {
     $find = st_json_read(ST_FIND, []);
     $unit = null; foreach ((array)($find['items'] ?? []) as $x) { if ($x['id'] === $itemId) { $unit = $x; } }
-    if (!$unit) { st_search_item('f' . substr(md5($itemId), 0, 12), ['kind' => '', 'note' => 'unknown item'], 'repl'); return; }
+    if (!$unit) { st_search_item('f' . substr(md5($itemId), 0, 12), ['kind' => '', 'note' => st_tr('e.unknown_item')], 'repl'); return; }
     st_find_repl_unit($unit, st_arr_index());
 }
 function st_find_repl_unit($unit, $index, $quiet = false) {
@@ -880,30 +880,30 @@ function st_replace_grab($key, $guid) {
     $res = st_json_read(ST_RES, []);
     $it = $res[$key]['item'] ?? null; $mode = $it['mode'] ?? '';
     $row = null; foreach ((array)($res[$key]['rows'] ?? []) as $r) { if ($r['guid'] === $guid) { $row = $r; } }
-    if (!$it || !$row) { return [false, 'unknown item or release (search again)']; }
-    $lk = st_action_lock(); if (!$lk) { return [false, 'another replacement is being started or removed right now; try again in a minute']; }
+    if (!$it || !$row) { return [false, st_tr('e.unknown_rel')]; }
+    $lk = st_action_lock(); if (!$lk) { return [false, st_tr('e.lock')]; }
     try { return st_replace_grab_do($key, $it, $mode, $row); } finally { st_action_unlock($lk); }
 }
 function st_replace_grab_do($key, $it, $mode, $row) {
     $state = st_state();
-    foreach ($state['jobs'] as $j) { if ($j['key'] === $key && !in_array($j['stage'], ['removed', 'failed', 'cleaned'], true)) { return [false, 'this title already has a replacement in progress']; } }
+    foreach ($state['jobs'] as $j) { if ($j['key'] === $key && !in_array($j['stage'], ['removed', 'failed', 'cleaned'], true)) { return [false, st_tr('e.inprog')]; } }
     [$code, $j, $err] = st_arr($it['kind'], '/release', 'POST', ['guid' => $row['guid'], 'indexerId' => $row['indexer_id']], 60);
     if ($err !== '' && stripos($err, 'cache') !== false) {
         // Radarr/Sonarr keep a search result only for a short while: search again with the same settings and retry once
         st_search_item($key, $it, $mode);
         $res = st_json_read(ST_RES, []);
         $row2 = null; foreach ((array)($res[$key]['rows'] ?? []) as $r) { if ($r['guid'] === $row['guid'] || $r['title'] === $row['title']) { $row2 = $r; break; } }
-        if (!$row2) { return [false, 'the release is no longer offered by ' . $it['kind'] . ' (search again)']; }
+        if (!$row2) { return [false, st_tr('e.rel_gone', ['k' => ucfirst($it['kind'])])]; }
         $row = $row2;
         [$code, $j, $err] = st_arr($it['kind'], '/release', 'POST', ['guid' => $row['guid'], 'indexerId' => $row['indexer_id']], 60);
     }
-    if ($err !== '') { return [false, $it['kind'] . ' refused the release: ' . $err]; }
+    if ($err !== '') { return [false, st_tr('e.rel_refused', ['k' => ucfirst($it['kind']), 'e' => $err])]; }
     $cfg = st_cfg();
     $media = [];
     foreach ((array)($it['media_paths'] ?? []) as $p) { if ($p !== '') { $media[] = st_to_host($p, $cfg); } }
     $job = ['id' => substr(md5($key . microtime()), 0, 10), 'key' => $key, 'mode' => $mode === 'repl' ? 'repl' : 'upd', 'hash' => (string)($it['old_hash'] ?? ''), 'old_path' => (string)($it['old_path'] ?? ''),
                         'kind' => $it['kind'], 'arr_id' => $it['arr_id'], 'season' => $it['season'], 'ep_id' => (int)($it['ep_id'] ?? 0), 'title' => $it['title'], 'old_name' => $it['name'], 'old_size' => $it['size'],
-                        'file_ids' => $it['file_ids'], 'media_paths' => $media, 'new' => $row['title'], 'new_size' => $row['size'], 't' => time(), 'gt' => time(), 'stage' => 'grabbed', 'msg' => 'sent to ' . $it['kind'],
+                        'file_ids' => $it['file_ids'], 'media_paths' => $media, 'new' => $row['title'], 'new_size' => $row['size'], 't' => time(), 'gt' => time(), 'stage' => 'grabbed', 'msg' => st_tr('job.sent', ['k' => ucfirst($it['kind'])]),
                         'why' => (string)($it['why'] ?? ''), 'dead' => !empty($it['dead']), 'saving' => $row['saving'] ?? 0, 'seeders' => $row['seeders'] ?? 0, 'q' => ($row['res'] ?? '') . 'p ' . ($row['hdr'] ?? '')];
     st_state_update(function (&$s) use ($job) { $s['jobs'][] = $job; });
     $j = $job;
@@ -947,7 +947,7 @@ function st_dl_summary($s) {
     if (!$n) { return null; }
     $tor = st_qb_json('/api/v2/torrents/info'); // all: a finished download may be moving or waiting for the import
     $ti = st_qb_json('/api/v2/transfer/info');
-    if ($tor === null || $ti === null) { return ['jobs' => $n, 'err' => 'qBittorrent did not answer']; }
+    if ($tor === null || $ti === null) { return ['jobs' => $n, 'err' => st_tr('e.qb_noanswer')]; }
     $left = 0; $found = 0; $stalled = 0; $seeds = 0; $swarm = 0; $stall = []; $per = [];
     $mv = 0.0; $mrate = 0; $last = 0.0; $lastEta = -1; // bytes still to move to the array, the measured move speed, the download that ends last
     $dl = array_flip(['downloading', 'metaDL', 'forcedMetaDL', 'stalledDL', 'checkingDL', 'pausedDL', 'stoppedDL', 'queuedDL', 'forcedDL', 'allocating']);
@@ -995,7 +995,7 @@ function st_job_status($j) {
         [$c, $m] = st_arr('radarr', '/movie/' . (int)$j['arr_id']);
         if (!is_array($m)) { return null; }
         $fid = (int)($m['movieFile']['id'] ?? 0);
-        if ($fid > 0 && !in_array($fid, $j['file_ids'], true)) { return ['stage' => 'imported', 'msg' => 'imported by Radarr; the old file was replaced']; }
+        if ($fid > 0 && !in_array($fid, $j['file_ids'], true)) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_radarr')]; }
         $key = 'movieId';
     } else {
         $cur = [];
@@ -1008,7 +1008,7 @@ function st_job_status($j) {
             if (!is_array($files)) { return null; }
             foreach ($files as $f) { if ((int)$f['seasonNumber'] === (int)$j['season']) { $cur[] = (int)$f['id']; } }
         }
-        if ($cur && !array_intersect($cur, $j['file_ids'])) { return ['stage' => 'imported', 'msg' => 'imported by Sonarr; the old files were replaced']; }
+        if ($cur && !array_intersect($cur, $j['file_ids'])) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_sonarr')]; }
         $key = 'seriesId';
     }
     [$c, $q] = st_arr($kind, '/queue?page=1&pageSize=200');
@@ -1020,13 +1020,13 @@ function st_job_status($j) {
         if ($tds === 'importBlocked' || $tdst === 'error' || $tdst === 'warning') {
             $msgs = [];
             foreach ((array)($r['statusMessages'] ?? []) as $sm) { foreach ((array)($sm['messages'] ?? []) as $mm) { $msgs[] = (string)$mm; } if (!empty($sm['title']) && !$msgs) { $msgs[] = (string)$sm['title']; } }
-            return ['stage' => 'blocked', 'msg' => 'waiting: ' . ($msgs ? implode(' / ', array_slice($msgs, 0, 2)) : ($tds ?: $tdst))];
+            return ['stage' => 'blocked', 'msg' => st_tr('job.waiting', ['m' => $msgs ? implode(' / ', array_slice($msgs, 0, 2)) : ($tds ?: $tdst)])];
         }
         $left = (float)($r['sizeleft'] ?? 0); $size = (float)($r['size'] ?? 0);
         $p = $size > 0 ? ($left > 0 ? min(99, (int)floor((1 - $left / $size) * 100)) : 100) : 0;
-        return ['stage' => 'downloading', 'msg' => 'downloading ' . $p . '%' . (!empty($r['timeleft']) ? ', ' . st_fmt_left((string)$r['timeleft']) . ' left' : '')];
+        return ['stage' => 'downloading', 'msg' => st_tr('job.dl', ['p' => $p]) . (!empty($r['timeleft']) ? ', ' . st_tr('job.left', ['t' => st_fmt_left((string)$r['timeleft'])]) : '')];
     }
-    if (time() - (int)$j['t'] > 1800) { return ['stage' => 'blocked', 'msg' => 'not in the queue and not imported: check ' . $kind]; }
+    if (time() - (int)$j['t'] > 1800) { return ['stage' => 'blocked', 'msg' => st_tr('job.lost', ['k' => ucfirst($kind)])]; }
     return null;
 }
 
@@ -1054,18 +1054,18 @@ function st_rm_tree($p) {
 // Returns [ok, message].
 function st_cleanup_old($j) {
     $cfg = st_cfg(); $msg = []; $msgL = []; $oldIno = [];
-    $add = function ($hu, $en) use (&$msg, &$msgL) { $msg[] = $en; $msgL[] = st_l($hu, $en); }; // $msg: English for the page, $msgL: the Discord language
-    if ($j['hash'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => 'false']); st_watch_forget($j['hash']); $add('a régi torrent kikerült a qBittorrentből (a fájlok megmaradtak)', 'old torrent removed from qBittorrent (files kept)'); }
+    $add = function ($hu, $en, $k, $v = []) use (&$msg, &$msgL) { $msg[] = st_tr($k, $v); $msgL[] = st_l($hu, $en); }; // $msg: the page language, $msgL: the Discord language
+    if ($j['hash'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => 'false']); st_watch_forget($j['hash']); $add('a régi torrent kikerült a qBittorrentből (a fájlok megmaradtak)', 'old torrent removed from qBittorrent (files kept)', 'cl.torrent'); }
     $p = (string)$j['old_path'];
     if ($p !== '' && file_exists($p)) {
         $root = st_under_roots($p, $cfg);
-        if ($root === false) { return [false, 'not removing ' . $p . ': it is not inside a configured downloads folder']; }
+        if ($root === false) { return [false, st_tr('e.norm_root', ['p' => $p])]; }
         // never remove what a torrent seeds
         $rp = realpath($p);
         foreach ((array)st_qb_torrents() as $t) {
             if ($j['hash'] !== '' && strtolower((string)$t['hash']) === strtolower((string)$j['hash'])) { continue; } // the old torrent itself (just deleted, qBittorrent may still list it)
             $cp = rtrim(st_to_host((string)($t['content_path'] ?? ''), $cfg), '/');
-            if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0)) { return [false, 'not removing ' . $p . ': torrent "' . $t['name'] . '" seeds it']; }
+            if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0)) { return [false, st_tr('e.norm_seed', ['p' => $p, 't' => $t['name']])]; }
         }
         // inodes of the old files: a media link is only removed if it still points at one of them (never the freshly imported file)
         if (is_file($rp)) { $oldIno[(int)@fileinode($rp)] = true; } else { foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rp, FilesystemIterator::SKIP_DOTS)) as $f) { if ($f->isFile()) { $oldIno[(int)$f->getInode()] = true; } } }
@@ -1073,11 +1073,11 @@ function st_cleanup_old($j) {
         if ($days > 0) {
             $tr = $root . '/' . ST_TRASH; @mkdir($tr, 0777, true);
             $dest = $tr . '/' . date('YmdHis') . '_' . basename($rp);
-            if (!@rename($rp, $dest)) { return [false, 'could not move ' . $p . ' to the trash folder']; }
-            $add('a régi fájlok a ' . ST_TRASH . ' mappába kerültek (' . $days . ' nap után törlődnek)', 'old files moved to ' . ST_TRASH . ' (deleted after ' . $days . ' days)');
+            if (!@rename($rp, $dest)) { return [false, st_tr('e.notrash', ['p' => $p])]; }
+            $add('a régi fájlok a ' . ST_TRASH . ' mappába kerültek (' . $days . ' nap után törlődnek)', 'old files moved to ' . ST_TRASH . ' (deleted after ' . $days . ' days)', 'cl.trash', ['f' => ST_TRASH, 'n' => $days]);
         } else {
-            if (!st_rm_tree($rp)) { return [false, 'could not delete ' . $p]; }
-            $add('a régi fájlok törölve', 'old files deleted');
+            if (!st_rm_tree($rp)) { return [false, st_tr('e.nodelete', ['p' => $p])]; }
+            $add('a régi fájlok törölve', 'old files deleted', 'cl.deleted');
         }
     }
     // the old hardlink in the media folder (Radarr/Sonarr normally removes it when it upgrades)
@@ -1085,7 +1085,7 @@ function st_cleanup_old($j) {
     foreach ((array)($j['media_paths'] ?? []) as $mp) {
         if ($mp !== '' && is_file($mp) && strpos(realpath($mp), rtrim($cfg['map_host'], '/') . '/') === 0 && isset($oldIno[(int)@fileinode($mp)])) { if (@unlink($mp)) { $gone++; } }
     }
-    if ($gone) { $add($gone . ' régi hardlink törölve a média mappából', $gone . ' old media link(s) removed'); }
+    if ($gone) { $add($gone . ' régi hardlink törölve a média mappából', $gone . ' old media link(s) removed', 'cl.links', ['n' => $gone]); }
     return [true, implode('; ', $msg), implode('; ', $msgL)];
 }
 
@@ -1145,24 +1145,24 @@ function st_trash_purge() {
 // This asks Radarr to import the finished download anyway (the ManualImport command); Radarr then replaces the old file.
 function st_force_import($id) {
     $s = st_state(); $job = null; foreach ($s['jobs'] as $j) { if ($j['id'] === $id) { $job = $j; } }
-    if (!$job) { return [false, 'unknown job']; }
-    if ($job['kind'] !== 'radarr') { return [false, 'forcing the import is only supported for Radarr (movies) so far: import it by hand in Sonarr, Activity, Queue']; }
-    if ($job['stage'] !== 'blocked') { return [false, 'this replacement is not blocked']; }
+    if (!$job) { return [false, st_tr('e.unknown_job')]; }
+    if ($job['kind'] !== 'radarr') { return [false, st_tr('e.force_sonarr')]; }
+    if ($job['stage'] !== 'blocked') { return [false, st_tr('e.notblocked')]; }
     [$c, $q, $e] = st_arr('radarr', '/queue?page=1&pageSize=200');
     $did = '';
     foreach ((array)($q['records'] ?? []) as $r) { if ((int)($r['movieId'] ?? 0) === (int)$job['arr_id'] && !empty($r['downloadId'])) { $did = (string)$r['downloadId']; } }
-    if ($did === '') { return [false, 'the download is not in the Radarr queue (it may still be downloading, or already imported)']; }
+    if ($did === '') { return [false, st_tr('e.notqueue')]; }
     [$c, $list, $e] = st_arr('radarr', '/manualimport?downloadId=' . rawurlencode($did) . '&filterExistingFiles=false', 'GET', null, 120);
-    if ($e !== '' || !is_array($list)) { return [false, 'Radarr could not list the downloaded files: ' . ($e ?: 'bad response')]; }
+    if ($e !== '' || !is_array($list)) { return [false, st_tr('e.mi_list', ['e' => $e ?: st_tr('e.bad_resp')])]; }
     $files = [];
     foreach ($list as $m) {
         if (empty($m['path']) || !st_main_video((string)$m['path'])) { continue; }
         $files[] = ['path' => $m['path'], 'movieId' => (int)$job['arr_id'], 'quality' => $m['quality'] ?? null, 'languages' => $m['languages'] ?? [], 'releaseGroup' => (string)($m['releaseGroup'] ?? ''), 'downloadId' => $did];
     }
-    if (count($files) !== 1) { return [false, 'expected one video file in the download, found ' . count($files) . ': import it by hand in Radarr']; }
+    if (count($files) !== 1) { return [false, st_tr('e.mi_count', ['n' => count($files)])]; }
     [$c, $r, $e] = st_arr('radarr', '/command', 'POST', ['name' => 'ManualImport', 'files' => $files, 'importMode' => 'auto'], 60);
-    if ($e !== '') { return [false, 'Radarr refused the import: ' . $e]; }
-    st_state_update(function (&$s) use ($id) { foreach ($s['jobs'] as &$j) { if ($j['id'] === $id) { $j['msg'] = 'import requested from Radarr, waiting for it'; $j['t'] = time(); } } unset($j); });
+    if ($e !== '') { return [false, st_tr('e.mi_refused', ['e' => $e])]; }
+    st_state_update(function (&$s) use ($id) { foreach ($s['jobs'] as &$j) { if ($j['id'] === $id) { $j['msg'] = st_tr('job.forced'); $j['t'] = time(); } } unset($j); });
     return [true, ''];
 }
 
@@ -1180,14 +1180,14 @@ function st_shared_by($hash, $tors) {
 }
 
 function st_job_remove_old($id) {
-    $lk = st_action_lock(); if (!$lk) { return [false, 'another replacement is being started or removed right now; try again in a minute']; }
+    $lk = st_action_lock(); if (!$lk) { return [false, st_tr('e.lock')]; }
     try { return st_job_remove_old_do($id); } finally { st_action_unlock($lk); }
 }
 function st_job_remove_old_do($id) {
     $j = null; foreach (st_state()['jobs'] as $x) { if ($x['id'] === $id) { $j = $x; } }
-    if (!$j) { return [false, 'unknown job']; }
-    if (in_array($j['stage'], ['removed', 'cleaned'], true)) { return [false, 'the old files are already removed']; }
-    if ($j['stage'] !== 'imported') { return [false, 'the replacement is not imported yet']; }
+    if (!$j) { return [false, st_tr('e.unknown_job')]; }
+    if (in_array($j['stage'], ['removed', 'cleaned'], true)) { return [false, st_tr('e.already_rm')]; }
+    if ($j['stage'] !== 'imported') { return [false, st_tr('e.notimp')]; }
     $set = function ($stage, $msg) use ($id) { st_state_update(function (&$s) use ($id, $stage, $msg) { foreach ($s['jobs'] as &$x) { if ($x['id'] === $id) { $x['stage'] = $stage; $x['msg'] = $msg; $x['t'] = time(); } } unset($x); }); };
     if ($j['mode'] === 'repl') {
         [$ok, $m, $mL] = st_cleanup_old($j); if (!$ok) { return [false, $m]; }
@@ -1197,7 +1197,7 @@ function st_job_remove_old_do($id) {
     }
     // another torrent may seed the same files (cross-seed on a second tracker): then only the old torrent goes, the files stay
     $tors = st_qb_torrents();
-    if ($tors === null) { return [false, 'qBittorrent did not answer; nothing was deleted']; }
+    if ($tors === null) { return [false, st_tr('e.qb_nodel')]; }
     $share = st_shared_by($j['hash'], $tors);
     // nothing else seeds it: the whole folder of the old torrent goes (torrent files and what came with them: nfo, images,
     // subtitles), to the trash like Find my torrent replacements (owner's decision 2026-10-11)
@@ -1207,7 +1207,7 @@ function st_job_remove_old_do($id) {
         $j2 = $j; $j2['old_path'] = $cp; $j2['media_paths'] = [];
         [$ok, $m, $mL] = st_cleanup_old($j2);
         if (!$ok) { return [false, $m]; }
-        $m = str_replace(' (files kept)', '', $m); $mL = str_replace(' (a fájlok megmaradtak)', '', $mL); // the folder went to the trash right after
+        $m = str_replace(st_tr('cl.torrent'), st_tr('cl.torrent_rm'), $m); $mL = str_replace(' (a fájlok megmaradtak)', '', $mL); // the folder went to the trash right after
         st_upd_drop((string)$j['hash']);
         $set('removed', $m);
         st_notify('g', st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted'), $mL,
@@ -1215,9 +1215,9 @@ function st_job_remove_old_do($id) {
         return [true, ''];
     }
     [$c, $b, $e] = st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => $share === '' ? 'true' : 'false']);
-    if ($c !== 200) { return [false, 'qBittorrent refused: ' . ($e ?: 'HTTP ' . $c)]; }
+    if ($c !== 200) { return [false, st_tr('e.qb_refused', ['e' => $e ?: 'HTTP ' . $c])]; }
     st_upd_drop((string)$j['hash']);
-    $set('removed', $share === '' ? 'the old torrent and its files were removed' : 'the old torrent was removed; its files were kept because torrent "' . $share . '" seeds them too');
+    $set('removed', $share === '' ? st_tr('job.rm_all') : st_tr('job.rm_kept', ['t' => $share]));
     st_notify('g', $share === '' ? st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted') : st_l('Seedbox: a régi torrent törölve, a fájlok maradtak', 'Seedbox: the old torrent was deleted, the files stay'), st_l('A jóváhagyásod után, mert az új kiadás már importálva van.', 'After your approval, because the new release is already imported.') . ($share === '' ? '' : ' ' . st_l('A fájlokat egy másik torrent is seedeli: ' . $share, 'Another torrent seeds the same files: ' . $share)),
         [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
     return [true, ''];

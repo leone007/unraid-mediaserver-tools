@@ -5,6 +5,11 @@
 // Nothing is deleted before the pack is fully downloaded and its file list covers every episode you have.
 const ST_SP = '/tmp/qbt_tools_sp.json';
 
+// the reason codes of st_sp_item (also the keys of the skipped counts) in the page language
+function st_sp_why($w) {
+    $k = ['airing' => 'spw.airing', 'already a pack' => 'spw.pack', 'no pack' => 'spw.nopack', 'search failed' => 'spw.search', 'Sonarr did not answer' => 'spw.noanswer', 'nothing to replace' => 'spw.nothing'][$w] ?? '';
+    return $k !== '' ? st_tr($k) : $w;
+}
 function st_sp_ep($s, $e) { return 'S' . str_pad((string)(int)$s, 2, '0', STR_PAD_LEFT) . 'E' . str_pad((string)(int)$e, 2, '0', STR_PAD_LEFT); }
 
 // episode numbers (of the given season) that appear in a list of file names
@@ -30,18 +35,18 @@ function st_sp_rank($rel, $cur_res, $need_hun, $season = 0) {
         // the pack must be of this season (Sonarr may list packs of other seasons): its own season field, else the S01 in the name; multi-season packs are not used
         if ($season > 0) {
             $rs = (int)($r['seasonNumber'] ?? 0);
-            if ($rs > 0 && $rs !== (int)$season) { $drop['other season'] = ($drop['other season'] ?? 0) + 1; continue; }
+            if ($rs > 0 && $rs !== (int)$season) { $drop[st_tr('dr.season')] = ($drop[st_tr('dr.season')] ?? 0) + 1; continue; }
             if (preg_match_all('/(?<![A-Za-z0-9])S(\d{1,2})(?![0-9]|E\d)/i', $title, $mm)) {
                 $ss = array_unique(array_map('intval', $mm[1]));
-                if (count($ss) !== 1 || $ss[0] !== (int)$season) { $drop['other season'] = ($drop['other season'] ?? 0) + 1; continue; }
+                if (count($ss) !== 1 || $ss[0] !== (int)$season) { $drop[st_tr('dr.season')] = ($drop[st_tr('dr.season')] ?? 0) + 1; continue; }
             }
         }
         $res = (int)($r['quality']['quality']['resolution'] ?? 0) ?: st_res_of($title);
-        if ($cur_res > 0 && $res > 0 && $res < $cur_res) { $drop['lower resolution'] = ($drop['lower resolution'] ?? 0) + 1; continue; }
-        if ((int)($r['seeders'] ?? 0) < 1) { $drop['no seeders'] = ($drop['no seeders'] ?? 0) + 1; continue; }
+        if ($cur_res > 0 && $res > 0 && $res < $cur_res) { $drop[st_tr('dr.lowres')] = ($drop[st_tr('dr.lowres')] ?? 0) + 1; continue; }
+        if ((int)($r['seeders'] ?? 0) < 1) { $drop[st_tr('dr.noseed')] = ($drop[st_tr('dr.noseed')] ?? 0) + 1; continue; }
         $langs = []; foreach ((array)($r['languages'] ?? []) as $l) { $langs[] = (string)($l['name'] ?? ''); }
         $hun = (bool)(preg_grep('/hungar/i', $langs) || preg_match('/\b(hun|hundub|magyar)\b/i', $title));
-        if ($need_hun && !$hun) { $drop['not Hungarian'] = ($drop['not Hungarian'] ?? 0) + 1; continue; }
+        if ($need_hun && !$hun) { $drop[st_tr('dr.nohun')] = ($drop[st_tr('dr.nohun')] ?? 0) + 1; continue; }
         $hdr = st_hdr_rank($title);
         $rows[] = ['guid' => (string)$r['guid'], 'indexer_id' => (int)($r['indexerId'] ?? 0), 'title' => $title, 'size' => $size, 'res' => $res, 'hdr' => st_hdr_label($hdr), 'hdr_rank' => $hdr,
                    'hun' => $hun, 'seeders' => (int)($r['seeders'] ?? 0), 'indexer' => (string)($r['indexer'] ?? '')];
@@ -142,16 +147,16 @@ function st_sp_item($s, $sn, $list, $fby, $tor, $min = 2) {
 function st_sp_scan($filter = '') {
     $GLOBALS['st_sp_fc'] = [];
     $filter = trim((string)$filter); $fn = st_norm($filter); $items = [];
-    st_sp_put('running', 'Reading Sonarr...', []);
+    st_sp_put('running', st_tr('run.sonarr'), []);
     [$c, $series, $e] = st_arr('sonarr', '/series', 'GET', null, 120);
-    if ($e !== '' || !is_array($series)) { st_sp_put('error', 'Sonarr: ' . ($e ?: 'bad response'), []); return; }
+    if ($e !== '' || !is_array($series)) { st_sp_put('error', 'Sonarr: ' . ($e ?: st_tr('e.bad_resp')), []); return; }
     $tor = st_lib_in(st_qb_torrents(), st_cfg()); $now = time(); $n = 0; $total = count($series); $skipped = ['airing' => 0, 'already a pack' => 0, 'no pack' => 0];
     foreach ($series as $s) {
         $n++;
         if (empty($s['monitored'])) { continue; } // finished series you keep (unmonitored) are left alone
         $smon = []; foreach ((array)($s['seasons'] ?? []) as $ss) { $smon[(int)$ss['seasonNumber']] = !empty($ss['monitored']); }
         if ($fn !== '' && strpos(st_norm($s['title'] ?? ''), $fn) === false) { continue; }
-        st_sp_put('running', $n . '/' . $total . ' ' . ($s['title'] ?? '') . ' (' . count($items) . ' found)', $items, ['skipped' => $skipped]);
+        st_sp_put('running', st_tr('run.sp_n', ['n' => $n, 'm' => $total, 't' => $s['title'] ?? '', 'f' => count($items)]), $items, ['skipped' => $skipped]);
         [$c1, $files] = st_arr('sonarr', '/episodefile?seriesId=' . (int)$s['id'], 'GET', null, 60);
         [$c2, $eps] = st_arr('sonarr', '/episode?seriesId=' . (int)$s['id'], 'GET', null, 60);
         if (!is_array($files) || !is_array($eps)) { continue; }
@@ -173,26 +178,26 @@ function st_sp_start($key, $guid = '') {
     $sp = st_json_read(ST_SP, []); $it = null;
     foreach ((array)($sp['items'] ?? []) as $x) { if ($x['key'] === $key) { $it = $x; } }
     foreach (st_sp_ab_list() as $x) { if ($x['key'] === $key) { $it = $x; } } // a pack from autobrr is the newer find
-    if (!$it) { return [false, 'unknown season (scan again)']; }
+    if (!$it) { return [false, st_tr('e.sp_season')]; }
     $pack = null; foreach ($it['packs'] as $p) { if ($guid === '' ? $pack === null : $p['guid'] === $guid) { $pack = $p; if ($guid === '') { break; } } }
-    if (!$pack) { return [false, 'unknown pack (scan again)']; }
-    $lk = st_action_lock(); if (!$lk) { return [false, 'another replacement is being started right now; try again in a minute']; }
+    if (!$pack) { return [false, st_tr('e.sp_pack')]; }
+    $lk = st_action_lock(); if (!$lk) { return [false, st_tr('e.lock')]; }
     try { return st_sp_start_do($key, $it, $pack); } finally { st_action_unlock($lk); }
 }
 function st_sp_start_do($key, $it, $pack) {
     $state = st_state();
-    foreach ((array)($state['packjobs'] ?? []) as $j) { if ($j['key'] === $key && !in_array($j['stage'], ['done', 'failed', 'blocked'], true)) { return [false, 'this season is already being replaced']; } }
+    foreach ((array)($state['packjobs'] ?? []) as $j) { if ($j['key'] === $key && !in_array($j['stage'], ['done', 'failed', 'blocked'], true)) { return [false, st_tr('e.sp_busy')]; } }
     [$code, $r, $err] = st_arr('sonarr', '/release', 'POST', ['guid' => $pack['guid'], 'indexerId' => $pack['indexer_id']], 60);
     if ($err !== '' && stripos($err, 'cache') !== false) {
         // the search result expired in Sonarr: search again and use the same release
         [$c4, $rel] = st_arr('sonarr', '/release?seriesId=' . (int)$it['series_id'] . '&seasonNumber=' . (int)$it['season'], 'GET', null, 240);
         $g2 = ''; foreach ((array)$rel as $x) { if (is_array($x) && ($x['guid'] ?? '') === $pack['guid'] || (($x['title'] ?? '') === $pack['title'] && !empty($x['fullSeason']))) { $g2 = (string)$x['guid']; $pack['indexer_id'] = (int)($x['indexerId'] ?? $pack['indexer_id']); } }
-        if ($g2 === '') { return [false, 'Sonarr no longer offers this pack (scan again)']; }
+        if ($g2 === '') { return [false, st_tr('e.sp_gone')]; }
         [$code, $r, $err] = st_arr('sonarr', '/release', 'POST', ['guid' => $g2, 'indexerId' => $pack['indexer_id']], 60);
     }
-    if ($err !== '') { return [false, 'Sonarr refused the release: ' . $err]; }
+    if ($err !== '') { return [false, st_tr('e.rel_refused', ['k' => 'Sonarr', 'e' => $err])]; }
     $job = ['id' => substr(md5($key . microtime()), 0, 10), 'key' => $key, 'series_id' => $it['series_id'], 'title' => $it['title'], 'season' => $it['season'],
-        'pack' => $pack['title'], 'pack_size' => $pack['size'], 'files' => $it['files'], 'old' => $it['old'], 'cur_res' => $it['cur_res'], 'stage' => 'grabbed', 'msg' => 'sent to Sonarr, waiting for the download to start',
+        'pack' => $pack['title'], 'pack_size' => $pack['size'], 'files' => $it['files'], 'old' => $it['old'], 'cur_res' => $it['cur_res'], 'stage' => 'grabbed', 'msg' => st_tr('pk.sent'),
         't' => time(), 'gt' => time(), 'hash' => ''];
     st_state_update(function (&$s) use ($job) { $s['packjobs'][] = $job; });
     st_notify('i', st_l('Seedbox: évadpakk csere elindítva', 'Seedbox: season pack replacement started'), st_l('A pakk letöltése után, ellenőrzéssel cserélem az epizódokat; addig semmi nem törlődik.', 'The episodes are replaced after the pack is downloaded and checked; nothing is deleted before that.'),
@@ -224,11 +229,11 @@ function st_sp_step(&$j, $tor) {
     }
     if ($stage === 'grabbed' || $stage === 'downloading') {
         if (!$pt) {
-            if (time() - (int)$j['gt'] > 1800) { st_sp_fail($j, 'the pack did not show up in qBittorrent within 30 minutes: check Sonarr, Activity, Queue. Nothing was deleted.'); return true; }
+            if (time() - (int)$j['gt'] > 1800) { st_sp_fail($j, st_tr('pk.nodl')); return true; }
             return false;
         }
         $prog = (float)$pt['progress'];
-        if ($prog < 0.99999) { $m = 'downloading ' . number_format($prog * 100, 1, '.', '') . '%'; if ($j['stage'] !== 'downloading' || $m !== $j['msg']) { $j['stage'] = 'downloading'; $j['msg'] = $m; return true; } return false; }
+        if ($prog < 0.99999) { $m = st_tr('job.dl', ['p' => number_format($prog * 100, 1, '.', '')]); if ($j['stage'] !== 'downloading' || $m !== $j['msg']) { $j['stage'] = 'downloading'; $j['msg'] = $m; return true; } return false; }
         if (preg_match('/^(checking|allocating|moving|metaDL)/', (string)$pt['state'])) {
             $m = 'downloaded, ' . (string)$pt['state'];
             if ((string)$pt['state'] === 'moving') { [$fr, $eta] = st_move_info($pt); $m = 'moving ' . number_format($fr * 100, 1, '.', '') . '%' . ($eta >= 0 ? ', about ' . st_move_eta_txt($eta) . ' left' : ''); }
@@ -242,8 +247,8 @@ function st_sp_step(&$j, $tor) {
         $packEps = st_sp_epnums($names, $j['season']);
         $want = array_map(function ($f) { return (int)$f['ep']; }, $j['files']);
         $miss = array_values(array_diff($want, $packEps));
-        if ($miss) { st_sp_fail($j, 'the pack does not contain episode(s) ' . implode(', ', $miss) . ' that you have; nothing was deleted or changed.'); return true; }
-        if (count($packEps) < count($want)) { st_sp_fail($j, 'the pack has fewer episodes than you have; nothing was deleted or changed.'); return true; }
+        if ($miss) { st_sp_fail($j, st_tr('pk.miss', ['l' => implode(', ', $miss)])); return true; }
+        if (count($packEps) < count($want)) { st_sp_fail($j, st_tr('pk.fewer')); return true; }
         // Sonarr may have imported the pack by itself already (an upgrade it accepts): then there is nothing to delete
         [$cE, $curEps] = st_arr('sonarr', '/episode?seriesId=' . (int)$j['series_id'] . '&seasonNumber=' . (int)$j['season']);
         if (!is_array($curEps)) { return false; }
@@ -253,19 +258,19 @@ function st_sp_step(&$j, $tor) {
             if (in_array((int)$ep['episodeNumber'], $want, true) && $fid > 0 && !in_array($fid, $oldIds, true)) { $got++; }
             if ($fid > 0 && in_array($fid, $oldIds, true)) { $live[] = $fid; }
         }
-        if ($got >= count($want)) { $j['packeps'] = count($packEps); $j['stage'] = 'imported'; $j['msg'] = 'Sonarr already imported the pack (' . $got . ' episodes)'; $j['t'] = time(); return true; }
+        if ($got >= count($want)) { $j['packeps'] = count($packEps); $j['stage'] = 'imported'; $j['msg'] = st_tr('pk.already', ['n' => $got]); $j['t'] = time(); return true; }
         // the old files are already gone (a restart between the delete and the saved state): go on waiting for the import
-        if (!$live) { $j['packeps'] = count($packEps); $j['stage'] = 'importing'; $j['msg'] = 'season files deleted in Sonarr, waiting for the import of the pack'; $j['t'] = time(); $j['dt'] = time(); return true; }
+        if (!$live) { $j['packeps'] = count($packEps); $j['stage'] = 'importing'; $j['msg'] = st_tr('pk.deleted'); $j['t'] = time(); $j['dt'] = time(); return true; }
         // go: remember monitoring, unmonitor the episodes (no other release may be grabbed meanwhile), delete the season files in Sonarr
         $j['packeps'] = count($packEps); $j['pack_path'] = (string)($pt['content_path'] ?? '');
         $e = st_sp_monitor(array_map(function ($f) { return (int)$f['ep_id']; }, $j['files']), false);
-        if ($e !== '') { st_sp_fail($j, 'could not unmonitor the episodes in Sonarr: ' . $e . '. Nothing was deleted.'); return true; }
+        if ($e !== '') { st_sp_fail($j, st_tr('pk.unmon', ['e' => $e])); return true; }
         [$c, $r, $e] = st_arr('sonarr', '/episodefile/bulk', 'DELETE', ['episodeFileIds' => array_values($live)], 120);
         if ($e !== '') {
             st_sp_monitor(array_map(function ($f) { return (int)$f['ep_id']; }, array_filter($j['files'], function ($f) { return !empty($f['monitored']); })), true);
-            st_sp_fail($j, 'Sonarr refused to delete the season files: ' . $e . '. Nothing was changed.'); return true;
+            st_sp_fail($j, st_tr('pk.nodel', ['e' => $e])); return true;
         }
-        $j['stage'] = 'importing'; $j['msg'] = 'season files deleted in Sonarr, waiting for the import of the pack'; $j['t'] = time(); $j['dt'] = time();
+        $j['stage'] = 'importing'; $j['msg'] = st_tr('pk.deleted'); $j['t'] = time(); $j['dt'] = time();
         return true;
     }
     if ($stage === 'importing') {
@@ -273,9 +278,9 @@ function st_sp_step(&$j, $tor) {
         if (!is_array($eps)) { return false; }
         $oldIds = array_map(function ($f) { return (int)$f['file']; }, $j['files']); $want = array_map(function ($f) { return (int)$f['ep']; }, $j['files']);
         $got = 0; foreach ($eps as $ep) { if (in_array((int)$ep['episodeNumber'], $want, true) && (int)($ep['episodeFileId'] ?? 0) > 0 && !in_array((int)$ep['episodeFileId'], $oldIds, true)) { $got++; } }
-        if ($got >= count($want)) { $j['stage'] = 'imported'; $j['msg'] = 'Sonarr imported ' . $got . ' episodes from the pack'; $j['t'] = time(); return true; }
+        if ($got >= count($want)) { $j['stage'] = 'imported'; $j['msg'] = st_tr('pk.imported', ['n' => $got]); $j['t'] = time(); return true; }
         $age = time() - (int)$j['dt'];
-        $m = 'waiting for the import: ' . $got . '/' . count($want) . ' episodes';
+        $m = st_tr('pk.wait', ['n' => $got, 'm' => count($want)]);
         if ($age > 120 && empty($j['scanned'])) {
             // Sonarr did not pick it up by itself: ask it to scan the finished download
             $did = ''; [$cq, $q] = st_arr('sonarr', '/queue?page=1&pageSize=200');
@@ -283,11 +288,11 @@ function st_sp_step(&$j, $tor) {
             $path = (string)($j['pack_path'] ?? '');
             $cmd = ['name' => 'DownloadedEpisodesScan', 'path' => $path, 'importMode' => 'auto'];
             if ($did !== '') { $cmd['downloadClientId'] = $did; }
-            if ($path !== '') { [$cc, $rr, $ee] = st_arr('sonarr', '/command', 'POST', $cmd, 60); $j['scanned'] = 1; $m .= $ee !== '' ? ' (scan request failed: ' . $ee . ')' : ' (asked Sonarr to scan the download)'; }
+            if ($path !== '') { [$cc, $rr, $ee] = st_arr('sonarr', '/command', 'POST', $cmd, 60); $j['scanned'] = 1; $m .= ' ' . ($ee !== '' ? st_tr('pk.scan_fail', ['e' => $ee]) : st_tr('pk.scan')); }
         }
         if ($age > 900) {
             st_sp_monitor(array_map(function ($f) { return (int)$f['ep_id']; }, array_filter($j['files'], function ($f) { return !empty($f['monitored']); })), true);
-            st_sp_fail($j, 'Sonarr did not import the pack within 15 minutes (' . $got . '/' . count($want) . ' episodes). The files of the old episodes are still in the downloads folder and the pack is seeding: import the pack by hand in Sonarr, Activity, Queue.'); return true;
+            st_sp_fail($j, st_tr('pk.noimp', ['n' => $got, 'm' => count($want)])); return true;
         }
         if ($m !== $j['msg']) { $j['msg'] = $m; return true; }
         return false;
@@ -296,7 +301,7 @@ function st_sp_step(&$j, $tor) {
         // monitoring back as it was, then the single-episode torrents go to the trash folder
         $e = st_sp_monitor(array_map(function ($f) { return (int)$f['ep_id']; }, array_filter($j['files'], function ($f) { return !empty($f['monitored']); })), true);
         $notes = [];
-        if ($e !== '') { $notes[] = 'monitoring could not be restored: ' . $e; }
+        if ($e !== '') { $notes[] = st_tr('pk.remon', ['e' => $e]); }
         $cl = 0; $paths = [];
         // first take every single-episode torrent out of qBittorrent (files kept), then move each folder once: two torrents can share a folder
         foreach ((array)$j['old'] as $o) {
@@ -306,11 +311,11 @@ function st_sp_step(&$j, $tor) {
         }
         foreach ($paths as $hp => $nm) {
             [$ok, $m] = st_cleanup_old(['hash' => '', 'old_path' => $hp, 'media_paths' => []]);
-            if ($ok) { $cl++; } elseif (strpos($m, 'is not inside') === false && !file_exists($hp)) { $cl++; } else { $notes[] = $nm . ': ' . $m; }
+            if ($ok) { $cl++; } elseif (st_under_roots($hp, $cfg) !== false && !file_exists($hp)) { $cl++; } else { $notes[] = $nm . ': ' . $m; }
         }
         st_find_prune();
         $j['stage'] = 'done'; $j['t'] = time();
-        $j['msg'] = 'done: ' . count($j['files']) . ' episodes now come from the pack, ' . $cl . ' single-episode folder(s) moved to the trash' . ($notes ? '; ' . implode('; ', array_slice($notes, 0, 3)) : '');
+        $j['msg'] = st_tr('pk.done', ['n' => count($j['files']), 'm' => $cl]) . ($notes ? '; ' . implode('; ', array_slice($notes, 0, 3)) : '');
         st_notify($notes ? 'a' : 'g', st_l('Seedbox: évadpakk csere kész', 'Seedbox: season pack replacement done'), st_l('Az epizódok a pakkból vannak importálva, az egyedi torrentek a kukába kerültek.', 'The episodes are imported from the pack; the single-episode torrents went to the trash.') . ($notes ? "\n" . implode("\n", array_slice($notes, 0, 3)) : ''),
             [[st_l('Sorozat', 'Series'), $j['title'] . ' S' . str_pad((string)$j['season'], 2, '0', STR_PAD_LEFT)], [st_l('Pakk', 'Pack'), $j['pack']]], false, 'rep');
         return true;
@@ -345,7 +350,7 @@ function st_ab_seen_file() { return dirname(st_state_file()) . '/ab_seen.json'; 
 function st_ab_get($path, $timeout = 20) {
     $c = $GLOBALS['st_ab_override'] ?? (st_cfg()['autobrr'] ?? ['url' => '', 'key' => '']); // override: the Load filters button before Save
     $url = rtrim((string)$c['url'], '/');
-    if ($url === '' || $c['key'] === '') { return [0, null, 'autobrr is not configured']; }
+    if ($url === '' || $c['key'] === '') { return [0, null, st_tr('e.ab_nocfg')]; }
     [$code, $body, $err] = st_http('GET', $url . '/api' . $path, ['headers' => ['X-API-Token: ' . $c['key'], 'Accept: application/json'], 'timeout' => $timeout, 'follow' => true]);
     if ($err) { return [0, null, $err]; }
     $j = json_decode($body, true);
@@ -358,7 +363,7 @@ function st_ab_releases($limit = 100) {
     [$c, $j, $e] = st_ab_get('/release?limit=' . (int)$limit . '&offset=0');
     if ($e !== '') { return [null, $e]; }
     $rows = is_array($j) ? ($j['data'] ?? (isset($j[0]) ? $j : null)) : null;
-    if (!is_array($rows)) { return [null, 'unexpected answer from autobrr']; }
+    if (!is_array($rows)) { return [null, st_tr('e.ab_answer')]; }
     $out = [];
     foreach ($rows as $r) {
         if (!is_array($r) || (int)($r['id'] ?? 0) <= 0) { continue; }
@@ -378,7 +383,7 @@ function st_ab_filters() {
     [$c, $j, $e] = st_ab_get('/filters');
     if ($e !== '') { return [null, $e]; }
     $rows = is_array($j) ? ($j['data'] ?? $j) : null;
-    if (!is_array($rows)) { return [null, 'unexpected answer from autobrr']; }
+    if (!is_array($rows)) { return [null, st_tr('e.ab_answer')]; }
     $out = [];
     foreach ($rows as $f) { if (is_array($f) && ($f['name'] ?? '') !== '') { $out[] = ['name' => (string)$f['name'], 'enabled' => !empty($f['enabled'])]; } }
     usort($out, function ($a, $b) { return strnatcasecmp($a['name'], $b['name']); });
@@ -387,8 +392,8 @@ function st_ab_filters() {
 
 // cheap checks on the name alone, before Sonarr is asked: one episode (S02E01, S02E01-E03), or not a filter that was chosen
 function st_ab_quick($rel, $filters) {
-    if ($filters && !in_array($rel['filter'], $filters, true)) { return 'from filter ' . ($rel['filter'] !== '' ? $rel['filter'] : '(none)') . ', not chosen'; }
-    if (preg_match('/(?<![A-Za-z0-9])S\d{1,2}[ ._-]?E\d{1,4}/i', $rel['name'])) { return 'one episode'; }
+    if ($filters && !in_array($rel['filter'], $filters, true)) { return st_tr('abw.filter', ['f' => $rel['filter'] !== '' ? $rel['filter'] : '-']); }
+    if (preg_match('/(?<![A-Za-z0-9])S\d{1,2}[ ._-]?E\d{1,4}/i', $rel['name'])) { return st_tr('abw.ep'); }
     return '';
 }
 
@@ -402,20 +407,20 @@ function st_ab_free() {
 // one release -> ['go' => bool, 'why' => text, ...]; 'retry' => true when Sonarr could not answer (ask again at the next poll)
 function st_ab_eval($rel, &$tor) {
     [$c, $p, $e] = st_arr('sonarr', '/parse?title=' . rawurlencode($rel['name']), 'GET', null, 30);
-    if ($e !== '' || !is_array($p)) { return ['go' => false, 'retry' => true, 'why' => 'Sonarr: ' . ($e ?: 'bad response')]; }
+    if ($e !== '' || !is_array($p)) { return ['go' => false, 'retry' => true, 'why' => 'Sonarr: ' . ($e ?: st_tr('e.bad_resp'))]; }
     $pe = (array)($p['parsedEpisodeInfo'] ?? []);
-    if (empty($pe['fullSeason'])) { return ['go' => false, 'why' => 'not a season pack']; }
-    if (!empty($pe['isMultiSeason'])) { return ['go' => false, 'why' => 'more than one season']; }
-    $sn = (int)($pe['seasonNumber'] ?? 0); if ($sn < 1) { return ['go' => false, 'why' => 'specials']; }
+    if (empty($pe['fullSeason'])) { return ['go' => false, 'why' => st_tr('dr.notpack')]; }
+    if (!empty($pe['isMultiSeason'])) { return ['go' => false, 'why' => st_tr('abw.multi')]; }
+    $sn = (int)($pe['seasonNumber'] ?? 0); if ($sn < 1) { return ['go' => false, 'why' => st_tr('abw.specials')]; }
     $ser = (array)($p['series'] ?? []); $sid = (int)($ser['id'] ?? 0);
-    if ($sid <= 0) { return ['go' => false, 'why' => 'the series is not in Sonarr']; }
+    if ($sid <= 0) { return ['go' => false, 'why' => st_tr('abw.noseries')]; }
     $title = (string)($ser['title'] ?? $rel['name']); $tag = $title . ' S' . str_pad((string)$sn, 2, '0', STR_PAD_LEFT);
-    if (empty($ser['monitored'])) { return ['go' => false, 'why' => $tag . ': the series is not monitored']; }
-    foreach ((array)($ser['seasons'] ?? []) as $ss) { if ((int)($ss['seasonNumber'] ?? -1) === $sn && empty($ss['monitored'])) { return ['go' => false, 'why' => $tag . ': the season is not monitored']; } }
-    foreach ((array)(st_state()['packjobs'] ?? []) as $j) { if ((int)$j['series_id'] === $sid && (int)$j['season'] === $sn && !in_array($j['stage'], ['done', 'failed', 'blocked'], true)) { return ['go' => false, 'why' => $tag . ': a pack replacement of this season is under way']; } }
+    if (empty($ser['monitored'])) { return ['go' => false, 'why' => st_tr('abw.sermon', ['s' => $tag])]; }
+    foreach ((array)($ser['seasons'] ?? []) as $ss) { if ((int)($ss['seasonNumber'] ?? -1) === $sn && empty($ss['monitored'])) { return ['go' => false, 'why' => st_tr('abw.seamon', ['s' => $tag])]; } }
+    foreach ((array)(st_state()['packjobs'] ?? []) as $j) { if ((int)$j['series_id'] === $sid && (int)$j['season'] === $sn && !in_array($j['stage'], ['done', 'failed', 'blocked'], true)) { return ['go' => false, 'why' => st_tr('abw.busy', ['s' => $tag])]; } }
     [$c1, $eps, $e1] = st_arr('sonarr', '/episode?seriesId=' . $sid . '&seasonNumber=' . $sn, 'GET', null, 60);
     [$c2, $files, $e2] = st_arr('sonarr', '/episodefile?seriesId=' . $sid, 'GET', null, 60);
-    if (!is_array($eps) || !is_array($files)) { return ['go' => false, 'retry' => true, 'why' => 'Sonarr: ' . ($e1 ?: ($e2 ?: 'bad response'))]; }
+    if (!is_array($eps) || !is_array($files)) { return ['go' => false, 'retry' => true, 'why' => 'Sonarr: ' . ($e1 ?: ($e2 ?: st_tr('e.bad_resp')))]; }
     $fby = []; foreach ($files as $f) { $fby[(int)$f['id']] = $f; }
     $have = []; $aired = 0; $missing = []; $now = time();
     foreach ($eps as $x) {
@@ -425,28 +430,28 @@ function st_ab_eval($rel, &$tor) {
         if (!empty($x['hasFile']) && isset($fby[(int)($x['episodeFileId'] ?? 0)])) { $have[] = $x; }
         elseif ($ts > 0 && $ts <= $now && !empty($x['monitored'])) { $missing[] = (int)$x['episodeNumber']; }
     }
-    if (!$have) { return ['go' => false, 'why' => $tag . ': no episode of this season yet (that is the job of Sonarr)']; }
+    if (!$have) { return ['go' => false, 'why' => st_tr('abw.noep', ['s' => $tag])]; }
     $first = $fby[(int)$have[0]['episodeFileId']];
     $cur_res = (int)($first['quality']['quality']['resolution'] ?? 0);
     $langs = []; foreach ((array)($first['languages'] ?? []) as $l) { $langs[] = (string)($l['name'] ?? ''); }
     $need_hun = (bool)preg_grep('/hungar/i', $langs);
     $res = (int)($pe['quality']['quality']['resolution'] ?? 0) ?: st_res_of($rel['name']);
-    if ($cur_res > 0 && $res > 0 && $res < $cur_res) { return ['go' => false, 'why' => $tag . ': lower resolution (' . $res . 'p, you have ' . $cur_res . 'p)']; }
+    if ($cur_res > 0 && $res > 0 && $res < $cur_res) { return ['go' => false, 'why' => st_tr('abw.lowres', ['s' => $tag, 'r' => $res, 'c' => $cur_res])]; }
     $pl = []; foreach ((array)($p['languages'] ?? ($pe['languages'] ?? [])) as $l) { $pl[] = is_array($l) ? (string)($l['name'] ?? '') : (string)$l; }
     $hun = (bool)(preg_grep('/hungar/i', $pl) || preg_match('/\b(hun|hundub|magyar)\b/i', $rel['name']));
-    if ($need_hun && !$hun) { return ['go' => false, 'why' => $tag . ': not Hungarian (your episodes are)']; }
+    if ($need_hun && !$hun) { return ['go' => false, 'why' => st_tr('abw.nohun', ['s' => $tag])]; }
     $nums = array_map(function ($x) { return (int)$x['episodeNumber']; }, $have);
     [$c3, $hist] = st_arr('sonarr', '/history/series?seriesId=' . $sid . '&seasonNumber=' . $sn . '&eventType=3', 'GET', null, 60);
     if (is_array($hist) && $hist) {
         $by = []; foreach ($hist as $h) { if (!empty($h['downloadId'])) { $by[$h['downloadId']][(int)($h['episodeId'] ?? 0)] = 1; } }
         $mx = 0; foreach ($by as $v) { $mx = max($mx, count($v)); }
-        if ($mx >= max(2, (int)ceil(count($have) * 0.8))) { return ['go' => false, 'why' => $tag . ': already imported from one pack']; }
+        if ($mx >= max(2, (int)ceil(count($have) * 0.8))) { return ['go' => false, 'why' => st_tr('abw.imported', ['s' => $tag])]; }
     }
     if ($tor === null) { $tor = st_qb_torrents() ?? []; }
     $tor = st_lib_in($tor, st_cfg()); // a ratio torrent (downloads/TL) is not the library's pack
-    if (count($have) >= 2 && st_sp_seeded_pack($title, $sn, $nums, $tor) !== '') { return ['go' => false, 'why' => $tag . ': already seeded as one torrent']; }
+    if (count($have) >= 2 && st_sp_seeded_pack($title, $sn, $nums, $tor) !== '') { return ['go' => false, 'why' => st_tr('abw.seeded', ['s' => $tag])]; }
     $cur_size = 0; foreach ($have as $x) { $cur_size += (float)($fby[(int)$x['episodeFileId']]['size'] ?? 0); }
-    return ['go' => true, 'why' => $tag . ': new season pack', 'series_id' => $sid, 'title' => $title, 'season' => $sn, 'tag' => $tag, 'res' => $res, 'hun' => $hun,
+    return ['go' => true, 'why' => st_tr('abw.new', ['s' => $tag]), 'series_id' => $sid, 'title' => $title, 'season' => $sn, 'tag' => $tag, 'res' => $res, 'hun' => $hun,
             'cur_res' => $cur_res, 'cur_quality' => (string)($first['quality']['quality']['name'] ?? ''), 'cur_size' => $cur_size, 'have' => count($have), 'aired' => $aired, 'missing' => $missing];
 }
 
@@ -493,12 +498,12 @@ function st_ab_poll($force = false) {
         $w['last_id'] = $r['id'];
         if ($v['go']) {
             $key = $v['series_id'] . ':' . $v['season'] . ':' . st_norm($r['name']);
-            if (isset($seen[$key])) { $v['why'] .= ' (already reported)'; }
+            if (isset($seen[$key])) { $v['why'] .= ' ' . st_tr('abw.reported'); }
             else {
                 $bot = st_bot_on('sp');
                 $abq[] = ['series_id' => $v['series_id'], 'season' => $v['season'], 'name' => $r['name'], 'indexer' => $r['indexer'], 'size' => $r['size'], 't' => time(), 'tries' => 0] + ($bot ? ['rel' => $r, 'v' => $v] : []);
-                if ($bot) { $ok = true; $v['why'] .= ', the Discord message with the choices follows when Sonarr lists the pack'; }
-                else { [$ok, $er] = st_ab_message($r, $v); $v['why'] .= $ok ? ', reported on Discord' : ', Discord: ' . $er; }
+                if ($bot) { $ok = true; $v['why'] .= ', ' . st_tr('abw.bot'); }
+                else { [$ok, $er] = st_ab_message($r, $v); $v['why'] .= $ok ? ', ' . st_tr('abw.dc') : ', Discord: ' . $er; }
                 $seen[$key] = time(); $seenCh = true;
             }
         }
@@ -594,7 +599,7 @@ function st_sp_ab_run() {
                 $d['items'][] = $it;
             }
             $d['items'] = array_values(array_filter($d['items'], function ($x) { return time() - (int)($x['t'] ?? 0) < 14 * 86400; }));
-            $d['last'] = ['t' => time(), 'name' => $q['name'], 'why' => $it ? 'listed' : ($retry ? 'Sonarr does not list a pack yet, trying again later' : 'not listed: ' . ($why !== '' ? $why : 'nothing to replace'))];
+            $d['last'] = ['t' => time(), 'name' => $q['name'], 'why' => $it ? st_tr('abw.listed') : ($retry ? st_tr('abw.retry') : st_tr('abw.notlisted', ['w' => st_sp_why($why !== '' ? $why : 'nothing to replace')]))];
         });
     }
 }
@@ -738,10 +743,10 @@ function st_bot_poll() {
 }
 // Settings, Test the bot: a message with 1️⃣ and 👎; a reaction of the owner turns it green within a minute
 function st_bot_test() {
-    if (!st_bot_on()) { return [false, 'save the bot token and your user id first']; }
+    if (!st_bot_on()) { return [false, st_tr('e.bot_cfg')]; }
     [$c, $me, $e] = st_bot_api('GET', '/users/@me');
-    if ($e !== '') { return [false, 'the bot token does not work: ' . $e]; }
+    if ($e !== '') { return [false, st_tr('e.bot_tok', ['e' => $e])]; }
     [$ok, $er] = st_bot_post('test', 'test', st_l('Seedbox: BoxBot teszt', 'Seedbox: BoxBot test'), st_l('Koppints az 1️⃣-re vagy a 👎-ra; egy percen belül zöld lesz.', 'Tap 1️⃣ or 👎; it turns green within a minute.'), [],
         [['guid' => 'test', 'title' => st_l('Próba', 'Test'), 'size' => 0, 'res' => 0, 'hdr' => '', 'hun' => false, 'seeders' => 0, 'indexer' => '']]);
-    return [$ok, $ok ? 'sent as ' . (string)($me['username'] ?? 'the bot') : $er];
+    return [$ok, $ok ? (string)($me['username'] ?? 'bot') : $er];
 }

@@ -5,6 +5,11 @@ Icon="seedbox.png"
 Markdown="false"
 ---
 <?PHP
+// texts from the dictionary (lang/en.json, see i18n.php); $tp_t escapes, $tp_T is raw (texts with HTML)
+require_once '/usr/local/emhttp/plugins/qbittorrent_widget/i18n.php';
+$tp_lang = '/usr/local/emhttp/plugins/qbittorrent_widget/lang';
+$tp_T = mt_i18n_t($tp_lang);
+$tp_t = function ($k, $v = []) use ($tp_T) { return htmlspecialchars($tp_T($k, $v), ENT_QUOTES); };
 $stt_var = @parse_ini_file('/var/local/emhttp/var.ini');
 $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 ?>
@@ -164,154 +169,156 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 @media (max-width:760px){#stt-form dl{grid-template-columns:1fr}#stt-form dl dd{border-top:0;padding-top:0}}
 </style>
 <div id="stt">
-<div class="stt-title"><h2>Seedbox Tools</h2><span class="stt-mut">Only scans run by themselves. Nothing is added, replaced or deleted without your click.</span></div>
-<nav class="stt-nav"><a href="#stt-t-find">Find my torrent <i id="stt-n-find"></i></a><a href="#stt-t-upd">Shape up <i id="stt-n-upd"></i></a><a href="#stt-t-rep">Season repacker <i id="stt-n-rep"></i></a><a href="#stt-t-set">Settings</a></nav>
-<details class="stt-about"><summary class="stt-mut">What do the tools do?</summary>
-<p>A seedbox, or a media server that seeds, only does its job if it seeds as many of its media files as possible. Content that nothing seeds is wasted: the ratio does not grow and the trackers may even drop you. The three tools work with Prowlarr, Radarr, Sonarr and qBittorrent.</p>
-<p><b>Find my torrent</b> looks for torrents (through Prowlarr) for the files in your downloads folders that nothing is seeding. <b>Shape up</b> (formerly Update me) searches every big, old, seeded title in the background and offers a smaller release, a better HDR format or a higher resolution, replaced through Radarr or Sonarr after you approve. <b>Season repacker</b> replaces the single episodes of a finished season with the season pack, so that one torrent seeds the whole season (the torrents it adds get the <code>seasonrepacker</code> tag); it can also watch autobrr for new season packs.</p>
+<div class="stt-title"><h2>Seedbox Tools</h2><span class="stt-mut"><?=$tp_t('tp.sub')?></span></div>
+<nav class="stt-nav"><a href="#stt-t-find">Find my torrent <i id="stt-n-find"></i></a><a href="#stt-t-upd">Shape up <i id="stt-n-upd"></i></a><a href="#stt-t-rep">Season repacker <i id="stt-n-rep"></i></a><a href="#stt-t-set"><?=$tp_t('tp.settings')?></a></nav>
+<details class="stt-about"><summary class="stt-mut"><?=$tp_t('tp.about.what_do_the_tools')?></summary>
+<p><?=$tp_T('tp.about.a_seedbox_or_a')?></p>
+<p><?=$tp_T('tp.about.find_my_torrent_looks')?></p>
 </details>
 
-<div class="mt-band"><span>Activity</span><b>replacements and added torrents</b></div>
+<div class="mt-band"><span><?=$tp_t('tp.band.activity')?></span><b><?=$tp_t('tp.bandb.replacements_and_added_torrents')?></b></div>
 <div class="stt-sec stt-s-proc" id="stt-proc" style="display:none"></div>
-<div class="stt-sec stt-s-res" id="stt-results"><div class="stt-sh">Results</div><p class="stt-mut" style="margin:8px 10px">Nothing finished yet.</p></div>
+<div class="stt-sec stt-s-res" id="stt-results"><div class="stt-sh"><?=$tp_t('act.results')?></div><p class="stt-mut" style="margin:8px 10px"><?=$tp_t('act.nothing_fin')?></p></div>
 
-<div class="mt-band" id="stt-t-find"><span>Find my torrent</span><b id="stt-fband"></b></div>
+<div class="mt-band" id="stt-t-find"><span><?=$tp_t('tp.band.find_my_torrent')?></span><b id="stt-fband"></b></div>
 <div class="mt-box">
-<div class="stt-lead"><p>Folders in the downloads folders that no torrent seeds: the original torrent is looked up on the trackers, or the content can be replaced.</p><input type="button" id="stt-fscan" value="Scan the downloads folders"></div>
+<div class="stt-lead"><p><?=$tp_t('tp.p.folders_in_the_downloads')?></p><input type="button" id="stt-fscan" value="<?=$tp_t('tp.btn.scan_the_downloads_folders')?>"></div>
 <div class="stt-status" id="stt-fstat"><span id="stt-fmsg"></span><span id="stt-queue"></span></div>
 </div>
 <div class="mt-box stt-flist"><div id="stt-fitems"></div></div>
 
-<div class="mt-band" id="stt-t-upd"><span>Shape up</span><b id="stt-uband"></b></div>
+<div class="mt-band" id="stt-t-upd"><span><?=$tp_t('tp.band.shape_up')?></span><b id="stt-uband"></b></div>
 <div class="mt-box">
-<div class="stt-lead"><p>Every listed torrent is searched in the background, one about every 90 seconds, a result is kept for 10 days. Offered: a release smaller by the saving, a better HDR format (SDR, HDR, DV) or a higher resolution, never a lower one. Hungarian audio comes first but is not required.</p><input type="button" id="stt-uscan" value="Scan the seeded torrents"></div>
+<div class="stt-lead"><p><?=$tp_t('tp.p.every_listed_torrent_is')?></p><input type="button" id="stt-uscan" value="<?=$tp_t('tp.btn.scan_the_seeded_torrents')?>"></div>
 <div class="stt-status"><span id="stt-umsg"></span><div id="stt-ubg"></div></div>
-<div class="stt-filter" id="stt-ubar" style="display:none"><input type="text" id="stt-uq" placeholder="filter by name" autocomplete="off"> <span id="stt-ucats"></span></div>
+<div class="stt-filter" id="stt-ubar" style="display:none"><input type="text" id="stt-uq" placeholder="<?=$tp_t('tp.ph.filter_by_name')?>" autocomplete="off"> <span id="stt-ucats"></span></div>
 </div>
 <div class="mt-box stt-ulist"><div id="stt-uitems"></div></div>
-<p class="stt-foot">The scan matches the file sizes of your torrents with the files in Radarr and Sonarr; a torrent with several seasons is listed but not supported yet. Radarr and Sonarr decide whether a chosen release is an upgrade: if it waits with &ldquo;Not an upgrade&rdquo;, import it by hand in Activity, Queue. After the import the old torrent and its files can be removed here with one more click.</p>
+<p class="stt-foot"><?=$tp_T('tp.upd_foot')?></p>
 
-<div class="mt-band" id="stt-t-rep"><span>Season repacker</span><b id="stt-rband"></b></div>
+<div class="mt-band" id="stt-t-rep"><span><?=$tp_t('tp.band.season_repacker')?></span><b id="stt-rband"></b></div>
 <div class="mt-box">
-<div class="stt-lead"><p>Seasons downloaded episode by episode, replaced with the season pack through Sonarr; monitored series and seasons only, same or higher resolution, DV / HDR first. Nothing is deleted before the pack is complete and holds every episode you have; missing episodes (often the finale) come from the pack. With autobrr watched, new packs are listed here by themselves; the library scan tidies up what is already here.</p><span class="stt-leadact"><input type="text" id="stt-spq" list="stt-splist" autocomplete="off" placeholder="series name (empty = all)"> <input type="button" id="stt-spscan" value="Scan for season packs"></span></div>
+<div class="stt-lead"><p><?=$tp_t('tp.p.seasons_downloaded_episode_by')?></p><span class="stt-leadact"><input type="text" id="stt-spq" list="stt-splist" autocomplete="off" placeholder="<?=$tp_t('tp.ph.series_name_empty_all')?>"> <input type="button" id="stt-spscan" value="<?=$tp_t('tp.btn.scan_for_season_packs')?>"></span></div>
 <div class="stt-status"><span id="stt-spmsg"></span><span id="stt-abst"></span></div>
 </div>
 <datalist id="stt-splist"></datalist>
 <div id="stt-spjobs"></div>
 <div class="mt-box stt-splist"><div id="stt-spab"></div><div id="stt-spitems"></div></div>
 
-<div class="stt-sethead" id="stt-t-set">Settings</div>
+<div class="stt-sethead" id="stt-t-set"><?=$tp_t('tp.settings')?></div>
 <form id="stt-form" onsubmit="return false;">
-<div class="mt-band"><span>Connections</span><b>shared by the three tools</b></div>
+<div class="mt-band"><span><?=$tp_t('tp.band.connections')?></span><b><?=$tp_t('tp.bandb.shared_by_the_three')?></b></div>
 <dl>
-<dt>Prowlarr address and API key:</dt>
-<dd><input type="text" name="prowlarr_url" placeholder="http://192.168.50.30:9696" style="width:260px"> <input type="password" name="prowlarr_key" autocomplete="new-password" placeholder="API key" style="width:260px"></dd>
-<dt>Radarr address and API key:</dt>
-<dd><input type="text" name="radarr_url" placeholder="http://192.168.50.30:7878" style="width:260px"> <input type="password" name="radarr_key" autocomplete="new-password" placeholder="API key" style="width:260px"></dd>
-<dt>Sonarr address and API key:</dt>
-<dd><input type="text" name="sonarr_url" placeholder="http://192.168.50.30:8989" style="width:260px"> <input type="password" name="sonarr_key" autocomplete="new-password" placeholder="API key" style="width:260px"></dd>
-<dt>Lidarr address and API key:</dt>
-<dd><input type="text" name="lidarr_url" placeholder="http://192.168.50.30:8686" style="width:260px"> <input type="password" name="lidarr_key" autocomplete="new-password" placeholder="API key" style="width:260px"> <span class="stt-hint">optional, for the Music folders (not used by the tools yet)</span></dd>
-<dt>autobrr address and API key:</dt>
-<dd><input type="text" name="autobrr_url" placeholder="http://192.168.50.30:7474" style="width:260px"> <input type="password" name="autobrr_key" autocomplete="new-password" placeholder="API key" style="width:260px"> <span class="stt-hint">optional, only for the season pack messages of the Season repacker (autobrr, Settings, API keys)</span></dd>
-<dt>Discord webhook:</dt>
-<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="https://discord.com/api/webhooks/..." style="width:420px"> <span class="stt-hint">one webhook for all tools; each tool below has its own switch for sending messages. Type - to remove the saved webhook</span></dd>
-<dt>Discord bot (reactions):</dt>
-<dd><input type="password" name="bot_token" autocomplete="new-password" placeholder="bot token" style="width:300px"> <input type="text" name="bot_user" placeholder="your Discord user ID" style="width:200px" inputmode="numeric">
-<span class="stt-brk"></span><label><input type="checkbox" name="bot_rep" value="1"> season packs from autobrr</label> &nbsp; <label><input type="checkbox" name="bot_find" value="1"> torrents removed from the tracker (daily check)</label> &nbsp; <input type="button" id="stt-bottest" value="Test the bot" class="stt-ghost"> <span id="stt-botmsg" class="stt-mut"></span>
-<span class="stt-hint">optional. The Seedbox message gets 1&#xFE0F;&#x20E3; 2&#xFE0F;&#x20E3; 3&#xFE0F;&#x20E3; &#x1F44E; reactions from your bot; a number starts that replacement (with the same checks as the button here), &#x1F44E; dismisses it. Only your reactions count, for 24 hours; the bot looks once a minute. Token: Discord Developer Portal, your app, Bot, Reset Token (leave empty to keep, - to remove). User ID: Discord, Settings, Advanced, Developer Mode, then right-click your name, Copy User ID. The bot needs View Channel, Add Reactions and Read Message History in the webhook's channel</span></dd>
-<dt>Check the connections:</dt>
-<dd><input type="button" id="stt-test" value="Test the connections"> <span class="stt-hint">tests the saved settings (Save first after a change): qBittorrent, the folder mapping, Discord (sends a test message), Prowlarr, Radarr, Sonarr, Lidarr, autobrr</span><div id="stt-tests" class="stt-mut"></div></dd>
-<dt>Data folder, as qBittorrent sees it / on this server:</dt>
+<dt><?=$tp_t('tp.dt.prowlarr_address_and_api')?></dt>
+<dd><input type="text" name="prowlarr_url" placeholder="<?=$tp_t('tp.ph.http_192_168_1')?>" style="width:260px"> <input type="password" name="prowlarr_key" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.api_key')?>" style="width:260px"></dd>
+<dt><?=$tp_t('tp.dt.radarr_address_and_api')?></dt>
+<dd><input type="text" name="radarr_url" placeholder="<?=$tp_t('tp.ph.http_192_168_12')?>" style="width:260px"> <input type="password" name="radarr_key" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.api_key')?>" style="width:260px"></dd>
+<dt><?=$tp_t('tp.dt.sonarr_address_and_api')?></dt>
+<dd><input type="text" name="sonarr_url" placeholder="<?=$tp_t('tp.ph.http_192_168_13')?>" style="width:260px"> <input type="password" name="sonarr_key" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.api_key')?>" style="width:260px"></dd>
+<dt><?=$tp_t('tp.dt.lidarr_address_and_api')?></dt>
+<dd><input type="text" name="lidarr_url" placeholder="<?=$tp_t('tp.ph.http_192_168_14')?>" style="width:260px"> <input type="password" name="lidarr_key" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.api_key')?>" style="width:260px"> <span class="stt-hint"><?=$tp_t('tp.hint.optional_for_the_music')?></span></dd>
+<dt><?=$tp_t('tp.dt.autobrr_address_and_api')?></dt>
+<dd><input type="text" name="autobrr_url" placeholder="<?=$tp_t('tp.ph.http_192_168_15')?>" style="width:260px"> <input type="password" name="autobrr_key" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.api_key')?>" style="width:260px"> <span class="stt-hint"><?=$tp_t('tp.hint.optional_only_for_the')?></span></dd>
+<dt><?=$tp_t('tp.dt.discord_webhook')?></dt>
+<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.https_discord_com_api')?>" style="width:420px"> <span class="stt-hint"><?=$tp_t('tp.hint.one_webhook_for_all')?></span></dd>
+<dt><?=$tp_t('tp.dt.discord_bot_reactions')?></dt>
+<dd><input type="password" name="bot_token" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.bot_token')?>" style="width:300px"> <input type="text" name="bot_user" placeholder="<?=$tp_t('tp.ph.your_discord_user_id')?>" style="width:200px" inputmode="numeric">
+<span class="stt-brk"></span><label><input type="checkbox" name="bot_rep" value="1"> <?=$tp_t('tp.lbl.season_packs_from_autobrr')?></label> &nbsp; <label><input type="checkbox" name="bot_find" value="1"> <?=$tp_t('tp.lbl.torrents_removed_from_the')?></label> &nbsp; <input type="button" id="stt-bottest" value="<?=$tp_t('tp.btn.test_the_bot')?>" class="stt-ghost"> <span id="stt-botmsg" class="stt-mut"></span>
+<span class="stt-hint"><?=$tp_t('tp.hint.optional_the_seedbox_message')?></span></dd>
+<dt><?=$tp_t('tp.dt.check_the_connections')?></dt>
+<dd><input type="button" id="stt-test" value="<?=$tp_t('tp.btn.test_the_connections')?>"> <span class="stt-hint"><?=$tp_t('tp.hint.tests_the_saved_settings')?></span><div id="stt-tests" class="stt-mut"></div></dd>
+<dt><?=$tp_t('tp.dt.data_folder_as_qbittorrent')?></dt>
 <dd><input type="text" name="map_qb" placeholder="/data" style="width:160px"> <input type="text" name="map_host" placeholder="/mnt/user/data" style="width:260px"></dd>
 </dl>
-<div class="mt-band"><span>Folders</span><b id="stt-foldband"></b></div>
+<div class="mt-band"><span><?=$tp_t('tp.band.folders')?></span><b id="stt-foldband"></b></div>
 <dl>
-<dt>Downloads folder on this server:</dt>
-<dd><input type="text" name="dl_base" placeholder="/mnt/user/data/downloads" style="width:320px;font-family:monospace"> <input type="button" id="stt-fread" class="stt-ghost" value="Read the folders again"><span class="stt-hint">every folder directly inside it is listed below with a role. A new folder shows up by itself as Other (marked new): Find my torrent sees it, Shape up and the Season repacker leave it alone until you change it. Save after a change.</span></dd>
+<dt><?=$tp_t('tp.dt.downloads_folder_on_this')?></dt>
+<dd><input type="text" name="dl_base" placeholder="/mnt/user/data/downloads" style="width:320px;font-family:monospace"> <input type="button" id="stt-fread" class="stt-ghost" value="<?=$tp_t('tp.btn.read_the_folders_again')?>"><span class="stt-hint"><?=$tp_t('tp.hint.every_folder_directly_inside')?></span></dd>
 </dl>
 <div id="stt-folders"></div>
-<div class="mt-band"><span>Scans and trash</span><b>shared by the three tools</b></div>
+<div class="mt-band"><span><?=$tp_t('tp.band.scans_and_trash')?></span><b><?=$tp_t('tp.bandb.shared_by_the_three')?></b></div>
 <dl>
-<dt>Scheduled scan:</dt>
-<dd><select name="auto_freq"><option value="daily">every day</option><option value="weekly">every week</option></select> <span class="stt-mut">(weekly: on</span> <select name="auto_day"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="7">Sunday</option></select><span class="stt-mut">)</span> at <input type="number" name="auto_hour" min="0" max="23" class="narrow"> :00
-<span class="stt-brk"></span><label><input type="checkbox" name="auto_scan" value="1"> Find my torrent</label> &nbsp; <label><input type="checkbox" name="auto_upd" value="1"> Shape up</label> &nbsp; <label><input type="checkbox" name="auto_rep" value="1"> Season repacker</label>
-<span class="stt-brk"></span><span class="stt-hint">the ticked tools scan one after the other at that time. Only scans run by themselves, nothing is added, replaced or deleted without your click. Torrents that a tracker removed are reported on Discord (if a webhook is saved, even when the other messages are off) and flagged in the Seedbox tile as <i>need attention</i></span></dd>
-<dt>Replaced files stay in a trash folder for (days):</dt>
-<dd><input type="number" name="trash_days" min="0" max="60" class="narrow"> <input type="button" id="stt-trempty" class="stt-ghost" value="Empty the trash now"> <span id="stt-trinfo" class="stt-mut"></span> <span class="stt-hint">0 = delete at once. The old folder is moved to <code>.seedbox_trash</code> inside its downloads folder and deleted after this many days</span></dd>
-<dt>Dolby Vision on your TVs:</dt>
-<dd><select name="dv_all"><option value="0">not every TV plays it</option><option value="1">every TV plays it</option></select> <span class="stt-hint">a Dolby Vision only release (DV without HDR10, mostly web releases) gives a purple and green picture on a TV without DV. With not every TV, such a release is never an upgrade and is marked; DV with HDR10 (DV+HDR) is the best. Changing it: Shape up, Forget results, search again</span></dd>
+<dt><?=$tp_t('tp.dt.scheduled_scan')?></dt>
+<dd><select name="auto_freq"><option value="daily"><?=$tp_t('tp.opt.every_day')?></option><option value="weekly"><?=$tp_t('tp.opt.every_week')?></option></select> <span class="stt-mut">(<?=$tp_t('tp.weekly_on')?></span> <select name="auto_day"><option value="1"><?=$tp_t('tp.opt.monday')?></option><option value="2"><?=$tp_t('tp.opt.tuesday')?></option><option value="3"><?=$tp_t('tp.opt.wednesday')?></option><option value="4"><?=$tp_t('tp.opt.thursday')?></option><option value="5"><?=$tp_t('tp.opt.friday')?></option><option value="6"><?=$tp_t('tp.opt.saturday')?></option><option value="7"><?=$tp_t('tp.opt.sunday')?></option></select><span class="stt-mut">)</span> <?=$tp_t('tp.at')?> <input type="number" name="auto_hour" min="0" max="23" class="narrow"> :00
+<span class="stt-brk"></span><label><input type="checkbox" name="auto_scan" value="1"> <?=$tp_t('tp.lbl.find_my_torrent')?></label> &nbsp; <label><input type="checkbox" name="auto_upd" value="1"> <?=$tp_t('tp.lbl.shape_up')?></label> &nbsp; <label><input type="checkbox" name="auto_rep" value="1"> <?=$tp_t('tp.lbl.season_repacker')?></label>
+<span class="stt-brk"></span><span class="stt-hint"><?=$tp_T('tp.hint.the_ticked_tools_scan')?></span></dd>
+<dt><?=$tp_t('tp.dt.replaced_files_stay_in')?></dt>
+<dd><input type="number" name="trash_days" min="0" max="60" class="narrow"> <input type="button" id="stt-trempty" class="stt-ghost" value="<?=$tp_t('tp.btn.empty_the_trash_now')?>"> <span id="stt-trinfo" class="stt-mut"></span> <span class="stt-hint"><?=$tp_T('tp.hint.0_delete_at_once')?></span></dd>
+<dt><?=$tp_t('tp.dt.dolby_vision_on_your')?></dt>
+<dd><select name="dv_all"><option value="0"><?=$tp_t('tp.opt.not_every_tv_plays')?></option><option value="1"><?=$tp_t('tp.opt.every_tv_plays_it')?></option></select> <span class="stt-hint"><?=$tp_t('tp.hint.a_dolby_vision_only')?></span></dd>
 </dl>
-<div class="mt-band"><span>Find my torrent</span><b></b></div>
+<div class="mt-band"><span><?=$tp_t('tp.band.find_my_torrent')?></span><b></b></div>
 <dl>
-<dt>Find my torrent: accepted match (%):</dt>
-<dd><input type="number" name="find_accept" min="90" max="100" step="0.5" class="narrow"> <span class="stt-hint">after the check, a torrent that matches at least this much of your files is started; qBittorrent downloads the missing rest (for example an .nfo file). Below it the torrent is removed again</span></dd>
-<dt>Find my torrent: files that may be missing:</dt>
-<dd><input type="number" name="find_missing_files" min="0" max="20" class="narrow"> <span class="stt-hint">if everything else matches and at most this many files of the torrent are missing from your folder, the torrent is started and qBittorrent downloads those files</span></dd>
-<dt>Find my torrent: size tolerance (%):</dt>
-<dd><input type="number" name="find_tol" min="0" max="10" step="0.5" class="narrow"> <span class="stt-hint">a torrent may be this much bigger than the folder (extra files such as .nfo)</span></dd>
-<dt>Replace unseeded content: maximum size increase (%):</dt>
-<dd><input type="number" name="repl_max_growth" min="0" max="1000" class="narrow"> <span class="stt-hint">a replacement may be at most this much bigger than what you have (0 = no limit). The same resolution and HDR format, closest in size, come first</span></dd>
-<dt>Find my torrent: category:</dt>
-<dd><label><input type="checkbox" name="find_cat" value="1"> give added torrents the category of Radarr / Sonarr</label> <span class="stt-hint">the category set in the qBittorrent download client of Radarr (movies) or Sonarr (series), by default it is radarr and sonarr respectively, you can change it in your Radarr or Sonarr instance under the download client setting. Torrents that match nothing will get the category most torrents in the same folder have</span></dd>
-<dt>Widget tagline:</dt>
-<dd><input type="text" name="tag_find" maxlength="60" placeholder="keeps your seed healthy 😉" style="width:320px"> <span class="stt-hint">the line under the tool name on the Dashboard tile; leave empty for the default</span></dd>
-<dt>Show on the Dashboard:</dt>
-<dd><select name="show_find"><option value="relevant">only when relevant</option><option value="always">always</option><option value="days">for N days after a scan</option><option value="never">never</option></select> <span class="stt-showd"><input type="number" name="show_find_days" min="1" max="60" class="narrow"> days</span> <span class="stt-hint">Relevant: something to fix, a scan running, never scanned. A failed or stuck row shows in every mode but never. When no row is left, the tools part of the tile is hidden.</span></dd>
-<dt>Discord messages:</dt>
-<dd><label><input type="checkbox" name="dc_find" value="1"> send them</label> <span class="stt-hint">off by default. The weekly check result (torrents removed by a tracker are always reported when a webhook is saved), and what happens to a replacement: started, imported, stuck, old files removed.</span></dd>
+<dt><?=$tp_t('tp.dt.find_my_torrent_accepted')?></dt>
+<dd><input type="number" name="find_accept" min="90" max="100" step="0.5" class="narrow"> <span class="stt-hint"><?=$tp_t('tp.hint.after_the_check_a')?></span></dd>
+<dt><?=$tp_t('tp.dt.find_my_torrent_files')?></dt>
+<dd><input type="number" name="find_missing_files" min="0" max="20" class="narrow"> <span class="stt-hint"><?=$tp_t('tp.hint.if_everything_else_matches')?></span></dd>
+<dt><?=$tp_t('tp.dt.find_my_torrent_size')?></dt>
+<dd><input type="number" name="find_tol" min="0" max="10" step="0.5" class="narrow"> <span class="stt-hint"><?=$tp_t('tp.hint.a_torrent_may_be')?></span></dd>
+<dt><?=$tp_t('tp.dt.replace_unseeded_content_maximum')?></dt>
+<dd><input type="number" name="repl_max_growth" min="0" max="1000" class="narrow"> <span class="stt-hint"><?=$tp_t('tp.hint.a_replacement_may_be')?></span></dd>
+<dt><?=$tp_t('tp.dt.find_my_torrent_category')?></dt>
+<dd><label><input type="checkbox" name="find_cat" value="1"> <?=$tp_t('tp.lbl.give_added_torrents_the')?></label> <span class="stt-hint"><?=$tp_t('tp.hint.the_category_set_in')?></span></dd>
+<dt><?=$tp_t('tp.dt.widget_tagline')?></dt>
+<dd><input type="text" name="tag_find" maxlength="60" placeholder="<?=$tp_t('tp.ph.keeps_your_seed_healthy')?>" style="width:320px"> <span class="stt-hint"><?=$tp_t('tp.hint.the_line_under_the')?></span></dd>
+<dt><?=$tp_t('tp.dt.show_on_the_dashboard')?></dt>
+<dd><select name="show_find"><option value="relevant"><?=$tp_t('tp.opt.only_when_relevant')?></option><option value="always"><?=$tp_t('tp.opt.always')?></option><option value="days"><?=$tp_t('tp.opt.for_n_days_after')?></option><option value="never"><?=$tp_t('tp.opt.never')?></option></select> <span class="stt-showd"><input type="number" name="show_find_days" min="1" max="60" class="narrow"> <?=$tp_t('tp.days')?></span> <span class="stt-hint"><?=$tp_t('tp.hint.relevant_something_to_fix')?></span></dd>
+<dt><?=$tp_t('tp.dt.discord_messages')?></dt>
+<dd><label><input type="checkbox" name="dc_find" value="1"> <?=$tp_t('tp.lbl.send_them')?></label> <span class="stt-hint"><?=$tp_t('tp.hint.off_by_default_the')?></span></dd>
 </dl>
-<div class="mt-band"><span>Shape up</span><b>slimmer or stronger: a smaller release, a better HDR format or a higher resolution</b></div>
+<div class="mt-band"><span><?=$tp_t('tp.band.shape_up')?></span><b><?=$tp_t('tp.bandb.slimmer_or_stronger_a')?></b></div>
 <dl>
-<dt>Minimum size (GB), age (days), saving (%):</dt>
-<dd><input type="number" name="upd_min_gb" min="1" max="1000" class="narrow"> <input type="number" name="upd_min_age" min="0" max="5000" class="narrow"> <input type="number" name="upd_saving" min="5" max="90" class="narrow"> <span class="stt-hint">titles at least this big and old are listed and searched in the background; a release counts as a saving if it is at least this much smaller</span></dd>
-<dt>Offer:</dt>
-<dd><label><input type="checkbox" name="upd_cat_save" value="1"> saving</label> &nbsp; <label><input type="checkbox" name="upd_cat_hdr" value="1"> HDR / DV upgrade</label> &nbsp; <label><input type="checkbox" name="upd_cat_res" value="1"> resolution upgrade</label> &nbsp; upgrades may be bigger by at most <input type="number" name="upd_upg_growth" min="0" max="1000" class="narrow"> % <span class="stt-hint">(0 = no limit). A release is never of a lower resolution or HDR format than what you have</span></dd>
-<dt>Widget tagline:</dt>
-<dd><input type="text" name="tag_upd" maxlength="60" placeholder="slimmer or stronger, in better shape" style="width:320px"> <span class="stt-hint">the line under the tool name on the Dashboard tile; leave empty for the default</span></dd>
-<dt>Show on the Dashboard:</dt>
-<dd><select name="show_upd"><option value="relevant">only when relevant</option><option value="always">always</option><option value="days">for N days after a scan</option><option value="never">never</option></select> <span class="stt-showd"><input type="number" name="show_upd_days" min="1" max="60" class="narrow"> days</span> <span class="stt-hint">Relevant: an offer, a scan or the background search running, never scanned. A failed or stuck row shows in every mode but never. When no row is left, the tools part of the tile is hidden.</span></dd>
-<dt>Discord messages:</dt>
-<dd><label><input type="checkbox" name="dc_upd" value="1"> send them</label> <span class="stt-hint">off by default. Replacement started, imported, stuck, old files removed.</span></dd>
+<dt><?=$tp_t('tp.dt.minimum_size_gb_age')?></dt>
+<dd><input type="number" name="upd_min_gb" min="1" max="1000" class="narrow"> <input type="number" name="upd_min_age" min="0" max="5000" class="narrow"> <input type="number" name="upd_saving" min="5" max="90" class="narrow"> <span class="stt-hint"><?=$tp_t('tp.hint.titles_at_least_this')?></span></dd>
+<dt><?=$tp_t('tp.dt.offer')?></dt>
+<dd><label><input type="checkbox" name="upd_cat_save" value="1"> <?=$tp_t('tp.lbl.saving')?></label> &nbsp; <label><input type="checkbox" name="upd_cat_hdr" value="1"> <?=$tp_t('tp.lbl.hdr_dv_upgrade')?></label> &nbsp; <label><input type="checkbox" name="upd_cat_res" value="1"> <?=$tp_t('tp.lbl.resolution_upgrade')?></label> &nbsp; <?=$tp_t('tp.upg_growth')?> <input type="number" name="upd_upg_growth" min="0" max="1000" class="narrow"> % <span class="stt-hint"><?=$tp_t('tp.hint.0_no_limit_a')?></span></dd>
+<dt><?=$tp_t('tp.dt.widget_tagline')?></dt>
+<dd><input type="text" name="tag_upd" maxlength="60" placeholder="<?=$tp_t('tp.ph.slimmer_or_stronger_in')?>" style="width:320px"> <span class="stt-hint"><?=$tp_t('tp.hint.the_line_under_the')?></span></dd>
+<dt><?=$tp_t('tp.dt.show_on_the_dashboard')?></dt>
+<dd><select name="show_upd"><option value="relevant"><?=$tp_t('tp.opt.only_when_relevant')?></option><option value="always"><?=$tp_t('tp.opt.always')?></option><option value="days"><?=$tp_t('tp.opt.for_n_days_after')?></option><option value="never"><?=$tp_t('tp.opt.never')?></option></select> <span class="stt-showd"><input type="number" name="show_upd_days" min="1" max="60" class="narrow"> <?=$tp_t('tp.days')?></span> <span class="stt-hint"><?=$tp_t('tp.hint.relevant_an_offer_a')?></span></dd>
+<dt><?=$tp_t('tp.dt.discord_messages')?></dt>
+<dd><label><input type="checkbox" name="dc_upd" value="1"> <?=$tp_t('tp.lbl.send_them')?></label> <span class="stt-hint"><?=$tp_t('tp.hint.off_by_default_replacement')?></span></dd>
 </dl>
-<div class="mt-band"><span>Season repacker</span><b>nothing to set: it works on the monitored series and seasons of Sonarr</b></div>
+<div class="mt-band"><span><?=$tp_t('tp.band.season_repacker')?></span><b><?=$tp_t('tp.bandb.nothing_to_set_it')?></b></div>
 <dl>
-<dt>Widget tagline:</dt>
-<dd><input type="text" name="tag_rep" maxlength="60" placeholder="keeps your data tidy" style="width:320px"> <span class="stt-hint">the line under the tool name on the Dashboard tile; leave empty for the default</span></dd>
-<dt>Show on the Dashboard:</dt>
-<dd><select name="show_rep"><option value="relevant">only when relevant</option><option value="always">always</option><option value="days">for N days after a scan</option><option value="never">never</option></select> <span class="stt-showd"><input type="number" name="show_rep_days" min="1" max="60" class="narrow"> days</span> <span class="stt-hint">Relevant: a season that can be repacked, a repack or a scan running, never scanned. A failed or stuck row shows in every mode but never. When no row is left, the tools part of the tile is hidden.</span></dd>
-<dt>Season packs from autobrr:</dt>
-<dd><label><input type="checkbox" name="ab_on" value="1"> watch autobrr</label> <span class="stt-hint">every 5 minutes the releases that your autobrr filters let through are checked with Sonarr. A season pack of a monitored season that you have at least one episode of, not of a lower resolution (and Hungarian if your episodes are), is listed in the Season repacker under From autobrr and reported on Discord (with this switch, even when the messages below are off). Nothing is started</span><div id="stt-ab" class="stt-mut"></div></dd>
-<dt>autobrr filters to use:</dt>
-<dd><input type="hidden" name="ab_filters"><input type="button" id="stt-abf-load" value="Load filters"> <span id="stt-abf" class="stt-mut"></span> <span class="stt-hint">tick the filters whose releases are checked; none ticked = all filters. Then Save</span></dd>
-<dt>Discord messages:</dt>
-<dd><label><input type="checkbox" name="dc_rep" value="1"> send them</label> <span class="stt-hint">off by default. Season pack replacement started, done (with what was imported and trashed) or stuck.</span></dd>
+<dt><?=$tp_t('tp.dt.widget_tagline')?></dt>
+<dd><input type="text" name="tag_rep" maxlength="60" placeholder="<?=$tp_t('tp.ph.keeps_your_data_tidy')?>" style="width:320px"> <span class="stt-hint"><?=$tp_t('tp.hint.the_line_under_the')?></span></dd>
+<dt><?=$tp_t('tp.dt.show_on_the_dashboard')?></dt>
+<dd><select name="show_rep"><option value="relevant"><?=$tp_t('tp.opt.only_when_relevant')?></option><option value="always"><?=$tp_t('tp.opt.always')?></option><option value="days"><?=$tp_t('tp.opt.for_n_days_after')?></option><option value="never"><?=$tp_t('tp.opt.never')?></option></select> <span class="stt-showd"><input type="number" name="show_rep_days" min="1" max="60" class="narrow"> <?=$tp_t('tp.days')?></span> <span class="stt-hint"><?=$tp_t('tp.hint.relevant_a_season_that')?></span></dd>
+<dt><?=$tp_t('tp.dt.season_packs_from_autobrr')?></dt>
+<dd><label><input type="checkbox" name="ab_on" value="1"> <?=$tp_t('tp.lbl.watch_autobrr')?></label> <span class="stt-hint"><?=$tp_t('tp.hint.every_5_minutes_the')?></span><div id="stt-ab" class="stt-mut"></div></dd>
+<dt><?=$tp_t('tp.dt.autobrr_filters_to_use')?></dt>
+<dd><input type="hidden" name="ab_filters"><input type="button" id="stt-abf-load" value="<?=$tp_t('tp.btn.load_filters')?>"> <span id="stt-abf" class="stt-mut"></span> <span class="stt-hint"><?=$tp_t('tp.hint.tick_the_filters_whose')?></span></dd>
+<dt><?=$tp_t('tp.dt.discord_messages')?></dt>
+<dd><label><input type="checkbox" name="dc_rep" value="1"> <?=$tp_t('tp.lbl.send_them')?></label> <span class="stt-hint"><?=$tp_t('tp.hint.off_by_default_season')?></span></dd>
 </dl>
 <dl>
-<dt>&nbsp;</dt>
-<dd><input type="button" id="stt-save" value="Save"> <span id="stt-cmsg" style="margin-left:10px"></span></dd>
+<dt><?=$tp_t('tp.dt.x')?></dt>
+<dd><input type="button" id="stt-save" value="<?=$tp_t('tp.btn.save')?>"> <span id="stt-cmsg" style="margin-left:10px"></span></dd>
 </dl>
 </form>
 <?php $mt_lang_post = '/plugins/qbittorrent_widget/lang_save.php'; include '/usr/local/emhttp/plugins/qbittorrent_widget/lang_block.php'; ?>
 
 </div>
 
+<?=mt_i18n_js($tp_lang, 'tp')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('tp', k, v); };
   var lastSig = '', URL_ = '/plugins/qbittorrent_widget/tools.php', cfg = null, fT = null, uT = null, resT = {}, UPD = null, RES = {};
   function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; return (b / 1e6).toFixed(0) + ' MB'; }
   function api(op, d) { return $.post(URL_, $.extend({op: op}, d || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
-  function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? Math.floor(s / 86400) + ' d' : s >= 3600 ? Math.floor(s / 3600) + ' h' : Math.max(1, Math.floor(s / 60)) + ' m'; }
+  function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? T('ago.d', { n: Math.floor(s / 86400) }) : s >= 3600 ? T('ago.hs', { n: Math.floor(s / 3600) }) : T('ago.m', { n: Math.max(1, Math.floor(s / 60)) }); }
 
   // folder roles (Movies, Series, Music: the media library; Other: only Find my torrent; Not watched)
-  var ROLES = [['movies', 'Movies', 's-green'], ['series', 'Series', 's-blue'], ['music', 'Music', 's-purple'], ['other', 'Other', 's-grey'], ['off', 'Not watched', 's-off']];
-  var RNOTE = {movies: 'media library &middot; Radarr', series: 'media library &middot; Sonarr', music: 'media library &middot; no matching tool yet', other: 'seeding only (for example ratio torrents): only Find my torrent looks at it', off: 'no tool looks at it'};
+  var ROLES = [['movies', T('fo.movies'), 's-green'], ['series', T('fo.series'), 's-blue'], ['music', T('fo.music'), 's-purple'], ['other', T('fo.other'), 's-grey'], ['off', T('fo.off'), 's-off']];
+  var RNOTE = {movies: esc(T('fo.n_movies')), series: esc(T('fo.n_series')), music: esc(T('fo.n_music')), other: esc(T('fo.n_other')), off: esc(T('fo.n_off'))};
   function roleTools(r) { return [r !== 'off', r === 'movies' || r === 'series', r === 'series']; }
   function folderRow(n, f) {
-    var o = ''; $.each(ROLES, function (i, x) { o += '<option value="' + x[0] + '"' + (x[0] === f.role ? ' selected' : '') + '>' + x[1] + '</option>'; });
-    return '<div class="stt-fr" data-n="' + esc(n) + '"><span><b>' + esc(n) + '</b>' + (f['new'] ? '<span class="stt-badge a">new</span>' : '') + '<small class="stt-fnote"></small></span><span><select class="stt-frole" aria-label="Role of ' + esc(n) + '">' + o + '</select></span><span class="stt-ft"></span><span class="stt-ft"></span><span class="stt-ft"></span></div>';
+    var o = ''; $.each(ROLES, function (i, x) { o += '<option value="' + x[0] + '"' + (x[0] === f.role ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; });
+    return '<div class="stt-fr" data-n="' + esc(n) + '"><span><b>' + esc(n) + '</b>' + (f['new'] ? '<span class="stt-badge a">' + esc(T('fo.new')) + '</span>' : '') + '<small class="stt-fnote"></small></span><span><select class="stt-frole" aria-label="' + esc(T('fo.role_of', { n: n })) + '">' + o + '</select></span><span class="stt-ft"></span><span class="stt-ft"></span><span class="stt-ft"></span></div>';
   }
   function folderPaint() {
     var w = 0, lib = 0, nw = $('#stt-folders .stt-badge').length;
@@ -322,14 +329,14 @@ $(function () {
       $(this).find('.stt-ft').each(function (i) { $(this).toggleClass('y', t[i]).html(t[i] ? '&#10003;' : '&ndash;'); });
       if (r !== 'off') { w++; } if (r === 'movies' || r === 'series' || r === 'music') { lib++; }
     });
-    $('#stt-foldband').text(w + ' watched · ' + lib + ' media library' + (nw ? ' · ' + nw + ' new' : ''));
+    $('#stt-foldband').text(T('fo.band', { w: w, l: lib }) + (nw ? ' · ' + T('fo.n_new', { n: nw }) : ''));
   }
   function drawFolders(list) {
-    var h = '<div class="stt-fr stt-fh"><span>Folder</span><span>Role</span><span>Find my torrent</span><span>Shape up</span><span>Season repacker</span></div>', n = 0;
+    var h = '<div class="stt-fr stt-fh"><span>' + esc(T('fo.col_folder')) + '</span><span>' + esc(T('fo.col_role')) + '</span><span>Find my torrent</span><span>Shape up</span><span>Season repacker</span></div>', n = 0;
     // most tools first: Series, Movies, Music, Other, Not watched; by name inside a role (sorted when drawn, not while you change a role)
     var RK = {series: 0, movies: 1, music: 2, other: 3, off: 4};
     $.each(Object.keys(list).sort(function (a, b) { return (RK[list[a].role] - RK[list[b].role]) || a.localeCompare(b, undefined, {sensitivity: 'base', numeric: true}); }), function (i, k) { h += folderRow(k, list[k]); n++; });
-    if (!n) { h += '<div class="stt-fr"><span class="stt-mut">No folder found inside the downloads folder (is the array started, is the path right?)</span></div>'; }
+    if (!n) { h += '<div class="stt-fr"><span class="stt-mut">' + esc(T('fo.none')) + '</span></div>'; }
     $('#stt-folders').html(h); folderPaint();
   }
   $(document).on('change', '.stt-frole', function () { $(this).closest('.stt-fr').find('.stt-badge').remove(); folderPaint(); });
@@ -343,7 +350,7 @@ $(function () {
   function folderRoles() { var o = {}; $('#stt-folders .stt-frole').each(function () { o[$(this).closest('.stt-fr').data('n')] = $(this).val(); }); return JSON.stringify(o); }
   function fillCfg(c) {
     cfg = c; var f = $('#stt-form');
-    $.each(['prowlarr', 'radarr', 'sonarr', 'lidarr', 'autobrr'], function (i, k) { f.find('[name=' + k + '_url]').val(c[k].url); f.find('[name=' + k + '_key]').val('').attr('placeholder', c[k].key_set ? '(saved, leave empty to keep)' : 'API key'); });
+    $.each(['prowlarr', 'radarr', 'sonarr', 'lidarr', 'autobrr'], function (i, k) { f.find('[name=' + k + '_url]').val(c[k].url); f.find('[name=' + k + '_key]').val('').attr('placeholder', c[k].key_set ? T('cfg.saved_keep') : T('tp.ph.api_key')); });
     f.find('[name=map_qb]').val(c.map_qb); f.find('[name=map_host]').val(c.map_host); f.find('[name=dl_base]').val(c.dl_base || ''); drawFolders(c.folder_list || {});
     $.each(['upd_min_gb', 'upd_min_age', 'upd_saving', 'dv_all', 'upd_upg_growth', 'find_tol', 'find_accept', 'repl_max_growth', 'find_missing_files', 'trash_days', 'dc_lang', 'auto_freq', 'auto_day', 'auto_hour'], function (i, k) { f.find('[name=' + k + ']').val(c[k]); });
     $.each(['tag_find', 'tag_upd', 'tag_rep'], function (i, k) { f.find('[name=' + k + ']').val(c[k] || ''); });
@@ -351,39 +358,39 @@ $(function () {
     showDays();
     $.each(['dc_find', 'dc_upd', 'dc_rep'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); }); f.find('[name=find_cat]').prop('checked', !!+c.find_cat); $.each(['auto_scan', 'auto_upd', 'auto_rep', 'ab_on', 'upd_cat_save', 'upd_cat_hdr', 'upd_cat_res'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); });
     f.find('[name=ab_filters]').val((c.ab_filters || []).join('\n')); drawAbf(null);
-    f.find('[name=dc_hook]').val('').attr('placeholder', c.dc_hook_set ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...');
-    f.find('[name=bot_token]').val('').attr('placeholder', c.bot_token_set ? '(saved, leave empty to keep)' : 'bot token'); f.find('[name=bot_user]').val(c.bot_user || '');
+    f.find('[name=dc_hook]').val('').attr('placeholder', c.dc_hook_set ? T('cfg.saved_keep') : 'https://discord.com/api/webhooks/...');
+    f.find('[name=bot_token]').val('').attr('placeholder', c.bot_token_set ? T('cfg.saved_keep') : T('tp.ph.bot_token')); f.find('[name=bot_user]').val(c.bot_user || '');
     $.each(['bot_rep', 'bot_find'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); });
   }
   $('#stt-bottest').on('click', function () {
-    var $b = $(this).prop('disabled', true); $('#stt-botmsg').css('color', '').text('Sending...');
-    api('bot_test').done(function (r) { $('#stt-botmsg').css('color', r.ok ? '#3fa24a' : '#e5534b').text(r.ok ? 'Test message ' + r.msg + ': react to it in Discord, it turns green within a minute' : r.error); })
+    var $b = $(this).prop('disabled', true); $('#stt-botmsg').css('color', '').text(T('cfg.sending'));
+    api('bot_test').done(function (r) { $('#stt-botmsg').css('color', r.ok ? '#3fa24a' : '#e5534b').text(r.ok ? T('cfg.bot_ok', { m: r.msg }) : r.error); })
       .fail(function (x) { $('#stt-botmsg').css('color', '#e5534b').text(err(x)); }).always(function () { $b.prop('disabled', false); });
   });
   // the filter list: from autobrr after Load filters, else the saved names
   function drawAbf(list) {
     var $h = $('#stt-form [name=ab_filters]'), sel = $h.val() ? $h.val().split('\n') : [], h = '';
-    if (!list) { $('#stt-abf').text(sel.length ? 'using: ' + sel.join(', ') : 'using: all filters'); return; }
-    if (!list.length) { $('#stt-abf').text('autobrr has no filters'); return; }
-    $.each(list, function (i, x) { h += ' <label style="margin-right:10px"><input type="checkbox" class="stt-abf-cb" value="' + esc(x.name).replace(/"/g, '&quot;') + '"' + (sel.indexOf(x.name) >= 0 ? ' checked' : '') + '> ' + esc(x.name) + (x.enabled ? '' : ' <i>(disabled)</i>') + '</label>'; });
-    $.each(sel, function (i, n) { if (!list.some(function (x) { return x.name === n; })) { h += ' <label style="margin-right:10px"><input type="checkbox" class="stt-abf-cb" value="' + esc(n).replace(/"/g, '&quot;') + '" checked> ' + esc(n) + ' <i>(not in autobrr any more)</i></label>'; } });
+    if (!list) { $('#stt-abf').text(sel.length ? T('ab.using', { l: sel.join(', ') }) : T('ab.using_all')); return; }
+    if (!list.length) { $('#stt-abf').text(T('ab.no_filters')); return; }
+    $.each(list, function (i, x) { h += ' <label style="margin-right:10px"><input type="checkbox" class="stt-abf-cb" value="' + esc(x.name).replace(/"/g, '&quot;') + '"' + (sel.indexOf(x.name) >= 0 ? ' checked' : '') + '> ' + esc(x.name) + (x.enabled ? '' : ' <i>(' + esc(T('ab.disabled')) + ')</i>') + '</label>'; });
+    $.each(sel, function (i, n) { if (!list.some(function (x) { return x.name === n; })) { h += ' <label style="margin-right:10px"><input type="checkbox" class="stt-abf-cb" value="' + esc(n).replace(/"/g, '&quot;') + '" checked> ' + esc(n) + ' <i>(' + esc(T('ab.gone')) + ')</i></label>'; } });
     $('#stt-abf').html(h);
   }
   $(document).on('change', '.stt-abf-cb', function () { $('#stt-form [name=ab_filters]').val($('.stt-abf-cb:checked').map(function () { return this.value; }).get().join('\n')); });
   $('#stt-abf-load').on('click', function () {
-    var $b = $(this).prop('disabled', true), f = $('#stt-form'); $('#stt-abf').css('color', '').text('Loading...');
+    var $b = $(this).prop('disabled', true), f = $('#stt-form'); $('#stt-abf').css('color', '').text(T('cfg.loading'));
     api('ab_filters', {url: f.find('[name=autobrr_url]').val(), key: f.find('[name=autobrr_key]').val()}).done(function (r) {
       if (r.ok) { drawAbf(r.filters); } else { $('#stt-abf').css('color', '#e5534b').text(r.error); }
     }).fail(function (x) { $('#stt-abf').text(err(x)); }).always(function () { $b.prop('disabled', false); });
   });
   function drawAb(a) {
     var h = '';
-    if (a.t) { h += 'last check ' + ago(a.t) + ' ago' + (a.skipped ? ', ' + a.skipped + ' single episodes passed over' : '') + (a.since ? ', watching since ' + new Date(a.since * 1000).toLocaleString() : '') + (a.err ? ' &middot; <span style="color:#e5534b">' + esc(a.err) + '</span>' : ''); }
-    $.each((a.recent || []).slice(-5).reverse(), function (i, x) { h += '<br>' + ago(x.t) + ' ago: ' + (x.go ? '<b>' : '') + esc(x.why) + (x.go ? '</b>' : '') + ' <span style="opacity:.7">' + esc(x.name) + '</span>'; });
+    if (a.t) { h += esc(T('ab.last_check', { t: ago(a.t) })) + (a.skipped ? ', ' + esc(T('ab.skipped', { n: a.skipped })) : '') + (a.since ? ', ' + esc(T('ab.since', { t: new Date(a.since * 1000).toLocaleString() })) : '') + (a.err ? ' &middot; <span style="color:#e5534b">' + esc(a.err) + '</span>' : ''); }
+    $.each((a.recent || []).slice(-5).reverse(), function (i, x) { h += '<br>' + esc(T('ab.ago', { t: ago(x.t) })) + ': ' + (x.go ? '<b>' : '') + esc(x.why) + (x.go ? '</b>' : '') + ' <span style="opacity:.7">' + esc(x.name) + '</span>'; });
     $('#stt-ab').html(h);
-    $('#stt-rband').text(a.t ? 'autobrr watched \u00b7 last check ' + ago(a.t) + ' ago' : '');
+    $('#stt-rband').text(a.t ? T('ab.band', { t: ago(a.t) }) : '');
     var r0 = (a.recent || []).slice(-1)[0];
-    $('#stt-abst').html(a.t ? '<span class="stt-mut">autobrr</span> ' + (a.err ? '<span class="stt-er">' + esc(a.err) + '</span>' : (a.skipped ? a.skipped + ' single episodes passed over' : 'watching')) + (r0 ? ' &middot; <span class="stt-mut">last:</span> ' + esc(r0.why) : '') : '');
+    $('#stt-abst').html(a.t ? '<span class="stt-mut">autobrr</span> ' + (a.err ? '<span class="stt-er">' + esc(a.err) + '</span>' : esc(a.skipped ? T('ab.skipped', { n: a.skipped }) : T('ab.watching'))) + (r0 ? ' &middot; <span class="stt-mut">' + esc(T('ab.last')) + '</span> ' + esc(r0.why) : '') : '');
   }
   function loadState() {
     return api('state').done(function (r) {
@@ -393,44 +400,44 @@ $(function () {
     });
   }
   $('#stt-save').on('click', function () {
-    var $b = $(this).prop('disabled', true), $m = $('#stt-cmsg').css('color', '').text('Saving...');
+    var $b = $(this).prop('disabled', true), $m = $('#stt-cmsg').css('color', '').text(T('cfg.saving'));
     api('saveconfig', $.extend($('#stt-form').serializeArray().reduce(function (o, x) { o[x.name] = x.value; return o; }, {}), {folders: folderRoles()})).done(function (r) {
-      if (r.ok) { $m.css('color', '#3fa24a').text('Saved.'); loadState(); } else { $m.css('color', '#e5534b').text(r.error); }
+      if (r.ok) { $m.css('color', '#3fa24a').text(T('cfg.saved')); loadState(); } else { $m.css('color', '#e5534b').text(r.error); }
     }).fail(function (x) { $m.css('color', '#e5534b').text(err(x)); }).always(function () { $b.prop('disabled', false); });
   });
   // the trash: what it holds, and the button that empties it now (with a confirm)
-  function trashInfo(r) { $('#stt-trinfo').text(r && r.items ? '(' + r.items + ' item' + (r.items === 1 ? '' : 's') + ', ' + fb(r.bytes) + ')' : '(empty)'); $('#stt-trempty').prop('disabled', !(r && r.items)); }
+  function trashInfo(r) { $('#stt-trinfo').text(r && r.items ? '(' + T('tr.items', { n: r.items, s: fb(r.bytes) }) + ')' : '(' + T('tr.empty') + ')'); $('#stt-trempty').prop('disabled', !(r && r.items)); }
   api('trash_info').done(trashInfo);
   $('#stt-trempty').on('click', function () {
     var $b = $(this);
-    if (!window.confirm('Empty the trash now?\n\nEverything in the .seedbox_trash folders is deleted at once ' + $('#stt-trinfo').text() + '. This cannot be undone. Space is freed only for files that have no other hardlink (for example in the media folder).')) { return; }
+    if (!window.confirm(T('tr.confirm', { info: $('#stt-trinfo').text() }))) { return; }
     $b.prop('disabled', true);
     api('trash_empty').done(function (r) { trashInfo(r); if (!r.ok) { window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
   $('#stt-test').on('click', function () {
-    var $b = $(this).prop('disabled', true); $('#stt-tests').text('Testing...');
+    var $b = $(this).prop('disabled', true); $('#stt-tests').text(T('cfg.testing'));
     api('test').done(function (r) {
       var h = ''; $.each(r.tests, function (k, v) { h += esc(k) + ': ' + esc(v) + '<br>'; }); $('#stt-tests').html(h);
     }).fail(function (x) { $('#stt-tests').text(err(x)); }).always(function () { $b.prop('disabled', false); });
   });
 
   // a release that is smaller and better at the same time (Shape up, Must do), within the ticked offer kinds
-  function hdrLbl(n) { return ((cfg && +cfg.dv_all) ? {1: 'SDR', 2: 'HDR', 3: 'DV', 4: 'DV+HDR'} : {0: 'DV only', 1: 'SDR', 2: 'HDR', 3: 'DV+HDR'})[n] || ''; }
-  function hdrTxt(h) { return h === 'DV only' ? '<span class="stt-badge rd" title="Dolby Vision without an HDR10 base layer: a purple and green picture on a TV without DV" style="margin-left:0">DV only</span>' : esc(h); }
+  function hdrLbl(n) { return ((cfg && +cfg.dv_all) ? {1: 'SDR', 2: 'HDR', 3: 'DV', 4: 'DV+HDR'} : {0: T('q.dv_only'), 1: 'SDR', 2: 'HDR', 3: 'DV+HDR'})[n] || ''; }
+  function hdrTxt(h) { return h === 'DV only' ? '<span class="stt-badge rd" title="' + esc(T('q.dv_only_tip')) + '" style="margin-left:0">' + esc(T('q.dv_only')) + '</span>' : esc(h); }
   function mustSorted(rows) { return $.grep(rows, mustRow).sort(function (a, b) { return a.size - b.size; }); } // the smallest (the biggest saving) first
   function mustRow(r) { var c = r.cats || []; return UCAT.save && c.indexOf('save') >= 0 && ((UCAT.hdr && c.indexOf('hdr') >= 0) || (UCAT.res && c.indexOf('res') >= 0)); }
   function resBlock(key, label, mode, it, mustFirst) {
     var rr = RES[key], h = '';
     if (!rr) { return ''; }
-    if (rr.state === 'running') { return '<div class="stt-mut">Searching in Radarr/Sonarr... this can take a minute.</div>'; }
+    if (rr.state === 'running') { return '<div class="stt-mut">' + esc(T('rs.searching')) + '</div>'; }
     if (rr.state === 'error') { return '<div class="stt-er">' + esc(rr.msg) + '</div>'; }
     if (!rr.rows.length) { return '<div class="stt-mut">' + esc(rr.msg) + '</div>'; }
-    h = '<table class="stt"><thead><tr><th>Release</th><th class="stt-r">Size</th><th class="stt-r">Size vs. current</th><th>Quality</th><th class="stt-r">Seeders</th><th>Indexer</th><th></th></tr></thead><tbody>';
+    h = '<table class="stt"><thead><tr><th>' + esc(T('col.release')) + '</th><th class="stt-r">' + esc(T('col.size')) + '</th><th class="stt-r">' + esc(T('col.size_vs')) + '</th><th>' + esc(T('col.quality')) + '</th><th class="stt-r">' + esc(T('col.seeders')) + '</th><th>' + esc(T('col.indexer')) + '</th><th></th></tr></thead><tbody>';
     var rows = rr.rows;
     if (mustFirst) { rows = mustSorted(rr.rows).concat($.grep(rr.rows, function (r) { return !mustRow(r); })); } // the must releases first, the smallest (biggest saving) on top
     $.each(rows, function (j, r) {
       var sv = r.saving > 0 ? '-' + r.saving + '%' : '+' + Math.abs(r.saving) + '%', mu = mustFirst && mustRow(r);
-      h += '<tr' + (mu ? ' class="stt-must"' : '') + '><td>' + (mu ? '<span class="stt-badge gold" style="margin:0 6px 0 0">must</span>' : '') + esc(r.title) + (r.hun ? '<span class="stt-badge g">HUN</span>' : '') + $.map(r.cats || [], function (c) { return '<span class="stt-badge">' + CATL[c] + '</span>'; }).join('') + (r.rejected ? '<div class="stt-am">' + esc(r.rejections.join(' / ') || 'rejected') + '</div>' : '') + '</td><td class="stt-r">' + fb(r.size) + '</td><td class="stt-r">' + sv + '</td><td>' + r.res + 'p ' + hdrTxt(r.hdr) + '</td><td class="stt-r">' + r.seeders + '</td><td>' + esc(r.indexer) + '</td><td><input type="button" class="stt-grab stt-btn" data-key="' + key + '" data-mode="' + mode + '" data-guid="' + esc(r.guid) + '" value="' + label + '"></td></tr>';
+      h += '<tr' + (mu ? ' class="stt-must"' : '') + '><td>' + (mu ? '<span class="stt-badge gold" style="margin:0 6px 0 0">' + esc(T('q.must')) + '</span>' : '') + esc(r.title) + (r.hun ? '<span class="stt-badge g">HUN</span>' : '') + $.map(r.cats || [], function (c) { return '<span class="stt-badge">' + esc(CATL[c]) + '</span>'; }).join('') + (r.rejected ? '<div class="stt-am">' + esc(r.rejections.join(' / ') || T('q.rejected')) + '</div>' : '') + '</td><td class="stt-r">' + fb(r.size) + '</td><td class="stt-r">' + sv + '</td><td>' + r.res + 'p ' + hdrTxt(r.hdr) + '</td><td class="stt-r">' + r.seeders + '</td><td>' + esc(r.indexer) + '</td><td><input type="button" class="stt-grab stt-btn" data-key="' + key + '" data-mode="' + mode + '" data-guid="' + esc(r.guid) + '" value="' + esc(label) + '"></td></tr>';
     });
     return h + '</tbody></table>';
   }
@@ -438,12 +445,12 @@ $(function () {
   function drawQueue(r) {
     var n = 0, f = r.find || {}; $.each(f.items || [], function (i, it) { if (!it.busy && !it.fail && it.searched) { var g = false; $.each(it.cands || [], function (j, c) { if (c.name_eq && c.size_ok) { g = true; } }); if (g) { n++; } } });
     var h = '';
-    if (!(r.queue > 0) && n > 0) { h += '<input type="button" id="stt-qall" class="stt-btn" value="Add all matching (' + n + ')"> <span class="stt-mut">adds every folder that has an identical torrent, one check at a time</span>'; }
+    if (!(r.queue > 0) && n > 0) { h += '<input type="button" id="stt-qall" class="stt-btn" value="' + esc(T('fq.add_all', { n: n })) + '"> <span class="stt-mut">' + esc(T('fq.add_all_hint')) + '</span>'; }
     $('#stt-queue').html(h);
     LAST.q = r.queue || 0; drawActivity();
   }
   $(document).on('click', '#stt-qall', function () {
-    if (!window.confirm('Add every listed torrent that has the same name and size as your folder?\n\nThey are added one after the other, with one file check at a time. Each is started only if it matches your files (see the settings); otherwise it is removed again and your files stay untouched. You can stop the queue at any time.')) { return; }
+    if (!window.confirm(T('fq.confirm'))) { return; }
     var $b = $(this).prop('disabled', true);
     api('find_queue_all').done(function (r) { setTimeout(pollFind, 1500); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
@@ -457,16 +464,16 @@ $(function () {
     var $o = $('#stt-fitems').empty();
     if (!f || f.state === 'none') { return; }
     if (f.state === 'error') { $('#stt-fmsg').css('color', '#e5534b').text(f.msg); return; }
-    if (f.state === 'running') { $('#stt-fmsg').css('color', '').text(f.msg || 'Working...'); } else { $('#stt-fmsg').css('color', '').text(''); }
+    if (f.state === 'running') { $('#stt-fmsg').css('color', '').text(f.msg || T('f.working')); } else { $('#stt-fmsg').css('color', '').text(''); }
     var nf = (f.items || []).length;
-    $('#stt-n-find').text(f.state === 'ready' ? nf : ''); $('#stt-fband').text(f.t ? 'scanned ' + ago(f.t) + ' ago' + (f.state === 'ready' ? ' \u00b7 ' + nf + ' folder' + (nf === 1 ? '' : 's') + ' not seeded' : '') : '');
-    if (!nf) { if (f.state === 'ready') { $o.append('<p class="stt-ok" style="margin:0;padding:10px 12px">Every file in the downloads folders is seeded.</p>'); } return; }
-    var LB = {name: 'Folder / release', size: 'Size', seeders: 'Seeders'};
+    $('#stt-n-find').text(f.state === 'ready' ? nf : ''); $('#stt-fband').text(f.t ? T('f.scanned', { t: ago(f.t) }) + (f.state === 'ready' ? ' \u00b7 ' + T('f.n_not_seeded', { n: nf }) : '') : '');
+    if (!nf) { if (f.state === 'ready') { $o.append('<p class="stt-ok" style="margin:0;padding:10px 12px">' + esc(T('f.all_seeded')) + '</p>'); } return; }
+    var LB = {name: esc(T('f.col_name')), size: esc(T('col.size')), seeders: esc(T('col.seeders'))};
     function sa(k) { return LB[k] + (SORT.k === k ? (SORT.d > 0 ? ' &#9650;' : ' &#9660;') : ''); }
     var h = '<table class="stt stt-fx"><colgroup><col><col style="width:78px"><col style="width:64px"><col style="width:110px"><col style="width:130px"><col style="width:270px"></colgroup>' +
-            '<thead><tr><th class="stt-so" data-k="name">' + sa('name') + '</th><th class="stt-so stt-r" data-k="size">' + sa('size') + '</th><th class="stt-so stt-r" data-k="seeders">' + sa('seeders') + '</th><th>Indexer</th><th>Match / quality</th><th></th></tr></thead>';
+            '<thead><tr><th class="stt-so" data-k="name">' + sa('name') + '</th><th class="stt-so stt-r" data-k="size">' + sa('size') + '</th><th class="stt-so stt-r" data-k="seeders">' + sa('seeders') + '</th><th>' + esc(T('col.indexer')) + '</th><th>' + esc(T('f.col_match')) + '</th><th></th></tr></thead>';
     // matches first (green, then amber), then name-only, then what has no torrent and needs a replacement
-    var G = {4: 'In progress', 3: 'Same name and size: add the torrent', 2.7: 'The tracker rejects the passkey: update the tracker URL in qBittorrent', 2.5: 'Removed from the tracker: replace the content', 2: 'Different release, similar size: replace the content', 1: 'Only the name is similar: replace the content', 0: 'No torrent found: replace the content'}, lastG = -1, catNo = 0;
+    var G = {4: T('f.g4'), 3: T('f.g3'), 2.7: T('f.g27'), 2.5: T('f.g25'), 2: T('f.g2'), 1: T('f.g1'), 0: T('f.g0')}, lastG = -1, catNo = 0;
     function grade(it) { if (it.busy) { return 4; } var g = it.searched ? 0 : -1; $.each(it.cands || [], function (j, c) { g = Math.max(g, c.name_eq && c.size_ok ? 3 : c.size_ok ? 2 : 1); }); if (it.pass && it.searched) { g = 2.7; } else if (it.old && g >= 0 && g < 3) { g = 2.5; } return g; }
     var list = $.map($.grep(f.items, function (it) { return !it.busy; }), function (it, i) { return {it: it, g: grade(it), i: i}; }).sort(function (x, y) {
       if (y.g !== x.g) { return y.g - x.g; }
@@ -480,7 +487,7 @@ $(function () {
     function head(g) {
       var cnt = cntG[g] || 0, op = !!GOPEN[g] && cnt > 0;
       if (inBody) { h += '</tbody>'; inBody = false; }
-      h += '<tbody><tr class="stt-gh"><td colspan="6"><div class="stt-gb ' + (g === 2.5 ? 'gd' : g === 2.7 ? 'gp' : 'g' + g) + (cnt ? ' stt-gtg" data-g="' + g + '" title="Show or hide this category" style="cursor:pointer' : '" style="opacity:.55') + '"><span>' + (cnt ? '<span style="display:inline-block;width:16px">' + (op ? '&minus;' : '+') + '</span>' : '<span style="display:inline-block;width:16px"></span>') + esc(g < 0 ? 'Waiting for the search...' : (++catNo) + '. ' + G[g]) + '</span><small>' + cnt + ' folder' + (cnt === 1 ? '' : 's') + (cnt ? (g === 3 ? ' &middot; Add torrent' : g === 2.7 ? ' &middot; fix in qBittorrent' : g >= 0 ? ' &middot; Replace' : '') : '') + '</small></div></td></tr></tbody>';
+      h += '<tbody><tr class="stt-gh"><td colspan="6"><div class="stt-gb ' + (g === 2.5 ? 'gd' : g === 2.7 ? 'gp' : 'g' + g) + (cnt ? ' stt-gtg" data-g="' + g + '" title="' + esc(T('f.toggle_cat')) + '" style="cursor:pointer' : '" style="opacity:.55') + '"><span>' + (cnt ? '<span style="display:inline-block;width:16px">' + (op ? '&minus;' : '+') + '</span>' : '<span style="display:inline-block;width:16px"></span>') + esc(g < 0 ? T('f.waiting_search') : (++catNo) + '. ' + G[g]) + '</span><small>' + esc(T('f.n_folders', { n: cnt })) + (cnt ? (g === 3 ? ' &middot; ' + esc(T('f.do_add')) : g === 2.7 ? ' &middot; ' + esc(T('f.do_fix')) : g >= 0 ? ' &middot; ' + esc(T('f.do_replace')) : '') : '') + '</small></div></td></tr></tbody>';
       if (cnt) { h += '<tbody class="stt-gbody" data-g="' + g + '"' + (op ? '' : ' style="display:none"') + '>'; inBody = true; }
     }
     function heads(upto) { $.each(ORD, function (i, g) { if (done[g] || (upto !== null && g < upto)) { return; } if (g === upto || cntG[g] || [3, 2.5, 2, 1, 0].indexOf(g) >= 0) { done[g] = 1; head(g); } }); }
@@ -490,35 +497,35 @@ $(function () {
       if (it.busy) { h += '<tr class="stt-grp"><td class="stt-ell" title="' + esc(it.name) + '"><b>' + esc(it.name) + '</b><span class="stt-mut"> ' + esc(it.root) + '</span></td><td class="stt-r">' + fb(it.size) + '</td><td colspan="4" class="stt-ok">' + esc(it.busy) + '</td></tr>'; return; }
       var gi = -1; $.each(it.cands || [], function (j, c) { if (gi < 0 && c.name_eq && c.size_ok) { gi = j; } });
       var gc = gi >= 0 ? it.cands[gi] : null, one = !it.error && it.searched && !it.fail && gc;
-      h += '<tr class="stt-grp"><td class="stt-ell" title="' + esc(it.root + ' / ' + it.name) + '">' + (rrf && rrf.state !== 'running' ? '<a href="#" class="stt-tg" data-key="' + it.key + '" title="Show or hide the search results" style="display:inline-block;width:16px;text-align:center;text-decoration:none">' + (COLL[it.key] !== false ? '+' : '&minus;') + '</a> ' : '') + '<b>' + esc(it.name) + '</b><span class="stt-mut"> ' + esc(it.root) + '</span>' + (it.pass ? ' <span class="stt-badge a" title="The tracker answers unregistered torrent pass: the passkey in the announce URL is not valid (changed or reset), the torrent itself is probably still there">passkey rejected</span>' : it.old ? ' <span class="stt-badge rd" title="The tracker no longer knows this torrent">removed from tracker</span>' : '') + '</td><td class="stt-r">' + fb(it.size) + '</td>';
-      if (one) { h += '<td class="stt-r">' + gc.seeders + '</td><td class="stt-ell">' + esc(gc.indexer) + '</td><td><span class="stt-badge g">found original</span></td>'; }
+      h += '<tr class="stt-grp"><td class="stt-ell" title="' + esc(it.root + ' / ' + it.name) + '">' + (rrf && rrf.state !== 'running' ? '<a href="#" class="stt-tg" data-key="' + it.key + '" title="' + esc(T('f.toggle_res')) + '" style="display:inline-block;width:16px;text-align:center;text-decoration:none">' + (COLL[it.key] !== false ? '+' : '&minus;') + '</a> ' : '') + '<b>' + esc(it.name) + '</b><span class="stt-mut"> ' + esc(it.root) + '</span>' + (it.pass ? ' <span class="stt-badge a" title="' + esc(T('f.pass_tip')) + '">' + esc(T('f.pass')) + '</span>' : it.old ? ' <span class="stt-badge rd" title="' + esc(T('f.removed_tip')) + '">' + esc(T('f.removed')) + '</span>' : '') + '</td><td class="stt-r">' + fb(it.size) + '</td>';
+      if (one) { h += '<td class="stt-r">' + gc.seeders + '</td><td class="stt-ell">' + esc(gc.indexer) + '</td><td><span class="stt-badge g">' + esc(T('f.found')) + '</span></td>'; }
       else {
         h += '<td colspan="3">';
-        if (it.pass) { h += '<span class="stt-am">the tracker rejects the torrent pass: update the tracker URL in qBittorrent</span>'; }
+        if (it.pass) { h += '<span class="stt-am">' + esc(T('f.pass_line')) + '</span>'; }
         else if (it.error) { h += '<span class="stt-er">' + esc(it.error) + '</span>'; }
-        else if (!it.searched) { h += '<span class="stt-mut">waiting for the search...</span>'; }
-        else if (it.fail) { h += '<span class="stt-am stt-ell" style="display:block" title="' + esc(it.fail) + '">last try failed, see below</span>'; }
-        else { h += '<span class="stt-am">' + (e.g === 2.5 ? 'the tracker removed this torrent' : e.g > 0 ? 'no identical torrent' : 'no torrent found') + ': replace the content instead &rarr;</span>'; }
+        else if (!it.searched) { h += '<span class="stt-mut">' + esc(T('f.waiting_row')) + '</span>'; }
+        else if (it.fail) { h += '<span class="stt-am stt-ell" style="display:block" title="' + esc(it.fail) + '">' + esc(T('f.failed_below')) + '</span>'; }
+        else { h += '<span class="stt-am">' + esc(T('f.replace_instead', { why: e.g === 2.5 ? T('f.why_removed') : e.g > 0 ? T('f.why_noident') : T('f.why_none') })) + ' &rarr;</span>'; }
         h += '</td>';
       }
       h += '<td class="stt-r">';
-      if (one) { h += '<input type="button" class="stt-add stt-btn stt-sm" data-id="' + it.id + '" data-idx="' + gi + '" title="' + esc(gc.title) + '" value="Add torrent">'; }
-      if (it.searched && !it.pass && inLib(it.root)) { h += '<input type="button" class="stt-rsearch stt-btn stt-sm" data-id="' + it.id + '" data-key="' + it.key + '" title="Search an equal or better release in Radarr/Sonarr; the old files are removed after the new one is imported" value="' + (rrf ? 'Replace again' : 'Replace...') + '"' + (rrf && rrf.state === 'running' ? ' disabled' : '') + '>'; }
-      h += '<input type="button" class="stt-ign stt-btn stt-sm stt-ghost" data-id="' + it.id + '" value="Ignore"> <input type="button" class="stt-del stt-btn stt-sm" data-id="' + it.id + '" value="Delete" title="Move the folder to the trash (or delete it at once when the trash days are 0)">';
+      if (one) { h += '<input type="button" class="stt-add stt-btn stt-sm" data-id="' + it.id + '" data-idx="' + gi + '" title="' + esc(gc.title) + '" value="' + esc(T('f.btn_add')) + '">'; }
+      if (it.searched && !it.pass && inLib(it.root)) { h += '<input type="button" class="stt-rsearch stt-btn stt-sm" data-id="' + it.id + '" data-key="' + it.key + '" title="' + esc(T('f.replace_tip')) + '" value="' + esc(rrf ? T('f.replace_again') : T('f.replace')) + '"' + (rrf && rrf.state === 'running' ? ' disabled' : '') + '>'; }
+      h += '<input type="button" class="stt-ign stt-btn stt-sm stt-ghost" data-id="' + it.id + '" value="' + esc(T('f.ignore')) + '"> <input type="button" class="stt-del stt-btn stt-sm" data-id="' + it.id + '" value="' + esc(T('f.delete')) + '" title="' + esc(T('f.delete_tip')) + '">';
       h += '</td></tr>';
-      if (!one && !it.error && it.searched && it.fail) { h += '<tr class="stt-sub"><td colspan="6" class="stt-am" style="white-space:normal">&#8627; last try failed: ' + esc(it.fail) + '</td></tr>'; }
+      if (!one && !it.error && it.searched && it.fail) { h += '<tr class="stt-sub"><td colspan="6" class="stt-am" style="white-space:normal">&#8627; ' + esc(T('f.last_failed', { e: it.fail })) + '</td></tr>'; }
       var hid = rrf && COLL[it.key] !== false && rrf.state !== 'running' ? ' style="display:none"' : '';
       if (rrf) {
-        if (rrf.state === 'running') { h += '<tr class="stt-sub stt-rs"' + hid + '><td colspan="6" class="stt-mut">&#8627; searching in Radarr/Sonarr... this can take a minute</td></tr>'; }
+        if (rrf.state === 'running') { h += '<tr class="stt-sub stt-rs"' + hid + '><td colspan="6" class="stt-mut">&#8627; ' + esc(T('rs.searching')) + '</td></tr>'; }
         else if (rrf.state === 'error') { h += '<tr class="stt-sub stt-rs"' + hid + '><td colspan="6" class="stt-er">&#8627; ' + esc(rrf.msg) + '</td></tr>'; }
-        else if (!(rrf.rows || []).length) { h += '<tr class="stt-sub stt-rs"' + hid + '><td colspan="6" class="stt-mut">&#8627; ' + esc(rrf.msg || 'no equal or better release with seeders found') + '</td></tr>'; }
+        else if (!(rrf.rows || []).length) { h += '<tr class="stt-sub stt-rs"' + hid + '><td colspan="6" class="stt-mut">&#8627; ' + esc(rrf.msg || T('rs.none')) + '</td></tr>'; }
         else { if (rrf.info) { h += '<tr class="stt-sub stt-rs"' + hid + '><td colspan="6" class="stt-mut">&#8627; ' + esc(rrf.info) + '</td></tr>'; }
           $.each(rrf.rows, function (j, r) {
           var sv = r.saving > 0 ? '-' + r.saving + '%' : '+' + Math.abs(r.saving) + '%';
-          h += '<tr class="stt-sub stt-rep stt-rs"' + hid + '><td class="stt-ell" title="' + esc(r.title + (r.rejected ? ' (' + r.rejections.join(' / ') + ')' : '')) + '">&#8627; ' + esc(r.title) + (r.hun ? '<span class="stt-badge g">HUN</span>' : '') + (r.rejected ? (rrf.item && rrf.item.kind === 'radarr' && r.rejections.length && $.grep(r.rejections, function (x) { return /cutoff|upgrade/i.test(x); }).length === r.rejections.length ? '<span class="stt-badge a" title="' + esc(r.rejections.join(' / ')) + '">do your thing Radarr!</span>' : '<span class="stt-badge a" title="' + esc(r.rejections.join(' / ')) + '">rejected</span> <span class="stt-am">' + esc(r.rejections[0] || '') + '</span>') : '') + '</td><td class="stt-r">' + fb(r.size) + '</td><td class="stt-r">' + r.seeders + '</td><td class="stt-ell">' + esc(r.indexer) + '</td><td>' + r.res + 'p ' + hdrTxt(r.hdr) + ' <span class="stt-mut">' + sv + '</span></td><td class="stt-r"><input type="button" class="stt-grab stt-btn stt-sm" data-key="' + it.key + '" data-mode="repl" data-guid="' + esc(r.guid) + '" value="Replace with this"></td></tr>';
+          h += '<tr class="stt-sub stt-rep stt-rs"' + hid + '><td class="stt-ell" title="' + esc(r.title + (r.rejected ? ' (' + r.rejections.join(' / ') + ')' : '')) + '">&#8627; ' + esc(r.title) + (r.hun ? '<span class="stt-badge g">HUN</span>' : '') + (r.rejected ? (rrf.item && rrf.item.kind === 'radarr' && r.rejections.length && $.grep(r.rejections, function (x) { return /cutoff|upgrade/i.test(x); }).length === r.rejections.length ? '<span class="stt-badge a" title="' + esc(r.rejections.join(' / ')) + '">' + esc(T('rs.do_radarr')) + '</span>' : '<span class="stt-badge a" title="' + esc(r.rejections.join(' / ')) + '">' + esc(T('q.rejected')) + '</span> <span class="stt-am">' + esc(r.rejections[0] || '') + '</span>') : '') + '</td><td class="stt-r">' + fb(r.size) + '</td><td class="stt-r">' + r.seeders + '</td><td class="stt-ell">' + esc(r.indexer) + '</td><td>' + r.res + 'p ' + hdrTxt(r.hdr) + ' <span class="stt-mut">' + sv + '</span></td><td class="stt-r"><input type="button" class="stt-grab stt-btn stt-sm" data-key="' + it.key + '" data-mode="repl" data-guid="' + esc(r.guid) + '" value="' + esc(T('rs.replace_this')) + '"></td></tr>';
         }); }
         if (rrf.state === 'ready' && (rrf.dropped || []).length) {
-          $.each(rrf.dropped, function (j, d) { h += '<tr class="stt-sub stt-rs"' + hid + '><td class="stt-ell stt-mut" title="' + esc(d.title) + '">&#8627; filtered out: ' + esc(d.title) + '</td><td class="stt-r stt-mut">' + fb(d.size) + '</td><td class="stt-r stt-mut">' + d.seeders + '</td><td colspan="3" class="stt-mut">' + esc(d.why) + '</td></tr>'; });
+          $.each(rrf.dropped, function (j, d) { h += '<tr class="stt-sub stt-rs"' + hid + '><td class="stt-ell stt-mut" title="' + esc(d.title) + '">&#8627; ' + esc(T('rs.filtered', { t: d.title })) + '</td><td class="stt-r stt-mut">' + fb(d.size) + '</td><td class="stt-r stt-mut">' + d.seeders + '</td><td colspan="3" class="stt-mut">' + esc(d.why) + '</td></tr>'; });
         }
       }
     });
@@ -532,15 +539,15 @@ $(function () {
   });
   $(document).on('click', '.stt-add', function () {
     var $b = $(this);
-    if (!window.confirm('Add this torrent to qBittorrent?\n\nIt is added stopped and checked against your existing files. It starts seeding if it matches your files (all of them, or all but a few, see the settings); otherwise it is removed again and your files stay untouched.')) { return; }
-    $b.prop('disabled', true).val('Adding...');
+    if (!window.confirm(T('f.add_confirm'))) { return; }
+    $b.prop('disabled', true).val(T('f.adding'));
     api('find_add', {id: $b.data('id'), idx: $b.data('idx')}).done(function (r) {
-      if (r.ok) { $b.val('Added, checking...'); loadState(); setTimeout(pollFind, 1500); } else { $b.prop('disabled', false).val('Add'); window.alert(r.error); }
+      if (r.ok) { $b.val(T('f.added')); loadState(); setTimeout(pollFind, 1500); } else { $b.prop('disabled', false).val(T('f.btn_add')); window.alert(r.error); }
     }).fail(function (x) { $b.prop('disabled', false).val('Add'); window.alert(err(x)); });
   });
   $(document).on('click', '.stt-del', function () {
     var $b = $(this), td = cfg && +cfg.trash_days > 0;
-    if (!window.confirm(td ? 'Move this folder to the trash?\n\nIt is deleted for good after ' + cfg.trash_days + ' days. If a torrent removed by the tracker belongs to it, that torrent is taken out of qBittorrent.' : 'Delete this folder for good?\n\nThis cannot be undone. If a torrent removed by the tracker belongs to it, that torrent is taken out of qBittorrent.')) { return; }
+    if (!window.confirm(td ? T('f.trash_confirm', { n: cfg.trash_days }) : T('f.del_confirm'))) { return; }
     $b.prop('disabled', true);
     api('find_delete', {id: $b.data('id')}).done(function (r) { if (r.ok) { $b.closest('tr').nextUntil('.stt-grp').addBack().remove(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
@@ -560,11 +567,11 @@ $(function () {
     });
   }
   $(document).on('click', '.stt-rsearch', function () {
-    COLL[String($(this).data('key'))] = false; var $b = $(this).prop('disabled', true).val('Searching...');
+    COLL[String($(this).data('key'))] = false; var $b = $(this).prop('disabled', true).val(T('f.searching'));
     api('repl_search', {id: $b.data('id')}).done(function (r) { if (r.ok) { setTimeout(pollFind, 600); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
   $('#stt-fscan').on('click', function () {
-    $(this).prop('disabled', true); $('#stt-fmsg').css('color', '').text('Starting...');
+    $(this).prop('disabled', true); $('#stt-fmsg').css('color', '').text(T('f.starting'));
     api('find_scan').done(function () { setTimeout(pollFind, 800); }).fail(function (x) { $('#stt-fscan').prop('disabled', false); $('#stt-fmsg').css('color', '#e5534b').text(err(x)); });
   });
   var COLL = {}, GOPEN = {}, showAll = false, LAST = {p: null, j: null, q: 0};
@@ -572,30 +579,30 @@ $(function () {
   // a speed: one decimal under 10 MB/s
   function fsp(b) { b = +b || 0; return b >= 1e9 ? (b / 1e9).toFixed(1) + ' GB/s' : b >= 1e6 ? (b / 1e6).toFixed(b < 1e7 ? 1 : 0) + ' MB/s' : b >= 1e3 ? Math.round(b / 1e3) + ' KB/s' : b + ' B/s'; }
   // time left in seconds, readable: 16 d 7 h, 1 h 17 m, 9 m
-  function fmtEta(e) { if (!(e > 0)) { return ''; } var d = Math.floor(e / 86400), h = Math.floor(e % 86400 / 3600), m = Math.ceil(e % 3600 / 60); if (m === 60) { h++; m = 0; } return d ? d + ' d ' + h + ' h' : h ? h + ' h ' + m + ' m' : Math.max(1, m) + ' m'; }
+  function fmtEta(e) { if (!(e > 0)) { return ''; } var d = Math.floor(e / 86400), h = Math.floor(e % 86400 / 3600), m = Math.ceil(e % 3600 / 60); if (m === 60) { h++; m = 0; } return d ? T('dur.dh', { d: d, h: h }) : h ? T('dur.hm', { h: h, m: m }) : T('dur.m', { m: Math.max(1, m) }); }
   // a running job's own progress (qBittorrent): numbers on one line, a bar under them; the bar takes the row's state color
   function progHtml(id, stalled) {
     var x = id && LAST.dl && LAST.dl.per ? LAST.dl.per[id] : null;
     if (!x) { return null; }
     var pc = Math.floor((+x.p || 0) * 100), bar = function (cls, w) { return '<div class="stt-pbar ' + cls + '"><i style="width:' + Math.max(1, Math.min(100, w)) + '%"></i></div>'; };
-    if (x.st === 'moving') { return {g: 1, h: '<div class="stt-pst"><b>moving to the array ' + pc + '%</b>' + (x.speed > 0 ? '<span>&rarr; ' + fsp(x.speed) + '</span>' : '') + (x.eta > 0 ? '<span>' + fmtEta(x.eta) + ' left</span>' : '') + '</div>' + bar('gr', pc)}; }
-    if (x.st === 'movewait') { return {g: 1, h: '<div class="stt-pst"><b>downloaded, waiting to move to the array</b></div>' + bar('gr', 0)}; }
-    if (x.st === 'done') { return {h: '<div class="stt-pst"><b>downloaded</b><span>' + fb(x.size) + '</span><span class="stt-mut">waiting for the import</span></div>' + bar('', 100)}; }
-    return {h: '<div class="stt-pst"><b>downloading ' + pc + '%</b><span>' + fb(x.done) + ' / ' + fb(x.size) + '</span><span>&darr; ' + fsp(x.speed) + '</span><span>' + (x.eta > 0 ? fmtEta(x.eta) + ' left' : 'no estimate') + '</span></div>' + bar(stalled ? 'am' : '', pc)};
+    if (x.st === 'moving') { return {g: 1, h: '<div class="stt-pst"><b>' + esc(T('pr.moving', { p: pc })) + '</b>' + (x.speed > 0 ? '<span>&rarr; ' + fsp(x.speed) + '</span>' : '') + (x.eta > 0 ? '<span>' + esc(T('pr.left', { t: fmtEta(x.eta) })) + '</span>' : '') + '</div>' + bar('gr', pc)}; }
+    if (x.st === 'movewait') { return {g: 1, h: '<div class="stt-pst"><b>' + esc(T('pr.movewait')) + '</b></div>' + bar('gr', 0)}; }
+    if (x.st === 'done') { return {h: '<div class="stt-pst"><b>' + esc(T('pr.downloaded')) + '</b><span>' + fb(x.size) + '</span><span class="stt-mut">' + esc(T('pr.wait_import')) + '</span></div>' + bar('', 100)}; }
+    return {h: '<div class="stt-pst"><b>' + esc(T('pr.downloading', { p: pc })) + '</b><span>' + fb(x.done) + ' / ' + fb(x.size) + '</span><span>&darr; ' + fsp(x.speed) + '</span><span>' + esc(x.eta > 0 ? T('pr.left', { t: fmtEta(x.eta) }) : T('pr.no_eta')) + '</span></div>' + bar(stalled ? 'am' : '', pc)};
   }
   function actRow(o) {
     var sc = {'stt-ok': 's-green', 'stt-am': 's-amber', 'stt-er': 's-red', 'stt-mut': 's-grey'}[o.c] || 's-blue', st = stallTxt(o.id);
     var pr = o.live ? progHtml(o.id, !!st) : null;
     if (pr && pr.g) { sc = 's-grey'; } // moving: grey row
     if (st) { sc = 's-amber'; } // stalled: amber row (stuck) and a badge of its own
-    return '<tr class="' + sc + '"><td><span class="stt-badge ' + o.bc + '">' + o.badge + '</span>' + (st ? '<span class="stt-badge a">stalled</span>' : '') + '<b>' + esc(o.title) + '</b>' + (o.l1 ? '<div class="stt-mut">' + o.l1 + '</div>' : '') + (o.l2 ? '<div class="stt-mut">&rarr; ' + o.l2 + '</div>' : '') + '</td>' +
-      '<td class="' + o.c + '" style="width:36%">' + (pr ? pr.h : esc(o.msg) + (o.okbar ? '<div class="stt-pbar ok"><i style="width:100%"></i></div>' : '')) + st + '</td><td class="stt-r">' + (o.btn || '') + '<div class="stt-mut">' + ago(o.t) + ' ago</div></td></tr>';
+    return '<tr class="' + sc + '"><td><span class="stt-badge ' + o.bc + '">' + o.badge + '</span>' + (st ? '<span class="stt-badge a">' + esc(T('pr.stalled_b')) + '</span>' : '') + '<b>' + esc(o.title) + '</b>' + (o.l1 ? '<div class="stt-mut">' + o.l1 + '</div>' : '') + (o.l2 ? '<div class="stt-mut">&rarr; ' + o.l2 + '</div>' : '') + '</td>' +
+      '<td class="' + o.c + '" style="width:36%">' + (pr ? pr.h : esc(o.msg) + (o.okbar ? '<div class="stt-pbar ok"><i style="width:100%"></i></div>' : '')) + st + '</td><td class="stt-r">' + (o.btn || '') + '<div class="stt-mut">' + esc(T('ab.ago', { t: ago(o.t) })) + '</div></td></tr>';
   }
   // a stalled download on its own row: seeders connected now and what the tracker lists
   function stallTxt(id) {
     var x = id && LAST.dl && LAST.dl.stall ? LAST.dl.stall[id] : null;
     if (!x) { return ''; }
-    return '<div class="stt-am">stalled: ' + (x.seeds ? x.seeds + ' seeder' + (x.seeds === 1 ? '' : 's') + ' connected, nothing comes' : 'no seeder online' + (x.swarm ? ' (the tracker lists ' + x.swarm + ')' : '')) + '</div>';
+    return '<div class="stt-am">' + esc(T('pr.stalled', { why: x.seeds ? T('pr.seeds_none', { n: x.seeds }) : T('pr.no_seeder') + (x.swarm ? ' ' + T('pr.swarm', { n: x.swarm }) : '') })) + '</div>';
   }
   // the replacements still downloading together: bytes left and one ETA at qBittorrent's total download speed;
   // then the moves to the array (one torrent at a time, at the measured move speed): the end is the later of
@@ -607,14 +614,14 @@ $(function () {
     if (!d || !d.jobs) { return ''; }
     if (d.err) { return ' &middot; ' + esc(d.err); }
     var mv = +d.mv || 0, mr = +d.mrate || 0, mvT = mv > 0 && mr > 0 ? mv / mr : -1;
-    var mvTxt = mv > 0 ? (mvT > 0 ? fb(mv) + ' to move to the array at ' + fsp(mr) : fb(mv) + ' to move to the array (no move speed measured yet)') : '';
-    if (!d.found) { return mv > 0 ? ' &middot; ' + mvTxt + (mvT > 0 ? ' &middot; about ' + fmtEta(mvT) : '') : ''; }
-    var r = ' &middot; ' + d.found + ' downloading &middot; ' + fb(d.left) + ' left';
-    if (d.stalled && d.stalled === d.found) { return r + ' &middot; <span class="stt-am">stalled: ' + (d.seeds ? d.seeds + ' seeder' + (d.seeds === 1 ? '' : 's') + ' connected, nothing comes' : 'no seeder online' + (d.swarm ? ' (the tracker lists ' + d.swarm + ')' : '')) + '</span>'; }
-    if (d.speed < 1e5) { return r + ' &middot; ' + (d.stalled ? d.stalled + ' stalled &middot; ' : '') + 'hardly moving (' + (d.speed / 1e3).toFixed(0) + ' KB/s)'; }
+    var mvTxt = esc(mv > 0 ? (mvT > 0 ? T('pr.to_move_at', { s: fb(mv), r: fsp(mr) }) : T('pr.to_move', { s: fb(mv) })) : '');
+    if (!d.found) { return mv > 0 ? ' &middot; ' + mvTxt + (mvT > 0 ? ' &middot; ' + esc(T('pr.about', { t: fmtEta(mvT) })) : '') : ''; }
+    var r = ' &middot; ' + esc(T('pr.n_dl', { n: d.found })) + ' &middot; ' + esc(T('pr.left', { t: fb(d.left) }));
+    if (d.stalled && d.stalled === d.found) { return r + ' &middot; <span class="stt-am">' + esc(T('pr.stalled', { why: d.seeds ? T('pr.seeds_none', { n: d.seeds }) : T('pr.no_seeder') + (d.swarm ? ' ' + T('pr.swarm', { n: d.swarm }) : '') })) + '</span>'; }
+    if (d.speed < 1e5) { return r + ' &middot; ' + (d.stalled ? esc(T('pr.n_stalled', { n: d.stalled })) + ' &middot; ' : '') + esc(T('pr.hardly', { s: (d.speed / 1e3).toFixed(0) })); }
     var e = d.left / d.speed;
-    r += ' &middot; about ' + fmtEta(e) + ' at ' + fsp(d.speed);
-    if (mv > 0) { r += ' &middot; then ' + mvTxt + (mvT > 0 ? ' &middot; all done in about ' + fmtEta(Math.max(e + (+d.mlast || 0) / mr, mvT)) : ''); }
+    r += ' &middot; ' + esc(T('pr.about_at', { t: fmtEta(e), r: fsp(d.speed) }));
+    if (mv > 0) { r += ' &middot; ' + esc(T('pr.then')) + ' ' + mvTxt + (mvT > 0 ? ' &middot; ' + esc(T('pr.all_done', { t: fmtEta(Math.max(e + (+d.mlast || 0) / mr, mvT)) })) : ''); }
     return r;
   }
   function drawActivity() {
@@ -622,30 +629,30 @@ $(function () {
     $.each(LAST.j || [], function (i, j) {
       var done = {cleaned: 1, removed: 1, failed: 1}[j.stage];
       var c = {imported: 'stt-ok', cleaned: 'stt-ok', blocked: 'stt-am', failed: 'stt-er', removed: 'stt-mut'}[j.stage] || '';
-      var btn = (j.stage === 'imported' ? '<input type="button" class="stt-rm stt-btn stt-sm" data-id="' + j.id + '" value="' + (j.mode === 'repl' ? 'Remove the old files' : 'Remove the old torrent and files') + '"> <input type="button" class="stt-dis stt-btn stt-sm stt-ghost" data-id="' + j.id + '" value="Dismiss" title="Hide this line; nothing is deleted">' : '') + (j.stage === 'blocked' && j.kind === 'radarr' ? '<input type="button" class="stt-force stt-btn stt-sm" data-id="' + j.id + '" value="Force the import">' : '');
-      (done ? R : P).push({t: j.t, s: !!stallTxt(j.id), h: actRow({badge: 'replace', bc: 'a', title: j.title, l1: esc(j.old_name) + ' (' + fb(j.old_size) + ')', l2: esc(j['new']) + ' (' + fb(j.new_size) + ')', msg: j.msg, c: c, btn: btn, t: j.t, id: j.id, live: {grabbed: 1, downloading: 1}[j.stage], okbar: j.stage === 'imported'})});
+      var btn = (j.stage === 'imported' ? '<input type="button" class="stt-rm stt-btn stt-sm" data-id="' + j.id + '" value="' + esc(j.mode === 'repl' ? T('act.rm_old') : T('act.rm_old_t')) + '"> <input type="button" class="stt-dis stt-btn stt-sm stt-ghost" data-id="' + j.id + '" value="' + esc(T('act.dismiss')) + '" title="' + esc(T('act.dismiss_tip')) + '">' : '') + (j.stage === 'blocked' && j.kind === 'radarr' ? '<input type="button" class="stt-force stt-btn stt-sm" data-id="' + j.id + '" value="' + esc(T('act.force')) + '">' : '');
+      (done ? R : P).push({t: j.t, s: !!stallTxt(j.id), h: actRow({badge: esc(T('act.b_replace')), bc: 'a', title: j.title, l1: esc(j.old_name) + ' (' + fb(j.old_size) + ')', l2: esc(j['new']) + ' (' + fb(j.new_size) + ')', msg: j.msg, c: c, btn: btn, t: j.t, id: j.id, live: {grabbed: 1, downloading: 1}[j.stage], okbar: j.stage === 'imported'})});
     });
     $.each(LAST.p || [], function (i, p) {
       var done = {done: 1, failed: 1}[p.stage], c = {done: 'stt-ok', failed: 'stt-er'}[p.stage] || '';
-      (done ? R : P).push({t: p.t, h: actRow({badge: 'add torrent', bc: 'g', title: p.name, msg: p.msg, c: c, t: p.t})});
+      (done ? R : P).push({t: p.t, h: actRow({badge: esc(T('act.b_add')), bc: 'g', title: p.name, msg: p.msg, c: c, t: p.t})});
     });
     // season pack replacements (Season repacker) in the same list
     $.each(SPJ || [], function (i, j) {
       var done = {done: 1, failed: 1}[j.stage], c = {done: 'stt-ok', blocked: 'stt-am', failed: 'stt-er'}[j.stage] || '';
-      (done ? R : P).push({t: j.t, s: !!stallTxt(j.id), h: actRow({badge: 'season pack', bc: 'a', title: j.title + ' S' + ('0' + j.season).slice(-2), l1: '', l2: esc(j.pack) + ' (' + fb(j.pack_size) + ')', msg: j.msg, c: c, t: j.t, id: j.id, live: {grabbed: 1, downloading: 1}[j.stage]})});
+      (done ? R : P).push({t: j.t, s: !!stallTxt(j.id), h: actRow({badge: esc(T('act.b_pack')), bc: 'a', title: j.title + ' S' + ('0' + j.season).slice(-2), l1: '', l2: esc(j.pack) + ' (' + fb(j.pack_size) + ')', msg: j.msg, c: c, t: j.t, id: j.id, live: {grabbed: 1, downloading: 1}[j.stage]})});
     });
     function srt(a) { a.sort(function (x, y) { return (x.s ? 1 : 0) - (y.s ? 1 : 0) || y.t - x.t; }); } // stalled ones at the bottom, newest first
     srt(P); srt(R);
-    var q = LAST.q > 0 ? '<div style="padding:6px 10px" class="stt-ok">Queue: ' + LAST.q + ' more torrent(s) waiting, added one after the other. <input type="button" id="stt-qstop" class="stt-btn stt-sm" value="Stop the queue"></div>' : '';
+    var q = LAST.q > 0 ? '<div style="padding:6px 10px" class="stt-ok">' + esc(T('act.queue', { n: LAST.q })) + ' <input type="button" id="stt-qstop" class="stt-btn stt-sm" value="' + esc(T('act.stop_queue')) + '"></div>' : '';
     var $p = $('#stt-proc');
     if (!P.length && !q) { $p.hide().empty(); } else {
-      var t = '<div class="stt-sh">Processing <span class="stt-mut">' + P.length + ' running now' + dlSum(LAST.dl) + '</span></div>' + q;
+      var t = '<div class="stt-sh">' + esc(T('act.processing')) + ' <span class="stt-mut">' + esc(T('act.n_running', { n: P.length })) + dlSum(LAST.dl) + '</span></div>' + q;
       if (P.length) { t += '<table class="stt stt-act"><tbody>' + $.map(P, function (x) { return x.h; }).join('') + '</tbody></table>'; }
       $p.html(t).show();
     }
     var lim = showAll ? R.length : 6;
-    var t2 = '<div class="stt-sh">Results <span class="stt-mut">finished</span>' + (R.length > 6 ? ' <a href="#" class="stt-more">' + (showAll ? 'show fewer' : 'show all ' + R.length) + '</a>' : '') + (R.length ? ' <a href="#" class="stt-clr" style="margin-left:10px" title="Remove the finished entries from this list">clear list</a>' : '') + '</div>';
-    t2 += R.length ? '<table class="stt stt-act"><tbody>' + $.map(R.slice(0, lim), function (x) { return x.h; }).join('') + '</tbody></table>' : '<p class="stt-mut" style="margin:8px 10px">Nothing finished yet.</p>';
+    var t2 = '<div class="stt-sh">' + esc(T('act.results')) + ' <span class="stt-mut">' + esc(T('act.finished')) + '</span>' + (R.length > 6 ? ' <a href="#" class="stt-more">' + esc(showAll ? T('act.fewer') : T('act.all', { n: R.length })) + '</a>' : '') + (R.length ? ' <a href="#" class="stt-clr" style="margin-left:10px" title="' + esc(T('act.clear_tip')) + '">' + esc(T('act.clear')) + '</a>' : '') + '</div>';
+    t2 += R.length ? '<table class="stt stt-act"><tbody>' + $.map(R.slice(0, lim), function (x) { return x.h; }).join('') + '</tbody></table>' : '<p class="stt-mut" style="margin:8px 10px">' + esc(T('act.nothing_fin')) + '</p>';
     $('#stt-results').html(t2);
   }
   function drawPending(list) { LAST.p = list || []; drawActivity(); }
@@ -655,7 +662,7 @@ $(function () {
   function drawJobs(list) { var was = JSON.stringify(updBusy()); LAST.j = list || []; drawActivity(); if (UPD && JSON.stringify(updBusy()) !== was) { drawUpd(); } }
 
   // ---- update me ----
-  var CATL = {save: 'saving', hdr: 'HDR / DV', res: 'resolution'}, UCAT = {save: 1, hdr: 1, res: 1}, ULIMG = {}, UGOPEN = {}, BG = {};
+  var CATL = {save: T('u.cat_save'), hdr: T('u.cat_hdr'), res: T('u.cat_res')}, UCAT = {save: 1, hdr: 1, res: 1}, ULIMG = {}, UGOPEN = {}, BG = {};
   // the offer categories of a torrent (from its last search), limited to the ticked filter chips
   function uCats(it) {
     var rr = RES[it.hash], c = {};
@@ -668,32 +675,32 @@ $(function () {
     var rr = RES[it.hash], cs = uCats(it) || [], tg = '', sum = '';
     var $b = $('<div class="stt-box">');
     if (it.kind && rr && rr.state === 'ready' && (rr.rows || []).length) {
-      tg = '<a href="#" class="stt-utg" data-hash="' + it.hash + '" title="Show or hide the releases" style="display:inline-block;width:16px;text-align:center;text-decoration:none">' + (UOPEN[it.hash] ? '&minus;' : '+') + '</a> ';
+      tg = '<a href="#" class="stt-utg" data-hash="' + it.hash + '" title="' + esc(T('u.toggle')) + '" style="display:inline-block;width:16px;text-align:center;text-decoration:none">' + (UOPEN[it.hash] ? '&minus;' : '+') + '</a> ';
       var rm = grp === 'must' ? mustSorted(rr.rows)[0] : null, r0 = rm || rr.rows[0];
-      sum = ' <span class="stt-mut">&middot; ' + rr.rows.length + ' release' + (rr.rows.length === 1 ? '' : 's') + ', ' + (rm ? 'must' : 'first') + ': ' + (r0.saving > 0 ? '-' + r0.saving : '+' + Math.abs(r0.saving)) + '% ' + r0.res + 'p ' + esc(r0.hdr) + (r0.hun ? ' HUN' : '') + '</span>';
+      sum = ' <span class="stt-mut">&middot; ' + esc(T('u.n_rel', { n: rr.rows.length })) + ', ' + esc(rm ? T('q.must') : T('u.first')) + ': ' + (r0.saving > 0 ? '-' + r0.saving : '+' + Math.abs(r0.saving)) + '% ' + r0.res + 'p ' + esc(r0.hdr) + (r0.hun ? ' HUN' : '') + '</span>';
     }
     var q = it.kind ? esc(it.title) + ' <span class="stt-mut">' + esc(it.cur_quality || '') + ' ' + (it.cur_res || '') + 'p ' + hdrLbl(it.cur_hdr) + '</span>' : '<span class="stt-am">' + esc(it.note) + '</span>';
-    $b.append($('<div>').html(tg + '<b>' + esc(it.name) + '</b> <span class="stt-mut">' + fb(it.size) + (it.added ? ', ' + ago(it.added) + ' in the client' : '') + '</span>' + (it.dead ? '<span class="stt-badge rd">removed from tracker</span>' : '') + $.map(cs, function (c) { return '<span class="stt-badge g">' + CATL[c] + '</span>'; }).join('')));
+    $b.append($('<div>').html(tg + '<b>' + esc(it.name) + '</b> <span class="stt-mut">' + fb(it.size) + (it.added ? ', ' + esc(T('u.in_client', { t: ago(it.added) })) : '') + '</span>' + (it.dead ? '<span class="stt-badge rd">' + esc(T('f.removed')) + '</span>' : '') + $.map(cs, function (c) { return '<span class="stt-badge g">' + esc(CATL[c]) + '</span>'; }).join('')));
     $b.append($('<div>').html(q + sum));
     if (it.kind) {
       var open = !tg || UOPEN[it.hash]; // nothing to fold (searching, an error, no release): shown as it is
-      $b.append($('<div class="stt-ures">').toggle(!!open).html(resBlock(it.hash, 'Replace with this', 'upd', it, grp === 'must')));
-      $b.append('<input type="button" class="stt-find stt-btn stt-sm' + (rr ? ' stt-ghost' : '') + '" data-hash="' + it.hash + '" value="' + (rr ? 'Search again' : 'Find alternatives') + '"' + (rr && rr.state === 'running' ? ' disabled' : '') + '>');
+      $b.append($('<div class="stt-ures">').toggle(!!open).html(resBlock(it.hash, T('rs.replace_this'), 'upd', it, grp === 'must')));
+      $b.append('<input type="button" class="stt-find stt-btn stt-sm' + (rr ? ' stt-ghost' : '') + '" data-hash="' + it.hash + '" value="' + esc(rr ? T('u.search_again') : T('u.find_alt')) + '"' + (rr && rr.state === 'running' ? ' disabled' : '') + '>');
     }
-    $b.append(' <input type="button" class="stt-uhide stt-btn stt-sm stt-ghost" data-hash="' + it.hash + '" data-on="1" value="Hide" title="Leave this torrent out of the Shape up list (nothing is changed in qBittorrent or on the disk)">');
+    $b.append(' <input type="button" class="stt-uhide stt-btn stt-sm stt-ghost" data-hash="' + it.hash + '" data-on="1" value="' + esc(T('u.hide')) + '" title="' + esc(T('u.hide_tip')) + '">');
     return $b;
   }
   function drawBg() {
     var u = UPD, h = '';
     var nu = (u && u.items || []).length;
-    $('#stt-uband').text(u && u.state === 'ready' && cfg ? nu + ' torrent' + (nu === 1 ? '' : 's') + ' of at least ' + cfg.upd_min_gb + ' GB and ' + cfg.upd_min_age + ' day' + (+cfg.upd_min_age === 1 ? '' : 's') : '');
+    $('#stt-uband').text(u && u.state === 'ready' && cfg ? T('u.band', { t: T('u.n_torrents', { n: nu }), gb: cfg.upd_min_gb, d: T('u.n_days', { n: +cfg.upd_min_age }) }) : '');
     if (!u || u.state !== 'ready' || !BG.total) { $('#stt-ubg').html(''); $('#stt-n-upd').text(''); return; }
     var n = {save: 0, hdr: 0, res: 0}, off = 0, UB = updBusy(), its = $.grep(u.items || [], function (it) { return !UB[it.hash]; }); // replacements started: not counted
     $.each(its, function (i, it) { var c = uCats(it); if (c && c.length) { off++; } $.each(c || [], function (j, k) { n[k]++; }); });
     var nm = 0; $.each(its, function (i, it) { var rr = RES[it.hash], m = false; if (rr && rr.state === 'ready') { $.each(rr.rows || [], function (j, r) { var c = r.cats || []; if (c.indexOf('save') >= 0 && (c.indexOf('hdr') >= 0 || c.indexOf('res') >= 0)) { m = true; } }); } if (m) { nm++; } });
-    $('#stt-n-upd').text(off + ' offer' + (off === 1 ? '' : 's') + (nm ? ' \u00b7 ' + nm + ' must do' : ''));
-    h = 'Searched ' + BG.done + ' of ' + BG.total + (BG.running ? (BG.cur ? ' &middot; now: ' + esc(BG.cur) : '') : (BG.done < BG.total ? (BG.state === 'stopped' ? ' &middot; stopped' : '') : ' &middot; done')) +
-        ' &middot; <b>' + off + '</b> with an offer' + (off ? ' (' + $.map(['save', 'hdr', 'res'], function (k) { return n[k] ? n[k] + ' ' + CATL[k] : null; }).join(', ') + ')' : '');
+    $('#stt-n-upd').text(T('u.n_offers', { n: off }) + (nm ? ' \u00b7 ' + T('u.n_must', { n: nm }) : ''));
+    h = esc(T('u.searched', { d: BG.done, n: BG.total })) + (BG.running ? (BG.cur ? ' &middot; ' + esc(T('u.now', { t: BG.cur })) : '') : (BG.done < BG.total ? (BG.state === 'stopped' ? ' &middot; ' + esc(T('u.stopped')) : '') : ' &middot; ' + esc(T('u.done')))) +
+        ' &middot; ' + T('u.with_offer', { n: '<b>' + off + '</b>' }) + (off ? ' (' + esc($.map(['save', 'hdr', 'res'], function (k) { return n[k] ? n[k] + ' ' + CATL[k] : null; }).join(', ')) + ')' : '');
     // the balance: the first (best listed) saving release of each torrent frees, the first upgrade takes; a torrent with both counts in both lines
     var fr = 0, nf = 0, tk = 0, nt = 0;
     $.each(u.items || [], function (i, it) {
@@ -708,13 +715,13 @@ $(function () {
       if (u1) { tk += u1.size - cur; nt++; }
     });
     if (nf || nt) {
-      h += '<br>' + (nf ? 'The ' + nf + ' saving offer' + (nf === 1 ? '' : 's') + ' would free about <b>' + fb(Math.max(0, fr)) + '</b>' : '') + (nf && nt ? '; ' : '') +
-           (nt ? 'the ' + nt + ' upgrade' + (nt === 1 ? '' : 's') + ' would take about <b>' + fb(Math.abs(tk)) + '</b> ' + (tk >= 0 ? 'more' : 'less') : '') +
-           ' <span title="Counted with the first release listed for each torrent. Hardlinked files (imported into Radarr or Sonarr) free their space only when every link is gone.">(approx.)</span>';
+      h += '<br>' + (nf ? T('u.free', { n: nf, s: '<b>' + fb(Math.max(0, fr)) + '</b>' }) : '') + (nf && nt ? '; ' : '') +
+           (nt ? T(tk >= 0 ? 'u.take_more' : 'u.take_less', { n: nt, s: '<b>' + fb(Math.abs(tk)) + '</b>' }) : '') +
+           ' <span title="' + esc(T('u.approx_tip')) + '">(' + esc(T('u.approx')) + ')</span>';
     }
-    if (BG.running) { h += ' <input type="button" class="stt-btn stt-sm stt-ghost" id="stt-ubgstop" value="Stop searching">'; }
-    else if (BG.done < BG.total) { h += ' <input type="button" class="stt-btn stt-sm" id="stt-ubggo" value="Search the rest">'; }
-    if (BG.done > 0) { h += ' <input type="button" class="stt-btn stt-sm stt-ghost" id="stt-uforget" value="Forget results, search again" title="Forget every search result of this list and search all torrents again in the background (for example after you changed the saving, the offers or the size limit)">'; }
+    if (BG.running) { h += ' <input type="button" class="stt-btn stt-sm stt-ghost" id="stt-ubgstop" value="' + esc(T('u.stop_search')) + '">'; }
+    else if (BG.done < BG.total) { h += ' <input type="button" class="stt-btn stt-sm" id="stt-ubggo" value="' + esc(T('u.search_rest')) + '">'; }
+    if (BG.done > 0) { h += ' <input type="button" class="stt-btn stt-sm stt-ghost" id="stt-uforget" value="' + esc(T('u.forget')) + '" title="' + esc(T('u.forget_tip')) + '">'; }
     $('#stt-ubg').html(h);
   }
   function drawUpd() {
@@ -722,12 +729,12 @@ $(function () {
     drawBg();
     if (!u || u.state === 'none') { $('#stt-ubar').hide(); return; }
     if (u.state === 'error') { $('#stt-umsg').css('color', '#e5534b').text(u.msg); return; }
-    $('#stt-umsg').css('color', '').text(u.state === 'running' ? (u.msg || 'Working...') : '');
-    if (!(u.items || []).length && u.state === 'ready') { $o.append('<p class="stt-mut">' + ((u.skipped || []).length ? 'Nothing to list.' : 'No torrent is big and old enough (see the thresholds above).') + '</p>'); }
+    $('#stt-umsg').css('color', '').text(u.state === 'running' ? (u.msg || T('f.working')) : '');
+    if (!(u.items || []).length && u.state === 'ready') { $o.append('<p class="stt-mut">' + esc((u.skipped || []).length ? T('u.nothing') : T('u.none_big')) + '</p>'); }
     // the filter bar: name and the ticked offer kinds
     $('#stt-ubar').toggle((u.items || []).length > 0);
     if (!$('#stt-ucats').children().length || $('#stt-ucats').data('sig') !== JSON.stringify(cfg ? [cfg.upd_cat_save, cfg.upd_cat_hdr, cfg.upd_cat_res] : [])) {
-      $('#stt-ucats').data('sig', JSON.stringify(cfg ? [cfg.upd_cat_save, cfg.upd_cat_hdr, cfg.upd_cat_res] : [])).html($.map(['save', 'hdr', 'res'], function (k) { return (!cfg || +cfg['upd_cat_' + k]) ? '<label style="margin-left:10px"><input type="checkbox" class="stt-ucat" value="' + k + '"' + (UCAT[k] ? ' checked' : '') + '> ' + CATL[k] + '</label>' : null; }).join(''));
+      $('#stt-ucats').data('sig', JSON.stringify(cfg ? [cfg.upd_cat_save, cfg.upd_cat_hdr, cfg.upd_cat_res] : [])).html($.map(['save', 'hdr', 'res'], function (k) { return (!cfg || +cfg['upd_cat_' + k]) ? '<label style="margin-left:10px"><input type="checkbox" class="stt-ucat" value="' + k + '"' + (UCAT[k] ? ' checked' : '') + '> ' + esc(CATL[k]) + '</label>' : null; }).join(''));
     }
     var qq = $.trim($('#stt-uq').val() || '').toLowerCase(), G = {dead: [], must: [], save: [], hdr: [], res: []}, rest = [];
     // Must do: one release that is smaller AND better (HDR / DV or resolution) at the same time
@@ -749,40 +756,40 @@ $(function () {
       if (!it.dead && !c.length) { rest.push(it); }
     });
     // a torrent with two kinds of offer is listed in both bars
-    var GL = {dead: 'Removed from the tracker: replace it', must: 'Must do <span class="stt-mut" style="font-weight:normal">&middot; smaller and better: a no-brainer</span>', save: 'Saving: a smaller release', hdr: 'HDR / DV upgrade', res: 'Resolution upgrade'}, GS = {dead: 's-red', must: 's-gold', save: 's-green', hdr: 's-purple', res: 's-blue'};
+    var GL = {dead: esc(T('u.g_dead')), must: esc(T('u.g_must')) + ' <span class="stt-mut" style="font-weight:normal">&middot; ' + esc(T('u.g_must_sub')) + '</span>', save: esc(T('u.g_save')), hdr: esc(T('u.g_hdr')), res: esc(T('u.g_res'))}, GS = {dead: 's-red', must: 's-gold', save: 's-green', hdr: 's-purple', res: 's-blue'};
     $.each(['dead', 'must', 'save', 'hdr', 'res'], function (i, g) {
       if (g === 'dead' ? !G.dead.length : g === 'must' ? !mustOn : ((cfg && !+cfg['upd_cat_' + g]) || !UCAT[g])) { return; }
       var n = G[g].length, op = !!UGOPEN[g] && n > 0, lim = ULIMG[g] || 25;
-      $o.append('<button type="button" class="stt-gbar ' + GS[g] + (n ? '' : ' empty') + '" data-g="' + g + '"' + (n ? '' : ' disabled') + '><span class="pm">' + (n ? (op ? '&minus;' : '+') : '') + '</span><span class="t">' + GL[g] + '</span><span class="c">' + n + ' torrent' + (n === 1 ? '' : 's') + '</span></button>');
+      $o.append('<button type="button" class="stt-gbar ' + GS[g] + (n ? '' : ' empty') + '" data-g="' + g + '"' + (n ? '' : ' disabled') + '><span class="pm">' + (n ? (op ? '&minus;' : '+') : '') + '</span><span class="t">' + GL[g] + '</span><span class="c">' + esc(T('u.n_torrents', { n: n })) + '</span></button>');
       if (!n) { return; }
       var $g = $('<div class="stt-ugrp" data-g="' + g + '">').toggle(op);
       $.each(G[g].slice(0, lim), function (j, it) { $g.append(uBox(it, GS[g], g)); });
-      if (n > lim) { $g.append('<p><input type="button" class="stt-btn stt-sm stt-ghost stt-umore" data-g="' + g + '" value="Show ' + Math.min(50, n - lim) + ' more (' + (n - lim) + ' left)"></p>'); }
+      if (n > lim) { $g.append('<p><input type="button" class="stt-btn stt-sm stt-ghost stt-umore" data-g="' + g + '" value="' + esc(T('u.more', { m: Math.min(50, n - lim), n: n - lim })) + '"></p>'); }
       $o.append($g);
     });
     if (rest.length) {
       var nn = 0; $.each(rest, function (i, it) { if (!RES[it.hash]) { nn++; } });
-      var $r = $('<details class="stt-urest"><summary class="stt-mut">' + rest.length + ' torrent' + (rest.length === 1 ? '' : 's') + ' without an offer' + (nn ? ' (' + nn + ' not searched yet)' : '') + '</summary></details>');
+      var $r = $('<details class="stt-urest"><summary class="stt-mut">' + esc(T('u.rest', { n: rest.length }) + (nn ? ' (' + T('u.not_searched_n', { n: nn }) + ')' : '')) + '</summary></details>');
       var $tr = $('<table class="stt stt-act"><tbody></tbody></table>');
       $.each(rest, function (i, it) {
-        var rr = RES[it.hash], st = !it.kind ? (it.note || 'not matched') : !rr ? 'not searched yet' : rr.state === 'running' ? 'searching now' : rr.state === 'error' ? 'search failed: ' + rr.msg : 'nothing better found';
+        var rr = RES[it.hash], st = !it.kind ? (it.note || T('u.not_matched')) : !rr ? T('u.not_searched') : rr.state === 'running' ? T('u.searching_now') : rr.state === 'error' ? T('u.search_failed', { e: rr.msg }) : T('u.nothing_better');
         $tr.find('tbody').append('<tr><td>' + esc(it.name) + '</td><td class="stt-r">' + fb(it.size) + '</td><td class="stt-mut" style="white-space:normal">' + esc(st) + '</td><td class="stt-r">' +
-          (it.kind ? '<input type="button" class="stt-find stt-btn stt-sm" data-hash="' + it.hash + '" value="' + (rr ? 'Search again' : 'Search now') + '"> ' : '') +
-          '<input type="button" class="stt-uhide stt-btn stt-sm stt-ghost" data-hash="' + it.hash + '" data-on="1" value="Hide"></td></tr>');
+          (it.kind ? '<input type="button" class="stt-find stt-btn stt-sm" data-hash="' + it.hash + '" value="' + esc(rr ? T('u.search_again') : T('u.search_now')) + '"> ' : '') +
+          '<input type="button" class="stt-uhide stt-btn stt-sm stt-ghost" data-hash="' + it.hash + '" data-on="1" value="' + esc(T('u.hide')) + '"></td></tr>');
       });
       $o.append($r.append($tr).prop('open', !!restOpen));
     }
     // not listed: no video, several seasons in one torrent, hidden by you
     var sk = u.state === 'ready' ? (u.skipped || []) : [];
     if (sk.length) {
-      var why = {'no video': 'no video file', 'several seasons': 'several seasons in one torrent', 'hidden': 'hidden by you'}, cnt = {}, t = '';
+      var why = {'no video': T('u.sk_novideo'), 'several seasons': T('u.sk_seasons'), 'hidden': T('u.sk_hidden')}, cnt = {}, t = '';
       $.each(sk, function (i, it) { cnt[it.skip] = (cnt[it.skip] || 0) + 1; });
       $.each(cnt, function (k, n) { t += (t ? ', ' : '') + n + ' ' + (why[k] || k); });
-      var $d = $('<details class="stt-uskip"><summary class="stt-mut">' + sk.length + ' torrent' + (sk.length === 1 ? '' : 's') + ' not listed (' + esc(t) + ')</summary></details>');
+      var $d = $('<details class="stt-uskip"><summary class="stt-mut">' + esc(T('u.not_listed', { n: sk.length, why: t })) + '</summary></details>');
       var $tb = $('<table class="stt stt-act"><tbody></tbody></table>');
       $.each(sk, function (i, it) {
         $tb.find('tbody').append('<tr><td>' + esc(it.name) + '</td><td class="stt-r">' + fb(it.size) + '</td><td class="stt-mut stt-r">' + esc(why[it.skip] || it.skip) + '</td><td class="stt-r">' +
-          (it.skip === 'hidden' ? '<input type="button" class="stt-uhide stt-btn stt-sm" data-hash="' + it.hash + '" data-on="0" value="Show again">' : '') + '</td></tr>');
+          (it.skip === 'hidden' ? '<input type="button" class="stt-uhide stt-btn stt-sm" data-hash="' + it.hash + '" data-on="0" value="' + esc(T('u.show_again')) + '">' : '') + '</td></tr>');
       });
       $o.append($d.append($tb).prop('open', !!wasOpen));
     }
@@ -792,7 +799,7 @@ $(function () {
     $(this).html(UOPEN[h] ? '&minus;' : '+').closest('.stt-box').find('.stt-ures').toggle(UOPEN[h]);
   });
   $(document).on('click', '#stt-uforget', function () {
-    if (!window.confirm('Forget every Shape up search result and search the whole list again?\n\nThe ' + (BG.total || 0) + ' torrents are searched again in the background, one about every 90 seconds (about ' + Math.max(1, Math.round((BG.total || 0) * 1.6 / 60)) + ' hours). Nothing is changed in qBittorrent, Radarr or Sonarr.')) { return; }
+    if (!window.confirm(T('u.forget_confirm', { n: BG.total || 0, h: Math.max(1, Math.round((BG.total || 0) * 1.6 / 60)) }))) { return; }
     var $b = $(this).prop('disabled', true);
     api('upd_forget').done(function (r) { if (!r.ok) { window.alert(r.error); $b.prop('disabled', false); return; } RES = {}; setTimeout(pollUpd, 1500); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
@@ -828,22 +835,22 @@ $(function () {
     });
   }
   $('#stt-uscan').on('click', function () {
-    $(this).prop('disabled', true); $('#stt-umsg').css('color', '').text('Starting...');
+    $(this).prop('disabled', true); $('#stt-umsg').css('color', '').text(T('f.starting'));
     api('upd_scan').done(function () { setTimeout(pollUpd, 800); }).fail(function (x) { $('#stt-uscan').prop('disabled', false); $('#stt-umsg').css('color', '#e5534b').text(err(x)); });
   });
   $(document).on('click', '.stt-find', function () {
-    var $b = $(this).prop('disabled', true).val('Searching...'); UOPEN[String($b.data('hash'))] = true;
+    var $b = $(this).prop('disabled', true).val(T('f.searching')); UOPEN[String($b.data('hash'))] = true;
     api('upd_search', {hash: $b.data('hash')}).done(function () { setTimeout(pollUpd, 600); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
   $(document).on('click', '.stt-grab', function () {
     var $b = $(this), repl = $b.data('mode') === 'repl';
-    if (!window.confirm(repl ? 'Replace this content with the selected release?\n\nRadarr/Sonarr downloads and imports it. When the import is done, the OLD files (the folder in the downloads folder and its media link) are moved to the trash folder, or deleted if the trash is set to 0 days, and the old torrent is removed from qBittorrent (its files are not deleted by qBittorrent).' : 'Send this release to Radarr/Sonarr?\n\nIt is downloaded and imported as a replacement. Your current files are replaced only when the import happens; the old torrent stays until you remove it here.')) { return; }
+    if (!window.confirm(repl ? T('rs.confirm_repl') : T('rs.confirm_upd'))) { return; }
     $b.prop('disabled', true);
     api('repl_grab', {key: $b.data('key'), guid: $b.data('guid')}).done(function (r) { if (r.ok) { loadState(); setTimeout(pollFind, 1500); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
   $(document).on('click', '.stt-force', function () {
     var $b = $(this);
-    if (!window.confirm('Ask Radarr to import the downloaded file now?\n\nRadarr replaces the old file in the media folder with the new one. Use it when the job waits with "Not an upgrade". Afterwards the old files are cleaned up as usual.')) { return; }
+    if (!window.confirm(T('act.force_confirm'))) { return; }
     $b.prop('disabled', true);
     api('job_force', {id: $b.data('id')}).done(function (r) { if (r.ok) { loadState(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
@@ -853,7 +860,7 @@ $(function () {
   });
   $(document).on('click', '.stt-rm', function () {
     var $b = $(this);
-    if (!window.confirm('Remove the OLD torrent from qBittorrent and its whole folder?\n\nThe folder (video and everything with it: nfo, images, subtitles) goes to the trash folder and is deleted after the trash days (at once if they are 0). If another torrent seeds the same files, only the old torrent is removed. Do it only after you checked that the new version plays.')) { return; }
+    if (!window.confirm(T('act.rm_confirm'))) { return; }
     $b.prop('disabled', true);
     api('upd_remove', {id: $b.data('id')}).done(function (r) { if (r.ok) { loadState(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
@@ -861,57 +868,58 @@ $(function () {
   // ---- season packs ----
   var SP = null, SPJ = [], spT = null, SPAB = [], SPABQ = 0, SPOPEN = false;
   function spName(x) { return esc(x.title) + ' S' + ('0' + x.season).slice(-2); }
+  var SPW = {'airing': 'spw.airing', 'already a pack': 'spw.pack', 'no pack': 'spw.nopack', 'search failed': 'spw.search', 'Sonarr did not answer': 'spw.noanswer', 'nothing to replace': 'spw.nothing'}; // reason codes of the scan
   function drawSp() {
     var $o = $('#stt-spitems').empty(), $j = $('#stt-spjobs').empty(), sp = SP;
     var jh = '', busyKeys = {};
     $.each(SPJ, function (i, j) {
       var fin = {done: 1, failed: 1, blocked: 1}[j.stage], c = {done: 'stt-ok', blocked: 'stt-am', failed: 'stt-er'}[j.stage] || '';
       if (!fin) { busyKeys[j.key] = 1; }
-      jh += '<tr class="' + ({done: 's-green', blocked: 's-amber', failed: 's-red'}[j.stage] || 's-blue') + '"><td><span class="stt-badge a">season pack</span><b>' + spName(j) + '</b><div class="stt-mut">&rarr; ' + esc(j.pack) + ' (' + fb(j.pack_size) + ')</div></td><td class="' + c + '" style="width:40%">' + esc(j.msg) + '</td><td class="stt-r"><div class="stt-mut">' + ago(j.t) + ' ago</div></td></tr>';
+      jh += '<tr class="' + ({done: 's-green', blocked: 's-amber', failed: 's-red'}[j.stage] || 's-blue') + '"><td><span class="stt-badge a">' + esc(T('act.b_pack')) + '</span><b>' + spName(j) + '</b><div class="stt-mut">&rarr; ' + esc(j.pack) + ' (' + fb(j.pack_size) + ')</div></td><td class="' + c + '" style="width:40%">' + esc(j.msg) + '</td><td class="stt-r"><div class="stt-mut">' + esc(T('ab.ago', { t: ago(j.t) })) + '</div></td></tr>';
     });
     drawActivity(); // the jobs are listed in Activity at the top
     var nact = 0; $.each(SPJ, function (i, j) { if (!{done: 1, failed: 1, blocked: 1}[j.stage]) { nact++; } });
     var abk = {}, nab = 0; $.each(SPAB, function (i, it) { if (!busyKeys[it.key]) { abk[it.key] = 1; nab++; } });
     var nsc = sp && sp.state === 'ready' ? $.grep(sp.items || [], function (it) { return !busyKeys[it.key] && !abk[it.key]; }).length : -1;
-    $('#stt-n-rep').text(nsc >= 0 || nab ? (Math.max(0, nsc) + nab) + (nact ? ' \u00b7 ' + nact + ' running' : '') : (nact ? nact + ' running' : ''));
+    $('#stt-n-rep').text(nsc >= 0 || nab ? (Math.max(0, nsc) + nab) + (nact ? ' \u00b7 ' + T('sp.n_running', { n: nact }) : '') : (nact ? T('sp.n_running', { n: nact }) : ''));
     // packs from autobrr (item 6, 2026-10-16): open, above the library scan; started ones are in Activity
     var ab = $.grep(SPAB, function (it) { return !busyKeys[it.key]; }), $ab = $('#stt-spab').empty();
     if (ab.length || SPABQ) {
-      var ah = '<div class="stt-sh" style="box-shadow:inset 3px 0 0 #3fa24a">From autobrr <span class="stt-mut">&middot; ' + ab.length + ' season' + (ab.length === 1 ? '' : 's') + (SPABQ ? ' &middot; ' + SPABQ + ' being checked with Sonarr' : '') + '</span></div>';
-      if (ab.length) { ah += '<table class="stt"><thead><tr><th>Season</th><th>Pack</th><th class="stt-r">Size</th><th class="stt-r">Seeders</th><th class="stt-r">Replaces</th><th></th></tr></thead><tbody>' + $.map(ab, function (it) { return spRows(it, true); }).join('') + '</tbody></table>'; }
+      var ah = '<div class="stt-sh" style="box-shadow:inset 3px 0 0 #3fa24a">' + esc(T('sp.from_ab')) + ' <span class="stt-mut">&middot; ' + esc(T('sp.n_seasons', { n: ab.length }) + (SPABQ ? ' · ' + T('sp.checking', { n: SPABQ }) : '')) + '</span></div>';
+      if (ab.length) { ah += '<table class="stt"><thead><tr><th>' + esc(T('sp.col_season')) + '</th><th>' + esc(T('sp.col_pack')) + '</th><th class="stt-r">' + esc(T('col.size')) + '</th><th class="stt-r">' + esc(T('col.seeders')) + '</th><th class="stt-r">' + esc(T('sp.col_replaces')) + '</th><th></th></tr></thead><tbody>' + $.map(ab, function (it) { return spRows(it, true); }).join('') + '</tbody></table>'; }
       $ab.html(ah);
     }
     if (!sp || sp.state === 'none') { return; }
     if (sp.state === 'error') { $('#stt-spmsg').css('color', '#e5534b').text(sp.msg); return; }
-    $('#stt-spmsg').css('color', '').text(sp.state === 'running' ? (sp.msg || 'Working...') : '');
+    $('#stt-spmsg').css('color', '').text(sp.state === 'running' ? (sp.msg || T('f.working')) : '');
     var abKeys = {}; $.each(ab, function (i, it) { abKeys[it.key] = 1; });
     var items = $.grep(sp.items || [], function (it) { return !busyKeys[it.key] && !abKeys[it.key]; }); // started: in Activity (owner rule 2026-10-11); also from autobrr: listed there
     var open = SPOPEN || sp.state === 'running';
-    $o.append('<div class="stt-sh" style="box-shadow:inset 3px 0 0 #8a8a8a"><a href="#" class="stt-spfold" style="color:inherit;text-decoration:none">' + (open ? '&minus;' : '+') + ' From the library scan</a> <span class="stt-mut">&middot; ' +
-      (sp.state === 'ready' ? items.length + ' season' + (items.length === 1 ? '' : 's') + (sp.t ? ' &middot; scanned ' + ago(sp.t) + ' ago' : '') + (sp.filter ? ' &middot; only &ldquo;' + esc(sp.filter) + '&rdquo;' : '') : 'scanning') + '</span></div>');
+    $o.append('<div class="stt-sh" style="box-shadow:inset 3px 0 0 #8a8a8a"><a href="#" class="stt-spfold" style="color:inherit;text-decoration:none">' + (open ? '&minus;' : '+') + ' ' + esc(T('sp.from_scan')) + '</a> <span class="stt-mut">&middot; ' +
+      esc(sp.state === 'ready' ? T('sp.n_seasons', { n: items.length }) + (sp.t ? ' · ' + T('f.scanned', { t: ago(sp.t) }) : '') + (sp.filter ? ' · ' + T('sp.only', { q: sp.filter }) : '') : T('sp.scanning')) + '</span></div>');
     if (!open) { return; }
     if (!items.length) {
-      if (sp.state === 'ready') { var k = sp.skipped || {}; $o.append('<p class="stt-mut" style="margin:0;padding:10px 12px">No season to replace was found' + (sp.filter ? ' for &ldquo;' + esc(sp.filter) + '&rdquo;' : '') + '. Skipped: ' + $.map(k, function (v, n) { return v + ' ' + n; }).join(', ') + '.</p>'); }
+      if (sp.state === 'ready') { var k = sp.skipped || {}; $o.append('<p class="stt-mut" style="margin:0;padding:10px 12px">' + esc((sp.filter ? T('sp.none_for', { q: sp.filter }) : T('sp.none')) + ' ' + T('sp.skipped', { l: $.map(k, function (v, n) { return v + ' ' + (SPW[n] ? T(SPW[n]) : n); }).join(', ') })) + '</p>'); }
       return;
     }
-    $o.append('<table class="stt"><thead><tr><th>Season</th><th>Pack</th><th class="stt-r">Size</th><th class="stt-r">Seeders</th><th class="stt-r">Replaces</th><th></th></tr></thead><tbody>' + $.map(items, function (it) { return spRows(it, false); }).join('') + '</tbody></table>');
+    $o.append('<table class="stt"><thead><tr><th>' + esc(T('sp.col_season')) + '</th><th>' + esc(T('sp.col_pack')) + '</th><th class="stt-r">' + esc(T('col.size')) + '</th><th class="stt-r">' + esc(T('col.seeders')) + '</th><th class="stt-r">' + esc(T('sp.col_replaces')) + '</th><th></th></tr></thead><tbody>' + $.map(items, function (it) { return spRows(it, false); }).join('') + '</tbody></table>');
   }
   // the rows of one season: the best pack, the other packs (hidden), the torrents that go to the trash
   function spRows(it, ab) {
     var b = it.packs[0], miss = it.missing || [], h = '';
     var epl = function (a) { return $.map(a, function (n) { return 'E' + ('0' + n).slice(-2); }).join(', '); };
-    h += '<tr><td><b>' + spName(it) + '</b><div class="stt-mut">now: ' + esc(it.cur_quality) + ' ' + it.cur_res + 'p ' + hdrLbl(it.cur_hdr) + ', ' + it.files.length + ' episodes, ' + fb(it.cur_size) + '</div>' +
-      (miss.length ? '<span class="stt-badge g" style="margin-left:0" title="Missing here; Sonarr imports them from the pack">brings ' + epl(miss.slice(0, 6)) + (miss.length > 6 ? ' &hellip;' : '') + '</span>' : '') +
-      (ab ? '<span class="stt-badge" style="background:rgba(150,120,230,.25);color:#b9a6f0' + (miss.length ? '' : ';margin-left:0') + '">autobrr &middot; ' + ago(it.t) + ' ago</span>' : '') + '</td>' +
+    h += '<tr><td><b>' + spName(it) + '</b><div class="stt-mut">' + esc(T('sp.now', { q: (it.cur_quality || '') + ' ' + it.cur_res + 'p ' + hdrLbl(it.cur_hdr), n: it.files.length, s: fb(it.cur_size) })) + '</div>' +
+      (miss.length ? '<span class="stt-badge g" style="margin-left:0" title="' + esc(T('sp.brings_tip')) + '">' + esc(T('sp.brings', { l: epl(miss.slice(0, 6)) })) + (miss.length > 6 ? ' &hellip;' : '') + '</span>' : '') +
+      (ab ? '<span class="stt-badge" style="background:rgba(150,120,230,.25);color:#b9a6f0' + (miss.length ? '' : ';margin-left:0') + '">autobrr &middot; ' + esc(T('ab.ago', { t: ago(it.t) })) + '</span>' : '') + '</td>' +
       '<td>' + esc(b.title) + '<span class="stt-badge ' + (b.hdr_rank > 1 ? 'g' : '') + '">' + b.res + 'p ' + b.hdr + '</span>' + (b.hun ? '<span class="stt-badge g">HUN</span>' : '') +
-      '<div class="stt-mut">' + esc(b.indexer) + (ab && !it.ab_match ? ' &middot; Sonarr does not list the release autobrr saw (' + esc(it.ab_name) + '); this is the best pack it found' : '') + (it.packs.length > 1 ? ', ' + (it.packs.length - 1) + ' other pack(s): <a href="#" class="stt-spo" data-key="' + it.key + '">show</a>' : '') + '</div></td>' +
-      '<td class="stt-r">' + fb(b.size) + '</td><td class="stt-r">' + b.seeders + '</td><td class="stt-r">' + it.files.length + ' files<div class="stt-mut">' + it.old.length + ' torrent(s)</div></td>' +
-      '<td class="stt-r"><input type="button" class="stt-spgo stt-btn stt-sm" data-key="' + it.key + '" data-guid="" value="Replace with pack">' + (ab ? ' <input type="button" class="stt-spdis stt-btn stt-sm stt-ghost" data-key="' + it.key + '" value="Dismiss">' : '') + '</td></tr>';
+      '<div class="stt-mut">' + esc(b.indexer) + (ab && !it.ab_match ? ' &middot; ' + esc(T('sp.ab_nomatch', { n: it.ab_name })) : '') + (it.packs.length > 1 ? ', ' + esc(T('sp.other_packs', { n: it.packs.length - 1 })) + ': <a href="#" class="stt-spo" data-key="' + it.key + '">' + esc(T('sp.show')) + '</a>' : '') + '</div></td>' +
+      '<td class="stt-r">' + fb(b.size) + '</td><td class="stt-r">' + b.seeders + '</td><td class="stt-r">' + esc(T('sp.n_files', { n: it.files.length })) + '<div class="stt-mut">' + esc(T('sp.n_torrents', { n: it.old.length })) + '</div></td>' +
+      '<td class="stt-r"><input type="button" class="stt-spgo stt-btn stt-sm" data-key="' + it.key + '" data-guid="" value="' + esc(T('sp.replace')) + '">' + (ab ? ' <input type="button" class="stt-spdis stt-btn stt-sm stt-ghost" data-key="' + it.key + '" value="' + esc(T('act.dismiss')) + '">' : '') + '</td></tr>';
     $.each(it.packs.slice(1), function (j, p) {
-      h += '<tr class="stt-sp-' + it.key + '" style="display:none"><td></td><td>&#8627; ' + esc(p.title) + '<span class="stt-badge ' + (p.hdr_rank > 1 ? 'g' : '') + '">' + p.res + 'p ' + p.hdr + '</span>' + (p.hun ? '<span class="stt-badge g">HUN</span>' : '') + '</td><td class="stt-r">' + fb(p.size) + '</td><td class="stt-r">' + p.seeders + '</td><td></td><td class="stt-r"><input type="button" class="stt-spgo stt-btn stt-sm" data-key="' + it.key + '" data-guid="' + esc(p.guid) + '" value="Use this pack"></td></tr>';
+      h += '<tr class="stt-sp-' + it.key + '" style="display:none"><td></td><td>&#8627; ' + esc(p.title) + '<span class="stt-badge ' + (p.hdr_rank > 1 ? 'g' : '') + '">' + p.res + 'p ' + p.hdr + '</span>' + (p.hun ? '<span class="stt-badge g">HUN</span>' : '') + '</td><td class="stt-r">' + fb(p.size) + '</td><td class="stt-r">' + p.seeders + '</td><td></td><td class="stt-r"><input type="button" class="stt-spgo stt-btn stt-sm" data-key="' + it.key + '" data-guid="' + esc(p.guid) + '" value="' + esc(T('sp.use')) + '"></td></tr>';
     });
     if (it.old.length) {
-      h += '<tr><td></td><td colspan="5" class="stt-mut" style="white-space:normal">Single-episode torrents that go to the trash after the import (' + it.old.length + ', ' + fb(it.old_size || 0) + ' on disk, the pack is ' + fb(b.size) + '):<br>' +
+      h += '<tr><td></td><td colspan="5" class="stt-mut" style="white-space:normal">' + esc(T('sp.old_list', { n: it.old.length, s: fb(it.old_size || 0), p: fb(b.size) })) + ':<br>' +
         $.map(it.old, function (o) { return 'E' + ('0' + o.ep).slice(-2) + ' &middot; ' + esc(o.name) + ' <span class="stt-mut">(' + fb(o.size) + ')</span>'; }).join('<br>') + '</td></tr>';
     }
     return h;
@@ -930,7 +938,7 @@ $(function () {
     });
   }
   $('#stt-spscan').on('click', function () {
-    $(this).prop('disabled', true); $('#stt-spmsg').css('color', '').text('Starting...'); SPOPEN = true;
+    $(this).prop('disabled', true); $('#stt-spmsg').css('color', '').text(T('f.starting')); SPOPEN = true;
     api('sp_scan', {q: $('#stt-spq').val()}).done(function () { setTimeout(pollSp, 800); }).fail(function (x) { $('#stt-spscan').prop('disabled', false); $('#stt-spmsg').css('color', '#e5534b').text(err(x)); });
   });
   $(document).on('click', '.stt-spo', function (e) { e.preventDefault(); $('.stt-sp-' + $(this).data('key')).toggle(); });
@@ -942,7 +950,7 @@ $(function () {
   $(document).on('click', '.stt-spclr', function (e) { e.preventDefault(); api('sp_clear').done(pollSp); });
   $(document).on('click', '.stt-spgo', function () {
     var $b = $(this);
-    if (!window.confirm('Replace the single episodes of this season with the season pack?\n\n1. Sonarr downloads the pack (the episodes stay as they are meanwhile).\n2. When it is 100% done and holds every episode you have, the season is unmonitored and its files are DELETED in Sonarr.\n3. Sonarr imports the pack; then monitoring is restored and the single-episode torrents are moved to the trash folder.\n\nIt runs in the background; if something goes wrong before step 2 nothing is changed.')) { return; }
+    if (!window.confirm(T('sp.confirm'))) { return; }
     $b.prop('disabled', true);
     api('sp_start', {key: $b.data('key'), guid: $b.data('guid')}).done(function (r) { if (r.ok) { pollSp(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });

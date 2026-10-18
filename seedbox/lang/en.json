@@ -1,0 +1,2727 @@
+{
+ "_meta": {
+  "plugin": "Seedbox",
+  "language": "English",
+  "about": "Texts of the Seedbox qBittorrent tile on the Unraid Dashboard (speeds, torrents, problems), its settings page and the Seedbox Tools page (Settings, Utilities): Find my torrent (files that are not seeded), Shape up (smaller or better releases through Radarr and Sonarr) and Season repacker (single episodes replaced by a season pack), with Activity on top. The Discord messages and the technical logs are not here. Terms: seed / seeding (sharing a finished torrent), tracker, release (a torrent Radarr or Sonarr offers), season pack, HDR / DV (Dolby Vision), hardlink, trash folder. Product names (Seedbox, Unraid, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr, Discord) stay as they are."
+ },
+ "ab.ago": {
+  "text": "{t} ago",
+  "note": "in front of a recent autobrr release ({t} like \"5 m\")."
+ },
+ "ab.band": {
+  "text": "autobrr watched · last check {t} ago",
+  "note": "grey text on the right of the Season repacker band."
+ },
+ "ab.disabled": {
+  "text": "disabled",
+  "note": "after a disabled autobrr filter, in brackets."
+ },
+ "ab.gone": {
+  "text": "not in autobrr any more",
+  "note": "after a saved filter that autobrr no longer has, in brackets."
+ },
+ "ab.last": {
+  "text": "last:",
+  "note": "before the result of the last autobrr release check."
+ },
+ "ab.last_check": {
+  "text": "last check {t} ago",
+  "note": "status of the autobrr watch ({t} like \"5 m\")."
+ },
+ "ab.no_filters": {
+  "text": "autobrr has no filters",
+  "note": "next to Load filters."
+ },
+ "ab.since": {
+  "text": "watching since {t}",
+  "note": "status of the autobrr watch ({t} a date and time)."
+ },
+ "ab.skipped": {
+  "text": "{n} single episodes passed over",
+  "note": "status of the autobrr watch: single episodes are not season packs."
+ },
+ "ab.using": {
+  "text": "using: {l}",
+  "note": "next to Load filters: the chosen autobrr filters."
+ },
+ "ab.using_all": {
+  "text": "using: all filters",
+  "note": "next to Load filters."
+ },
+ "ab.watching": {
+  "text": "watching",
+  "note": "status of the autobrr watch. Short."
+ },
+ "abw.bot": {
+  "text": "the Discord message with the choices follows when Sonarr lists the pack",
+  "note": "added to the autobrr watch line after a comma."
+ },
+ "abw.busy": {
+  "text": "{s}: a pack replacement of this season is under way",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.dc": {
+  "text": "reported on Discord",
+  "note": "added to the autobrr watch line after a comma."
+ },
+ "abw.ep": {
+  "text": "one episode",
+  "note": "autobrr watch: why a release was not used. Short."
+ },
+ "abw.filter": {
+  "text": "from filter {f}, not chosen",
+  "note": "autobrr watch: the release came from a filter you did not choose."
+ },
+ "abw.imported": {
+  "text": "{s}: already imported from one pack",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.listed": {
+  "text": "listed",
+  "note": "autobrr watch: the pack is listed under Season repacker. Short."
+ },
+ "abw.lowres": {
+  "text": "{s}: lower resolution ({r}p, you have {c}p)",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.multi": {
+  "text": "more than one season",
+  "note": "autobrr watch: why a pack was not used. Short."
+ },
+ "abw.new": {
+  "text": "{s}: new season pack",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.noep": {
+  "text": "{s}: no episode of this season yet (that is the job of Sonarr)",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.nohun": {
+  "text": "{s}: not Hungarian (your episodes are)",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.noseries": {
+  "text": "the series is not in Sonarr",
+  "note": "autobrr watch: why a pack was not used."
+ },
+ "abw.notlisted": {
+  "text": "not listed: {w}",
+  "note": "autobrr watch: not listed under Season repacker, with the reason."
+ },
+ "abw.reported": {
+  "text": "(already reported)",
+  "note": "added to the autobrr watch line."
+ },
+ "abw.retry": {
+  "text": "Sonarr does not list a pack yet, trying again later",
+  "note": "autobrr watch."
+ },
+ "abw.seamon": {
+  "text": "{s}: the season is not monitored",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.seeded": {
+  "text": "{s}: already seeded as one torrent",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.sermon": {
+  "text": "{s}: the series is not monitored",
+  "note": "autobrr watch: why a release autobrr saw was or was not used; {s} the series and season like \"Dune S01\"."
+ },
+ "abw.specials": {
+  "text": "specials",
+  "note": "autobrr watch: a pack of season 0 (specials) is not used. Short."
+ },
+ "act.all": {
+  "text": "show all {n}",
+  "note": "link."
+ },
+ "act.b_add": {
+  "text": "add torrent",
+  "note": "small green badge in Activity. Short."
+ },
+ "act.b_pack": {
+  "text": "season pack",
+  "note": "small amber badge in Activity. Short."
+ },
+ "act.b_replace": {
+  "text": "replace",
+  "note": "small amber badge of a replacement in Activity. Short."
+ },
+ "act.clear": {
+  "text": "clear list",
+  "note": "link: removes the finished entries."
+ },
+ "act.clear_tip": {
+  "text": "Remove the finished entries from this list",
+  "note": "tooltip of clear list."
+ },
+ "act.dismiss": {
+  "text": "Dismiss",
+  "note": "small button: hides the line. Short."
+ },
+ "act.dismiss_tip": {
+  "text": "Hide this line; nothing is deleted",
+  "note": "tooltip of Dismiss."
+ },
+ "act.fewer": {
+  "text": "show fewer",
+  "note": "link."
+ },
+ "act.finished": {
+  "text": "finished",
+  "note": "grey word after Results."
+ },
+ "act.force": {
+  "text": "Force the import",
+  "note": "button: tells Radarr to import the release although it says \"Not an upgrade\"."
+ },
+ "act.force_confirm": {
+  "text": "Ask Radarr to import the downloaded file now?\n\nRadarr replaces the old file in the media folder with the new one. Use it when the job waits with \"Not an upgrade\". Afterwards the old files are cleaned up as usual.",
+  "note": "confirmation box of Force the import. Keep the line breaks."
+ },
+ "act.n_running": {
+  "text": "{n} running now",
+  "note": "grey text after it."
+ },
+ "act.nothing_fin": {
+  "text": "Nothing finished yet.",
+  "note": "text in the Results part."
+ },
+ "act.processing": {
+  "text": "Processing",
+  "note": "title of the running part of Activity."
+ },
+ "act.queue": {
+  "text": "Queue: {n} more torrent(s) waiting, added one after the other.",
+  "note": "line in Activity while Add all matching runs."
+ },
+ "act.results": {
+  "text": "Results",
+  "note": "title of the finished part of Activity."
+ },
+ "act.rm_confirm": {
+  "text": "Remove the OLD torrent from qBittorrent and its whole folder?\n\nThe folder (video and everything with it: nfo, images, subtitles) goes to the trash folder and is deleted after the trash days (at once if they are 0). If another torrent seeds the same files, only the old torrent is removed. Do it only after you checked that the new version plays.",
+  "note": "confirmation box. Keep the line breaks."
+ },
+ "act.rm_old": {
+  "text": "Remove the old files",
+  "note": "button on a finished replacement: moves the old files to the trash."
+ },
+ "act.rm_old_t": {
+  "text": "Remove the old torrent and files",
+  "note": "button on a finished Shape up replacement."
+ },
+ "act.stop_queue": {
+  "text": "Stop the queue",
+  "note": "button."
+ },
+ "ago.d": {
+  "text": "{n} d",
+  "note": "an age in days, used as \"{age} ago\" or \"{age}\" alone. Short."
+ },
+ "ago.days": {
+  "text": "{n} days ago",
+  "note": "how long ago."
+ },
+ "ago.h": {
+  "text": "{n} h ago",
+  "note": "how long ago."
+ },
+ "ago.hs": {
+  "text": "{n} h",
+  "note": "an age in hours. Short."
+ },
+ "ago.m": {
+  "text": "{n} m",
+  "note": "an age in minutes. Short."
+ },
+ "ago.min": {
+  "text": "{n} min ago",
+  "note": "how long ago."
+ },
+ "ago.now": {
+  "text": "just now",
+  "note": "how long ago (tool rows on the tile)."
+ },
+ "attn.cols": {
+  "text": "Torrent · Issue",
+  "note": "grey text on the right of the band: the two columns."
+ },
+ "attn.more": {
+  "text": "+{n} more flagged",
+  "note": "link under the attention list (opens qBittorrent)."
+ },
+ "attn.title": {
+  "text": "Needs attention",
+  "note": "band title (upper case on screen), followed by the count."
+ },
+ "busy.added": {
+  "text": "torrent added, checking the files: {m}",
+  "note": "grey line of a Find my torrent row while a torrent is checked; {m} the state like \"checking 40%\"."
+ },
+ "busy.allocating": {
+  "text": "Allocating",
+  "note": "state of a torrent qBittorrent is allocating space for. Short."
+ },
+ "busy.checking": {
+  "text": "Checking",
+  "note": "state of a torrent qBittorrent is checking (a percentage follows). Short."
+ },
+ "busy.moving": {
+  "text": "Moving",
+  "note": "state of a torrent qBittorrent is moving to another folder. Short."
+ },
+ "busy.queue": {
+  "text": "waiting in the queue",
+  "note": "grey line of a Find my torrent row."
+ },
+ "busy.repl": {
+  "text": "replacement: {m}",
+  "note": "grey line of a Find my torrent row while its replacement runs."
+ },
+ "cfg.bot_ok": {
+  "text": "Test message sent as {m}: react to it in Discord, it turns green within a minute",
+  "note": "result of Test the bot ({m} the name of the bot)."
+ },
+ "cfg.loading": {
+  "text": "Loading...",
+  "note": "message while something loads."
+ },
+ "cfg.saved": {
+  "text": "Saved.",
+  "note": "message next to Save."
+ },
+ "cfg.saved_keep": {
+  "text": "(saved, leave empty to keep)",
+  "note": "grey text in an empty secret field: a value is saved; empty keeps it."
+ },
+ "cfg.saving": {
+  "text": "Saving...",
+  "note": "message next to Save."
+ },
+ "cfg.sending": {
+  "text": "Sending...",
+  "note": "message while a test is sent."
+ },
+ "cfg.testing": {
+  "text": "Testing...",
+  "note": "message while the connections are tested."
+ },
+ "cl.deleted": {
+  "text": "old files deleted",
+  "note": "part of the cleanup result."
+ },
+ "cl.links": {
+  "text": "{n} old media link(s) removed",
+  "note": "part of the cleanup result."
+ },
+ "cl.torrent": {
+  "text": "old torrent removed from qBittorrent (files kept)",
+  "note": "part of the cleanup result of a replacement (parts are joined with semicolons)."
+ },
+ "cl.torrent_rm": {
+  "text": "old torrent removed from qBittorrent",
+  "note": "the same without \"(files kept)\", used when the folder went to the trash too."
+ },
+ "cl.trash": {
+  "text": "old files moved to {f} (deleted after {n} days)",
+  "note": "part of the cleanup result; {f} the trash folder name."
+ },
+ "col.indexer": {
+  "text": "Indexer",
+  "note": "column header: the tracker the release comes from."
+ },
+ "col.quality": {
+  "text": "Quality",
+  "note": "column header."
+ },
+ "col.release": {
+  "text": "Release",
+  "note": "column header of a release list (upper case on screen)."
+ },
+ "col.seeders": {
+  "text": "Seeders",
+  "note": "column header."
+ },
+ "col.size": {
+  "text": "Size",
+  "note": "column header."
+ },
+ "col.size_vs": {
+  "text": "Size vs. current",
+  "note": "column header: how much bigger or smaller than what you have."
+ },
+ "dr.big": {
+  "text": "too big",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.dvonly": {
+  "text": "DV only: no HDR10 fallback for a TV without DV",
+  "note": "why a release was filtered out."
+ },
+ "dr.ep": {
+  "text": "another episode",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.lowhdr": {
+  "text": "lower HDR format",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.lowres": {
+  "text": "lower resolution",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.nohun": {
+  "text": "not Hungarian",
+  "note": "why a pack was filtered out (your episodes have Hungarian audio). Short."
+ },
+ "dr.nores": {
+  "text": "resolution unknown",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.nosave": {
+  "text": "not small enough, no upgrade",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.noseed": {
+  "text": "no seeders",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.notpack": {
+  "text": "not a season pack",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.pack": {
+  "text": "season pack or multi-episode",
+  "note": "why a release was filtered out (a single episode was searched). Short."
+ },
+ "dr.season": {
+  "text": "another season",
+  "note": "why a release was filtered out. Short."
+ },
+ "dr.upg_big": {
+  "text": "upgrade, but too big",
+  "note": "why a release was filtered out. Short."
+ },
+ "dur.dh": {
+  "text": "{d} d {h} h",
+  "note": "a time span. Short."
+ },
+ "dur.hm": {
+  "text": "{h} h {m} m",
+  "note": "a time span. Short."
+ },
+ "dur.m": {
+  "text": "{m} m",
+  "note": "a time span in minutes. Short."
+ },
+ "e.ab_answer": {
+  "text": "unexpected answer from autobrr",
+  "note": "error of the autobrr watch."
+ },
+ "e.ab_nocfg": {
+  "text": "autobrr is not configured",
+  "note": "error of the autobrr watch."
+ },
+ "e.already_rm": {
+  "text": "the old files are already removed",
+  "note": "error of Remove the old."
+ },
+ "e.bad": {
+  "text": "unknown item (reload the page)",
+  "note": "error of a button when the page sent a wrong id."
+ },
+ "e.bad_resp": {
+  "text": "bad response",
+  "note": "short technical error after a service name (\"Sonarr: bad response\")."
+ },
+ "e.bad_series": {
+  "text": "the series name is too long or has odd characters",
+  "note": "error of the season pack scan filter."
+ },
+ "e.bot_cfg": {
+  "text": "save the bot token and your user id first",
+  "note": "error of Test the bot."
+ },
+ "e.bot_tok": {
+  "text": "the bot token does not work: {e}",
+  "note": "error of Test the bot."
+ },
+ "e.dc_nohook": {
+  "text": "no Discord webhook set",
+  "note": "error of a Discord message."
+ },
+ "e.dc_off": {
+  "text": "Discord messages are switched off for this tool",
+  "note": "error of a Discord test or message."
+ },
+ "e.dc_refused": {
+  "text": "Discord did not accept the message",
+  "note": "error of a Discord message."
+ },
+ "e.dl_torrent": {
+  "text": "could not download the .torrent file ({e})",
+  "note": "error of Add torrent; {e} a technical reason."
+ },
+ "e.exists": {
+  "text": "this torrent is already in qBittorrent ({n})",
+  "note": "error of Add torrent."
+ },
+ "e.force_sonarr": {
+  "text": "forcing the import is only supported for Radarr (movies) so far: import it by hand in Sonarr, Activity, Queue",
+  "note": "error of Force the import; \"Activity, Queue\" is the Sonarr menu path."
+ },
+ "e.gone": {
+  "text": "the folder is already gone",
+  "note": "error of Delete."
+ },
+ "e.hash": {
+  "text": "could not read the torrent hash",
+  "note": "error of Add torrent."
+ },
+ "e.inprog": {
+  "text": "this title already has a replacement in progress",
+  "note": "error of Replace with this."
+ },
+ "e.lock": {
+  "text": "another replacement is being started or removed right now; try again in a minute",
+  "note": "error of a button."
+ },
+ "e.mi_count": {
+  "text": "expected one video file in the download, found {n}: import it by hand in Radarr",
+  "note": "error of Force the import."
+ },
+ "e.mi_list": {
+  "text": "Radarr could not list the downloaded files: {e}",
+  "note": "error of Force the import."
+ },
+ "e.mi_refused": {
+  "text": "Radarr refused the import: {e}",
+  "note": "error of Force the import."
+ },
+ "e.nodel_root": {
+  "text": "not deleting {p}: it is not inside a configured downloads folder",
+  "note": "error of Delete."
+ },
+ "e.nodel_seed": {
+  "text": "not deleting {p}: torrent \"{t}\" seeds it",
+  "note": "error of Delete."
+ },
+ "e.nodelete": {
+  "text": "could not delete {p}",
+  "note": "error of Delete or of a cleanup."
+ },
+ "e.nodismiss": {
+  "text": "this job cannot be dismissed",
+  "note": "error of Dismiss."
+ },
+ "e.nolink": {
+  "text": "the result has no download link",
+  "note": "error of Add torrent."
+ },
+ "e.norm_root": {
+  "text": "not removing {p}: it is not inside a configured downloads folder",
+  "note": "error of a cleanup."
+ },
+ "e.norm_seed": {
+  "text": "not removing {p}: torrent \"{t}\" seeds it",
+  "note": "error of a cleanup."
+ },
+ "e.notblocked": {
+  "text": "this replacement is not blocked",
+  "note": "error of Force the import."
+ },
+ "e.notimp": {
+  "text": "the replacement is not imported yet",
+  "note": "error of Remove the old."
+ },
+ "e.notqueue": {
+  "text": "the download is not in the Radarr queue (it may still be downloading, or already imported)",
+  "note": "error of Force the import."
+ },
+ "e.notrash": {
+  "text": "could not move {p} to the trash folder",
+  "note": "error of Delete or of a cleanup."
+ },
+ "e.qb_noanswer": {
+  "text": "qBittorrent did not answer",
+  "note": "error."
+ },
+ "e.qb_nodel": {
+  "text": "qBittorrent did not answer; nothing was deleted",
+  "note": "error of Delete."
+ },
+ "e.qb_refused": {
+  "text": "qBittorrent refused it ({e})",
+  "note": "error of Add torrent."
+ },
+ "e.rel_gone": {
+  "text": "the release is no longer offered by {k} (search again)",
+  "note": "error of Replace with this; {k} Radarr or Sonarr."
+ },
+ "e.rel_refused": {
+  "text": "{k} refused the release: {e}",
+  "note": "error of Replace with this."
+ },
+ "e.scan_busy": {
+  "text": "a scan is running; try again when it has finished",
+  "note": "error of a button."
+ },
+ "e.scan_busy_bg": {
+  "text": "a scan is running; the check starts by itself after it",
+  "note": "error of Check now (the background check)."
+ },
+ "e.sp_busy": {
+  "text": "this season is already being replaced",
+  "note": "error of Replace with pack."
+ },
+ "e.sp_gone": {
+  "text": "Sonarr no longer offers this pack (scan again)",
+  "note": "error of Replace with pack."
+ },
+ "e.sp_pack": {
+  "text": "unknown pack (scan again)",
+  "note": "error of Replace with pack."
+ },
+ "e.sp_season": {
+  "text": "unknown season (scan again)",
+  "note": "error of Replace with pack."
+ },
+ "e.trash_fail": {
+  "text": "could not delete: {l}",
+  "note": "error of Empty the trash; {l} file names."
+ },
+ "e.unexpected": {
+  "text": "unexpected error: {e}",
+  "note": "autobrr watch status line; {e} technical."
+ },
+ "e.unknown_item": {
+  "text": "unknown item",
+  "note": "error of a button: the row is no longer in the list (reload the page)."
+ },
+ "e.unknown_job": {
+  "text": "unknown job (reload the page)",
+  "note": "error of a button in Activity."
+ },
+ "e.unknown_op": {
+  "text": "unknown action",
+  "note": "technical error."
+ },
+ "e.unknown_rel": {
+  "text": "unknown item or release (search again)",
+  "note": "error of Replace with this."
+ },
+ "f.add_confirm": {
+  "text": "Add this torrent to qBittorrent?\n\nIt is added stopped and checked against your existing files. It starts seeding if it matches your files (all of them, or all but a few, see the settings); otherwise it is removed again and your files stay untouched.",
+  "note": "confirmation box of Add torrent. Keep the line breaks."
+ },
+ "f.added": {
+  "text": "Added, checking...",
+  "note": "the Add torrent button after it was added."
+ },
+ "f.adding": {
+  "text": "Adding...",
+  "note": "the Add torrent button while it works."
+ },
+ "f.all_seeded": {
+  "text": "Every file in the downloads folders is seeded.",
+  "note": "text when Find my torrent found nothing."
+ },
+ "f.btn_add": {
+  "text": "Add torrent",
+  "note": "small button on a folder row. Short."
+ },
+ "f.col_match": {
+  "text": "Match / quality",
+  "note": "column header of the Find my torrent list."
+ },
+ "f.col_name": {
+  "text": "Folder / release",
+  "note": "column header of the Find my torrent list."
+ },
+ "f.del_confirm": {
+  "text": "Delete this folder for good?\n\nThis cannot be undone. If a torrent removed by the tracker belongs to it, that torrent is taken out of qBittorrent.",
+  "note": "confirmation box of Delete without a trash."
+ },
+ "f.delete": {
+  "text": "Delete",
+  "note": "small button. Short."
+ },
+ "f.delete_tip": {
+  "text": "Move the folder to the trash (or delete it at once when the trash days are 0)",
+  "note": "tooltip of Delete."
+ },
+ "f.do_add": {
+  "text": "Add torrent",
+  "note": "what to do with a group (right of the bar). Short."
+ },
+ "f.do_fix": {
+  "text": "fix in qBittorrent",
+  "note": "what to do with the passkey group."
+ },
+ "f.do_replace": {
+  "text": "Replace",
+  "note": "what to do with a group. Short."
+ },
+ "f.failed_below": {
+  "text": "last try failed, see below",
+  "note": "amber text on a folder row."
+ },
+ "f.found": {
+  "text": "found original",
+  "note": "green badge: the same torrent was found."
+ },
+ "f.g0": {
+  "text": "No torrent found: replace the content",
+  "note": "a group bar."
+ },
+ "f.g1": {
+  "text": "Only the name is similar: replace the content",
+  "note": "a group bar."
+ },
+ "f.g2": {
+  "text": "Different release, similar size: replace the content",
+  "note": "a group bar."
+ },
+ "f.g25": {
+  "text": "Removed from the tracker: replace the content",
+  "note": "a group bar."
+ },
+ "f.g27": {
+  "text": "The tracker rejects the passkey: update the tracker URL in qBittorrent",
+  "note": "a group bar of Find my torrent."
+ },
+ "f.g3": {
+  "text": "Same name and size: add the torrent",
+  "note": "a group bar of Find my torrent."
+ },
+ "f.g4": {
+  "text": "In progress",
+  "note": "a group of Find my torrent."
+ },
+ "f.ignore": {
+  "text": "Ignore",
+  "note": "small button: hides the folder from the list. Short."
+ },
+ "f.last_failed": {
+  "text": "last try failed: {e}",
+  "note": "amber line under a folder."
+ },
+ "f.n_folders": {
+  "one": "{n} folder",
+  "other": "{n} folders",
+  "note": "count on the right of a group bar."
+ },
+ "f.n_not_seeded": {
+  "one": "{n} folder not seeded",
+  "other": "{n} folders not seeded",
+  "note": "grey text on the right of the Find my torrent band."
+ },
+ "f.pass": {
+  "text": "passkey rejected",
+  "note": "amber badge after a folder whose torrent's tracker rejects the passkey."
+ },
+ "f.pass_line": {
+  "text": "the tracker rejects the torrent pass: update the tracker URL in qBittorrent",
+  "note": "amber text on a folder row."
+ },
+ "f.pass_tip": {
+  "text": "The tracker answers unregistered torrent pass: the passkey in the announce URL is not valid (changed or reset), the torrent itself is probably still there",
+  "note": "tooltip of the badge."
+ },
+ "f.removed": {
+  "text": "removed from tracker",
+  "note": "red badge after a folder whose torrent the tracker removed."
+ },
+ "f.removed_tip": {
+  "text": "The tracker no longer knows this torrent",
+  "note": "tooltip of the badge."
+ },
+ "f.replace": {
+  "text": "Replace...",
+  "note": "small button: searches replacements."
+ },
+ "f.replace_again": {
+  "text": "Replace again",
+  "note": "small button."
+ },
+ "f.replace_instead": {
+  "text": "{why}: replace the content instead",
+  "note": "amber text on a folder row, followed by an arrow to the Replace button."
+ },
+ "f.replace_tip": {
+  "text": "Search an equal or better release in Radarr/Sonarr; the old files are removed after the new one is imported",
+  "note": "tooltip of the Replace button."
+ },
+ "f.scanned": {
+  "text": "scanned {t} ago",
+  "note": "grey text on the right of a tool band ({t} like \"2 h\")."
+ },
+ "f.searching": {
+  "text": "Searching...",
+  "note": "the Replace button while it searches."
+ },
+ "f.starting": {
+  "text": "Starting...",
+  "note": "status line when a scan starts."
+ },
+ "f.toggle_cat": {
+  "text": "Show or hide this category",
+  "note": "tooltip of a group bar."
+ },
+ "f.toggle_res": {
+  "text": "Show or hide the search results",
+  "note": "tooltip of the +/- in front of a folder."
+ },
+ "f.trash_confirm": {
+  "text": "Move this folder to the trash?\n\nIt is deleted for good after {n} days. If a torrent removed by the tracker belongs to it, that torrent is taken out of qBittorrent.",
+  "note": "confirmation box of Delete with a trash. Keep the line breaks."
+ },
+ "f.waiting_row": {
+  "text": "waiting for the search...",
+  "note": "grey text on a folder row."
+ },
+ "f.waiting_search": {
+  "text": "Waiting for the search...",
+  "note": "a group bar: folders not searched yet."
+ },
+ "f.why_noident": {
+  "text": "no identical torrent",
+  "note": "reason in it."
+ },
+ "f.why_none": {
+  "text": "no torrent found",
+  "note": "reason in it."
+ },
+ "f.why_removed": {
+  "text": "the tracker removed this torrent",
+  "note": "reason in it."
+ },
+ "f.working": {
+  "text": "Working...",
+  "note": "status line while a scan runs."
+ },
+ "fo.band": {
+  "text": "{w} watched · {l} media library",
+  "note": "grey text on the right of the Folders band."
+ },
+ "fo.col_folder": {
+  "text": "Folder",
+  "note": "column header of the folder list."
+ },
+ "fo.col_role": {
+  "text": "Role",
+  "note": "column header of the folder list."
+ },
+ "fo.movies": {
+  "text": "Movies",
+  "note": "role of a downloads folder (dropdown in Settings, Folders)."
+ },
+ "fo.music": {
+  "text": "Music",
+  "note": "role of a downloads folder."
+ },
+ "fo.n_movies": {
+  "text": "media library · Radarr",
+  "note": "small grey line under a folder with the Movies role."
+ },
+ "fo.n_music": {
+  "text": "media library · no matching tool yet",
+  "note": "small grey line under a Music folder."
+ },
+ "fo.n_new": {
+  "text": "{n} new",
+  "note": "added to it."
+ },
+ "fo.n_off": {
+  "text": "no tool looks at it",
+  "note": "small grey line under a Not watched folder."
+ },
+ "fo.n_other": {
+  "text": "seeding only (for example ratio torrents): only Find my torrent looks at it",
+  "note": "small grey line under an Other folder."
+ },
+ "fo.n_series": {
+  "text": "media library · Sonarr",
+  "note": "small grey line under a Series folder."
+ },
+ "fo.new": {
+  "text": "new",
+  "note": "amber badge after a folder that appeared since the last save. Short."
+ },
+ "fo.none": {
+  "text": "No folder found inside the downloads folder (is the array started, is the path right?)",
+  "note": "text instead of the folder list."
+ },
+ "fo.off": {
+  "text": "Not watched",
+  "note": "role of a downloads folder: no tool looks at it."
+ },
+ "fo.other": {
+  "text": "Other",
+  "note": "role of a downloads folder: seeding only."
+ },
+ "fo.role_of": {
+  "text": "Role of {n}",
+  "note": "screen reader label of the role dropdown of a folder."
+ },
+ "fo.series": {
+  "text": "Series",
+  "note": "role of a downloads folder."
+ },
+ "fq.add_all": {
+  "text": "Add all matching ({n})",
+  "note": "button of Find my torrent: adds every torrent that matches a folder."
+ },
+ "fq.add_all_hint": {
+  "text": "adds every folder that has an identical torrent, one check at a time",
+  "note": "grey hint next to it."
+ },
+ "fq.confirm": {
+  "text": "Add every listed torrent that has the same name and size as your folder?\n\nThey are added one after the other, with one file check at a time. Each is started only if it matches your files (see the settings); otherwise it is removed again and your files stay untouched. You can stop the queue at any time.",
+  "note": "confirmation box. Keep the line breaks."
+ },
+ "iss.conn_name": {
+  "text": "qBittorrent connection",
+  "note": "name of the row in the Needs attention list when the connection has a problem."
+ },
+ "iss.disc_why": {
+  "text": "No connection to the network",
+  "note": "reason in the Needs attention list."
+ },
+ "iss.dl_stopped": {
+  "text": "Download not running",
+  "note": "reason under the badge."
+ },
+ "iss.error": {
+  "text": "Error",
+  "note": "badge of a torrent in the Needs attention list. Short, upper case on screen."
+ },
+ "iss.error_why": {
+  "text": "Torrent is in an error state",
+  "note": "reason under the badge."
+ },
+ "iss.firewalled_why": {
+  "text": "Incoming port not reachable, check port forwarding",
+  "note": "reason in the Needs attention list."
+ },
+ "iss.missing": {
+  "text": "Missing",
+  "note": "badge: the files of the torrent are missing. Short."
+ },
+ "iss.missing_why": {
+  "text": "Files missing on disk",
+  "note": "reason under the badge."
+ },
+ "iss.not_seeding": {
+  "text": "Not seeding",
+  "note": "reason under the badge."
+ },
+ "iss.paused": {
+  "text": "Paused",
+  "note": "badge: the torrent is paused (qBittorrent 4). Short."
+ },
+ "iss.queued": {
+  "text": "Queued",
+  "note": "badge: waiting in the queue. Short."
+ },
+ "iss.queued_why": {
+  "text": "Waiting for a slot",
+  "note": "reason under the badge."
+ },
+ "iss.stopped": {
+  "text": "Stopped",
+  "note": "badge: the torrent is stopped (qBittorrent 5). Short."
+ },
+ "iss.unknown": {
+  "text": "Unknown",
+  "note": "badge. Short."
+ },
+ "iss.unknown_why": {
+  "text": "Unknown state",
+  "note": "reason under the badge."
+ },
+ "job.checking": {
+  "text": "checking {p}%",
+  "note": "state of an added torrent while qBittorrent checks the files."
+ },
+ "job.checking_files": {
+  "text": "checking the existing files",
+  "note": "state of an added torrent in Activity."
+ },
+ "job.dismissed": {
+  "text": "dismissed; the old files were left where they are",
+  "note": "state line of a finished replacement in Activity."
+ },
+ "job.dl": {
+  "text": "downloading {p}%",
+  "note": "state of a replacement or season pack."
+ },
+ "job.forced": {
+  "text": "import requested from Radarr, waiting for it",
+  "note": "state of a replacement in Activity."
+ },
+ "job.gone": {
+  "text": "the torrent disappeared from qBittorrent",
+  "note": "failed state of an added torrent in Activity."
+ },
+ "job.imp_radarr": {
+  "text": "imported by Radarr; the old file was replaced",
+  "note": "state of a replacement in Activity."
+ },
+ "job.imp_sonarr": {
+  "text": "imported by Sonarr; the old files were replaced",
+  "note": "state of a replacement in Activity."
+ },
+ "job.left": {
+  "text": "{t} left",
+  "note": "time left of a download, after a comma."
+ },
+ "job.lost": {
+  "text": "not in the queue and not imported: check {k}",
+  "note": "state of a replacement; {k} Radarr or Sonarr."
+ },
+ "job.matched": {
+  "text": "all files matched, seeding started",
+  "note": "done state of an added torrent."
+ },
+ "job.matched_part": {
+  "text": "{p}% matched, seeding started; qBittorrent downloads the missing {m}",
+  "note": "done state; {m} a size or the missing files."
+ },
+ "job.n_files": {
+  "one": "{n} file ({s})",
+  "other": "{n} files ({s})",
+  "note": "the missing files of an added torrent, in the done state (\"qBittorrent downloads the missing 2 files (1.2 GB)\")."
+ },
+ "job.nomatch": {
+  "text": "the files did not match ({p}% found); the torrent was removed, your files are untouched",
+  "note": "failed state of an added torrent."
+ },
+ "job.old_kept": {
+  "text": "the old files were not removed: {m}",
+  "note": "added to a replacement state after a semicolon."
+ },
+ "job.old_removed": {
+  "text": "the old torrent was removed (files kept)",
+  "note": "added to the done state after a semicolon."
+ },
+ "job.rm_all": {
+  "text": "the old torrent and its files were removed",
+  "note": "state of a finished replacement in Activity."
+ },
+ "job.rm_kept": {
+  "text": "the old torrent was removed; its files were kept because torrent \"{t}\" seeds them too",
+  "note": "state of a finished replacement in Activity."
+ },
+ "job.sent": {
+  "text": "sent to {k}",
+  "note": "state of a replacement in Activity; {k} Radarr or Sonarr."
+ },
+ "job.waiting": {
+  "text": "waiting: {m}",
+  "note": "state of a blocked replacement; {m} the message of Radarr/Sonarr (English)."
+ },
+ "pill.attention": {
+  "text": "{n} need attention",
+  "note": "status pill: how many torrents need attention."
+ },
+ "pill.connected": {
+  "text": "Connected",
+  "note": "status pill at the top of the tile: qBittorrent is connected to the network. Short."
+ },
+ "pill.disconnected": {
+  "text": "Disconnected",
+  "note": "status pill at the top of the tile: no network connection. Short."
+ },
+ "pill.firewalled": {
+  "text": "Firewalled",
+  "note": "status pill at the top of the tile: connected, but the incoming port is not reachable. Short."
+ },
+ "pill.healthy": {
+  "text": "All healthy",
+  "note": "status pill when nothing needs attention."
+ },
+ "pill.offline": {
+  "text": "Offline",
+  "note": "status pill at the top of the tile: qBittorrent does not answer. Short."
+ },
+ "pill.unknown": {
+  "text": "Unknown",
+  "note": "status pill at the top of the tile: the state is not known. Short."
+ },
+ "pk.already": {
+  "text": "Sonarr already imported the pack ({n} episodes)",
+  "note": "state of a season pack job in Activity."
+ },
+ "pk.deleted": {
+  "text": "season files deleted in Sonarr, waiting for the import of the pack",
+  "note": "state of a season pack job in Activity."
+ },
+ "pk.done": {
+  "text": "done: {n} episodes now come from the pack, {m} single-episode folder(s) moved to the trash",
+  "note": "done state of a season pack job in Activity."
+ },
+ "pk.fewer": {
+  "text": "the pack has fewer episodes than you have; nothing was deleted or changed.",
+  "note": "failed state of a season pack job in Activity."
+ },
+ "pk.imported": {
+  "text": "Sonarr imported {n} episodes from the pack",
+  "note": "state of a season pack job in Activity."
+ },
+ "pk.miss": {
+  "text": "the pack does not contain episode(s) {l} that you have; nothing was deleted or changed.",
+  "note": "failed state of a season pack job in Activity."
+ },
+ "pk.nodel": {
+  "text": "Sonarr refused to delete the season files: {e}. Nothing was changed.",
+  "note": "failed state of a season pack job in Activity."
+ },
+ "pk.nodl": {
+  "text": "the pack did not show up in qBittorrent within 30 minutes: check Sonarr, Activity, Queue. Nothing was deleted.",
+  "note": "failed state of a season pack job in Activity."
+ },
+ "pk.noimp": {
+  "text": "Sonarr did not import the pack within 15 minutes ({n}/{m} episodes). The files of the old episodes are still in the downloads folder and the pack is seeding: import the pack by hand in Sonarr, Activity, Queue.",
+  "note": "failed state of a season pack job in Activity."
+ },
+ "pk.remon": {
+  "text": "monitoring could not be restored: {e}",
+  "note": "note added to the done state."
+ },
+ "pk.scan": {
+  "text": "(asked Sonarr to scan the download)",
+  "note": "added to the waiting state."
+ },
+ "pk.scan_fail": {
+  "text": "(scan request failed: {e})",
+  "note": "added to the waiting state."
+ },
+ "pk.sent": {
+  "text": "sent to Sonarr, waiting for the download to start",
+  "note": "state of a season pack job in Activity."
+ },
+ "pk.unmon": {
+  "text": "could not unmonitor the episodes in Sonarr: {e}. Nothing was deleted.",
+  "note": "failed state of a season pack job in Activity."
+ },
+ "pk.wait": {
+  "text": "waiting for the import: {n}/{m} episodes",
+  "note": "state of a season pack job in Activity."
+ },
+ "pr.about": {
+  "text": "about {t}",
+  "note": "an estimated time, like \"about 2 h 10 m\"."
+ },
+ "pr.about_at": {
+  "text": "about {t} at {r}",
+  "note": "estimated time at the current download speed."
+ },
+ "pr.all_done": {
+  "text": "all done in about {t}",
+  "note": "estimated end of everything."
+ },
+ "pr.downloaded": {
+  "text": "downloaded",
+  "note": "progress in Activity. Short."
+ },
+ "pr.downloading": {
+  "text": "downloading {p}%",
+  "note": "progress in Activity."
+ },
+ "pr.hardly": {
+  "text": "hardly moving ({s} KB/s)",
+  "note": "part of the Activity summary line."
+ },
+ "pr.left": {
+  "text": "{t} left",
+  "note": "time left. Short."
+ },
+ "pr.movewait": {
+  "text": "downloaded, waiting to move to the array",
+  "note": "progress in Activity."
+ },
+ "pr.moving": {
+  "text": "moving to the array {p}%",
+  "note": "progress of a replacement in Activity: qBittorrent moves it from the cache to the array."
+ },
+ "pr.n_dl": {
+  "text": "{n} downloading",
+  "note": "part of the Activity summary line."
+ },
+ "pr.n_stalled": {
+  "text": "{n} stalled",
+  "note": "part of the Activity summary line."
+ },
+ "pr.no_eta": {
+  "text": "no estimate",
+  "note": "instead of the time left."
+ },
+ "pr.no_seeder": {
+  "text": "no seeder online",
+  "note": "reason in it."
+ },
+ "pr.seeds_none": {
+  "one": "{n} seeder connected, nothing comes",
+  "other": "{n} seeders connected, nothing comes",
+  "note": "reason in the stalled line."
+ },
+ "pr.stalled": {
+  "text": "stalled: {why}",
+  "note": "amber line in Activity: why the download does not move."
+ },
+ "pr.stalled_b": {
+  "text": "stalled",
+  "note": "amber badge: the download does not move. Short."
+ },
+ "pr.swarm": {
+  "text": "(the tracker lists {n})",
+  "note": "added to \"no seeder online\": how many seeders the tracker reports."
+ },
+ "pr.then": {
+  "text": "then",
+  "note": "word before what comes after the downloads."
+ },
+ "pr.to_move": {
+  "text": "{s} to move to the array (no move speed measured yet)",
+  "note": "part of the Activity summary line."
+ },
+ "pr.to_move_at": {
+  "text": "{s} to move to the array at {r}",
+  "note": "part of the Activity summary line."
+ },
+ "pr.wait_import": {
+  "text": "waiting for the import",
+  "note": "progress in Activity: Radarr/Sonarr has not imported it yet."
+ },
+ "q.dv_only": {
+  "text": "DV only",
+  "note": "HDR format: Dolby Vision without an HDR10 base layer. Short."
+ },
+ "q.dv_only_tip": {
+  "text": "Dolby Vision without an HDR10 base layer: a purple and green picture on a TV without DV",
+  "note": "tooltip of the red DV only badge."
+ },
+ "q.must": {
+  "text": "must",
+  "note": "gold badge of a release that is smaller and better at the same time (Shape up, Must do). Very short."
+ },
+ "q.rejected": {
+  "text": "rejected",
+  "note": "badge or text: Radarr/Sonarr rejects the release (its reasons follow)."
+ },
+ "rep.blocked": {
+  "text": "Stuck",
+  "note": "badge: the job needs a look."
+ },
+ "rep.done": {
+  "text": "Repacked",
+  "note": "badge: done."
+ },
+ "rep.downloading": {
+  "text": "Downloading",
+  "note": "badge of a Season Repacker job."
+ },
+ "rep.grabbed": {
+  "text": "Queued",
+  "note": "badge of a Season Repacker job on the tile: the pack was sent to the download client."
+ },
+ "rep.imported": {
+  "text": "Finishing",
+  "note": "badge: imported, the old torrents are being cleaned up."
+ },
+ "rep.importing": {
+  "text": "Importing",
+  "note": "badge: Sonarr imports the pack."
+ },
+ "rep.moving": {
+  "text": "Moving",
+  "note": "badge: qBittorrent moves the pack to its folder."
+ },
+ "rep.tip_done": {
+  "text": "{n} is repacked by Season Repacker",
+  "note": "tooltip of the row ({n} series and season)."
+ },
+ "rep.tip_run": {
+  "text": "{n} is being repacked by Season Repacker",
+  "note": "tooltip of the row."
+ },
+ "rep.wait_move": {
+  "text": "waiting to move",
+  "note": "after the series name on the tile: qBittorrent will move it after the others."
+ },
+ "rep.wait_sonarr": {
+  "text": "season files deleted, waiting for Sonarr",
+  "note": "after the series name on the tile."
+ },
+ "rs.confirm_repl": {
+  "text": "Replace this content with the selected release?\n\nRadarr/Sonarr downloads and imports it. When the import is done, the OLD files (the folder in the downloads folder and its media link) are moved to the trash folder, or deleted if the trash is set to 0 days, and the old torrent is removed from qBittorrent (its files are not deleted by qBittorrent).",
+  "note": "confirmation box of Replace with this (Find my torrent). Keep the line breaks."
+ },
+ "rs.confirm_upd": {
+  "text": "Send this release to Radarr/Sonarr?\n\nIt is downloaded and imported as a replacement. Your current files are replaced only when the import happens; the old torrent stays until you remove it here.",
+  "note": "confirmation box of Replace with this (Shape up). Keep the line breaks."
+ },
+ "rs.do_radarr": {
+  "text": "do your thing Radarr!",
+  "note": "amber badge: Radarr says the release is not an upgrade by its own rules (cutoff); it can still be grabbed. A bit playful."
+ },
+ "rs.ep1": {
+  "text": "(single episode {e})",
+  "note": "part of the search diagnostics; {e} like S01E05."
+ },
+ "rs.ep_fail": {
+  "text": "(episode lookup failed, searching the season)",
+  "note": "part of the search diagnostics."
+ },
+ "rs.filtered": {
+  "text": "filtered out: {t}",
+  "note": "grey line: a release left out of the offers (the reason is in the next column)."
+ },
+ "rs.filtered_out": {
+  "text": "Filtered out: {l}",
+  "note": "search diagnostics; {l} counts with reasons (\"3 too big, 1 no seeders\")."
+ },
+ "rs.lang": {
+  "text": "language: {l}",
+  "note": "search diagnostics."
+ },
+ "rs.no_offer": {
+  "text": "No release meets the conditions.",
+  "note": "search result without an offer; the diagnostics follow."
+ },
+ "rs.none": {
+  "text": "no equal or better release with seeders found",
+  "note": "line under a folder after the search."
+ },
+ "rs.orig": {
+  "text": "Original language of the title: {l}",
+  "note": "search diagnostics."
+ },
+ "rs.profile": {
+  "text": "Profile of this title: {p}",
+  "note": "search diagnostics: the Radarr/Sonarr quality profile."
+ },
+ "rs.replace_this": {
+  "text": "Replace with this",
+  "note": "small button on a release row."
+ },
+ "rs.returned": {
+  "one": "{k} returned {n} release{e} in {s} s",
+  "other": "{k} returned {n} releases{e} in {s} s",
+  "note": "search diagnostics; {k} Radarr or Sonarr, {e} an optional part in brackets (with its own space)."
+ },
+ "rs.searching": {
+  "text": "Searching in Radarr/Sonarr... this can take a minute.",
+  "note": "text while the releases of a title are searched."
+ },
+ "rs.upg_no": {
+  "text": "upgrades NOT allowed",
+  "note": "search diagnostics."
+ },
+ "rs.upg_yes": {
+  "text": "upgrades allowed",
+  "note": "search diagnostics."
+ },
+ "run.dirs": {
+  "text": "Reading the downloads folders...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "run.match": {
+  "text": "Matching with Radarr and Sonarr...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "run.qb": {
+  "text": "Reading qBittorrent...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "run.qb_fail": {
+  "text": "Cannot read the torrent list from qBittorrent (check the Seedbox settings).",
+  "note": "error under the scan button."
+ },
+ "run.repl_n": {
+  "text": "Looking up replacement releases {n} of {m}...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "run.search_n": {
+  "text": "Searching {n} of {m}...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "run.sonarr": {
+  "text": "Reading Sonarr...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "run.sp_n": {
+  "text": "{n}/{m} {t} ({f} found)",
+  "note": "progress line of the season pack scan; {t} a series name."
+ },
+ "run.trk": {
+  "text": "Checking the trackers...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "run.trk_n": {
+  "text": "Checking the trackers ({n} of {m})...",
+  "note": "progress line under the scan button while a scan runs."
+ },
+ "set.ab": {
+  "text": "watching autobrr needs the autobrr and Sonarr addresses and keys",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.ab_key": {
+  "text": "the autobrr address or key looks wrong",
+  "note": "error of Load the filters."
+ },
+ "set.accept": {
+  "text": "the accepted match must be between 90 and 100 percent",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.base": {
+  "text": "the downloads folder must be a path under /mnt/",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.base_ex": {
+  "text": "the downloads folder must be a path under /mnt/ (for example /mnt/user/data/downloads)",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.bot": {
+  "text": "the bot token looks wrong (Developer Portal, Bot, Reset Token)",
+  "note": "settings error. The words in brackets are the menu path on the Discord Developer Portal (English there)."
+ },
+ "set.bot_hook": {
+  "text": "the bot reacts under the Seedbox messages: save a Discord webhook too",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.cats": {
+  "text": "Shape up needs at least one of saving, HDR / DV upgrade, resolution upgrade",
+  "note": "settings error; the three are the Shape up kinds."
+ },
+ "set.growth": {
+  "text": "the maximum size increase must be between 0 and 1000 percent",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.hook": {
+  "text": "the Discord webhook address looks wrong",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.key": {
+  "text": "the {k} API key looks wrong",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.map": {
+  "text": "invalid folder mapping",
+  "note": "settings error: the qBittorrent to server folder mapping."
+ },
+ "set.missing": {
+  "text": "the number of missing files must be between 0 and 20",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.nodir": {
+  "text": "no such folder: {p}",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.noroot": {
+  "text": "no folder is watched: give at least one folder a role other than Not watched",
+  "note": "settings error. \"Not watched\" is the name of a choice in the folder list."
+ },
+ "set.range": {
+  "text": "a threshold is out of range",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.roles": {
+  "text": "the folder roles are missing (reload the page)",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.sched": {
+  "text": "the scheduled scan needs a weekday and an hour (0-23)",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.trash": {
+  "text": "the trash days must be between 0 and 60",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.uid": {
+  "text": "the Discord user id is a number of 17-20 digits (Developer Mode, right-click your name, Copy User ID)",
+  "note": "settings error. The words in brackets are Discord menu items: use the names of the Discord app in your language."
+ },
+ "set.upg": {
+  "text": "the upgrade size increase must be between 0 and 1000 percent",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "set.url": {
+  "text": "the {k} address must start with http:// or https://",
+  "note": "{k} is radarr, sonarr, prowlarr, ... settings error shown under the Save button; starts lowercase."
+ },
+ "set.write": {
+  "text": "could not write the settings",
+  "note": "settings error shown under the Save button; starts lowercase."
+ },
+ "sp.ab_nomatch": {
+  "text": "Sonarr does not list the release autobrr saw ({n}); this is the best pack it found",
+  "note": "grey line under a pack from autobrr."
+ },
+ "sp.brings": {
+  "text": "brings {l}",
+  "note": "green badge: the missing episodes the pack adds ({l} like E09, E10)."
+ },
+ "sp.brings_tip": {
+  "text": "Missing here; Sonarr imports them from the pack",
+  "note": "tooltip of the badge."
+ },
+ "sp.checking": {
+  "text": "{n} being checked with Sonarr",
+  "note": "grey text after it."
+ },
+ "sp.col_pack": {
+  "text": "Pack",
+  "note": "column header: the season pack release."
+ },
+ "sp.col_replaces": {
+  "text": "Replaces",
+  "note": "column header: the files and torrents the pack replaces."
+ },
+ "sp.col_season": {
+  "text": "Season",
+  "note": "column header of the season pack list."
+ },
+ "sp.confirm": {
+  "text": "Replace the single episodes of this season with the season pack?\n\n1. Sonarr downloads the pack (the episodes stay as they are meanwhile).\n2. When it is 100% done and holds every episode you have, the season is unmonitored and its files are DELETED in Sonarr.\n3. Sonarr imports the pack; then monitoring is restored and the single-episode torrents are moved to the trash folder.\n\nIt runs in the background; if something goes wrong before step 2 nothing is changed.",
+  "note": "confirmation box. Keep the line breaks and the numbering."
+ },
+ "sp.from_ab": {
+  "text": "From autobrr",
+  "note": "title of the season packs autobrr found."
+ },
+ "sp.from_scan": {
+  "text": "From the library scan",
+  "note": "title of the seasons found by the library scan (foldable)."
+ },
+ "sp.n_files": {
+  "one": "{n} file",
+  "other": "{n} files",
+  "note": "what the pack replaces."
+ },
+ "sp.n_running": {
+  "text": "{n} running",
+  "note": "count next to Season repacker in the page navigation."
+ },
+ "sp.n_seasons": {
+  "one": "{n} season",
+  "other": "{n} seasons",
+  "note": "count of seasons."
+ },
+ "sp.n_torrents": {
+  "text": "{n} torrent(s)",
+  "note": "what the pack replaces."
+ },
+ "sp.none": {
+  "text": "No season to replace was found.",
+  "note": "text after a scan."
+ },
+ "sp.none_for": {
+  "text": "No season to replace was found for \"{q}\".",
+  "note": "text after a filtered scan."
+ },
+ "sp.now": {
+  "text": "now: {q}, {n} episodes, {s}",
+  "note": "grey line under a season: what you have now."
+ },
+ "sp.old_list": {
+  "text": "Single-episode torrents that go to the trash after the import ({n}, {s} on disk, the pack is {p})",
+  "note": "grey line over the list of the replaced torrents (a colon follows)."
+ },
+ "sp.only": {
+  "text": "only \"{q}\"",
+  "note": "the series name filter of the scan."
+ },
+ "sp.other_packs": {
+  "text": "{n} other pack(s)",
+  "note": "link text before \"show\"."
+ },
+ "sp.replace": {
+  "text": "Replace with pack",
+  "note": "button of a season."
+ },
+ "sp.scanning": {
+  "text": "scanning",
+  "note": "status. Short."
+ },
+ "sp.show": {
+  "text": "show",
+  "note": "link: shows the other packs."
+ },
+ "sp.skipped": {
+  "text": "Skipped: {l}.",
+  "note": "what the scan left out ({l} counts with reasons)."
+ },
+ "sp.use": {
+  "text": "Use this pack",
+  "note": "button on another pack of a season."
+ },
+ "spw.airing": {
+  "text": "still airing",
+  "note": "why a season is not listed under Season repacker (also in \"Skipped: 3 no pack, 2 still airing\"). Short."
+ },
+ "spw.noanswer": {
+  "text": "Sonarr did not answer",
+  "note": "why a season is not listed under Season repacker (also in \"Skipped: 3 no pack, 2 still airing\"). Short."
+ },
+ "spw.nopack": {
+  "text": "no pack",
+  "note": "why a season is not listed under Season repacker (also in \"Skipped: 3 no pack, 2 still airing\"). Short."
+ },
+ "spw.nothing": {
+  "text": "nothing to replace",
+  "note": "why a season is not listed under Season repacker (also in \"Skipped: 3 no pack, 2 still airing\"). Short."
+ },
+ "spw.pack": {
+  "text": "already a pack",
+  "note": "why a season is not listed under Season repacker (also in \"Skipped: 3 no pack, 2 still airing\"). Short."
+ },
+ "spw.search": {
+  "text": "search failed",
+  "note": "why a season is not listed under Season repacker (also in \"Skipped: 3 no pack, 2 still airing\"). Short."
+ },
+ "sum.all_seeding": {
+  "text": "All {n} seeding",
+  "note": "part of the line under the tile title."
+ },
+ "sum.busy": {
+  "text": "{n} busy",
+  "note": "part of the line under the tile title: torrents being checked or moved."
+ },
+ "sum.downloading": {
+  "text": "{n} downloading",
+  "note": "part of the line under the tile title."
+ },
+ "sum.not_seeded": {
+  "text": "{n} not seeded",
+  "note": "part of the line under the tile title: folders no torrent seeds."
+ },
+ "sum.ns_tip": {
+  "one": "{n} folder in the downloads folders that no torrent seeds (last Find my torrent scan)",
+  "other": "{n} folders in the downloads folders that no torrent seeds (last Find my torrent scan)",
+  "note": "tooltip of the line under the tile title."
+ },
+ "sum.of_seeded": {
+  "text": "{n} of {all} seeded",
+  "note": "part of the line under the tile title."
+ },
+ "sum.seeding": {
+  "text": "{n} seeding",
+  "note": "part of the line under the tile title."
+ },
+ "sum.unavailable": {
+  "text": "Unavailable",
+  "note": "line under the tile title when qBittorrent cannot be read."
+ },
+ "test.ab_off": {
+  "text": "(watching is off)",
+  "note": "added after it."
+ },
+ "test.ab_ok": {
+  "text": "ok, {n} filter(s): {l}",
+  "note": "result line of Test the connections (autobrr); {l} the filter names."
+ },
+ "test.dc_alloff": {
+  "text": "(messages are switched off for every tool)",
+  "note": "added after it."
+ },
+ "test.dc_ok": {
+  "text": "ok, a test message was sent",
+  "note": "result line of Test the connections (discord)."
+ },
+ "test.map": {
+  "text": "{n} of {m} sampled torrents found on this server",
+  "note": "result line of Test the connections (path_mapping)."
+ },
+ "test.map_check": {
+  "text": "(check the folder mapping)",
+  "note": "added after it when most are missing."
+ },
+ "test.nocfg": {
+  "text": "not configured",
+  "note": "result line of Test the connections (radarr, sonarr, autobrr, ...)."
+ },
+ "test.nohook": {
+  "text": "no webhook set",
+  "note": "result line of Test the connections (discord)."
+ },
+ "test.qb_fail": {
+  "text": "cannot connect or log in",
+  "note": "result line of Test the connections (after \"qbittorrent: \")."
+ },
+ "test.qb_ok": {
+  "one": "ok, {n} torrent",
+  "other": "ok, {n} torrents",
+  "note": "result line of Test the connections."
+ },
+ "test.ver": {
+  "text": "ok, version {v}",
+  "note": "result line of Test the connections."
+ },
+ "tile.connecting": {
+  "text": "Connecting…",
+  "note": "grey line under the tile title before the first answer."
+ },
+ "tile.loading": {
+  "text": "Loading…",
+  "note": "placeholder in the tile body."
+ },
+ "tile.open_webui": {
+  "text": "Open qBittorrent Web UI",
+  "note": "tooltip of the home icon in the tile header."
+ },
+ "tile.settings": {
+  "text": "Seedbox settings",
+  "note": "tooltip of the gear icon in the tile header."
+ },
+ "tl.all_seeded": {
+  "text": "All seeded",
+  "note": "badge of the Find my torrent row when every folder is seeded."
+ },
+ "tl.latest": {
+  "text": "latest {t}",
+  "note": "grey line under the Season Repacker badge: when the newest autobrr pack came."
+ },
+ "tl.n_not_seeded": {
+  "text": "{n} not seeded",
+  "note": "part of the Find my torrent row: folders no torrent seeds."
+ },
+ "tl.n_passkey": {
+  "text": "{n} passkey",
+  "note": "part of the Find my torrent row: torrents whose tracker rejects the passkey."
+ },
+ "tl.n_removed": {
+  "text": "{n} removed from tracker",
+  "note": "part of the Find my torrent row on the tile."
+ },
+ "tl.not_scanned": {
+  "text": "Not scanned yet",
+  "note": "badge of a tool row. Short."
+ },
+ "tl.nothing_rep": {
+  "text": "Nothing to repack",
+  "note": "badge of the Season Repacker row."
+ },
+ "tl.nothing_upd": {
+  "text": "Nothing to shape up",
+  "note": "badge of the Shape up row."
+ },
+ "tl.offers": {
+  "one": "{n} offer",
+  "other": "{n} offers",
+  "note": "badge of the Shape up row: torrents with a better or smaller release."
+ },
+ "tl.open": {
+  "text": "Open Seedbox Tools, {n}",
+  "note": "tooltip of a tool row ({n} the tool name)."
+ },
+ "tl.packs_ab": {
+  "one": "{n} pack from autobrr",
+  "other": "{n} packs from autobrr",
+  "note": "badge of the Season Repacker row: season packs autobrr found, waiting for a click."
+ },
+ "tl.scanned": {
+  "text": "scanned {t}",
+  "note": "grey line under a tool row ({t} like \"2 h ago\")."
+ },
+ "tl.scanning": {
+  "text": "Scanning",
+  "note": "badge of a tool row while it scans. Short, upper case on screen."
+ },
+ "tl.searched": {
+  "text": "searched {d} of {n}",
+  "note": "line under the Shape up badge: how many torrents were searched."
+ },
+ "tl.seasons": {
+  "one": "{n} season can be repacked",
+  "other": "{n} seasons can be repacked",
+  "note": "badge of the Season Repacker row."
+ },
+ "tl.tag_find": {
+  "text": "keeps your seed healthy 😉",
+  "note": "default tagline under Find my torrent on the tile (the owner can change it in the settings). Keep the emoji."
+ },
+ "tl.tag_rep": {
+  "text": "keeps your data tidy",
+  "note": "default tagline under Season Repacker on the tile."
+ },
+ "tl.tag_upd": {
+  "text": "slimmer or stronger, in better shape",
+  "note": "default tagline under Shape up on the tile."
+ },
+ "tl.tip_find": {
+  "text": "keeps every file seeding · no file left unseeded",
+  "note": "tooltip of the tagline."
+ },
+ "tl.tip_rep": {
+  "text": "one torrent per season · keeps seasons in one piece",
+  "note": "tooltip of the tagline."
+ },
+ "tl.tip_upd": {
+  "text": "smaller, better HDR or higher resolution · never a lower quality",
+  "note": "tooltip of the tagline."
+ },
+ "tl.to_fix": {
+  "text": "{n} to fix",
+  "note": "badge of the Find my torrent row."
+ },
+ "tl.to_search": {
+  "text": "{n} to search",
+  "note": "badge of the Shape up row before the search."
+ },
+ "tools.action": {
+  "text": "Action",
+  "note": "grey text on the right of the band: the column of the states."
+ },
+ "tools.title": {
+  "text": "Seedbox tools",
+  "note": "band title of the tools part (upper case on screen)."
+ },
+ "tp.about.a_seedbox_or_a": {
+  "text": "A seedbox, or a media server that seeds, only does its job if it seeds as many of its media files as possible. Content that nothing seeds is wasted: the ratio does not grow and the trackers may even drop you. The three tools work with Prowlarr, Radarr, Sonarr and qBittorrent.",
+  "note": "text of the folded \"What do the tools do?\" part."
+ },
+ "tp.about.find_my_torrent_looks": {
+  "text": "<b>Find my torrent</b> looks for torrents (through Prowlarr) for the files in your downloads folders that nothing is seeding. <b>Shape up</b> (formerly Update me) searches every big, old, seeded title in the background and offers a smaller release, a better HDR format or a higher resolution, replaced through Radarr or Sonarr after you approve. <b>Season repacker</b> replaces the single episodes of a finished season with the season pack, so that one torrent seeds the whole season (the torrents it adds get the <code>seasonrepacker</code> tag); it can also watch autobrr for new season packs.",
+  "note": "text of the folded \"What do the tools do?\" part. May contain simple HTML tags: keep them."
+ },
+ "tp.about.what_do_the_tools": {
+  "text": "What do the tools do?",
+  "note": "text of the folded \"What do the tools do?\" part."
+ },
+ "tp.at": {
+  "text": "at",
+  "note": "word before the hour field (\"at 6 :00\")."
+ },
+ "tp.band.activity": {
+  "text": "Activity",
+  "note": "band title (upper case on screen)."
+ },
+ "tp.band.connections": {
+  "text": "Connections",
+  "note": "band title (upper case on screen)."
+ },
+ "tp.band.find_my_torrent": {
+  "text": "Find my torrent",
+  "note": "band title (upper case on screen)."
+ },
+ "tp.band.folders": {
+  "text": "Folders",
+  "note": "band title (upper case on screen)."
+ },
+ "tp.band.scans_and_trash": {
+  "text": "Scans and trash",
+  "note": "band title (upper case on screen)."
+ },
+ "tp.band.season_repacker": {
+  "text": "Season repacker",
+  "note": "band title (upper case on screen)."
+ },
+ "tp.band.shape_up": {
+  "text": "Shape up",
+  "note": "band title (upper case on screen)."
+ },
+ "tp.bandb.nothing_to_set_it": {
+  "text": "nothing to set: it works on the monitored series and seasons of Sonarr",
+  "note": "grey text on the right of a band."
+ },
+ "tp.bandb.replacements_and_added_torrents": {
+  "text": "replacements and added torrents",
+  "note": "grey text on the right of a band."
+ },
+ "tp.bandb.shared_by_the_three": {
+  "text": "shared by the three tools",
+  "note": "grey text on the right of a band."
+ },
+ "tp.bandb.slimmer_or_stronger_a": {
+  "text": "slimmer or stronger: a smaller release, a better HDR format or a higher resolution",
+  "note": "grey text on the right of a band."
+ },
+ "tp.btn.empty_the_trash_now": {
+  "text": "Empty the trash now",
+  "note": "button."
+ },
+ "tp.btn.load_filters": {
+  "text": "Load filters",
+  "note": "button."
+ },
+ "tp.btn.read_the_folders_again": {
+  "text": "Read the folders again",
+  "note": "button."
+ },
+ "tp.btn.save": {
+  "text": "Save",
+  "note": "button."
+ },
+ "tp.btn.scan_for_season_packs": {
+  "text": "Scan for season packs",
+  "note": "button."
+ },
+ "tp.btn.scan_the_downloads_folders": {
+  "text": "Scan the downloads folders",
+  "note": "button."
+ },
+ "tp.btn.scan_the_seeded_torrents": {
+  "text": "Scan the seeded torrents",
+  "note": "button."
+ },
+ "tp.btn.test_the_bot": {
+  "text": "Test the bot",
+  "note": "button."
+ },
+ "tp.btn.test_the_connections": {
+  "text": "Test the connections",
+  "note": "button."
+ },
+ "tp.days": {
+  "text": "days",
+  "note": "after a number of days."
+ },
+ "tp.dt.autobrr_address_and_api": {
+  "text": "autobrr address and API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.autobrr_filters_to_use": {
+  "text": "autobrr filters to use:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.check_the_connections": {
+  "text": "Check the connections:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.data_folder_as_qbittorrent": {
+  "text": "Data folder, as qBittorrent sees it / on this server:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.discord_bot_reactions": {
+  "text": "Discord bot (reactions):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.discord_messages": {
+  "text": "Discord messages:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.discord_webhook": {
+  "text": "Discord webhook:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.dolby_vision_on_your": {
+  "text": "Dolby Vision on your TVs:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.downloads_folder_on_this": {
+  "text": "Downloads folder on this server:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.find_my_torrent_accepted": {
+  "text": "Find my torrent: accepted match (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.find_my_torrent_category": {
+  "text": "Find my torrent: category:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.find_my_torrent_files": {
+  "text": "Find my torrent: files that may be missing:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.find_my_torrent_size": {
+  "text": "Find my torrent: size tolerance (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.lidarr_address_and_api": {
+  "text": "Lidarr address and API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.minimum_size_gb_age": {
+  "text": "Minimum size (GB), age (days), saving (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.offer": {
+  "text": "Offer:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.prowlarr_address_and_api": {
+  "text": "Prowlarr address and API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.radarr_address_and_api": {
+  "text": "Radarr address and API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.replace_unseeded_content_maximum": {
+  "text": "Replace unseeded content: maximum size increase (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.replaced_files_stay_in": {
+  "text": "Replaced files stay in a trash folder for (days):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.scheduled_scan": {
+  "text": "Scheduled scan:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.season_packs_from_autobrr": {
+  "text": "Season packs from autobrr:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.show_on_the_dashboard": {
+  "text": "Show on the Dashboard:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.sonarr_address_and_api": {
+  "text": "Sonarr address and API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.widget_tagline": {
+  "text": "Widget tagline:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.dt.x": {
+  "text": " ",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "tp.hint.0_delete_at_once": {
+  "text": "0 = delete at once. The old folder is moved to <code>.seedbox_trash</code> inside its downloads folder and deleted after this many days",
+  "note": "grey hint next to or under a setting. May contain simple HTML tags: keep them."
+ },
+ "tp.hint.0_no_limit_a": {
+  "text": "(0 = no limit). A release is never of a lower resolution or HDR format than what you have",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.a_dolby_vision_only": {
+  "text": "a Dolby Vision only release (DV without HDR10, mostly web releases) gives a purple and green picture on a TV without DV. With not every TV, such a release is never an upgrade and is marked; DV with HDR10 (DV+HDR) is the best. Changing it: Shape up, Forget results, search again",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.a_replacement_may_be": {
+  "text": "a replacement may be at most this much bigger than what you have (0 = no limit). The same resolution and HDR format, closest in size, come first",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.a_torrent_may_be": {
+  "text": "a torrent may be this much bigger than the folder (extra files such as .nfo)",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.after_the_check_a": {
+  "text": "after the check, a torrent that matches at least this much of your files is started; qBittorrent downloads the missing rest (for example an .nfo file). Below it the torrent is removed again",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.every_5_minutes_the": {
+  "text": "every 5 minutes the releases that your autobrr filters let through are checked with Sonarr. A season pack of a monitored season that you have at least one episode of, not of a lower resolution (and Hungarian if your episodes are), is listed in the Season repacker under From autobrr and reported on Discord (with this switch, even when the messages below are off). Nothing is started",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.every_folder_directly_inside": {
+  "text": "every folder directly inside it is listed below with a role. A new folder shows up by itself as Other (marked new): Find my torrent sees it, Shape up and the Season repacker leave it alone until you change it. Save after a change.",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.if_everything_else_matches": {
+  "text": "if everything else matches and at most this many files of the torrent are missing from your folder, the torrent is started and qBittorrent downloads those files",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.off_by_default_replacement": {
+  "text": "off by default. Replacement started, imported, stuck, old files removed.",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.off_by_default_season": {
+  "text": "off by default. Season pack replacement started, done (with what was imported and trashed) or stuck.",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.off_by_default_the": {
+  "text": "off by default. The weekly check result (torrents removed by a tracker are always reported when a webhook is saved), and what happens to a replacement: started, imported, stuck, old files removed.",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.one_webhook_for_all": {
+  "text": "one webhook for all tools; each tool below has its own switch for sending messages. Type - to remove the saved webhook",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.optional_for_the_music": {
+  "text": "optional, for the Music folders (not used by the tools yet)",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.optional_only_for_the": {
+  "text": "optional, only for the season pack messages of the Season repacker (autobrr, Settings, API keys)",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.optional_the_seedbox_message": {
+  "text": "optional. The Seedbox message gets 1️⃣ 2️⃣ 3️⃣ 👎 reactions from your bot; a number starts that replacement (with the same checks as the button here), 👎 dismisses it. Only your reactions count, for 24 hours; the bot looks once a minute. Token: Discord Developer Portal, your app, Bot, Reset Token (leave empty to keep, - to remove). User ID: Discord, Settings, Advanced, Developer Mode, then right-click your name, Copy User ID. The bot needs View Channel, Add Reactions and Read Message History in the webhook's channel",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.relevant_a_season_that": {
+  "text": "Relevant: a season that can be repacked, a repack or a scan running, never scanned. A failed or stuck row shows in every mode but never. When no row is left, the tools part of the tile is hidden.",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.relevant_an_offer_a": {
+  "text": "Relevant: an offer, a scan or the background search running, never scanned. A failed or stuck row shows in every mode but never. When no row is left, the tools part of the tile is hidden.",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.relevant_something_to_fix": {
+  "text": "Relevant: something to fix, a scan running, never scanned. A failed or stuck row shows in every mode but never. When no row is left, the tools part of the tile is hidden.",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.tests_the_saved_settings": {
+  "text": "tests the saved settings (Save first after a change): qBittorrent, the folder mapping, Discord (sends a test message), Prowlarr, Radarr, Sonarr, Lidarr, autobrr",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.the_category_set_in": {
+  "text": "the category set in the qBittorrent download client of Radarr (movies) or Sonarr (series), by default it is radarr and sonarr respectively, you can change it in your Radarr or Sonarr instance under the download client setting. Torrents that match nothing will get the category most torrents in the same folder have",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.the_line_under_the": {
+  "text": "the line under the tool name on the Dashboard tile; leave empty for the default",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.the_ticked_tools_scan": {
+  "text": "the ticked tools scan one after the other at that time. Only scans run by themselves, nothing is added, replaced or deleted without your click. Torrents that a tracker removed are reported on Discord (if a webhook is saved, even when the other messages are off) and flagged in the Seedbox tile as <i>need attention</i>",
+  "note": "grey hint next to or under a setting. May contain simple HTML tags: keep them."
+ },
+ "tp.hint.tick_the_filters_whose": {
+  "text": "tick the filters whose releases are checked; none ticked = all filters. Then Save",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.hint.titles_at_least_this": {
+  "text": "titles at least this big and old are listed and searched in the background; a release counts as a saving if it is at least this much smaller",
+  "note": "grey hint next to or under a setting."
+ },
+ "tp.lbl.find_my_torrent": {
+  "text": "Find my torrent",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.give_added_torrents_the": {
+  "text": "give added torrents the category of Radarr / Sonarr",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.hdr_dv_upgrade": {
+  "text": "HDR / DV upgrade",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.resolution_upgrade": {
+  "text": "resolution upgrade",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.saving": {
+  "text": "saving",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.season_packs_from_autobrr": {
+  "text": "season packs from autobrr",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.season_repacker": {
+  "text": "Season repacker",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.send_them": {
+  "text": "send them",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.shape_up": {
+  "text": "Shape up",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.torrents_removed_from_the": {
+  "text": "torrents removed from the tracker (daily check)",
+  "note": "text next to a checkbox."
+ },
+ "tp.lbl.watch_autobrr": {
+  "text": "watch autobrr",
+  "note": "text next to a checkbox."
+ },
+ "tp.opt.always": {
+  "text": "always",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.every_day": {
+  "text": "every day",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.every_tv_plays_it": {
+  "text": "every TV plays it",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.every_week": {
+  "text": "every week",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.for_n_days_after": {
+  "text": "for N days after a scan",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.friday": {
+  "text": "Friday",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.monday": {
+  "text": "Monday",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.never": {
+  "text": "never",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.not_every_tv_plays": {
+  "text": "not every TV plays it",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.only_when_relevant": {
+  "text": "only when relevant",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.saturday": {
+  "text": "Saturday",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.sunday": {
+  "text": "Sunday",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.thursday": {
+  "text": "Thursday",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.tuesday": {
+  "text": "Tuesday",
+  "note": "choice in a dropdown."
+ },
+ "tp.opt.wednesday": {
+  "text": "Wednesday",
+  "note": "choice in a dropdown."
+ },
+ "tp.p.every_listed_torrent_is": {
+  "text": "Every listed torrent is searched in the background, one about every 90 seconds, a result is kept for 10 days. Offered: a release smaller by the saving, a better HDR format (SDR, HDR, DV) or a higher resolution, never a lower one. Hungarian audio comes first but is not required.",
+  "note": "lead line of a part of the page."
+ },
+ "tp.p.folders_in_the_downloads": {
+  "text": "Folders in the downloads folders that no torrent seeds: the original torrent is looked up on the trackers, or the content can be replaced.",
+  "note": "lead line of a part of the page."
+ },
+ "tp.p.seasons_downloaded_episode_by": {
+  "text": "Seasons downloaded episode by episode, replaced with the season pack through Sonarr; monitored series and seasons only, same or higher resolution, DV / HDR first. Nothing is deleted before the pack is complete and holds every episode you have; missing episodes (often the finale) come from the pack. With autobrr watched, new packs are listed here by themselves; the library scan tidies up what is already here.",
+  "note": "lead line of a part of the page."
+ },
+ "tp.ph.api_key": {
+  "text": "API key",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.bot_token": {
+  "text": "bot token",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.filter_by_name": {
+  "text": "filter by name",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.http_192_168_1": {
+  "text": "http://192.168.1.10:9696",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.http_192_168_12": {
+  "text": "http://192.168.1.10:7878",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.http_192_168_13": {
+  "text": "http://192.168.1.10:8989",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.http_192_168_14": {
+  "text": "http://192.168.1.10:8686",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.http_192_168_15": {
+  "text": "http://192.168.1.10:7474",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.https_discord_com_api": {
+  "text": "https://discord.com/api/webhooks/...",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.keeps_your_data_tidy": {
+  "text": "keeps your data tidy",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.keeps_your_seed_healthy": {
+  "text": "keeps your seed healthy 😉",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.series_name_empty_all": {
+  "text": "series name (empty = all)",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.slimmer_or_stronger_in": {
+  "text": "slimmer or stronger, in better shape",
+  "note": "grey example text in an empty field."
+ },
+ "tp.ph.your_discord_user_id": {
+  "text": "your Discord user ID",
+  "note": "grey example text in an empty field."
+ },
+ "tp.settings": {
+  "text": "Settings",
+  "note": "link in the page navigation and the title of the settings part."
+ },
+ "tp.sub": {
+  "text": "Only scans run by themselves. Nothing is added, replaced or deleted without your click.",
+  "note": "grey line next to the page title."
+ },
+ "tp.upd_foot": {
+  "text": "The scan matches the file sizes of your torrents with the files in Radarr and Sonarr; a torrent with several seasons is listed but not supported yet. Radarr and Sonarr decide whether a chosen release is an upgrade: if it waits with “Not an upgrade”, import it by hand in Activity, Queue. After the import the old torrent and its files can be removed here with one more click.",
+  "note": "grey note under Shape up. \"Not an upgrade\" is Radarr's message; Activity, Queue are Radarr/Sonarr menu names."
+ },
+ "tp.upg_growth": {
+  "text": "upgrades may be bigger by at most",
+  "note": "words before the size limit of upgrades (\"... by at most 300 %\")."
+ },
+ "tp.weekly_on": {
+  "text": "weekly: on",
+  "note": "text before the day choice of the scheduled scan (\"(weekly: on Monday)\")."
+ },
+ "tr.confirm": {
+  "text": "Empty the trash now?\n\nEverything in the .seedbox_trash folders is deleted at once {info}. This cannot be undone. Space is freed only for files that have no other hardlink (for example in the media folder).",
+  "note": "confirmation box. Keep .seedbox_trash and the line breaks."
+ },
+ "tr.empty": {
+  "text": "empty",
+  "note": "the trash is empty (in brackets)."
+ },
+ "tr.items": {
+  "one": "{n} item, {s}",
+  "other": "{n} items, {s}",
+  "note": "what the trash holds, in brackets next to Empty the trash now."
+ },
+ "u.approx": {
+  "text": "approx.",
+  "note": "in brackets after the balance line."
+ },
+ "u.approx_tip": {
+  "text": "Counted with the first release listed for each torrent. Hardlinked files (imported into Radarr or Sonarr) free their space only when every link is gone.",
+  "note": "tooltip of (approx.)."
+ },
+ "u.band": {
+  "text": "{t} of at least {gb} GB and {d}",
+  "note": "grey text on the right of the Shape up band; {t} like \"4 torrents\", {d} like \"1 day\" (the Shape up thresholds)."
+ },
+ "u.cat_hdr": {
+  "text": "HDR / DV",
+  "note": "kind of offer: a better HDR format."
+ },
+ "u.cat_res": {
+  "text": "resolution",
+  "note": "kind of offer: a higher resolution."
+ },
+ "u.cat_save": {
+  "text": "saving",
+  "note": "kind of Shape up offer: a smaller release (green badge, filter checkbox)."
+ },
+ "u.done": {
+  "text": "done",
+  "note": "status. Short."
+ },
+ "u.find_alt": {
+  "text": "Find alternatives",
+  "note": "small button: searches releases for this torrent."
+ },
+ "u.first": {
+  "text": "first",
+  "note": "label of the first release in the summary line (\"first: -40% 2160p HDR\")."
+ },
+ "u.forget": {
+  "text": "Forget results, search again",
+  "note": "small button."
+ },
+ "u.forget_confirm": {
+  "text": "Forget every Shape up search result and search the whole list again?\n\nThe {n} torrents are searched again in the background, one about every 90 seconds (about {h} hours). Nothing is changed in qBittorrent, Radarr or Sonarr.",
+  "note": "confirmation box. Keep the line breaks."
+ },
+ "u.forget_tip": {
+  "text": "Forget every search result of this list and search all torrents again in the background (for example after you changed the saving, the offers or the size limit)",
+  "note": "tooltip of it."
+ },
+ "u.free": {
+  "one": "The {n} saving offer would free about {s}",
+  "other": "The {n} saving offers would free about {s}",
+  "note": "balance line under the search status ({s} a size in bold)."
+ },
+ "u.g_dead": {
+  "text": "Removed from the tracker: replace it",
+  "note": "group bar of Shape up."
+ },
+ "u.g_hdr": {
+  "text": "HDR / DV upgrade",
+  "note": "group bar."
+ },
+ "u.g_must": {
+  "text": "Must do",
+  "note": "group bar of Shape up: releases that are smaller and better."
+ },
+ "u.g_must_sub": {
+  "text": "smaller and better: a no-brainer",
+  "note": "grey text after Must do."
+ },
+ "u.g_res": {
+  "text": "Resolution upgrade",
+  "note": "group bar."
+ },
+ "u.g_save": {
+  "text": "Saving: a smaller release",
+  "note": "group bar."
+ },
+ "u.hide": {
+  "text": "Hide",
+  "note": "small button. Short."
+ },
+ "u.hide_tip": {
+  "text": "Leave this torrent out of the Shape up list (nothing is changed in qBittorrent or on the disk)",
+  "note": "tooltip of Hide."
+ },
+ "u.in_client": {
+  "text": "{t} in the client",
+  "note": "how long the torrent has been in qBittorrent ({t} like \"400 d\")."
+ },
+ "u.more": {
+  "text": "Show {m} more ({n} left)",
+  "note": "button under a long list."
+ },
+ "u.n_days": {
+  "one": "{n} day",
+  "other": "{n} days",
+  "note": "part of the Shape up band text."
+ },
+ "u.n_must": {
+  "text": "{n} must do",
+  "note": "count next to Shape up in the page navigation."
+ },
+ "u.n_nomatch": {
+  "text": "no matching movie or series in Radarr/Sonarr",
+  "note": "reason in the Shape up list."
+ },
+ "u.n_notscan": {
+  "text": "This torrent is not in the last scan",
+  "note": "error of a search."
+ },
+ "u.n_novideo": {
+  "text": "no video file",
+  "note": "reason in the Shape up list."
+ },
+ "u.n_offers": {
+  "one": "{n} offer",
+  "other": "{n} offers",
+  "note": "count of torrents with an offer."
+ },
+ "u.n_outside": {
+  "text": "outside the library: {l}",
+  "note": "reason of a torrent not listed by Shape up; {l} the reason (category, folder)."
+ },
+ "u.n_rel": {
+  "one": "{n} release",
+  "other": "{n} releases",
+  "note": "count of found releases."
+ },
+ "u.n_seasons": {
+  "text": "several seasons in one place: not supported yet ({n} video file(s) here; matches: {l})",
+  "note": "reason in the Shape up list."
+ },
+ "u.n_torrents": {
+  "one": "{n} torrent",
+  "other": "{n} torrents",
+  "note": "count on a group bar, also part of the Shape up band text."
+ },
+ "u.none_big": {
+  "text": "No torrent is big and old enough (see the thresholds above).",
+  "note": "text of Shape up."
+ },
+ "u.not_listed": {
+  "one": "{n} torrent not listed ({why})",
+  "other": "{n} torrents not listed ({why})",
+  "note": "folded list of Shape up."
+ },
+ "u.not_matched": {
+  "text": "not matched",
+  "note": "state of a torrent: not found in Radarr/Sonarr."
+ },
+ "u.not_searched": {
+  "text": "not searched yet",
+  "note": "state of a torrent."
+ },
+ "u.not_searched_n": {
+  "text": "{n} not searched yet",
+  "note": "in brackets after it."
+ },
+ "u.nothing": {
+  "text": "Nothing to list.",
+  "note": "text of Shape up."
+ },
+ "u.nothing_better": {
+  "text": "nothing better found",
+  "note": "state of a torrent."
+ },
+ "u.now": {
+  "text": "now: {t}",
+  "note": "the torrent being searched."
+ },
+ "u.rest": {
+  "one": "{n} torrent without an offer",
+  "other": "{n} torrents without an offer",
+  "note": "folded list of Shape up."
+ },
+ "u.search_again": {
+  "text": "Search again",
+  "note": "small button."
+ },
+ "u.search_failed": {
+  "text": "search failed: {e}",
+  "note": "state of a torrent."
+ },
+ "u.search_now": {
+  "text": "Search now",
+  "note": "small button."
+ },
+ "u.search_rest": {
+  "text": "Search the rest",
+  "note": "small button."
+ },
+ "u.searched": {
+  "text": "Searched {d} of {n}",
+  "note": "status of the background search."
+ },
+ "u.searching_now": {
+  "text": "searching now",
+  "note": "state of a torrent."
+ },
+ "u.show_again": {
+  "text": "Show again",
+  "note": "small button: lists a hidden torrent again."
+ },
+ "u.sk_hidden": {
+  "text": "hidden by you",
+  "note": "why a torrent is not listed."
+ },
+ "u.sk_novideo": {
+  "text": "no video file",
+  "note": "why a torrent is not listed in Shape up."
+ },
+ "u.sk_seasons": {
+  "text": "several seasons in one torrent",
+  "note": "why a torrent is not listed."
+ },
+ "u.stop_search": {
+  "text": "Stop searching",
+  "note": "small button."
+ },
+ "u.stopped": {
+  "text": "stopped",
+  "note": "status. Short."
+ },
+ "u.take_less": {
+  "one": "the {n} upgrade would take about {s} less",
+  "other": "the {n} upgrades would take about {s} less",
+  "note": "balance line."
+ },
+ "u.take_more": {
+  "one": "the {n} upgrade would take about {s} more",
+  "other": "the {n} upgrades would take about {s} more",
+  "note": "balance line ({s} a size in bold)."
+ },
+ "u.toggle": {
+  "text": "Show or hide the releases",
+  "note": "tooltip of the +/- in front of a torrent."
+ },
+ "u.with_offer": {
+  "text": "{n} with an offer",
+  "note": "how many torrents have an offer ({n} shown in bold)."
+ },
+ "ws.btn.apply": {
+  "text": "Apply",
+  "note": "button: saves (Unraid's usual word). Short."
+ },
+ "ws.btn.done": {
+  "text": "Done",
+  "note": "button: leaves the page (Unraid's usual word). Short."
+ },
+ "ws.btn.test": {
+  "text": "Test the connection",
+  "note": "button."
+ },
+ "ws.check": {
+  "text": "Check:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "ws.col_bar": {
+  "text": "progress bar under the name",
+  "note": "checkbox: show a progress bar under each torrent name."
+ },
+ "ws.cols": {
+  "text": "Columns:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "ws.cols_hint": {
+  "text": "the torrent name column is always shown",
+  "note": "hint under the column checkboxes."
+ },
+ "ws.conn_state": {
+  "one": "{s} · {n} torrent",
+  "other": "{s} · {n} torrents",
+  "note": "small text next to the qBittorrent connection heading ({s} is qBittorrent's own state word: connected, firewalled, disconnected)."
+ },
+ "ws.e_auth": {
+  "text": "the username or password is wrong",
+  "note": "result of the connection test."
+ },
+ "ws.e_bad": {
+  "text": "unexpected answer",
+  "note": "result of the connection test."
+ },
+ "ws.e_none": {
+  "text": "no answer",
+  "note": "result of the connection test."
+ },
+ "ws.e_quote": {
+  "text": "double quotes are not allowed in the username or password",
+  "note": "reason after \"Not saved:\"."
+ },
+ "ws.e_unreach": {
+  "text": "cannot reach qBittorrent (address or port)",
+  "note": "result of the connection test."
+ },
+ "ws.h.conn": {
+  "text": "qBittorrent connection",
+  "note": "section heading (upper case on screen)."
+ },
+ "ws.h.rows": {
+  "text": "Tile rows",
+  "note": "section heading (upper case on screen)."
+ },
+ "ws.h.rows_sub": {
+  "text": "In transfer and Needs attention",
+  "note": "small grey text next to the heading (the names of two parts of the tile)."
+ },
+ "ws.help": {
+  "text": "Stalled torrents are ignored: an idle seed that nobody downloads from is normal in qBittorrent. Errors, missing files, paused or stopped and queued torrents are listed under Needs attention; torrents that are moving, checking or allocating appear under In transfer. When the client is firewalled or disconnected, a single connection row is shown.",
+  "note": "grey paragraph at the bottom of the page."
+ },
+ "ws.host": {
+  "text": "Address and Web UI port:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "ws.host_hint": {
+  "text": "as seen from Unraid; 127.0.0.1 when qBittorrent runs in a container on this server with its port published",
+  "note": "hint under the address field."
+ },
+ "ws.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message when saving failed."
+ },
+ "ws.pass_hint": {
+  "text": "the saved password is not sent to the page: leave it empty to keep it, type - to remove it; no double quotes",
+  "note": "hint under the password field."
+ },
+ "ws.password": {
+  "text": "password",
+  "note": "grey text in the empty password field."
+ },
+ "ws.rows": {
+  "text": "Most rows shown:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "ws.rows_hint": {
+  "text": "more rows are counted in the band title",
+  "note": "hint under the rows fields."
+ },
+ "ws.saved": {
+  "text": "(saved)",
+  "note": "grey text in the empty password field: a password is saved."
+ },
+ "ws.saved_msg": {
+  "text": "Saved. The dashboard picks it up within a few seconds.",
+  "note": "message next to Apply."
+ },
+ "ws.saving": {
+  "text": "Saving...",
+  "note": "message next to Apply."
+ },
+ "ws.test_hint": {
+  "text": "tests the saved settings (Apply first after a change)",
+  "note": "hint next to the test button."
+ },
+ "ws.test_ok": {
+  "one": "ok, {n} torrent, {s}",
+  "other": "ok, {n} torrents, {s}",
+  "note": "result of a working connection test."
+ },
+ "ws.testing": {
+  "text": "Testing...",
+  "note": "message next to the test button."
+ },
+ "ws.tools_line": {
+  "text": "find torrents for files that are not seeded, replace content and big titles with better or smaller releases through Radarr and Sonarr, and repack seasons.",
+  "note": "text after the \"Seedbox Tools\" link at the bottom of the page."
+ },
+ "ws.unknown_error": {
+  "text": "unknown error",
+  "note": "reason when none is known."
+ },
+ "ws.url": {
+  "text": "Web UI link (optional):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "ws.url_hint": {
+  "text": "the home icon of the tile opens this; empty = this server's address with the Web UI port",
+  "note": "hint under the Web UI link field."
+ },
+ "ws.user": {
+  "text": "Username and password:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "wse.replace": {
+  "text": "could not replace the settings file",
+  "note": "reason after \"Not saved:\" on the Seedbox settings page."
+ },
+ "wse.url": {
+  "text": "invalid Web UI link URL",
+  "note": "reason after \"Not saved:\" on the Seedbox settings page."
+ },
+ "wse.write": {
+  "text": "could not write the settings file",
+  "note": "reason after \"Not saved:\" on the Seedbox settings page."
+ },
+ "xfer.col_down": {
+  "text": "Down",
+  "note": "column header: download speed. Short (76 px)."
+ },
+ "xfer.col_eta": {
+  "text": "ETA",
+  "note": "column header: estimated time left. Very short (50 px)."
+ },
+ "xfer.col_torrent": {
+  "text": "Torrent",
+  "note": "column header (upper case on screen)."
+ },
+ "xfer.col_up": {
+  "text": "Up",
+  "note": "column header: upload speed. Short."
+ },
+ "xfer.err_auth": {
+  "text": "Authentication failed (check Seedbox settings)",
+  "note": "message in the tile when the qBittorrent login fails."
+ },
+ "xfer.err_down": {
+  "text": "qBittorrent unreachable",
+  "note": "message in the tile."
+ },
+ "xfer.more": {
+  "text": "+{n} more in transfer",
+  "note": "link under the In transfer list (opens qBittorrent)."
+ },
+ "xfer.nothing": {
+  "text": "Nothing transferring right now",
+  "note": "text in the In transfer box when nothing moves."
+ },
+ "xfer.title": {
+  "text": "In transfer",
+  "note": "band title of the downloading, uploading and busy torrents (upper case on screen)."
+ },
+ "xfer.waiting": {
+  "text": "waiting",
+  "note": "next to the bar of a torrent waiting to be moved by qBittorrent (moves run one by one). Short."
+ }
+}

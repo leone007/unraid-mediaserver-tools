@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/i18n.php';
+$qx_T = mt_i18n_t(__DIR__ . '/lang');
 
 function qbt_out($ok, $extra = []) {
     echo json_encode(array_merge(['ok' => $ok], $extra));
@@ -44,7 +46,7 @@ $host = trim((string)($_POST['host'] ?? '127.0.0.1'));
 if (!preg_match('/^[A-Za-z0-9.\-]+$/', $host)) { $host = '127.0.0.1'; }
 
 $url = trim(qbt_clean($_POST['webui_url'] ?? ''));
-if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { qbt_out(false, ['error' => 'invalid Web UI link URL']); }
+if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { qbt_out(false, ['error' => $qx_T('wse.url')]); }
 
 $new = [
     'host'          => $host,
@@ -65,13 +67,13 @@ foreach ($new as $k => $v) { $text .= $k . '="' . $v . '"' . "\n"; }
 
 if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
 $tmp = $file . '.tmp';
-if (@file_put_contents($tmp, $text) === false) { qbt_out(false, ['error' => 'could not write the settings file']); }
+if (@file_put_contents($tmp, $text) === false) { qbt_out(false, ['error' => $qx_T('wse.write')]); }
 @chmod($tmp, 0600);
 if (!@rename($tmp, $file)) {
     // some filesystems refuse to replace an existing file: write in place instead
     $ok = @file_put_contents($file, $text);
     @unlink($tmp);
-    if ($ok === false) { qbt_out(false, ['error' => 'could not replace the settings file']); }
+    if ($ok === false) { qbt_out(false, ['error' => $qx_T('wse.replace')]); }
 }
 @chmod($file, 0600);
 @unlink('/tmp/qbt_widget_authfail');   // credentials may have changed: allow a fresh login attempt

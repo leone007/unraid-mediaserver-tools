@@ -4,6 +4,12 @@ Markdown="false"
 ---
 <?PHP
 $pluginname = "qbittorrent_widget";
+// texts from the dictionary (lang/en.json and its translations, see i18n.php); own names: Monitor runs this in its scope
+require_once '/usr/local/emhttp/plugins/qbittorrent_widget/i18n.php';
+$qbt_lang = '/usr/local/emhttp/plugins/qbittorrent_widget/lang';
+$qbt_T = mt_i18n_t($qbt_lang);
+$qbt_t = [];
+foreach (['conn' => 'tile.connecting', 'loading' => 'tile.loading', 'webui' => 'tile.open_webui', 'set' => 'tile.settings'] as $qbt_k => $qbt_v) { $qbt_t[$qbt_k] = htmlspecialchars($qbt_T($qbt_v), ENT_QUOTES); }
 
 $mytiles[$pluginname]['column2'] =
 <<<EOT
@@ -14,13 +20,13 @@ $mytiles[$pluginname]['column2'] =
       <i class="f32 qbt-ic"></i>
       <div class="section">
         <h3 class="tile-header-main qbt-ttl">Seedbox</h3>
-        <span id="qbt-summary" class="qbt-sum">Connecting&hellip;</span>
+        <span id="qbt-summary" class="qbt-sum">{$qbt_t['conn']}</span>
       </div>
     </span>
     <span class="tile-header-right">
       <span class="tile-header-right-controls">
-        <a id="qbt-home" href="#" target="_blank" rel="noopener" title="_(Open qBittorrent Web UI)_"><i class="fa fa-fw fa-home control"></i></a>
-        <a href="/Settings/QbtWidgetSettings" title="_(Seedbox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+        <a id="qbt-home" href="#" target="_blank" rel="noopener" title="{$qbt_t['webui']}"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/QbtWidgetSettings" title="{$qbt_t['set']}"><i class="fa fa-fw fa-cog control"></i></a>
       </span>
     </span>
   </span>
@@ -30,11 +36,12 @@ $mytiles[$pluginname]['column2'] =
     <div id="qbt-status"></div>
     <div id="qbt-tools"></div>
     <div id="qbt-attn"></div>
-    <div id="qbt-xfer"><div class="qbt-note">Loading&hellip;</div></div>
+    <div id="qbt-xfer"><div class="qbt-note">{$qbt_t['loading']}</div></div>
   </div>
 </td></tr>
 </tbody>
 EOT;
+echo mt_i18n_js($qbt_lang, 'qbt', ['tile.', 'pill.', 'sum.', 'tools.', 'attn.', 'xfer.', 'busy.']);
 ?>
 <style>
 i.f32.qbt-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/qbittorrent_widget/icon.png) center/contain no-repeat!important}
@@ -68,6 +75,7 @@ $(function () {
   // Optional hook; stock Unraid has no addWidget(), so this is a harmless no-op.
   if (typeof addWidget === 'function') { addWidget('db-qbittorrent', true); }
 
+  var T = function (k, v) { return MTL.t('qbt', k, v); };
   var API = '/plugins/qbittorrent_widget/api_fetch.php';
   var busy = false;
   var themed = false;
@@ -141,20 +149,20 @@ $(function () {
 
   function renderPill(r) {
     var map = {
-      connected:    [COLOR.green, 'fa-globe', 'Connected'],
-      firewalled:   [COLOR.amber, 'fa-globe', 'Firewalled'],
-      disconnected: [COLOR.red, 'fa-chain-broken', 'Disconnected']
+      connected:    [COLOR.green, 'fa-globe', T('pill.connected')],
+      firewalled:   [COLOR.amber, 'fa-globe', T('pill.firewalled')],
+      disconnected: [COLOR.red, 'fa-chain-broken', T('pill.disconnected')]
     };
-    var g = (r && r.conn && map[r.conn]) ? map[r.conn] : [COLOR.grey, 'fa-chain-broken', (r && r.ok) ? 'Unknown' : 'Offline'];
+    var g = (r && r.conn && map[r.conn]) ? map[r.conn] : [COLOR.grey, 'fa-chain-broken', (r && r.ok) ? T('pill.unknown') : T('pill.offline')];
     var $p = $('<div class="qbt-pill">');
     $p.append($('<span>').css('color', g[0]).append($('<i class="fa">').addClass(g[1])).append(document.createTextNode(' ' + g[2])));
     if (r && r.ok) {
       if (r.attention_total > 0) {
         $p.append($('<span>').css('color', COLOR.red).append($('<i class="fa fa-exclamation-triangle">'))
-          .append(document.createTextNode(' ' + r.attention_total + ' need attention')));
+          .append(document.createTextNode(' ' + T('pill.attention', { n: r.attention_total }))));
       } else {
         $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-check-circle">'))
-          .append(document.createTextNode(' All healthy')));
+          .append(document.createTextNode(' ' + T('pill.healthy'))));
       }
     }
     $('#qbt-status').empty().append($p);
@@ -162,18 +170,18 @@ $(function () {
 
   function renderSummary(r) {
     var $s = $('#qbt-summary');
-    if (!r || !r.ok) { $s.text('Unavailable'); return; }
+    if (!r || !r.ok) { $s.text(T('sum.unavailable')); return; }
     var c = r.counts || { seeding: 0, downloading: 0, busy: 0 };
     var g = r.global || { dl: 0, ul: 0 };
     var speeds = '\u2193 ' + rateTxt(g.dl) + '\u00A0\u00A0\u2191 ' + rateTxt(g.ul);
     // folders that no torrent seeds (Find my torrent): the header counts them too, so 'All seeding' is said only when there are none
     var ns = +r.not_seeded > 0 ? +r.not_seeded : 0;
-    $s.attr('title', ns ? ns + ' folder' + (ns === 1 ? '' : 's') + ' in the downloads folders that no torrent seeds (last Find my torrent scan)' : '');
-    if (ns && r.attention_total === 0 && c.downloading === 0 && !c.busy) { $s.text(c.seeding + ' of ' + (c.seeding + ns) + ' seeded \u00B7 ' + ns + ' not seeded \u00B7 ' + speeds); }
-    else if (r.attention_total === 0 && c.downloading === 0 && !c.busy) { $s.text('All ' + c.seeding + ' seeding \u00B7 ' + speeds); }
+    $s.attr('title', ns ? T('sum.ns_tip', { n: ns }) : '');
+    if (ns && r.attention_total === 0 && c.downloading === 0 && !c.busy) { $s.text(T('sum.of_seeded', { n: c.seeding, all: c.seeding + ns }) + ' \u00B7 ' + T('sum.not_seeded', { n: ns }) + ' \u00B7 ' + speeds); }
+    else if (r.attention_total === 0 && c.downloading === 0 && !c.busy) { $s.text(T('sum.all_seeding', { n: c.seeding }) + ' \u00B7 ' + speeds); }
     else {
-      $s.text(c.seeding + ' seeding' + (ns ? ' \u00B7 ' + ns + ' not seeded' : '') + (c.downloading ? ' \u00B7 ' + c.downloading + ' downloading' : '')
-        + (c.busy ? ' \u00B7 ' + c.busy + ' busy' : '') + ' \u00B7 ' + speeds);
+      $s.text(T('sum.seeding', { n: c.seeding }) + (ns ? ' \u00B7 ' + T('sum.not_seeded', { n: ns }) : '') + (c.downloading ? ' \u00B7 ' + T('sum.downloading', { n: c.downloading }) : '')
+        + (c.busy ? ' \u00B7 ' + T('sum.busy', { n: c.busy }) : '') + ' \u00B7 ' + speeds);
     }
   }
 
@@ -189,7 +197,7 @@ $(function () {
     if (!r || !r.ok || !r.tools || !r.tools.length) { return; }
     var g = '18px minmax(0,1fr) 190px', BG = { amber: 'rgba(224,160,48,.22)', orange: 'rgba(245,165,36,.22)', blue: 'rgba(74,144,226,.22)', green: 'rgba(63,162,74,.22)', red: 'rgba(229,83,75,.22)', grey: 'rgba(185,185,185,.2)' };
     var TC = { amber: '#d9921f', orange: COLOR.orange, blue: COLOR.blue, green: COLOR.green, red: COLOR.red, grey: '#b9b9b9' };
-    $t.append(band('Seedbox tools', 'Action', true));
+    $t.append(band(T('tools.title'), T('tools.action'), true));
     var $box = $('<div class="mt-box">').appendTo($t);
     $.each(r.tools, function (i, x) {
       var c = x.col || 'grey';
@@ -211,7 +219,7 @@ $(function () {
     var $a = $('#qbt-attn').empty();
     if (!r || !r.ok || !r.attention || !r.attention.length) { return; }
     var t = '18px minmax(0,1fr) 170px';
-    $a.append(band('Needs attention \u00B7 ' + r.attention_total, 'Torrent \u00B7 Issue', false, true));
+    $a.append(band(T('attn.title') + ' \u00B7 ' + r.attention_total, T('attn.cols'), false, true));
     var $box = $('<div class="mt-box">').appendTo($a);
     $.each(r.attention, function (i, x) {
       var col = (x.sev === 'red') ? 'red' : 'amber';
@@ -225,28 +233,28 @@ $(function () {
         .append($('<div class="qbt-rs">').addClass('qbt-' + col).text(x.reason)));
       $box.append($row);
     });
-    if (r.attention_more > 0) { $a.append(moreLink(href, '+' + r.attention_more + ' more flagged')); }
+    if (r.attention_more > 0) { $a.append(moreLink(href, T('attn.more', { n: r.attention_more }))); }
   }
 
   function renderTransfer(r, ui, href) {
     var $x = $('#qbt-xfer').empty();
     if (!r || !r.ok) {
-      var msg = (r && r.error === 'auth') ? 'Authentication failed (check Seedbox settings)' : 'qBittorrent unreachable';
+      var msg = (r && r.error === 'auth') ? T('xfer.err_auth') : T('xfer.err_down');
       $x.append($('<div class="qbt-note">').text(msg));
       return;
     }
     var gl = r.global || { dl: 0, ul: 0 };
-    $x.append(band('In transfer \u00B7 ' + r.transfer_total, '\u2193 ' + rateTxt(gl.dl) + '\u00A0\u00A0\u2191 ' + rateTxt(gl.ul), false));
+    $x.append(band(T('xfer.title') + ' \u00B7 ' + r.transfer_total, '\u2193 ' + rateTxt(gl.dl) + '\u00A0\u00A0\u2191 ' + rateTxt(gl.ul), false));
     var $box = $('<div class="mt-box">').appendTo($x);
 
     var t = ['18px', 'minmax(0,1fr)'], hd = $('<div class="mt-cols">');
-    hd.append($('<div>')).append($('<div>').text('Torrent'));
-    if (ui.cols.dl)  { t.push('76px'); hd.append($('<div class="qbt-num">').css('color', COLOR.orange).text('Down')); }
-    if (ui.cols.ul)  { t.push('76px'); hd.append($('<div class="qbt-num">').text('Up')); }
-    if (ui.cols.eta) { t.push('50px'); hd.append($('<div class="qbt-num">').text('ETA')); }
+    hd.append($('<div>')).append($('<div>').text(T('xfer.col_torrent')));
+    if (ui.cols.dl)  { t.push('76px'); hd.append($('<div class="qbt-num">').css('color', COLOR.orange).text(T('xfer.col_down'))); }
+    if (ui.cols.ul)  { t.push('76px'); hd.append($('<div class="qbt-num">').text(T('xfer.col_up'))); }
+    if (ui.cols.eta) { t.push('50px'); hd.append($('<div class="qbt-num">').text(T('xfer.col_eta'))); }
     var tpl = t.join(' ');
     $box.append(hd.css('grid-template-columns', tpl));
-    if (!r.transfer.length) { $box.append($('<div class="mt-note">').text('Nothing transferring right now')); return; }
+    if (!r.transfer.length) { $box.append($('<div class="mt-note">').text(T('xfer.nothing'))); return; }
 
     var nCols = (ui.cols.dl ? 1 : 0) + (ui.cols.ul ? 1 : 0) + (ui.cols.eta ? 1 : 0);
     var BUSY = { Moving: 'fa-exchange', Checking: 'fa-refresh', Allocating: 'fa-hdd-o' }, LIGHT = '#b9b9b9';
@@ -265,7 +273,7 @@ $(function () {
         var col = mv ? LIGHT : (isBusy ? COLOR.grey : (done ? COLOR.green : COLOR.orange));
         var $pl = $('<div class="qbt-pl">')
           .append($('<div class="qbt-pb">').append($('<i>').css({ width: (wt ? 0 : pct) + '%', background: col })))
-          .append($('<span>').css('color', col).text(wt ? 'waiting' : (mv ? pct.toFixed(1) + '%' : (done ? '100%' : pct.toFixed(1) + '%'))));
+          .append($('<span>').css('color', col).text(wt ? T('xfer.waiting') : (mv ? pct.toFixed(1) + '%' : (done ? '100%' : pct.toFixed(1) + '%'))));
         if (!isBusy) { $pl.append($('<span class="qbt-u">').text(done ? size(x.size) : size(x.completed) + ' / ' + size(x.size))); }
         $nm.append($pl);
       }
@@ -273,7 +281,7 @@ $(function () {
 
       if (isBusy) {
         if (nCols > 0) {
-          var lbl = x.label + (x.label === 'Checking' ? ' ' + (x.progress * 100).toFixed(1) + '%' : '');
+          var lbl = T('busy.' + String(x.label).toLowerCase()) + (x.label === 'Checking' ? ' ' + (x.progress * 100).toFixed(1) + '%' : '');
           if (x.label === 'Moving' && ui.cols.eta) {
             if (nCols > 1) { $row.append($('<div class="qbt-num qbt-u">').css('grid-column', 'span ' + (nCols - 1)).text(lbl)); }
             $row.append($('<div class="qbt-num">').text(x.eta > 0 && x.eta < 8640000 ? fmtEta(x.eta, 0) : '\u2014'));
@@ -288,7 +296,7 @@ $(function () {
       }
       $box.append($row);
     });
-    if (r.more > 0) { $x.append(moreLink(href, '+' + r.more + ' more in transfer')); }
+    if (r.more > 0) { $x.append(moreLink(href, T('xfer.more', { n: r.more }))); }
   }
 
   function render(r) {

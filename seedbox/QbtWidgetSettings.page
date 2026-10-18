@@ -5,6 +5,11 @@ Icon="seedbox.png"
 Markdown="false"
 ---
 <?PHP
+// texts from the dictionary (lang/en.json, see i18n.php)
+require_once '/usr/local/emhttp/plugins/qbittorrent_widget/i18n.php';
+$qws_lang = '/usr/local/emhttp/plugins/qbittorrent_widget/lang';
+$qws_T = mt_i18n_t($qws_lang);
+$qws_t = function ($k, $v = []) use ($qws_T) { return htmlspecialchars($qws_T($k, $v), ENT_QUOTES); };
 $qbt_file = '/boot/config/plugins/qbittorrent_widget/settings.cfg';
 $qbt = [
   'host' => '127.0.0.1', 'port' => '8080', 'user' => '', 'pass' => '', 'webui_url' => '',
@@ -29,59 +34,61 @@ if (!function_exists('qbt_chk')) {
 </style>
 <form id="qbt-form" class="uset" method="POST" action="/plugins/qbittorrent_widget/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=qbt_h($qbt_tok)?>">
-<h3><span>qBittorrent connection</span><small id="qbt-conn"></small></h3>
+<h3><span><?=$qws_t('ws.h.conn')?></span><small id="qbt-conn"></small></h3>
 <dl>
-<dt>Address and Web UI port:</dt>
-<dd><input type="text" name="host" class="narrow" value="<?=qbt_h($qbt['host'])?>"> <input type="number" name="port" min="1" max="65535" class="narrow" value="<?=qbt_h($qbt['port'])?>"><span class="uset-hint">as seen from Unraid; 127.0.0.1 when qBittorrent runs in a container on this server with its port published</span></dd>
+<dt><?=$qws_t('ws.host')?></dt>
+<dd><input type="text" name="host" class="narrow" value="<?=qbt_h($qbt['host'])?>"> <input type="number" name="port" min="1" max="65535" class="narrow" value="<?=qbt_h($qbt['port'])?>"><span class="uset-hint"><?=$qws_t('ws.host_hint')?></span></dd>
 
-<dt>Username and password:</dt>
-<dd><input type="text" name="user" class="narrow" autocomplete="off" value="<?=qbt_h($qbt['user'])?>"> <input type="password" name="pass" class="narrow" autocomplete="new-password" value="" placeholder="<?=$qbt['pass'] !== '' ? '(saved)' : 'password'?>"><span class="uset-hint">the saved password is not sent to the page: leave it empty to keep it, type - to remove it; no double quotes</span></dd>
+<dt><?=$qws_t('ws.user')?></dt>
+<dd><input type="text" name="user" class="narrow" autocomplete="off" value="<?=qbt_h($qbt['user'])?>"> <input type="password" name="pass" class="narrow" autocomplete="new-password" value="" placeholder="<?=$qbt['pass'] !== '' ? $qws_T('ws.saved') : $qws_T('ws.password')?>"><span class="uset-hint"><?=$qws_t('ws.pass_hint')?></span></dd>
 
-<dt>Web UI link (optional):</dt>
-<dd><input type="text" name="webui_url" placeholder="http://192.168.1.10:8080" value="<?=qbt_h($qbt['webui_url'])?>" style="width:320px"><span class="uset-hint">the home icon of the tile opens this; empty = this server's address with the Web UI port</span></dd>
+<dt><?=$qws_t('ws.url')?></dt>
+<dd><input type="text" name="webui_url" placeholder="http://192.168.1.10:8080" value="<?=qbt_h($qbt['webui_url'])?>" style="width:320px"><span class="uset-hint"><?=$qws_t('ws.url_hint')?></span></dd>
 
-<dt>Check:</dt>
-<dd><input type="button" id="qbt-test" value="Test the connection"> <span id="qbt-tmsg"></span><span class="uset-hint">tests the saved settings (Apply first after a change)</span></dd>
+<dt><?=$qws_t('ws.check')?></dt>
+<dd><input type="button" id="qbt-test" value="<?=$qws_t('ws.btn.test')?>"> <span id="qbt-tmsg"></span><span class="uset-hint"><?=$qws_t('ws.test_hint')?></span></dd>
 </dl>
 
-<h3><span>Tile rows</span><small>In transfer and Needs attention</small></h3>
+<h3><span><?=$qws_t('ws.h.rows')?></span><small><?=$qws_t('ws.h.rows_sub')?></small></h3>
 <dl>
-<dt>Most rows shown:</dt>
-<dd>In transfer <input type="number" name="rows" min="1" max="50" class="narrow" value="<?=qbt_h($qbt['rows'])?>"> Needs attention <input type="number" name="max_attention" min="1" max="50" class="narrow" value="<?=qbt_h($qbt['max_attention'])?>"><span class="uset-hint">more rows are counted in the band title</span></dd>
+<dt><?=$qws_t('ws.rows')?></dt>
+<dd><?=$qws_t('xfer.title')?> <input type="number" name="rows" min="1" max="50" class="narrow" value="<?=qbt_h($qbt['rows'])?>"> <?=$qws_t('attn.title')?> <input type="number" name="max_attention" min="1" max="50" class="narrow" value="<?=qbt_h($qbt['max_attention'])?>"><span class="uset-hint"><?=$qws_t('ws.rows_hint')?></span></dd>
 
-<dt>Columns:</dt>
-<dd><input type="hidden" name="show_bar" value="0"><label><input type="checkbox" name="show_bar" value="1" <?=qbt_chk($qbt['show_bar'])?>> progress bar under the name</label>
-<input type="hidden" name="col_dl" value="0"><label><input type="checkbox" name="col_dl" value="1" <?=qbt_chk($qbt['col_dl'])?>> Down</label>
-<input type="hidden" name="col_ul" value="0"><label><input type="checkbox" name="col_ul" value="1" <?=qbt_chk($qbt['col_ul'])?>> Up</label>
-<input type="hidden" name="col_eta" value="0"><label><input type="checkbox" name="col_eta" value="1" <?=qbt_chk($qbt['col_eta'])?>> ETA</label><span class="uset-hint">the torrent name column is always shown</span></dd>
+<dt><?=$qws_t('ws.cols')?></dt>
+<dd><input type="hidden" name="show_bar" value="0"><label><input type="checkbox" name="show_bar" value="1" <?=qbt_chk($qbt['show_bar'])?>> <?=$qws_t('ws.col_bar')?></label>
+<input type="hidden" name="col_dl" value="0"><label><input type="checkbox" name="col_dl" value="1" <?=qbt_chk($qbt['col_dl'])?>> <?=$qws_t('xfer.col_down')?></label>
+<input type="hidden" name="col_ul" value="0"><label><input type="checkbox" name="col_ul" value="1" <?=qbt_chk($qbt['col_ul'])?>> <?=$qws_t('xfer.col_up')?></label>
+<input type="hidden" name="col_eta" value="0"><label><input type="checkbox" name="col_eta" value="1" <?=qbt_chk($qbt['col_eta'])?>> <?=$qws_t('xfer.col_eta')?></label><span class="uset-hint"><?=$qws_t('ws.cols_hint')?></span></dd>
 </dl>
 
 <dl class="uset-save">
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="qbt-save" value="Apply">
-  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <input type="button" id="qbt-save" value="<?=$qws_t('ws.btn.apply')?>">
+  <input type="button" value="<?=$qws_t('ws.btn.done')?>" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
   <span id="qbt-msg"></span>
 </dd>
 </dl>
 </form>
 
-<p><a href="/Settings/SeedboxTools">Seedbox Tools</a>: find torrents for files that are not seeded, and replace big titles with smaller releases through Radarr and Sonarr.</p>
+<p><a href="/Settings/SeedboxTools">Seedbox Tools</a>: <?=$qws_t('ws.tools_line')?></p>
 
-<p style="opacity:.55;font-size:12px;max-width:130ch">Stalled torrents are ignored: an idle seed that nobody downloads from is normal in qBittorrent. Errors, missing files, paused or stopped and queued torrents are listed under Needs attention; torrents that are moving, checking or allocating appear under In transfer. When the client is firewalled or disconnected, a single connection row is shown.</p>
+<p style="opacity:.55;font-size:12px;max-width:130ch"><?=$qws_t('ws.help')?></p>
 
+<?=mt_i18n_js($qws_lang, 'qws')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('qws', k, v); };
   var $msg = $('#qbt-msg');
   function qbtCheck(show) {
-    var $t = $('#qbt-tmsg'); if (show) { $t.attr('class', '').text('Testing...'); }
+    var $t = $('#qbt-tmsg'); if (show) { $t.attr('class', '').text(T('ws.testing')); }
     $.getJSON('/plugins/qbittorrent_widget/api_fetch.php', {_: Date.now()}).done(function (r) {
-      var why = {unreachable: 'cannot reach qBittorrent (address or port)', auth: 'the username or password is wrong', bad_response: 'unexpected answer'};
+      var why = {unreachable: T('ws.e_unreach'), auth: T('ws.e_auth'), bad_response: T('ws.e_bad')};
       if (r && r.ok) {
-        var n = r.counts ? r.counts.total || 0 : 0, t = (r.conn || 'connected') + ' \u00b7 ' + n + ' torrents';
-        $('#qbt-conn').attr('class', 'uset-ok').text(t); if (show) { $t.attr('class', 'uset-ok').text('ok, ' + n + ' torrents, ' + (r.conn || 'connected')); }
+        var n = r.counts ? r.counts.total || 0 : 0, t = T('ws.conn_state', { s: r.conn || 'connected', n: n });
+        $('#qbt-conn').attr('class', 'uset-ok').text(t); if (show) { $t.attr('class', 'uset-ok').text(T('ws.test_ok', { n: n, s: r.conn || 'connected' })); }
       } else {
-        var e = r && r.error ? (why[r.error] || r.error) : 'no answer';
+        var e = r && r.error ? (why[r.error] || r.error) : T('ws.e_none');
         $('#qbt-conn').attr('class', 'uset-er').text(e); if (show) { $t.attr('class', 'uset-er').text(e); }
       }
     }).fail(function (x) { if (show) { $t.attr('class', 'uset-er').text('HTTP ' + x.status); } });
@@ -90,20 +97,20 @@ $(function () {
   qbtCheck(false);
   $('#qbt-save').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $msg.css('color', '').text('Saving...');
+    $msg.css('color', '').text(T('ws.saving'));
     $.post('/plugins/qbittorrent_widget/save.php', $('#qbt-form').serialize(), null, 'json')
       .done(function (r) {
         if (r && r.ok) {
-          $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.'); qbtCheck(false);
+          $msg.css('color', '#3fa24a').text(T('ws.saved_msg')); qbtCheck(false);
         } else {
-          var e = (r && r.error) ? r.error : 'unknown error';
-          if (e === 'quote_not_allowed') { e = 'double quotes are not allowed in the username or password'; }
-          $msg.css('color', '#e5534b').text('Not saved: ' + e);
+          var e = (r && r.error) ? r.error : T('ws.unknown_error');
+          if (e === 'quote_not_allowed') { e = T('ws.e_quote'); }
+          $msg.css('color', '#e5534b').text(T('ws.not_saved', { e: e }));
         }
       })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
-        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+        $msg.css('color', '#e5534b').text(T('ws.not_saved', { e: e }));
       })
       .always(function () { $b.prop('disabled', false); });
   });
