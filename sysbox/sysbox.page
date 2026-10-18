@@ -1,0 +1,593 @@
+Menu="Dashboard:0"
+Cond="version_compare(parse_ini_file('/etc/unraid-version')['version'],'6.11.9','>')"
+Markdown="false"
+---
+<?PHP
+$pluginname = "sysbox";
+
+$mytiles[$pluginname]['column2'] =
+<<<EOT
+<tbody title="_(Sysbox)_">
+<tr><td>
+  <span class="tile-header">
+    <span class="tile-header-left">
+      <i class="f32 sx-ic"></i>
+      <div class="section">
+        <h3 class="tile-header-main sx-ttl">Sysbox</h3>
+        <span id="sx-summary" class="sx-sum">Reading system&hellip;</span>
+      </div>
+    </span>
+    <span class="tile-header-right">
+      <span class="tile-header-right-controls">
+        <a href="/Docker" title="_(Open Docker)_"><i class="fa fa-fw fa-cubes control"></i></a>
+        <a href="/Settings/SysboxSettings" title="_(Sysbox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+      </span>
+    </span>
+  </span>
+</td></tr>
+<tr><td>
+  <div class="sx-tile">
+    <div id="sx-attn"></div>
+    <div id="sx-mem"><div class="sx-note">Loading&hellip;</div></div>
+    <div id="sx-sto"></div>
+    <div id="sx-cpu"></div>
+    <div id="sx-gpu"></div>
+    <div id="sx-pow"></div>
+    <div id="sx-con"></div>
+  </div>
+</td></tr>
+</tbody>
+EOT;
+?>
+<style>
+i.f32.sx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/sysbox/icon.png) center/contain no-repeat!important}
+i.f32.sx-ic.sx-inv{filter:invert(1)}
+.sx-ttl{margin-bottom:2px!important}
+.sx-sum{display:block;margin:0!important;line-height:1.3}
+.sx-tile{width:100%;font-size:12px;white-space:normal}
+.sx-tile a{text-decoration:none}
+.sx-g{color:#3fa24a}.sx-a{color:#d9921f}.sx-rd{color:#e5534b}.sx-mu{color:#8a8a8a}
+.sx-lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:12px 2px 4px}
+.sx-warn{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:5px 2px;font-size:13px}
+.sx-warn small{font-size:12px;opacity:.65}
+.sx-warn i{width:18px;text-align:center}
+.sx-box{background:rgba(128,128,128,.12);border-radius:6px;padding:10px 12px;margin-top:8px}
+.sx-ut{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:4px;white-space:nowrap}
+.sx-ut b{font-weight:600}
+.sx-tr{height:5px;background:rgba(128,128,128,.3);border-radius:3px;overflow:hidden}
+.sx-tr i{display:block;height:100%;border-radius:3px;background:#3fa24a}
+.sx-tr i.a{background:#d9921f}.sx-tr i.rd{background:#e5534b}
+.sx-stk{display:flex;height:10px;border-radius:5px;overflow:hidden;background:rgba(128,128,128,.3);gap:1px}
+.sx-stk i{display:block;height:100%}
+.sx-leg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.sx-leg div{font-size:11px;opacity:.9;white-space:nowrap;letter-spacing:.04em}
+.sx-leg div i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.sx-leg div b{display:block;font-weight:600;font-size:13px;letter-spacing:0;margin-top:1px}
+.sx-nm{font-size:14px;font-weight:600;letter-spacing:.04em;line-height:1.2}
+.sx-sub{font-size:11px;opacity:.65;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sx-val{text-align:right;white-space:nowrap}
+.sx-kp{display:grid;gap:8px}
+.sx-kp .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
+.sx-kp .v{font-size:20px;font-weight:600;margin-top:1px;white-space:nowrap}
+.sx-kp .v small{font-size:12px;font-weight:400;opacity:.65}
+.sx-spark{display:block;width:100%;height:56px;margin-top:10px;border-radius:3px;background:rgba(128,128,128,.10)}
+.sx-led{display:grid;gap:4px;margin-top:10px}
+.sx-cell{position:relative;height:40px;border-radius:3px;overflow:hidden;background:rgba(128,128,128,.12)}
+.sx-cell i{position:absolute;left:0;right:0;top:0;bottom:0;display:block}
+.sx-cell .d,.sx-cell .l{-webkit-mask:repeating-linear-gradient(to top,#000 0,#000 4px,transparent 4px,transparent 5px);mask:repeating-linear-gradient(to top,#000 0,#000 4px,transparent 4px,transparent 5px)}
+.sx-cell .d{background:rgba(128,128,128,.26)}
+.sx-cell .l{background:linear-gradient(to top,#3fa24a 0%,#3fa24a 38%,#d9921f 68%,#e5534b 100%);clip-path:inset(calc((1 - var(--v)) * 100%) 0 0 0)}
+.sx-cl{font-size:11px;opacity:.6;margin-top:5px;display:flex;justify-content:space-between;gap:8px}
+.sx-gr{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:4px 0}
+.sx-gr .n{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}
+.sx-cr .n{font-size:13px;font-weight:600;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sx-mini{height:4px;background:rgba(128,128,128,.3);border-radius:2px;overflow:hidden}
+.sx-mini i{display:block;height:100%;background:#4a90e2}
+.sx-act{display:flex;gap:2px;justify-content:flex-end}
+a.sx-btn{width:20px;height:20px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;background:rgba(128,128,128,.18);color:inherit;opacity:.8}
+a.sx-btn:hover{opacity:1;background:rgba(128,128,128,.35)}
+a.sx-btn.on{opacity:1;background:rgba(128,128,128,.40)}
+a.sx-btn.go{color:#3fa24a;background:rgba(63,162,74,.22);opacity:1}
+a.sx-btn.dis{opacity:.3;pointer-events:none}
+.sx-cr.off .n{opacity:.5}
+.sx-pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.sx-pill.am{color:#d9921f;background:rgba(224,160,48,.22)}
+.sx-pill.mu{color:#8a8a8a;background:rgba(128,128,128,.25)}
+.sx-pill.rd{color:#e5534b;background:rgba(229,83,75,.22)}
+.sx-conf{display:flex;align-items:center;gap:10px;margin:2px -8px 4px;padding:8px;border-radius:5px;background:rgba(229,83,75,.16);box-shadow:inset 3px 0 0 #e5534b;font-size:13px}
+.sx-conf .sp{flex:1;min-width:0}
+a.sx-b2{font-size:12px;font-weight:600;border-radius:4px;padding:3px 10px;background:rgba(128,128,128,.25);color:inherit}
+a.sx-b2.rd{background:#e5534b;color:#fff}
+.sx-log{margin:4px 0 6px;border-radius:5px;background:rgba(0,0,0,.35);border:1px solid rgba(128,128,128,.25);overflow:hidden}
+.sx-lh{display:flex;align-items:center;gap:12px;padding:6px 10px;background:rgba(128,128,128,.10);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.sx-lh span{flex:1;opacity:.75;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sx-lh a{color:#4a90e2;text-transform:none;letter-spacing:0;font-size:12px}
+.sx-log pre{margin:0;padding:8px 10px;font:11px/1.45 bitstream,Consolas,monospace;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow:auto;background:transparent;border:0}
+.sx-log pre .w{color:#d9921f}.sx-log pre .e{color:#e5534b}.sx-log pre .d{opacity:.55}
+.sx-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+.sx-fine{font-size:11px;opacity:.6;margin-top:6px}
+.sx-r,.sx-cr{min-width:0}
+.mt-box>.sx-conf{margin:0;border-radius:0}
+.mt-box>.sx-log{margin:4px 8px 6px}
+/*@@TILE_CSS@@*/
+</style>
+<script>
+$(function () {
+  var API = '/plugins/sysbox/api_fetch.php', CPU = '/plugins/sysbox/cpu.php', ACT = '/plugins/sysbox/action.php', LOGS = '/plugins/sysbox/logs.php';
+  var histSeeded = false, seededMin = 0, busy = false, cpuBusy = false, clkBusy = false, themed = false, last = null, hist = [], HMAX = 120, HMIN = 2, live = null;
+  var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
+  var S = { confirm: null, busy: {}, logOpen: null, logs: {}, logErr: {}, logTimer: null, err: null };
+  // Dashboard tile settings (item 53): which blocks, in which order, and which figures; all on until the first answer
+  var MX = { ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true };
+  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', con: 'sx-con' };
+  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, con: true }, ORDER = '';
+  function mx(k) { return MX[k] !== false; }
+  var LV = { g: 'sx-g', a: 'sx-a', rd: 'sx-rd', mu: 'sx-mu', '': '' };
+  var ICON = {
+    restart: '<path d="M19 12a7 7 0 1 1-2.2-5.1M19 4v4h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+    stop: '<rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/>',
+    play: '<path d="M8 5.5v13l11-6.5Z" fill="currentColor"/>',
+    logs: '<path d="M5 7h14M5 12h14M5 17h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'
+  };
+
+  function applyTheme() {
+    if (themed) { return; }
+    themed = true;
+    var el = document.getElementById('sx-mem');
+    while (el) {
+      var m = /rgba?\(([^)]+)\)/.exec(getComputedStyle(el).backgroundColor || '');
+      if (m) {
+        var p = m[1].split(',');
+        var a = p.length > 3 ? parseFloat(p[3]) : 1;
+        if (a > 0.5) {
+          if ((0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 150) { $('i.sx-ic').addClass('sx-inv'); }
+          return;
+        }
+      }
+      el = el.parentElement;
+    }
+  }
+
+  function el(cls, tag) { return $(document.createElement(tag || 'div')).addClass(cls || ''); }
+  function txt(tag, cls, t) { return el(cls, tag).text(t); }
+  function fmtB(b, bin, trim) {
+    b = Number(b) || 0;
+    var base = bin ? 1024 : 1000;
+    var u = bin ? ['GiB', 'MiB', 'KiB', 'B'] : ['GB', 'MB', 'KB', 'B'];
+    var th = [Math.pow(base, 3), Math.pow(base, 2), base, 1];
+    for (var i = 0; i < 4; i++) {
+      if (b >= th[i] || i === 3) {
+        var v = b / th[i], s = (trim && v >= 100) ? v.toFixed(0) : (i === 3 ? v.toFixed(0) : (v >= 100 ? v.toFixed(0) : v.toFixed(v >= 10 ? 1 : 2)));
+        if (trim) { s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, ''); }
+        return s + ' ' + u[i];
+      }
+    }
+    return '0 B';
+  }
+  function pct0(p) { return Math.round(Number(p) || 0) + '%'; }
+  function band(label, right, first) {
+    var $b = el('mt-band' + (first ? ' mt-first' : '')).append(txt('span', '', label));
+    if (right) { $b.append(txt('b', '', right)); }
+    return $b;
+  }
+  function svg(name, size) {
+    return $('<span>').html('<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" aria-hidden="true">' + ICON[name] + '</svg>').children();
+  }
+  function btn(name, title, cls, fn) {
+    var $a = $('<a href="#" class="sx-btn">').addClass(cls || '').attr('title', title).append(svg(name, 12));
+    if (fn) { $a.on('click', function (e) { e.preventDefault(); fn(); }); }
+    return $a;
+  }
+  function icon(c, cls) { return $('<i class="fa fa-fw">').addClass(c).addClass(cls || ''); }
+
+  function renderAttn(list) {
+    var $a = $('#sx-attn').empty();
+    if (!list || !list.length) { return; }
+    var worst = 'a';
+    $.each(list, function (i, x) { if (x.level === 'rd') { worst = 'rd'; } });
+    $a.append(el('sx-lbl ' + LV[worst]).text('Needs attention · ' + list.length));
+    $.each(list, function (i, x) {
+      var small = x.small || '';
+      var m = /^@FREE@([0-9.eE+]+) free$/.exec(small);
+      if (m) { small = fmtB(parseFloat(m[1]), x.name === 'RAM') + ' free'; }
+      var $w = el('sx-warn').append(icon('fa-exclamation-triangle', LV[x.level]));
+      var $t = $('<span>').append($('<b>').text(x.name));
+      if (x.text) { $t.append(document.createTextNode(' ' + x.text)); }
+      $w.append($t);
+      if (small) { $w.append($('<small>').text(small)); }
+      $a.append($w);
+    });
+  }
+
+  function renderMem(M, first) {
+    var $d = $('#sx-mem').empty();
+    var right = (M.phys ? Math.round(M.phys) + ' GiB' + (M.type ? ' ' + M.type : '') + ' · ' : '') + 'usable ' + fmtB(M.total, true, true);
+    $d.append(band('RAM', right, first));
+    var t = M.total || 1;
+    var $b = el('sx-box');
+    $b.append(el('sx-ut').append(txt('span', '', fmtB(M.used, true) + ' used of ' + fmtB(M.total, true, true)), $('<b>').addClass(LV[M.level] || '').text(pct0(M.pct))));
+    var $s = el('sx-stk');
+    $s.append($('<i>').css({ width: (M.system / t * 100) + '%', background: '#9a9a9a' }));
+    $s.append($('<i>').css({ width: (M.zfs / t * 100) + '%', background: '#9a7de6' }));
+    if (M.docker_known) { $s.append($('<i>').css({ width: (M.docker / t * 100) + '%', background: '#4a90e2' })); }
+    $b.append($s);
+    var $l = el('sx-leg');
+    function lg(c, n, v) { $l.append($('<div>').append($('<i>').css('background', c), document.createTextNode(n), $('<b>').text(v))); }
+    lg('#9a9a9a', 'System', fmtB(M.system, true));
+    lg('#9a7de6', 'ZFS cache', fmtB(M.zfs, true));
+    lg('#4a90e2', 'Docker', M.docker_known ? fmtB(M.docker, true) : '\u2013');
+    lg('rgba(128,128,128,.4)', 'Free', fmtB(M.free, true));
+    if (mx('ram_leg')) { $b.append($l); }
+    $d.append($b);
+  }
+
+  function renderSto(list) {
+    var $d = $('#sx-sto').empty();
+    if (!list || !list.length) { return; }
+    $d.append(band('Storage', 'boot · log · docker'));
+    var $box = el('mt-box').appendTo($d);
+    $.each(list, function (i, s) {
+      var lv = s.level || '';
+      $box.append(el('sx-r mt-r mt-n mt-s-' + (lv === 'rd' ? 'red' : (lv === 'a' ? 'amber' : 'green'))).css('grid-template-columns', '108px minmax(0,1fr) 44px').append(
+        el('').append(txt('div', 'sx-nm', s.label), txt('div', 'sx-sub', fmtB(s.used) + ' of ' + fmtB(s.size, false, true))),
+        el('sx-tr').append($('<i>').addClass(lv).css('width', Math.min(100, s.pct) + '%')),
+        $('<span class="sx-val">').append($('<b>').addClass(LV[lv] || '').text(pct0(s.pct)))));
+    });
+  }
+
+  function lvLoad(p) { return p >= 80 ? 'rd' : (p >= 50 ? 'a' : 'g'); }
+  function kp(label, valHtml, cls) {
+    return el('').append(txt('div', 'k', label), $('<div class="v">').addClass(cls || '').append(valHtml));
+  }
+  function small(t) { return $('<small>').text(t); }
+
+  // the graph is drawn against real time: x is the age of the sample, so the window is always HMIN minutes
+  function histTrim() {
+    var lim = Date.now() - HMIN * 60000 - 2000;
+    while (hist.length && hist[0][0] < lim) { hist.shift(); }
+  }
+  function histPoints() {
+    histTrim();
+    // buckets are anchored to absolute time (multiples of 2 s, the recorder's step), so a bucket keeps its value
+    // while the graph scrolls; only the x position moves
+    var W = HMIN * 60000, now = Date.now(), t0 = now - W, bw = Math.max(2000, Math.ceil(W / 200 / 2000) * 2000), out = [], bk = {}, ids = [];
+    for (var k = 0; k < hist.length; k++) {
+      var t = hist[k][0]; if (t < t0) { continue; }
+      var bi = Math.floor(t / bw);
+      if (!bk[bi]) { bk[bi] = [0, 0]; ids.push(bi); }
+      bk[bi][0] += hist[k][1]; bk[bi][1]++;
+    }
+    ids.sort(function (a, b) { return a - b; });
+    for (var q = 0; q < ids.length; q++) {
+      var x = ((ids[q] + 0.5) * bw - t0) / W * 400;
+      if (x >= 0 && x <= 400) { out.push([x, bk[ids[q]][0] / bk[ids[q]][1]]); }
+    }
+    return out;
+  }
+
+  function renderCpu(C0) {
+    var C = $.extend({}, C0, live || {});
+    var $d = $('#sx-cpu').empty();
+    $d.append(band('CPU', C.model + ' · ' + C.cores + ' cores / ' + C.threads + ' threads'));
+    var $b = el('sx-box');
+    var items = [];
+    var lv = (C.load === null || C.load === undefined) ? 'g' : lvLoad(C.load);
+    if (mx('cpu_load')) items.push(kp('Load', [document.createTextNode(C.load === null || C.load === undefined ? '–' : Math.round(C.load)), small('%')], LV[lv]));
+    if (mx('cpu_temp') && C.temp !== null && C.temp !== undefined) { items.push(kp('Temp', [document.createTextNode(C.temp), small('°C')], LV[C.tlevel] || 'sx-g')); }
+    if (mx('cpu_pow') && C.power !== null && C.power !== undefined) { items.push(kp('Power', [document.createTextNode(C.power.toFixed(1)), small(' W')], '')); }
+    var clk = showClock ? (clockVal !== null ? clockVal : C.clock) : null;
+    if (clk !== null && clk !== undefined) { items.push(kp('Clock', [document.createTextNode(clk.toFixed(2)), small(' GHz')], '')); }
+    var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
+    $.each(items, function (i, x) { $k.append(x); });
+    if (items.length) { $b.append($k); }
+    var laTxt = (mx('cpu_la') && C.loadavg !== null && C.loadavg !== undefined) ? 'load avg ' + C.loadavg : '';
+    var hotTxt = (mx('cpu_temp') && C.hot_core !== null && C.hot_core !== undefined) ? 'hottest core ' + C.hot_core + '°C' : '';
+    var foot = $.grep([hotTxt, laTxt], function (x) { return x !== ''; }).join(' · ');
+
+    if (mx('cpu_hist')) {
+    // history graph: the line turns from green to yellow around 50% and to red around 80%
+    var pts = histPoints(), n = pts.length, P = [];
+    for (var i = 0; i < n; i++) {
+      P.push(pts[i][0].toFixed(1) + ',' + (52 - Math.max(0, Math.min(100, pts[i][1])) / 100 * 50).toFixed(1));
+    }
+    var stops = '<stop offset="0" stop-color="#3fa24a"/><stop offset=".45" stop-color="#3fa24a"/><stop offset=".55" stop-color="#d9921f"/><stop offset=".75" stop-color="#d9921f"/><stop offset=".85" stop-color="#e5534b"/><stop offset="1" stop-color="#e5534b"/>';
+    var fstops = stops.replace(/stop-color="(#[0-9a-f]+)"/g, 'stop-color="$1" stop-opacity=".30"');
+    var g = '<svg class="sx-spark" viewBox="0 0 400 54" preserveAspectRatio="none"><defs>'
+      + '<linearGradient id="sxgl" gradientUnits="userSpaceOnUse" x1="0" y1="52" x2="0" y2="2">' + stops + '</linearGradient>'
+      + '<linearGradient id="sxgf" gradientUnits="userSpaceOnUse" x1="0" y1="52" x2="0" y2="2">' + fstops + '</linearGradient></defs>'
+      + '<line x1="0" y1="27" x2="400" y2="27" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>'
+      + '<line x1="0" y1="12" x2="400" y2="12" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>';
+    if (n > 1) {
+      g += '<polygon points="' + P[0].split(',')[0] + ',52 ' + P.join(' ') + ' ' + P[n - 1].split(',')[0] + ',52" fill="url(#sxgf)"/>'
+        + '<polyline points="' + P.join(' ') + '" fill="none" stroke="url(#sxgl)" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    }
+    g += '</svg>';
+    $b.append($('<span>').html(g).children());
+    $b.append(el('sx-cl').append(txt('span', '', 'last ' + HMIN + ' min'), txt('span', '', mx('cpu_per') ? '' : foot)));
+    }
+
+    // per-thread LED meters: eight segments, lit from the bottom, green to yellow to red
+    if (mx('cpu_per') && C.per && C.per.length) {
+      var $c = el('sx-led').css('grid-template-columns', 'repeat(' + C.per.length + ',1fr)');
+      $.each(C.per, function (i, v) {
+        var segs = v < 1 ? 0 : Math.min(8, Math.ceil(v / 12.5));
+        $c.append($('<div class="sx-cell">').attr('title', 'thread ' + i + ': ' + Math.round(v) + '%')
+          .append($('<i class="d">'), $('<i class="l">').css('--v', segs / 8)));
+      });
+      $b.append($c);
+      $b.append(el('sx-cl').append(txt('span', '', 'per thread'), txt('span', '', foot)));
+    }
+    if (!mx('cpu_hist') && !mx('cpu_per') && foot) { $b.append(el('sx-cl').append(txt('span', '', ''), txt('span', '', foot))); }
+    if ($b.children().length) { $d.append($b); }
+  }
+
+  function renderGpu(G) {
+    var $d = $('#sx-gpu').empty();
+    if (!G) { return; }
+    if (!G.data) {
+      if (G.pending || !G.note) { return; }
+      $d.append(band('GPU', 'unavailable'));
+      $d.append(el('sx-box').append(txt('div', 'sx-fine', G.note).css('margin', 0)));
+      return;
+    }
+    var D = G.data;
+    $d.append(band('GPU', ((G && G.name) ? G.name + ' \u00B7 ' : '') + 'Quick Sync'));
+    var $b = el('sx-box');
+    function row(n, v) {
+      $b.append(el('sx-gr').append(txt('span', 'n', n), el('sx-tr').append($('<i>').addClass(v >= 85 ? 'rd' : (v >= 60 ? 'a' : '')).css('width', Math.min(100, v) + '%')),
+        $('<span class="sx-val">').append($('<b>').addClass(LV[lvLoad(v)]).text(Math.round(v) + '%'))));
+    }
+    row('Video', D.video); row('Render', D.render);
+    $b.append(el('sx-cl').css('margin-top', '6px').append(txt('span', '', D.freq > 0 ? Math.round(D.freq) + ' MHz' : 'idle'), txt('span', '', (D.video >= 1 || D.render >= 1) ? 'active' : '')));
+    $d.append($b);
+  }
+
+  function renderPow(P) {
+    var $d = $('#sx-pow').empty();
+    if (!P) { return; }
+    if (!P.data) {
+      if (P.pending) { return; }
+      $d.append(band('Power', 'smart socket'));
+      $d.append(el('sx-box').append(txt('div', 'sx-fine sx-a', 'Socket not reachable' + (P.note ? ': ' + P.note : '')).css('margin', 0)));
+      return;
+    }
+    var D = P.data;
+    $d.append(band('Power', mx('pow_name') ? (D.name || 'smart socket') : ''));
+    var items = [];
+    if (mx('pow_w')) items.push(kp('Wall', [document.createTextNode(D.power >= 100 ? D.power.toFixed(0) : D.power.toFixed(1)), small(' W')], ''));
+    if (mx('pow_day') && D.day_kwh !== null && D.day_kwh !== undefined) { items.push(kp('Today', [document.createTextNode(D.day_kwh.toFixed(1)), small(' kWh')], '')); }
+    if (mx('pow_mon') && D.month_kwh !== null && D.month_kwh !== undefined) { items.push(kp('This month', [document.createTextNode(D.month_kwh.toFixed(1)), small(' kWh')], '')); }
+    if (mx('pow_cost') && P.cost !== null && P.cost !== undefined) { items.push(kp('Cost', [document.createTextNode(Math.round(P.cost).toLocaleString('en-US').replace(/,/g, ' ')), small(' ' + P.currency)], '')); }
+    var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
+    $.each(items, function (i, x) { $k.append(x); });
+    if (items.length) { $d.append(el('sx-box').append($k)); }
+  }
+
+  // ---- containers ----------------------------------------------------------------------------
+  function stripAnsi(s) { return String(s).replace(/\u001b\[[0-9;?]*[A-Za-z]/g, ''); }
+  function renderLogBody(name) {
+    var $pre = $('<pre>');
+    if (S.logErr[name]) { return $pre.text(S.logErr[name]).addClass('sx-a'); }
+    var raw = S.logs[name];
+    if (raw === undefined) { return $pre.text('Loading…'); }
+    var lines = stripAnsi(raw).split('\n');
+    if (lines.length && lines[lines.length - 1] === '') { lines.pop(); }
+    if (!lines.length) { return $pre.text('(the log is empty)'); }
+    $.each(lines, function (i, l) {
+      var m = /^(\d{4}-\d\d-\d\dT[\d:.]+Z)\s?(.*)$/.exec(l), t = '', body = l;
+      if (m) {
+        var d = new Date(m[1]);
+        if (!isNaN(d.getTime())) { t = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2); body = m[2]; }
+      }
+      var cls = /\b(error|fatal|exception|panic|critical|failed|failure)\b/i.test(body) ? 'e' : (/\b(warn|warning)\b/i.test(body) ? 'w' : '');
+      var $ln = $('<span>');
+      if (t) { $ln.append($('<span class="d">').text(t + ' ')); }
+      $ln.append($('<span>').addClass(cls).text(body));
+      $pre.append($ln).append(document.createTextNode('\n'));
+    });
+    return $pre;
+  }
+
+  function fetchLog(name, quiet) {
+    var C = last && last.containers;
+    $.getJSON(LOGS, { name: name, lines: C ? C.log_lines : 100, _: Date.now() })
+      .done(function (r) {
+        if (r && r.ok) { S.logs[name] = r.text; delete S.logErr[name]; }
+        else { S.logErr[name] = (r && r.error) ? r.error : 'could not read the log'; }
+      })
+      .fail(function (x) { S.logErr[name] = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; })
+      .always(function () { if (S.logOpen === name) { renderCon(); } });
+  }
+  function toggleLog(name) {
+    if (S.logTimer) { clearInterval(S.logTimer); S.logTimer = null; }
+    if (S.logOpen === name) { S.logOpen = null; renderCon(); return; }
+    S.logOpen = name;
+    delete S.logs[name]; delete S.logErr[name];
+    renderCon();
+    fetchLog(name);
+    S.logTimer = setInterval(function () { if (S.logOpen) { fetchLog(S.logOpen, true); } }, 5000);
+  }
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t); return; }
+    var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  function doOp(name, op) {
+    S.busy[name] = op; S.confirm = null; S.err = null; renderCon();
+    $.post(ACT, { name: name, op: op }, null, 'json')
+      .done(function (r) { if (!r || !r.ok) { S.err = name + ': ' + ((r && r.error) ? r.error : 'failed'); } })
+      .fail(function (x) { S.err = name + ': ' + ((x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status); })
+      .always(function () { delete S.busy[name]; poll(); });
+  }
+
+  var PILL = { exited: ['mu', 'STOPPED'], created: ['mu', 'CREATED'], restarting: ['am', 'RESTARTING'], paused: ['am', 'PAUSED'], dead: ['rd', 'DEAD'], removing: ['am', 'REMOVING'] };
+  var BUSYTXT = { start: 'STARTING', stop: 'STOPPING', restart: 'RESTARTING' };
+
+  function renderCon() {
+    var $d = $('#sx-con').empty();
+    var C = last && last.containers;
+    if (!C || !C.enabled) { return; }
+    if (!C.docker) { $d.append(band('Containers', '')); $d.append(el('sx-box').append(txt('div', 'sx-fine', 'Docker is not running').css('margin', 0))); return; }
+    var title = C.mode === 'selected' ? 'Containers · selected' : 'Top ' + C.n + ' containers · by ' + (C.mode === 'ram' ? 'RAM' : 'CPU');
+    $d.append(band(title, 'CPU · RAM'));
+    if (S.err) { $d.append(el('sx-warn sx-rd').append(icon('fa-exclamation-triangle', 'sx-rd'), txt('span', '', S.err))); }
+    if (!C.rows.length) { $d.append(el('sx-note').text(C.pending ? 'Reading containers…' : (C.mode === 'selected' ? 'No containers selected (see the Sysbox settings)' : 'No running containers'))); return; }
+    var $box = el('mt-box').appendTo($d);
+    $.each(C.rows, function (i, c) {
+      var running = c.state === 'running', bz = S.busy[c.name];
+      var stripe = c.unhealthy || c.state === 'dead' ? 'red' : (bz || c.state === 'restarting' || c.state === 'paused' || c.state === 'removing' ? 'amber' : (running ? 'green' : 'grey'));
+      var $row = el('sx-cr mt-r mt-n mt-s-' + stripe + (running ? '' : ' off')).css('grid-template-columns', 'minmax(0,1fr) 44px 92px 68px');
+      var $n = txt('span', 'n', c.name).attr('title', c.name + (c.status ? ' — ' + c.status : ''));
+      var pill = bz ? ['am', BUSYTXT[bz]] : (c.unhealthy ? ['rd', 'UNHEALTHY'] : PILL[c.state]);
+      if (pill) { $n.append($('<span class="sx-pill">').addClass(pill[0]).text(pill[1])); }
+      $row.append($('<div>').css({ minWidth: 0, overflow: 'hidden' }).append($n));
+      $row.append(el('sx-mini').append($('<i>').css('width', (c.bar || 0) + '%')));
+      var v = running ? ((c.cpu !== null && c.cpu !== undefined ? (c.cpu >= 100 ? c.cpu.toFixed(0) : c.cpu.toFixed(1)) + '%' : '…') + (c.mem !== null && c.mem !== undefined ? ' · ' + fmtB(c.mem, true, false).replace('iB', 'B') : '')) : (c.status || '');
+      $row.append($('<span class="sx-val sx-sub">').text(v).attr('title', v + (running && c.cpu_core !== null && c.cpu_core !== undefined ? ' \u2014 CPU: ' + c.cpu_core.toFixed(1) + '% of one core' : '')));
+      var $a = el('sx-act');
+      if (C.controls) {
+        if (running) {
+          $a.append(btn('restart', 'Restart', bz ? 'dis' : '', function () { doOp(c.name, 'restart'); }));
+          $a.append(btn('stop', 'Stop', (bz ? 'dis ' : '') + (S.confirm === c.name ? 'on' : ''), function () { S.confirm = (S.confirm === c.name) ? null : c.name; renderCon(); }));
+        } else {
+          $a.append(btn('play', 'Start', 'go' + (bz ? ' dis' : ''), function () { doOp(c.name, 'start'); }));
+        }
+      }
+      if (C.logs) { $a.append(btn('logs', 'Log', S.logOpen === c.name ? 'on' : '', function () { toggleLog(c.name); })); }
+      $row.append($a);
+      $box.append($row);
+      if (S.confirm === c.name && running) {
+        $box.append(el('sx-conf').append(
+          $('<span class="sp">').append($('<b>').text('Stop ' + c.name + '?')),
+          $('<a href="#" class="sx-b2">').text('Cancel').on('click', function (e) { e.preventDefault(); S.confirm = null; renderCon(); }),
+          $('<a href="#" class="sx-b2 rd">').text('Stop').on('click', function (e) { e.preventDefault(); doOp(c.name, 'stop'); })));
+      }
+      if (S.logOpen === c.name) {
+        var $pre = renderLogBody(c.name);
+        $box.append(el('sx-log').append(
+          el('sx-lh').append(txt('span', '', c.name + ' · last ' + C.log_lines + ' lines'),
+            $('<a href="#">').text('Refresh').on('click', function (e) { e.preventDefault(); fetchLog(c.name); }),
+            $('<a href="#">').text('Copy').on('click', function (e) { e.preventDefault(); copyText(S.logs[c.name] ? stripAnsi(S.logs[c.name]) : ''); }),
+            $('<a href="#">').text('Close').on('click', function (e) { e.preventDefault(); toggleLog(c.name); })),
+          $pre));
+        var p = $pre[0]; if (p) { p.scrollTop = p.scrollHeight; }
+      }
+    });
+  }
+
+  // the top band sits closer to the header when no Needs attention list is above it
+  function firstBand() {
+    $('.sx-tile .mt-band.mt-first').removeClass('mt-first');
+    if ($('#sx-attn').children().length) { return; }
+    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'con'];
+    for (var i = 0; i < k.length; i++) { var $b = $('#' + BLK[k[i]]).find('.mt-band').first(); if ($b.length) { $b.addClass('mt-first'); return; } }
+  }
+
+  function render(r) {
+    applyTheme();
+    last = r;
+    var $s = $('#sx-summary');
+    if (!r || !r.ok) {
+      $s.text('Unavailable');
+      $('#sx-attn,#sx-sto,#sx-cpu,#sx-gpu,#sx-pow,#sx-con').empty();
+      $('#sx-mem').empty().append(el('sx-note').text('System data unavailable'));
+      return;
+    }
+    var m = r.summary, parts = [Math.round(m.ram) + '% RAM'];
+    var cl = (live && live.load !== undefined && live.load !== null) ? live.load : m.cpu;
+    if (cl !== null && cl !== undefined) { parts.push(Math.round(cl) + '% CPU'); }
+    var ct = (live && live.temp !== undefined && live.temp !== null) ? live.temp : m.temp;
+    if (ct !== null && ct !== undefined) { parts.push(ct + '\u00B0C'); }
+    parts.push('up ' + m.uptime);
+    $s.text(parts.join(' · '));
+    if (r.ui) { applyUi(r.ui); }
+    if (r.ui && r.ui.metrics) { MX = r.ui.metrics; }
+    if (r.ui && r.ui.show) { SHOW = r.ui.show; }
+    if (r.ui && r.ui.order && r.ui.order.join(',') !== ORDER) {
+      ORDER = r.ui.order.join(',');
+      var $after = $('#sx-attn');
+      $.each(r.ui.order, function (i, k) { var $x = $('#' + BLK[k]); if ($x.length) { $after.after($x); $after = $x; } });
+    }
+    renderAttn(r.attention);
+    if (SHOW.ram) { renderMem(r.memory, false); } else { $('#sx-mem').empty(); }
+    if (SHOW.sto) { renderSto(r.storage); } else { $('#sx-sto').empty(); }
+    if (SHOW.cpu) { renderCpu(r.cpu); } else { $('#sx-cpu').empty(); }
+    renderGpu(r.gpu);
+    if (SHOW.pow) { renderPow(r.power); } else { $('#sx-pow').empty(); }
+    renderCon();
+    firstBand();
+  }
+
+  function poll() {
+    if (busy) { return; }
+    busy = true;
+    $.getJSON(API, { _: Date.now() })
+      .done(render)
+      .fail(function () { render({ ok: false }); })
+      .always(function () { busy = false; });
+  }
+
+  // refresh settings: the CPU numbers and the clock each have their own timer
+  function applyUi(u) {
+    var cs = parseInt(u.cpu_sec, 10) || 1, ks = parseInt(u.clk_sec, 10) || 2, sc = (u.show_clock !== false);
+    HMIN = u.hist_min || 2;
+    var pts = Math.max(2, Math.round(HMIN * 60 / cs));
+    var hm = HMIN; HMAX = pts; histTrim();
+    if (!histSeeded || hm !== seededMin) { histSeeded = true; seededMin = HMIN; seedHist(); }
+    if (cs !== cpuSec || !cpuTimer) { cpuSec = cs; if (cpuTimer) { clearInterval(cpuTimer); } cpuTimer = setInterval(pollCpu, cpuSec * 1000); }
+    if (!sc) { showClock = false; if (clkTimer) { clearInterval(clkTimer); clkTimer = null; } }
+    else if (!showClock || ks !== clkSec || !clkTimer) { showClock = true; clkSec = ks; if (clkTimer) { clearInterval(clkTimer); } clkTimer = setInterval(pollClock, clkSec * 1000); }
+  }
+
+  // fill the graph from the server's background recording (page open, tab visible again)
+  var seeding = false;
+  function seedHist() {
+    if (seeding) { return; }
+    seeding = true;
+    $.ajax({ url: CPU, data: { only: 'hist', min: HMIN, _: Date.now() }, dataType: 'json', timeout: 10000 })
+      .done(function (r) {
+        if (!r || !r.ok || !r.pts || !r.pts.length) { return; }
+        var now = Date.now(), srv = [], tmax = 0;
+        $.each(r.pts, function (i, p) { var t = now - p[0]; srv.push([t, p[1]]); if (t > tmax) { tmax = t; } });
+        hist = srv.concat($.grep(hist, function (p) { return p[0] > tmax; }));
+        if (last && last.ok) { if (SHOW.cpu) { renderCpu(last.cpu); firstBand(); } }
+      })
+      .always(function () { seeding = false; });
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { seedHist(); } });
+  window.addEventListener('pageshow', function () { seedHist(); });
+  // the server records the load every 2 s whatever this browser does, so refill the graph from it regularly
+  setInterval(function () { if (!document.hidden) { seedHist(); } }, 15000);
+
+  function pollClock() {
+    if (clkBusy || !last || !last.ok || !showClock) { return; }
+    clkBusy = true;
+    $.getJSON(CPU, { only: 'clock', _: Date.now() })
+      .done(function (r) { if (r && r.ok && r.clock !== null && r.clock !== undefined) { clockVal = r.clock; if (SHOW.cpu) { renderCpu(last.cpu); firstBand(); } } })
+      .always(function () { clkBusy = false; });
+  }
+
+  function pollCpu() {
+    if (cpuBusy || !last || !last.ok) { return; }
+    cpuBusy = true;
+    $.getJSON(CPU, { _: Date.now() })
+      .done(function (r) {
+        if (!r || !r.ok) { return; }
+        live = r;
+        if (r.load !== null && r.load !== undefined) { hist.push([Date.now(), r.load]); histTrim(); }
+        if (SHOW.cpu) { renderCpu(last.cpu); firstBand(); }
+        var m = last.summary, parts = [Math.round(m.ram) + '% RAM'];
+        if (r.load !== null && r.load !== undefined) { parts.push(Math.round(r.load) + '% CPU'); }
+        if (r.temp !== null && r.temp !== undefined) { parts.push(r.temp + '\u00B0C'); }
+        parts.push('up ' + m.uptime);
+        $('#sx-summary').text(parts.join(' \u00B7 '));
+      })
+      .always(function () { cpuBusy = false; });
+  }
+
+  poll();
+  setInterval(poll, 3000);
+});
+</script>

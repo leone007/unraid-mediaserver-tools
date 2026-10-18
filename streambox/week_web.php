@@ -1,0 +1,66 @@
+<?php
+// Started by cron every 2 minutes: the "Ezen a héten" row on Jellyfin's home page (web client and Jellyfin Desktop only).
+// Writes week.json (series, episode codes, times and states; no keys, no addresses) and the renderer week.js into a folder
+// that the Jellyfin container serves read-only under /web/streambox/ (a path mapping). The JavaScript Injector plugin loads
+// week.js. Read-only towards Sonarr and Jellyfin; writes only into that folder.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/week_lib.php';
+
+$cfg = wk_cfg();
+if ((string)$cfg['wk_web'] !== '1') { exit(0); }
+$dir = rtrim(trim((string)$cfg['wk_web_dir']), '/');
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir)) { exit(0); }
+// The pool or share is mounted only while the array runs: never create its top folder (/mnt/cache) ourselves
+$top = '/mnt/' . explode('/', substr($dir, 5))[0];
+if (!is_dir($top)) { exit(0); }
+if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+if (!is_dir($dir)) { exit(0); }
+$lock = @fopen('/tmp/streambox_web.lock', 'c');
+if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
+
+function ww_put($f, $data) {
+    if (is_file($f) && (string)@file_get_contents($f) === $data) { return; }
+    if (@file_put_contents($f . '.tmp', $data) === false) { return; }
+    @chmod($f . '.tmp', 0644);
+    @rename($f . '.tmp', $f);
+}
+
+// The renderer ships with the plugin; copy it when it changed
+$js = (string)@file_get_contents(__DIR__ . '/week_web.js');
+if ($js !== '') { ww_put($dir . '/week.js', $js); }
+
+wk_tz();
+$now = time();
+$w = wk_build($cfg, $now);
+$jf = $dir . '/week.json';
+if (!$w['ok']) {
+    // Sonarr hiccup: keep the last list while its week lasts, then say there is nothing to show
+    $old = is_file($jf) ? json_decode((string)@file_get_contents($jf), true) : null;
+    if (is_array($old) && !empty($old['ok']) && $now < (int)($old['to'] ?? 0)) { exit(0); }
+    ww_put($jf, json_encode(['ok' => false, 'gen' => $now]));
+    exit(0);
+}
+
+$ser = $w['counts']['all'] ? wk_jf_series($cfg) : null;
+$eps = [];
+foreach ($w['days'] as $day) {
+    foreach ($day['rows'] as $r) {
+        $sid = '';
+        if (is_array($ser)) { $sid = $ser['t' . $r['tvdb']] ?? ($ser['n' . wk_norm($r['series'])] ?? ''); }
+        $nm = $sid !== '' ? (string)($ser['N' . $sid] ?? '') : '';
+        $eps[] = ['s' => $nm !== '' ? $nm : $r['series'], 'c' => $r['code'], 't' => $r['title'], 'air' => $r['air'], 'exp' => $r['exp'],
+                  'st' => $r['st'], 'pct' => $r['pct'], 'new' => $r['new'], 'ep' => $r['jfid'], 'sid' => $sid,
+                  'img' => $sid === '' ? $r['poster'] : ''];
+    }
+}
+// Episode titles in Jellyfin's language for the episodes it already has (one request); the rest keep Sonarr's title
+$ids = array_values(array_unique(array_filter(array_column($eps, 'ep'), function ($v) { return $v !== '' && $v !== '1'; })));
+if ($ids) {
+    [$j] = wk_jf($cfg, '/Items?Ids=' . implode(',', array_slice($ids, 0, 200)) . '&EnableImages=false');
+    $tn = [];
+    foreach ((array)($j['Items'] ?? []) as $it) { if (is_array($it) && !empty($it['Id'])) { $tn[(string)$it['Id']] = (string)($it['Name'] ?? ''); } }
+    foreach ($eps as &$x) { if (($tn[$x['ep']] ?? '') !== '') { $x['t'] = $tn[$x['ep']]; } }
+    unset($x);
+}
+$out = ['ok' => true, 'gen' => $now, 'view' => (string)$cfg['wk_web_view'] === 'row' ? 'row' : 'grid', 'from' => $w['from'], 'to' => $w['to'], 'late' => max(1, (float)$cfg['wk_late']) * 3600, 'eps' => $eps];
+ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

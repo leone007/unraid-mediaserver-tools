@@ -1,0 +1,3287 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "streambox">
+<!ENTITY author    "leone007">
+<!ENTITY title     "Streambox">
+<!ENTITY version   "2026.10.14h">
+<!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
+<!ENTITY cfgdir    "/boot/config/plugins/&name;">
+]>
+
+<PLUGIN name="&title;"
+        author="&author;"
+        version="&version;"
+        min="6.12.0"
+        icon="streambox.png"
+        pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
+
+<CHANGES>
+###&version;
+- Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed
+###2026.10.14g
+- Ezen a heten sav: a bal szel egy vonalban a Jellyfin kartyaival (merve); naptarnezetben a napi kartyak szovege a kartyaval meretezodik, 4 bejegyzes tolti ki
+###2026.10.14f
+- Ezen a heten sav: a kepek olyan magasak, mint a Megtekintes folytatasa kartyai, 2:3 aranyuak, mint a poszterek, ablakmeretre is kovetik; a naptar- es poszternezetben ugyanakkora; a nap neve es datuma a kartya alatt
+###2026.10.14e
+- Ezen a heten sav: a cim es a nyil a naptar es a poszter nezet kozott valt, mert a Jellyfin Kozelgo oldala ures
+###2026.10.14d
+- Ezen a heten sav: a poszterek akkorak, mint a Jellyfin sajat poszterkartyai; a cim es egy nyil a Sorozatok Kozelgo fulere visz; flex gap helyett margok, igy a Jellyfin Media Playerben sem csuszik ossze
+###2026.10.14c
+- Ezen a héten sav: a poszterek fix magassagot kapnak aspect-ratio helyett, igy a Jellyfin Media Player regi Chromiumaban is latszanak
+###2026.10.14b
+- Jellyfin heti sav: a sorozat neve es a mar letoltott epizodok cime a Jellyfinbol jon (magyarul); a beallitasok sugoja az uj betolto sort mutatja
+###2026.10.14a
+- Ezen a héten row in Jellyfin: no more flicker (the row is rebuilt only when the list changes, the countdowns update in place); two views, calendar or posters, the default is a setting and each viewer can switch with two icons next to the title; the row now sits inside Jellyfin's own sections, aligned like the others
+###2026.10.14
+- This week's episodes on Jellyfin's home page (web client and Jellyfin Desktop): a seven-day row in Hungarian (Ezen a héten), with posters, states and countdowns; Streambox writes week.json and week.js every 2 minutes into a folder mapped read-only into Jellyfin, the JavaScript Injector plugin loads it; new settings: the row on or off and the folder
+###2026.10.13b
+- This week's episodes: the time column counts down to the expected time (in 1d 12h 46m, overdue 3h 10m, aired 03:00 when it is already here); air time, expected time and the usual delay after airing in the tooltip
+###2026.10.13a
+- This week's episodes: NEW badge on a new series (its first episode airs this week: Sonarr firstAired in the week, or S01E01 in the week)
+###2026.10.13
+- This week's episodes (item 55): new band under Now playing, Monday to Sunday by day from the Sonarr calendar, air time and the usual time the torrent shows up (median grab delay from Sonarr history), status In Jellyfin, downloading, late; settings band (Seedbox's Sonarr connection or own, delay per series or indexer, late after N hours); optional Discord message for a late episode, default off. Read-only towards Sonarr and Jellyfin
+###2026.10.12
+- Settings page in the shared look of the plugin pages: a dark band per part, the label on the left, the controls of one setting on one line, the explanation quiet under them; Apply and Done below
+###2026.10.11
+- The cron scripts (notifications, weekly summary, smart socket sampler) run only from cron, not when their address is opened in a browser
+- Settings: the saved Jellyfin API key and Discord webhooks are no longer sent to the page; an empty field keeps the saved value, a single - removes it
+###2026.10.10
+- Dashboard look: the row boxes have square corners, so the stripes are straight like in Diskbox
+###2026.10.09
+- Dashboard look: the Now playing and Recently added rows have a plain background, only the stripe and the badge are colored
+###2026.10.08
+- Dashboard look: Now playing, Server load and Recently added are dark section bands like in Sysbox and Diskbox, the rows sit in a box under them with a colored stripe on the left (direct play green, direct stream blue, transcode amber, paused grey, movie blue, episode purple); the column header is a muted line instead of a dark band. The look comes from a shared common tile.css
+###2026.10.06d
+- The server load block (GPU, CPU, power, smart socket) can be hidden with the "Show server load" setting; the new Sysbox tile shows these
+###2026.10.06c
+- Weekly summary in Discord: every Friday at 18:00 (day and hour are settings) one message lists the movies and series/seasons added in the last 7 days, with year, length, quality, genres and rating, each linked to Jellyfin; own webhook, own switch, "Send weekly summary now" button
+###2026.10.06b
+- Discord cards: forced subtitles are no longer listed; Hungarian subtitles always come first (they were cut off when a file has many subtitle languages)
+###2026.10.06
+- New logo: monochrome Streambox icon on the dashboard tile, the Plugins page and the settings menu
+- Plugin details: display name Streambox, author leone007, description and full release notes
+- Update status: the plugin file is served on 127.0.0.1 only, so the Plugins page can run its update check and report "up-to-date"
+- Discord notifier: Hungarian cards for new movies and new seasons (poster, backdrop, overview, quality, audio and subtitles, genres, cast, Jellyfin link); separate webhooks for movies and series; test and preview buttons
+###2026.10.05b - 2026.10.05k
+- Smart socket (Shelly Gen2+): wall power and monthly kWh next to Server load; 10-minute cron sampler keeps the monthly figure exact
+- Live TV: progress bar and time left for the current program (from the guide), program times in the hover text
+- Direct stream rows say why (transcode reasons, container change, or the file's container/codecs); hover shows the full details
+- Server load: current CPU package power in watts (from intel_gpu_top)
+- Jellyfin icon (30px, embedded, inverted on light themes)
+- Interlaced sources: 1080i label, 1080i -> 1080p / Deinterlace detail for transcodes (from TranscodeReasons / IsInterlaced)
+- Live TV: LIVE label instead of a 0% bar, channel + program title, target resolution for transcodes
+- GPU load: read the numbers directly from intel_gpu_top output instead of strict JSON parsing
+- Container remux shows resolution and bitrate; device names lose the trailing (IP) part
+- Audio-only transcodes are shown as Direct stream; GPU load reports why it is unavailable (gpu_note)
+###2026.10.05
+- First release: Jellyfin now playing (user, device, direct play / direct stream / transcode), GPU and CPU load, recently added
+- Short user names: nicknames on the settings page, automatic shortening otherwise
+</CHANGES>
+
+<!-- ========================================================= -->
+<!-- ARCHITECTURE SETUP                                         -->
+<!-- ========================================================= -->
+<FILE Name="/tmp/&name;_setup.sh" Run="/bin/bash">
+<INLINE><![CDATA[
+#!/bin/bash
+PLUG="streambox"
+DIR="/usr/local/emhttp/plugins/$PLUG"
+CFG="/boot/config/plugins/$PLUG"
+
+rm -rf "$DIR"
+rm -rf "/usr/local/emhttp/plugins/Streambox"
+rm -f /tmp/streambox_* 2>/dev/null
+
+mkdir -p "$DIR"
+mkdir -p "$CFG"
+
+# Defaults are written only if absent, so upgrades never clobber the settings.
+if [ ! -f "$CFG/settings.cfg" ]; then
+cat > "$CFG/settings.cfg" <<'EOF'
+jf_host="127.0.0.1"
+jf_port="8096"
+jf_key=""
+jf_url=""
+streams_max="8"
+added_rows="5"
+show_load="1"
+socket_host=""
+socket_id="0"
+EOF
+fi
+chmod 600 "$CFG/settings.cfg"
+
+if [ ! -f "$CFG/nicknames.json" ]; then
+  echo '{}' > "$CFG/nicknames.json"
+fi
+
+# Jellyfin icon (96x96 PNG), embedded so there is no download or CDN dependency
+base64 -d > "$DIR/icon.png" <<'B64'
+iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAALGUlEQVR4nOydC7BVVRnH/xiSZCER
+aDlJl7LEKbNQxkLLi42jRpCppZJNlmZjNRU5U95URKchamym0F5D5Z2pkbLC66PQssIxoMeQ0IiB
+olCYiu83Ksr1/5+10cvl7NfZa7+/38x/1rn3rL3PPvv7zlprr8e3RsJoNSNhtBpzgJZjDtByzAFa
+TuEOMDg4OJHJwdTegfYJ0gnU7mgH26gHqPupLUPS1SNGjLgbBTICBUCjT2ZyEvURagqMMAapv1NX
+UdfQGdYhZ3JzABp9LJMvU6dQB8DohvXUYmohneER5IB3B6DhRzP5EvU1aiwMH8j4C6hL6Qhb4RFv
+DkDDqz1xBjWX2hdGHtxDzaMupyM8Dw94cQAafxyTa6lpMIpgBTWTTvAwMrIbMkLjv4vJKpjxi0T3
+elVw7zORyQF4AbOYLKd6YBRND7U8sEHXdO0A/ODzmQxQr4JRFrr3A7TFeeiSrtoA/MBzmXwTRpXo
+Y5tgQcpj0jsAja8OnV/BQ/vB8Mp2agad4Po0B6VyABpfXbgrqdEwqshjVC+dYHXSAxI7AI0/nsm/
+qP1gVJnN1BQ6wYNJMqcpxi+DGb8OyEaXJc2cqATgr/8wJn+DUSemsRRYGZcpaQnwXRh145IkmWId
+gL9+jea9B0bdmEbbHR+XKbIK4AlGMbmdehOMOnIrdTCrgu1hGeJKgK/AjF9n3kGdFZUhzgF6YdSd
+yGogtApg8f8aJnqWHAWjzjxHTWA18HinN6NKgBkw4zcB2fCDYW9GOUBsC9KoDaG27FgFsPjX9GwV
+/2NgNAGNEaga2Db8jbAS4C0w4zeJveBsugthDvB61BdNSj0QbsRSo5d6DFoFo6NNR6bJXAMOZzG3
+Ysjf/w60iNXa6Uy/BbcKqY10tGmTSoD5w4y/E3yvn8kktHcmUyoH6EH9WBKXgU7wNPV1uPowNn/D
+aHwJsDZpRjrBXdSJfDkdrr+8DaRygNrN96NBn0FKeMwyJppbfzaVeZFFxek4ja/1EzvpBC9QP4Kr
+FjTvwcuSq7pgM3sD6ASPUnPgRtCWoiWYAwyDTrCeUt/5sXBzIRqNOUAIdIIb4EoDlQqPoaGYA0Sg
+vnNK7YL9KbUTtqNhmAMkQHPsKT0pvJO6CQ3CHCAFdIK1VC9crKNNaADmAF1AJxig1K3cRz2FGmMO
+kIFgNa7aB/1wEb5qhzlARugE91Gf4supcCHeaoU5gCfoBKsoLaCZTRUa7DEL5gCeoRMorp/iIl5E
+pR6fKBpzgBwIhp3n8eXbqF+iwpgD5AidYDN1KtzayjWoIOYABUAnUOPw3dSn4QJDVwZzgIKgEwxS
+l8M9Nmpu4jZUAHOAgqETPEEpytoR1EMoGXOAkqAT/IPJ0SgZc4ASoRPcgpKfEswByqfU3kPbM6h8
+nkWJmAOUz3EoEXOAEhkcHNSUs5koEWsDlEQQ6/86lIw5QMEo9A6leQQKvFl6AC6rAgqCRlcwjtPh
+Nn+qzAplc4ACCELt/hguXkGlsCogR2j4/SjND1BxXznjCysBcoBG11YuX4XbO3EPVBhzAM/Q+Br/
+/zb1RtQAcwBP0PCHMPk+dRhqhLUBMkLDv4HSOP8/UTPjC3OADAS7p90B93hXyE7svrEqoAto+I/B
+zerpQc0xB0gBDf92uHr+SDQEqwISoB3TqB/CxRxsjPGFlQARBDGTv0BdCBdutXGYA4RA42uY9jvU
+W9FgzAGGQcPL4CruP4AWYG2AABp+LKVwMLehJcYXrS8BaPRXwEUU/wY1Di2jMQ5AQ+6RNloojzmK
+yffgooG1kiZVAfsnzUjDT6J+y5d/QouNL5rkAB+Py6BhWkrh4u+iToDRKAc4JxiR2wVNx6IUxmUj
+dS6Ml2iSA6jTZikNPZ+auuOffK2wr9oy5mdo724hoTTtKWACXOi2PhoeRjzWEdRyzAFajjlAyzEH
+aDnmAC3HHKDlVNEBrqWWwW3XsgEuLPt4uK5eSZ09J1OvRXXQTKEB6j9w17wh+P+Oa9ZWth8N0koR
+tnv4lXAXXBSKlaMx+N9wQOeRJAfwGmfAzcY9CeWg3dUXUVfwmhPtPchr1vIwLRw5k3odiuVKXufJ
+w/9Zdk/gVuqL1KG8uEVJjS+Y93eUnFTh1jagWH5BTdYupEmNL5h3TRAiTiXBr1EBynSAm6kDeUMu
+pbrei4fHLmdyENxyrLz39LmXOoaf+Qmq6xh/PPYBSlPLP0xtQYmU5QAq7o/kTfgvPKB5AJQWYn4I
++QVdUj1/ED/nD/AEz3UN3D5Et6EkwhzgHuTHxfzin1PoVHiG59SGjwq+6HsbFy3vfl+WX30YPKdi
+Bx8ON2CVJxs7/TPMATYhH+bwC1+IHOH5VbVo7v6j8IPOdxTP+zhyQruWwl3zzciP+zr9c2SazBm5
+INiDLxa2lvdk8hlKK3EmwrW45cE/5Tk2xh2v3Tt4DjUO/4xsQ8DX8VyJo3jxMzXJ5P1w+xCLO3UN
+QVEfCfM8xeOP4cu/UlPgn442DXsM7GXyF/hD26kcmiQjP3suk3OoMSFZrqD6eL7/If5cb4b7HhOR
+nsX8jNlJMvJz1Pa4BG6nkE6shyv9Yvck5rnUb3AH/DM92C19J8KqAN8lwB/jMugZmVoHt9XKmIis
+Mspa5j0TMfALa+qXHC/NZo96kjgPyaaY7UX1w3VeHRCRVe/9nnl/oihhEfl0zXqk3Qz/dLRpmAOo
+6PK5X+6eUW/ypmijZkXPjrqJQ3k1tYjH/SAuox654Ob5L0A8yqv6fn5cI5Wfrcknahx+Esk5g1rO
+Y8dFnFel8hj4Re2XOzu90dEBtGcuk+vhj9lB0bYL/L9CpapoHIX0nM3jF8Zl4vd5gdJMIV3DBdQK
+vPyko+JWv+DTqB7miy0tAuMr32SkR30Wy3iOsJ7Az8P/OsSlgU13ITSoAS/wFCaL4Q91eJzAC1kx
+5DP06+lHdtSLeBYKgNe8D1y7Imu/vsYNZgVF/o5z6wlpHvxzKj+nY1j6KAdQMaQisZtfZhSaj7+j
+bp4OfyzhlzwROcJ7oirqRvgLAPUkdTVcD6PuxSHwz3PUeO1U0unNyLAm/MLLUK/18PplztQjFTwT
+xPbVQpK6LR+7gffj2LA347qCfbYDikC/otVBZE4v8Fy7UXP4ciXquXZwIOrNuBLglXB11STUCz3K
+6bl8Lr2/67EBfv8euC1dahf9K2AT3Khl6D2ILAGCAy9G/dD3UqTONWGrhaIIVhIpMogGaepqfNEX
+9wOIDW2mIpDJarjHlzqi53n1sWuSiyachA6/8ruqC1aTJtTZVItInxHcyu8aa7NEse14Y45nchWa
+gTpFHg70NDUWrm7fF83iODpAbBsucXBDOoF+RUfAqAM30fi9STKmcQD1oqklPB5GldHI6XuHdjBF
+kXhGUHBCDY1WYs9boyOaYzkzqfFFqilhPLEGPwrpcjW64rTARolJPSeQH9APN2RrVIuLaJslSEnX
+Ea7ZJjgfro+gllGyG4Qec+fR+F3112QyHp1gFpOfw//4tZEMPdLO1hoJdEnmX28wQqbnzR4YRaJp
+ZhpOvh0ZyLwugBegC1F3640wikKTXadmNb7wsjCEF6JeNc1o1Ty9/8PIC81i+ix1dNj4flq8N+BY
+JYyGC7GuKVhVWsFbZ7RmUjuULKTht8IjubXg6QgyvhZ+ajVs0smexs6oetW0vIVpFs6moZBHODqD
+Jk9qupYWTuSx6KEp6JFOs6M18HY1jb4OOVP4MzydQYs0tCBSkyv3HpJqpu3uaAfqTtd8S60L3BKk
+0i00+t0oEOvEaTkWI6jlmAO0HHOAlmMO0HJeBAAA//8nBMHQAAAABklEQVQDANmb9zP4VdwAAAAA
+AElFTkSuQmCC
+B64
+
+# Icon for the Plugins page and the settings menu; the Plugins page looks it up under the display name
+TITLEDIR="/usr/local/emhttp/plugins/Streambox"
+mkdir -p "$DIR/images" "$TITLEDIR/images"
+cp "$DIR/icon.png" "$DIR/images/streambox.png"
+cp "$DIR/icon.png" "$TITLEDIR/images/streambox.png"
+exit 0
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- DASHBOARD TILE                                             -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/&name;.page">
+<INLINE><![CDATA[Menu="Dashboard:0"
+Cond="version_compare(parse_ini_file('/etc/unraid-version')['version'],'6.11.9','>')"
+Markdown="false"
+---
+<?PHP
+$pluginname = "streambox";
+
+$mytiles[$pluginname]['column2'] =
+<<<EOT
+<tbody title="_(Streambox)_">
+<tr><td>
+  <span class="tile-header">
+    <span class="tile-header-left">
+      <i class="f32 sb-ic"></i>
+      <div class="section">
+        <h3 class="tile-header-main sb-ttl">Streambox</h3>
+        <span id="sb-summary" class="sb-sum">Connecting&hellip;</span>
+      </div>
+    </span>
+    <span class="tile-header-right">
+      <span class="tile-header-right-controls">
+        <a id="sb-home" href="#" target="_blank" rel="noopener" title="_(Open Jellyfin)_"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/StreamboxSettings" title="_(Streambox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+      </span>
+    </span>
+  </span>
+</td></tr>
+<tr><td>
+  <div class="sb-tile">
+    <div id="sb-status"></div>
+    <div id="sb-now"><div class="sb-note">Loading&hellip;</div></div>
+    <div id="sb-week"></div>
+    <div id="sb-load"></div>
+    <div id="sb-added"></div>
+  </div>
+</td></tr>
+</tbody>
+EOT;
+?>
+<style>
+i.f32.sb-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/streambox/icon.png) center/contain no-repeat!important}
+i.f32.sb-ic.sb-inv{filter:invert(1)}
+.sb-ttl{margin-bottom:2px!important}
+.sb-sum{display:block;margin:0!important;line-height:1.3}
+.sb-tile{width:100%;font-size:12px;white-space:normal}
+.sb-tile a{text-decoration:none}
+#sb-status{display:flex;justify-content:flex-end;margin:0 0 4px}
+.sb-pill{display:inline-flex;border:1px solid rgba(128,128,128,.35);border-radius:6px;overflow:hidden}
+.sb-pill span{padding:3px 10px}
+.sb-pill span+span{border-left:1px solid rgba(128,128,128,.35)}
+.sb-num{text-align:right;white-space:nowrap;font-family:bitstream,monospace}
+.sb-nm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;word-break:break-word}
+.sb-el{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-u{opacity:.6}
+.sb-sm{font-size:11px}
+.sb-pl{display:flex;align-items:center;gap:8px;margin-top:5px;font-family:bitstream,monospace;white-space:nowrap}
+.sb-pb{height:4px;border-radius:2px;background:rgba(128,128,128,.3);overflow:hidden;flex:1;min-width:30px}
+.sb-pb i{display:block;height:100%}
+.sb-bd{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px}
+.sb-play{background:rgba(63,162,74,.22);color:#3fa24a}
+.sb-stream{background:rgba(74,144,226,.22);color:#4a90e2}
+.sb-trans{background:rgba(224,160,48,.22);color:#d9921f}
+.sb-t-blue{background:rgba(74,144,226,.22);color:#4a90e2}
+.sb-t-purple{background:rgba(150,120,230,.22);color:#9a7de6}
+.sb-rs{margin-top:4px;font-size:11px;line-height:1.3;overflow-wrap:anywhere;opacity:.75;white-space:pre-line}
+.sb-rs.sb-warn{color:#d9921f;opacity:1}
+.sb-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+.sb-more{display:block;text-align:center;padding:10px 0 2px;color:#4a90e2}
+/* Shared tile look (the Sysbox / Diskbox style): dark section bands, the content in a box under them, colored left stripes on rows.
+   Used by Seedbox and Streambox; the build copies this block into each plugin's page where the marker below stands. */
+.mt-band{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;margin-top:14px}
+.mt-band.mt-first{margin-top:6px}
+.mt-band span{opacity:.75}
+.mt-band b{font-weight:400;opacity:.5;text-transform:none;letter-spacing:0;text-align:right}
+.mt-band.mt-red span{color:#e5534b;opacity:1}
+.mt-box{background:rgba(128,128,128,.12);margin-top:8px}
+.mt-cols{display:grid;gap:8px;align-items:center;padding:6px 10px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.2)}
+.mt-cols>div{opacity:.6}
+.mt-r{display:grid;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid rgba(128,128,128,.2)}
+.mt-box>.mt-r:first-child,.mt-cols+.mt-r{border-top:0}
+.mt-s-orange{background:rgba(245,165,36,.10);box-shadow:inset 3px 0 0 #f5a524}
+.mt-s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+.mt-s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+.mt-s-red{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.mt-s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+.mt-s-purple{background:rgba(150,120,230,.10);box-shadow:inset 3px 0 0 #9a7de6}
+.mt-s-grey{background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.mt-box .mt-n{background:none}
+.mt-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+.sb-cards{display:grid;gap:8px}
+.sb-card{background:rgba(128,128,128,.10);border:1px solid rgba(128,128,128,.25);border-radius:6px;padding:10px}
+.sb-k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}
+.sb-day{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;background:rgba(0,0,0,.15);border-top:1px solid rgba(128,128,128,.2)}
+.sb-day:first-child{border-top:0}
+.sb-day.sb-today{opacity:1}
+.sb-day+.mt-r{border-top:0}
+.sb-wsub{font-size:11px;opacity:.6;margin-top:2px;line-height:1.3;overflow-wrap:anywhere}
+.sb-day+.mt-r .sb-bd,#sb-week .sb-bd{white-space:nowrap}
+.sb-new{display:inline-block;vertical-align:1px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:1px 6px;border-radius:4px;background:#f5a524;color:#1c1b1b}
+.sb-t-green{background:rgba(63,162,74,.22);color:#3fa24a}
+.sb-t-amber{background:rgba(224,160,48,.22);color:#d9921f}
+.sb-t-red{background:rgba(229,83,75,.22);color:#e5534b}
+.sb-t-grey{background:rgba(128,128,128,.2);color:inherit;opacity:.8}
+.sb-v{font-family:bitstream,monospace;font-size:18px;margin:4px 0 6px}
+</style>
+<script>
+$(function () {
+  var API = '/plugins/streambox/api_fetch.php';
+  var LOAD = '/plugins/streambox/load.php';
+  var busy = false, loadBusy = false, loadTimer = null, themed = false;
+  var DEF_UI = { port: 8096, url: '', load: true, added: 5 };
+  var COLOR = { red: '#e5534b', amber: '#d9921f', green: '#3fa24a', blue: '#4a90e2', grey: '#8a8a8a', orange: '#f5a524' };
+  var TYPE_ICON = { Movie: 'fa-film', Episode: 'fa-television', Season: 'fa-television', Audio: 'fa-music',
+    TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
+  var MODE = {
+    DirectPlay:   ['sb-play', 'Direct play'],
+    DirectStream: ['sb-stream', 'Direct stream'],
+    Transcode:    ['sb-trans', 'Transcode']
+  };
+
+  // The embedded icon is light; invert it when the page background is light
+  function applyTheme() {
+    if (themed) { return; }
+    themed = true;
+    var el = document.getElementById('sb-now');
+    while (el) {
+      var m = /rgba?\(([^)]+)\)/.exec(getComputedStyle(el).backgroundColor || '');
+      if (m) {
+        var p = m[1].split(',');
+        var a = p.length > 3 ? parseFloat(p[3]) : 1;
+        if (a > 0.5) {
+          if ((0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 150) { $('i.sb-ic').addClass('sb-inv'); }
+          return;
+        }
+      }
+      el = el.parentElement;
+    }
+  }
+
+  function leftTxt(s) {
+    s = Math.max(0, Math.floor(s));
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    if (h > 0) { return h + 'h ' + (m < 10 ? '0' : '') + m + 'm left'; }
+    if (m > 0) { return m + 'm left'; }
+    return s + 's left';
+  }
+  function agoTxt(ts) {
+    var d = Math.max(0, Math.floor(Date.now() / 1000) - ts);
+    if (d < 60) { return 'just now'; }
+    if (d < 3600) { return Math.floor(d / 60) + 'm ago'; }
+    if (d < 86400) { return Math.floor(d / 3600) + 'h ago'; }
+    return Math.floor(d / 86400) + 'd ago';
+  }
+  function band(text, meta, first) {
+    var $b = $('<div class="mt-band">').toggleClass('mt-first', !!first).append($('<span>').text(text));
+    if (meta) { $b.append($('<b>').text(meta)); }
+    return $b;
+  }
+  function mnote(t) { return $('<div class="mt-note">').text(t); }
+  function note(t) { return $('<div class="sb-note">').text(t); }
+  function moreLink(href, text) {
+    return $('<a class="sb-more" target="_blank" rel="noopener">').attr('href', href)
+      .append(document.createTextNode(text + ' ')).append($('<i class="fa fa-external-link">'));
+  }
+  function icon(cls, color) { return $('<i class="fa fa-fw">').addClass(cls).css('color', color); }
+
+  function renderPill(r) {
+    var $p = $('<div class="sb-pill">');
+    var ok = r && r.ok;
+    var st = ok ? [COLOR.green, 'fa-server', 'Online']
+         : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', 'API key']
+         : [COLOR.red, 'fa-chain-broken', 'Offline'];
+    $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
+    if (ok) {
+      var n = r.streams_total || 0;
+      if (n > 0) {
+        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-play">')).append(document.createTextNode(' ' + n + ' streaming')));
+      }
+      if (r.transcoding > 0) {
+        $p.append($('<span>').css('color', COLOR.amber).append($('<i class="fa fa-bolt">')).append(document.createTextNode(' ' + r.transcoding + ' transcoding')));
+      }
+    }
+    $('#sb-status').empty().append($p);
+  }
+
+  function renderSummary(r) {
+    var $s = $('#sb-summary');
+    if (!r || !r.ok) { $s.text('Unavailable'); return; }
+    if (!r.streams_total) { $s.text('No active streams'); return; }
+    $s.text(r.streams_total + (r.streams_total === 1 ? ' stream' : ' streams') + ' \u00B7 ' + r.users + (r.users === 1 ? ' user' : ' users')
+      + (r.mbps > 0 ? ' \u00B7 ' + r.mbps.toFixed(1) + ' Mbps' : ''));
+  }
+
+  function renderNow(r) {
+    var $n = $('#sb-now').empty();
+    if (!r || !r.ok) {
+      var msg = (r && r.error === 'auth') ? 'Jellyfin rejected the API key (check Streambox settings)'
+              : (r && r.error === 'nokey') ? 'Enter the Jellyfin API key in the Streambox settings'
+              : 'Jellyfin unreachable';
+      $n.append(note(msg));
+      return;
+    }
+    var t = '18px minmax(0,1fr) 64px 84px 120px';
+    $n.append(band('Now playing \u00B7 ' + r.streams_total, '', true));
+    var $box = $('<div class="mt-box">').appendTo($n);
+    if (!r.streams.length) { $box.append(mnote('No active streams')); return; }
+    $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
+      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('User')).append($('<div>').text('Device'))
+      .append($('<div>').css('color', COLOR.orange).text('Mode')));
+
+    $.each(r.streams, function (i, x) {
+      var m = MODE[x.mode] || MODE.DirectPlay;
+      var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.paused ? 'mt-s-grey' : (x.mode === 'Transcode' ? 'mt-s-amber' : (x.mode === 'DirectStream' ? 'mt-s-blue' : 'mt-s-green')));
+      $row.append(x.paused ? icon('fa-pause', COLOR.grey) : icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
+
+      var pct = Math.max(0, Math.min(100, x.pct * 100));
+      var col = x.paused ? COLOR.grey : (x.mode === 'Transcode' ? COLOR.orange : COLOR.green);
+      var $pl;
+      if (x.live) {
+        // live TV has no length: a label instead of a progress bar
+        $pl = $('<div class="sb-pl">').append($('<span>').css('color', x.paused ? COLOR.grey : COLOR.red)
+          .text(x.paused ? 'Paused' : '\u25CF LIVE'));
+        if (x.epg) {
+          $pl.append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })));
+          if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
+        }
+      } else {
+        $pl = $('<div class="sb-pl">')
+          .append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })))
+          .append($('<span>').css('color', col).text(x.paused ? 'Paused' : Math.round(pct) + '%'));
+        if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
+        else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
+      }
+      $row.append($('<div>').append($('<div class="sb-nm">').attr('title', x.title).text(x.title)).append($pl));
+
+      $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
+      $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
+      $row.append($('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]))
+        .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
+      $box.append($row);
+    });
+  }
+
+  function renderAdded(r, href) {
+    var $a = $('#sb-added').empty();
+    if (!r || !r.ok || !r.added || !r.added.length) { return; }
+    var t = '18px minmax(0,1fr) 74px 52px 62px';
+    $a.append(band('Recently added \u00B7 ' + r.added.length, 'latest from Jellyfin'));
+    var $box = $('<div class="mt-box">').appendTo($a);
+    $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
+      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('Type')).append($('<div>').text('Quality'))
+      .append($('<div class="sb-num">').text('Added')));
+    $.each(r.added, function (i, x) {
+      var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.type === 'Movie' ? 'mt-s-blue' : 'mt-s-purple');
+      $row.append(icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
+      $row.append($('<div class="sb-nm">').attr('title', x.title).text(x.title));
+      $row.append($('<div>').append($('<span class="sb-bd">').addClass(x.type === 'Movie' ? 'sb-t-blue' : 'sb-t-purple').text(x.type)));
+      $row.append($('<div class="sb-num">').css('text-align', 'left').text(x.quality || '\u2014'));
+      $row.append($('<div class="sb-num sb-u">').text(x.added ? agoTxt(x.added) : '\u2014'));
+      $box.append($row);
+    });
+    $a.append(moreLink(href, 'Open Jellyfin'));
+  }
+
+  function card(label, pct, sub) {
+    var col = pct >= 85 ? COLOR.red : (pct >= 60 ? COLOR.amber : COLOR.green);
+    return $('<div class="sb-card">')
+      .append($('<div class="sb-k">').text(label))
+      .append($('<div class="sb-v">').text(Math.round(pct) + '%'))
+      .append($('<div class="sb-pb">').append($('<i>').css({ width: Math.min(100, pct) + '%', background: col })))
+      .append($('<div class="sb-u sb-sm">').css('margin-top', '4px').text(sub));
+  }
+
+  function fmtW(w) { return (w >= 100 ? w.toFixed(0) : w.toFixed(1)) + ' W'; }
+
+  function renderLoad(d) {
+    var $l = $('#sb-load').empty();
+    if (!d || !d.ok) { return; }
+    var cards = [];
+    if (d.gpu) {
+      cards.push(card('GPU \u00B7 Video', d.gpu.video, 'Quick Sync'));
+      cards.push(card('GPU \u00B7 Render', d.gpu.render, d.gpu.freq > 0 ? Math.round(d.gpu.freq) + ' MHz' : 'idle'));
+    }
+    if (d.cpu !== null && d.cpu !== undefined) { cards.push(card('CPU', d.cpu, 'all cores')); }
+    var sock = d.socket;
+    if (!cards.length && !sock && !d.socket_note) { return; }
+
+    var watts = (d.gpu && d.gpu.power > 0) ? d.gpu.power : 0;
+    var $sec = band(cards.length ? 'Server load' + (watts > 0 ? ' \u00B7 ' + watts.toFixed(1) + ' W' : '') : 'Socket', '');
+    if (cards.length) { $sec.find('span').attr('title', watts > 0 ? 'CPU package power (includes the integrated GPU); not the power drawn at the wall' : ''); }
+    if (sock) {
+      var month = (sock.month_kwh !== null && sock.month_kwh !== undefined) ? ' \u00B7 ' + sock.month_kwh.toFixed(1) + ' kWh/mo' : '';
+      $sec.append($('<b>').text('Socket \u00B7 ' + fmtW(sock.power) + month)
+        .attr('title', "Smart socket: power drawn at the wall. The monthly figure is the socket's own energy counter since the 1st of the month."));
+    } else if (d.socket_note) {
+      $sec.append($('<b>').css('color', COLOR.amber).text('Socket \u00B7 n/a').attr('title', d.socket_note));
+    }
+    $l.append($sec);
+
+    if (cards.length) {
+      var $g = $('<div class="sb-cards">').css('margin-top', '8px').css('grid-template-columns', 'repeat(' + cards.length + ',1fr)');
+      $.each(cards, function (i, c) { $g.append(c); });
+      $l.append($g);
+    }
+  }
+
+  function pollLoad() {
+    if (loadBusy) { return; }
+    loadBusy = true;
+    $.getJSON(LOAD, { _: Date.now() }).done(renderLoad).always(function () { loadBusy = false; });
+  }
+
+  function render(r) {
+    applyTheme();
+    var ui = (r && r.ui) ? r.ui : DEF_UI;
+    var href = ui.url ? ui.url : 'http://' + location.hostname + ':' + ui.port;
+    $('#sb-home').attr('href', href);
+    renderPill(r);
+    renderSummary(r);
+    renderNow(r);
+    renderAdded(r, href);
+    if (r && r.ok && ui.load) {
+      if (!loadTimer) { pollLoad(); loadTimer = setInterval(pollLoad, 10000); }
+    } else {
+      if (loadTimer) { clearInterval(loadTimer); loadTimer = null; }
+      $('#sb-load').empty();
+    }
+  }
+
+  function poll() {
+    if (busy) { return; }
+    busy = true;
+    $.getJSON(API, { _: Date.now() })
+      .done(render)
+      .fail(function () { render({ ok: false, error: 'unreachable' }); })
+      .always(function () { busy = false; });
+  }
+
+  poll();
+  setInterval(poll, 5000);
+
+  // ---- This week's episodes (week.php, Sonarr calendar + usual delay) ----
+  var WEEK = '/plugins/streambox/week.php';
+  var weekBusy = false;
+  function hm(ts) { var d = new Date(ts * 1000); return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes(); }
+  function durTxt(s) {
+    s = Math.max(0, Math.floor(s / 60));
+    var h = Math.floor(s / 60), m = s % 60;
+    return h > 0 ? h + 'h' + (m ? ' ' + (m < 10 ? '0' : '') + m + 'm' : '') : m + 'm';
+  }
+  function cdTxt(s) {   // 1d 12h 46m
+    s = Math.max(0, Math.floor(s / 60));
+    var d = Math.floor(s / 1440), h = Math.floor((s % 1440) / 60), m = s % 60, o = [];
+    if (d) { o.push(d + 'd'); }
+    if (d || h) { o.push(h + 'h'); }
+    o.push((o.length && m < 10 ? '0' : '') + m + 'm');
+    return o.join(' ');
+  }
+  function dhm(ts) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(ts * 1000).getDay()] + ' ' + hm(ts); }
+  var WST = {
+    jf:    ['mt-s-green', 'sb-t-green', 'In Jellyfin'],
+    file:  ['mt-s-green', 'sb-t-green', 'Downloaded'],
+    imp:   ['mt-s-blue', 'sb-t-blue', 'Importing'],
+    scan:  ['mt-s-blue', 'sb-t-blue', 'Imported'],
+    dl:    ['mt-s-blue', 'sb-t-blue', 'Downloading'],
+    grab:  ['mt-s-blue', 'sb-t-blue', 'Grabbed'],
+    pause: ['mt-s-grey', 'sb-t-grey', 'Paused'],
+    fail:  ['mt-s-red', 'sb-t-red', 'Failed'],
+    late:  ['mt-s-amber', 'sb-t-amber', 'No release'],
+    aired: ['mt-s-grey', 'sb-t-grey', 'Aired'],
+    wait:  ['mt-s-grey', 'sb-t-grey', 'Waiting']
+  };
+  function renderWeek(w) {
+    var $w = $('#sb-week').empty();
+    if (!w || !w.show) { return; }
+    var f = new Date(w.from * 1000), t = new Date((w.to - 1) * 1000);
+    var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var range = 'Mon ' + f.getDate() + (f.getMonth() !== t.getMonth() ? ' ' + M[f.getMonth()] : '') + ' \u2013 Sun ' + t.getDate() + ' ' + M[t.getMonth()];
+    if (!w.ok) {
+      if (w.show < 2) { return; }
+      $w.append(band("This week's episodes", range));
+      var why = w.error === 'nosonarr' ? 'Sonarr is not set (Streambox settings)' : (w.error === 'auth' ? 'Sonarr rejected the API key' : 'Sonarr unreachable');
+      $w.append($('<div class="mt-box">').append(mnote(why)));
+      return;
+    }
+    if (!w.counts.all && w.show < 2) { return; }
+    var meta = [range];
+    if (w.counts.jf) { meta.push(w.counts.jf + ' in Jellyfin'); }
+    if (w.counts.dl) { meta.push(w.counts.dl + ' downloading'); }
+    if (w.counts.late) { meta.push(w.counts.late + ' late'); }
+    var $b = band("This week's episodes \u00B7 " + w.counts.all, meta.join(' \u00B7 '));
+    if (w.counts.late) { $b.find('b').css({ color: COLOR.amber, opacity: 1 }); }
+    $w.append($b);
+    var $box = $('<div class="mt-box">').appendTo($w);
+    if (!w.counts.all) { $box.append(mnote('No monitored episode airs this week')); return; }
+    var t3 = '18px minmax(0,1fr) 108px 104px';
+    $.each(w.days, function (i, d) {
+      var ready = 0;
+      $.each(d.rows, function (j, r) { if (r.st === 'jf' || r.st === 'file') { ready++; } });
+      $box.append($('<div class="sb-day">').toggleClass('sb-today', !!d.today)
+        .append($('<span>').text((d.today ? 'Today \u00B7 ' : '') + d.label))
+        .append($('<span>').text(ready ? ready + ' in Jellyfin' : '')));
+      $.each(d.rows, function (j, r) {
+        var s = WST[r.st] || WST.wait;
+        var $row = $('<div class="mt-r mt-n">').addClass(s[0]).css('grid-template-columns', t3);
+        $row.append(icon('fa-television', '#9fb4c8'));
+        var $t = $('<div class="sb-nm">').attr('title', r.title ? r.code + ' \u00B7 ' + r.title : r.code).text(r.series + ' \u00B7 ' + r.code);
+        if (r['new']) { $t.append(' ').append($('<span class="sb-new">').attr('title', 'New series: its first episode airs this week').text('New')); }
+        var $nm = $('<div>').append($t);
+        var sub = '';
+        if (r.st === 'late') { sub = (r.delay !== null ? 'usually ' + durTxt(r.delay) + ' after airing, now ' : 'aired ') + durTxt(w.now - r.air) + (r.delay !== null ? '' : ' ago'); }
+        else if (r.idx && r.idx.length > 1 && (r.st === 'wait' || r.st === 'aired')) { sub = $.map(r.idx, function (x) { return x[0] + ' ~' + hm(x[1]); }).join(' \u00B7 '); }
+        if (sub) { $nm.append($('<div class="sb-wsub">').text(sub)); }
+        if (r.st === 'dl' && r.pct !== null) { $nm.append($('<div class="sb-pb">').css('margin-top', '5px').append($('<i>').css({ width: r.pct + '%', background: COLOR.blue }))); }
+        $row.append($nm);
+        // countdown to the expected time (to the air time when the delay is unknown); after it: overdue
+        var nowS = Math.floor(Date.now() / 1000), target = r.exp !== null ? r.exp : r.air, when;
+        if (r.st === 'wait' || r.st === 'aired' || r.st === 'late') {
+          when = target > nowS ? (r.exp === null ? 'airs in ' : 'in ') + cdTxt(target - nowS) : (nowS - target < 60 ? 'due now' : 'overdue ' + cdTxt(nowS - target));
+        } else { when = 'aired ' + hm(r.air); }
+        var tip = 'Airs ' + dhm(r.air) + (r.exp !== null ? ' \u00b7 expected ~' + dhm(r.exp) : '') + '\n'
+          + (r.exp === null ? 'No grab history yet: the usual delay after airing is unknown'
+            : 'Usual delay after airing: ' + durTxt(r.delay) + ' (median of ' + r.n + ' episode' + (r.n === 1 ? '' : 's') + (r.basis === 'series' ? ' of this series' : ' of all series') + ')');
+        $row.append($('<div class="sb-num sb-u">').css('text-align', 'left').attr('title', tip).text(when));
+        var lab = s[2];
+        if (r.st === 'dl' && r.pct !== null) { lab = r.pct + '%' + (r.left ? ' \u00B7 ' + durTxt(r.left) : ''); }
+        $row.append($('<div>').append($('<span class="sb-bd">').addClass(s[1]).text(lab)
+          .attr('title', r.st === 'scan' ? 'Sonarr imported it; Jellyfin has not listed it yet' : '')));
+        $box.append($row);
+      });
+    });
+  }
+  function pollWeek() {
+    if (weekBusy) { return; }
+    weekBusy = true;
+    $.getJSON(WEEK, { _: Date.now() }).done(renderWeek).always(function () { weekBusy = false; });
+  }
+  pollWeek();
+  setInterval(pollWeek, 60000);
+});
+</script>
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- SETTINGS PAGE  (Settings -> Utilities -> Streambox)        -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/StreamboxSettings.page">
+<INLINE><![CDATA[Menu="Utilities"
+Type="xmenu"
+Title="Streambox"
+Icon="streambox.png"
+Markdown="false"
+---
+<?PHP
+$sb_file = '/boot/config/plugins/streambox/settings.cfg';
+$sb = [
+  'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
+  'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
+  'socket_host' => '', 'socket_id' => '0',
+  'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
+  'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
+  'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid',
+];
+$sb_log = is_file('/tmp/streambox_notify.log') ? implode("\n", array_slice((array)@file('/tmp/streambox_notify.log', FILE_IGNORE_NEW_LINES), -6)) : '';
+if (is_file($sb_file)) {
+  $sb_c = @parse_ini_file($sb_file);
+  if (is_array($sb_c)) { $sb = array_merge($sb, $sb_c); }
+}
+$sb_nicks = [];
+$sb_nf = '/boot/config/plugins/streambox/nicknames.json';
+if (is_file($sb_nf)) {
+  $sb_n = json_decode((string)@file_get_contents($sb_nf), true);
+  if (is_array($sb_n)) { $sb_nicks = $sb_n; }
+}
+$sb_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$sb_tok = is_array($sb_var) ? (string)($sb_var['csrf_token'] ?? '') : '';
+
+// Jellyfin users, for the nickname table
+$sb_users = null;
+if ((string)$sb['jf_key'] !== '' && preg_match('/^[A-Za-z0-9.\-]+$/', (string)$sb['jf_host'])) {
+  $sb_ch = curl_init('http://' . $sb['jf_host'] . ':' . (int)$sb['jf_port'] . '/Users');
+  curl_setopt_array($sb_ch, [
+    CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => 4,
+    CURLOPT_HTTPHEADER => ['Authorization: MediaBrowser Token="' . $sb['jf_key'] . '"', 'Accept: application/json'],
+  ]);
+  $sb_body = curl_exec($sb_ch);
+  $sb_code = (int)curl_getinfo($sb_ch, CURLINFO_HTTP_CODE);
+  curl_close($sb_ch);
+  if ($sb_code === 200) {
+    $sb_list = json_decode((string)$sb_body, true);
+    if (is_array($sb_list)) {
+      $sb_users = [];
+      foreach ($sb_list as $sb_u) {
+        if (!empty($sb_u['Id'])) { $sb_users[] = ['id' => (string)$sb_u['Id'], 'name' => (string)($sb_u['Name'] ?? '?')]; }
+      }
+      usort($sb_users, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
+    }
+  }
+}
+if (!function_exists('sb_h')) {
+  function sb_h($v) { return htmlspecialchars((string)$v, ENT_QUOTES); }
+}
+if (!function_exists('sb_chk')) {
+  function sb_chk($v) { return in_array(strtolower(trim((string)$v)), ['0', 'no', 'false', 'off', ''], true) ? '' : 'checked'; }
+}
+if (!function_exists('sb_auto')) {
+  function sb_auto($name) {
+    $parts = preg_split('/[\s._\-@]+/u', trim((string)$name));
+    $first = ($parts && $parts[0] !== '') ? $parts[0] : trim((string)$name);
+    $n = preg_match_all('/./us', $first);
+    if ($n > 8) { return (preg_match('/^.{1,8}/us', $first, $m) ? $m[0] : substr($first, 0, 8)) . "\u{2026}"; }
+    return $first;
+  }
+}
+?>
+<style>
+/* Shared settings-page look (the owner's design rule, 2026-10-10): a dark band per part (the h3), the rows in a box, the label on the
+   left, the controls of one setting on one line, the explanation as a quiet line under them. Scoped to a form with class "uset".
+   The builds copy this block into each settings page where the marker below stands. Unraid 7 lays every dd out as a flex column:
+   overridden here for these forms only. */
+.uset h3{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:9px 12px;margin:26px 0 8px;line-height:1.4}
+.uset h3:first-child{margin-top:6px}
+.uset h3 small{font-weight:400;opacity:.55;text-transform:none;letter-spacing:0}
+.uset dl{display:grid;grid-template-columns:minmax(200px,300px) minmax(0,1fr);gap:0;margin:0;padding:0;background:rgba(128,128,128,.12)}
+.uset dl dt,.uset dl dd{float:none;width:auto;margin:0;padding:9px 12px;border-top:1px solid rgba(128,128,128,.22);text-align:left;line-height:1.5}
+.uset dl dt{opacity:.75;font-weight:normal}
+.uset dl dt:first-child,.uset dl dt:first-child+dd{border-top:0}
+.uset dl dd{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.uset dl dd>[class*="-mut"],.uset dl dd>.uset-hint,.uset dl dd>.uset-brk,.uset dl dd>div,.uset dl dd>p{flex:1 1 100%;margin:0}
+.uset dl dd>[class*="-mut"],.uset dl dd>.uset-hint{opacity:.55;font-size:12px;max-width:120ch}
+.uset dl dd>.uset-brk{height:0}
+.uset dd input,.uset dd select,.uset dd textarea{margin:0;max-width:100%}
+.uset dd select{width:auto!important;min-width:110px}
+.uset dd input.narrow{width:110px!important;min-width:0}
+.uset dd input[type=checkbox]{width:auto!important;margin:0 4px 0 0}
+.uset dd label{display:inline-flex;align-items:center;gap:4px}
+.uset dd input[type=button]{margin:0}
+.uset dl.uset-save{background:none;margin-top:14px}
+.uset dl.uset-save dt,.uset dl.uset-save dd{border-top:0}
+.uset .uset-ok{color:#3fa24a}.uset .uset-er{color:#e5534b}
+@media (max-width:760px){.uset dl{grid-template-columns:1fr}.uset dl dd{border-top:0;padding-top:0}}
+</style>
+<form id="sb-form" class="uset" method="POST" action="/plugins/streambox/save.php" onsubmit="return false;">
+<input type="hidden" name="csrf_token" value="<?=sb_h($sb_tok)?>">
+<h3>Jellyfin and the tile</h3>
+<dl>
+<dt>Jellyfin host (as seen from Unraid):</dt>
+<dd><input type="text" name="jf_host" class="narrow" value="<?=sb_h($sb['jf_host'])?>"></dd>
+
+<dt>Jellyfin port:</dt>
+<dd><input type="number" name="jf_port" min="1" max="65535" class="narrow" value="<?=sb_h($sb['jf_port'])?>"></dd>
+
+<dt>Jellyfin API key:</dt>
+<dd><input type="password" name="jf_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['jf_key'] !== '' ? '(saved, leave empty to keep)' : ''?>"> <span style="opacity:.6">saved keys and webhooks are not sent to the page; type - to remove one</span></dd>
+
+<dt>Jellyfin link URL (also used in the Discord cards):</dt>
+<dd><input type="text" name="jf_url" placeholder="https://media.example.com" value="<?=sb_h($sb['jf_url'])?>"></dd>
+
+<dt>Maximum rows in Now playing:</dt>
+<dd><input type="number" name="streams_max" min="1" max="30" class="narrow" value="<?=sb_h($sb['streams_max'])?>"></dd>
+
+<dt>Rows in Recently added (0 = hide):</dt>
+<dd><input type="number" name="added_rows" min="0" max="20" class="narrow" value="<?=sb_h($sb['added_rows'])?>"></dd>
+
+<dt>Show server load (GPU, CPU, smart socket):</dt>
+<dd><input type="hidden" name="show_load" value="0"><input type="checkbox" name="show_load" value="1" <?=sb_chk($sb['show_load'])?>> switch off when the Sysbox tile shows these</dd>
+
+<dt>Smart socket (Shelly) address:</dt>
+<dd><input type="text" name="socket_host" class="narrow" placeholder="192.168.1.50" value="<?=sb_h($sb['socket_host'])?>"></dd>
+
+<dt>Smart socket channel:</dt>
+<dd><input type="number" name="socket_id" min="0" max="3" class="narrow" value="<?=sb_h($sb['socket_id'])?>"></dd>
+</dl>
+
+<h3>This week's episodes <small>Monday to Sunday, from Sonarr; read-only</small></h3>
+<dl>
+<dt>Show on the Dashboard:</dt>
+<dd><select name="wk_show">
+<?php foreach (['2' => 'always', '1' => 'only when an episode airs this week', '0' => 'never'] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_show'] === (string)$sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php endforeach; ?>
+</select>
+<span class="uset-hint">The monitored episodes airing this week, by day: air time, when the torrent usually shows up, and where each one is now. A new week starts at midnight on Sunday.</span></dd>
+
+<dt>Sonarr connection:</dt>
+<dd><label><input type="radio" name="wk_src" value="seedbox" <?=(string)$sb['wk_src'] !== 'own' ? 'checked' : ''?>> use Seedbox's Sonarr settings</label>
+<label><input type="radio" name="wk_src" value="own" <?=(string)$sb['wk_src'] === 'own' ? 'checked' : ''?>> own</label>
+<input type="button" id="sb-wtest" value="Test Sonarr"> <span id="sb-wmsg"></span>
+<span class="uset-hint">Seedbox already has the Sonarr address and API key (Seedbox Tools, Connections). The fields below are used only with "own".</span></dd>
+
+<dt>Sonarr address (own):</dt>
+<dd><input type="text" name="son_url" placeholder="http://192.168.1.10:8989" value="<?=sb_h($sb['son_url'])?>"></dd>
+
+<dt>Sonarr API key (own):</dt>
+<dd><input type="password" name="son_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['son_key'] !== '' ? '(saved, leave empty to keep)' : ''?>"></dd>
+
+<dt>Usual delay:</dt>
+<dd><select name="wk_delay">
+<?php foreach (['series' => 'per series', 'idx' => 'per series and indexer', 'all' => 'one value for all series'] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_delay'] === $sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php endforeach; ?>
+</select>
+<span class="uset-hint">Median time from airing to the first grab, from the last 60 days of Sonarr history (grabs more than 3 days after airing are left out). Under 3 episodes of a series the median of all series is used. Per indexer: the earliest indexer decides, the others are listed under the title.</span></dd>
+
+<dt>Late after (hours past the usual time):</dt>
+<dd><input type="number" name="wk_late" min="1" max="48" class="narrow" value="<?=sb_h($sb['wk_late'])?>"></dd>
+
+<dt>Post late episodes to Discord:</dt>
+<dd><input type="hidden" name="wk_dc" value="0"><input type="checkbox" name="wk_dc" value="1" <?=sb_chk($sb['wk_dc'])?>> once per episode, to the series webhook (below)</dd>
+
+<dt>Row on Jellyfin's home page:</dt>
+<dd><input type="hidden" name="wk_web" value="0"><input type="checkbox" name="wk_web" value="1" <?=sb_chk($sb['wk_web'])?>> "Ezen a héten", web client and Jellyfin Desktop only
+<span class="uset-hint">Every 2 minutes Streambox writes week.json (series, episode codes, times; no keys) and week.js into the folder below. Map it read-only into the Jellyfin container as /usr/share/jellyfin/web/streambox, then add this script in Jellyfin (Dashboard, JS Injector, enabled): <code>var s=document.createElement('script');s.src='streambox/week.js?v='+Date.now();document.head.appendChild(s);</code> Anyone who can open the Jellyfin address can read week.json.</span></dd>
+
+<dt>Default view in Jellyfin:</dt>
+<dd><select name="wk_web_view">
+<?php foreach (['grid' => 'calendar (seven day cards)', 'row' => 'posters (one row)'] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_web_view'] === $sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php endforeach; ?>
+</select>
+<span class="uset-hint">Each viewer can switch with the two icons next to the title; the choice is remembered in that browser.</span></dd>
+
+<dt>Folder for Jellyfin:</dt>
+<dd><input type="text" name="wk_web_dir" value="<?=sb_h($sb['wk_web_dir'])?>" placeholder="/mnt/cache/docker/streambox/web"></dd>
+</dl>
+
+<h3>Discord notifications</h3>
+<dl>
+<dt>Announce new movies and seasons:</dt>
+<dd><input type="hidden" name="notify" value="0"><input type="checkbox" name="notify" value="1" <?=sb_chk($sb['notify'])?>></dd>
+
+<dt>Webhook for movies (#filmek):</dt>
+<dd><input type="password" name="dc_movies" autocomplete="new-password" placeholder="<?=$sb['dc_movies'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+
+<dt>Webhook for series (#sorozatok):</dt>
+<dd><input type="password" name="dc_series" autocomplete="new-password" placeholder="<?=$sb['dc_series'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+
+<dt>Weekly summary of new movies and series:</dt>
+<dd><input type="hidden" name="weekly" value="0"><input type="checkbox" name="weekly" value="1" <?=sb_chk($sb['weekly'])?>></dd>
+
+<dt>Webhook for the weekly summary:</dt>
+<dd><input type="password" name="dc_weekly" autocomplete="new-password" placeholder="<?=$sb['dc_weekly'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+
+<dt>Weekly summary day and hour:</dt>
+<dd>
+  <select name="weekly_day" style="width:auto">
+<?php foreach ([1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 0 => 'Sunday'] as $sb_dv => $sb_dn): ?>
+    <option value="<?=$sb_dv?>" <?=((string)$sb['weekly_day'] === (string)$sb_dv) ? 'selected' : ''?>><?=$sb_dn?></option>
+<?php endforeach; ?>
+  </select>
+  <input type="number" name="weekly_hour" min="0" max="23" class="narrow" value="<?=sb_h($sb['weekly_hour'])?>"> :00
+</dd>
+
+<dt>Wait for more episodes (minutes):</dt>
+<dd><input type="number" name="notify_settle" min="1" max="60" class="narrow" value="<?=sb_h($sb['notify_settle'])?>"></dd>
+
+<dt>Wait for metadata and poster (minutes):</dt>
+<dd><input type="number" name="notify_wait" min="1" max="240" class="narrow" value="<?=sb_h($sb['notify_wait'])?>"></dd>
+
+<dt>&nbsp;</dt>
+<dd>
+  <input type="button" id="sb-ntest" value="Send test message">
+  <input type="button" id="sb-nprev" value="Send preview (newest movie and season)">
+  <input type="button" id="sb-nweek" value="Send weekly summary now">
+  <span id="sb-nmsg" style="margin-left:12px"></span>
+</dd>
+</dl>
+
+<h3>User nicknames</h3>
+<?php if ($sb_users === null): ?>
+<p>The user list could not be loaded. Enter the Jellyfin host, port and API key above, press Apply, then reload this page.</p>
+<?php else: ?>
+<p>Nicknames are shown instead of the long user names on the dashboard tile. Leave a field empty to use the automatic short name (shown as a hint).</p>
+<dl>
+<?php foreach ($sb_users as $sb_u): ?>
+<dt><?=sb_h($sb_u['name'])?>:</dt>
+<dd><input type="text" name="nick[<?=sb_h($sb_u['id'])?>]" class="narrow" maxlength="24" placeholder="<?=sb_h(sb_auto($sb_u['name']))?>" value="<?=sb_h($sb_nicks[$sb_u['id']] ?? '')?>"></dd>
+<?php endforeach; ?>
+</dl>
+<?php endif; ?>
+
+<dl class="uset-save">
+<dt>&nbsp;</dt>
+<dd>
+  <input type="button" id="sb-save" value="Apply">
+  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <span id="sb-msg" style="margin-left:12px"></span>
+</dd>
+</dl>
+</form>
+
+<?php if ($sb_log !== ''): ?>
+<p style="opacity:.6;font-size:12px;max-width:130ch">Notifier log (latest entries):</p>
+<pre><?=sb_h($sb_log)?></pre>
+<?php endif; ?>
+
+<p style="opacity:.6;font-size:12px;max-width:130ch">Discord cards: Unraid checks Jellyfin every minute. A movie is announced once its Hungarian description and poster exist; episodes are grouped per season and announced when no new episode has arrived for the "wait for more episodes" time. The first time the notifier is switched on, only items added from then on are announced. The weekly summary lists everything added in the last 7 days at the chosen day and hour (server time zone); if the server was off at that hour it is sent when it is next up the same day. The buttons use the saved settings, so press Apply first. The Jellyfin link in the cards is left out when the Jellyfin link URL is empty. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
+
+<p style="opacity:.6;font-size:12px;max-width:130ch">The Jellyfin API key is created in Jellyfin under Dashboard, Advanced, API Keys. Streams that are idle (nothing playing) are not shown. GPU load is read with intel_gpu_top, CPU load from the system statistics. Leave the Jellyfin link URL empty to use this server's address with the Jellyfin port. Leave the smart socket address empty to hide the Socket reading. The monthly consumption is taken from the socket's own energy counter, which Unraid samples every 10 minutes, so the first month counts from the day the socket is set up.</p>
+
+<script>
+$(function () {
+  var $msg = $('#sb-msg');
+  $('#sb-save').on('click', function () {
+    var $b = $(this).prop('disabled', true);
+    $msg.css('color', '').text('Saving...');
+    $.post('/plugins/streambox/save.php', $('#sb-form').serialize(), null, 'json')
+      .done(function (r) {
+        if (r && r.ok) {
+          $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.');
+        } else {
+          $msg.css('color', '#e5534b').text('Not saved: ' + ((r && r.error) ? r.error : 'unknown error'));
+        }
+      })
+      .fail(function (x) {
+        var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
+        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+      })
+      .always(function () { $b.prop('disabled', false); });
+  });
+  $('#sb-wtest').on('click', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text('Asking Sonarr... (Apply first if you changed the connection)');
+    $.getJSON('/plugins/streambox/week.php', { test: 1, _: Date.now() })
+      .done(function (r) { $m.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : 'unknown answer'); })
+      .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
+      .always(function () { $b.prop('disabled', false); });
+  });
+  var $nm = $('#sb-nmsg');
+  $('#sb-ntest, #sb-nprev, #sb-nweek').on('click', function () {
+    var mode = (this.id === 'sb-nprev') ? 'preview' : ((this.id === 'sb-nweek') ? 'weekly' : 'test');
+    var $b = $('#sb-ntest, #sb-nprev, #sb-nweek').prop('disabled', true);
+    $nm.css('color', '').text('Sending...');
+    $.post('/plugins/streambox/notify_test.php', { mode: mode }, null, 'json')
+      .done(function (r) { $nm.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : 'unknown answer'); })
+      .fail(function (x) {
+        var e = (x.responseJSON && x.responseJSON.message) ? x.responseJSON.message : 'HTTP ' + x.status;
+        $nm.css('color', '#e5534b').text(e);
+      })
+      .always(function () { $b.prop('disabled', false); });
+  });
+});
+</script>
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- JELLYFIN PROXY (sessions + recently added)                 -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/api_fetch.php">
+<INLINE><![CDATA[<?php
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+
+$cfg = [
+    'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
+    'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
+];
+$file = '/boot/config/plugins/streambox/settings.cfg';
+if (is_file($file)) {
+    $c = @parse_ini_file($file);
+    if (is_array($c)) { $cfg = array_merge($cfg, $c); }
+}
+
+function sb_flag($v) {
+    return !in_array(strtolower(trim((string)$v)), ['0', 'no', 'false', 'off', ''], true);
+}
+
+$host = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host']) ? $cfg['jf_host'] : '127.0.0.1';
+$port = (int)$cfg['jf_port'];
+if ($port < 1 || $port > 65535) { $port = 8096; }
+$key       = (string)$cfg['jf_key'];
+$maxStream = max(1, min(30, (int)$cfg['streams_max']));
+$addedRows = max(0, min(20, (int)$cfg['added_rows']));
+$link      = trim((string)$cfg['jf_url']);
+if (!preg_match('#^https?://[^\s"<>]+$#i', $link)) { $link = ''; }
+$base = "http://$host:$port";
+
+$ui = ['port' => $port, 'url' => $link, 'load' => sb_flag($cfg['show_load']), 'added' => $addedRows];
+
+function out($arr) {
+    global $ui;
+    $arr['ui'] = $ui;
+    echo json_encode($arr, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($key === '') { out(['ok' => false, 'error' => 'nokey']); }
+
+function sb_get($path) {
+    global $base, $key;
+    $ch = curl_init($base . $path);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_TIMEOUT        => 4,
+        CURLOPT_HTTPHEADER     => ['Authorization: MediaBrowser Token="' . $key . '"', 'Accept: application/json'],
+    ]);
+    $body = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err  = curl_errno($ch);
+    curl_close($ch);
+    return [$body, $code, $err];
+}
+
+function sb_res($w, $h) {
+    $w = (int)$w;
+    $h = (int)$h;
+    if ($w <= 0 && $h <= 0) { return ''; }
+    if ($w >= 3200 || $h >= 1800) { return '2160p'; }
+    if ($w >= 2400 || $h >= 1300) { return '1440p'; }
+    if ($w >= 1800 || $h >= 1000) { return '1080p'; }
+    if ($w >= 1200 || $h >= 700)  { return '720p'; }
+    if ($w >= 700  || $h >= 460)  { return '480p'; }
+    return 'SD';
+}
+
+function sb_vres($vs) {
+    if (!is_array($vs)) { return ''; }
+    $r = sb_res($vs['Width'] ?? 0, $vs['Height'] ?? 0);
+    if ($r !== '' && !empty($vs['IsInterlaced']) && substr($r, -1) === 'p') { $r = substr($r, 0, -1) . 'i'; }
+    return $r;
+}
+
+// "VideoCodecNotSupported" -> "Video codec"
+function sb_reason($r) {
+    $r = (string)preg_replace('/(NotSupported|ExceedsLimit)$/', '', (string)$r);
+    $r = trim(strtolower((string)preg_replace('/(?<!^)(?=[A-Z])/', ' ', $r)));
+    return ($r !== '') ? ucfirst($r) : '';
+}
+
+// Short human wording for a Jellyfin transcode reason
+function sb_why($r) {
+    $map = [
+        'ContainerNotSupported'        => 'Container',
+        'VideoCodecNotSupported'       => 'Video codec',
+        'AudioCodecNotSupported'       => 'Audio codec',
+        'SubtitleCodecNotSupported'    => 'Subtitles',
+        'AudioChannelsNotSupported'    => 'Audio channels',
+        'ContainerBitrateExceedsLimit' => 'Bitrate limit',
+        'VideoBitrateNotSupported'     => 'Video bitrate',
+        'AudioBitrateNotSupported'     => 'Audio bitrate',
+        'InterlacedVideoNotSupported'  => 'Interlaced',
+        'VideoResolutionNotSupported'  => 'Resolution',
+        'VideoProfileNotSupported'     => 'Video profile',
+        'VideoLevelNotSupported'       => 'Video level',
+        'VideoRangeTypeNotSupported'   => 'HDR format',
+    ];
+    $r = (string)$r;
+    return isset($map[$r]) ? $map[$r] : sb_reason($r);
+}
+
+function sb_audio($it) {
+    $first = null;
+    foreach ((array)($it['MediaStreams'] ?? []) as $ms) {
+        if (!is_array($ms) || ($ms['Type'] ?? '') !== 'Audio') { continue; }
+        if ($first === null) { $first = $ms; }
+        if (!empty($ms['IsDefault'])) { return $ms; }
+    }
+    return $first;
+}
+
+function sb_short($name) {
+    $name  = trim((string)$name);
+    $parts = preg_split('/[\s._\-@]+/u', $name);
+    $first = ($parts && $parts[0] !== '') ? $parts[0] : $name;
+    $n = preg_match_all('/./us', $first);
+    if ($n > 8) { return (preg_match('/^.{1,8}/us', $first, $m) ? $m[0] : substr($first, 0, 8)) . "\u{2026}"; }
+    return $first;
+}
+
+function sb_dev($d) {
+    $s = trim((string)preg_replace('/\s*\([^)]*\)\s*$/u', '', (string)$d));
+    return ($s !== '') ? $s : (string)$d;
+}
+
+function sb_title($it) {
+    $type = (string)($it['Type'] ?? '');
+    $name = (string)($it['Name'] ?? '?');
+    $dot  = " \u{00b7} ";
+    if ($type === 'Episode') {
+        $series = (string)($it['SeriesName'] ?? '');
+        $s = $it['ParentIndexNumber'] ?? null;
+        $e = $it['IndexNumber'] ?? null;
+        $code = ($s !== null && $e !== null) ? sprintf('S%02dE%02d', (int)$s, (int)$e) : '';
+        $tail = trim($code . ' ' . $name);
+        return ($series !== '') ? $series . $dot . $tail : $tail;
+    }
+    if ($type === 'Season') {
+        $series = (string)($it['SeriesName'] ?? '');
+        return ($series !== '') ? $series . $dot . $name : $name;
+    }
+    if ($type === 'TvChannel' || $type === 'LiveTvChannel') {
+        $cp = is_array($it['CurrentProgram'] ?? null) ? trim((string)($it['CurrentProgram']['Name'] ?? '')) : '';
+        return ($cp !== '') ? $name . $dot . $cp : $name;
+    }
+    $y = $it['ProductionYear'] ?? null;
+    return $name . ($y ? ' (' . (int)$y . ')' : '');
+}
+
+function sb_video($it) {
+    foreach ((array)($it['MediaStreams'] ?? []) as $ms) {
+        if (is_array($ms) && ($ms['Type'] ?? '') === 'Video') { return $ms; }
+    }
+    return null;
+}
+
+$nick = [];
+$nf = '/boot/config/plugins/streambox/nicknames.json';
+if (is_file($nf)) {
+    $n = json_decode((string)@file_get_contents($nf), true);
+    if (is_array($n)) { $nick = $n; }
+}
+
+// ---- Sessions -----------------------------------------------------------
+list($b, $code, $err) = sb_get('/Sessions');
+if ($err) { out(['ok' => false, 'error' => 'unreachable']); }
+if ($code === 401 || $code === 403) { out(['ok' => false, 'error' => 'auth']); }
+if ($code !== 200) { out(['ok' => false, 'error' => 'http_' . $code]); }
+$sessions = json_decode((string)$b, true);
+if (!is_array($sessions)) { out(['ok' => false, 'error' => 'bad_response']); }
+
+$arrow   = " \u{2192} ";
+$streams = [];
+$users   = [];
+$mbps    = 0.0;
+$trans   = 0;
+
+foreach ($sessions as $s) {
+    $np = $s['NowPlayingItem'] ?? null;
+    if (!is_array($np)) { continue; }   // idle client
+    $ps = is_array($s['PlayState'] ?? null) ? $s['PlayState'] : [];
+    $ti = is_array($s['TranscodingInfo'] ?? null) ? $s['TranscodingInfo'] : null;
+
+    $uid   = (string)($s['UserId'] ?? '');
+    $uname = (string)($s['UserName'] ?? '?');
+    $short = ($uid !== '' && isset($nick[$uid]) && trim((string)$nick[$uid]) !== '') ? (string)$nick[$uid] : sb_short($uname);
+    $users[$uname] = true;
+
+    $vs       = sb_video($np);
+    $srcRes   = sb_vres($vs);
+    $srcCodec = $vs ? strtoupper((string)($vs['Codec'] ?? '')) : '';
+    $srcBps   = $vs ? (int)($vs['BitRate'] ?? 0) : 0;
+    $cparts   = explode(',', (string)($np['Container'] ?? ''));
+    $srcCont  = strtoupper(trim((string)$cparts[0]));
+    $as       = sb_audio($np);
+    $srcAudio = $as ? strtoupper((string)($as['Codec'] ?? '')) : '';
+    $srcCh    = $as ? (int)($as['Channels'] ?? 0) : 0;
+    $rs       = ($ti !== null) ? array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? []))) : [];
+
+    $mode = (string)($ps['PlayMethod'] ?? '');
+    if (!in_array($mode, ['DirectPlay', 'DirectStream', 'Transcode'], true)) {
+        if ($ti === null) { $mode = 'DirectPlay'; }
+        else { $mode = !empty($ti['IsVideoDirect']) ? 'DirectStream' : 'Transcode'; }
+    }
+
+    // Only the audio is transcoded and the video stays untouched: treat it as a direct stream
+    if ($mode === 'Transcode' && $ti !== null && !empty($ti['IsVideoDirect'])) { $mode = 'DirectStream'; }
+
+    $resLine = $srcRes;
+    if ($srcBps > 0) { $resLine .= (($resLine !== '') ? " \u{00b7} " : '') . number_format($srcBps / 1000000, 1) . ' Mbps'; }
+
+    $detail = '';
+    $bps    = $srcBps;
+    if ($mode === 'Transcode' && $ti !== null) {
+        $trans++;
+        $audioCodec = strtoupper((string)($ti['AudioCodec'] ?? '?'));
+        if (!empty($ti['IsVideoDirect'])) {
+            $detail = 'Audio' . $arrow . $audioCodec;
+        } else {
+            $dstRes = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
+            $dstCodec = strtoupper((string)($ti['VideoCodec'] ?? ''));
+            $rs = array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? [])));
+            $interlaced = in_array('InterlacedVideoNotSupported', $rs, true) || ($vs && !empty($vs['IsInterlaced']));
+            if ($dstRes !== '' && $srcRes !== '' && $dstRes !== $srcRes) { $detail = $srcRes . $arrow . $dstRes; }
+            elseif ($srcCodec !== '' && $dstCodec !== '' && $srcCodec !== $dstCodec) { $detail = $srcCodec . $arrow . $dstCodec; }
+            elseif ($interlaced && $dstRes !== '') { $detail = 'Deinterlace' . $arrow . $dstRes; }
+            elseif ($dstRes !== '') { $detail = 'Video' . $arrow . $dstRes; }
+            elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
+            else { $detail = 'Video transcode'; }
+            $detail .= ((string)($ti['HardwareAccelerationType'] ?? '') !== '') ? " \u{00b7} HW" : " \u{00b7} SW";
+        }
+        if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
+    } elseif ($mode === 'DirectStream') {
+        // First line: why the stream is not a plain direct play. Second line: resolution and bitrate.
+        $why = [];
+        foreach ($rs as $r) {
+            $t = sb_why($r);
+            if ($t !== '' && !in_array($t, $why, true)) { $why[] = $t; }
+        }
+        $conv = '';
+        if ($ti !== null) {
+            $dstCont = strtoupper((string)($ti['Container'] ?? ''));
+            if ($dstCont !== '' && $srcCont !== '' && $dstCont !== $srcCont) { $conv = $srcCont . $arrow . $dstCont; }
+        }
+        if ($ti !== null && empty($ti['IsAudioDirect']) && !empty($ti['AudioCodec'])) {
+            $line1 = ($srcAudio !== '' ? $srcAudio : 'Audio') . $arrow . strtoupper((string)$ti['AudioCodec']);
+        } elseif ($why || $conv) {
+            $line1 = implode(" \u{00b7} ", array_filter([implode(', ', $why), $conv]));
+        } else {
+            // Jellyfin reports no reason: show what the file is made of, which usually explains it
+            $line1 = implode(" \u{00b7} ", array_filter([$srcCont, $srcCodec, $srcAudio]));
+        }
+        $detail = trim($line1 . "\n" . $resLine);
+    } else {
+        // direct play
+        $detail = $resLine;
+    }
+
+    // Hover text: everything Jellyfin tells us about this stream
+    $methodName = ['DirectPlay' => 'Direct play', 'DirectStream' => 'Direct stream', 'Transcode' => 'Transcode'][$mode];
+    $info   = ['Method: ' . $methodName];
+    $srcBits = array_filter([
+        $srcCont,
+        trim($srcCodec . ($srcRes !== '' ? ' ' . $srcRes : '')),
+        trim($srcAudio . ($srcCh > 0 ? ' ' . $srcCh . 'ch' : '')),
+    ]);
+    if ($srcBits) { $info[] = 'Source: ' . implode(" \u{00b7} ", $srcBits); }
+    if ($ti !== null) {
+        $names = [];
+        foreach ($rs as $r) { $names[] = sb_why($r); }
+        $info[] = 'Reasons: ' . ($names ? implode(', ', $names) : 'none reported');
+    } else {
+        $info[] = 'Jellyfin reported no transcoding details for this stream';
+    }
+    $info[] = 'Client: ' . trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''));
+    $mbps += $bps / 1000000;
+
+    $pos = (int)($ps['PositionTicks'] ?? 0);
+    $rt  = (int)($np['RunTimeTicks'] ?? 0);
+
+    // Live TV has no length of its own; the current program from the guide (EPG) gives start and end
+    $live = ($rt <= 0);
+    $epg  = false;
+    $pct  = ($rt > 0) ? max(0, min(1, $pos / $rt)) : 0;
+    $left = ($rt > 0) ? max(0, ($rt - $pos) / 10000000) : 0;
+    $cp   = is_array($np['CurrentProgram'] ?? null) ? $np['CurrentProgram'] : null;
+    if ($live && $cp !== null && !empty($cp['StartDate']) && !empty($cp['EndDate'])) {
+        $st = (int)strtotime((string)$cp['StartDate']);
+        $en = (int)strtotime((string)$cp['EndDate']);
+        if ($st > 0 && $en > $st) {
+            $nowTs = time();
+            $pct   = max(0, min(1, ($nowTs - $st) / ($en - $st)));
+            $left  = max(0, $en - $nowTs);
+            $epg   = true;
+            $info[] = 'Program: ' . date('H:i', $st) . " \u{2013} " . date('H:i', $en);
+        }
+    }
+    $dev = (string)($s['DeviceName'] ?? '?');
+
+    $streams[] = [
+        'title'       => sb_title($np),
+        'type'        => (string)($np['Type'] ?? ''),
+        'user'        => $short,
+        'user_full'   => $uname,
+        'device'      => sb_dev($dev),
+        'device_full' => $dev . ' ' . "\u{00b7}" . ' ' . (string)($s['Client'] ?? ''),
+        'mode'        => $mode,
+        'detail'      => $detail,
+        'info'        => implode("\n", $info),
+        'pct'         => $pct,
+        'left'        => $left,
+        'paused'      => !empty($ps['IsPaused']),
+        'live'        => $live,
+        'epg'         => $epg,
+    ];
+}
+
+usort($streams, function ($a, $b) {
+    if ($a['paused'] !== $b['paused']) { return $a['paused'] ? 1 : -1; }
+    return 0;
+});
+$total   = count($streams);
+$more    = max(0, $total - $maxStream);
+$streams = array_slice($streams, 0, $maxStream);
+
+// ---- Recently added (cached for a minute) ----------------------------------
+$added = [];
+if ($addedRows > 0) {
+    $cf  = '/tmp/streambox_added.json';
+    $now = time();
+    $c   = is_file($cf) ? json_decode((string)@file_get_contents($cf), true) : null;
+    if (is_array($c) && ($now - (int)($c['t'] ?? 0)) < 60 && (int)($c['n'] ?? -1) === $addedRows && is_array($c['items'] ?? null)) {
+        $added = $c['items'];
+    } else {
+        list($ab, $ac, $ae) = sb_get('/Items?SortBy=DateCreated&SortOrder=Descending&Recursive=true&IncludeItemTypes=Movie,Episode,Season&Limit=' . $addedRows . '&Fields=DateCreated,MediaStreams');
+        if (!$ae && $ac === 200) {
+            $r = json_decode((string)$ab, true);
+            foreach ((array)($r['Items'] ?? []) as $it) {
+                if (!is_array($it)) { continue; }
+                $v = sb_video($it);
+                $added[] = [
+                    'title'   => sb_title($it),
+                    'type'    => (string)($it['Type'] ?? ''),
+                    'quality' => $v ? sb_vres($v) : '',
+                    'added'   => isset($it['DateCreated']) ? (int)strtotime((string)$it['DateCreated']) : 0,
+                ];
+            }
+            @file_put_contents($cf, json_encode(['t' => $now, 'n' => $addedRows, 'items' => $added], JSON_INVALID_UTF8_SUBSTITUTE));
+        } elseif (is_array($c) && is_array($c['items'] ?? null)) {
+            $added = $c['items'];   // Jellyfin hiccup: show the last known list
+        }
+    }
+}
+
+out([
+    'ok'            => true,
+    'streams'       => $streams,
+    'streams_total' => $total,
+    'more'          => $more,
+    'users'         => count($users),
+    'mbps'          => round($mbps, 1),
+    'transcoding'   => $trans,
+    'added'         => $added,
+]);
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- GPU + CPU LOAD                                             -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/load.php">
+<INLINE><![CDATA[<?php
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+
+require_once __DIR__ . '/energy.php';
+
+$sbCfg = ['socket_host' => '', 'socket_id' => '0'];
+$sbCfgFile = '/boot/config/plugins/streambox/settings.cfg';
+if (is_file($sbCfgFile)) {
+    $sbRead = @parse_ini_file($sbCfgFile);
+    if (is_array($sbRead)) { $sbCfg = array_merge($sbCfg, $sbRead); }
+}
+
+// ---- CPU: delta of /proc/stat between two readings --------------------------
+function sb_cpu_read() {
+    $l = @file('/proc/stat', FILE_IGNORE_NEW_LINES);
+    if (!$l) { return null; }
+    $p = preg_split('/\s+/', trim($l[0]));
+    array_shift($p);
+    $v = array_map('intval', array_slice($p, 0, 8));
+    return [array_sum($v), (int)($v[3] ?? 0) + (int)($v[4] ?? 0)];
+}
+
+$cpu = null;
+$cur = sb_cpu_read();
+if ($cur !== null) {
+    $cf   = '/tmp/streambox_cpu.json';
+    $prev = is_file($cf) ? json_decode((string)@file_get_contents($cf), true) : null;
+    if (!is_array($prev) || (microtime(true) - (float)($prev['t'] ?? 0)) > 60) {
+        $prev = ['t' => microtime(true), 'total' => $cur[0], 'idle' => $cur[1]];
+        usleep(300000);
+        $cur = sb_cpu_read();
+    }
+    if ($cur !== null) {
+        $dt = $cur[0] - (int)$prev['total'];
+        $di = $cur[1] - (int)$prev['idle'];
+        if ($dt > 0) { $cpu = max(0, min(100, (1 - $di / $dt) * 100)); }
+        @file_put_contents($cf, json_encode(['t' => microtime(true), 'total' => $cur[0], 'idle' => $cur[1]]));
+    }
+}
+
+// ---- GPU: intel_gpu_top, cached for 8 seconds so several tabs do not pile up --
+$gpu     = null;
+$gpuNote = '';
+$gf      = '/tmp/streambox_gpu.json';
+$gc      = is_file($gf) ? json_decode((string)@file_get_contents($gf), true) : null;
+if (is_array($gc) && (time() - (int)($gc['t'] ?? 0)) < 8) {
+    $gpu     = $gc['gpu'] ?? null;
+    $gpuNote = (string)($gc['note'] ?? '');
+} else {
+    $bin = '';
+    foreach (['/usr/bin/intel_gpu_top', '/usr/local/bin/intel_gpu_top', '/usr/sbin/intel_gpu_top'] as $cand) {
+        if (is_executable($cand)) { $bin = $cand; break; }
+    }
+    $disabled = array_map('trim', explode(',', (string)ini_get('disable_functions')));
+    if ($bin === '') {
+        $gpuNote = 'intel_gpu_top not found';
+    } elseif (!function_exists('shell_exec') || in_array('shell_exec', $disabled, true)) {
+        $gpuNote = 'shell_exec is disabled in PHP';
+    } else {
+        $to = '';
+        foreach (['/usr/bin/timeout', '/bin/timeout'] as $tb) {
+            if (is_executable($tb)) { $to = $tb . ' 4 '; break; }
+        }
+        $errf = '/tmp/streambox_gpu.err';
+        @unlink($errf);
+        $raw = (string)@shell_exec($to . escapeshellarg($bin) . ' -J -s 400 -n 2 2>' . escapeshellarg($errf));
+        // intel_gpu_top output is not always strict JSON (nan values, a cut-off last sample), so the
+        // numbers are read straight from the last sample that contains engine data.
+        $chunks = preg_split('/"period"\s*:/', $raw);
+        array_shift($chunks);
+        $pick = null;
+        for ($i = count($chunks) - 1; $i >= 0; $i--) {
+            if (preg_match('/"Render\/3D"\s*:\s*\{[^}]*?"busy"\s*:\s*([^,}\s]+)/', $chunks[$i])) { $pick = $chunks[$i]; break; }
+        }
+        if ($pick !== null) {
+            $num = function ($pat) use ($pick) {
+                return (preg_match($pat, $pick, $m) && is_numeric($m[1])) ? (float)$m[1] : 0.0;
+            };
+            $gpu = [
+                'video'  => max($num('/"Video"\s*:\s*\{[^}]*?"busy"\s*:\s*([^,}\s]+)/'),
+                                $num('/"VideoEnhance"\s*:\s*\{[^}]*?"busy"\s*:\s*([^,}\s]+)/')),
+                'render' => $num('/"Render\/3D"\s*:\s*\{[^}]*?"busy"\s*:\s*([^,}\s]+)/'),
+                'freq'   => $num('/"actual"\s*:\s*([^,}\s]+)/'),
+                'power'  => $num('/"Package"\s*:\s*([^,}\s]+)/'),
+            ];
+        } else {
+            $e = is_file($errf) ? trim((string)@file_get_contents($errf)) : '';
+            if ($raw === '') { $gpuNote = 'intel_gpu_top printed nothing' . ($e !== '' ? ': ' . substr($e, 0, 160) : ''); }
+            else { $gpuNote = 'no engine data in the output: ' . substr($raw, -200); }
+        }
+    }
+    @file_put_contents($gf, json_encode(['t' => time(), 'gpu' => $gpu, 'note' => $gpuNote]));
+}
+
+// ---- Smart socket (power drawn at the wall + monthly energy), cached for 8 seconds ---------
+$socket     = null;
+$socketNote = '';
+$sockHost   = trim((string)$sbCfg['socket_host']);
+if ($sockHost !== '') {
+    $skf = '/tmp/streambox_socket.json';
+    $skc = is_file($skf) ? json_decode((string)@file_get_contents($skf), true) : null;
+    if (is_array($skc) && (time() - (int)($skc['t'] ?? 0)) < 8 && (string)($skc['host'] ?? '') === $sockHost) {
+        $socket     = $skc['socket'] ?? null;
+        $socketNote = (string)($skc['note'] ?? '');
+    } else {
+        list($sd, $se) = sb_socket_fetch($sockHost, (int)$sbCfg['socket_id']);
+        if ($sd !== null) {
+            $monthKwh = ($sd['total_wh'] !== null) ? sb_energy_month_wh($sd['total_wh']) / 1000 : null;
+            $socket = ['power' => $sd['power'], 'month_kwh' => $monthKwh, 'output' => $sd['output']];
+        } else {
+            $socketNote = $se;
+        }
+        @file_put_contents($skf, json_encode(['t' => time(), 'host' => $sockHost, 'socket' => $socket, 'note' => $socketNote]));
+    }
+}
+
+echo json_encode(['ok' => true, 'gpu' => $gpu, 'cpu' => $cpu, 'gpu_note' => $gpuNote, 'socket' => $socket, 'socket_note' => $socketNote]);
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- SETTINGS SAVE ENDPOINT                                     -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/save.php">
+<INLINE><![CDATA[<?php
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+
+function sb_out($ok, $extra = []) {
+    echo json_encode(array_merge(['ok' => $ok], $extra), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { http_response_code(405); sb_out(false, ['error' => 'method']); }
+
+// CSRF: Unraid's own prepend script validates csrf_token and removes it from $_POST;
+// if a token is still present check it, otherwise require an AJAX request.
+$var  = @parse_ini_file('/var/local/emhttp/var.ini');
+$tok  = is_array($var) ? (string)($var['csrf_token'] ?? '') : '';
+$sent = (string)($_POST['csrf_token'] ?? '');
+if ($sent !== '') {
+    if ($tok === '' || !hash_equals($tok, $sent)) { http_response_code(403); sb_out(false, ['error' => 'csrf token mismatch']); }
+} elseif (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403);
+    sb_out(false, ['error' => 'csrf: token removed and request is not AJAX']);
+}
+
+$dir   = '/boot/config/plugins/streambox';
+$file  = $dir . '/settings.cfg';
+$nfile = $dir . '/nicknames.json';
+
+function sb_int($v, $min, $max, $def) { $i = (int)$v; return ($i < $min || $i > $max) ? $def : $i; }
+function sb_bool($v) { return in_array(strtolower(trim((string)$v)), ['1', 'yes', 'true', 'on'], true) ? '1' : '0'; }
+
+$host = trim((string)($_POST['jf_host'] ?? '127.0.0.1'));
+if (!preg_match('/^[A-Za-z0-9.\-]+$/', $host)) { $host = '127.0.0.1'; }
+
+// the page does not get the saved key and webhooks: empty keeps the saved value, - removes it
+$old = is_file($file) ? @parse_ini_file($file, false, INI_SCANNER_RAW) : [];
+if (!is_array($old)) { $old = []; }
+function sb_keep($name, $old) { $v = trim((string)($_POST[$name] ?? '')); return $v === '' ? (string)($old[$name] ?? '') : ($v === '-' ? '' : $v); }
+$key = sb_keep('jf_key', $old);
+if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $key)) { sb_out(false, ['error' => 'the API key contains invalid characters']); }
+
+$url = trim(str_replace(["\r", "\n", "\0"], '', (string)($_POST['jf_url'] ?? '')));
+if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => 'invalid Jellyfin link URL']); }
+
+$sockHost = trim((string)($_POST['socket_host'] ?? ''));
+if ($sockHost !== '' && !preg_match('/^[A-Za-z0-9.\-]+$/', $sockHost)) { sb_out(false, ['error' => 'invalid smart socket address']); }
+
+$hookRe = '#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#';
+$dcm = sb_keep('dc_movies', $old);
+$dcs = sb_keep('dc_series', $old);
+if ($dcm !== '' && !preg_match($hookRe, $dcm)) { sb_out(false, ['error' => 'the movies webhook is not a valid Discord webhook URL']); }
+if ($dcs !== '' && !preg_match($hookRe, $dcs)) { sb_out(false, ['error' => 'the series webhook is not a valid Discord webhook URL']); }
+
+$dcw = sb_keep('dc_weekly', $old);
+if ($dcw !== '' && !preg_match($hookRe, $dcw)) { sb_out(false, ['error' => 'the weekly summary webhook is not a valid Discord webhook URL']); }
+
+$sonKey = sb_keep('son_key', $old);
+if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => 'the Sonarr API key contains invalid characters']); }
+$sonUrl = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['son_url'] ?? ''))), '/');
+if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => 'invalid Sonarr address']); }
+$wkWebDir = rtrim(trim((string)($_POST['wk_web_dir'] ?? '/mnt/cache/docker/streambox/web')), '/');
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir)) { sb_out(false, ['error' => 'the folder for Jellyfin must be a path under /mnt (letters, digits, . _ - only)']); }
+$wkDelay = (string)($_POST['wk_delay'] ?? 'series');
+if (!in_array($wkDelay, ['series', 'idx', 'all'], true)) { $wkDelay = 'series'; }
+
+$oldNotify = is_array($old) ? sb_bool($old['notify'] ?? '0') : '0';
+$newNotify = sb_bool($_POST['notify'] ?? '0');
+
+$new = [
+    'jf_host'     => $host,
+    'jf_port'     => (string)sb_int($_POST['jf_port'] ?? 8096, 1, 65535, 8096),
+    'jf_key'      => $key,
+    'jf_url'      => $url,
+    'streams_max' => (string)sb_int($_POST['streams_max'] ?? 8, 1, 30, 8),
+    'added_rows'  => (string)sb_int($_POST['added_rows'] ?? 5, 0, 20, 5),
+    'show_load'   => sb_bool($_POST['show_load'] ?? '1'),
+    'socket_host' => $sockHost,
+    'socket_id'   => (string)sb_int($_POST['socket_id'] ?? 0, 0, 3, 0),
+    'notify'        => $newNotify,
+    'dc_movies'     => $dcm,
+    'dc_series'     => $dcs,
+    'notify_settle' => (string)sb_int($_POST['notify_settle'] ?? 5, 1, 60, 5),
+    'notify_wait'   => (string)sb_int($_POST['notify_wait'] ?? 30, 1, 240, 30),
+    'weekly'        => sb_bool($_POST['weekly'] ?? '0'),
+    'dc_weekly'     => $dcw,
+    'weekly_day'    => (string)sb_int($_POST['weekly_day'] ?? 5, 0, 6, 5),
+    'weekly_hour'   => (string)sb_int($_POST['weekly_hour'] ?? 18, 0, 23, 18),
+    'wk_show'       => (string)sb_int($_POST['wk_show'] ?? 1, 0, 2, 1),
+    'wk_src'        => ((string)($_POST['wk_src'] ?? '') === 'own') ? 'own' : 'seedbox',
+    'son_url'       => $sonUrl,
+    'son_key'       => $sonKey,
+    'wk_delay'      => $wkDelay,
+    'wk_late'       => (string)sb_int($_POST['wk_late'] ?? 2, 1, 48, 2),
+    'wk_dc'         => sb_bool($_POST['wk_dc'] ?? '0'),
+    'wk_web'        => sb_bool($_POST['wk_web'] ?? '0'),
+    'wk_web_dir'    => $wkWebDir,
+    'wk_web_view'   => ((string)($_POST['wk_web_view'] ?? '') === 'row') ? 'row' : 'grid',
+];
+
+$text = '';
+foreach ($new as $k => $v) { $text .= $k . '="' . $v . '"' . "\n"; }
+
+// Nicknames: {userId: nickname}
+$map = [];
+$in  = $_POST['nick'] ?? [];
+if (is_array($in)) {
+    foreach ($in as $id => $v) {
+        $id = (string)$id;
+        if (!preg_match('/^[0-9a-fA-F\-]{32,36}$/', $id)) { continue; }
+        $v = trim(preg_replace('/[\x00-\x1f"\\\\]/u', '', (string)$v));
+        if ($v === '') { continue; }
+        if (preg_match('/^.{1,24}/us', $v, $m)) { $v = $m[0]; }
+        $map[$id] = $v;
+    }
+}
+
+if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+
+function sb_write($path, $data) {
+    $tmp = $path . '.tmp';
+    if (@file_put_contents($tmp, $data) === false) { return false; }
+    @chmod($tmp, 0600);
+    if (!@rename($tmp, $path)) {
+        $ok = @file_put_contents($path, $data);
+        @unlink($tmp);
+        if ($ok === false) { return false; }
+    }
+    @chmod($path, 0600);
+    return true;
+}
+
+if (!sb_write($file, $text)) { sb_out(false, ['error' => 'could not write the settings file']); }
+// only touch the nickname list when the nickname fields were part of the form
+if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
+    sb_out(false, ['error' => 'could not write the nickname file']);
+}
+@unlink('/tmp/streambox_added.json');
+@unlink('/tmp/streambox_week.json');
+@unlink('/tmp/streambox_delay.json');
+// switched on again: start counting from now, do not announce what was added while it was off
+if ($oldNotify !== '1' && $newNotify === '1') { @unlink($dir . '/notify_state.json'); }
+
+$shown = $new;
+unset($shown['jf_key'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
+sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- SMART SOCKET (Shelly Gen2+) HELPERS + CRON SAMPLER         -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/energy.php">
+<INLINE><![CDATA[<?php
+// Smart socket (Shelly Gen2 and newer) helpers: wall power and a monthly energy total.
+
+// Returns [array|null, error text]
+function sb_socket_fetch($host, $id) {
+    if (!preg_match('/^[A-Za-z0-9.\-]+$/', (string)$host)) { return [null, 'invalid socket address']; }
+    $ch = curl_init('http://' . $host . '/rpc/Switch.GetStatus?id=' . (int)$id);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 2, CURLOPT_TIMEOUT => 3]);
+    $body = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err  = curl_errno($ch);
+    curl_close($ch);
+    if ($err) { return [null, 'socket unreachable']; }
+    if ($code === 401 || $code === 403) { return [null, 'the socket asks for a password (not supported)']; }
+    if ($code !== 200) { return [null, 'socket answered HTTP ' . $code]; }
+    $d = json_decode((string)$body, true);
+    if (!is_array($d) || !isset($d['apower'])) { return [null, 'unexpected answer from the socket']; }
+    $total = isset($d['aenergy']['total']) ? (float)$d['aenergy']['total'] : null;
+    return [['power' => (float)$d['apower'], 'total_wh' => $total, 'output' => !empty($d['output'])], ''];
+}
+
+// Energy used since the 1st of the month, in Wh. The socket keeps a running counter; the counter value at
+// the start of the month is remembered on the flash drive. It is written only when the month changes or
+// the counter is reset, never on every reading.
+function sb_energy_month_wh($total) {
+    $sf    = '/boot/config/plugins/streambox/energy.json';
+    $lf    = '/tmp/streambox_energy_last.json';
+    $month = date('Y-m');
+    $st    = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : null;
+    $last  = is_file($lf) ? json_decode((string)@file_get_contents($lf), true) : null;
+    $dirty = false;
+
+    if (!is_array($st) || !isset($st['month']) || !isset($st['base'])) {
+        $st = ['month' => $month, 'base' => $total, 'carry' => 0.0];
+        $dirty = true;
+    } elseif ((string)$st['month'] !== $month) {
+        $st = ['month' => $month, 'base' => $total, 'carry' => 0.0];
+        $dirty = true;
+    }
+
+    // The counter went backwards: it was reset (or the socket was replaced). Keep what was counted so far.
+    $ref = (is_array($last) && isset($last['total'])) ? (float)$last['total'] : (float)$st['base'];
+    if ($total < $ref - 0.001) {
+        $st['carry'] = (float)($st['carry'] ?? 0) + max(0.0, $ref - (float)$st['base']);
+        $st['base']  = 0.0;   // the counter restarted from zero
+        $dirty = true;
+    }
+
+    if ($dirty) {
+        $tmp = $sf . '.tmp';
+        if (@file_put_contents($tmp, json_encode($st)) !== false) {
+            if (!@rename($tmp, $sf)) { @file_put_contents($sf, json_encode($st)); @unlink($tmp); }
+        }
+    }
+    @file_put_contents($lf, json_encode(['total' => $total, 't' => time()]));
+    return max(0.0, (float)($st['carry'] ?? 0) + $total - (float)$st['base']);
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/sample.php">
+<INLINE><![CDATA[<?php
+// Started by cron every 10 minutes: remember the smart socket's energy counter, so the monthly
+// consumption stays correct even when nobody has the dashboard open.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/energy.php';
+
+$cfg = ['socket_host' => '', 'socket_id' => '0'];
+$f = '/boot/config/plugins/streambox/settings.cfg';
+if (is_file($f)) {
+    $c = @parse_ini_file($f);
+    if (is_array($c)) { $cfg = array_merge($cfg, $c); }
+}
+$host = trim((string)$cfg['socket_host']);
+if ($host === '') { exit(0); }
+
+list($s, $err) = sb_socket_fetch($host, (int)$cfg['socket_id']);
+if ($s !== null && $s['total_wh'] !== null) { sb_energy_month_wh($s['total_wh']); }
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/week_lib.php">
+<INLINE><![CDATA[<?php
+// This week's episodes (item 55): the monitored episodes airing Monday to Sunday, from Sonarr's calendar, with the time the
+// torrent usually shows up (air time + the median delay of earlier grabs in Sonarr's history) and where each one is now.
+// Read-only: only GET requests to Sonarr and Jellyfin. Used by week.php (the tile) and week_late.php (cron, Discord).
+
+const WK_CACHE = '/tmp/streambox_week.json';
+const WK_DELAY = '/tmp/streambox_delay.json';
+
+function wk_cfg() {
+    $c = [
+        'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '',
+        'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '',
+        'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'dc_series' => '',
+        'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid',
+    ];
+    $f = getenv('SB_CFG') ?: '/boot/config/plugins/streambox/settings.cfg';   // SB_CFG: tests only
+    if (is_file($f)) {
+        $x = @parse_ini_file($f, false, INI_SCANNER_RAW);
+        if (is_array($x)) { $c = array_merge($c, $x); }
+    }
+    return $c;
+}
+
+// Sonarr address and key: Seedbox's (tools.json) or Streambox's own
+function wk_sonarr($cfg) {
+    if ((string)$cfg['wk_src'] === 'own') { return [rtrim(trim((string)$cfg['son_url']), '/'), trim((string)$cfg['son_key'])]; }
+    $f = getenv('SB_SEEDBOX_TOOLS') ?: '/boot/config/plugins/qbittorrent_widget/tools.json';
+    $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null;
+    $s = is_array($j) && is_array($j['sonarr'] ?? null) ? $j['sonarr'] : [];
+    return [rtrim(trim((string)($s['url'] ?? '')), '/'), trim((string)($s['key'] ?? ''))];
+}
+
+function wk_tz() {
+    $v = @parse_ini_file('/var/local/emhttp/var.ini');
+    $tz = is_array($v) ? (string)($v['timeZone'] ?? '') : '';
+    if ($tz !== '' && in_array($tz, timezone_identifiers_list(), true)) { date_default_timezone_set($tz); }
+}
+
+function wk_http($url, $headers, $timeout = 8) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_FOLLOWLOCATION => true, CURLOPT_HTTPHEADER => array_merge($headers, ['Accept: application/json'])]);
+    $body = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_errno($ch);
+    curl_close($ch);
+    if ($err) { return [null, 'unreachable']; }
+    if ($code === 401 || $code === 403) { return [null, 'auth']; }
+    if ($code !== 200) { return [null, 'HTTP ' . $code]; }
+    $j = json_decode((string)$body, true);
+    return is_array($j) ? [$j, ''] : [null, 'bad answer'];
+}
+
+function wk_son($son, $path, $timeout = 8) {
+    if ($son[0] === '' || $son[1] === '') { return [null, 'nosonarr']; }
+    return wk_http($son[0] . '/api/v3' . $path, ['X-Api-Key: ' . $son[1]], $timeout);
+}
+
+function wk_jf($cfg, $path) {
+    if ((string)$cfg['jf_key'] === '' || !preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { return [null, 'nokey']; }
+    return wk_http('http://' . $cfg['jf_host'] . ':' . (int)$cfg['jf_port'] . $path, ['Authorization: MediaBrowser Token="' . $cfg['jf_key'] . '"'], 6);
+}
+
+function wk_iso($ts) { return gmdate('Y-m-d\TH:i:s\Z', $ts); }
+function wk_ts($iso) { $t = strtotime((string)$iso); return $t ? (int)$t : 0; }
+
+// Monday 00:00 of this week (local time) and the next Monday 00:00
+function wk_week($now) {
+    $mon = strtotime('monday this week 00:00', $now);
+    return [$mon, strtotime('+7 days', $mon)];
+}
+
+function wk_median($a) {
+    sort($a);
+    $n = count($a);
+    if (!$n) { return null; }
+    return ($n % 2) ? $a[intdiv($n, 2)] : (int)round(($a[$n / 2 - 1] + $a[$n / 2]) / 2);
+}
+
+// "nCore (Prowlarr)" -> "nCore"
+function wk_idx($s) { $s = trim((string)preg_replace('/\s*\(Prowlarr\)\s*$/i', '', (string)$s)); return $s !== '' ? $s : '?'; }
+
+// Grab delays of the last 60 days: [seriesId, indexer, seconds from air time to the first grab], cached for 6 hours
+function wk_samples($son, $now) {
+    $c = is_file(WK_DELAY) ? json_decode((string)@file_get_contents(WK_DELAY), true) : null;
+    $sig = md5($son[0]);
+    if (is_array($c) && ($c['sig'] ?? '') === $sig && ($now - (int)($c['t'] ?? 0)) < 6 * 3600 && is_array($c['s'] ?? null)) { return $c['s']; }
+    [$h, $e] = wk_son($son, '/history/since?date=' . rawurlencode(wk_iso($now - 60 * 86400)) . '&eventType=1&includeEpisode=true', 20);
+    if (!is_array($h)) { return is_array($c['s'] ?? null) ? $c['s'] : []; }
+    $first = [];
+    foreach ($h as $r) {
+        if (!is_array($r)) { continue; }
+        $air = wk_ts($r['episode']['airDateUtc'] ?? '');
+        $at = wk_ts($r['date'] ?? '');
+        $eid = (int)($r['episodeId'] ?? 0);
+        if (!$air || !$at || !$eid) { continue; }
+        $d = $at - $air;
+        if ($d < 0 || $d > 3 * 86400) { continue; }   // grabbed before airing or a late backfill: not a release delay
+        if (!isset($first[$eid]) || $d < $first[$eid][2]) { $first[$eid] = [(int)($r['seriesId'] ?? 0), wk_idx($r['data']['indexer'] ?? ''), $d]; }
+    }
+    $s = array_values($first);
+    @file_put_contents(WK_DELAY, json_encode(['t' => $now, 'sig' => $sig, 's' => $s]));
+    return $s;
+}
+
+// Usual delay for one series: [seconds or null, samples, basis 'series'|'all'|'none', per indexer [[name, seconds, samples]]]
+function wk_delay($samples, $sid, $mode) {
+    $ser = array_values(array_filter($samples, function ($r) use ($sid) { return $r[0] === $sid; }));
+    if ($mode === 'all') {
+        $all = array_column($samples, 2);
+        return count($all) >= 3 ? [wk_median($all), count($all), 'all', []] : [null, count($all), 'none', []];
+    }
+    $base = count($ser) >= 3 ? [wk_median(array_column($ser, 2)), count($ser), 'series']
+          : (count($samples) >= 3 ? [wk_median(array_column($samples, 2)), count($samples), 'all'] : [null, count($samples), 'none']);
+    $idx = [];
+    if ($mode === 'idx') {
+        // only the indexers this series came from before (a new series: every indexer)
+        $names = array_unique(array_column($ser ?: $samples, 1));
+        foreach ($names as $n) {
+            $s1 = array_column(array_filter($ser, function ($r) use ($n) { return $r[1] === $n; }), 2);
+            $s2 = array_column(array_filter($samples, function ($r) use ($n) { return $r[1] === $n; }), 2);
+            if (count($s1) >= 3) { $idx[] = [$n, wk_median($s1), count($s1)]; }
+            elseif (count($s2) >= 3) { $idx[] = [$n, wk_median($s2), count($s2)]; }
+        }
+        usort($idx, function ($a, $b) { return $a[1] <=> $b[1]; });
+        if ($idx) { $base[0] = $idx[0][1]; }   // the earliest indexer decides when it is expected
+    }
+    $base[] = $idx;
+    return $base;
+}
+
+// Sonarr's poster of a series (its public artwork address), '' when it has none
+function wk_poster($imgs) {
+    foreach ((array)$imgs as $i) {
+        $u = is_array($i) ? (string)($i['remoteUrl'] ?? '') : '';
+        if (($i['coverType'] ?? '') === 'poster' && preg_match('#^https://[^\s"<>]+$#', $u)) { return $u; }
+    }
+    return '';
+}
+
+// Series Jellyfin lists: tvdb id and normalized name -> Jellyfin item id; null when Jellyfin cannot be asked
+function wk_jf_series($cfg) {
+    [$j] = wk_jf($cfg, '/Items?IncludeItemTypes=Series&Recursive=true&Fields=ProviderIds&EnableImages=false');
+    if (!is_array($j)) { return null; }
+    $m = [];
+    foreach ((array)($j['Items'] ?? []) as $it) {
+        if (!is_array($it) || empty($it['Id'])) { continue; }
+        $tv = (string)($it['ProviderIds']['Tvdb'] ?? '');
+        if ($tv !== '') { $m['t' . $tv] = (string)$it['Id']; }
+        $m['n' . wk_norm($it['Name'] ?? '')] = (string)$it['Id'];
+        $m['N' . $it['Id']] = (string)($it['Name'] ?? ''); // the name Jellyfin shows (its metadata language, e.g. Hungarian)
+    }
+    return $m;
+}
+
+function wk_norm($s) { return preg_replace('/[^a-z0-9]+/', '', strtolower((string)preg_replace('/\s*\(\d{4}\)\s*$/', '', (string)$s))); }
+
+// Episodes Jellyfin already lists: tvdb ids and "series|S|E" keys (value: the Jellyfin item id); null when Jellyfin cannot be asked
+function wk_jf_have($cfg, $from, $to) {
+    $have = [];
+    $ok = false;
+    $paths = [
+        '/Items?IncludeItemTypes=Episode&Recursive=true&MinPremiereDate=' . rawurlencode(wk_iso($from - 2 * 86400)) . '&MaxPremiereDate=' . rawurlencode(wk_iso($to + 86400)) . '&Fields=ProviderIds&EnableImages=false&Limit=500',
+        '/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Fields=ProviderIds&EnableImages=false&Limit=200',
+    ];
+    foreach ($paths as $p) {
+        [$j, $e] = wk_jf($cfg, $p);
+        if (!is_array($j)) { continue; }
+        $ok = true;
+        foreach ((array)($j['Items'] ?? []) as $it) {
+            if (!is_array($it)) { continue; }
+            $tv = (string)($it['ProviderIds']['Tvdb'] ?? '');
+            $id = (string)($it['Id'] ?? '') ?: '1';
+            if ($tv !== '') { $have['t' . $tv] = $id; }
+            if (isset($it['ParentIndexNumber'], $it['IndexNumber'])) {
+                $have[wk_norm($it['SeriesName'] ?? '') . '|' . (int)$it['ParentIndexNumber'] . '|' . (int)$it['IndexNumber']] = $id;
+            }
+        }
+    }
+    return $ok ? $have : null;
+}
+
+// The whole band: ['ok', 'error', 'week' => [from, to], 'days' => [...], 'counts' => [...]]
+function wk_build($cfg, $now) {
+    $son = wk_sonarr($cfg);
+    [$from, $to] = wk_week($now);
+    $out = ['ok' => false, 'error' => '', 'from' => $from, 'to' => $to, 'days' => [], 'counts' => ['jf' => 0, 'dl' => 0, 'late' => 0, 'all' => 0]];
+    if ($son[0] === '' || $son[1] === '') { $out['error'] = 'nosonarr'; return $out; }
+    [$cal, $e] = wk_son($son, '/calendar?start=' . rawurlencode(wk_iso($from)) . '&end=' . rawurlencode(wk_iso($to)) . '&unmonitored=false&includeSeries=true');
+    if (!is_array($cal)) { $out['error'] = $e; return $out; }
+    [$q] = wk_son($son, '/queue?page=1&pageSize=500&includeEpisode=false');
+    $queue = [];
+    foreach ((array)($q['records'] ?? []) as $r) {
+        if (is_array($r) && !empty($r['episodeId'])) { $queue[(int)$r['episodeId']] = $r; }
+    }
+    $samples = wk_samples($son, $now);
+    $have = null;
+    foreach ($cal as $ep) { if (!empty($ep['hasFile'])) { $have = wk_jf_have($cfg, $from, $to); break; } }
+    $late = max(0, (float)$cfg['wk_late']) * 3600;
+    $mode = in_array((string)$cfg['wk_delay'], ['series', 'idx', 'all'], true) ? (string)$cfg['wk_delay'] : 'series';
+
+    // A new series (its first episode airs this week): NEW badge on its rows. Sonarr's firstAired, or S01E01 in the week.
+    $newSer = [];
+    $d0 = date('Y-m-d', $from); $d1 = date('Y-m-d', $to);
+    foreach ($cal as $ep) {
+        if (!is_array($ep)) { continue; }
+        $fa = substr((string)($ep['series']['firstAired'] ?? ''), 0, 10);
+        $air = wk_ts($ep['airDateUtc'] ?? '');
+        $first = (int)($ep['seasonNumber'] ?? 0) === 1 && (int)($ep['episodeNumber'] ?? 0) === 1 && $air >= $from && $air < $to;
+        if ($first || ($fa !== '' && $fa >= $d0 && $fa < $d1)) { $newSer[(int)($ep['seriesId'] ?? 0)] = 1; }
+    }
+
+    $rows = [];
+    foreach ($cal as $ep) {
+        if (!is_array($ep) || empty($ep['monitored'])) { continue; }
+        $air = wk_ts($ep['airDateUtc'] ?? '');
+        if (!$air || $air < $from || $air >= $to) { continue; }
+        $sid = (int)($ep['seriesId'] ?? 0);
+        $ser = (string)($ep['series']['title'] ?? '?');
+        $sn = (int)($ep['seasonNumber'] ?? 0); $en = (int)($ep['episodeNumber'] ?? 0);
+        [$d, $n, $basis, $idx] = wk_delay($samples, $sid, $mode);
+        $exp = $d === null ? null : $air + $d;
+        $row = ['id' => (int)($ep['id'] ?? 0), 'series' => $ser, 'code' => sprintf('S%02dE%02d', $sn, $en), 'title' => (string)($ep['title'] ?? ''),
+                'air' => $air, 'exp' => $exp, 'delay' => $d, 'n' => $n, 'basis' => $basis, 'idx' => [], 'st' => '', 'pct' => null, 'left' => null, 'new' => isset($newSer[$sid]),
+                'tvdb' => (string)($ep['series']['tvdbId'] ?? ''), 'poster' => wk_poster($ep['series']['images'] ?? []), 'jfid' => ''];
+        foreach ($idx as $i) { $row['idx'][] = [$i[0], $air + $i[1]]; }
+        $qr = $queue[$row['id']] ?? null;
+        if (!empty($ep['hasFile'])) {
+            if ($have === null) { $row['st'] = 'file'; }
+            else {
+                $tv = (string)($ep['tvdbId'] ?? '');
+                $in = ($tv !== '' && $tv !== '0' && isset($have['t' . $tv])) ? $have['t' . $tv] : ($have[wk_norm($ser) . '|' . $sn . '|' . $en] ?? '');
+                $row['st'] = $in !== '' ? 'jf' : 'scan';   // imported, Jellyfin has not listed it yet
+                $row['jfid'] = $in !== '1' ? $in : '';
+            }
+        } elseif ($qr !== null) {
+            $ts = strtolower((string)($qr['trackedDownloadState'] ?? ''));
+            $qs = strtolower((string)($qr['status'] ?? ''));
+            $size = (float)($qr['size'] ?? 0);
+            if ($ts === 'failed' || $ts === 'failedpending' || $qs === 'failed') { $row['st'] = 'fail'; }
+            elseif (in_array($ts, ['importpending', 'importing', 'imported'], true) || $qs === 'completed') { $row['st'] = 'imp'; }
+            elseif ($qs === 'paused') { $row['st'] = 'pause'; }
+            elseif ($size > 0 && (float)($qr['sizeleft'] ?? $size) < $size) {
+                $row['st'] = 'dl';
+                $row['pct'] = round(100 * (1 - (float)$qr['sizeleft'] / $size));
+                if (preg_match('/^(?:(\d+)\.)?(\d+):(\d+):(\d+)/', (string)($qr['timeleft'] ?? ''), $m)) { $row['left'] = (int)$m[1] * 86400 + (int)$m[2] * 3600 + (int)$m[3] * 60 + (int)$m[4]; }
+            } else { $row['st'] = 'grab'; }
+        } elseif ($air > $now) { $row['st'] = 'wait'; }
+        elseif ($now > ($exp ?? $air) + $late) { $row['st'] = 'late'; }
+        else { $row['st'] = 'aired'; }
+        $rows[] = $row;
+    }
+    usort($rows, function ($a, $b) { return [$a['air'], $a['series']] <=> [$b['air'], $b['series']]; });
+
+    foreach ($rows as $r) {
+        $k = date('Y-m-d', $r['air']);
+        if (!isset($out['days'][$k])) { $out['days'][$k] = ['label' => date('D j M', $r['air']), 'today' => $k === date('Y-m-d', $now), 'past' => $k < date('Y-m-d', $now), 'rows' => []]; }
+        $out['days'][$k]['rows'][] = $r;
+        $out['counts']['all']++;
+        if ($r['st'] === 'jf' || $r['st'] === 'file') { $out['counts']['jf']++; }
+        if ($r['st'] === 'dl' || $r['st'] === 'grab') { $out['counts']['dl']++; }
+        if ($r['st'] === 'late') { $out['counts']['late']++; }
+    }
+    $out['days'] = array_values($out['days']);
+    $out['samples'] = count($samples);
+    $out['ok'] = true;
+    return $out;
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/week.php">
+<INLINE><![CDATA[<?php
+// The tile's "This week's episodes" band (JSON, cached for a minute). ?test=1 from the settings page checks the Sonarr connection.
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+require_once __DIR__ . '/week_lib.php';
+
+wk_tz();
+$cfg = wk_cfg();
+$now = time();
+$show = (int)$cfg['wk_show'];
+
+if (!empty($_GET['test'])) {
+    $son = wk_sonarr($cfg);
+    if ($son[0] === '' || $son[1] === '') {
+        echo json_encode(['ok' => false, 'message' => (string)$cfg['wk_src'] === 'own' ? 'Enter the Sonarr address and API key, then Apply.' : 'Seedbox has no Sonarr address and key (Seedbox Tools, Connections).']);
+        exit;
+    }
+    [$st, $e] = wk_son($son, '/system/status');
+    if (!is_array($st)) { echo json_encode(['ok' => false, 'message' => 'Sonarr: ' . ($e === 'auth' ? 'the API key was rejected' : $e)]); exit; }
+    @unlink(WK_DELAY);
+    $n = count(wk_samples($son, $now));
+    echo json_encode(['ok' => true, 'message' => 'Sonarr ' . (string)($st['version'] ?? '?') . ' answers; the usual delay is learned from ' . $n . ' grab' . ($n === 1 ? '' : 's') . ' of the last 60 days.']);
+    exit;
+}
+
+if ($show <= 0) { echo json_encode(['ok' => false, 'show' => 0]); exit; }
+
+$c = is_file(WK_CACHE) ? json_decode((string)@file_get_contents(WK_CACHE), true) : null;
+if (is_array($c) && ($now - (int)($c['t'] ?? 0)) < 60 && is_array($c['w'] ?? null) && $now < (int)($c['w']['to'] ?? 0)) {
+    $w = $c['w'];
+} else {
+    $w = wk_build($cfg, $now);
+    if ($w['ok']) { @file_put_contents(WK_CACHE, json_encode(['t' => $now, 'w' => $w], JSON_INVALID_UTF8_SUBSTITUTE)); }
+    elseif (is_array($c['w'] ?? null) && $w['error'] !== 'nosonarr' && $now < (int)($c['w']['to'] ?? 0)) { $w = $c['w']; }   // Sonarr hiccup: last known list
+}
+$w['show'] = $show;
+$w['now'] = $now;
+echo json_encode($w, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/week_late.php">
+<INLINE><![CDATA[<?php
+// Started by cron every 10 minutes: one Discord message (series webhook) for each episode of this week that is late,
+// i.e. no release a set number of hours after the usual time. Off unless switched on in the settings.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/week_lib.php';
+require_once __DIR__ . '/notify_lib.php';
+
+$cfg = wk_cfg();
+if (!nf_on($cfg['wk_dc'])) { exit(0); }
+$hook = nf_hook($cfg['dc_series']);
+if ($hook === '') { exit(0); }
+$lock = @fopen('/tmp/streambox_late.lock', 'c');
+if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
+
+wk_tz();
+$now = time();
+$w = wk_build($cfg, $now);
+if (!$w['ok']) { exit(0); }
+
+$sf = '/boot/config/plugins/streambox/late_state.json';
+$done = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : null;
+$done = is_array($done) ? $done : [];
+$days = ['vasárnap', 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat'];
+$changed = false;
+
+foreach ($w['days'] as $day) {
+    foreach ($day['rows'] as $r) {
+        if ($r['st'] !== 'late' || isset($done[(string)$r['id']])) { continue; }
+        $h = intdiv($now - $r['air'], 3600);
+        $msg = '⏰ Késik: **' . nf_md($r['series']) . '** ' . $r['code']
+             . ' · adás ' . $days[(int)date('w', $r['air'])] . ' ' . date('H:i', $r['air'])
+             . ($r['exp'] !== null ? ', általában ~' . date('H:i', $r['exp']) . ' körül jön (' . $r['n'] . ' rész alapján)' : '')
+             . '; az adás óta ' . $h . ' óra telt el, és még nincs kiadás.';
+        list($res, $m) = nf_send($hook, ['username' => 'Streambox', 'content' => $msg]);
+        if ($res === 'retry') { nf_log('late "' . $r['series'] . ' ' . $r['code'] . '": ' . $m . ', will retry'); break 2; }
+        $done[(string)$r['id']] = $now;
+        $changed = true;
+        nf_log('late ' . ($res === 'ok' ? 'message sent' : 'message not sent (' . $m . ')') . ': ' . $r['series'] . ' ' . $r['code']);
+    }
+}
+if ($changed) {
+    $done = array_filter($done, function ($t) use ($now) { return $now - (int)$t < 21 * 86400; });
+    @file_put_contents($sf . '.tmp', json_encode($done));
+    @rename($sf . '.tmp', $sf);
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/week_web.php">
+<INLINE><![CDATA[<?php
+// Started by cron every 2 minutes: the "Ezen a héten" row on Jellyfin's home page (web client and Jellyfin Desktop only).
+// Writes week.json (series, episode codes, times and states; no keys, no addresses) and the renderer week.js into a folder
+// that the Jellyfin container serves read-only under /web/streambox/ (a path mapping). The JavaScript Injector plugin loads
+// week.js. Read-only towards Sonarr and Jellyfin; writes only into that folder.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/week_lib.php';
+
+$cfg = wk_cfg();
+if ((string)$cfg['wk_web'] !== '1') { exit(0); }
+$dir = rtrim(trim((string)$cfg['wk_web_dir']), '/');
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir)) { exit(0); }
+// The pool or share is mounted only while the array runs: never create its top folder (/mnt/cache) ourselves
+$top = '/mnt/' . explode('/', substr($dir, 5))[0];
+if (!is_dir($top)) { exit(0); }
+if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+if (!is_dir($dir)) { exit(0); }
+$lock = @fopen('/tmp/streambox_web.lock', 'c');
+if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
+
+function ww_put($f, $data) {
+    if (is_file($f) && (string)@file_get_contents($f) === $data) { return; }
+    if (@file_put_contents($f . '.tmp', $data) === false) { return; }
+    @chmod($f . '.tmp', 0644);
+    @rename($f . '.tmp', $f);
+}
+
+// The renderer ships with the plugin; copy it when it changed
+$js = (string)@file_get_contents(__DIR__ . '/week_web.js');
+if ($js !== '') { ww_put($dir . '/week.js', $js); }
+
+wk_tz();
+$now = time();
+$w = wk_build($cfg, $now);
+$jf = $dir . '/week.json';
+if (!$w['ok']) {
+    // Sonarr hiccup: keep the last list while its week lasts, then say there is nothing to show
+    $old = is_file($jf) ? json_decode((string)@file_get_contents($jf), true) : null;
+    if (is_array($old) && !empty($old['ok']) && $now < (int)($old['to'] ?? 0)) { exit(0); }
+    ww_put($jf, json_encode(['ok' => false, 'gen' => $now]));
+    exit(0);
+}
+
+$ser = $w['counts']['all'] ? wk_jf_series($cfg) : null;
+$eps = [];
+foreach ($w['days'] as $day) {
+    foreach ($day['rows'] as $r) {
+        $sid = '';
+        if (is_array($ser)) { $sid = $ser['t' . $r['tvdb']] ?? ($ser['n' . wk_norm($r['series'])] ?? ''); }
+        $nm = $sid !== '' ? (string)($ser['N' . $sid] ?? '') : '';
+        $eps[] = ['s' => $nm !== '' ? $nm : $r['series'], 'c' => $r['code'], 't' => $r['title'], 'air' => $r['air'], 'exp' => $r['exp'],
+                  'st' => $r['st'], 'pct' => $r['pct'], 'new' => $r['new'], 'ep' => $r['jfid'], 'sid' => $sid,
+                  'img' => $sid === '' ? $r['poster'] : ''];
+    }
+}
+// Episode titles in Jellyfin's language for the episodes it already has (one request); the rest keep Sonarr's title
+$ids = array_values(array_unique(array_filter(array_column($eps, 'ep'), function ($v) { return $v !== '' && $v !== '1'; })));
+if ($ids) {
+    [$j] = wk_jf($cfg, '/Items?Ids=' . implode(',', array_slice($ids, 0, 200)) . '&EnableImages=false');
+    $tn = [];
+    foreach ((array)($j['Items'] ?? []) as $it) { if (is_array($it) && !empty($it['Id'])) { $tn[(string)$it['Id']] = (string)($it['Name'] ?? ''); } }
+    foreach ($eps as &$x) { if (($tn[$x['ep']] ?? '') !== '') { $x['t'] = $tn[$x['ep']]; } }
+    unset($x);
+}
+$out = ['ok' => true, 'gen' => $now, 'view' => (string)$cfg['wk_web_view'] === 'row' ? 'row' : 'grid', 'from' => $w['from'], 'to' => $w['to'], 'late' => max(1, (float)$cfg['wk_late']) * 3600, 'eps' => $eps];
+ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/week_web.js">
+<INLINE><![CDATA[/* Streambox: "Ezen a héten" row on Jellyfin's home page (web client and Jellyfin Desktop).
+   Loaded by the JavaScript Injector plugin; reads week.json next to this file (written by the Streambox plugin every 2 minutes).
+   Two views: calendar (seven day cards) and posters (one poster row with day separators); the default comes from the
+   Streambox settings, each viewer can switch with the two icons next to the title (remembered in this browser).
+   Read-only: it only shows the list and links to Jellyfin's own pages. */
+(function () {
+  'use strict';
+  if (window.__sbWeek) { return; }
+  window.__sbWeek = true;
+
+  var BASE = 'streambox/';
+  try { if (document.currentScript && document.currentScript.src) { BASE = new URL('.', document.currentScript.src).href; } } catch (e) { /* keep the default */ }
+  var ROOT = new URL('../../', new URL(BASE, location.href)).href;   // the Jellyfin server root (/web/streambox/ -> /)
+  var DAYS = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+  var MON = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.'];
+  var KEY = 'streamboxWeekView';
+  var data = null, lastFetch = 0, busy = false;
+
+  var css = '' +
+    '#sbWeek .sectionTitleContainer{display:flex;align-items:center;flex-wrap:wrap}' +
+    '#sbWeek .sectionTitleContainer>*+*{margin-left:.8em}' +
+    '#sbWeek button.sectionTitleTextButton{background:none;border:0;font:inherit;cursor:pointer;align-items:center}' +
+    '.sbw-meta{opacity:.6;font-size:.9em}' +
+    '.sbw-meta b{color:#f0a83a;font-weight:600}' +
+    '#sbWeek .sectionTitleContainer>.sbw-views{display:flex;margin-left:auto}' +
+    '.sbw-views button+button{margin-left:.2em}' +
+    '.sbw-views button{background:none;border:0;color:inherit;opacity:.45;cursor:pointer;padding:.2em;border-radius:6px;line-height:0}' +
+    '.sbw-views button.on{opacity:1;background:rgba(255,255,255,.1)}' +
+    '.sbw-views button:hover,.sbw-views button:focus-visible{opacity:1;outline:none}' +
+    '.sbw-scroll{overflow-x:auto;scrollbar-width:thin}' +
+    /* both views: the picture is as high as Jellyfin's Continue watching / Next up cards (--sbw-h, measured), 2:3 like
+       its posters; under it two text lines like Jellyfin's cards, so the whole row is as high as those rows */
+    '.sbw-grid{display:flex;padding:.3em 0 .6em var(--sbw-x,0px)}' +
+    '.sbw-grid>*+*{margin-left:1em}' +
+    '.sbw-col{flex:none;width:calc(var(--sbw-h,12em) * 2 / 3);min-width:0}' +
+    /* the day card's text scales with the card: four entries (3 lines each) fill its height, the text its width */
+    '.sbw-box{height:var(--sbw-h,12em);font-size:calc(var(--sbw-h,12em) / 19.2);line-height:1.3;box-sizing:border-box;background:rgba(255,255,255,.06);border-radius:10px;padding:.35em;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}' +
+    '.sbw-box::-webkit-scrollbar{display:none}' +
+    '.sbw-col.sbw-today .sbw-box{box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}' +
+    '.sbw-col.sbw-past{opacity:.72}' +
+    '.sbw-box>*+*{margin-top:.2em}' +
+    '.sbw-ep{display:block;border-radius:.35em;padding:.25em .3em;color:inherit;text-decoration:none}' +
+    'a.sbw-ep:hover,a.sbw-ep:focus-visible{background:rgba(255,255,255,.1);outline:none}' +
+    '.sbw-n{font-weight:600;display:flex;align-items:center;min-width:0}' +
+    '.sbw-n span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}' +
+    '.sbw-st{font-size:.9em;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}' +
+    '.sbw-s{font-size:.9em;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}' +
+    '.sbw-c{opacity:.6}' +
+    '.sbw-new{flex:none;font-size:.72em;background:#b45ff0;color:#fff;border-radius:4px;padding:0 .35em;margin-left:.4em;font-weight:700}' +
+    '.sbw-none{font-size:.9em;opacity:.45;padding:.25em .3em}' +
+    /* posters view */
+    '.sbw-row{display:flex;padding:.3em 0 .6em var(--sbw-x,0px);align-items:stretch}' +
+    '.sbw-row>*+*{margin-left:1em}' +
+    '.sbw-day{flex:none;writing-mode:vertical-rl;transform:rotate(180deg);font-size:.72em;letter-spacing:.14em;text-transform:uppercase;font-weight:600;opacity:.55;border-left:1px solid rgba(255,255,255,.18);padding-left:.5em;text-align:center}' +
+    '.sbw-day.sbw-today{opacity:1;border-color:rgba(255,255,255,.7)}' +
+    '.sbw-card{flex:none;width:calc(var(--sbw-h,12em) * 2 / 3);color:inherit;text-decoration:none;min-width:0}' +
+    '.sbw-pos{position:relative;height:var(--sbw-h,12em);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.08) center/cover no-repeat}' +
+    'a.sbw-card:hover .sbw-pos,a.sbw-card:focus-visible .sbw-pos{box-shadow:0 0 0 2px rgba(255,255,255,.85)}' +
+    'a.sbw-card{outline:none}' +
+    '.sbw-when{position:absolute;top:.4em;left:.4em;background:rgba(0,0,0,.72);border-radius:6px;padding:.15em .4em;font-size:.68em;font-weight:600;font-variant-numeric:tabular-nums}' +
+    '.sbw-pos .sbw-new{position:absolute;top:.4em;right:.4em;margin:0;font-size:.64em;padding:.15em .4em;border-radius:6px}' +
+    '.sbw-chip{position:absolute;left:.35em;right:.35em;bottom:.35em;background:rgba(0,0,0,.78);border-radius:7px;padding:.25em .4em;font-size:.68em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-variant-numeric:tabular-nums}' +
+    '.sbw-t1{margin-top:.5em;font-weight:600;font-size:.9em;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.sbw-t2{font-size:.8em;line-height:1.35;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.sbw-ok{color:#3fbf7f}.sbw-dl{color:#4a9eff}.sbw-proc{color:#38c7c0}.sbw-late{color:#f0a83a}.sbw-fail{color:#ef5350}.sbw-wait{color:inherit;opacity:.75}' +
+    '.sbw-chip.sbw-wait{opacity:1;color:#e6e6e6}';
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) { e.className = cls; }
+    if (text !== undefined) { e.textContent = text; }
+    return e;
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function hm(ts) { var d = new Date(ts * 1000); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function dur(s) {
+    s = Math.max(0, Math.round(s / 60));
+    var d = Math.floor(s / 1440), h = Math.floor(s % 1440 / 60), m = s % 60;
+    return d ? d + 'n ' + h + 'ó' : (h ? h + 'ó ' + m + 'p' : m + 'p');
+  }
+  function dayIdx(ts) { return (new Date(ts * 1000).getDay() + 6) % 7; }   // Monday 0 .. Sunday 6
+
+  // Status text and its colour; the countdowns are recomputed in the browser
+  function status(e, now) {
+    var target = e.exp !== null ? e.exp : e.air;
+    switch (e.st) {
+      case 'jf': return ['Elérhető', 'sbw-ok'];
+      case 'file': case 'scan': case 'imp': return ['Hamarosan elérhető', 'sbw-proc'];
+      case 'dl': return ['Letöltés ' + (e.pct !== null ? e.pct + '%' : ''), 'sbw-dl'];
+      case 'grab': return ['Letöltés indul', 'sbw-dl'];
+      case 'pause': return ['Szünetel', 'sbw-wait'];
+      case 'fail': return ['Letöltési hiba', 'sbw-fail'];
+      case 'late': return ['Késik ' + dur(now - target), 'sbw-late'];
+      default:
+        if (target > now) { return [(e.exp !== null ? '' : 'Adás ') + dur(target - now) + ' múlva', 'sbw-wait']; }
+        return ['Bármikor jöhet', 'sbw-wait'];
+    }
+  }
+
+  function link(e) {
+    var id = e.ep || e.sid;
+    if (!id) { return ''; }
+    var sv = '';
+    try { sv = window.ApiClient && window.ApiClient.serverId ? window.ApiClient.serverId() : ''; } catch (x) { sv = ''; }
+    return '#/details?id=' + encodeURIComponent(id) + (sv ? '&serverId=' + encodeURIComponent(sv) : '');
+  }
+  function thumb(e, h) {
+    if (e.sid) { return ROOT + 'Items/' + encodeURIComponent(e.sid) + '/Images/Primary?fillHeight=' + h + '&quality=90'; }
+    return e.img || '';
+  }
+  function bg(node, src) { if (src) { node.style.backgroundImage = 'url("' + src.replace(/"/g, '%22') + '")'; } }
+  function tip(e) {
+    return e.s + ' · ' + e.c + (e.t ? ' · ' + e.t : '') + '\nAdás: ' + DAYS[dayIdx(e.air)].toLowerCase() + ' ' + hm(e.air) +
+      (e.exp !== null ? '\nVárható: ~' + hm(e.exp) : '');
+  }
+  function stNode(tag, cls, e, now, i) {
+    var st = status(e, now);
+    var n = el(tag, cls + ' ' + st[1], st[0]);
+    n.setAttribute('data-sbw', i);
+    n.setAttribute('data-base', cls);
+    return n;
+  }
+
+  function view() {
+    var v = '';
+    try { v = localStorage.getItem(KEY) || ''; } catch (x) { v = ''; }
+    if (v !== 'grid' && v !== 'row') { v = data && data.view === 'row' ? 'row' : 'grid'; }
+    return v;
+  }
+  function setView(v) {
+    try { localStorage.setItem(KEY, v); } catch (x) { /* this browser only */ }
+    render(true);
+  }
+
+  function metaText(w) {
+    var ready = 0, late = 0;
+    w.eps.forEach(function (e) { if (e.st === 'jf') { ready++; } if (e.st === 'late') { late++; } });
+    var f = new Date(w.from * 1000), t = new Date(f.getFullYear(), f.getMonth(), f.getDate() + 6);
+    var range = MON[f.getMonth()] + ' ' + f.getDate() + '–' + (f.getMonth() !== t.getMonth() ? MON[t.getMonth()] + ' ' : '') + t.getDate() + '.';
+    return [range + ' · ' + w.eps.length + ' epizód · ' + ready + ' elérhető', late];
+  }
+
+  function buildGrid(w, now) {
+    var grid = el('div', 'sbw-grid');
+    var today = dayIdx(now), thisWeek = now >= w.from && now < w.to;
+    for (var d = 0; d < 7; d++) {
+      var col = el('div', 'sbw-col' + (thisWeek && d === today ? ' sbw-today' : '') + (thisWeek && d < today ? ' sbw-past' : ''));
+      var eps = [];
+      w.eps.forEach(function (e, i) { if (dayIdx(e.air) === d) { eps.push([e, i]); } });
+      var box = el('div', 'sbw-box');
+      if (!eps.length) { box.appendChild(el('div', 'sbw-none', 'nincs epizód')); }
+      eps.forEach(function (x) {
+        var e = x[0], href = link(e);
+        var row = el(href ? 'a' : 'div', 'sbw-ep');
+        if (href) { row.href = href; }
+        row.title = tip(e);
+        var nm = el('div', 'sbw-n');
+        nm.appendChild(el('span', '', e.s));
+        if (e['new']) { nm.appendChild(el('span', 'sbw-new', 'ÚJ')); }
+        row.appendChild(nm);
+        row.appendChild(el('div', 'sbw-s sbw-c', e.c + ' · ' + hm(e.air)));
+        row.appendChild(stNode('div', 'sbw-st', e, now, x[1]));
+        box.appendChild(row);
+      });
+      col.appendChild(box);
+      // under the card like Jellyfin's card titles: the day, then its date and how many are available
+      var n = eps.filter(function (x) { return x[0].st === 'jf'; }).length, dt = new Date(w.from * 1000);
+      dt = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + d);
+      col.appendChild(el('div', 'sbw-t1', thisWeek && d === today ? 'Ma · ' + DAYS[d] : DAYS[d]));
+      col.appendChild(el('div', 'sbw-t2', MON[dt.getMonth()] + ' ' + dt.getDate() + '.' + (eps.length ? ' · ' + n + '/' + eps.length + ' elérhető' : '')));
+      grid.appendChild(col);
+    }
+    return grid;
+  }
+
+  function buildRow(w, now) {
+    var row = el('div', 'sbw-row');
+    var today = dayIdx(now), thisWeek = now >= w.from && now < w.to, last = -1;
+    w.eps.forEach(function (e, i) {
+      var d = dayIdx(e.air);
+      if (d !== last) {
+        row.appendChild(el('div', 'sbw-day' + (thisWeek && d === today ? ' sbw-today' : ''), (thisWeek && d === today ? 'Ma · ' : '') + DAYS[d]));
+        last = d;
+      }
+      var href = link(e);
+      var c = el(href ? 'a' : 'div', 'sbw-card');
+      if (href) { c.href = href; }
+      c.title = tip(e);
+      var p = el('div', 'sbw-pos');
+      bg(p, thumb(e, 400));
+      p.appendChild(el('span', 'sbw-when', hm(e.air)));
+      if (e['new']) { p.appendChild(el('span', 'sbw-new', 'ÚJ')); }
+      p.appendChild(stNode('span', 'sbw-chip', e, now, i));
+      c.appendChild(p);
+      c.appendChild(el('div', 'sbw-t1', e.s));
+      c.appendChild(el('div', 'sbw-t2', e.c + (e.t ? ' · ' + e.t : '')));
+      row.appendChild(c);
+    });
+    return row;
+  }
+
+  function build(w, v) {
+    var now = Date.now() / 1000;
+    var box = el('div', 'verticalSection sbw');
+    box.id = 'sbWeek';
+    var head = el('div', 'sectionTitleContainer sectionTitleContainer-cards padded-left padded-right');
+    var h2 = el('h2', 'sectionTitle sectionTitle-cards', 'Ezen a héten');
+    // like Jellyfin's own rows: the title with a chevron; here it switches between the calendar and the posters view
+    var more = el('button', 'more button-flat button-flat-mini sectionTitleTextButton emby-button');
+    more.type = 'button';
+    more.title = v === 'row' ? 'Naptár nézet' : 'Poszter nézet';
+    more.appendChild(h2);
+    var ic = el('span', 'material-icons chevron_right');
+    ic.setAttribute('aria-hidden', 'true');
+    more.appendChild(ic);
+    more.addEventListener('click', function () { setView(v === 'row' ? 'grid' : 'row'); });
+    head.appendChild(more);
+    var mt = metaText(w);
+    var meta = el('span', 'sbw-meta', mt[0]);
+    if (mt[1]) { meta.appendChild(document.createTextNode(' · ')); meta.appendChild(el('b', '', mt[1] + ' késik')); }
+    head.appendChild(meta);
+    var vs = el('span', 'sbw-views');
+    [['grid', 'calendar_view_week', 'Naptár nézet'], ['row', 'view_carousel', 'Poszter nézet']].forEach(function (b) {
+      var bt = el('button', b[0] === v ? 'on' : '');
+      bt.type = 'button';
+      bt.title = b[2];
+      bt.setAttribute('aria-label', b[2]);
+      bt.appendChild(el('span', 'material-icons', b[1]));
+      bt.addEventListener('click', function () { setView(b[0]); });
+      vs.appendChild(bt);
+    });
+    head.appendChild(vs);
+    box.appendChild(head);
+    var sc = el('div', 'sbw-scroll padded-left padded-right');
+    sc.appendChild(v === 'row' ? buildRow(w, now) : buildGrid(w, now));
+    box.appendChild(sc);
+    return box;
+  }
+
+  // What the row shows apart from the countdowns: rebuild only when this changes (no flicker of the posters)
+  function sig(w, v) {
+    return v + '|' + w.from + '|' + new Date().toDateString() + '|' + JSON.stringify(w.eps.map(function (e) {
+      return [e.s, e.c, e.t, e.air, e.exp, e.st, e.pct, e['new'], e.ep, e.sid, e.img];
+    }));
+  }
+
+  function homeSections() {
+    var pages = document.querySelectorAll('[id="indexPage"]');
+    for (var i = 0; i < pages.length; i++) {
+      var p = pages[i];
+      if (p.classList.contains('hide') || p.hidden) { continue; }
+      var tab = p.querySelector('#homeTab');
+      var sec = tab && tab.querySelector('.sections');
+      if (sec) { return sec; }
+    }
+    return null;
+  }
+
+  // Picture height of Jellyfin's own wide rows (Continue watching, Next up), so the row is as high as those on every
+  // screen; without such a row: the portrait posters' width (Recently added) times the usual wide/portrait card ratio
+  function cardHeight(sec) {
+    var c = sec.querySelectorAll('.overflowBackdropCard .cardScalable'), i;
+    for (i = 0; i < c.length; i++) { if (c[i].offsetHeight > 40) { return c[i].offsetHeight; } }
+    c = sec.querySelectorAll('.overflowPortraitCard .cardScalable');
+    for (i = 0; i < c.length; i++) { if (c[i].offsetWidth > 40) { return Math.round(c[i].offsetWidth * 1.08); } }
+    return 0;
+  }
+
+  // Left edge of Jellyfin's card pictures within their row, so the week row starts in line with them on any skin
+  function align(box, sec) {
+    var j = sec.querySelector('.overflowBackdropCard .cardScalable') || sec.querySelector('.overflowPortraitCard .cardScalable');
+    var sc = box.querySelector('.sbw-scroll'), first = sc && sc.firstChild && sc.firstChild.firstChild;
+    if (!j || !first || !j.offsetWidth) { return; }
+    var jv = j.closest('.verticalSection') || sec;
+    var want = j.getBoundingClientRect().left - jv.getBoundingClientRect().left;
+    var cur = parseFloat(box.style.getPropertyValue('--sbw-x')) || 0;
+    var have = first.getBoundingClientRect().left + sc.scrollLeft - box.getBoundingClientRect().left - cur;
+    var x = Math.max(0, Math.round(want - have));
+    if (x !== cur) { box.style.setProperty('--sbw-x', x + 'px'); }
+  }
+
+  function render(force) {
+    var sec = homeSections();
+    if (!sec) { return; }
+    var old = sec.querySelector('#sbWeek');
+    var ch = cardHeight(sec);
+    if (old && ch && old.style.getPropertyValue('--sbw-h') !== ch + 'px') { old.style.setProperty('--sbw-h', ch + 'px'); }
+    var show = data && data.ok && data.eps && data.eps.length && Date.now() / 1000 < data.to + 3600;
+    if (!show) { if (old) { old.remove(); } return; }
+    var v = view(), s = sig(data, v);
+    if (old && !force && old.getAttribute('data-sig') === s) {
+      // same list: refresh the countdowns in place
+      var now = Date.now() / 1000;
+      Array.prototype.forEach.call(old.querySelectorAll('[data-sbw]'), function (n) {
+        var e = data.eps[+n.getAttribute('data-sbw')];
+        if (!e) { return; }
+        var st = status(e, now);
+        if (n.textContent !== st[0]) { n.textContent = st[0]; }
+        var cls = n.getAttribute('data-base') + ' ' + st[1];
+        if (n.className !== cls) { n.className = cls; }
+      });
+      align(old, sec);
+      return;
+    }
+    var box = build(data, v);
+    box.setAttribute('data-sig', s);
+    if (ch) { box.style.setProperty('--sbw-h', ch + 'px'); }
+    var x = old ? old.querySelector('.sbw-scroll').scrollLeft : -1;
+    if (old) { box.style.setProperty('--sbw-x', old.style.getPropertyValue('--sbw-x')); old.replaceWith(box); } else { sec.insertBefore(box, sec.firstChild); }
+    align(box, sec);
+    var sc = box.querySelector('.sbw-scroll'), td = box.querySelector('.sbw-today');
+    if (x >= 0 && !force) { sc.scrollLeft = x; }
+    else if (td && sc.scrollWidth > sc.clientWidth) { sc.scrollLeft = Math.max(0, td.offsetLeft - sc.offsetLeft - 8); }   // today in sight
+  }
+
+  function load(force) {
+    if (busy || (!force && Date.now() - lastFetch < 110000)) { return; }
+    busy = true;
+    fetch(BASE + 'week.json?_=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j) { data = j; } lastFetch = Date.now(); render(false); })
+      .catch(function () { lastFetch = Date.now(); })
+      .then(function () { busy = false; });
+  }
+
+  // Jellyfin rebuilds the home page on navigation: put the row back when it is missing
+  var queued = false;
+  function check() {
+    queued = false;
+    var sec = homeSections();
+    if (!sec) { return; }
+    if (!sec.querySelector('#sbWeek')) { if (data) { render(false); } load(!data); }
+    else if (data) { render(false); }   // Jellyfin's rows came in: the card height may follow them
+  }
+  function start() {
+    var st = document.createElement('style');
+    st.id = 'sbWeekCss';
+    st.textContent = css;
+    document.head.appendChild(st);
+    new MutationObserver(function () { if (!queued) { queued = true; requestAnimationFrame(check); } })
+      .observe(document.body, { childList: true, subtree: true });
+    setInterval(function () { if (homeSections()) { load(false); render(false); } }, 30000);
+    // Jellyfin sizes its cards to the window: measure again when the window changes
+    window.addEventListener('resize', function () { if (!queued) { queued = true; requestAnimationFrame(check); } });
+    load(true);
+  }
+  if (document.body) { start(); } else { document.addEventListener('DOMContentLoaded', start); }
+})();
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/notify_lib.php">
+<INLINE><![CDATA[<?php
+// Discord notifier helpers (Streambox): Hungarian cards for new movies and seasons.
+
+const NF_FIELDS = 'Overview,Genres,People,MediaStreams,MediaSources,DateCreated,OriginalTitle,ProductionYear';
+
+function nf_cfg() {
+    $c = [
+        'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
+        'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
+        'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
+    ];
+    $f = '/boot/config/plugins/streambox/settings.cfg';
+    if (is_file($f)) {
+        $x = @parse_ini_file($f);
+        if (is_array($x)) { $c = array_merge($c, $x); }
+    }
+    return $c;
+}
+
+function nf_on($v) { return in_array(strtolower(trim((string)$v)), ['1', 'yes', 'true', 'on'], true); }
+
+function nf_hook($u) {
+    $u = trim((string)$u);
+    return preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $u) ? $u : '';
+}
+
+function nf_log($m) {
+    $f = '/tmp/streambox_notify.log';
+    $lines = is_file($f) ? (array)@file($f, FILE_IGNORE_NEW_LINES) : [];
+    $lines[] = date('Y-m-d H:i:s') . ' ' . $m;
+    @file_put_contents($f, implode("\n", array_slice($lines, -100)) . "\n");
+}
+
+// ---- Jellyfin ---------------------------------------------------------------------------------
+function nf_get($cfg, $path) {
+    $ch = curl_init('http://' . $cfg['jf_host'] . ':' . (int)$cfg['jf_port'] . $path);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => 25,
+        CURLOPT_HTTPHEADER => ['Authorization: MediaBrowser Token="' . $cfg['jf_key'] . '"', 'Accept: */*'],
+    ]);
+    $b = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ($code === 200 && is_string($b)) ? $b : null;
+}
+
+function nf_json($cfg, $path) {
+    $b = nf_get($cfg, $path);
+    if ($b === null) { return null; }
+    $d = json_decode($b, true);
+    return is_array($d) ? $d : null;
+}
+
+function nf_item($cfg, $id) {
+    if ($id === '' || !preg_match('/^[0-9a-fA-F\-]{32,36}$/', $id)) { return null; }
+    $d = nf_json($cfg, '/Items?Ids=' . rawurlencode($id) . '&Fields=' . NF_FIELDS);
+    return (is_array($d) && !empty($d['Items'][0])) ? $d['Items'][0] : null;
+}
+
+function nf_image($cfg, $id, $type, $w) {
+    $p = '/Items/' . rawurlencode($id) . '/Images/' . $type . ($type === 'Backdrop' ? '/0' : '')
+       . '?maxWidth=' . (int)$w . '&quality=90&format=Jpg';
+    $b = nf_get($cfg, $p);
+    return ($b !== null && strlen($b) > 500 && strlen($b) < 7000000) ? $b : null;
+}
+
+function nf_info($cfg) {
+    static $info = null;
+    if ($info === null) {
+        $d = nf_json($cfg, '/System/Info/Public');
+        $info = ['Version' => (string)($d['Version'] ?? ''), 'Id' => (string)($d['Id'] ?? '')];
+    }
+    return $info;
+}
+
+function nf_link($cfg, $id) {
+    $base = rtrim(trim((string)$cfg['jf_url']), '/');
+    if ($base === '') { return ''; }
+    $info = nf_info($cfg);
+    return $base . '/web/#/details?id=' . $id . ($info['Id'] !== '' ? '&serverId=' . $info['Id'] : '');
+}
+
+function nf_ts($iso) {
+    $t = strtotime(preg_replace('/\.\d+/', '', (string)$iso));
+    return $t === false ? 0 : (int)$t;
+}
+
+function nf_ready($item) {
+    return $item !== null && trim((string)($item['Overview'] ?? '')) !== '' && !empty($item['ImageTags']['Primary']);
+}
+
+// ---- text helpers -----------------------------------------------------------------------------
+function nf_trunc($s, $max) {
+    $s = trim((string)preg_replace('/\s+/u', ' ', (string)$s));
+    if (mb_strlen($s) <= $max) { return $s; }
+    $c = mb_substr($s, 0, $max);
+    $p = mb_strrpos($c, ' ');
+    if ($p !== false && $p > $max * 0.6) { $c = mb_substr($c, 0, $p); }
+    return rtrim($c, " \t,;:.-") . "\u{2026}";
+}
+
+function nf_md($s) { return preg_replace('/([\\\\*_~`|>])/u', '\\\\$1', (string)$s); }
+
+function nf_runtime($ticks) {
+    $min = (int)round(((float)$ticks) / 10000000 / 60);
+    if ($min <= 0) { return ''; }
+    $h = intdiv($min, 60);
+    $m = $min % 60;
+    if ($h > 0) { return $h . ' óra' . ($m > 0 ? ' ' . $m . ' perc' : ''); }
+    return $m . ' perc';
+}
+
+function nf_size($bytes) {
+    $b = (float)$bytes;
+    if ($b <= 0) { return ''; }
+    if ($b >= 1073741824) { return number_format($b / 1073741824, 1, ',', '') . ' GB'; }
+    return number_format($b / 1048576, 0, ',', '') . ' MB';
+}
+
+function nf_genres($list, $max = 4) {
+    static $map = [
+        'Action' => 'Akció', 'Adventure' => 'Kaland', 'Animation' => 'Animáció', 'Comedy' => 'Vígjáték',
+        'Crime' => 'Krimi', 'Documentary' => 'Dokumentum', 'Drama' => 'Dráma', 'Family' => 'Családi',
+        'Fantasy' => 'Fantasy', 'History' => 'Történelmi', 'Horror' => 'Horror', 'Music' => 'Zenei',
+        'Musical' => 'Musical', 'Mystery' => 'Misztikus', 'Romance' => 'Romantikus',
+        'Science Fiction' => 'Sci-fi', 'Sci-Fi & Fantasy' => 'Sci-fi és fantasy', 'TV Movie' => 'TV-film',
+        'Thriller' => 'Thriller', 'War' => 'Háborús', 'Western' => 'Western', 'Action & Adventure' => 'Akció és kaland',
+        'Kids' => 'Gyerek', 'News' => 'Hírek', 'Reality' => 'Valóságshow', 'Soap' => 'Szappanopera',
+        'Talk' => 'Beszélgetős', 'War & Politics' => 'Háború és politika', 'Biography' => 'Életrajzi',
+        'Sport' => 'Sport', 'Anime' => 'Anime',
+    ];
+    $out = [];
+    foreach ((array)$list as $g) { $g = (string)$g; $out[] = $map[$g] ?? $g; }
+    return implode(', ', array_slice($out, 0, $max));
+}
+
+function nf_cast($item) {
+    $n = [];
+    foreach ((array)($item['People'] ?? []) as $p) {
+        if (($p['Type'] ?? '') === 'Actor' && !empty($p['Name'])) { $n[] = (string)$p['Name']; }
+        if (count($n) >= 5) { break; }
+    }
+    return implode(', ', $n);
+}
+
+function nf_lang($code) {
+    static $map = [
+        'eng' => 'angol', 'hun' => 'magyar', 'ger' => 'német', 'deu' => 'német', 'fre' => 'francia', 'fra' => 'francia',
+        'spa' => 'spanyol', 'ita' => 'olasz', 'jpn' => 'japán', 'kor' => 'koreai', 'chi' => 'kínai', 'zho' => 'kínai',
+        'rus' => 'orosz', 'por' => 'portugál', 'pol' => 'lengyel', 'cze' => 'cseh', 'ces' => 'cseh', 'dut' => 'holland',
+        'nld' => 'holland', 'swe' => 'svéd', 'tur' => 'török', 'hin' => 'hindi', 'dan' => 'dán', 'nor' => 'norvég',
+        'fin' => 'finn', 'rum' => 'román', 'ron' => 'román', 'slo' => 'szlovák', 'slk' => 'szlovák', 'hrv' => 'horvát',
+        'srp' => 'szerb', 'ukr' => 'ukrán', 'ara' => 'arab', 'heb' => 'héber', 'gre' => 'görög', 'ell' => 'görög',
+        'tha' => 'thai', 'vie' => 'vietnami', 'bul' => 'bolgár', 'slv' => 'szlovén', 'bos' => 'bosnyák',
+        'mac' => 'macedón', 'mkd' => 'macedón', 'alb' => 'albán', 'sqi' => 'albán', 'lit' => 'litván', 'lav' => 'lett',
+        'est' => 'észt', 'ice' => 'izlandi', 'isl' => 'izlandi', 'nob' => 'norvég', 'nno' => 'norvég', 'per' => 'perzsa',
+        'fas' => 'perzsa', 'ind' => 'indonéz', 'may' => 'maláj', 'msa' => 'maláj', 'cat' => 'katalán', 'baq' => 'baszk',
+        'eus' => 'baszk', 'glg' => 'galego', 'afr' => 'afrikaans', 'ben' => 'bengáli', 'tam' => 'tamil', 'tel' => 'telugu',
+        'fil' => 'filippínó', 'tgl' => 'filippínó', 'urd' => 'urdu',
+    ];
+    $c = strtolower(trim((string)$code));
+    if ($c === '' || $c === 'und') { return 'ismeretlen'; }
+    return $map[$c] ?? $c;
+}
+
+function nf_acodec($s) {
+    $c = strtolower((string)($s['Codec'] ?? ''));
+    $prof = (string)($s['Profile'] ?? '');
+    switch ($c) {
+        case 'ac3': return 'DD';
+        case 'eac3': return 'DD+';
+        case 'truehd': return 'TrueHD';
+        case 'dts':
+            if (stripos($prof, 'MA') !== false) { return 'DTS-HD MA'; }
+            if (stripos($prof, 'HRA') !== false) { return 'DTS-HD HRA'; }
+            if (stripos($prof, 'DTS:X') !== false || stripos($prof, 'X') === 0) { return 'DTS:X'; }
+            return 'DTS';
+        case 'aac': return 'AAC';
+        case 'flac': return 'FLAC';
+        case 'opus': return 'Opus';
+        case 'mp3': return 'MP3';
+        case '': return '';
+    }
+    return strpos($c, 'pcm') === 0 ? 'PCM' : strtoupper($c);
+}
+
+function nf_ch($n) {
+    $m = [1 => '1.0', 2 => '2.0', 3 => '2.1', 4 => '4.0', 5 => '5.0', 6 => '5.1', 7 => '6.1', 8 => '7.1'];
+    return $m[(int)$n] ?? '';
+}
+
+// "angol · DD+ 5.1 Atmos" lines plus "felirat: magyar (kényszerített), angol"
+function nf_audio_sub($item) {
+    $aud = [];
+    $subs = [];
+    foreach ((array)($item['MediaStreams'] ?? []) as $s) {
+        $t = $s['Type'] ?? '';
+        if ($t === 'Audio') {
+            $atmos = stripos((string)($s['DisplayTitle'] ?? '') . ' ' . (string)($s['Profile'] ?? ''), 'atmos') !== false;
+            $lang = nf_lang($s['Language'] ?? '');
+            $tech = trim(nf_acodec($s) . ' ' . nf_ch($s['Channels'] ?? 0) . ($atmos ? ' Atmos' : ''));
+            $line = $lang . ($tech !== '' ? ' · ' . $tech : '');
+            if (!in_array($line, $aud, true)) { $aud[] = $line; }
+        } elseif ($t === 'Subtitle') {
+            // forced (foreign-parts-only) subtitles are not announced
+            $hay = (string)($s['Title'] ?? '') . ' ' . (string)($s['DisplayTitle'] ?? '');
+            if (!empty($s['IsForced']) || stripos($hay, 'forced') !== false || stripos($hay, 'kényszer') !== false) { continue; }
+            $subs[nf_lang($s['Language'] ?? '')] = true;
+        }
+    }
+    $lines = array_slice($aud, 0, 3);
+    if ($subs) {
+        $labels = array_keys($subs);
+        // Hungarian first, the rest in file order
+        usort($labels, function ($a, $b) { return (($a === 'magyar') ? 0 : 1) <=> (($b === 'magyar') ? 0 : 1); });
+        $lines[] = 'felirat: ' . implode(', ', array_slice($labels, 0, 6));
+    }
+    return $lines ? implode("\n", $lines) : '';
+}
+
+// "2160p · HEVC · Dolby Vision · 12,4 GB"
+function nf_quality($item, $size = null) {
+    $v = null;
+    foreach ((array)($item['MediaStreams'] ?? []) as $s) { if (($s['Type'] ?? '') === 'Video') { $v = $s; break; } }
+    $parts = [];
+    if ($v) {
+        $w = (int)($v['Width'] ?? 0);
+        $h = (int)($v['Height'] ?? 0);
+        if ($w >= 3200 || $h >= 2000) { $parts[] = '2160p'; }
+        elseif ($w >= 1800 || $h >= 1000) { $parts[] = '1080p'; }
+        elseif ($w >= 1200 || $h >= 700) { $parts[] = '720p'; }
+        elseif ($h > 0) { $parts[] = 'SD'; }
+        $codec = strtolower((string)($v['Codec'] ?? ''));
+        $cm = ['hevc' => 'HEVC', 'h264' => 'H.264', 'av1' => 'AV1', 'vp9' => 'VP9', 'mpeg2video' => 'MPEG-2'];
+        if ($codec !== '') { $parts[] = $cm[$codec] ?? strtoupper($codec); }
+        $r = (string)($v['VideoRangeType'] ?? '');
+        if (stripos($r, 'DOVI') === 0) { $parts[] = 'Dolby Vision' . (stripos($r, 'HDR10') !== false ? ' / HDR10' : ''); }
+        elseif ($r === 'HDR10Plus') { $parts[] = 'HDR10+'; }
+        elseif ($r === 'HDR10') { $parts[] = 'HDR10'; }
+        elseif ($r === 'HLG') { $parts[] = 'HLG'; }
+    }
+    if ($size === null) { $size = (float)($item['MediaSources'][0]['Size'] ?? 0); }
+    $sz = nf_size($size);
+    if ($sz !== '') { $parts[] = $sz; }
+    return implode(' · ', $parts);
+}
+
+function nf_field($name, $value, $inline) {
+    $value = trim((string)$value);
+    if ($value === '') { return null; }
+    return ['name' => $name, 'value' => mb_substr($value, 0, 1000), 'inline' => (bool)$inline];
+}
+
+// ---- cards ------------------------------------------------------------------------------------
+function nf_build($cfg, $o) {
+    $desc = '';
+    if ($o['orig'] !== '') { $desc .= '*' . nf_md($o['orig']) . "*\n"; }
+    if ($o['overview'] !== '') { $desc .= nf_md(nf_trunc($o['overview'], 280)) . "\n"; }
+    if ($o['url'] !== '') { $desc .= "\n[Megnyitás a Jellyfinben](" . $o['url'] . ')'; }
+    $info = nf_info($cfg);
+    $host = strtoupper((string)(gethostname() ?: 'SERVER'));
+    $emb = [
+        'author'      => ['name' => $o['author']],
+        'title'       => mb_substr($o['title'], 0, 256),
+        'description' => trim($desc),
+        'color'       => 6967248,
+        'fields'      => array_values(array_filter($o['fields'])),
+        'footer'      => ['text' => $host . ($info['Version'] !== '' ? ' · Jellyfin ' . $info['Version'] : '')],
+    ];
+    if ($o['ts'] > 0) { $emb['timestamp'] = gmdate('c', $o['ts']); }
+    if ($o['url'] !== '') { $emb['url'] = $o['url']; }
+    return ['payload' => ['username' => 'Streambox', 'embeds' => [$emb]], 'poster' => $o['poster'], 'backdrop' => $o['backdrop']];
+}
+
+function nf_card_movie($cfg, $m, $preview = false) {
+    $name = (string)($m['Name'] ?? '?');
+    $orig = (string)($m['OriginalTitle'] ?? '');
+    if ($orig !== '' && mb_strtolower($orig) === mb_strtolower($name)) { $orig = ''; }
+    $id = (string)$m['Id'];
+    return nf_build($cfg, [
+        'author'   => ($preview ? 'ELŐNÉZET · ' : '') . 'Új film',
+        'title'    => $name . (!empty($m['ProductionYear']) ? ' (' . (int)$m['ProductionYear'] . ')' : ''),
+        'orig'     => $orig,
+        'overview' => (string)($m['Overview'] ?? ''),
+        'url'      => nf_link($cfg, $id),
+        'ts'       => nf_ts($m['DateCreated'] ?? ''),
+        'fields'   => [
+            nf_field('Hossz', nf_runtime($m['RunTimeTicks'] ?? 0), true),
+            nf_field('Minőség', nf_quality($m), true),
+            nf_field('Műfaj', nf_genres($m['Genres'] ?? []), true),
+            nf_field('Hang · felirat', nf_audio_sub($m), false),
+            nf_field('Szereplők', nf_cast($m), false),
+        ],
+        'poster'   => nf_image($cfg, $id, 'Primary', 400),
+        'backdrop' => !empty($m['BackdropImageTags']) ? nf_image($cfg, $id, 'Backdrop', 1280) : null,
+    ]);
+}
+
+// "S01E01 – S01E08", or a list when the episodes are not consecutive
+function nf_ep_range($eps) {
+    $codes = [];
+    $nums = [];
+    foreach ($eps as $e) {
+        $s = (int)($e['ParentIndexNumber'] ?? 0);
+        $n = (int)($e['IndexNumber'] ?? 0);
+        $codes[] = [$s, $n];
+        $nums[] = $n;
+    }
+    usort($codes, function ($a, $b) { return [$a[0], $a[1]] <=> [$b[0], $b[1]]; });
+    $fmt = function ($c) { return sprintf('S%02dE%02d', $c[0], $c[1]); };
+    if (count($codes) === 1) { return $fmt($codes[0]); }
+    $contig = true;
+    for ($i = 1; $i < count($codes); $i++) {
+        if ($codes[$i][0] !== $codes[$i - 1][0] || $codes[$i][1] !== $codes[$i - 1][1] + 1) { $contig = false; break; }
+    }
+    if ($contig) { return $fmt($codes[0]) . ' – ' . $fmt($codes[count($codes) - 1]); }
+    $list = array_map($fmt, array_slice($codes, 0, 8));
+    return implode(', ', $list) . (count($codes) > 8 ? ', …' : '');
+}
+
+// $eps: the new episodes of one season (full items, with streams)
+function nf_card_season($cfg, $series, $season, $eps, $preview = false) {
+    usort($eps, function ($a, $b) {
+        return [(int)($a['ParentIndexNumber'] ?? 0), (int)($a['IndexNumber'] ?? 0)] <=> [(int)($b['ParentIndexNumber'] ?? 0), (int)($b['IndexNumber'] ?? 0)];
+    });
+    $first = $eps[0];
+    $sn = (int)($first['ParentIndexNumber'] ?? 0);
+    $name = (string)($series['Name'] ?? ($first['SeriesName'] ?? '?'));
+    $orig = (string)($series['OriginalTitle'] ?? '');
+    if ($orig !== '' && mb_strtolower($orig) === mb_strtolower($name)) { $orig = ''; }
+    $sid = (string)($series['Id'] ?? ($first['SeriesId'] ?? ''));
+    $seasonId = (string)($season['Id'] ?? '');
+
+    $hasFirst = false;
+    $total = 0.0;
+    $ts = 0;
+    foreach ($eps as $e) {
+        if ((int)($e['IndexNumber'] ?? 0) === 1) { $hasFirst = true; }
+        $total += (float)($e['MediaSources'][0]['Size'] ?? 0);
+        $ts = max($ts, nf_ts($e['DateCreated'] ?? ''));
+    }
+    $count = count($eps);
+    $label = $hasFirst ? 'Új évad' : 'Új epizódok';
+    $seasonTxt = $sn === 0 ? 'Különlegességek' : $sn . '. évad';
+
+    $overview = trim((string)($season['Overview'] ?? ''));
+    if ($overview === '') { $overview = (string)($series['Overview'] ?? ''); }
+
+    $posterId = ($season && !empty($season['ImageTags']['Primary'])) ? $seasonId : $sid;
+    $rt = nf_runtime($first['RunTimeTicks'] ?? 0);
+    $epTxt = $count . ' új epizód: ' . nf_ep_range($eps);
+    $sz = nf_size($total);
+
+    return nf_build($cfg, [
+        'author'   => ($preview ? 'ELŐNÉZET · ' : '') . $label,
+        'title'    => $name . (!empty($series['ProductionYear']) ? ' (' . (int)$series['ProductionYear'] . ')' : '') . ' · ' . $seasonTxt,
+        'orig'     => $orig,
+        'overview' => $overview,
+        'url'      => nf_link($cfg, $seasonId !== '' ? $seasonId : $sid),
+        'ts'       => $ts,
+        'fields'   => [
+            nf_field('Epizódok', $epTxt, false),
+            nf_field('Hossz', $rt !== '' ? 'epizódonként kb. ' . $rt : '', true),
+            nf_field('Minőség', nf_quality($first, 0) . ($sz !== '' ? ' · összesen ' . $sz : ''), true),
+            nf_field('Műfaj', nf_genres($series['Genres'] ?? []), true),
+            nf_field('Hang · felirat', nf_audio_sub($first), false),
+            nf_field('Szereplők', nf_cast($series), false),
+        ],
+        'poster'   => $posterId !== '' ? nf_image($cfg, $posterId, 'Primary', 400) : null,
+        'backdrop' => ($sid !== '' && !empty($series['BackdropImageTags'])) ? nf_image($cfg, $sid, 'Backdrop', 1280) : null,
+    ]);
+}
+
+// ---- weekly summary ---------------------------------------------------------------------------
+// Use the server's time zone (Settings, Date and Time) for "Friday 18:00".
+function nf_tz() {
+    $v = @parse_ini_file('/var/local/emhttp/var.ini');
+    $tz = is_array($v) ? (string)($v['timeZone'] ?? '') : '';
+    if ($tz !== '' && in_array($tz, timezone_identifiers_list(), true)) { date_default_timezone_set($tz); }
+}
+
+function nf_hu_date($ts) {
+    static $m = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.'];
+    return $m[(int)date('n', $ts) - 1] . ' ' . (int)date('j', $ts) . '.';
+}
+
+// "2160p DV", "1080p", "2160p HDR"
+function nf_res_short($item) {
+    $parts = explode(' · ', nf_quality($item, 0));
+    $out = [];
+    if ($parts[0] !== '') { $out[] = $parts[0]; }
+    foreach ($parts as $p) {
+        if (strpos($p, 'Dolby Vision') === 0) { $out[] = 'DV'; break; }
+        if (strpos($p, 'HDR') === 0 || $p === 'HLG') { $out[] = 'HDR'; break; }
+    }
+    return implode(' ', $out);
+}
+
+function nf_stars($item) {
+    $r = (float)($item['CommunityRating'] ?? 0);
+    return $r > 0 ? '★ ' . number_format($r, 1, ',', '') : '';
+}
+
+function nf_title_link($cfg, $name, $id) {
+    $n = nf_md(str_replace(['[', ']'], ['(', ')'], (string)$name));
+    $url = nf_link($cfg, $id);
+    return $url !== '' ? '**[' . $n . '](' . $url . ')**' : '**' . $n . '**';
+}
+
+function nf_join_lines($lines, $budget) {
+    $out = '';
+    $n = 0;
+    foreach ($lines as $l) {
+        if (mb_strlen($out) + mb_strlen($l) + 40 > $budget) { return rtrim($out) . "\n…és még " . (count($lines) - $n) . ' további'; }
+        $out .= $l . "\n";
+        $n++;
+    }
+    return rtrim($out);
+}
+
+// Message payload for everything added since $from; null = nothing new, false = Jellyfin could not be read
+function nf_weekly($cfg, $from, $now, $preview = false) {
+    $md = nf_json($cfg, '/Items?IncludeItemTypes=Movie&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=100&Fields=' . NF_FIELDS);
+    $ed = nf_json($cfg, '/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=600&Fields=DateCreated');
+    if ($md === null && $ed === null) { return false; }
+
+    $mlines = [];
+    foreach ((array)($md['Items'] ?? []) as $m) {
+        if (nf_ts($m['DateCreated'] ?? '') < $from) { continue; }
+        $line = nf_title_link($cfg, $m['Name'] ?? '?', (string)($m['Id'] ?? ''));
+        if (!empty($m['ProductionYear'])) { $line .= ' (' . (int)$m['ProductionYear'] . ')'; }
+        $bits = array_filter([nf_runtime($m['RunTimeTicks'] ?? 0), nf_res_short($m), nf_genres($m['Genres'] ?? [], 3), nf_stars($m)]);
+        $mlines[] = $line . ($bits ? ' · ' . implode(' · ', $bits) : '');
+    }
+
+    $groups = [];
+    foreach ((array)($ed['Items'] ?? []) as $e) {
+        $ts = nf_ts($e['DateCreated'] ?? '');
+        if ($ts < $from || empty($e['SeriesId'])) { continue; }
+        $k = (string)$e['SeriesId'] . '|' . (int)($e['ParentIndexNumber'] ?? 0);
+        if (!isset($groups[$k])) { $groups[$k] = ['eps' => [], 'ts' => 0, 'sid' => (string)$e['SeriesId'], 'name' => (string)($e['SeriesName'] ?? '?')]; }
+        $groups[$k]['eps'][] = $e;
+        $groups[$k]['ts'] = max($groups[$k]['ts'], $ts);
+    }
+    uasort($groups, function ($a, $b) { return $b['ts'] <=> $a['ts']; });
+    $slines = [];
+    $cache = [];
+    foreach (array_slice($groups, 0, 25) as $g) {
+        if (!array_key_exists($g['sid'], $cache)) { $cache[$g['sid']] = nf_item($cfg, $g['sid']); }
+        $ser = $cache[$g['sid']] ?: [];
+        $sn = (int)($g['eps'][0]['ParentIndexNumber'] ?? 0);
+        $line = nf_title_link($cfg, $ser['Name'] ?? $g['name'], $g['sid']);
+        if (!empty($ser['ProductionYear'])) { $line .= ' (' . (int)$ser['ProductionYear'] . ')'; }
+        $line .= ' · ' . ($sn === 0 ? 'különlegességek' : $sn . '. évad') . ' · ' . count($g['eps']) . ' új epizód (' . nf_ep_range($g['eps']) . ')';
+        $bits = array_filter([nf_genres($ser['Genres'] ?? [], 3), nf_stars($ser)]);
+        $slines[] = $line . ($bits ? ' · ' . implode(' · ', $bits) : '');
+    }
+
+    $embeds = [];
+    if ($mlines) { $embeds[] = ['title' => '🎬 Új filmek (' . count($mlines) . ')', 'description' => nf_join_lines($mlines, 2800), 'color' => 6967248]; }
+    if ($slines) { $embeds[] = ['title' => '📺 Új sorozatok és évadok (' . count($slines) . ')', 'description' => nf_join_lines($slines, 2800), 'color' => 6967248]; }
+    if (!$embeds) { return null; }
+    $info = nf_info($cfg);
+    $host = strtoupper((string)(gethostname() ?: 'SERVER'));
+    $embeds[count($embeds) - 1]['footer'] = ['text' => $host . ' · ' . nf_hu_date($from) . ' – ' . nf_hu_date($now)];
+    return [
+        'username' => 'Streambox',
+        'content'  => ($preview ? '**ELŐNÉZET** · ' : '') . '🍿 **Hétvégi műsor** – ezek érkeztek a héten, jó szórakozást!',
+        'embeds'   => $embeds,
+    ];
+}
+
+// ---- Discord ----------------------------------------------------------------------------------
+// Returns ['ok'|'retry'|'fail', message]
+function nf_send($hook, $payload, $poster = null, $backdrop = null, $attempt = 0) {
+    $payload['allowed_mentions'] = ['parse' => []];
+    $tmp = [];
+    $files = [];
+    if ($poster !== null && isset($payload['embeds'][0])) {
+        $payload['embeds'][0]['thumbnail'] = ['url' => 'attachment://poster.jpg'];
+        $files['poster.jpg'] = $poster;
+    }
+    if ($backdrop !== null && isset($payload['embeds'][0])) {
+        $payload['embeds'][0]['image'] = ['url' => 'attachment://backdrop.jpg'];
+        $files['backdrop.jpg'] = $backdrop;
+    }
+    $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+    $ch = curl_init($hook);
+    $opt = [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 40];
+    if ($files) {
+        $fields = ['payload_json' => $json];
+        $i = 0;
+        foreach ($files as $fname => $data) {
+            $p = tempnam('/tmp', 'sbn');
+            file_put_contents($p, $data);
+            $tmp[] = $p;
+            $fields['files[' . $i . ']'] = new CURLFile($p, 'image/jpeg', $fname);
+            $i++;
+        }
+        $opt[CURLOPT_POSTFIELDS] = $fields;
+    } else {
+        $opt[CURLOPT_POSTFIELDS] = $json;
+        $opt[CURLOPT_HTTPHEADER] = ['Content-Type: application/json'];
+    }
+    curl_setopt_array($ch, $opt);
+    $body = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_errno($ch);
+    curl_close($ch);
+    foreach ($tmp as $p) { @unlink($p); }
+
+    if ($err) { return ['retry', 'network error ' . $err]; }
+    if ($code === 200 || $code === 204) { return ['ok', '']; }
+    if ($code === 429) {
+        $d = json_decode((string)$body, true);
+        $wait = is_array($d) && isset($d['retry_after']) ? (float)$d['retry_after'] : 2.0;
+        if ($attempt < 1 && $wait <= 5.0) {
+            usleep((int)(($wait + 0.3) * 1000000));
+            return nf_send($hook, $payload, $poster, $backdrop, $attempt + 1);
+        }
+        return ['retry', 'rate limited'];
+    }
+    if ($code >= 500 || $code === 0) { return ['retry', 'Discord HTTP ' . $code]; }
+    $d = json_decode((string)$body, true);
+    return ['fail', 'Discord HTTP ' . $code . (is_array($d) && !empty($d['message']) ? ' (' . $d['message'] . ')' : '')];
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/notify.php">
+<INLINE><![CDATA[<?php
+// Started by cron every minute: post a Discord card for each new movie and each new season.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/notify_lib.php';
+
+$cfg = nf_cfg();
+if (!nf_on($cfg['notify']) || (string)$cfg['jf_key'] === '') { exit(0); }
+$hookMovies = nf_hook($cfg['dc_movies']);
+$hookSeries = nf_hook($cfg['dc_series']);
+if ($hookMovies === '' && $hookSeries === '') { exit(0); }
+if (!preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { exit(0); }
+
+$lock = @fopen('/tmp/streambox_notify.lock', 'c');
+if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
+
+$sf  = '/boot/config/plugins/streambox/notify_state.json';
+$st  = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : null;
+$now = time();
+
+function nf_save_state($sf, $st) {
+    $tmp = $sf . '.tmp';
+    $data = json_encode($st);
+    if (@file_put_contents($tmp, $data) === false || !@rename($tmp, $sf)) { @file_put_contents($sf, $data); @unlink($tmp); }
+}
+
+if (!is_array($st) || !isset($st['since'])) {
+    // first run: only things added from now on are announced
+    nf_save_state($sf, ['since' => $now, 'done' => []]);
+    nf_log('notifier started, announcing items added from now on');
+    exit(0);
+}
+
+$since  = (int)$st['since'];
+$done   = array_flip(array_map('strval', (array)($st['done'] ?? [])));
+$settle = max(1, (int)$cfg['notify_settle']) * 60;
+$wait   = max(1, (int)$cfg['notify_wait']) * 60;
+$posted = 0;
+$changed = false;
+$stop = false;
+$MAX_CARDS = 6;
+$BULK = 20;
+
+// ---- movies -----------------------------------------------------------------------------------
+if ($hookMovies !== '') {
+    $d = nf_json($cfg, '/Items?IncludeItemTypes=Movie&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=60&Fields=' . NF_FIELDS);
+    $pending = [];
+    foreach ((array)($d['Items'] ?? []) as $m) {
+        $id = (string)($m['Id'] ?? '');
+        if ($id === '' || isset($done[$id])) { continue; }
+        $ts = nf_ts($m['DateCreated'] ?? '');
+        if ($ts <= $since) { continue; }
+        $m['_ts'] = $ts;
+        $pending[] = $m;
+    }
+    usort($pending, function ($a, $b) { return $a['_ts'] <=> $b['_ts']; });
+    if (count($pending) > $BULK) {
+        foreach (array_slice($pending, 0, count($pending) - $BULK) as $m) { $done[(string)$m['Id']] = 1; }
+        nf_log('bulk import: skipped ' . (count($pending) - $BULK) . ' older movies');
+        $pending = array_slice($pending, -$BULK);
+        $changed = true;
+    }
+    foreach ($pending as $m) {
+        if ($posted >= $MAX_CARDS || $stop) { break; }
+        $id = (string)$m['Id'];
+        if (!nf_ready($m) && ($now - $m['_ts']) < $wait) { continue; }   // metadata and poster not in yet
+        $card = nf_card_movie($cfg, $m);
+        list($res, $msg) = nf_send($hookMovies, $card['payload'], $card['poster'], $card['backdrop']);
+        if ($res === 'retry') { nf_log('movie "' . ($m['Name'] ?? $id) . '": ' . $msg . ', will retry'); $stop = true; break; }
+        $done[$id] = 1;
+        $changed = true;
+        $posted++;
+        if ($res === 'fail') { nf_log('movie "' . ($m['Name'] ?? $id) . '" not sent: ' . $msg); }
+        else { nf_log('movie card sent: ' . ($m['Name'] ?? $id)); }
+    }
+}
+
+// ---- seasons ----------------------------------------------------------------------------------
+if ($hookSeries !== '' && !$stop) {
+    $d = nf_json($cfg, '/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=300&Fields=' . NF_FIELDS);
+    $groups = [];
+    foreach ((array)($d['Items'] ?? []) as $e) {
+        $id = (string)($e['Id'] ?? '');
+        if ($id === '' || isset($done[$id])) { continue; }
+        $ts = nf_ts($e['DateCreated'] ?? '');
+        if ($ts <= $since) { continue; }
+        $e['_ts'] = $ts;
+        $key = (string)($e['SeasonId'] ?? '') !== '' ? (string)$e['SeasonId'] : ((string)($e['SeriesId'] ?? '') . '-' . (int)($e['ParentIndexNumber'] ?? 0));
+        $groups[$key][] = $e;
+    }
+    foreach ($groups as $k => $eps) {
+        $min = PHP_INT_MAX; $max = 0;
+        foreach ($eps as $e) { $min = min($min, $e['_ts']); $max = max($max, $e['_ts']); }
+        $groups[$k] = ['eps' => $eps, 'min' => $min, 'max' => $max];
+    }
+    uasort($groups, function ($a, $b) { return $a['min'] <=> $b['min']; });
+    if (count($groups) > 15) {
+        $skip = array_slice($groups, 0, count($groups) - 15, true);
+        foreach ($skip as $g) { foreach ($g['eps'] as $e) { $done[(string)$e['Id']] = 1; } }
+        nf_log('bulk import: skipped ' . count($skip) . ' older seasons');
+        $groups = array_slice($groups, -15, null, true);
+        $changed = true;
+    }
+    foreach ($groups as $g) {
+        if ($posted >= $MAX_CARDS || $stop) { break; }
+        if (($now - $g['max']) < $settle) { continue; }   // more episodes may still be arriving
+        $eps = $g['eps'];
+        $series = nf_item($cfg, (string)($eps[0]['SeriesId'] ?? ''));
+        if (!nf_ready($series) && ($now - $g['min']) < $wait) { continue; }
+        $season = nf_item($cfg, (string)($eps[0]['SeasonId'] ?? ''));
+        $card = nf_card_season($cfg, $series ?: [], $season ?: [], $eps);
+        list($res, $msg) = nf_send($hookSeries, $card['payload'], $card['poster'], $card['backdrop']);
+        $label = (string)($eps[0]['SeriesName'] ?? '?') . ' S' . sprintf('%02d', (int)($eps[0]['ParentIndexNumber'] ?? 0));
+        if ($res === 'retry') { nf_log('season "' . $label . '": ' . $msg . ', will retry'); $stop = true; break; }
+        foreach ($eps as $e) { $done[(string)$e['Id']] = 1; }
+        $changed = true;
+        $posted++;
+        if ($res === 'fail') { nf_log('season "' . $label . '" not sent: ' . $msg); }
+        else { nf_log('season card sent: ' . $label . ' (' . count($eps) . ' episodes)'); }
+    }
+}
+
+if ($changed) {
+    nf_save_state($sf, ['since' => $since, 'done' => array_slice(array_keys($done), -400)]);
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/notify_test.php">
+<INLINE><![CDATA[<?php
+// Settings page buttons: "Send test message" and "Send preview" (newest movie and season, nothing is marked as sent).
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+require_once __DIR__ . '/notify_lib.php';
+
+function nt_out($ok, $msg) { echo json_encode(['ok' => $ok, 'message' => $msg], JSON_UNESCAPED_UNICODE); exit; }
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { http_response_code(405); nt_out(false, 'method'); }
+$var  = @parse_ini_file('/var/local/emhttp/var.ini');
+$tok  = is_array($var) ? (string)($var['csrf_token'] ?? '') : '';
+$sent = (string)($_POST['csrf_token'] ?? '');
+if ($sent !== '') {
+    if ($tok === '' || !hash_equals($tok, $sent)) { http_response_code(403); nt_out(false, 'csrf token mismatch'); }
+} elseif (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403); nt_out(false, 'csrf: token removed and request is not AJAX');
+}
+
+$cfg  = nf_cfg();
+$hm   = nf_hook($cfg['dc_movies']);
+$hs   = nf_hook($cfg['dc_series']);
+$hw   = nf_hook($cfg['dc_weekly']);
+$mode = (string)($_POST['mode'] ?? 'test');
+if ($hm === '' && $hs === '' && $hw === '') { nt_out(false, 'No valid Discord webhook is saved yet. Enter the webhook(s), press Apply, then try again.'); }
+
+$report = [];
+if ($mode === 'test') {
+    foreach (['movies' => $hm, 'series' => $hs, 'weekly' => $hw] as $label => $h) {
+        if ($h === '') { continue; }
+        list($r, $m) = nf_send($h, ['username' => 'Streambox', 'content' => '✅ Streambox: tesztüzenet (' . $label . ' csatorna)']);
+        $report[] = $label . ': ' . ($r === 'ok' ? 'sent' : 'failed (' . $m . ')');
+    }
+    nt_out(true, implode('; ', $report));
+}
+
+if ((string)$cfg['jf_key'] === '' || !preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { nt_out(false, 'The Jellyfin host and API key must be saved first.'); }
+
+if ($mode === 'weekly') {
+    if ($hw === '') { nt_out(false, 'No valid weekly summary webhook is saved yet.'); }
+    nf_tz();
+    $p = nf_weekly($cfg, time() - 7 * 86400, time(), true);
+    if ($p === false) { nt_out(false, 'Jellyfin could not be read.'); }
+    if ($p === null) { nt_out(true, 'Nothing was added in the last 7 days, so there is nothing to send.'); }
+    list($r, $msg) = nf_send($hw, $p);
+    nt_out($r === 'ok', 'weekly summary: ' . ($r === 'ok' ? 'sent' : 'failed (' . $msg . ')'));
+}
+
+if ($hm !== '') {
+    $d = nf_json($cfg, '/Items?IncludeItemTypes=Movie&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=1&Fields=' . NF_FIELDS);
+    $m = $d['Items'][0] ?? null;
+    if ($m) {
+        $c = nf_card_movie($cfg, $m, true);
+        list($r, $msg) = nf_send($hm, $c['payload'], $c['poster'], $c['backdrop']);
+        $report[] = 'movie "' . ($m['Name'] ?? '?') . '": ' . ($r === 'ok' ? 'sent' : 'failed (' . $msg . ')');
+    } else { $report[] = 'no movie found'; }
+}
+if ($hs !== '') {
+    $d = nf_json($cfg, '/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=1&Fields=' . NF_FIELDS);
+    $e = $d['Items'][0] ?? null;
+    if ($e && !empty($e['SeasonId'])) {
+        $all = nf_json($cfg, '/Items?ParentId=' . rawurlencode((string)$e['SeasonId']) . '&IncludeItemTypes=Episode&Fields=' . NF_FIELDS);
+        $eps = (array)($all['Items'] ?? []);
+        if (!$eps) { $eps = [$e]; }
+        $series = nf_item($cfg, (string)($e['SeriesId'] ?? ''));
+        $season = nf_item($cfg, (string)$e['SeasonId']);
+        $c = nf_card_season($cfg, $series ?: [], $season ?: [], $eps, true);
+        list($r, $msg) = nf_send($hs, $c['payload'], $c['poster'], $c['backdrop']);
+        $report[] = 'season "' . ($e['SeriesName'] ?? '?') . '": ' . ($r === 'ok' ? 'sent' : 'failed (' . $msg . ')');
+    } else { $report[] = 'no episode found'; }
+}
+nt_out(true, implode('; ', $report));
+]]></INLINE>
+</FILE>
+
+<FILE Name="/usr/local/emhttp/plugins/Streambox/README.md">
+<INLINE><![CDATA[**Streambox** puts Jellyfin on the Unraid dashboard as a native-looking tile: who is watching right now (direct play, direct stream or transcode, with progress and live TV guide data), GPU and CPU load with the current power draw, optional smart-socket wall power and monthly kWh, and the recently added titles. It can also announce new movies and seasons in Discord with Hungarian cards.
+
+Settings: Settings, Utilities, Streambox (or the gear icon on the tile). A Jellyfin API key is required.
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/weekly.php">
+<INLINE><![CDATA[<?php
+// Started by cron every hour: on the chosen day, from the chosen hour, post the weekly summary once.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/notify_lib.php';
+nf_tz();
+
+$cfg = nf_cfg();
+if (!nf_on($cfg['weekly']) || (string)$cfg['jf_key'] === '') { exit(0); }
+$hook = nf_hook($cfg['dc_weekly']);
+if ($hook === '' || !preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { exit(0); }
+
+$now = time();
+if ((int)date('w', $now) !== (int)$cfg['weekly_day'] || (int)date('G', $now) < (int)$cfg['weekly_hour']) { exit(0); }
+
+$sf = '/boot/config/plugins/streambox/weekly_state.json';
+$st = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : [];
+$today = date('Y-m-d', $now);
+if (is_array($st) && ($st['last'] ?? '') === $today) { exit(0); }
+
+$lock = @fopen('/tmp/streambox_weekly.lock', 'c');
+if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
+
+function nf_mark_week($sf, $today) {
+    $tmp = $sf . '.tmp';
+    $data = json_encode(['last' => $today]);
+    if (@file_put_contents($tmp, $data) === false || !@rename($tmp, $sf)) { @file_put_contents($sf, $data); @unlink($tmp); }
+}
+
+$payload = nf_weekly($cfg, $now - 7 * 86400, $now);
+if ($payload === false) { nf_log('weekly summary: Jellyfin not reachable, will retry'); exit(0); }
+if ($payload === null) { nf_log('weekly summary: nothing new this week'); nf_mark_week($sf, $today); exit(0); }
+
+list($res, $msg) = nf_send($hook, $payload);
+if ($res === 'retry') { nf_log('weekly summary: ' . $msg . ', will retry'); exit(0); }
+nf_mark_week($sf, $today);
+nf_log($res === 'ok' ? 'weekly summary sent' : 'weekly summary not sent: ' . $msg);
+]]></INLINE>
+</FILE>
+
+<!-- Permissions + done -->
+<FILE Name="/tmp/&name;_finish.sh" Run="/bin/bash">
+<INLINE><![CDATA[
+#!/bin/bash
+DIR="/usr/local/emhttp/plugins/streambox"
+chmod 644 "$DIR"/*.page "$DIR"/*.php "$DIR"/*.js "$DIR"/icon.png
+
+# Smart-socket sampler: Unraid collects /boot/config/plugins/<name>/*.cron with update_cron.
+PHPBIN="$(command -v php || echo /usr/bin/php)"
+cat > /boot/config/plugins/streambox/streambox.cron <<CRON
+# Streambox: remember the smart socket energy counter every 10 minutes (monthly consumption)
+*/10 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/sample.php >/dev/null 2>&1
+# Streambox: Discord notifier, checks Jellyfin for new movies and seasons every minute
+* * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/notify.php >/dev/null 2>&1
+# Streambox: weekly summary, checked hourly (day and hour are settings)
+0 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/weekly.php >/dev/null 2>&1
+# Streambox: this week's episodes, a Discord message for a late episode (only when switched on)
+*/10 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/week_late.php >/dev/null 2>&1
+# Streambox: this week's episodes for the row on Jellyfin's home page (week.json, week.js)
+*/2 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/week_web.php >/dev/null 2>&1
+CRON
+# update_cron reads the plugin link in /var/log/plugins, which appears only after the install scripts
+# have finished, so wait for it in the background.
+nohup bash -c 'for i in $(seq 1 60); do [ -e /var/log/plugins/streambox.plg ] && break; sleep 1; done; /usr/local/sbin/update_cron' >/dev/null 2>&1 &
+
+
+# Updates come from GitHub (pluginURL): stop the local update server of earlier versions
+pkill -f "php -S 127.0.0.1:18182" 2>/dev/null
+rm -f /usr/local/emhttp/plugins/streambox/repo.php
+rm -f /tmp/streambox_setup.sh /tmp/streambox_finish.sh
+echo ""
+echo "----------------------------------------------------"
+echo " Streambox installed."
+echo " Settings: Settings -> Utilities -> Streambox"
+echo " (or the gear icon on the dashboard tile)."
+echo "----------------------------------------------------"
+exit 0
+]]></INLINE>
+</FILE>
+
+<!-- Uninstall -->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE><![CDATA[
+#!/bin/bash
+rm -rf /usr/local/emhttp/plugins/streambox
+rm -rf /usr/local/emhttp/plugins/Streambox
+pkill -f "php -S 127.0.0.1:18182" 2>/dev/null
+rm -f /tmp/streambox_*
+rm -f /boot/config/plugins/streambox/streambox.cron
+/usr/local/sbin/update_cron 2>/dev/null
+# Settings and nicknames in /boot/config/plugins/streambox are kept intentionally.
+echo "streambox removed."
+exit 0
+]]></INLINE>
+</FILE>
+
+</PLUGIN>

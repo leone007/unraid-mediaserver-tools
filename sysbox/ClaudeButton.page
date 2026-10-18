@@ -1,0 +1,53 @@
+Menu="Buttons:3b"
+Title="Claude"
+Icon="fa-comments"
+---
+<?PHP
+/* Sysbox: the Claude button in the header, next to the terminal. One click starts the claude container, the tmux session and
+   Claude Code with Remote Control when they are not running yet, and opens the session on claude.ai in a new tab. */
+$cl_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$cl_tok = is_array($cl_var) ? (string)($cl_var['csrf_token'] ?? '') : '';
+?>
+<script>
+function ClaudeButton() {
+  // the tab is opened right away (a popup blocker allows it only during the click) and shows the progress
+  var w = window.open('', '_blank');
+  function say(t) { try { if (w && w.document) { w.document.title = 'Claude'; w.document.body.style.cssText = 'background:#141414;color:#e8e8e8;font:15px/1.5 system-ui,sans-serif;padding:40px'; w.document.body.textContent = t; } } catch (e) {} }
+  say('Starting the Claude session on <?=htmlspecialchars(gethostname(), ENT_QUOTES)?>...');
+  $.post('/plugins/sysbox/claude.php', {op: 'open', csrf_token: '<?=htmlspecialchars($cl_tok, ENT_QUOTES)?>'}, null, 'json').done(function (r) {
+    if (!r.ok) { say('Claude could not be started: ' + r.error); return; }
+    if (w) { w.location.href = r.url; } else { window.open(r.url, '_blank'); }
+  }).fail(function (x) { say('Claude could not be started: HTTP ' + (x && x.status)); });
+}
+// Tooltip with the plan usage (item 62): asked when the page loads and again on hover when it is older than a minute
+(function () {
+  var got = 0, busy = false, base = 'Claude Code: open the session';
+  function btn() { return $('[onclick*="ClaudeButton"]'); }
+  function ago(s) { s = Math.max(0, Math.round(s / 60)); return s < 1 ? 'just now' : s < 60 ? s + ' min ago' : s < 1440 ? Math.floor(s / 60) + ' h ' + (s % 60) + ' min ago' : Math.floor(s / 1440) + ' d ago'; }
+  function left(s) { s = Math.max(0, Math.round(s / 60)); var d = Math.floor(s / 1440), h = Math.floor(s % 1440 / 60); return d ? d + ' d ' + h + ' h' : h ? h + ' h ' + (s % 60) + ' min' : (s % 60) + ' min'; }
+  function pct(v) { return (Math.round(v * 10) / 10).toString() + '%'; }
+  function when(ts) { var d = new Date(ts * 1000); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function text(r) {
+    if (!r || !r.ok) { return base + '\n' + ((r && r.error) || 'usage not available'); }
+    var t = [base];
+    if (r.expired) { t.push('Week:     new week since ' + when(r.reset) + ', no data yet'); }
+    else {
+      t.push('Week:     ' + pct(r.week) + '  (resets ' + when(r.reset) + ', in ' + left(r.reset - r.now) + ')');
+      t.push('Today:    ' + (r.today === null ? 'from tomorrow' : pct(r.today)));
+      t.push('Average:  ' + pct(r.avg) + '/day  (allowance ' + pct(r.quota) + '/day)');
+    }
+    if (r.five) { t.push('5 hours:  ' + pct(r.five.pct) + '  (resets in ' + left(r.five.reset - r.now) + ')'); }
+    t.push('updated ' + ago(r.now - r.seen));
+    return t.join('\n');
+  }
+  function load() {
+    if (busy || Date.now() - got < 60000) { return; }
+    busy = true;
+    $.post('/plugins/sysbox/claude.php', {op: 'usage', csrf_token: '<?=htmlspecialchars($cl_tok, ENT_QUOTES)?>'}, null, 'json')
+      .done(function (r) { got = Date.now(); btn().attr('title', text(r)); })
+      .always(function () { busy = false; });
+  }
+  function start() { load(); $(document).on('mouseenter', '[onclick*="ClaudeButton"]', load); }
+  if (window.jQuery) { $(start); } else { document.addEventListener('DOMContentLoaded', start); }
+})();
+</script>

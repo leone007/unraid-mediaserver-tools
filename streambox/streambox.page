@@ -1,0 +1,421 @@
+Menu="Dashboard:0"
+Cond="version_compare(parse_ini_file('/etc/unraid-version')['version'],'6.11.9','>')"
+Markdown="false"
+---
+<?PHP
+$pluginname = "streambox";
+
+$mytiles[$pluginname]['column2'] =
+<<<EOT
+<tbody title="_(Streambox)_">
+<tr><td>
+  <span class="tile-header">
+    <span class="tile-header-left">
+      <i class="f32 sb-ic"></i>
+      <div class="section">
+        <h3 class="tile-header-main sb-ttl">Streambox</h3>
+        <span id="sb-summary" class="sb-sum">Connecting&hellip;</span>
+      </div>
+    </span>
+    <span class="tile-header-right">
+      <span class="tile-header-right-controls">
+        <a id="sb-home" href="#" target="_blank" rel="noopener" title="_(Open Jellyfin)_"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/StreamboxSettings" title="_(Streambox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+      </span>
+    </span>
+  </span>
+</td></tr>
+<tr><td>
+  <div class="sb-tile">
+    <div id="sb-status"></div>
+    <div id="sb-now"><div class="sb-note">Loading&hellip;</div></div>
+    <div id="sb-week"></div>
+    <div id="sb-load"></div>
+    <div id="sb-added"></div>
+  </div>
+</td></tr>
+</tbody>
+EOT;
+?>
+<style>
+i.f32.sb-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/streambox/icon.png) center/contain no-repeat!important}
+i.f32.sb-ic.sb-inv{filter:invert(1)}
+.sb-ttl{margin-bottom:2px!important}
+.sb-sum{display:block;margin:0!important;line-height:1.3}
+.sb-tile{width:100%;font-size:12px;white-space:normal}
+.sb-tile a{text-decoration:none}
+#sb-status{display:flex;justify-content:flex-end;margin:0 0 4px}
+.sb-pill{display:inline-flex;border:1px solid rgba(128,128,128,.35);border-radius:6px;overflow:hidden}
+.sb-pill span{padding:3px 10px}
+.sb-pill span+span{border-left:1px solid rgba(128,128,128,.35)}
+.sb-num{text-align:right;white-space:nowrap;font-family:bitstream,monospace}
+.sb-nm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;word-break:break-word}
+.sb-el{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-u{opacity:.6}
+.sb-sm{font-size:11px}
+.sb-pl{display:flex;align-items:center;gap:8px;margin-top:5px;font-family:bitstream,monospace;white-space:nowrap}
+.sb-pb{height:4px;border-radius:2px;background:rgba(128,128,128,.3);overflow:hidden;flex:1;min-width:30px}
+.sb-pb i{display:block;height:100%}
+.sb-bd{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px}
+.sb-play{background:rgba(63,162,74,.22);color:#3fa24a}
+.sb-stream{background:rgba(74,144,226,.22);color:#4a90e2}
+.sb-trans{background:rgba(224,160,48,.22);color:#d9921f}
+.sb-t-blue{background:rgba(74,144,226,.22);color:#4a90e2}
+.sb-t-purple{background:rgba(150,120,230,.22);color:#9a7de6}
+.sb-rs{margin-top:4px;font-size:11px;line-height:1.3;overflow-wrap:anywhere;opacity:.75;white-space:pre-line}
+.sb-rs.sb-warn{color:#d9921f;opacity:1}
+.sb-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+.sb-more{display:block;text-align:center;padding:10px 0 2px;color:#4a90e2}
+/*@@TILE_CSS@@*/
+.sb-cards{display:grid;gap:8px}
+.sb-card{background:rgba(128,128,128,.10);border:1px solid rgba(128,128,128,.25);border-radius:6px;padding:10px}
+.sb-k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}
+.sb-day{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65;background:rgba(0,0,0,.15);border-top:1px solid rgba(128,128,128,.2)}
+.sb-day:first-child{border-top:0}
+.sb-day.sb-today{opacity:1}
+.sb-day+.mt-r{border-top:0}
+.sb-wsub{font-size:11px;opacity:.6;margin-top:2px;line-height:1.3;overflow-wrap:anywhere}
+.sb-day+.mt-r .sb-bd,#sb-week .sb-bd{white-space:nowrap}
+.sb-new{display:inline-block;vertical-align:1px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:1px 6px;border-radius:4px;background:#f5a524;color:#1c1b1b}
+.sb-t-green{background:rgba(63,162,74,.22);color:#3fa24a}
+.sb-t-amber{background:rgba(224,160,48,.22);color:#d9921f}
+.sb-t-red{background:rgba(229,83,75,.22);color:#e5534b}
+.sb-t-grey{background:rgba(128,128,128,.2);color:inherit;opacity:.8}
+.sb-v{font-family:bitstream,monospace;font-size:18px;margin:4px 0 6px}
+</style>
+<script>
+$(function () {
+  var API = '/plugins/streambox/api_fetch.php';
+  var LOAD = '/plugins/streambox/load.php';
+  var busy = false, loadBusy = false, loadTimer = null, themed = false;
+  var DEF_UI = { port: 8096, url: '', load: true, added: 5 };
+  var COLOR = { red: '#e5534b', amber: '#d9921f', green: '#3fa24a', blue: '#4a90e2', grey: '#8a8a8a', orange: '#f5a524' };
+  var TYPE_ICON = { Movie: 'fa-film', Episode: 'fa-television', Season: 'fa-television', Audio: 'fa-music',
+    TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
+  var MODE = {
+    DirectPlay:   ['sb-play', 'Direct play'],
+    DirectStream: ['sb-stream', 'Direct stream'],
+    Transcode:    ['sb-trans', 'Transcode']
+  };
+
+  // The embedded icon is light; invert it when the page background is light
+  function applyTheme() {
+    if (themed) { return; }
+    themed = true;
+    var el = document.getElementById('sb-now');
+    while (el) {
+      var m = /rgba?\(([^)]+)\)/.exec(getComputedStyle(el).backgroundColor || '');
+      if (m) {
+        var p = m[1].split(',');
+        var a = p.length > 3 ? parseFloat(p[3]) : 1;
+        if (a > 0.5) {
+          if ((0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 150) { $('i.sb-ic').addClass('sb-inv'); }
+          return;
+        }
+      }
+      el = el.parentElement;
+    }
+  }
+
+  function leftTxt(s) {
+    s = Math.max(0, Math.floor(s));
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    if (h > 0) { return h + 'h ' + (m < 10 ? '0' : '') + m + 'm left'; }
+    if (m > 0) { return m + 'm left'; }
+    return s + 's left';
+  }
+  function agoTxt(ts) {
+    var d = Math.max(0, Math.floor(Date.now() / 1000) - ts);
+    if (d < 60) { return 'just now'; }
+    if (d < 3600) { return Math.floor(d / 60) + 'm ago'; }
+    if (d < 86400) { return Math.floor(d / 3600) + 'h ago'; }
+    return Math.floor(d / 86400) + 'd ago';
+  }
+  function band(text, meta, first) {
+    var $b = $('<div class="mt-band">').toggleClass('mt-first', !!first).append($('<span>').text(text));
+    if (meta) { $b.append($('<b>').text(meta)); }
+    return $b;
+  }
+  function mnote(t) { return $('<div class="mt-note">').text(t); }
+  function note(t) { return $('<div class="sb-note">').text(t); }
+  function moreLink(href, text) {
+    return $('<a class="sb-more" target="_blank" rel="noopener">').attr('href', href)
+      .append(document.createTextNode(text + ' ')).append($('<i class="fa fa-external-link">'));
+  }
+  function icon(cls, color) { return $('<i class="fa fa-fw">').addClass(cls).css('color', color); }
+
+  function renderPill(r) {
+    var $p = $('<div class="sb-pill">');
+    var ok = r && r.ok;
+    var st = ok ? [COLOR.green, 'fa-server', 'Online']
+         : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', 'API key']
+         : [COLOR.red, 'fa-chain-broken', 'Offline'];
+    $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
+    if (ok) {
+      var n = r.streams_total || 0;
+      if (n > 0) {
+        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-play">')).append(document.createTextNode(' ' + n + ' streaming')));
+      }
+      if (r.transcoding > 0) {
+        $p.append($('<span>').css('color', COLOR.amber).append($('<i class="fa fa-bolt">')).append(document.createTextNode(' ' + r.transcoding + ' transcoding')));
+      }
+    }
+    $('#sb-status').empty().append($p);
+  }
+
+  function renderSummary(r) {
+    var $s = $('#sb-summary');
+    if (!r || !r.ok) { $s.text('Unavailable'); return; }
+    if (!r.streams_total) { $s.text('No active streams'); return; }
+    $s.text(r.streams_total + (r.streams_total === 1 ? ' stream' : ' streams') + ' \u00B7 ' + r.users + (r.users === 1 ? ' user' : ' users')
+      + (r.mbps > 0 ? ' \u00B7 ' + r.mbps.toFixed(1) + ' Mbps' : ''));
+  }
+
+  function renderNow(r) {
+    var $n = $('#sb-now').empty();
+    if (!r || !r.ok) {
+      var msg = (r && r.error === 'auth') ? 'Jellyfin rejected the API key (check Streambox settings)'
+              : (r && r.error === 'nokey') ? 'Enter the Jellyfin API key in the Streambox settings'
+              : 'Jellyfin unreachable';
+      $n.append(note(msg));
+      return;
+    }
+    var t = '18px minmax(0,1fr) 64px 84px 120px';
+    $n.append(band('Now playing \u00B7 ' + r.streams_total, '', true));
+    var $box = $('<div class="mt-box">').appendTo($n);
+    if (!r.streams.length) { $box.append(mnote('No active streams')); return; }
+    $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
+      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('User')).append($('<div>').text('Device'))
+      .append($('<div>').css('color', COLOR.orange).text('Mode')));
+
+    $.each(r.streams, function (i, x) {
+      var m = MODE[x.mode] || MODE.DirectPlay;
+      var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.paused ? 'mt-s-grey' : (x.mode === 'Transcode' ? 'mt-s-amber' : (x.mode === 'DirectStream' ? 'mt-s-blue' : 'mt-s-green')));
+      $row.append(x.paused ? icon('fa-pause', COLOR.grey) : icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
+
+      var pct = Math.max(0, Math.min(100, x.pct * 100));
+      var col = x.paused ? COLOR.grey : (x.mode === 'Transcode' ? COLOR.orange : COLOR.green);
+      var $pl;
+      if (x.live) {
+        // live TV has no length: a label instead of a progress bar
+        $pl = $('<div class="sb-pl">').append($('<span>').css('color', x.paused ? COLOR.grey : COLOR.red)
+          .text(x.paused ? 'Paused' : '\u25CF LIVE'));
+        if (x.epg) {
+          $pl.append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })));
+          if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
+        }
+      } else {
+        $pl = $('<div class="sb-pl">')
+          .append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })))
+          .append($('<span>').css('color', col).text(x.paused ? 'Paused' : Math.round(pct) + '%'));
+        if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
+        else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
+      }
+      $row.append($('<div>').append($('<div class="sb-nm">').attr('title', x.title).text(x.title)).append($pl));
+
+      $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
+      $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
+      $row.append($('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]))
+        .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
+      $box.append($row);
+    });
+  }
+
+  function renderAdded(r, href) {
+    var $a = $('#sb-added').empty();
+    if (!r || !r.ok || !r.added || !r.added.length) { return; }
+    var t = '18px minmax(0,1fr) 74px 52px 62px';
+    $a.append(band('Recently added \u00B7 ' + r.added.length, 'latest from Jellyfin'));
+    var $box = $('<div class="mt-box">').appendTo($a);
+    $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
+      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('Type')).append($('<div>').text('Quality'))
+      .append($('<div class="sb-num">').text('Added')));
+    $.each(r.added, function (i, x) {
+      var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.type === 'Movie' ? 'mt-s-blue' : 'mt-s-purple');
+      $row.append(icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
+      $row.append($('<div class="sb-nm">').attr('title', x.title).text(x.title));
+      $row.append($('<div>').append($('<span class="sb-bd">').addClass(x.type === 'Movie' ? 'sb-t-blue' : 'sb-t-purple').text(x.type)));
+      $row.append($('<div class="sb-num">').css('text-align', 'left').text(x.quality || '\u2014'));
+      $row.append($('<div class="sb-num sb-u">').text(x.added ? agoTxt(x.added) : '\u2014'));
+      $box.append($row);
+    });
+    $a.append(moreLink(href, 'Open Jellyfin'));
+  }
+
+  function card(label, pct, sub) {
+    var col = pct >= 85 ? COLOR.red : (pct >= 60 ? COLOR.amber : COLOR.green);
+    return $('<div class="sb-card">')
+      .append($('<div class="sb-k">').text(label))
+      .append($('<div class="sb-v">').text(Math.round(pct) + '%'))
+      .append($('<div class="sb-pb">').append($('<i>').css({ width: Math.min(100, pct) + '%', background: col })))
+      .append($('<div class="sb-u sb-sm">').css('margin-top', '4px').text(sub));
+  }
+
+  function fmtW(w) { return (w >= 100 ? w.toFixed(0) : w.toFixed(1)) + ' W'; }
+
+  function renderLoad(d) {
+    var $l = $('#sb-load').empty();
+    if (!d || !d.ok) { return; }
+    var cards = [];
+    if (d.gpu) {
+      cards.push(card('GPU \u00B7 Video', d.gpu.video, 'Quick Sync'));
+      cards.push(card('GPU \u00B7 Render', d.gpu.render, d.gpu.freq > 0 ? Math.round(d.gpu.freq) + ' MHz' : 'idle'));
+    }
+    if (d.cpu !== null && d.cpu !== undefined) { cards.push(card('CPU', d.cpu, 'all cores')); }
+    var sock = d.socket;
+    if (!cards.length && !sock && !d.socket_note) { return; }
+
+    var watts = (d.gpu && d.gpu.power > 0) ? d.gpu.power : 0;
+    var $sec = band(cards.length ? 'Server load' + (watts > 0 ? ' \u00B7 ' + watts.toFixed(1) + ' W' : '') : 'Socket', '');
+    if (cards.length) { $sec.find('span').attr('title', watts > 0 ? 'CPU package power (includes the integrated GPU); not the power drawn at the wall' : ''); }
+    if (sock) {
+      var month = (sock.month_kwh !== null && sock.month_kwh !== undefined) ? ' \u00B7 ' + sock.month_kwh.toFixed(1) + ' kWh/mo' : '';
+      $sec.append($('<b>').text('Socket \u00B7 ' + fmtW(sock.power) + month)
+        .attr('title', "Smart socket: power drawn at the wall. The monthly figure is the socket's own energy counter since the 1st of the month."));
+    } else if (d.socket_note) {
+      $sec.append($('<b>').css('color', COLOR.amber).text('Socket \u00B7 n/a').attr('title', d.socket_note));
+    }
+    $l.append($sec);
+
+    if (cards.length) {
+      var $g = $('<div class="sb-cards">').css('margin-top', '8px').css('grid-template-columns', 'repeat(' + cards.length + ',1fr)');
+      $.each(cards, function (i, c) { $g.append(c); });
+      $l.append($g);
+    }
+  }
+
+  function pollLoad() {
+    if (loadBusy) { return; }
+    loadBusy = true;
+    $.getJSON(LOAD, { _: Date.now() }).done(renderLoad).always(function () { loadBusy = false; });
+  }
+
+  function render(r) {
+    applyTheme();
+    var ui = (r && r.ui) ? r.ui : DEF_UI;
+    var href = ui.url ? ui.url : 'http://' + location.hostname + ':' + ui.port;
+    $('#sb-home').attr('href', href);
+    renderPill(r);
+    renderSummary(r);
+    renderNow(r);
+    renderAdded(r, href);
+    if (r && r.ok && ui.load) {
+      if (!loadTimer) { pollLoad(); loadTimer = setInterval(pollLoad, 10000); }
+    } else {
+      if (loadTimer) { clearInterval(loadTimer); loadTimer = null; }
+      $('#sb-load').empty();
+    }
+  }
+
+  function poll() {
+    if (busy) { return; }
+    busy = true;
+    $.getJSON(API, { _: Date.now() })
+      .done(render)
+      .fail(function () { render({ ok: false, error: 'unreachable' }); })
+      .always(function () { busy = false; });
+  }
+
+  poll();
+  setInterval(poll, 5000);
+
+  // ---- This week's episodes (week.php, Sonarr calendar + usual delay) ----
+  var WEEK = '/plugins/streambox/week.php';
+  var weekBusy = false;
+  function hm(ts) { var d = new Date(ts * 1000); return (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes(); }
+  function durTxt(s) {
+    s = Math.max(0, Math.floor(s / 60));
+    var h = Math.floor(s / 60), m = s % 60;
+    return h > 0 ? h + 'h' + (m ? ' ' + (m < 10 ? '0' : '') + m + 'm' : '') : m + 'm';
+  }
+  function cdTxt(s) {   // 1d 12h 46m
+    s = Math.max(0, Math.floor(s / 60));
+    var d = Math.floor(s / 1440), h = Math.floor((s % 1440) / 60), m = s % 60, o = [];
+    if (d) { o.push(d + 'd'); }
+    if (d || h) { o.push(h + 'h'); }
+    o.push((o.length && m < 10 ? '0' : '') + m + 'm');
+    return o.join(' ');
+  }
+  function dhm(ts) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(ts * 1000).getDay()] + ' ' + hm(ts); }
+  var WST = {
+    jf:    ['mt-s-green', 'sb-t-green', 'In Jellyfin'],
+    file:  ['mt-s-green', 'sb-t-green', 'Downloaded'],
+    imp:   ['mt-s-blue', 'sb-t-blue', 'Importing'],
+    scan:  ['mt-s-blue', 'sb-t-blue', 'Imported'],
+    dl:    ['mt-s-blue', 'sb-t-blue', 'Downloading'],
+    grab:  ['mt-s-blue', 'sb-t-blue', 'Grabbed'],
+    pause: ['mt-s-grey', 'sb-t-grey', 'Paused'],
+    fail:  ['mt-s-red', 'sb-t-red', 'Failed'],
+    late:  ['mt-s-amber', 'sb-t-amber', 'No release'],
+    aired: ['mt-s-grey', 'sb-t-grey', 'Aired'],
+    wait:  ['mt-s-grey', 'sb-t-grey', 'Waiting']
+  };
+  function renderWeek(w) {
+    var $w = $('#sb-week').empty();
+    if (!w || !w.show) { return; }
+    var f = new Date(w.from * 1000), t = new Date((w.to - 1) * 1000);
+    var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var range = 'Mon ' + f.getDate() + (f.getMonth() !== t.getMonth() ? ' ' + M[f.getMonth()] : '') + ' \u2013 Sun ' + t.getDate() + ' ' + M[t.getMonth()];
+    if (!w.ok) {
+      if (w.show < 2) { return; }
+      $w.append(band("This week's episodes", range));
+      var why = w.error === 'nosonarr' ? 'Sonarr is not set (Streambox settings)' : (w.error === 'auth' ? 'Sonarr rejected the API key' : 'Sonarr unreachable');
+      $w.append($('<div class="mt-box">').append(mnote(why)));
+      return;
+    }
+    if (!w.counts.all && w.show < 2) { return; }
+    var meta = [range];
+    if (w.counts.jf) { meta.push(w.counts.jf + ' in Jellyfin'); }
+    if (w.counts.dl) { meta.push(w.counts.dl + ' downloading'); }
+    if (w.counts.late) { meta.push(w.counts.late + ' late'); }
+    var $b = band("This week's episodes \u00B7 " + w.counts.all, meta.join(' \u00B7 '));
+    if (w.counts.late) { $b.find('b').css({ color: COLOR.amber, opacity: 1 }); }
+    $w.append($b);
+    var $box = $('<div class="mt-box">').appendTo($w);
+    if (!w.counts.all) { $box.append(mnote('No monitored episode airs this week')); return; }
+    var t3 = '18px minmax(0,1fr) 108px 104px';
+    $.each(w.days, function (i, d) {
+      var ready = 0;
+      $.each(d.rows, function (j, r) { if (r.st === 'jf' || r.st === 'file') { ready++; } });
+      $box.append($('<div class="sb-day">').toggleClass('sb-today', !!d.today)
+        .append($('<span>').text((d.today ? 'Today \u00B7 ' : '') + d.label))
+        .append($('<span>').text(ready ? ready + ' in Jellyfin' : '')));
+      $.each(d.rows, function (j, r) {
+        var s = WST[r.st] || WST.wait;
+        var $row = $('<div class="mt-r mt-n">').addClass(s[0]).css('grid-template-columns', t3);
+        $row.append(icon('fa-television', '#9fb4c8'));
+        var $t = $('<div class="sb-nm">').attr('title', r.title ? r.code + ' \u00B7 ' + r.title : r.code).text(r.series + ' \u00B7 ' + r.code);
+        if (r['new']) { $t.append(' ').append($('<span class="sb-new">').attr('title', 'New series: its first episode airs this week').text('New')); }
+        var $nm = $('<div>').append($t);
+        var sub = '';
+        if (r.st === 'late') { sub = (r.delay !== null ? 'usually ' + durTxt(r.delay) + ' after airing, now ' : 'aired ') + durTxt(w.now - r.air) + (r.delay !== null ? '' : ' ago'); }
+        else if (r.idx && r.idx.length > 1 && (r.st === 'wait' || r.st === 'aired')) { sub = $.map(r.idx, function (x) { return x[0] + ' ~' + hm(x[1]); }).join(' \u00B7 '); }
+        if (sub) { $nm.append($('<div class="sb-wsub">').text(sub)); }
+        if (r.st === 'dl' && r.pct !== null) { $nm.append($('<div class="sb-pb">').css('margin-top', '5px').append($('<i>').css({ width: r.pct + '%', background: COLOR.blue }))); }
+        $row.append($nm);
+        // countdown to the expected time (to the air time when the delay is unknown); after it: overdue
+        var nowS = Math.floor(Date.now() / 1000), target = r.exp !== null ? r.exp : r.air, when;
+        if (r.st === 'wait' || r.st === 'aired' || r.st === 'late') {
+          when = target > nowS ? (r.exp === null ? 'airs in ' : 'in ') + cdTxt(target - nowS) : (nowS - target < 60 ? 'due now' : 'overdue ' + cdTxt(nowS - target));
+        } else { when = 'aired ' + hm(r.air); }
+        var tip = 'Airs ' + dhm(r.air) + (r.exp !== null ? ' \u00b7 expected ~' + dhm(r.exp) : '') + '\n'
+          + (r.exp === null ? 'No grab history yet: the usual delay after airing is unknown'
+            : 'Usual delay after airing: ' + durTxt(r.delay) + ' (median of ' + r.n + ' episode' + (r.n === 1 ? '' : 's') + (r.basis === 'series' ? ' of this series' : ' of all series') + ')');
+        $row.append($('<div class="sb-num sb-u">').css('text-align', 'left').attr('title', tip).text(when));
+        var lab = s[2];
+        if (r.st === 'dl' && r.pct !== null) { lab = r.pct + '%' + (r.left ? ' \u00B7 ' + durTxt(r.left) : ''); }
+        $row.append($('<div>').append($('<span class="sb-bd">').addClass(s[1]).text(lab)
+          .attr('title', r.st === 'scan' ? 'Sonarr imported it; Jellyfin has not listed it yet' : '')));
+        $box.append($row);
+      });
+    });
+  }
+  function pollWeek() {
+    if (weekBusy) { return; }
+    weekBusy = true;
+    $.getJSON(WEEK, { _: Date.now() }).done(renderWeek).always(function () { weekBusy = false; });
+  }
+  pollWeek();
+  setInterval(pollWeek, 60000);
+});
+</script>

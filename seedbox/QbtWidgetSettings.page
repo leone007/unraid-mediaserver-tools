@@ -1,0 +1,111 @@
+Menu="Utilities"
+Type="xmenu"
+Title="Seedbox"
+Icon="seedbox.png"
+Markdown="false"
+---
+<?PHP
+$qbt_file = '/boot/config/plugins/qbittorrent_widget/settings.cfg';
+$qbt = [
+  'host' => '127.0.0.1', 'port' => '8080', 'user' => '', 'pass' => '', 'webui_url' => '',
+  'rows' => '6', 'max_attention' => '15', 'show_bar' => '1',
+  'col_dl' => '1', 'col_ul' => '1', 'col_eta' => '1',
+];
+if (is_file($qbt_file)) {
+  $qbt_c = @parse_ini_file($qbt_file, false, INI_SCANNER_RAW);
+  if (is_array($qbt_c)) { $qbt = array_merge($qbt, $qbt_c); }
+}
+$qbt_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$qbt_tok = is_array($qbt_var) ? (string)($qbt_var['csrf_token'] ?? '') : '';
+if (!function_exists('qbt_h')) {
+  function qbt_h($v) { return htmlspecialchars((string)$v, ENT_QUOTES); }
+}
+if (!function_exists('qbt_chk')) {
+  function qbt_chk($v) { return in_array(strtolower(trim((string)$v)), ['0', 'no', 'false', 'off', ''], true) ? '' : 'checked'; }
+}
+?>
+<style>
+/*@@SETTINGS_CSS@@*/
+</style>
+<form id="qbt-form" class="uset" method="POST" action="/plugins/qbittorrent_widget/save.php" onsubmit="return false;">
+<input type="hidden" name="csrf_token" value="<?=qbt_h($qbt_tok)?>">
+<h3><span>qBittorrent connection</span><small id="qbt-conn"></small></h3>
+<dl>
+<dt>Address and Web UI port:</dt>
+<dd><input type="text" name="host" class="narrow" value="<?=qbt_h($qbt['host'])?>"> <input type="number" name="port" min="1" max="65535" class="narrow" value="<?=qbt_h($qbt['port'])?>"><span class="uset-hint">as seen from Unraid; 127.0.0.1 when qBittorrent runs in a container on this server with its port published</span></dd>
+
+<dt>Username and password:</dt>
+<dd><input type="text" name="user" class="narrow" autocomplete="off" value="<?=qbt_h($qbt['user'])?>"> <input type="password" name="pass" class="narrow" autocomplete="new-password" value="" placeholder="<?=$qbt['pass'] !== '' ? '(saved)' : 'password'?>"><span class="uset-hint">the saved password is not sent to the page: leave it empty to keep it, type - to remove it; no double quotes</span></dd>
+
+<dt>Web UI link (optional):</dt>
+<dd><input type="text" name="webui_url" placeholder="http://192.168.1.10:8080" value="<?=qbt_h($qbt['webui_url'])?>" style="width:320px"><span class="uset-hint">the home icon of the tile opens this; empty = this server's address with the Web UI port</span></dd>
+
+<dt>Check:</dt>
+<dd><input type="button" id="qbt-test" value="Test the connection"> <span id="qbt-tmsg"></span><span class="uset-hint">tests the saved settings (Apply first after a change)</span></dd>
+</dl>
+
+<h3><span>Tile rows</span><small>In transfer and Needs attention</small></h3>
+<dl>
+<dt>Most rows shown:</dt>
+<dd>In transfer <input type="number" name="rows" min="1" max="50" class="narrow" value="<?=qbt_h($qbt['rows'])?>"> Needs attention <input type="number" name="max_attention" min="1" max="50" class="narrow" value="<?=qbt_h($qbt['max_attention'])?>"><span class="uset-hint">more rows are counted in the band title</span></dd>
+
+<dt>Columns:</dt>
+<dd><input type="hidden" name="show_bar" value="0"><label><input type="checkbox" name="show_bar" value="1" <?=qbt_chk($qbt['show_bar'])?>> progress bar under the name</label>
+<input type="hidden" name="col_dl" value="0"><label><input type="checkbox" name="col_dl" value="1" <?=qbt_chk($qbt['col_dl'])?>> Down</label>
+<input type="hidden" name="col_ul" value="0"><label><input type="checkbox" name="col_ul" value="1" <?=qbt_chk($qbt['col_ul'])?>> Up</label>
+<input type="hidden" name="col_eta" value="0"><label><input type="checkbox" name="col_eta" value="1" <?=qbt_chk($qbt['col_eta'])?>> ETA</label><span class="uset-hint">the torrent name column is always shown</span></dd>
+</dl>
+
+<dl class="uset-save">
+<dt>&nbsp;</dt>
+<dd>
+  <input type="button" id="qbt-save" value="Apply">
+  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <span id="qbt-msg"></span>
+</dd>
+</dl>
+</form>
+
+<p><a href="/Settings/SeedboxTools">Seedbox Tools</a>: find torrents for files that are not seeded, and replace big titles with smaller releases through Radarr and Sonarr.</p>
+
+<p style="opacity:.55;font-size:12px;max-width:130ch">Stalled torrents are ignored: an idle seed that nobody downloads from is normal in qBittorrent. Errors, missing files, paused or stopped and queued torrents are listed under Needs attention; torrents that are moving, checking or allocating appear under In transfer. When the client is firewalled or disconnected, a single connection row is shown.</p>
+
+<script>
+$(function () {
+  var $msg = $('#qbt-msg');
+  function qbtCheck(show) {
+    var $t = $('#qbt-tmsg'); if (show) { $t.attr('class', '').text('Testing...'); }
+    $.getJSON('/plugins/qbittorrent_widget/api_fetch.php', {_: Date.now()}).done(function (r) {
+      var why = {unreachable: 'cannot reach qBittorrent (address or port)', auth: 'the username or password is wrong', bad_response: 'unexpected answer'};
+      if (r && r.ok) {
+        var n = r.counts ? r.counts.total || 0 : 0, t = (r.conn || 'connected') + ' \u00b7 ' + n + ' torrents';
+        $('#qbt-conn').attr('class', 'uset-ok').text(t); if (show) { $t.attr('class', 'uset-ok').text('ok, ' + n + ' torrents, ' + (r.conn || 'connected')); }
+      } else {
+        var e = r && r.error ? (why[r.error] || r.error) : 'no answer';
+        $('#qbt-conn').attr('class', 'uset-er').text(e); if (show) { $t.attr('class', 'uset-er').text(e); }
+      }
+    }).fail(function (x) { if (show) { $t.attr('class', 'uset-er').text('HTTP ' + x.status); } });
+  }
+  $('#qbt-test').on('click', function () { qbtCheck(true); });
+  qbtCheck(false);
+  $('#qbt-save').on('click', function () {
+    var $b = $(this).prop('disabled', true);
+    $msg.css('color', '').text('Saving...');
+    $.post('/plugins/qbittorrent_widget/save.php', $('#qbt-form').serialize(), null, 'json')
+      .done(function (r) {
+        if (r && r.ok) {
+          $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.'); qbtCheck(false);
+        } else {
+          var e = (r && r.error) ? r.error : 'unknown error';
+          if (e === 'quote_not_allowed') { e = 'double quotes are not allowed in the username or password'; }
+          $msg.css('color', '#e5534b').text('Not saved: ' + e);
+        }
+      })
+      .fail(function (x) {
+        var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
+        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+      })
+      .always(function () { $b.prop('disabled', false); });
+  });
+});
+</script>

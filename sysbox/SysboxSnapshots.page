@@ -1,0 +1,173 @@
+Menu="Utilities"
+Type="xmenu"
+Title="Snapshots"
+Icon="sysbox.png"
+Markdown="false"
+---
+<style>
+/* the Dashboard tile look (common/tile.css, inserted by the build): Activity on top, the datasets, the settings */
+/*@@TILE_CSS@@*/
+#snp{--snp-line:rgba(128,128,128,.22)}
+#snp .snp-mut{opacity:.6}
+#snp .snp-ok{color:#3fa24a}#snp .snp-er{color:#e5534b}#snp .snp-am{color:#d9921f}
+#snp .snp-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
+#snp .mt-band{margin-top:26px;padding:9px 12px}
+#snp .mt-band span{font-weight:600}
+#snp .mt-box{margin-top:8px}
+#snp .snp-status{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:9px 12px;border-top:1px solid var(--snp-line)}
+#snp .mt-box>:first-child{border-top:0}
+#snp .snp-row{display:grid;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--snp-line)}
+#snp .snp-row small{display:block;opacity:.6}
+#snp .s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+#snp .s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+#snp .s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+#snp .s-red{background:rgba(229,83,75,.13);box-shadow:inset 3px 0 0 #e5534b}
+#snp .s-grey{background:rgba(128,128,128,.07);box-shadow:inset 3px 0 0 #8a8a8a}
+#snp .snp-log1{grid-template-columns:22px minmax(0,1fr)}
+#snp .snp-ico{font-family:monospace;font-weight:bold;text-align:center}
+#snp .snp-snap{grid-template-columns:22px minmax(0,1fr) 110px 90px auto}
+#snp .snp-ct{grid-template-columns:22px minmax(0,1fr) 90px auto;padding-left:46px}
+#snp .snp-num{font-family:monospace;text-align:right}
+#snp .snp-path{display:block;font-family:monospace;font-size:12px;opacity:.6;overflow-wrap:anywhere}
+#snp .snp-chip{display:inline-block;font-size:11px;padding:1px 6px;margin-left:6px;background:rgba(128,128,128,.25);font-weight:normal}
+#snp .snp-chip.b{background:rgba(74,144,226,.25);color:#8fbdf0}#snp .snp-chip.a{background:rgba(217,146,31,.25);color:#d9921f}
+#snp .snp-gbar{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--snp-line);cursor:pointer;font-weight:600}
+#snp .snp-gbar .c{font-weight:normal;font-size:12px;opacity:.7}
+#snp .snp-gbar.sub{padding-left:46px}
+#snp .snp-grp[hidden]{display:none}
+#snp .snp-log{max-height:240px;overflow:auto;font-family:monospace;font-size:12px;white-space:pre-wrap;padding:10px 12px;margin:0;opacity:.75}
+#snp .snp-lead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 12px}
+#snp .snp-lead p{margin:0;opacity:.65;max-width:95ch;flex:1 1 420px}
+#snp input.snp-ghost{color:inherit!important;opacity:.7;border-color:rgba(128,128,128,.45)!important}
+#snp input.snp-sm{padding:2px 8px!important;font-size:11px!important;letter-spacing:0!important;text-transform:none!important;margin:0!important;min-width:0}
+#snp .snp-set{grid-template-columns:minmax(200px,280px) minmax(0,1fr)}
+#snp .snp-set .lb{opacity:.75}
+#snp .snp-ctl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+#snp .snp-ctl input[type=number]{width:70px!important;margin:0}
+#snp .snp-ctl label{display:inline-flex;align-items:center;gap:6px}
+#snp .snp-ctl input[type=checkbox]{margin:0}
+#snp .snp-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+@media (max-width:760px){#snp .snp-snap,#snp .snp-ct{grid-template-columns:22px minmax(0,1fr);padding-left:12px}#snp .snp-snap>:nth-child(n+3),#snp .snp-ct>:nth-child(n+3){grid-column:2}#snp .snp-set{grid-template-columns:1fr}}
+</style>
+<div id="snp">
+<p class="snp-sub">A ZFS snapshot freezes a dataset as it is: it costs almost no space at first and grows only with the changes. A daily one before the container updates lets you bring back any container's data from the last days. The whole dataset is never rolled back; a single container can be restored, with a safety snapshot first.</p>
+
+<div class="mt-band"><span>Activity</span><b id="snp-aband"></b></div>
+<div class="mt-box" id="snp-act"><div class="snp-status snp-mut">Loading...</div></div>
+
+<div class="mt-band"><span>Datasets</span><b id="snp-dband"></b></div>
+<div class="mt-box" id="snp-ds"></div>
+
+<div class="mt-band"><span>Settings</span><b>daily snapshots</b></div>
+<div class="mt-box" id="snp-set"></div>
+</div>
+
+<script>
+$(function () {
+  var URL = '/plugins/sysbox/snap.php', D = null, OPEN = {}, CTRS = {}, pollT = null, CONF = null;
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
+  function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
+  function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return Math.max(0, Math.round(b / 1e3)) + ' KB'; }
+  function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? Math.floor(s / 86400) + ' d' : s >= 3600 ? Math.floor(s / 3600) + ' h' : Math.max(1, Math.floor(s / 60)) + ' m'; }
+  function gbar(g, cls, title, count, sub) { return '<div class="snp-gbar ' + cls + (sub ? ' sub' : '') + '" data-g="' + esc(g) + '"><span class="pm">' + (OPEN[g] ? '&minus;' : '+') + '</span><span>' + title + '</span><span class="c">' + count + '</span></div>'; }
+  function grp(g, inner) { return '<div class="snp-grp" data-g="' + esc(g) + '"' + (OPEN[g] ? '' : ' hidden') + '>' + inner + '</div>'; }
+  $(document).on('click', '#snp .snp-gbar', function () {
+    var g = String($(this).data('g')); OPEN[g] = !OPEN[g]; $(this).find('.pm').first().html(OPEN[g] ? '&minus;' : '+'); $('#snp .snp-grp').filter(function () { return String($(this).data('g')) === g; }).prop('hidden', !OPEN[g]);
+    var m = /^rs\|(.+)\|(.+)$/.exec(g); if (OPEN[g] && m && !CTRS[m[1]]) { loadCtrs(m[1]); }
+  });
+
+  // ---- Activity: a running restore, the last line of the log, the log folded
+  function drawAct(r) {
+    var h = '', run = r.run || {state: 'idle'}, log = r.log || [], last = log.length ? log[log.length - 1] : '';
+    if (run.state && run.state !== 'idle' && (run.state === 'running' || Date.now() / 1000 - (run.finished || 0) < 3600)) {
+      var cls = run.state === 'running' ? 's-blue' : run.state === 'done' ? 's-green' : 's-red';
+      h += '<div class="snp-row snp-log1 ' + cls + '"><span class="snp-ico">' + (run.state === 'running' ? '&#8635;' : run.state === 'done' ? '&#10003;' : '!') + '</span><span><b>' + (run.state === 'running' ? 'Restoring ' + esc(run.ctr) + ' from ' + esc(run.snap) : esc(run.msg)) + '</b><small>' + esc((run.log || []).slice(-3).join(' · ')) + '</small></span></div>';
+    }
+    if (last) { var bad = / FAILED|could not| full | not found/.test(last); h += '<div class="snp-row snp-log1 ' + (bad ? 's-amber' : 's-green') + '"><span class="snp-ico ' + (bad ? 'snp-am">!' : 'snp-ok">&#10003;') + '</span><span>' + esc(last) + '</span></div>'; }
+    if (log.length > 1) { h += gbar('log', 's-grey', 'Earlier lines', (log.length - 1) + (log.length === 2 ? ' line' : ' lines')) + grp('log', '<div class="snp-log">' + esc(log.slice(0, -1).reverse().join('\n')) + '</div>'); }
+    $('#snp-act').html(h || '<div class="snp-status snp-mut">Nothing has happened yet. The first daily snapshot is made at ' + ('0' + r.cfg.hour).slice(-2) + ':' + ('0' + r.cfg.min).slice(-2) + '.</div>');
+    $('#snp-aband').text(run.state === 'running' ? 'restoring ' + run.ctr : last ? 'last: ' + last.slice(0, 16) : 'nothing yet');
+  }
+
+  // ---- the datasets and their snapshots
+  function drawDs(r) {
+    var h = '', free = '';
+    if (!r.zfs) { $('#snp-ds').html('<div class="snp-status snp-er">ZFS is not available on this server (no pool).</div>'); return; }
+    $.each(r.datasets, function (i, d) {
+      free = fb(d.avail) + ' free';
+      var snaps = (d.snaps || []).slice().reverse(), g = 'ds|' + d.name;
+      h += gbar(g, d.on ? 's-blue' : 's-grey', esc(d.name) + (d.on ? '<span class="snp-chip b">daily</span>' : '') + ' <span class="snp-mut" style="font-weight:normal">' + esc(d.mnt) + '</span>', fb(d.used) + ' · ' + snaps.length + ' snapshot' + (snaps.length === 1 ? '' : 's') + (snaps.length ? ' · ' + fb(d.held) + ' held' : '') + (d.fill >= 0 ? ' · pool ' + d.fill + ' % full' : ''));
+      var inner = '<div class="snp-lead"><p>Every snapshot can be browsed as a folder: <code>' + esc(d.mnt) + '/.zfs/snapshot/&lt;name&gt;/</code>. A container is restored with the button under a snapshot; the others keep running.</p><input type="button" class="snp-make" data-ds="' + esc(d.name) + '" value="Make one now"></div>';
+      if (!snaps.length) { inner += '<div class="snp-status snp-mut">No snapshot yet.</div>'; }
+      $.each(snaps, function (j, s) {
+        inner += '<div class="snp-row snp-snap ' + (s.auto ? 's-green' : 's-blue') + '"><span class="snp-ico ' + (s.auto ? 'snp-ok">A' : '">M') + '</span><div><b>' + esc(s.name) + '</b>' + (s.auto ? '' : '<span class="snp-chip">manual: never removed by itself</span>') + '<span class="snp-path">' + esc(d.mnt) + '/.zfs/snapshot/' + esc(s.name) + '/</span></div><span class="snp-num">' + ago(s.t) + ' ago</span><span class="snp-num">' + fb(s.used) + '</span><span><input type="button" class="snp-del snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(s.name) + '" value="Delete"></span></div>';
+        var rg = 'rs|' + d.name + '|' + s.name;
+        inner += gbar(rg, 's-grey', 'Restore a container from ' + esc(s.name), 'the folders each one uses, read from its settings', true) + grp(rg, ctrRows(d.name, s.name));
+      });
+      h += grp(g, inner);
+    });
+    $('#snp-ds').html(h || '<div class="snp-status snp-mut">No ZFS dataset under /mnt.</div>');
+    $('#snp-dband').text(free);
+  }
+  function ctrRows(ds, snap) {
+    var L = CTRS[ds];
+    if (!L) { return '<div class="snp-status snp-mut" style="padding-left:46px">Loading the containers...</div>'; }
+    if (!L.length) { return '<div class="snp-status snp-mut" style="padding-left:46px">No container keeps its data in this dataset.</div>'; }
+    var h = '<div class="snp-status snp-mut" style="padding-left:46px;font-size:12px">Before a restore a safety snapshot of now is made (before-restore-&lt;name&gt;-&lt;date&gt;), so a restore can be undone the same way. Only that container is stopped.</div>';
+    $.each(L, function (i, c) {
+      h += '<div class="snp-row snp-ct s-grey"><span></span><div><b>' + esc(c.name) + '</b>' + (c.name === 'claude' ? '<span class="snp-chip a">this Claude session stops</span>' : '') + $.map(c.dirs, function (x) { return '<span class="snp-path">' + esc(x) + '</span>'; }).join('') + '</div><span class="snp-num">' + esc(c.state) + '</span><span><input type="button" class="snp-pre snp-sm" data-ds="' + esc(ds) + '" data-snap="' + esc(snap) + '" data-ctr="' + esc(c.name) + '" value="Restore"></span></div>';
+      h += '<div class="snp-status s-amber snp-conf" data-key="' + esc(ds + '|' + snap + '|' + c.name) + '" style="display:none;padding-left:46px"></div>';
+    });
+    return h;
+  }
+  function loadCtrs(ds) { api('state', {ctr: ds}).done(function (r) { $.each(r.datasets, function (i, d) { if (d.name === ds) { CTRS[ds] = d.containers || []; } }); draw(r); }); }
+
+  $(document).on('click', '.snp-make', function () {
+    var $b = $(this).prop('disabled', true), ds = $b.data('ds');
+    api('make', {ds: ds}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }).always(function () { $b.prop('disabled', false); });
+  });
+  $(document).on('click', '.snp-del', function () {
+    var $b = $(this), ds = $b.data('ds'), n = $b.data('name');
+    if (!window.confirm('Delete the snapshot ' + ds + '@' + n + '?\n\nThe data that only this snapshot holds is gone for good; the live data does not change.')) return;
+    $b.prop('disabled', true);
+    api('delete', {ds: ds, name: n}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
+  });
+  // Restore: first a dry run shows how many files differ, then the confirm row
+  $(document).on('click', '.snp-pre', function () {
+    var $b = $(this).prop('disabled', true), ds = $b.data('ds'), snap = $b.data('snap'), ctr = $b.data('ctr'), key = ds + '|' + snap + '|' + ctr;
+    var $c = $('#snp .snp-conf').filter(function () { return $(this).data('key') === key; }).show().html('<span class="snp-mut">Comparing with the snapshot...</span>');
+    api('preview', {ds: ds, snap: snap, ctr_name: ctr}).done(function (r) {
+      if (!r.ok) { $c.html('<span class="snp-er">' + esc(r.error) + '</span>'); return; }
+      $c.html('<span class="snp-am">Restore <b>' + esc(ctr) + '</b> from ' + esc(snap) + '? ' + r.changed + ' file' + (r.changed === 1 ? '' : 's') + ' differ. 1) safety snapshot of now, 2) stop ' + esc(ctr) + ', 3) its folders become exactly as in the snapshot (newer files are removed), 4) start ' + esc(ctr) + '.' + (ctr === 'claude' ? ' This Claude session stops; the Claude button brings it back.' : '') + '</span><input type="button" class="snp-go snp-sm" data-ds="' + esc(ds) + '" data-snap="' + esc(snap) + '" data-ctr="' + esc(ctr) + '" value="Yes, restore"><input type="button" class="snp-no snp-ghost snp-sm" value="Cancel">');
+    }).fail(function (x) { $c.html('<span class="snp-er">' + esc(err(x)) + '</span>'); }).always(function () { $b.prop('disabled', false); });
+  });
+  $(document).on('click', '.snp-no', function () { $(this).closest('.snp-conf').hide().empty(); });
+  $(document).on('click', '.snp-go', function () {
+    var $b = $(this).prop('disabled', true);
+    api('restore', {ds: $b.data('ds'), snap: $b.data('snap'), ctr_name: $b.data('ctr')}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
+  });
+
+  // ---- settings
+  function drawSet(r) {
+    var c = r.cfg, ds = '';
+    $.each(r.datasets, function (i, d) { ds += '<label><input type="checkbox" class="snp-dsel" value="' + esc(d.name) + '"' + (c.datasets.indexOf(d.name) >= 0 ? ' checked' : '') + '> ' + esc(d.name) + '</label>'; });
+    $('#snp-set').html(
+      '<div class="snp-row snp-set"><span class="lb">Daily snapshots</span><div class="snp-ctl"><label><input type="checkbox" id="snp-on"' + (+c.on ? ' checked' : '') + '> on</label></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">Datasets</span><div class="snp-ctl">' + (ds || '<span class="snp-mut">none</span>') + '<span class="snp-hint">only the datasets of the pools are offered (ZFS); the array disks are XFS and have no snapshots</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">Time and how long to keep</span><div class="snp-ctl">every day at <input type="number" id="snp-h" min="0" max="23" value="' + c.hour + '"> : <input type="number" id="snp-m" min="0" max="59" value="' + c.min + '"> keep <input type="number" id="snp-k" min="1" max="90" value="' + c.keep + '"> days, stop above <input type="number" id="snp-f" min="10" max="99" value="' + c.maxfill + '"> % pool fill<span class="snp-hint">set CA Auto Update after this time, so the snapshot is made before the updates. Only the daily auto- snapshots are removed by themselves; a manual one stays until you delete it</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">Discord</span><div class="snp-ctl"><label><input type="checkbox" id="snp-dc"' + (+c.discord ? ' checked' : '') + '> tell me when a daily snapshot fails or a restore stops (the Sysbox webhook)</label></div></div>' +
+      '<div class="snp-row snp-set"><span></span><div class="snp-ctl"><input type="button" id="snp-save" value="Save"><span id="snp-smsg"></span></div></div>');
+  }
+  $(document).on('click', '#snp-save', function () {
+    var d = []; $('.snp-dsel:checked').each(function () { d.push($(this).val()); });
+    var $m = $('#snp-smsg').attr('class', '').text('Saving...');
+    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0})
+      .done(function (r) { if (r.ok) { $m.attr('class', 'snp-ok').text('Saved.'); load(); } else { $m.attr('class', 'snp-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'snp-er').text(err(x)); });
+  });
+
+  function draw(r) { D = r; drawAct(r); drawDs(r); if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); } clearTimeout(pollT); if (r.running || (r.run && r.run.state === 'running')) { pollT = setTimeout(load, 2500); } }
+  function load() { api('state').done(draw).fail(function (x) { $('#snp-act').html('<div class="snp-status snp-er">' + esc(err(x)) + '</div>'); }); }
+  load();
+});
+</script>

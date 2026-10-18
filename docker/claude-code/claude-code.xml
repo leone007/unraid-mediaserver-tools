@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>claude</Name>
+  <Repository>claude-code-unraid:local</Repository>
+  <Registry/>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project/>
+  <Overview>Claude Code in a tmux session for working on the Unraid plugins. Built locally from docker/claude-code/Dockerfile (no third-party image). Runs as nobody:users, bridge network, no Docker socket. Only /work and the home folder are writable; the server data is mounted read-only. Attach: docker exec -it claude tmux attach -t main, or the Claude button in the Unraid header (Sysbox).</Overview>
+  <Category>Tools: Productivity:</Category>
+  <WebUI/>
+  <TemplateURL/>
+  <Icon/>
+  <ExtraParams>--memory=4g --cpus=2 --restart=unless-stopped</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Work (read/write)" Target="/work" Default="/mnt/user/data/DEV" Mode="rw" Description="Repo and build output. The only place Claude can write besides its home." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/data/DEV</Config>
+  <Config Name="Home (login, settings)" Target="/home/claude" Default="/mnt/cache/docker/claude-code" Mode="rw" Description="Claude Code login and settings (survive updates)." Type="Path" Display="always" Required="true" Mask="false">/mnt/cache/docker/claude-code</Config>
+  <Config Name="Data (read only)" Target="/srv/data" Default="/mnt/user/data" Mode="ro" Description="Media and downloads, read only." Type="Path" Display="always" Required="false" Mask="false">/mnt/user/data</Config>
+  <Config Name="Plugin config (read only)" Target="/srv/plugins" Default="/boot/config/plugins" Mode="ro" Description="Installed .plg files and plugin settings. Contains API keys: Claude is told never to print them." Type="Path" Display="always" Required="false" Mask="false">/boot/config/plugins</Config>
+  <Config Name="Installed plugin code (read only)" Target="/srv/emhttp-plugins" Default="/usr/local/emhttp/plugins" Mode="ro" Description="The plugin files as installed, to compare with the repo." Type="Path" Display="always" Required="false" Mask="false">/usr/local/emhttp/plugins</Config>
+  <Config Name="Unraid state (read only)" Target="/srv/emhttp-state" Default="/var/local/emhttp" Mode="ro" Description="disks.ini and var.ini for Diskbox checks." Type="Path" Display="always" Required="false" Mask="false">/var/local/emhttp</Config>
+</Container>

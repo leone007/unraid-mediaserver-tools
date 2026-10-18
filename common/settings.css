@@ -1,0 +1,25 @@
+/* Shared settings-page look (the owner's design rule, 2026-10-10): a dark band per part (the h3), the rows in a box, the label on the
+   left, the controls of one setting on one line, the explanation as a quiet line under them. Scoped to a form with class "uset".
+   The builds copy this block into each settings page where the marker below stands. Unraid 7 lays every dd out as a flex column:
+   overridden here for these forms only. */
+.uset h3{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:9px 12px;margin:26px 0 8px;line-height:1.4}
+.uset h3:first-child{margin-top:6px}
+.uset h3 small{font-weight:400;opacity:.55;text-transform:none;letter-spacing:0}
+.uset dl{display:grid;grid-template-columns:minmax(200px,300px) minmax(0,1fr);gap:0;margin:0;padding:0;background:rgba(128,128,128,.12)}
+.uset dl dt,.uset dl dd{float:none;width:auto;margin:0;padding:9px 12px;border-top:1px solid rgba(128,128,128,.22);text-align:left;line-height:1.5}
+.uset dl dt{opacity:.75;font-weight:normal}
+.uset dl dt:first-child,.uset dl dt:first-child+dd{border-top:0}
+.uset dl dd{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.uset dl dd>[class*="-mut"],.uset dl dd>.uset-hint,.uset dl dd>.uset-brk,.uset dl dd>div,.uset dl dd>p{flex:1 1 100%;margin:0}
+.uset dl dd>[class*="-mut"],.uset dl dd>.uset-hint{opacity:.55;font-size:12px;max-width:120ch}
+.uset dl dd>.uset-brk{height:0}
+.uset dd input,.uset dd select,.uset dd textarea{margin:0;max-width:100%}
+.uset dd select{width:auto!important;min-width:110px}
+.uset dd input.narrow{width:110px!important;min-width:0}
+.uset dd input[type=checkbox]{width:auto!important;margin:0 4px 0 0}
+.uset dd label{display:inline-flex;align-items:center;gap:4px}
+.uset dd input[type=button]{margin:0}
+.uset dl.uset-save{background:none;margin-top:14px}
+.uset dl.uset-save dt,.uset dl.uset-save dd{border-top:0}
+.uset .uset-ok{color:#3fa24a}.uset .uset-er{color:#e5534b}
+@media (max-width:760px){.uset dl{grid-template-columns:1fr}.uset dl dd{border-top:0;padding-top:0}}

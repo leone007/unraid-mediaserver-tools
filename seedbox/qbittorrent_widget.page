@@ -1,0 +1,318 @@
+Menu="Dashboard:0"
+Cond="version_compare(parse_ini_file('/etc/unraid-version')['version'],'6.11.9','>')"
+Markdown="false"
+---
+<?PHP
+$pluginname = "qbittorrent_widget";
+
+$mytiles[$pluginname]['column2'] =
+<<<EOT
+<tbody title="_(Seedbox)_">
+<tr><td>
+  <span class="tile-header">
+    <span class="tile-header-left">
+      <i class="f32 qbt-ic"></i>
+      <div class="section">
+        <h3 class="tile-header-main qbt-ttl">Seedbox</h3>
+        <span id="qbt-summary" class="qbt-sum">Connecting&hellip;</span>
+      </div>
+    </span>
+    <span class="tile-header-right">
+      <span class="tile-header-right-controls">
+        <a id="qbt-home" href="#" target="_blank" rel="noopener" title="_(Open qBittorrent Web UI)_"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/QbtWidgetSettings" title="_(Seedbox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+      </span>
+    </span>
+  </span>
+</td></tr>
+<tr><td>
+  <div class="qbt-tile">
+    <div id="qbt-status"></div>
+    <div id="qbt-tools"></div>
+    <div id="qbt-attn"></div>
+    <div id="qbt-xfer"><div class="qbt-note">Loading&hellip;</div></div>
+  </div>
+</td></tr>
+</tbody>
+EOT;
+?>
+<style>
+i.f32.qbt-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/qbittorrent_widget/icon.png) center/contain no-repeat!important}
+i.f32.qbt-ic.qbt-inv{filter:invert(1)}
+.qbt-ttl{margin-bottom:2px!important}
+.qbt-sum{display:block;margin:0!important;line-height:1.3}
+.qbt-tile{width:100%;font-size:12px;white-space:normal}
+.qbt-tile a{text-decoration:none}
+#qbt-status{display:flex;justify-content:flex-end;margin:0 0 4px}
+.qbt-pill{display:inline-flex;border:1px solid rgba(128,128,128,.35);border-radius:6px;overflow:hidden}
+.qbt-pill span{padding:3px 10px}
+.qbt-pill span+span{border-left:1px solid rgba(128,128,128,.35)}
+.qbt-num{text-align:right;white-space:nowrap;font-family:bitstream,monospace}
+.qbt-nm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;word-break:break-word}
+.qbt-u{opacity:.6}
+.qbt-pl{display:flex;align-items:center;gap:8px;margin-top:5px;font-family:bitstream,monospace;white-space:nowrap}
+.qbt-pb{height:4px;border-radius:2px;background:rgba(128,128,128,.3);overflow:hidden;flex:1;min-width:30px}
+.qbt-pb i{display:block;height:100%}
+.qbt-bd{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px}
+.qbt-bd.qbt-red{background:rgba(229,83,75,.22);color:#e5534b}
+.qbt-bd.qbt-amber{background:rgba(224,160,48,.22);color:#d9921f}
+.qbt-rs{margin-top:4px;font-size:11px;line-height:1.3;overflow-wrap:anywhere}
+.qbt-rs.qbt-red{color:#e5534b}
+.qbt-rs.qbt-amber{color:#d9921f}
+.qbt-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+.qbt-more{display:block;text-align:center;padding:10px 0 2px;color:#4a90e2}
+/*@@TILE_CSS@@*/
+</style>
+<script>
+$(function () {
+  // Optional hook; stock Unraid has no addWidget(), so this is a harmless no-op.
+  if (typeof addWidget === 'function') { addWidget('db-qbittorrent', true); }
+
+  var API = '/plugins/qbittorrent_widget/api_fetch.php';
+  var busy = false;
+  var themed = false;
+  var DEF_UI = { cols: { dl: true, ul: true, eta: true }, bar: true, port: 8080, url: '' };
+  var ICON = {
+    error: 'fa-times-circle', missing: 'fa-exclamation-circle', paused: 'fa-pause',
+    queued: 'fa-clock-o', checking: 'fa-refresh', stalled: 'fa-exclamation-triangle',
+    idle: 'fa-exclamation-triangle', moving: 'fa-exchange', unknown: 'fa-question-circle',
+    conn: 'fa-globe', disc: 'fa-chain-broken', tools: 'fa-chain-broken'
+  };
+  var COLOR = { red: '#e5534b', amber: '#d9921f', green: '#3fa24a', blue: '#4a90e2', grey: '#8a8a8a', orange: '#f5a524' };
+
+  // The embedded icon is light; invert it when the page background is light
+  function applyTheme() {
+    if (themed) { return; }
+    themed = true;
+    var el = document.getElementById('qbt-xfer');
+    while (el) {
+      var m = /rgba?\(([^)]+)\)/.exec(getComputedStyle(el).backgroundColor || '');
+      if (m) {
+        var p = m[1].split(',');
+        var a = p.length > 3 ? parseFloat(p[3]) : 1;
+        if (a > 0.5) {
+          if ((0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 150) { $('i.qbt-ic').addClass('qbt-inv'); }
+          return;
+        }
+      }
+      el = el.parentElement;
+    }
+  }
+
+  function rate(b) {
+    if (!(b >= 50)) { return null; }
+    var v = b / 1024, u = ['kB/s', 'MB/s', 'GB/s'], i = 0;
+    while (v >= 1024 && i < 2) { v /= 1024; i++; }
+    return { n: v >= 100 ? v.toFixed(0) : (v >= 10 ? v.toFixed(1) : v.toFixed(2)), u: u[i] };
+  }
+  function rateTxt(b) { var r = rate(b); return r ? r.n + ' ' + r.u : '0 kB/s'; }
+  function size(b) {
+    var u = ['B', 'kB', 'MB', 'GB', 'TB'], i = 0, v = b;
+    while (v >= 1024 && i < 4) { v /= 1024; i++; }
+    return (i >= 3 ? v.toFixed(1) : v.toFixed(0)) + ' ' + u[i];
+  }
+  function fmtEta(s, p) {
+    if (p >= 1) { return '\u2014'; }
+    if (s < 0 || s >= 8640000) { return '\u221E'; }
+    var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+    if (d > 0) { return d + 'd ' + h + 'h'; }
+    if (h > 0) { return h + 'h ' + (m < 10 ? '0' : '') + m + 'm'; }
+    if (m > 0) { return m + 'm'; }
+    return Math.floor(s) + 's';
+  }
+
+  function pretty(n) {
+    if (/\s/.test(n)) { return n; }
+    var t = n.replace(/(^|[^\d])(\d)\.(\d)(?!\d)/g, '$1$2\u0001$3').replace(/\b([Hh])\.(26[45])\b/g, '$1\u0001$2');
+    t = t.replace(/[._]+/g, ' ').replace(/\u0001/g, '.');
+    return t.replace(/\s+/g, ' ').trim();
+  }
+
+  function speedCell(b) {
+    var r = rate(b), $c = $('<div class="qbt-num">');
+    if (!r) { return $c.addClass('qbt-u').text('\u2014'); }
+    return $c.append(document.createTextNode(r.n)).append($('<span class="qbt-u">').text(' ' + r.u));
+  }
+
+  function moreLink(href, text) {
+    return $('<a class="qbt-more" target="_blank" rel="noopener">').attr('href', href)
+      .append(document.createTextNode(text + ' ')).append($('<i class="fa fa-external-link">'));
+  }
+
+  function renderPill(r) {
+    var map = {
+      connected:    [COLOR.green, 'fa-globe', 'Connected'],
+      firewalled:   [COLOR.amber, 'fa-globe', 'Firewalled'],
+      disconnected: [COLOR.red, 'fa-chain-broken', 'Disconnected']
+    };
+    var g = (r && r.conn && map[r.conn]) ? map[r.conn] : [COLOR.grey, 'fa-chain-broken', (r && r.ok) ? 'Unknown' : 'Offline'];
+    var $p = $('<div class="qbt-pill">');
+    $p.append($('<span>').css('color', g[0]).append($('<i class="fa">').addClass(g[1])).append(document.createTextNode(' ' + g[2])));
+    if (r && r.ok) {
+      if (r.attention_total > 0) {
+        $p.append($('<span>').css('color', COLOR.red).append($('<i class="fa fa-exclamation-triangle">'))
+          .append(document.createTextNode(' ' + r.attention_total + ' need attention')));
+      } else {
+        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-check-circle">'))
+          .append(document.createTextNode(' All healthy')));
+      }
+    }
+    $('#qbt-status').empty().append($p);
+  }
+
+  function renderSummary(r) {
+    var $s = $('#qbt-summary');
+    if (!r || !r.ok) { $s.text('Unavailable'); return; }
+    var c = r.counts || { seeding: 0, downloading: 0, busy: 0 };
+    var g = r.global || { dl: 0, ul: 0 };
+    var speeds = '\u2193 ' + rateTxt(g.dl) + '\u00A0\u00A0\u2191 ' + rateTxt(g.ul);
+    // folders that no torrent seeds (Find my torrent): the header counts them too, so 'All seeding' is said only when there are none
+    var ns = +r.not_seeded > 0 ? +r.not_seeded : 0;
+    $s.attr('title', ns ? ns + ' folder' + (ns === 1 ? '' : 's') + ' in the downloads folders that no torrent seeds (last Find my torrent scan)' : '');
+    if (ns && r.attention_total === 0 && c.downloading === 0 && !c.busy) { $s.text(c.seeding + ' of ' + (c.seeding + ns) + ' seeded \u00B7 ' + ns + ' not seeded \u00B7 ' + speeds); }
+    else if (r.attention_total === 0 && c.downloading === 0 && !c.busy) { $s.text('All ' + c.seeding + ' seeding \u00B7 ' + speeds); }
+    else {
+      $s.text(c.seeding + ' seeding' + (ns ? ' \u00B7 ' + ns + ' not seeded' : '') + (c.downloading ? ' \u00B7 ' + c.downloading + ' downloading' : '')
+        + (c.busy ? ' \u00B7 ' + c.busy + ' busy' : '') + ' \u00B7 ' + speeds);
+    }
+  }
+
+  function band(text, meta, first, red) {
+    var $b = $('<div class="mt-band">').toggleClass('mt-first', !!first).toggleClass('mt-red', !!red).append($('<span>').text(text));
+    if (meta) { $b.append($('<b>').text(meta)); }
+    return $b;
+  }
+  var STRIPE = { amber: 'amber', orange: 'orange', blue: 'blue', green: 'green', red: 'red', grey: 'grey' };
+
+  function renderTools(r) {
+    var $t = $('#qbt-tools').empty();
+    if (!r || !r.ok || !r.tools || !r.tools.length) { return; }
+    var g = '18px minmax(0,1fr) 190px', BG = { amber: 'rgba(224,160,48,.22)', orange: 'rgba(245,165,36,.22)', blue: 'rgba(74,144,226,.22)', green: 'rgba(63,162,74,.22)', red: 'rgba(229,83,75,.22)', grey: 'rgba(185,185,185,.2)' };
+    var TC = { amber: '#d9921f', orange: COLOR.orange, blue: COLOR.blue, green: COLOR.green, red: COLOR.red, grey: '#b9b9b9' };
+    $t.append(band('Seedbox tools', 'Action', true));
+    var $box = $('<div class="mt-box">').appendTo($t);
+    $.each(r.tools, function (i, x) {
+      var c = x.col || 'grey';
+      var $row = $('<div class="mt-r">').addClass('mt-n mt-s-' + (STRIPE[c] || 'grey')).css('grid-template-columns', g);
+      $row.append($('<i class="fa fa-fw">').addClass(x.name === 'Find my torrent' ? 'fa-chain-broken' : (x.name === 'Shape up' ? 'fa-arrow-circle-up' : 'fa-refresh')).css('color', TC[c]));
+      if (x.tip) { $row.attr('title', x.tip); }
+      var $n = $('<div class="qbt-nm">').css('display', 'block').append($('<a>').attr('href', x.href).css({ color: 'inherit', textDecoration: 'none', fontWeight: 'bold' }).text(x.name));
+      if (x.tag) { $n.append($('<div class="qbt-rs">').css({ color: '#8a8a8a', marginTop: '2px' }).attr('title', x.tagtip || '').text(x.tag)); }
+      $row.append($n);
+      var $a = $('<div>').append($('<span class="qbt-bd">').css({ background: BG[c], color: TC[c] }).text(x.badge));
+      if (x.reason) { $a.append($('<div class="qbt-rs">').css('color', TC[c]).text(x.reason)); }
+      if (x.when) { $a.append($('<div class="qbt-rs">').css({ color: '#8a8a8a', marginTop: '2px' }).text(x.when)); }
+      $row.append($a);
+      $box.append($row);
+    });
+  }
+
+  function renderAttention(r, href) {
+    var $a = $('#qbt-attn').empty();
+    if (!r || !r.ok || !r.attention || !r.attention.length) { return; }
+    var t = '18px minmax(0,1fr) 170px';
+    $a.append(band('Needs attention \u00B7 ' + r.attention_total, 'Torrent \u00B7 Issue', false, true));
+    var $box = $('<div class="mt-box">').appendTo($a);
+    $.each(r.attention, function (i, x) {
+      var col = (x.sev === 'red') ? 'red' : 'amber';
+      var $row = $('<div class="mt-r">').addClass('mt-s-' + col).css('grid-template-columns', t);
+      $row.append($('<i class="fa fa-fw">').addClass(ICON[x.kind] || 'fa-exclamation-triangle').css('color', COLOR[col]));
+      if (x.tip) { $row.attr('title', x.tip); }
+      if (x.href) { $row.append($('<div class="qbt-nm">').attr('title', x.tip || x.name).append($('<a>').attr('href', x.href).css('color', 'inherit').text(x.name))); }
+      else { $row.append($('<div class="qbt-nm">').attr('title', x.name).text(pretty(x.name))); }
+      $row.append($('<div>')
+        .append($('<span class="qbt-bd">').addClass('qbt-' + col).text(x.badge))
+        .append($('<div class="qbt-rs">').addClass('qbt-' + col).text(x.reason)));
+      $box.append($row);
+    });
+    if (r.attention_more > 0) { $a.append(moreLink(href, '+' + r.attention_more + ' more flagged')); }
+  }
+
+  function renderTransfer(r, ui, href) {
+    var $x = $('#qbt-xfer').empty();
+    if (!r || !r.ok) {
+      var msg = (r && r.error === 'auth') ? 'Authentication failed (check Seedbox settings)' : 'qBittorrent unreachable';
+      $x.append($('<div class="qbt-note">').text(msg));
+      return;
+    }
+    var gl = r.global || { dl: 0, ul: 0 };
+    $x.append(band('In transfer \u00B7 ' + r.transfer_total, '\u2193 ' + rateTxt(gl.dl) + '\u00A0\u00A0\u2191 ' + rateTxt(gl.ul), false));
+    var $box = $('<div class="mt-box">').appendTo($x);
+
+    var t = ['18px', 'minmax(0,1fr)'], hd = $('<div class="mt-cols">');
+    hd.append($('<div>')).append($('<div>').text('Torrent'));
+    if (ui.cols.dl)  { t.push('76px'); hd.append($('<div class="qbt-num">').css('color', COLOR.orange).text('Down')); }
+    if (ui.cols.ul)  { t.push('76px'); hd.append($('<div class="qbt-num">').text('Up')); }
+    if (ui.cols.eta) { t.push('50px'); hd.append($('<div class="qbt-num">').text('ETA')); }
+    var tpl = t.join(' ');
+    $box.append(hd.css('grid-template-columns', tpl));
+    if (!r.transfer.length) { $box.append($('<div class="mt-note">').text('Nothing transferring right now')); return; }
+
+    var nCols = (ui.cols.dl ? 1 : 0) + (ui.cols.ul ? 1 : 0) + (ui.cols.eta ? 1 : 0);
+    var BUSY = { Moving: 'fa-exchange', Checking: 'fa-refresh', Allocating: 'fa-hdd-o' }, LIGHT = '#b9b9b9';
+    $.each(r.transfer, function (i, x) {
+      var isDown = (x.dir === 'down'), isBusy = (x.dir === 'busy');
+      var $row = $('<div class="mt-r">').css('grid-template-columns', tpl).addClass(isBusy ? 'mt-s-grey' : (isDown ? 'mt-s-orange' : 'mt-s-blue'));
+      var icon = isBusy ? (BUSY[x.label] || 'fa-refresh') : (isDown ? 'fa-arrow-down' : 'fa-arrow-up');
+      $row.append($('<i class="fa fa-fw">').addClass(icon)
+        .css('color', isBusy ? COLOR.grey : (isDown ? COLOR.green : COLOR.blue)));
+
+      var $nm = $('<div>').append($('<div class="qbt-nm">').attr('title', x.name).text(pretty(x.name)));
+      if (ui.bar) {
+        var done = x.progress >= 1;
+        var pct = Math.max(0, Math.min(100, x.progress * 100));
+        var mv = isBusy && x.label === 'Moving', wt = mv && x.wait;
+        var col = mv ? LIGHT : (isBusy ? COLOR.grey : (done ? COLOR.green : COLOR.orange));
+        var $pl = $('<div class="qbt-pl">')
+          .append($('<div class="qbt-pb">').append($('<i>').css({ width: (wt ? 0 : pct) + '%', background: col })))
+          .append($('<span>').css('color', col).text(wt ? 'waiting' : (mv ? pct.toFixed(1) + '%' : (done ? '100%' : pct.toFixed(1) + '%'))));
+        if (!isBusy) { $pl.append($('<span class="qbt-u">').text(done ? size(x.size) : size(x.completed) + ' / ' + size(x.size))); }
+        $nm.append($pl);
+      }
+      $row.append($nm);
+
+      if (isBusy) {
+        if (nCols > 0) {
+          var lbl = x.label + (x.label === 'Checking' ? ' ' + (x.progress * 100).toFixed(1) + '%' : '');
+          if (x.label === 'Moving' && ui.cols.eta) {
+            if (nCols > 1) { $row.append($('<div class="qbt-num qbt-u">').css('grid-column', 'span ' + (nCols - 1)).text(lbl)); }
+            $row.append($('<div class="qbt-num">').text(x.eta > 0 && x.eta < 8640000 ? fmtEta(x.eta, 0) : '\u2014'));
+          } else {
+            $row.append($('<div class="qbt-num qbt-u">').css('grid-column', 'span ' + nCols).text(lbl));
+          }
+        }
+      } else {
+        if (ui.cols.dl)  { $row.append(speedCell(x.dl)); }
+        if (ui.cols.ul)  { $row.append(speedCell(x.ul)); }
+        if (ui.cols.eta) { $row.append($('<div class="qbt-num">').text(isDown ? fmtEta(x.eta, x.progress) : '\u2014')); }
+      }
+      $box.append($row);
+    });
+    if (r.more > 0) { $x.append(moreLink(href, '+' + r.more + ' more in transfer')); }
+  }
+
+  function render(r) {
+    applyTheme();
+    var ui = (r && r.ui) ? r.ui : DEF_UI;
+    var href = ui.url ? ui.url : 'http://' + location.hostname + ':' + ui.port;
+    $('#qbt-home').attr('href', href);
+    renderPill(r);
+    renderSummary(r);
+    renderTools(r);
+    renderAttention(r, href);
+    renderTransfer(r, ui, href);
+  }
+
+  function poll() {
+    if (busy) { return; }
+    busy = true;
+    $.getJSON(API, { _: Date.now() })
+      .done(render)
+      .fail(function () { render({ ok: false, error: 'unreachable' }); })
+      .always(function () { busy = false; });
+  }
+
+  poll();
+  setInterval(poll, 5000);
+});
+</script>

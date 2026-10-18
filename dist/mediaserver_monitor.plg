@@ -1,0 +1,371 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "mediaserver_monitor">
+<!ENTITY author    "leone007">
+<!ENTITY title     "Monitor">
+<!ENTITY version   "2026.10.07f">
+<!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
+]>
+
+<PLUGIN name="&title;"
+        author="&author;"
+        version="&version;"
+        min="6.12.0"
+        icon="monitor.png"
+        pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
+
+<CHANGES>
+###&version;
+- Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed
+###2026.10.07e
+- The page now opens on its own from Settings, Utilities, Monitor (it was listed inside the Tools page)
+###2026.10.07d
+- Every tile request has a time limit, so a request dropped by iOS can no longer freeze a tile (the CPU numbers and the graph stopped updating on the phone)
+###2026.10.07c
+- Full screen mode: hides the Unraid header and menu (automatic when opened from the iPhone home screen; the button is Full screen / Unraid menu; ?full=1 in the address also turns it on)
+###2026.10.07b
+- Each tile has its own frame and padding, like on the dashboard
+###2026.10.07
+- First release: a phone-friendly page (Settings, Utilities, Monitor) that shows the Sysbox, Diskbox, Streambox and Seedbox tiles in one column; reorder and hide tiles with the Reorder button (saved on the device); can be added to the iPhone home screen
+</CHANGES>
+
+<FILE Name="/tmp/&name;_setup.sh" Run="/bin/bash">
+<INLINE><![CDATA[
+#!/bin/bash
+DIR="/usr/local/emhttp/plugins/mediaserver_monitor"
+rm -rf "$DIR"
+rm -rf "/usr/local/emhttp/plugins/Monitor"
+mkdir -p "$DIR/images" "/usr/local/emhttp/plugins/Monitor/images"
+
+# Menu icon (monochrome) and the iPhone home screen icon, embedded so there is no download
+base64 -d > "$DIR/icon.png" <<'B64'
+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
+B64
+base64 -d > "$DIR/touch.png" <<'B64'
+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
+saajrgAAAABJRU5ErkJggg==
+B64
+cp "$DIR/icon.png" "$DIR/images/monitor.png"
+cp "$DIR/icon.png" "$DIR/images/mediaserver_monitor.png"
+cp "$DIR/icon.png" "/usr/local/emhttp/plugins/Monitor/images/mediaserver_monitor.png"
+cp "$DIR/icon.png" "/usr/local/emhttp/plugins/Monitor/images/monitor.png"
+exit 0
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/Monitor.page">
+<INLINE><![CDATA[Menu="Utilities"
+Type="xmenu"
+Title="Monitor"
+Icon="monitor.png"
+Markdown="false"
+---
+<?PHP
+// Phone-friendly server monitor: shows the Sysbox, Diskbox, Streambox and Seedbox tiles on one page,
+// in an order you choose. The tiles are not copied: each one is taken from the plugin's own dashboard
+// page, so they always match the dashboard and update with the plugins.
+$mon_tiles = [
+  ['sysbox', 'Sysbox'],
+  ['diskbox', 'Diskbox'],
+  ['streambox', 'Streambox'],
+  ['qbittorrent_widget', 'Seedbox'],
+];
+$mon_root = '/usr/local/emhttp/plugins/';
+$mon_out = [];
+foreach ($mon_tiles as $mon_t) {
+  $mon_f = $mon_root . $mon_t[0] . '/' . $mon_t[0] . '.page';
+  if (!is_file($mon_f)) { continue; }
+  $mon_src = (string)file_get_contents($mon_f);
+  $mon_p = strpos($mon_src, "\n---\n");
+  if ($mon_p === false) { continue; }
+  $mytiles = [];
+  ob_start();
+  try { eval('?>' . substr($mon_src, $mon_p + 5)); } catch (\Throwable $mon_e) { }
+  $mon_rest = ob_get_clean();
+  $mon_html = $mytiles[$mon_t[0]]['column2'] ?? '';
+  if ($mon_html === '') { continue; }
+  $mon_out[] = [$mon_t[0], $mon_t[1], $mon_html, $mon_rest];
+}
+?>
+<style>
+.mon-in{max-width:760px;margin:0 auto;padding:0 2px}
+html.mon-full,html.mon-full body{overflow:hidden!important}
+html.mon-full .mon-wrap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;overflow-y:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 18px)}
+a.mon-btn{text-decoration:none;display:inline-block}
+.mon-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 10px}
+.mon-top h2{margin:0;font-size:18px;letter-spacing:.04em}
+.mon-top .mon-b{display:flex;gap:8px}
+.mon-btn{font:inherit;font-size:13px;line-height:1;padding:8px 14px;border-radius:6px;border:0;cursor:pointer;background:rgba(128,128,128,.25);color:inherit}
+.mon-btn.on{background:#e68a00;color:#fff}
+.mon-sec{margin:0 0 14px}
+.mon-ed{display:none;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px;font-size:13px;opacity:.9}
+.mon-edit .mon-ed{display:flex}
+.mon-ed .mon-nm{font-weight:600;letter-spacing:.04em}
+.mon-ed .mon-bt{display:flex;gap:6px}
+.mon-ed .mon-btn{padding:9px 14px;font-size:15px}
+.mon-sec table.mon-t{width:100%;margin:0;border-collapse:separate;border-spacing:0;table-layout:fixed;box-sizing:border-box;padding:12px 14px;border:1px solid rgba(128,128,128,.35);border-radius:6px;background:rgba(128,128,128,.07)}
+.mon-sec table.mon-t td{display:block;padding:0}
+.mon-sec .tile-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 6px}
+.mon-sec .tile-header-left{display:flex;align-items:center;gap:10px;min-width:0}
+.mon-sec .tile-header-left .section{min-width:0}
+.mon-sec .tile-header-main{margin:0}
+.mon-sec .tile-header-right-controls{display:flex;gap:12px;white-space:nowrap}
+.mon-sec.mon-off table.mon-t,.mon-sec.mon-off .mon-x{display:none}
+.mon-sec.mon-off{opacity:.55}
+.mon-sec:not(.mon-off) .mon-ed .mon-eye{opacity:1}
+.mon-off .mon-eye{opacity:.6}
+.mon-sec.mon-off{display:none}
+.mon-edit .mon-sec.mon-off{display:block}
+.mon-note{font-size:12px;opacity:.65;margin:8px 0 0;text-align:center}
+@media (max-width:600px){.mon-wrap{padding:0}}
+</style>
+<script>
+// A request that iOS drops (page in the background, flaky connection) must not freeze a tile for good:
+// every tile request gets a time limit, so its "busy" flag is always released and the next poll goes out.
+(function () {
+  if (!window.jQuery) { return; }
+  var $ = window.jQuery;
+  $.getJSON = function (url, data, cb) {
+    if (typeof data === 'function') { cb = data; data = undefined; }
+    return $.ajax({ url: url, data: data, dataType: 'json', timeout: 12000, success: cb });
+  };
+})();
+</script>
+<div class="mon-wrap" id="mon-wrap"><div class="mon-in">
+  <div class="mon-top">
+    <h2>Monitor</h2>
+    <span class="mon-b"><button type="button" class="mon-btn" id="mon-full">Full screen</button><button type="button" class="mon-btn" id="mon-edit">Reorder</button><button type="button" class="mon-btn" id="mon-reset" style="display:none">Reset</button></span>
+  </div>
+  <div id="mon-list">
+<?PHP foreach ($mon_out as $mon_o) { ?>
+    <section class="mon-sec" data-id="<?=htmlspecialchars($mon_o[0])?>">
+      <div class="mon-ed"><span class="mon-nm"><?=htmlspecialchars($mon_o[1])?></span><span class="mon-bt"><button type="button" class="mon-btn mon-eye" data-a="eye">Hide</button><button type="button" class="mon-btn" data-a="up">&#9650;</button><button type="button" class="mon-btn" data-a="down">&#9660;</button></span></div>
+      <table class="mon-t dashboard"><?=$mon_o[2]?></table>
+      <div class="mon-x"><?=$mon_o[3]?></div>
+    </section>
+<?PHP } ?>
+  </div>
+<?PHP if (!$mon_out) { ?>
+  <p class="mon-note">No tiles found. Install Sysbox, Diskbox, Streambox or Seedbox first.</p>
+<?PHP } else { ?>
+  <p class="mon-note">The order is saved on this device only.</p>
+<?PHP } ?>
+</div></div>
+<script>
+(function () {
+  var DEF = ['sysbox', 'diskbox', 'streambox', 'qbittorrent_widget'], KO = 'mon_order', KH = 'mon_hide';
+  function ld(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v instanceof Array ? v : d; } catch (e) { return d; } }
+  function sv(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+  var list = document.getElementById('mon-list'), wrap = document.getElementById('mon-wrap');
+  function secs() { return [].slice.call(list.children).filter(function (n) { return n.tagName === 'SECTION'; }); }
+  function byId(id) { return secs().filter(function (s) { return s.getAttribute('data-id') === id; })[0]; }
+  function apply() {
+    var saved = ld(KO, []), order = [];
+    saved.concat(DEF).forEach(function (id) { if (order.indexOf(id) < 0 && byId(id)) { order.push(id); } });
+    order.forEach(function (id) { list.appendChild(byId(id)); });
+    var hid = ld(KH, []);
+    secs().forEach(function (s) {
+      var off = hid.indexOf(s.getAttribute('data-id')) >= 0;
+      s.classList.toggle('mon-off', off);
+      s.querySelector('.mon-eye').textContent = off ? 'Show' : 'Hide';
+    });
+  }
+  function save() { sv(KO, secs().map(function (s) { return s.getAttribute('data-id'); })); }
+  list.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button[data-a]') : null;
+    if (!b) { return; }
+    var s = b.closest('section'), a = b.getAttribute('data-a'), id = s.getAttribute('data-id');
+    if (a === 'up') { var p = s.previousElementSibling; if (p) { list.insertBefore(s, p); } save(); }
+    else if (a === 'down') { var n = s.nextElementSibling; if (n) { list.insertBefore(n, s); } save(); }
+    else if (a === 'eye') {
+      var hid = ld(KH, []), i = hid.indexOf(id);
+      if (i >= 0) { hid.splice(i, 1); } else { hid.push(id); }
+      sv(KH, hid); apply();
+    }
+  });
+  var eb = document.getElementById('mon-edit'), rb = document.getElementById('mon-reset');
+  eb.addEventListener('click', function () {
+    var on = !wrap.classList.contains('mon-edit');
+    wrap.classList.toggle('mon-edit', on); eb.classList.toggle('on', on);
+    eb.textContent = on ? 'Done' : 'Reorder'; rb.style.display = on ? '' : 'none';
+  });
+  rb.addEventListener('click', function () { sv(KO, []); sv(KH, []); apply(); });
+  // full screen: covers the Unraid header and menu (automatic when opened from the home screen)
+  var root = document.documentElement, fb = document.getElementById('mon-full');
+  var standalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  function bg() {
+    var c = '';
+    [document.body, root].forEach(function (n) { var v = getComputedStyle(n).backgroundColor; if (!c && v && v !== 'transparent' && v !== 'rgba(0, 0, 0, 0)') { c = v; } });
+    return c || '#1c1b1b';
+  }
+  function full(on, keep) {
+    root.classList.toggle('mon-full', on);
+    wrap.style.background = on ? bg() : '';
+    fb.textContent = on ? 'Unraid menu' : 'Full screen';
+    if (keep) { try { localStorage.setItem('mon_full', on ? '1' : '0'); } catch (e) { } }
+  }
+  fb.addEventListener('click', function () {
+    if (standalone && root.classList.contains('mon-full')) { location.href = '/Dashboard'; return; }
+    full(!root.classList.contains('mon-full'), true);
+  });
+  var sf = null; try { sf = localStorage.getItem('mon_full'); } catch (e) { }
+  full(standalone || sf === '1' || /[?&]full=1/.test(location.search), false);
+  apply();
+  // home screen app on iPhone: own name and icon
+  try {
+    var h = document.head, add = function (t, a) { var x = document.createElement(t); for (var k in a) { x.setAttribute(k, a[k]); } h.appendChild(x); };
+    add('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
+    add('meta', { name: 'apple-mobile-web-app-title', content: 'Monitor' });
+    add('link', { rel: 'apple-touch-icon', href: '/plugins/mediaserver_monitor/touch.png' });
+  } catch (e) { }
+})();
+</script>
+]]></INLINE>
+</FILE>
+
+<FILE Name="/tmp/&name;_finish.sh" Run="/bin/bash">
+<INLINE><![CDATA[
+#!/bin/bash
+DIR="/usr/local/emhttp/plugins/mediaserver_monitor"
+chmod 644 "$DIR"/*.page "$DIR"/*.php "$DIR"/*.png
+PHPBIN="$(command -v php || echo /usr/bin/php)"
+# Updates come from GitHub (pluginURL): stop the local update server of earlier versions
+pkill -f "php -S 127.0.0.1:18185" 2>/dev/null
+rm -f /usr/local/emhttp/plugins/mediaserver_monitor/repo.php
+rm -f /tmp/mediaserver_monitor_setup.sh /tmp/mediaserver_monitor_finish.sh
+echo ""
+echo "----------------------------------------------------"
+echo " Monitor installed: Settings -> Utilities -> Monitor"
+echo " It shows the Sysbox, Diskbox, Streambox and Seedbox"
+echo " tiles, so install those plugins too."
+echo "----------------------------------------------------"
+exit 0
+]]></INLINE>
+</FILE>
+
+<FILE Run="/bin/bash" Method="remove">
+<INLINE><![CDATA[
+#!/bin/bash
+rm -rf /usr/local/emhttp/plugins/mediaserver_monitor
+rm -rf /usr/local/emhttp/plugins/Monitor
+pkill -f "php -S 127.0.0.1:18185" 2>/dev/null
+echo "Monitor removed."
+exit 0
+]]></INLINE>
+</FILE>
+
+</PLUGIN>

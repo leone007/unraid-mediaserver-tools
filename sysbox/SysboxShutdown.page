@@ -1,0 +1,229 @@
+Menu="Utilities"
+Type="xmenu"
+Title="Safe shutdown"
+Icon="sysbox.png"
+Markdown="false"
+---
+<?PHP
+$sds_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$sds_tok = is_array($sds_var) ? (string)($sds_var['csrf_token'] ?? '') : '';
+?>
+<style>
+/* the Dashboard tile look (common/tile.css, inserted by the build): Activity on top, then the four steps, each a dark band + striped rows */
+/*@@TILE_CSS@@*/
+#sds{--sds-line:rgba(128,128,128,.22)}
+#sds .sds-mut{opacity:.6}
+#sds .sds-ok{color:#3fa24a}#sds .sds-er{color:#e5534b}#sds .sds-am{color:#d9921f}
+#sds .sds-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
+#sds .mt-band{margin-top:26px;padding:9px 12px}
+#sds .mt-band span{font-weight:600}
+#sds .mt-box{margin-top:8px}
+#sds .sds-lead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 12px}
+#sds .sds-lead p{margin:0;opacity:.65;max-width:95ch;flex:1 1 420px}
+#sds .sds-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#sds .sds-acts input{margin:0}
+#sds .sds-status{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:9px 12px;border-top:1px solid var(--sds-line)}
+#sds .mt-box>.sds-status:first-child,#sds .mt-box>.sds-row:first-child{border-top:0}
+#sds .sds-prog{flex:1 1 220px;height:8px;background:rgba(128,128,128,.25);position:relative;min-width:120px}
+#sds .sds-prog i{position:absolute;left:0;top:0;bottom:0;background:#4a90e2}
+#sds .sds-row{display:grid;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--sds-line)}
+#sds .sds-row small{display:block;opacity:.6}
+#sds .s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+#sds .s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+#sds .s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+#sds .s-red{background:rgba(229,83,75,.13);box-shadow:inset 3px 0 0 #e5534b}
+#sds .s-grey{background:rgba(128,128,128,.07);box-shadow:inset 3px 0 0 #8a8a8a}
+#sds .sds-chk{grid-template-columns:22px minmax(0,1fr)}
+#sds .sds-ico{font-family:monospace;font-weight:bold;text-align:center}
+#sds .sds-ct{grid-template-columns:minmax(0,1fr) 170px}
+#sds .sds-pr{grid-template-columns:22px 70px minmax(0,1fr) minmax(140px,24%)}
+#sds .sds-pr input{margin:0}
+#sds .sds-pr b,#sds .sds-ct b{font-weight:600}
+#sds .sds-files{font-family:monospace;font-size:12px;opacity:.65;overflow-wrap:anywhere}
+#sds .sds-num{font-family:monospace;text-align:right}
+#sds .sds-chip{display:inline-block;font-size:11px;padding:1px 6px;margin-left:6px;background:rgba(128,128,128,.25);font-weight:normal}
+#sds .sds-chip.a{background:rgba(217,146,31,.25);color:#d9921f}
+#sds .sds-gbar{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--sds-line);cursor:pointer;font-weight:600}
+#sds .sds-gbar .c{font-weight:normal;font-size:12px;opacity:.7}
+#sds .sds-grp[hidden]{display:none}
+#sds .sds-log{max-height:220px;overflow:auto;font-family:monospace;font-size:12px;white-space:pre-wrap;padding:10px 12px;margin:0;opacity:.75}
+#sds .sds-final{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;padding:14px 12px}
+#sds .sds-final .msg{font-size:15px}
+#sds .sds-foot{opacity:.55;font-size:12px;margin:8px 2px 0;max-width:120ch}
+#sds input.sds-ghost{color:inherit!important;opacity:.7;border-color:rgba(128,128,128,.45)!important}
+#sds input.sds-danger{color:#e5534b!important;border-color:rgba(229,83,75,.7)!important}
+@media (max-width:760px){#sds .sds-ct,#sds .sds-pr{grid-template-columns:22px minmax(0,1fr)}#sds .sds-ct>:nth-child(n+2),#sds .sds-pr>:nth-child(n+3){grid-column:2}}
+</style>
+<div id="sds">
+<p class="sds-sub">Stops the containers (qBittorrent first, with up to 5 minutes to close its files) and the VMs, shows every process that still uses the array or pool disks, then calls Unraid's own shutdown or restart, the same as the buttons on the Main page. Nothing is stopped until you press a button.</p>
+
+<div class="mt-band"><span>Activity</span><b id="sds-aband"></b></div>
+<div class="mt-box">
+<div class="sds-status" id="sds-astat"><span class="sds-mut">Nothing has been stopped from this page.</span></div>
+<div id="sds-arows"></div>
+<div id="sds-alog" style="display:none"><div class="sds-gbar s-grey" data-g="log"><span class="pm">+</span><span>Log of the last run</span><span class="c" id="sds-alogc"></span></div><div class="sds-grp" data-g="log" hidden><div class="sds-log" id="sds-rlog"></div></div></div>
+</div>
+
+<div class="mt-band"><span>1 &middot; Before you start</span><b id="sds-b1"></b></div>
+<div class="mt-box" id="sds-checks"><div class="sds-status sds-mut">Checking...</div></div>
+
+<div class="mt-band"><span>2 &middot; Containers and VMs</span><b id="sds-b2"></b></div>
+<div class="mt-box">
+<div class="sds-lead"><p>qBittorrent stops first with up to 5 minutes to close its files, then the others together. The server keeps running; the stopped ones can be started again here.</p><span class="sds-acts"><input type="button" id="sds-stop" value="Stop the containers and VMs"> <input type="button" id="sds-cancel" class="sds-ghost" value="Cancel" style="display:none"> <input type="button" id="sds-start" class="sds-ghost" value="Start them again" style="display:none"></span></div>
+<div class="sds-status" id="sds-rmsgrow" style="display:none"><span id="sds-rmsg"></span></div>
+<div id="sds-cts"></div>
+</div>
+
+<div class="mt-band"><span>3 &middot; Still using the disks</span><b id="sds-b3"></b></div>
+<div class="mt-box">
+<div class="sds-lead"><p>Every process that has a file open on the array or pool disks. Ask to quit sends TERM, so the program can save and close its files; Force quit sends KILL, only for what does not quit (unsaved data of that program is lost). What Unraid stops by itself (Samba, Docker, the VM manager) or what runs inside a container is not offered.</p><span class="sds-acts"><input type="button" id="sds-term" value="Ask the ticked ones to quit"> <input type="button" id="sds-kill" class="sds-danger" value="Force quit"> <input type="button" id="sds-refresh" class="sds-ghost" value="Check again"></span></div>
+<div class="sds-status" id="sds-kmsgrow" style="display:none"><span id="sds-kmsg"></span></div>
+<div id="sds-hold"></div>
+</div>
+
+<div class="mt-band"><span>4 &middot; Shut down</span><b>Unraid's own shutdown, as on the Main page</b></div>
+<div class="mt-box">
+<div class="sds-final" id="sds-finalrow"><span class="msg" id="sds-final"></span><span class="sds-acts"><input type="button" id="sds-off" value="Shut down"> <input type="button" id="sds-reboot" value="Restart"></span></div>
+</div>
+<p class="sds-foot">When the last row is green, nothing uses the disks and no container or VM runs.</p>
+<form id="sds-boot" method="POST" action="/webGui/include/Boot.php" target="_top" style="display:none"><input type="hidden" name="cmd" value=""><input type="hidden" name="csrf_token" value="<?=htmlspecialchars($sds_tok, ENT_QUOTES)?>"></form>
+</div>
+
+<script>
+$(function () {
+  var URL = '/plugins/sysbox/shutdown.php', S = null, pollT = null, GOPEN = {};
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
+  function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
+  function free() { return S ? S.holders.filter(function (h) { return !h.protected; }) : []; }
+  function dur(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60); return m ? m + ' m ' + (s % 60) + ' s' : s + ' s'; }
+  function hm(t) { var d = new Date(t * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function msg(id, cls, t) { $('#' + id).attr('class', cls || '').text(t || ''); $('#' + id + 'row').toggle(!!t); }
+
+  // foldable bars, closed when the page loads
+  $(document).on('click', '#sds .sds-gbar', function () { var g = String($(this).data('g')); GOPEN[g] = !GOPEN[g]; $(this).find('.pm').html(GOPEN[g] ? '&minus;' : '+'); $('#sds .sds-grp[data-g="' + g + '"]').prop('hidden', !GOPEN[g]); });
+
+  function draw(r) {
+    S = r;
+    var run = r.run || {state: 'idle'}, busy = r.running || run.state === 'running', stopped = run.stopped || [];
+
+    // ---- Activity: the last stop or start run of this page
+    if (!run.state || run.state === 'idle') {
+      $('#sds-aband').text('nothing running');
+      $('#sds-astat').html('<span class="sds-mut">Nothing has been stopped from this page.</span>');
+      $('#sds-arows').empty(); $('#sds-alog').hide();
+    } else {
+      var start = run.mode === 'start', el = (run.finished || r.now || Math.floor(Date.now() / 1000)) - (run.started || 0);
+      var tot = stopped.length + (busy && !start ? r.containers.length : 0), qbRun = busy && !start && r.containers.some(function (c) { return c.qb; });
+      var t = {done: 'Done', error: 'Stopped with an error', cancelled: 'Cancelled'}[run.state] || (start ? 'Starting' : 'Stopping');
+      var cls = {done: 'sds-ok', error: 'sds-er', cancelled: 'sds-am'}[run.state] || '';
+      $('#sds-aband').text(busy ? (start ? 'starting the containers' : 'stopping the containers') + ' · ' + dur(el) : t.toLowerCase() + ' · ' + hm(run.finished || run.started));
+      var h = '<b class="' + cls + '">' + t + '</b> ';
+      if (busy && !start) { h += stopped.length + ' of ' + tot + ' stopped'; }
+      else if (run.msg) { h += '<span class="' + cls + '">' + esc(run.msg) + '</span>'; }
+      var back = (!busy && run.back) || [], gone = (!busy && run.gone) || [];
+      if (back.length) { h += ' <span class="sds-mut">· since then ' + back.length + ' started again outside this page (Unraid autostart or the Docker page)</span>'; }
+      if (gone.length) { h += ' <span class="sds-mut">· ' + gone.length + ' removed</span>'; }
+      if ((back.length || gone.length) && !stopped.length) { h += ' <span class="sds-mut">· nothing left to start</span>'; }
+      $('#sds-astat').html(h + (busy && !start && tot ? '<span class="sds-prog"><i style="width:' + Math.round(stopped.length / tot * 100) + '%"></i></span>' : '') + (qbRun ? '<span class="sds-am">qBittorrent is closing its files (up to 5 min)</span>' : '') + ' <span class="sds-mut">' + dur(el) + '</span>');
+      var rows = '';
+      if (busy && !start) { $.each(r.containers, function (i, c) { rows += '<div class="sds-row sds-ct s-blue"><div><b>' + esc(c.name) + '</b>' + (c.qb ? '<span class="sds-chip a">first, up to 5 min</span>' : '') + '</div><span class="sds-am">stopping or waiting</span></div>'; }); }
+      $.each(stopped, function (i, n) { rows += '<div class="sds-row sds-ct ' + (start && busy ? 's-blue' : 's-green') + '"><div><b>' + esc(n) + '</b></div><span class="' + (start && busy ? 'sds-am">starting' : 'sds-ok">stopped') + '</span></div>'; });
+      $.each(gone, function (i, n) { rows += '<div class="sds-row sds-ct s-grey"><div><b>' + esc(n) + '</b></div><span class="sds-mut">removed</span></div>'; });
+      $('#sds-arows').html(rows);
+      if (run.log && run.log.length) {
+        $('#sds-alog').show(); $('#sds-alogc').text(run.log.length + ' lines');
+        var $l = $('#sds-rlog'); $l.text(run.log.join('\n')); $l[0].scrollTop = $l[0].scrollHeight;
+      }
+    }
+
+    // ---- 1. checks
+    var h1 = '', bad = 0;
+    $.each(r.checks, function (i, c) { if (!c.ok) { bad++; } h1 += '<div class="sds-row sds-chk ' + (c.ok ? 's-green' : 's-amber') + '"><span class="sds-ico ' + (c.ok ? 'sds-ok">&#10003;' : 'sds-am">!') + '</span><span>' + esc(c.text) + '</span></div>'; });
+    $('#sds-checks').html(h1 || '<div class="sds-status sds-mut">No checks.</div>');
+    $('#sds-b1').text(bad ? bad + ' thing' + (bad === 1 ? '' : 's') + ' to look at' : 'all clear');
+
+    // ---- 2. containers and VMs
+    var h2 = '', cts = r.containers.slice().sort(function (a, b) { return (b.qb ? 1 : 0) - (a.qb ? 1 : 0); }); // qBittorrent first: it is stopped first
+    $.each(cts, function (i, c) { h2 += '<div class="sds-row sds-ct ' + (busy && run.mode === 'stop' ? 's-blue' : 's-grey') + '"><div><b>' + esc(c.name) + '</b>' + (c.qb ? '<span class="sds-chip a">first, up to 5 min</span>' : '') + '</div><span' + (busy && run.mode === 'stop' ? ' class="sds-am">stopping or waiting' : '>running') + '</span></div>'; });
+    $.each(r.vms, function (i, v) { h2 += '<div class="sds-row sds-ct s-grey"><div><b>' + esc(v) + '</b><span class="sds-chip">VM</span></div><span>running</span></div>'; });
+    $('#sds-cts').html(h2 || '<div class="sds-status sds-ok">No container or VM is running.</div>');
+    $('#sds-b2').text(r.containers.length + ' container' + (r.containers.length === 1 ? '' : 's') + ' · ' + (r.vms.length ? r.vms.length + ' VM' + (r.vms.length === 1 ? '' : 's') : 'no VM') + (stopped.length && !busy ? ' · ' + stopped.length + ' stopped here' : ''));
+    $('#sds-stop').prop('disabled', busy || (!r.containers.length && !r.vms.length));
+    $('#sds-cancel').toggle(busy && run.mode === 'stop');
+    $('#sds-start').toggle(!busy && stopped.length > 0).val('Start them again (' + stopped.length + ')');
+    msg('sds-rmsg', {done: 'sds-ok', error: 'sds-er', cancelled: 'sds-am'}[run.state] || '', busy ? (run.mode === 'start' ? 'Starting...' : 'Stopping...') : '');
+
+    // ---- 3. processes on the disks
+    var h3 = '', np = 0;
+    $.each(r.holders, function (i, x) {
+      if (x.protected) { np++; }
+      var fl = x.protected ? x.files.slice(0, 2) : x.files;
+      var files = fl.map(esc).join('<br>') + (x.nfiles > fl.length ? '<br>+' + (x.nfiles - fl.length) + ' more' : '');
+      h3 += '<div class="sds-row sds-pr ' + (x.protected ? 's-grey' : 's-amber') + '">' + (x.protected ? '<span></span>' : '<input type="checkbox" class="sds-k" data-pid="' + x.pid + '" data-start="' + esc(x.start) + '" checked>') + '<span class="sds-num">' + x.pid + '</span><div><b>' + esc(x.comm) + '</b><span class="sds-chip">' + esc(x.user) + '</span><div class="sds-files">' + esc(x.cmd) + '</div><div class="sds-files">' + files + '</div></div><span class="' + (x.protected ? 'sds-mut' : 'sds-am') + '">' + (x.protected ? esc(x.protected) : 'can be stopped here') + '</span></div>';
+    });
+    $('#sds-hold').html(h3 || '<div class="sds-status sds-ok">Nothing uses the array or pool disks right now.</div>');
+    $('#sds-b3').text(r.holders.length ? r.holders.length + ' process' + (r.holders.length === 1 ? '' : 'es') + (np ? ' · ' + np + ' protected' : '') : 'nothing');
+    $('#sds-term, #sds-kill').prop('disabled', !free().length || busy);
+
+    // ---- 4. the summary
+    var n = free().length, nprot = r.holders.length - n, nc = r.containers.length, ready = !busy && !n && !nc && !r.vms.length;
+    var f = busy ? 'Wait until the containers have stopped.' : ready ? 'Ready: nothing uses the disks, no container or VM runs.' + (nprot ? ' (' + nprot + ' protected process' + (nprot === 1 ? '' : 'es') + ' left: Unraid stops ' + (nprot === 1 ? 'it' : 'them') + ' by itself.)' : '') :
+      [nc ? nc + ' container' + (nc === 1 ? '' : 's') + ' still run' : '', r.vms.length ? r.vms.length + ' VM(s) still run' : '', n ? n + ' process' + (n === 1 ? ' still uses' : 'es still use') + ' the disks' : ''].filter(Boolean).join(', ') + '. Unraid tries to stop them during the shutdown, but that is where a shutdown can hang.' + (nprot ? ' (' + nprot + ' more that Unraid stops by itself, for example the share service while containers still read files.)' : '');
+    $('#sds-final').attr('class', 'msg ' + (ready ? 'sds-ok' : 'sds-am')).text(f);
+    $('#sds-finalrow').removeClass('s-green s-amber').addClass(ready ? 's-green' : 's-amber');
+    // not ready: the buttons stay usable (a way out in an emergency) but say so
+    $('#sds-off').prop('disabled', busy).val(ready || busy ? 'Shut down' : 'Shut down anyway');
+    $('#sds-reboot').prop('disabled', busy).val(ready || busy ? 'Restart' : 'Restart anyway');
+
+    clearTimeout(pollT);
+    if (busy) { pollT = setTimeout(load, 2500); }
+  }
+  function load() {
+    api('state').done(draw).fail(function (x) { $('#sds-checks').html('<div class="sds-status sds-er">' + esc(err(x)) + '</div>'); });
+  }
+
+  $('#sds-stop').on('click', function () {
+    var n = S ? S.containers.length : 0, v = S ? S.vms.length : 0;
+    if (!window.confirm('Stop ' + n + ' container(s)' + (v ? ' and shut down ' + v + ' VM(s)' : '') + '?\n\nqBittorrent first (up to 5 minutes), then the others together. The server keeps running; you can start them again from this page.')) return;
+    $(this).prop('disabled', true);
+    api('stop').done(function (r) { if (!r.ok) { msg('sds-rmsg', 'sds-er', r.error); } load(); }).fail(function (x) { msg('sds-rmsg', 'sds-er', err(x)); });
+  });
+  $('#sds-cancel').on('click', function () { api('cancel').always(load); });
+  $('#sds-start').on('click', function () {
+    if (!window.confirm('Start again the containers this page stopped?')) return;
+    api('start').done(function (r) { if (!r.ok) { msg('sds-rmsg', 'sds-er', r.error); } load(); });
+  });
+  function kill(sig) {
+    var p = [];
+    $('.sds-k:checked').each(function () { p.push({pid: $(this).data('pid'), start: String($(this).data('start'))}); });
+    if (!p.length) return;
+    var txt = sig === 'KILL' ? 'Force quit ' + p.length + ' process(es)? They cannot save anything first.' : 'Ask ' + p.length + ' process(es) to quit?';
+    if (!window.confirm(txt)) return;
+    msg('sds-kmsg', '', '...');
+    api('kill', {sig: sig, pids: JSON.stringify(p)}).done(function (r) {
+      if (!r.ok) { msg('sds-kmsg', 'sds-er', r.error); return; }
+      msg('sds-kmsg', '', (r.done.length ? 'Sent to ' + r.done.join(', ') + '. ' : '') + (r.skipped.length ? 'Not sent: ' + r.skipped.join(', ') + '. ' : '') + 'Checking again in 5 s...');
+      setTimeout(function () { msg('sds-kmsg', '', ''); load(); }, 5000);
+    }).fail(function (x) { msg('sds-kmsg', 'sds-er', err(x)); });
+  }
+  $('#sds-term').on('click', function () { kill('TERM'); });
+  $('#sds-kill').on('click', function () { kill('KILL'); });
+  $('#sds-refresh').on('click', load);
+
+  function boot(cmd) {
+    var what = cmd === 'reboot' ? 'Restart' : 'Shut down', still = [];
+    if (S) {
+      if (S.containers.length) { still.push(S.containers.length + ' container' + (S.containers.length === 1 ? '' : 's') + ': ' + S.containers.slice(0, 6).map(function (c) { return c.name; }).join(', ') + (S.containers.length > 6 ? ', ...' : '')); }
+      if (S.vms.length) { still.push(S.vms.length + ' VM' + (S.vms.length === 1 ? '' : 's') + ': ' + S.vms.join(', ')); }
+      var fr = free(); if (fr.length) { still.push(fr.length + ' process' + (fr.length === 1 ? '' : 'es') + ' on the disks: ' + fr.slice(0, 4).map(function (h) { return h.comm + ' (' + h.pid + ')'; }).join(', ')); }
+    }
+    if (!window.confirm(still.length ? what + ' the server anyway?\n\nStill running:\n- ' + still.join('\n- ') + '\n\nUnraid tries to stop them during the shutdown, but that is where a shutdown can hang.' : what + ' the server now?')) return;
+    var $f = $('#sds-boot'); $f.find('[name=cmd]').val(cmd); $f[0].submit();
+  }
+  $('#sds-off').on('click', function () { boot('shutdown'); });
+  $('#sds-reboot').on('click', function () { boot('reboot'); });
+
+  load();
+});
+</script>

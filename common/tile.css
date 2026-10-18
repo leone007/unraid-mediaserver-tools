@@ -1,0 +1,21 @@
+/* Shared tile look (the Sysbox / Diskbox style): dark section bands, the content in a box under them, colored left stripes on rows.
+   Used by Seedbox and Streambox; the build copies this block into each plugin's page where the marker below stands. */
+.mt-band{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;margin-top:14px}
+.mt-band.mt-first{margin-top:6px}
+.mt-band span{opacity:.75}
+.mt-band b{font-weight:400;opacity:.5;text-transform:none;letter-spacing:0;text-align:right}
+.mt-band.mt-red span{color:#e5534b;opacity:1}
+.mt-box{background:rgba(128,128,128,.12);margin-top:8px}
+.mt-cols{display:grid;gap:8px;align-items:center;padding:6px 10px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.2)}
+.mt-cols>div{opacity:.6}
+.mt-r{display:grid;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid rgba(128,128,128,.2)}
+.mt-box>.mt-r:first-child,.mt-cols+.mt-r{border-top:0}
+.mt-s-orange{background:rgba(245,165,36,.10);box-shadow:inset 3px 0 0 #f5a524}
+.mt-s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+.mt-s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+.mt-s-red{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.mt-s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+.mt-s-purple{background:rgba(150,120,230,.10);box-shadow:inset 3px 0 0 #9a7de6}
+.mt-s-grey{background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.mt-box .mt-n{background:none}
+.mt-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}

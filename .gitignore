@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.claude/settings.local.json
+node_modules/
+._*
+.DS_Store
+# local only (personal notes, work files)
+ATADAS.md
+ATADAS_archiv.md
+CLAUDE.md
+updates_todo.md
+*.zip
+.claude/
+icons/prev*.png
+_local_old/

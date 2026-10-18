@@ -1,0 +1,620 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "qbittorrent_widget">
+<!ENTITY author    "leone007">
+<!ENTITY title     "Seedbox">
+<!ENTITY version   "2026.10.99zu">
+<!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
+<!ENTITY cfgdir    "/boot/config/plugins/&name;">
+]>
+
+<PLUGIN name="&title;"
+        author="&author;"
+        version="&version;"
+        min="6.12.0"
+        icon="seedbox.png"
+        pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
+
+<CHANGES>
+###2026.10.99zu
+- Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed
+###2026.10.99zt
+- Discord bot (reactions): with a bot token and your Discord user ID saved, a season pack from autobrr and a torrent the tracker removed (daily check) come as a message with up to three choices; the bot adds 1️⃣ 2️⃣ 3️⃣ 👎 under it. A number starts that replacement with the same checks as the button on the page, 👎 dismisses it. Only your reactions count, for 24 hours; the bot looks once a minute (no open port, no running bot process). The bottom of the message follows the job: started, done, failed, dismissed, expired
+- Settings: Discord bot row (token, user ID, which messages, Test the bot); a torrent removed from the tracker is offered again only after 7 days, at most five messages per check
+- With the bot, the autobrr message waits a few minutes until Sonarr lists the pack, so it carries the choices; without the bot it comes at once as before
+###2026.10.99zs
+- Season repacker: a season pack that autobrr reports is listed by itself under From autobrr (a few minutes later, after Sonarr found it), with Replace with pack and Dismiss; the release autobrr saw comes first. The row leaves when the replacement starts (back if it fails), when dismissed or after 7 days. Nothing is started by itself
+- Season repacker: an incomplete season can be replaced too when the pack holds every episode you have; the missing ones (on nCore often the finale) come from the pack. An autobrr find needs only one episode here
+- Season repacker: the library scan results are folded under From the library scan; a season that autobrr reported is listed only there
+- Widget: the Season Repacker row shows the packs from autobrr waiting for a click (green, with the series and when the latest came)
+- Discord: the autobrr message says where to replace it and that the missing episodes come from the pack
+###2026.10.99zr
+- Widget: Shape up shows when it scanned last also while it shows offers or the search
+###2026.10.99zq
+- Settings: Show on the Dashboard for each tool (only when relevant, always, for N days after a scan, never); the default is only when relevant; with no row left the tools part of the tile is hidden
+- Widget: Shape up shows Scanning while the background search runs and has no offer yet
+###2026.10.99zp
+- Activity summary: after the downloads it counts the moves to the array (one torrent at a time, at the measured move speed) and shows when all is done
+- Settings: Lidarr address and API key in Connections, tested with the others
+###2026.10.99zo
+- Activity: every running replacement shows its own speed, downloaded and total size, time left and a progress bar; a move to the array shows its own progress (grey), a finished download shows waiting for the import, an imported one a full green bar
+- Radarr and Sonarr time left is readable (16 d 7 h instead of 16.07:31:53)
+###2026.10.99zn
+- Activity: stalled replacements are listed at the bottom of Processing
+###2026.10.99zm
+- Settings: Empty the trash now button next to the trash days (shows what the trash holds, asks before deleting)
+- Settings: Test the connections is back in Connections, under the Discord webhook
+###2026.10.99zl
+- Shape up: the minute check drops torrents that are no longer in qBittorrent from the list; the offer and must do counters skip replacements already started
+###2026.10.99zk
+- Shape up: Remove the old torrent and files moves the whole old folder to the trash (video plus nfo, images, subtitles), not only the torrent files; cross-seeded files stay
+###2026.10.99zj
+- Shape up: Remove the old torrent and files also drops that torrent from the last scan list (it no longer comes back when the finished job is forgotten)
+###2026.10.99zi
+- Shape up: a torrent whose old copy was already removed after the replacement stays out of the list too (it showed up again until the next scan)
+###2026.10.99zh
+- Activity: a stalled replacement row turns amber and gets a stalled badge
+###2026.10.99zg
+- Activity: a stalled replacement shows why on its own row (seeders connected, or none online and how many the tracker lists), not only when every download is stalled
+- Season repacker: a season whose pack replacement is under way leaves the list (it is in Activity)
+###2026.10.99zf
+- Shape up: a torrent whose replacement is under way leaves the list (like in Find my torrent) and comes back if the job fails
+###2026.10.99ze
+- Folders: sorted by how many tools watch them (Series, Movies, Music, Other, Not watched), by name inside a role
+###2026.10.99zd
+- Folders: the row of the Seedbox trash is gone (hidden folders are never listed)
+###2026.10.99zc
+- Settings: a Folders part replaces the downloads folder list. Every folder inside the downloads folder has a role: Movies, Series, Music (the media library), Other (seeding only, for example ratio torrents) or Not watched. The first roles come from the names (FILM, SOROZAT, MUZZIK); a new folder shows up as Other, marked new
+- Find my torrent looks at every folder but Not watched; Replace is offered only in Movies and Series folders
+- Shape up and the Season repacker look only at torrents in Movies and Series folders; the big old torrents of other folders are listed folded as outside the library
+###2026.10.99za
+- Activity summary: a download that does not move says stalled, with the seeders connected and the number the tracker lists, instead of hardly moving
+- A replacement at 99.x percent no longer shows downloading 100%
+###2026.10.99z
+- Seedbox Tools Activity: the Processing line sums up the replacements still downloading: how many, how much is left and about when they finish at the current total download speed of qBittorrent (read only)
+###2026.10.99y
+- Settings page in the shared look of the plugin pages: a dark band per part, the label on the left, the controls of one setting on one line, the explanation quiet under them; Apply and Done below; the connection part first, with a Test the connection button and the state in the band (connected, number of torrents); the rows and the columns in one line each
+
+###2026.10.99x
+- Dashboard tile header: the folders that no torrent seeds (the last Find my torrent scan) are counted too, for example 508 of 587 seeded, 79 not seeded, instead of All 508 seeding
+- Settings: the saved password field shows (saved), the explanation is under it
+
+###2026.10.99w
+- qBittorrent login: the settings file is read literally, so a password with a dollar sign and braces or with backslashes works
+- Settings: the saved qBittorrent password is no longer sent to the page; an empty field keeps it, a single - removes it
+
+###2026.10.99v
+- Dolby Vision: only a remux or a full disc (BD25, BD50, BD66, BD100) counts as DV+HDR without HDR in the name; a Blu-ray encode with only DV in the name (for example Dolby.Vision.SL.x265) counts as DV only, since a single layer encode may have no HDR10 base layer
+
+###2026.10.99u
+- HDR and Dolby Vision apart: DV with an HDR10 base layer (DV+HDR: the name has HDR or HDR10 too, or it is a Blu-ray or remux) is the best; DV only (web releases with DV and no HDR10) gives a purple and green picture on a TV without DV
+- New setting in Connections: Dolby Vision on your TVs, not every TV plays it (the default) or every TV. With not every TV a DV only release is never an upgrade or a Must do in Shape up (it is left out with the reason), it comes last in the Find my torrent replacements and Season repacker packs, and it is marked with a red DV only chip; the current file's format comes from Radarr or Sonarr (DV HDR10 or DV)
+- After changing the setting press Forget results, search again in Shape up
+
+###2026.10.99t
+- Shape up, Must do: the must releases are sorted by size, the smallest (the biggest saving) first; the must line under the torrent names that one
+
+###2026.10.99r
+- Settings, Connections: the Discord webhook row sits under autobrr, and Test the connections is the last row of Connections with its results right there (it tests the saved settings); Save stays at the bottom of the page
+
+###2026.10.99q
+- Shape up, Must do: the line under a torrent names the release that is smaller and better (must: minus 12.4 percent, 2160p DV HUN) instead of the first one in the list, and in the opened list the must releases come first with a gold must mark; the other bars keep their order
+
+###2026.10.99p
+- Shape up: a new first bar, Must do (smaller and better: a no-brainer): the torrents with one release that is smaller by the saving and at the same time a better HDR format or a higher resolution; gold stripe, closed when the page loads; the torrents stay in their other bars too. The top chip counts them (for example 20 offers, 4 must do)
+
+###2026.10.99o
+- Update me is called Shape up now: slimmer or stronger, a smaller release, a better HDR format or a higher resolution. Only the names on the page and on the Dashboard tile changed; the settings and the results are kept
+- Shape up: the offers are in foldable bars like Find my torrent, closed when the page loads: Saving, HDR / DV upgrade, Resolution upgrade (and Removed from the tracker when there is one); a torrent with two kinds of offer is in both bars; 25 rows per bar, then 50 more per click
+- Dashboard tile: Shape up shows the number of offers and how many torrents were searched (it showed the size of the list before)
+
+###2026.10.99n
+- Settings: the controls of one setting are really on one line now (Unraid 7 lays every setting out as a column; this page overrides it for its own form only)
+
+###2026.10.99m
+- Activity at the top lists every running and finished job of the three tools, the season pack replacements too (marked season pack); clear list clears them all
+- Settings: the controls of one setting stay on one line (the scheduled scan, the Update me thresholds); the Season repacker search field sits under its lead text
+
+###2026.10.99l
+- Seedbox Tools page in the look of the Dashboard tiles: a dark band per tool with its state on the right (scanned when, how many folders, torrents, autobrr), a short lead line with the main button, a status strip, rows with a colored left stripe (green saving or done, purple upgrade, red removed or failed, blue in progress, amber waiting)
+- Chips at the top jump to each tool and show its count (folders not seeded, Update me offers, season packs); the long introduction is folded under What do the tools do
+- Secondary buttons (Hide, Ignore, Search again, Dismiss, Stop searching, Forget results) are quieter, so the main actions stand out
+- Settings: a band per part, the label on the left, the control on the right, the explanations as a quiet line under the control. Nothing in the working of the tools changed
+
+###2026.10.99k
+- Find my torrent: the five categories (same name and size, removed from the tracker, different release, only the name similar, no torrent found) are always shown, also when empty (dimmed, 0 folders); a click on a category opens or closes it, and they are closed when the page loads. The passkey category and the waiting rows show up only when there are some
+
+###2026.10.99j
+- Update me: Forget results, search again button (with a confirm): forgets every search result of the list and searches all torrents again in the background, for example after the saving, the offers or the size limit were changed
+
+###2026.10.99i
+- A plugin update ends a running Update me background search (it went on with the old code); press Search the rest or scan again to go on, the results so far are kept
+- Update me: results saved before 2026.10.99h that have a release of unknown resolution (0p) no longer count as an offer
+
+###2026.10.99h
+- Update me: the releases under a torrent are folded, plus or minus before the name opens them (like Find my torrent); the line under the title shows how many there are and the first one; a new search opens them
+- Update me: a release whose resolution Radarr or Sonarr cannot read (for example a Hungarian title only, Unable to parse release) is no offer any more
+
+###2026.10.99g
+- Update me: the progress of the background search shows up by itself after a scan (the page stopped looking if it asked in the moment between the end of the scan and the start of the search)
+- Update me: the background search ends when its list is gone (a plugin update clears it) instead of waiting, so a later scan cannot run two searches at once
+
+###2026.10.99e
+- Update me: the progress line shows the balance: about how much space the saving offers would free and how much more the upgrades would take (with the first listed release of each torrent, following the offer switches above the list)
+
+###2026.10.99d
+- Update me: after a scan every listed torrent is searched in the background, one about every 90 seconds so the trackers see no burst; a result is kept for 10 days, so the next scan searches only the new and the old ones. Stop searching and Search the rest buttons, progress line
+- Update me offers three kinds, each with its own switch in the settings: saving (at least the saving percent smaller), HDR or DV upgrade, resolution upgrade; upgrades may be bigger by at most a set percent (default 100, 0 = no limit). Never a lower resolution or HDR format. Hungarian audio comes first but is not required
+- Update me list: only the torrents with an offer are shown, 25 at first and then 50 more per click; a name filter and a switch per offer kind; the rest is folded (nothing better found, not searched yet) with a Search now button
+
+###2026.10.99c
+- autobrr watch: Load filters button lists the autobrr filters, tick the ones whose releases are checked (none ticked = all)
+- autobrr watch: single episodes (S02E01) are passed over by their name without asking Sonarr, so a busy feed is followed in time; the status line counts them
+- Test the connections lists the autobrr filters
+
+###2026.10.99b
+- Season repacker: optional autobrr watch (Settings: autobrr address and API key, Season packs from autobrr). Every 5 minutes the releases autobrr let through are checked with Sonarr; a season pack of a monitored season that you have at least one episode of, not of a lower resolution and Hungarian if your episodes are, is reported once on Discord with its size, your episodes, the missing ones and the free space. Nothing is started; only GET calls to autobrr and Sonarr
+- Test the connections also tests autobrr
+
+###2026.10.99a
+- Update me, Remove: when another torrent seeds the same files (the same release on a second tracker), only the old torrent is removed and the files stay; the page and the Discord message say which torrent keeps them
+- The tools state is changed under a lock: a click on the page (Add, Replace, Replace with pack, Dismiss, Clear) during the minute check is no longer lost or overwritten, and the minute check puts its changes onto the current state; Replace, Replace with pack and Remove run one at a time, so a double click cannot grab or delete twice
+- Fewer writes to the flash drive: progress messages (downloading 45 percent) are kept in /tmp, the flash copy is written when a stage changes, an entry is added or removed, or once an hour
+
+###2026.10.99
+- Update me: torrents without a video file (games, software) and packs that hold several seasons are no longer listed; they appear, with the reason, in a folded line under the list. Every listed torrent has a Hide button (for example a game or Windows image kept as an .iso); hidden ones are in the same folded list with a Show again button. Hiding only changes the list, nothing in qBittorrent or on the disk. The Dashboard count follows the list.
+
+###2026.10.98
+- Bonus material and Hungarian samples: video files in an Extras, Featurettes, Trailers, Behind the Scenes, Deleted Scenes, Interviews or Bonus folder and clips named minta (Hungarian for sample) no longer count as the movie, so a torrent that holds the film plus such extras is matched with Radarr (seen live: Die Hard With a Vengeance, The Postman, You've Got Mail).
+
+###2026.10.97
+- Sample clips: a sample file is now recognised whatever character stands before the word (for example !sample.mkv), so a movie whose torrent held such a clip beside the film is matched with Radarr instead of showing no matching movie.
+
+###2026.10.96
+- Disc images: an .iso file counts as a video for matching, so a movie that Radarr keeps as an .iso (for example a UHD disc image) is found, compared and can be replaced like any other, instead of showing no video file; folders that hold only an .iso are no longer treated as having no content by the old-file cleanup.
+
+###2026.10.95
+- Moving: a move that qBittorrent has queued but not started (content still at the old place) shows waiting instead of a percentage measured at the old place (it showed 99 percent); the Season Repacker line says waiting to move
+
+###2026.10.94
+- Matching a folder with Sonarr: when one season holds at least 80 percent of the videos, stray matches of other seasons are ignored; the several seasons message now lists which seasons matched and with how many files
+
+###2026.10.93
+- Resolution from the release name: an explicit 1080p or 720p wins over UHD in the name, so a 1080p UHD BluRay hybrid is no longer shown as 2160p
+
+###2026.10.92
+- Matching a folder or torrent with Radarr / Sonarr ignores sample clips (a Sample folder or sample in the file name); folders with samples were counted with twice as many videos and found no match
+
+###2026.10.91
+- Find my torrent: a Delete button next to Replace again and Ignore moves the folder to the trash after a confirmation (or deletes it at once when the trash days are 0) and takes the torrent the tracker removed out of qBittorrent; a folder another torrent seeds is never touched
+
+###2026.10.90
+- Find my torrent / Update me: Blu-ray disc releases named BD25 or BD50 without a resolution count as 1080p, and the higher of the Radarr/Sonarr and the name based resolution is used, so a 1080p release is no longer dropped as lower resolution
+
+###2026.10.89
+- Activity: the long message now wraps even with the Unraid table style that forbids wrapping, and the buttons are stacked, so Dismiss is visible
+
+###2026.10.88
+- Activity: a Dismiss button hides an imported replacement whose old files could not be removed (nothing is deleted); long messages wrap so the buttons stay visible
+
+###2026.10.87
+- Scheduled scan moved to the shared Connections settings: every day or every week, at the chosen hour, for the ticked tools (Find my torrent as before; Update me and Season repacker are new and off by default). They scan one after the other; nothing is added, replaced or deleted without a click
+
+###2026.10.86
+- Replacement jobs: the findmytorrent / updateme tag is retried when qBittorrent was busy or did not answer, so a torrent is no longer left untagged
+
+###2026.10.85
+- Find my torrent: the replacement list shows the better HDR release first (DV before HDR before SDR); the size column header is now Size vs. current
+
+###&version;
+- Find my torrent and Update me: for a single episode only releases of that episode are offered (Sonarr also lists the single-episode releases of the other episodes of the season), and for a whole season only packs of that season
+###2026.10.83
+- Widget look: the row boxes have square corners, so the stripes are straight like in Diskbox
+###2026.10.82
+- Widget look: the Seedbox tools rows and the Streambox rows have a plain background, only the stripe and the badge are colored; the In transfer rows keep the colored background
+###2026.10.81
+- Widget look: section bands (Seedbox tools, Needs attention, In transfer) are dark bands like in Sysbox and Diskbox, the rows sit in a box under them with a colored stripe on the left (tools: the action color, transfer: orange download, blue upload, grey moving, attention: red or amber); the column header is a muted line instead of a dark band. The look comes from a shared common/tile.css
+###2026.10.80
+- Widget: the header reads Seedbox tools
+###2026.10.79
+- Settings: the tagline under each tool name on the widget can be changed per tool (empty = the default text)
+###2026.10.78
+- Widget: a wink after the Find my torrent tagline
+###2026.10.77
+- Season Repacker: only packs of the same season are offered (Sonarr also lists packs of other seasons, for example an S05 pack for S03); multi-season packs are not used
+###2026.10.76
+- Widget: a running scan shows as Scanning on its tool row (instead of the previous scan result)
+###2026.10.75
+- Widget: Find my torrent shows when the last scan ran, under the problem count
+###2026.10.74
+- Settings are grouped by tool: Connections (shared), Find my torrent, Update me, Season repacker. Each tool has its own Discord messages switch (the webhook stays one). Until you save, the old single switch decides for all three
+###2026.10.73
+- Widget: Find my torrent, Update me and Season Repacker are always shown, with a short tagline and a tooltip. Find my torrent shows the number of all problems from the last scan with the breakdown, the other two show the last scan result. Last scan results are kept across reboots
+- All percentages have one decimal (widget, Season Repacker rows, job messages)
+- Season Repacker: if the old season files are already gone when the job continues (restart), it goes on waiting for the import
+###2026.10.72
+- Moving progress: measured with the allocated blocks of the target files (a move creates every target file at its full size at once, so the file sizes jumped by a whole file), and the time left uses the speed of the last five minutes
+###2026.10.71
+- Widget: the In transfer header (Torrent, Down, Up, ETA) is shown when nothing is transferring too
+###2026.10.70
+- Season repacker: a whole-series (or multi-season) torrent is recognised too, its name does not need the season (the file list decides); the suggestion list only has series that have a season with at least two episode files
+###2026.10.69
+- Season repacker: a season that one torrent in qBittorrent already seeds whole (its name has the series and the season and its files hold at least 80 % of your episodes) is never listed, besides the check on the Sonarr import history
+###2026.10.68
+- Season repacker: the series field has a suggestion list (drop-down while typing) with the series that are monitored in Sonarr
+###2026.10.67
+- Widget: the tools block has a "Seedbox tool / Action" header (shown only when a tool has something to say); the rows are plain, the action badge is coloured by state: Find my torrent amber, Season Repacker downloading orange, moving grey (like a normal torrent move), importing blue, repacked green, stuck red; the tool name is a link without underline
+###2026.10.66
+- Widget: the top block is "Seedbox tools" with one row per tool (Find my torrent with the removed-from-tracker count, Season Repacker with its state), the tool names are links to their part of the Seedbox Tools page; the repacker no longer appears twice in In transfer, and the "need attention" count only counts real torrent problems
+- Widget: the Moving percentage is measured at the real destination (qBittorrent reports the source folder while it moves, so the destination is save path + name); previously it stayed at 0 %
+###2026.10.65
+- Season repacker is a third, separate tool (intro text, heading, jobs table); its torrents carry the seasonrepacker tag. The single-episode torrents are listed one per line with their sizes and the total next to the pack size
+- Season repacker: two torrents that share one folder no longer give a false "seeds it" warning (torrents are removed first, each folder is moved once); the Find my torrent list drops entries whose folder is gone, right after the repack and on every refresh
+- Widget: a Moving torrent shows a light grey bar with the percentage measured at the destination (every 30 s) and an ETA; a season being repacked shows a row "Series is being repacked by Season Repacker" (and "is repacked" for 15 minutes); the jobs table shows the move progress too
+- A torrent that a tool removes is also dropped from the widget's "removed from tracker" list at once
+###2026.10.64
+- Season packs: only series and seasons that are monitored in Sonarr are scanned; unmonitored (finished, kept) series are left alone
+###2026.10.61
+- New helper, Season packs (seasonrepacker): for seasons whose episodes were downloaded one by one it finds the season pack through Sonarr (same or higher resolution, DV/HDR preferred, Hungarian if your files are), and on one click downloads it, checks that it holds every episode you have, then deletes the season's files in Sonarr, lets Sonarr import the pack and moves the single-episode torrents to the trash folder. Nothing is deleted before the pack is complete
+###2026.10.60
+- Find my torrent: a tracker that answers "unregistered torrent pass" (the passkey in the announce URL is invalid) is its own category with no Replace button, because the torrent still exists and only the tracker URL has to be updated; these are not counted as removed by the tracker
+###2026.10.59
+- Replace: an episode folder whose files differ from the Sonarr library is matched to the series by the name in the folder (and the S01E02 number), so the single-episode releases are searched for it
+###2026.10.58
+- Replace: releases with a lower HDR / DV format than the current files are offered too (the goal is to keep the resolution and get the content seeded); the ones with the same HDR format are listed first
+###2026.10.57
+- Replace options: the releases that Radarr / Sonarr returned but the filters dropped are listed under the results (title, size, seeders and the reason), so it is visible why a release you can see on the tracker is not offered
+###2026.10.56
+- Find my torrent: the categories are numbered by what is shown, an empty category is hidden and the rest are renumbered
+###2026.10.55
+- Replacements: the torrent that Radarr / Sonarr grabs for a replacement gets the qBittorrent tag findmytorrent (Update me: updateme), like the torrents added by Add torrent
+###2026.10.54
+- Find my torrent: torrents that the tracker removed are their own category (2) right under "Add the torrent", so there are five categories
+###2026.10.53
+- Find my torrent: at the end of a scan the torrent list is read again, so a folder whose torrent was added during the scan (for example a replacement Radarr / Sonarr had just grabbed) no longer shows up as unseeded
+###2026.10.52
+- Find my torrent: the replacement results of a scan arrive collapsed, a click on the + opens them (Replace again opens them too)
+###2026.10.51
+- Replace: a folder whose files differ from the library (another release imported) is matched to the Radarr movie by title and year; the single episode is found by its S01E01 number too; "No release meets the conditions" now lists why the releases were filtered out
+###2026.10.50
+- Replace options: "do your thing Radarr!" is shown only for Radarr releases rejected solely because of the cutoff / upgrade rules (the plugin can force the import); every other rejection (and Sonarr) shows "rejected" with the reason again
+###2026.10.49
+- Replace options: releases that Radarr / Sonarr would reject are marked "do your thing Radarr!" / "do your thing Sonarr!" (the reasons are in the tooltip); the weekly automatic scan also looks up the replacement options
+###2026.10.48
+- Find my torrent: a new scan clears the earlier replacement results, and during the scan every folder without an identical torrent gets its Radarr / Sonarr replacement options, so each row can be opened with the +/- toggle as soon as the scan is ready
+###2026.10.47
+- Replace with this: when Radarr/Sonarr has already forgotten the search result (HTTP 404, release not in cache), the search is repeated automatically and the release is sent again
+###2026.10.46
+- Find my torrent: a +/- toggle in front of the name shows or hides the replacement search results of that folder
+###2026.10.45
+- Replace: a single episode in the Sonarr library is now searched by episode, so single-episode releases (for example from nCore) are offered; season packs are still used for whole seasons. The replacement is tracked per episode
+###2026.10.44
+- Results list: a "clear list" link removes the finished entries, and finished replacements are forgotten after 7 days like the added torrents
+###2026.10.43
+- Add all matching summary: clearer wording for torrents whose missing part qBittorrent still has to download
+###2026.10.42
+- Find my torrent: Ignore is now stored in its own file, so the background queue can no longer bring an ignored item back; the "last try failed" message is shown on its own full-width line instead of overlapping the buttons
+###2026.10.41
+- Seedbox Tools: the category setting help text explains where the Radarr / Sonarr download client category comes from and where to change it
+###2026.10.40
+- Seedbox Tools: the category setting help text refers to the Radarr / Sonarr download client category
+###2026.10.39
+- Weekly check: when no torrent was removed by a tracker, a green Discord message says that the weekly torrent health check ran (and how many folders are still unseeded)
+###2026.10.38
+- Weekly check (on by default, Monday 08:00, settable): scans the downloads folders by itself; torrents removed by their tracker are reported on Discord (when a webhook is saved, even if the other messages are off) and shown in the Seedbox tile under Needs attention, with a hint and a link to Seedbox Tools; the first run waits for the next slot
+###2026.10.37
+- Scan results: folders whose torrent was removed by the tracker carry a red "removed from tracker" mark (the groups stay the same); Update me uses the same wording
+###2026.10.36
+- Torrents removed by the tracker are found again: qBittorrent 5 reports "err: unregistered torrent" as status Tracker error (not "Not working"), and its "current tracker" field is not empty; both scans now check every finished torrent. "Host not found" no longer counts as removed
+###2026.10.35
+- The messages on the Seedbox Tools page are always English (the Discord language setting only changes the Discord messages); fixes the mixed Hungarian/English cleanup message
+###2026.10.34
+- Seedbox Tools: intro text in four short paragraphs
+###2026.10.33
+- Seedbox Tools: the intro now explains why the plugin exists (a seedbox or seeding media server should seed all of its media files)
+###2026.10.32
+- Added torrents that Radarr/Sonarr cannot match still get a category: the one most torrents in the same folder already have
+###2026.10.31
+- Find my torrent: added torrents get the qBittorrent category that Radarr (movies) or Sonarr (series) uses in its download client (for example FILM); a setting switches it off
+###2026.10.30
+- Add torrent with missing files: the message shows how many files were missing and their total size (for example "1 file (14 KB)"); sizes under 1 MB are shown in KB
+###2026.10.28
+- Scan results: click Folder, Size or Seeders in the header to sort inside each of the four groups (default: biggest first); a second click reverses it
+###2026.10.27
+- Scan results: the four group headings are full-width colored bars (green, amber, orange, red), numbered 1-4, with the folder count
+###2026.10.26
+- Fixed the "NaN m ago" time on replacement rows in Results
+###2026.10.25
+- Scan results: a match is one line (seeders, indexer, "found original", Add torrent / Replace / Ignore); the "why" badge is gone from the rows
+###2026.10.24
+- Seedbox Tools page in three separate boxes: Processing (running replacements and added torrents), Results (finished ones, newest first) and Scan results (work still to do); items in progress leave the scan list; shorter rows with the new file name on its own line; Connections moved to the bottom as Settings
+###2026.10.23
+- Replacements and Recently added moved to the top of Find my torrent (above the long list), newest first, the latest 6 / 5 with a show all link
+###2026.10.22
+- Replacement search shows what Radarr/Sonarr judged with: the profile of the title (name, language, upgrades allowed), the original language, how many releases came back and how long it took
+###2026.10.21
+- Replacement jobs that wait with "Not an upgrade" (an equal replacement is never an upgrade for Radarr) get a Force the import button: Radarr is asked to import the downloaded file with the ManualImport command and replaces the old one, then the old files are cleaned up as usual (Radarr only)
+###2026.10.20
+- Replacement search: the same resolution and HDR format come first, closest in size; new setting for the maximum size increase (default 100 percent, 0 = no limit); the Radarr/Sonarr rejection reason is shown in the row
+###2026.10.19
+- Find my torrent: Add all matching button: adds every folder that has an identical torrent, one after the other with one file check at a time, can be stopped; one Discord summary at the end (instead of one message per torrent); folders whose last try failed are marked and skipped
+###2026.10.18
+- Find my torrent: the automatic refresh redraws the list only when something changed (no flicker or lost scroll with hundreds of rows)
+###2026.10.17
+- Find my torrent: the list follows what happens: a folder drops out once its torrent is seeding (or its replacement is done), and one that is being checked or replaced is shown as in progress; the list refreshes itself
+###2026.10.16
+- Find my torrent: torrents are added with the incomplete-folder feature switched off, so qBittorrent never moves your files (a move can break the hardlinks to the media folder)
+###2026.10.15
+- Find my torrent: if only a few whole files of the torrent are missing from your folder (setting, default 1), the torrent is started anyway and qBittorrent downloads just those files
+###2026.10.14
+- Find my torrent: a torrent that matches at least 99% of your files after the check (setting: accepted match) is started and qBittorrent downloads the missing rest (for example an .nfo file); below that it is removed as before
+###2026.10.13
+- Replacement: the audio language no longer matters (English audio with Hungarian subtitles is fine); HUN releases are still marked with a badge
+###2026.10.12
+- Find my torrent: Add torrent only for an identical release (same name and size); everything else is replaced through Radarr/Sonarr.
+###2026.10.11
+- Find my torrent: files and folders without any video file (poster.jpg, backdrop.jpg, .nfo, artwork folders) are no longer listed as unseeded content
+###2026.10.10
+- Discord messages are off until switched on (checkbox); no red messages, nothing in Seedbox needs immediate attention yet
+- Find my torrent: results grouped, matches first (same name and size, then size match, then name only), folders without a torrent (to replace) last; scan report on Discord splits the same way
+###2026.10.09
+- Discord summaries from Seedbox Tools (webhook and language Hungarian/English in Seedbox Tools): scan result, replacement started, stuck, imported, old files removed, trash emptied, torrent added or mismatched, each with what happened and why
+###2026.10.08b
+- Find my torrent: compact single table with columns, the results listed under each folder; duplicate releases merged, folders under 1 MB (.nfo files) no longer listed
+###2026.10.08
+- Find my torrent: when no torrent exists for unseeded content, "Replace content" searches Radarr/Sonarr for an equal-or-better release (resolution and DV/HDR not lower, at least one seeder), sends it with your click, and after the import moves the old folder to .seedbox_trash (deleted after the number of days set in Seedbox Tools, 0 = at once) and removes the old media hardlink
+###2026.10.07
+- New page Settings, Utilities, Seedbox Tools with two helpers (nothing is added, replaced or deleted without your click)
+- Find my torrent: scans the downloads folders for files that no torrent seeds (and torrents the tracker has removed), searches Prowlarr and lists matching releases by name and size; Add puts the torrent in qBittorrent stopped, checks it against your files and starts it only if every file matches
+- Update me: finds big, old seeded titles (size and age are settings), matches them with Radarr or Sonarr, and lists smaller releases with the same or higher resolution and the same HDR format or better (at least 30 percent smaller by default); Replace sends the release to Radarr or Sonarr, shows the queue state, and after the import the old torrent and its files can be removed with one more click
+###2026.10.06
+- New logo: monochrome Seedbox icon on the dashboard tile, the Plugins page and the settings menu
+- Plugin details: display name Seedbox, author leone007, description and full release notes
+- Update status: the plugin file is served on 127.0.0.1 only, so the Plugins page can run its update check and report "up-to-date"
+###2026.10.05b - 2026.10.05k
+- Speeds below 50 B/s count as idle (no more rows or header values showing 0.00 kB/s)
+- Icon 30px; summary line closer to the title
+- Fix: save.php rejected every save because Unraid removes csrf_token from $_POST after validating it; now accepts AJAX requests
+- Settings page now saves through its own endpoint (save.php) with validation and visible feedback; Unraid's generic update.php did not write the file
+- Moving / checking / allocating torrents are shown in In transfer (with a status label) instead of Needs attention
+- Fix: red rows were drawn with Unraid's global .red text colour (classes renamed); header speeds use the larger of qBittorrent's global value and the sum of active rows; spacing between the two speeds
+- Stalled status is ignored completely (idle seeds are normal); removed tracker checks and the stall setting
+- Fix: text clipped on the right (nowrap inherited from the dashboard) and scene-style names now wrap (dots shown as spaces)
+###2026.10.05
+- Renamed the tile to Seedbox, with two tables: Needs attention and In transfer
+- Connection globe (connected / firewalled / disconnected) from qBittorrent
+- Stalled torrents are flagged while connected; when firewalled or disconnected only one connection row is shown
+- Tracker hint for flagged stalled torrents
+- Auto-scaled speed units, ETA, progress bar under the name, link to the Web UI
+- qBittorrent icon embedded in the plugin (inverted automatically on light themes)
+- Settings page: Settings -> Utilities -> Seedbox
+###2026.10.04b - 2026.10.04e
+- New: ETA column, separate download/upload speed columns
+- New: only downloading torrents shown by default (optional: anything transferring), row limit
+- New: header home icon (opens qBittorrent Web UI) and gear icon (settings page)
+- New: Settings -> Utilities -> qBittorrent Widget (columns, filter, rows, connection)
+- Tweak: smaller header icon
+- Fix: remove nested table/tbody that broke the Unraid 7 dashboard; use grid rows
+- Fix: register tile via $mytiles so Unraid 7.x renders it as a native dashboard tile
+###2026.10.04
+- Initial release: qBittorrent dashboard tile (Web UI API via local PHP proxy)
+</CHANGES>
+
+<!-- ========================================================= -->
+<!-- ARCHITECTURE SETUP                                         -->
+<!-- ========================================================= -->
+<FILE Name="/tmp/&name;_setup.sh" Run="/bin/bash">
+<INLINE><![CDATA[
+#!/bin/bash
+PLUG="qbittorrent_widget"
+DIR="/usr/local/emhttp/plugins/$PLUG"
+CFG="/boot/config/plugins/$PLUG"
+
+# Wipe old deployment + temp files (RAM-side only; /boot config is preserved)
+rm -rf "$DIR"
+rm -rf "/usr/local/emhttp/plugins/Seedbox"
+rm -f /tmp/qbt_widget_* 2>/dev/null
+# the Update me background search keeps running with the code it started with: end it, the next scan or Search the rest starts the new one
+pkill -f "qbittorrent_widget/tools_run.php updbg" 2>/dev/null
+
+mkdir -p "$DIR"
+mkdir -p "$CFG"
+
+# Default settings: only written if absent, so upgrades never clobber them.
+# Missing keys in an older file simply fall back to defaults in the code.
+if [ ! -f "$CFG/settings.cfg" ]; then
+cat > "$CFG/settings.cfg" <<'EOF'
+host="127.0.0.1"
+port="8080"
+user=""
+pass=""
+webui_url=""
+rows="6"
+max_attention="15"
+show_bar="1"
+col_dl="1"
+col_ul="1"
+col_eta="1"
+EOF
+fi
+chmod 600 "$CFG/settings.cfg"
+
+# qBittorrent icon (96x96 PNG), embedded so there is no CDN dependency
+base64 -d > "$DIR/icon.png" <<'B64'
+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
+gg==
+B64
+
+# Icon for the Plugins page and the settings menu; the Plugins page looks it up under the display name
+TITLEDIR="/usr/local/emhttp/plugins/Seedbox"
+mkdir -p "$DIR/images" "$TITLEDIR/images"
+cp "$DIR/icon.png" "$DIR/images/seedbox.png"
+cp "$DIR/icon.png" "$TITLEDIR/images/seedbox.png"
+exit 0
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- DASHBOARD TILE                                             -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/&name;.page">
+<INLINE><![CDATA[@@SRC:seedbox/qbittorrent_widget.page@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- SETTINGS PAGE  (Settings -> Utilities -> Seedbox)          -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/QbtWidgetSettings.page">
+<INLINE><![CDATA[@@SRC:seedbox/QbtWidgetSettings.page@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- LOCALHOST API REVERSE PROXY                                -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/api_fetch.php">
+<INLINE><![CDATA[@@SRC:seedbox/api_fetch.php@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- SETTINGS SAVE ENDPOINT                                     -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/save.php">
+<INLINE><![CDATA[@@SRC:seedbox/save.php@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- TOOLS PAGE -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/SeedboxTools.page">
+<INLINE><![CDATA[@@SRC:seedbox/SeedboxTools.page@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- TOOLS LIBRARY -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/tools_lib.php">
+<INLINE><![CDATA[@@SRC:seedbox/tools_lib.php@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- TOOLS OPERATIONS -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/moveprog.php">
+<INLINE><![CDATA[@@SRC:seedbox/moveprog.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/tools_packs.php">
+<INLINE><![CDATA[@@SRC:seedbox/tools_packs.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/tools_ops.php">
+<INLINE><![CDATA[@@SRC:seedbox/tools_ops.php@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- TOOLS BACKGROUND WORKER -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/tools_run.php">
+<INLINE><![CDATA[@@SRC:seedbox/tools_run.php@@]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- TOOLS ENDPOINT -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/tools.php">
+<INLINE><![CDATA[@@SRC:seedbox/tools.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="/usr/local/emhttp/plugins/Seedbox/README.md">
+<INLINE><![CDATA[@@SRC:seedbox/README.md@@]]></INLINE>
+</FILE>
+
+<!-- Permissions + done -->
+<FILE Name="/tmp/&name;_finish.sh" Run="/bin/bash">
+<INLINE><![CDATA[
+#!/bin/bash
+DIR="/usr/local/emhttp/plugins/qbittorrent_widget"
+chmod 644 "$DIR"/*.page "$DIR"/*.php "$DIR"/icon.png
+
+# Seedbox tools: finishes added torrents and watches replacements (checked every minute; it returns at once when nothing is pending)
+PHPBIN0="$(command -v php || echo /usr/bin/php)"
+cat > /boot/config/plugins/qbittorrent_widget/qbittorrent_widget.cron <<CRON
+# Seedbox tools: finish torrents added by Find my torrent, follow Radarr/Sonarr replacements
+* * * * * $PHPBIN0 /usr/local/emhttp/plugins/qbittorrent_widget/tools_run.php tick >/dev/null 2>&1
+CRON
+# update_cron reads the plugin link in /var/log/plugins, which appears only after the install scripts have finished
+nohup bash -c 'for i in $(seq 1 60); do [ -e /var/log/plugins/qbittorrent_widget.plg ] && break; sleep 1; done; /usr/local/sbin/update_cron' >/dev/null 2>&1 &
+
+# Updates come from GitHub (pluginURL): stop the local update server of earlier versions
+pkill -f "php -S 127.0.0.1:18181" 2>/dev/null
+rm -f /usr/local/emhttp/plugins/qbittorrent_widget/repo.php
+rm -f /tmp/qbittorrent_widget_setup.sh /tmp/qbittorrent_widget_finish.sh
+echo ""
+echo "----------------------------------------------------"
+echo " Seedbox installed."
+echo " Settings: Settings -> Utilities -> Seedbox"
+echo " (or the gear icon on the dashboard tile)."
+echo "----------------------------------------------------"
+exit 0
+]]></INLINE>
+</FILE>
+
+<!-- Uninstall -->
+<FILE Run="/bin/bash" Method="remove">
+<INLINE><![CDATA[
+#!/bin/bash
+rm -rf /usr/local/emhttp/plugins/Seedbox
+pkill -f "php -S 127.0.0.1:18181" 2>/dev/null
+pkill -f "qbittorrent_widget/tools_run.php updbg" 2>/dev/null
+rm -rf /usr/local/emhttp/plugins/qbittorrent_widget
+rm -f /tmp/qbt_widget_* /tmp/qbt_tools_*
+rm -f /boot/config/plugins/qbittorrent_widget/qbittorrent_widget.cron
+/usr/local/sbin/update_cron 2>/dev/null
+# Settings in /boot/config/plugins/qbittorrent_widget are kept intentionally.
+echo "qbittorrent_widget removed."
+exit 0
+]]></INLINE>
+</FILE>
+
+</PLUGIN>

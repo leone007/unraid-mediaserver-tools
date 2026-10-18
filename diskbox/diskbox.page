@@ -1,0 +1,348 @@
+Menu="Dashboard:0"
+Cond="version_compare(parse_ini_file('/etc/unraid-version')['version'],'6.11.9','>')"
+Markdown="false"
+---
+<?PHP
+$pluginname = "diskbox";
+
+$mytiles[$pluginname]['column2'] =
+<<<EOT
+<tbody title="_(Diskbox)_">
+<tr><td>
+  <span class="tile-header">
+    <span class="tile-header-left">
+      <i class="f32 dbx-ic"></i>
+      <div class="section">
+        <h3 class="tile-header-main dbx-ttl">Diskbox</h3>
+        <span id="dbx-summary" class="dbx-sum">Reading disks&hellip;</span>
+      </div>
+    </span>
+    <span class="tile-header-right">
+      <span class="tile-header-right-controls">
+        <a href="/Main" title="_(Open Main)_"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/DiskboxSettings" title="_(Diskbox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+      </span>
+    </span>
+  </span>
+</td></tr>
+<tr><td>
+  <div class="dbx-tile">
+    <div id="dbx-attn"></div>
+    <div id="dbx-bal"></div>
+    <div id="dbx-array"><div class="dbx-note">Loading&hellip;</div></div>
+    <div id="dbx-pools"></div>
+    <div id="dbx-ua"></div>
+  </div>
+</td></tr>
+</tbody>
+EOT;
+?>
+<style>
+i.f32.dbx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/diskbox/icon.png) center/contain no-repeat!important}
+i.f32.dbx-ic.dbx-inv{filter:invert(1)}
+.dbx-ttl{margin-bottom:2px!important}
+.dbx-sum{display:block;margin:0!important;line-height:1.3}
+.dbx-tile{width:100%;font-size:12px;white-space:normal}
+.dbx-tile a{text-decoration:none;color:inherit}
+.dbx-hd{background:rgba(0,0,0,.25);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;margin-top:14px}
+.dbx-hd.dbx-first{margin-top:6px}
+.dbx-hd span{opacity:.7}
+.dbx-nl{display:flex;align-items:center;gap:6px;min-width:0}
+.dbx-sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:14px 2px 6px;opacity:.75}
+.dbx-sec.dbx-first{padding-top:6px}
+.dbx-sec.dbx-a,.dbx-sec.dbx-rd{opacity:1}
+.dbx-warn{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:6px 2px;font-size:13px}
+.dbx-warn small{font-size:12px;opacity:.65}
+.dbx-warn i{width:18px;text-align:center}
+.dbx-ackbtn{margin-left:auto;font-size:11px;border:1px solid rgba(128,128,128,.5);border-radius:4px;padding:1px 8px;cursor:pointer;opacity:.85}
+.dbx-ackbtn:hover{opacity:1;background:rgba(128,128,128,.2)}
+.dbx-g{color:#3fa24a}.dbx-a{color:#d9921f}.dbx-rd{color:#e5534b}.dbx-mu{color:#8a8a8a}.dbx-bl{color:#3d8bd9}
+.dbx-arr{background:rgba(128,128,128,.12);border-radius:6px;padding:10px 12px;margin-top:8px}
+.dbx-at{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dbx-an{font-size:16px;font-weight:700;letter-spacing:.06em}
+.dbx-sub{font-size:11px;opacity:.65;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbx-fs.pu{color:#a98df0;background:rgba(150,120,230,.24)}
+.dbx-fs{display:inline-block;font-size:11px;font-weight:700;color:#4a90e2;background:rgba(74,144,226,.2);border-radius:3px;padding:1px 6px;text-align:center}
+.dbx-chip{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.06em;border-radius:4px;padding:3px 8px;white-space:nowrap}
+.dbx-chip.g{background:rgba(63,162,74,.22);color:#3fa24a}
+.dbx-chip.a{background:rgba(224,160,48,.22);color:#d9921f}
+.dbx-chip.rd{background:rgba(229,83,75,.22);color:#e5534b}
+.dbx-chip.bl{background:rgba(61,139,217,.22);color:#3d8bd9}
+.dbx-chip.mu{background:rgba(128,128,128,.25);color:#8a8a8a}
+.dbx-chip.p{background:linear-gradient(90deg,rgba(224,160,48,.5) var(--p),rgba(224,160,48,.18) var(--p))}
+.dbx-chip.p.bl{background:linear-gradient(90deg,rgba(61,139,217,.5) var(--p),rgba(61,139,217,.18) var(--p))}
+.dbx-chip.p.st{opacity:.7}
+.dbx-pg.st{opacity:.6}
+.dbx-ut{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:3px;white-space:nowrap}
+.dbx-ut b{font-weight:600}
+.dbx-tr{height:5px;background:rgba(128,128,128,.3);border-radius:3px;overflow:hidden}
+.dbx-tr i{display:block;height:100%;border-radius:3px;background:#3fa24a}
+.dbx-tr i.a{background:#d9921f}
+.dbx-tr i.bl{background:#3d8bd9}
+.dbx-tr i.rd{background:#e5534b}
+.dbx-r{display:grid;grid-template-columns:16px minmax(0,1fr) 48px 112px 38px 18px;gap:6px;align-items:center;padding:7px 0;border-top:1px solid rgba(128,128,128,.2)}
+.dbx-r.dbx-f{border-top:0}
+.dbx-nm{font-size:14px;font-weight:600;letter-spacing:.04em;line-height:1.2}
+.dbx-sz{text-align:right;white-space:nowrap}
+.dbx-tp{text-align:right;font-weight:600;white-space:nowrap}
+.dbx-dot{width:9px;height:9px;border-radius:50%;background:#3fa24a;justify-self:center}
+.dbx-dot.off{background:#6b6a6a}
+.dbx-dot.rd{background:#e5534b}
+.dbx-pr{margin:6px -8px 2px;padding:8px;border-radius:0;border-top:0}
+.dbx-pr.g{background:rgba(63,162,74,.16);box-shadow:inset 3px 0 0 #3fa24a}
+.dbx-pr.a{background:rgba(224,160,48,.16);box-shadow:inset 3px 0 0 #d9921f}
+.dbx-pr.bl{background:rgba(61,139,217,.16);box-shadow:inset 3px 0 0 #3d8bd9}
+.dbx-pr.rd{background:rgba(229,83,75,.18);box-shadow:inset 3px 0 0 #e5534b}
+.dbx-gx{margin:0 -8px;padding-left:8px;padding-right:8px}
+.dbx-ga{background:rgba(74,144,226,.08);box-shadow:inset 3px 0 0 #4a90e2}
+.dbx-gp{background:rgba(150,120,230,.10);box-shadow:inset 3px 0 0 #9a7de6}
+.dbx-u-bl{background:rgba(74,144,226,.08);box-shadow:inset 3px 0 0 #4a90e2}
+.dbx-u-g{background:rgba(63,162,74,.08);box-shadow:inset 3px 0 0 #3fa24a}
+.dbx-u-a{background:rgba(224,160,48,.10);box-shadow:inset 3px 0 0 #d9921f}
+.dbx-u-rd{background:rgba(229,83,75,.12);box-shadow:inset 3px 0 0 #e5534b}
+.dbx-u-mu{background:rgba(128,128,128,.06);box-shadow:inset 3px 0 0 #8a8a8a}
+.dbx-fs.bus{color:#9fb4c8;background:rgba(159,180,200,.18);margin-left:6px}
+.dbx-fs.bus.sata{color:#b5b5b5;background:rgba(128,128,128,.25)}
+.dbx-pr .dbx-nm{letter-spacing:.1em}
+.dbx-pr .dbx-sub{white-space:normal}
+.dbx-hl{justify-self:center}
+.dbx-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+</style>
+<script>
+$(function () {
+  var API = '/plugins/diskbox/api_fetch.php';
+  var busy = false, themed = false;
+  var LVL = { g: 'dbx-g', a: 'dbx-a', rd: 'dbx-rd', mu: 'dbx-mu', bl: 'dbx-bl', ok: 'dbx-g', unk: 'dbx-mu' };
+
+  // The embedded icon is light; invert it when the page background is light
+  function applyTheme() {
+    if (themed) { return; }
+    themed = true;
+    var el = document.getElementById('dbx-array');
+    while (el) {
+      var m = /rgba?\(([^)]+)\)/.exec(getComputedStyle(el).backgroundColor || '');
+      if (m) {
+        var p = m[1].split(',');
+        var a = p.length > 3 ? parseFloat(p[3]) : 1;
+        if (a > 0.5) {
+          if ((0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) > 150) { $('i.dbx-ic').addClass('dbx-inv'); }
+          return;
+        }
+      }
+      el = el.parentElement;
+    }
+  }
+
+  // Decimal units, like Unraid itself
+  function fmt(b, trim) {
+    b = Number(b) || 0;
+    var u = [['TB', 1e12], ['GB', 1e9], ['MB', 1e6], ['KB', 1e3]];
+    for (var i = 0; i < u.length; i++) {
+      if (b >= u[i][1] || i === u.length - 1) {
+        var v = b / u[i][1];
+        var s = (trim && v >= 100) ? v.toFixed(0) : v.toFixed(2);
+        if (trim) { s = s.replace(/\.?0+$/, ''); }
+        return s + ' ' + u[i][0];
+      }
+    }
+    return '0 B';
+  }
+  function pct1(p) { return (Math.round((Number(p) || 0) * 10) / 10).toFixed(1) + '%'; }
+  function el(cls, tag) { return $(document.createElement(tag || 'div')).addClass(cls || ''); }
+  function ic(name, cls, size) {
+    return $('<i class="fa">').addClass('fa-' + name).addClass(cls || '').css({ fontSize: (size || 14) + 'px', width: '1.1em', textAlign: 'center' });
+  }
+  function barLevel(p, warn, crit) {
+    if (crit > 0 && p >= crit) { return 'rd'; }
+    if (warn > 0 && p >= warn) { return 'a'; }
+    return '';
+  }
+  function healthIcon(h) {
+    var lvl = h ? h[0] : 'unk';
+    var title = (h && h[1]) ? h[1] : '';
+    var name = lvl === 'ok' ? 'check' : (lvl === 'unk' ? 'circle-o' : 'exclamation-triangle');
+    return ic(name, LVL[lvl] || 'dbx-mu', 15).addClass('dbx-hl').attr('title', title);
+  }
+  function usageCell(r, warn, crit) {
+    if (r.pct === null || r.pct === undefined) { return el(''); }
+    var lv = r.zero ? (r.zero === 'run' ? 'bl' : (r.zero === 'done' ? '' : 'a')) : (r.ulevel || barLevel(r.pct, warn, crit));
+    return el('').append(
+      el('dbx-ut').append($('<span>').text(fmt(r.used))).append($('<b>').addClass(lv ? LVL[lv] : '').text(pct1(r.pct))),
+      el('dbx-tr').append($('<i>').addClass(lv).css('width', Math.min(100, r.pct) + '%')));
+  }
+
+  function row(r, opts) {
+    opts = opts || {};
+    var $r = el('dbx-r');
+    if (opts.cls) { $r.addClass(opts.cls); }
+    var lead;
+    if (opts.shield) { lead = ic('shield', LVL[opts.level], 16); }
+    else { lead = el('dbx-dot'); if (r.dot === 'off') { lead.addClass('off'); } else if (r.dot === 'rd') { lead.addClass('rd'); } }
+    var $name = $('<a>').addClass('dbx-nm').text(r.label).attr('href', r.link || '/Main').attr('title', r.name);
+    $r.append(lead);
+    var $nl = el('dbx-nl').append($name);
+    if (r.kind === 'pool' && r.fs) { $nl.append($('<span class="dbx-fs pu">').text(r.fs)); }
+    if (r.kind === 'ua' && r.bus) { $nl.append($('<span class="dbx-fs bus">').toggleClass('sata', r.bus !== 'USB').text(r.bus)); }
+    $r.append(el('').css('min-width', 0).append($nl, el('dbx-sub').text(r.sub || '').attr('title', r.sub || '')));
+    $r.append($('<span class="dbx-sz dbx-szc">').addClass(r.size > 0 ? '' : 'dbx-mu').text(r.size > 0 ? fmt(r.size, true) : '–'));
+    if ((r.kind === 'parity' || r.build) && r.rpct !== null && r.rpct !== undefined) {
+      // a check (amber, 'checked') or a disk being built (blue, 'built')
+      var rp = Math.max(0, Math.min(100, r.rpct)), bc = r.build ? 'bl' : 'a';
+      $r.append(el('dbx-pg' + (r.rstill ? ' st' : '')).append(
+        el('dbx-ut').append($('<span>').text(r.blab || (r.build ? 'built' : 'checked')), $('<b>').addClass(LVL[bc]).text(pct1(rp))),
+        el('dbx-tr').append($('<i>').addClass(bc).css('width', rp + '%'))));
+    } else if (r.kind === 'ua') {
+      // a running SMART self-test (how much is done, the % left that the disk reports) or a UD Preclear step
+      $r.append(r.tpct === null || r.tpct === undefined ? $('<span>') : el('dbx-pg').append(
+        el('dbx-ut').append($('<span>').text(r.tlab || 'test'), $('<b>').text(r.tleft)),
+        el('dbx-tr').append($('<i>').addClass('bl').css('width', r.tpct + '%'))));
+    } else { $r.append(r.kind === 'parity' ? $('<span>') : usageCell(r, opts.warn, opts.crit)); }
+    $r.append($('<span class="dbx-tp">').addClass(LVL[r.tlevel] || '').text(r.temp === null || r.temp === undefined ? '–' : r.temp + '°C'));
+    $r.append(healthIcon(r.health));
+    return $r;
+  }
+
+  function parityLevel(p, st) {
+    if (p.build) { return 'bl'; }
+    if (p.state !== 'ok') { return 'rd'; }
+    if (st === 'sync') { return 'g'; }
+    if (st === 'check' || st === 'rebuild' || st === 'clear' || st === 'degraded') { return 'a'; }
+    if (st === 'emulated' || st === 'invalid' || st === 'unprotected') { return 'rd'; }
+    return 'g';
+  }
+
+  function renderAttn(list) {
+    var $a = $('#dbx-attn').empty();
+    if (!list || !list.length) { return; }
+    var worst = 'a';
+    $.each(list, function (i, x) { if (x.level === 'rd') { worst = 'rd'; } });
+    $a.append(el('dbx-sec dbx-first').addClass(LVL[worst]).text('Needs attention · ' + list.length));
+    $.each(list, function (i, x) {
+      var small = x.small || '';
+      var m = /^@FREE@([0-9.eE+]+)$/.exec(small);
+      if (m) { small = fmt(parseFloat(m[1])) + ' free'; }
+      var $w = el('dbx-warn').append(ic('exclamation-triangle', LVL[x.level], 14));
+      var $t = $('<span>').append($('<b>').text(x.name));
+      if (x.text) { $t.append(document.createTextNode(' ' + x.text)); }
+      $w.append($t);
+      if (small) { $w.append($('<small>').text(small)); }
+      if (x.ack) {
+        $w.append($('<a href="#" class="dbx-ackbtn">').text('Acknowledge').attr('title', 'Accept this warning; Diskbox will report it again only if it gets worse').on('click', function (e) {
+          e.preventDefault();
+          if (!window.confirm('Acknowledge the SMART warning for ' + x.name + '?\n\nIt stays on the disk, but Diskbox will warn again only when it gets worse.')) { return; }
+          $.post('/plugins/diskbox/ack.php', { name: x.ack, op: 'ack' }, null, 'json').always(function () { poll(); });
+        }));
+      }
+      $a.append($w);
+    });
+  }
+
+  function renderArray(r) {
+    var A = r.array, $d = $('#dbx-array').empty();
+    $d.append(el('dbx-hd' + (($('#dbx-attn').children().length || $('#dbx-bal').children().length) ? '' : ' dbx-first')).append($('<span>').text('Array \u00B7 ' + A.devices + (A.devices === 1 ? ' device' : ' devices'))));
+    var chip = A.chip || ['mu', ''];
+    var $card = el('dbx-arr');
+    $card.append(el('dbx-at').append(
+      $('<span class="dbx-an">').text('ARRAY'),
+      A.fs ? $('<span class="dbx-fs">').text(A.fs) : $('<span>'),
+      (function () {
+        var $c = $('<span class="dbx-chip">').addClass(chip[0]).text(chip[1]);
+        if (A.rpct !== null && A.rpct !== undefined) { $c.addClass('p').css('--p', Math.max(0, Math.min(100, A.rpct)) + '%'); if (A.rstill) { $c.addClass('st'); } }
+        return $c;
+      })()));
+    var lv = barLevel(A.pct, A.warn, A.crit);
+    $card.append(
+      el('dbx-ut').css('margin-top', '9px').append($('<span>').text(fmt(A.used) + ' used of ' + fmt(A.size, true)), $('<b>').text(pct1(A.pct))),
+      el('dbx-tr').css('height', '7px').append($('<i>').addClass(lv).css('width', Math.min(100, A.pct) + '%')));
+    $d.append($card);
+    $.each(A.parity || [], function (i, p) {
+      var lvl = parityLevel(p, A.state);
+      $d.append(row(p, { cls: 'dbx-pr ' + lvl, shield: true, level: lvl }));
+    });
+    $.each(A.disks || [], function (i, x) {
+      $d.append(row(x, { cls: 'dbx-gx dbx-ga' + (i === 0 ? ' dbx-f' : ''), warn: A.warn, crit: A.crit }));
+    });
+  }
+
+  function renderBalance(r) {
+    var B = r.balance, $b = $('#dbx-bal').empty();
+    if (!B) { return; }
+    var pct = B.total > 0 ? Math.min(100, B.done / B.total * 100) : 0;
+    var lv = {running: 'g', done: B.skip ? 'a' : 'g', aborted: 'a', error: 'rd'}[B.state] || 'g';
+    var now = Math.floor(Date.now() / 1000), txt, right;
+    if (B.state === 'running') {
+      var el_ = Math.max(1, now - B.started), eta = (B.done > 0 && B.total > B.done) ? Math.round(el_ * (B.total - B.done) / B.done) : 0;
+      txt = 'Moving ' + B.ok + ' of ' + B.n + ' titles';
+      right = pct.toFixed(0) + '%' + (eta ? ' \u00B7 ' + (eta >= 3600 ? Math.floor(eta / 3600) + ' h ' : '') + Math.floor(eta % 3600 / 60) + ' m left' : '');
+    } else {
+      var ago = now - B.finished, agot = ago >= 3600 ? Math.floor(ago / 3600) + ' h ago' : Math.max(1, Math.floor(ago / 60)) + ' m ago';
+      txt = ({done: 'Finished', aborted: 'Stopped', error: 'Stopped with an error'}[B.state]) + ': ' + B.ok + ' of ' + B.n + ' titles, ' + fmt(B.done) + (B.skip ? ', ' + B.skip + ' skipped' : '');
+      right = agot;
+    }
+    $b.append(el('dbx-hd' + ($('#dbx-attn').children().length ? '' : ' dbx-first')).append($('<span>').text('Balance')));
+    var $c = el('dbx-arr');
+    $c.append(el('dbx-ut').append($('<span>').text(txt), $('<b>').text(right)));
+    if (B.state === 'running') { $c.append(el('dbx-tr').css({height: '7px', 'margin-top': '6px'}).append($('<i>').addClass(lv).css('width', pct + '%'))); }
+    else if (B.msg && B.state === 'error') { $c.append($('<div>').css({'margin-top': '5px', fontSize: '12px'}).addClass(LVL[lv]).text(B.msg)); }
+    $b.append($c);
+  }
+
+  function renderPools(r) {
+    var $p = $('#dbx-pools').empty();
+    $.each(r.pools || [], function (i, x) {
+      var n = x.devices || 1;
+      $p.append(el('dbx-hd').append($('<span>').text('Pool \u00B7 ' + n + (n === 1 ? ' device' : ' devices'))));
+      $p.append(row(x, { cls: 'dbx-gx dbx-gp dbx-f', warn: r.array.warn, crit: r.array.crit }));
+    });
+  }
+
+  function renderUnassigned(r) {
+    var $u = $('#dbx-ua').empty(), L = r.unassigned || [];
+    if (!L.length) { return; }
+    $u.append(el('dbx-hd').append($('<span>').text('Unassigned \u00B7 ' + L.length + (L.length === 1 ? ' device' : ' devices'))));
+    $.each(L, function (i, x) {
+      $u.append(row(x, { cls: 'dbx-gx dbx-u-' + (x.lv || 'mu') + (i === 0 ? ' dbx-f' : '') }).attr('title', x.name));
+    });
+  }
+
+  function renderSummary(r) {
+    var $s = $('#dbx-summary');
+    if (!r || !r.ok) { $s.text('Unavailable'); return; }
+    var S = r.summary, t = S.devices + (S.devices === 1 ? ' device' : ' devices');
+    if (!r.started) { t += ' · array stopped'; }
+    else { t += ' · ' + fmt(S.used) + ' of ' + fmt(S.size, true) + ' used'; }
+    if (S.hottest !== null && S.hottest !== undefined) { t += ' · hottest ' + S.hottest + '°C'; }
+    if (r.ua_running) { t += ' · ' + r.ua_running + ' SMART test' + (r.ua_running === 1 ? '' : 's') + ' running'; }
+    if (S.clearing) { t += ' · ' + S.clearing.disks.map(function (d) { return d.charAt(0) + d.slice(1).toLowerCase().replace(/(\d+)$/, ' $1'); }).join(', ') + ' clearing ' + S.clearing.pct + '%'; }
+    if (r.pc_running) { t += ' · ' + r.pc_running + ' preclear' + (r.pc_running === 1 ? '' : 's') + ' running'; }
+    $s.text(t);
+  }
+
+  function render(r) {
+    applyTheme();
+    renderSummary(r);
+    if (!r || !r.ok) {
+      $('#dbx-attn').empty(); $('#dbx-pools').empty(); $('#dbx-bal').empty(); $('#dbx-ua').empty();
+      $('#dbx-array').empty().append(el('dbx-note').text(r && r.error === 'nodata' ? 'No disk information from Unraid yet' : 'Disk data unavailable'));
+      return;
+    }
+    renderAttn(r.attention);
+    renderBalance(r);
+    renderArray(r);
+    renderPools(r);
+    renderUnassigned(r);
+  }
+
+  function poll() {
+    if (busy) { return; }
+    busy = true;
+    $.getJSON(API, { _: Date.now() })
+      .done(render)
+      .fail(function () { render({ ok: false, error: 'unreachable' }); })
+      .always(function () { busy = false; });
+  }
+
+  poll();
+  setInterval(poll, 5000);
+});
+</script>
