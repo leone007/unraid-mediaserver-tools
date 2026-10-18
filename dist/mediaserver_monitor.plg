@@ -3,7 +3,7 @@
 <!ENTITY name      "mediaserver_monitor">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Monitor">
-<!ENTITY version   "2026.10.07h">
+<!ENTITY version   "2026.10.07i">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 ]>
 
@@ -16,6 +16,8 @@
 
 <CHANGES>
 ###&version;
+- The dictionary also works when another plugin with an older language file was loaded first
+###2026.10.07h
 - The page texts come from a dictionary (lang/en.json) that can be translated; the page follows the shared language setting and shows English where a translation is missing. Nothing changes on the page yet
 ###2026.10.07g
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
@@ -455,7 +457,7 @@ function mt_i18n($dir) {
     if (isset($cache[$dir])) { return $cache[$dir]; }
     $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
     $en = $read($dir . '/en.json');
-    $code = mt_lang_ui_want();
+    $code = function_exists('mt_lang_ui_want') ? mt_lang_ui_want() : mt_lang_ui();   // an older lang.php of another plugin may have been loaded first
     $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : [];
     $out = [];
     foreach ($en as $k => $v) {

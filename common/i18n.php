@@ -17,7 +17,7 @@ function mt_i18n($dir) {
     if (isset($cache[$dir])) { return $cache[$dir]; }
     $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
     $en = $read($dir . '/en.json');
-    $code = mt_lang_ui_want();
+    $code = function_exists('mt_lang_ui_want') ? mt_lang_ui_want() : mt_lang_ui();   // an older lang.php of another plugin may have been loaded first
     $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : [];
     $out = [];
     foreach ($en as $k => $v) {

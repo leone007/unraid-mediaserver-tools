@@ -10,7 +10,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "mediaserver_monitor">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Monitor">
-<!ENTITY version   "2026.10.07h">
+<!ENTITY version   "2026.10.07i">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 ]>
 
@@ -23,6 +23,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- The dictionary also works when another plugin with an older language file was loaded first
+###2026.10.07h
 - The page texts come from a dictionary (lang/en.json) that can be translated; the page follows the shared language setting and shows English where a translation is missing. Nothing changes on the page yet
 ###2026.10.07g
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
