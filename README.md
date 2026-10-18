@@ -9,7 +9,7 @@ Dashboard plugins for **Unraid 7.x** that help you run a media server (Jellyfin,
 | Plugin | Replaces / adds | Highlights |
 |---|---|---|
 | [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, containers; Update manager, Snapshots, Safe shutdown pages |
-| [**Diskbox**](#diskbox) | Disk Viewer tile | Array, parity, pools, unassigned disks, SMART, preclear and clearing progress; **Balance** page |
+| [**Diskbox**](#diskbox) | Disk Viewer tile | Array, parity, pools, unassigned disks, SMART, preclear and clearing progress; **Balance** page: balance, empty or remove disks |
 | [**Streambox**](#streambox) | new Jellyfin tile | Now playing, this week's episodes, recently added, Discord announcements |
 | [**Seedbox**](#seedbox) | new qBittorrent tile and *Seedbox Tools* page | Find my torrent, Shape up, Season Repacker, autobrr watch, Discord bot |
 | **Monitor** | Settings, Utilities, Monitor | The tiles in one column for the phone; reorder or hide them, add the page to the iPhone home screen |
@@ -33,7 +33,13 @@ A tile instead of Disk Viewer: the array as one card with its protection state, 
 
 ### Diskbox Balance
 
-*Settings, Utilities, Diskbox Balance.* Spreads the data over the array disks, or empties chosen disks. Choose a target fill (or equal fill), get a plan, tick the titles, and move. A title is a downloads folder together with its hardlinked media files; they are copied with `rsync -aH`, checked (sizes and hardlinks) and only then removed from the old disk. Files hardlinked outside the configured folders, unfinished downloads and files changed in the last 2 hours are left out. It needs the array started and no parity check, rebuild or mover running.
+*Settings, Utilities, Diskbox Balance.* Moves data between the array disks, in three modes:
+
+- **Balance**: choose a target fill (or equal fill), get a plan, tick the titles, and move.
+- **Empty disks**: tick the disk(s) to empty; everything in the configured folders is planned to the other disks: titles with their hardlinks, media files without a download (nfo, pictures, subtitles too) and the items in the Seedbox trash. The plan lists what would still stay on the disk.
+- **Remove disks**: takes a disk out of the array without losing parity protection, step by step: the shares (you change them, Diskbox checks), emptying (the Empty disks plan), a check that nothing is left, clearing the disk through parity (zeros written to the array device, so parity stays valid; you type the disk names to start it, and the tile shows the progress), then the New Config steps in Unraid. No step can be skipped, and each one is checked again before the next.
+
+A title is a downloads folder together with its hardlinked media files; they are copied with `rsync -aH`, checked (sizes and hardlinks) and only then removed from the old disk. Files hardlinked outside the configured folders, unfinished downloads and files changed in the last 2 hours are left out. Moves need the array started and no parity check, rebuild or mover running. The tile shows a running move with progress and time left, and Discord gets a message at the start, the end and on errors.
 
 **Back up first and try it with one small title.**
 
