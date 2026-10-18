@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22k">
+<!ENTITY version   "2026.10.22l">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -28,6 +28,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Diskbox Balance works again: since 2026.10.22 the background worker (balance_run.php) was missing from the plugin, so Make a plan stayed at Starting and nothing could be moved. The build now checks that every file gets into the plugin
+###2026.10.22k
 - The dashboard tile gets only the texts it shows from the dictionary (a smaller page); nothing changes on the screen
 ###2026.10.22j
 - The texts of the tile, the settings page and the Diskbox Balance page come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet
@@ -179,7 +181,10 @@ exit 0
 '''
 assert len(files)==24
 sep=lambda t:'<!-- ========================================================= -->\n<!-- %s -->\n<!-- ========================================================= -->\n'%t
-for (name,p),t in zip(files,['DASHBOARD TILE','SETTINGS PAGE','LIBRARY','DATA ENDPOINT','SMART COLLECTOR','SAVE','DISCORD HELPERS','DISCORD ALERT TEXTS','DISCORD ALERTS','DISCORD WEEKLY','DISCORD TEST','ACKNOWLEDGE','README','SHARED LANGUAGE SETTING','LANGUAGE BLOCK OF THE SETTINGS PAGE','LANGUAGE SAVE','DICTIONARIES','ENGLISH DICTIONARY (the source of translations)','BALANCE PAGE','BALANCE LIBRARY','BALANCE ENDPOINT','REMOVE DISKS','BALANCE WORKER']):
+TITLES=['DASHBOARD TILE','SETTINGS PAGE','LIBRARY','DATA ENDPOINT','SMART COLLECTOR','UNASSIGNED DISKS','SAVE','DISCORD HELPERS','DISCORD ALERT TEXTS','DISCORD ALERTS','DISCORD WEEKLY','DISCORD TEST','ACKNOWLEDGE','README','SHARED LANGUAGE SETTING','LANGUAGE BLOCK OF THE SETTINGS PAGE','LANGUAGE SAVE','DICTIONARIES','ENGLISH DICTIONARY (the source of translations)','BALANCE PAGE','BALANCE LIBRARY','BALANCE ENDPOINT','REMOVE DISKS','BALANCE WORKER']
+# zip() would silently drop the files past the end of a shorter title list (2026.10.22 lost balance_run.php that way)
+assert len(TITLES)==len(files),(len(TITLES),len(files))
+for (name,p),t in zip(files,TITLES):
     out+=sep(t)+'<FILE Name="%s">\n<INLINE><![CDATA[%s]]></INLINE>\n</FILE>\n\n'%(name,rd(p) if not p.endswith('README.md') else rd(p).rstrip('\n')+'\n')
 out+=r'''<!-- Permissions + done -->
 <FILE Name="/tmp/&name;_finish.sh" Run="/bin/bash">

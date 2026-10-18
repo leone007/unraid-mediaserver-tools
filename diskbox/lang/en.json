@@ -1508,5 +1508,9 @@
  "run.rm_fail_t": {
   "text": "could not remove the source files of {t}",
   "note": "red text in Activity: the move stopped ({t} the title)."
+ },
+ "rm.err.step2_shares": {
+  "text": "Step 2 first: {l} can still write to the disks to remove.",
+  "note": "error next to Make a plan in the Remove disks mode ({l} share names)."
  }
 }

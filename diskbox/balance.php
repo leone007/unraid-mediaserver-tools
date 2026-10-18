@@ -67,7 +67,7 @@ if ($op === 'plan') {
     if ((bl_cfg()['mode'] ?? '') === 'remove') { // Remove disks: emptying (step 3) only after the shares keep new files off them (step 2)
         require_once __DIR__ . '/remove.php';
         $sh = rm_shares(rm_sel());
-        if ($sh) { bl_out(false, ['error' => 'Step 2 first: ' . implode(', ', array_column($sh, 0)) . ' can still write to the disks to remove.']); }
+        if ($sh) { bl_out(false, ['error' => bl_tr('rm.err.step2_shares', ['l' => implode(', ', array_column($sh, 0))])]); }
     }
     bl_plan_status('running', 'Starting...');
     bl_spawn('plan');
