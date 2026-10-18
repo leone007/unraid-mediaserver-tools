@@ -1,0 +1,2064 @@
+{
+ "_meta": {
+  "plugin": "Sysbox",
+  "language": "English",
+  "about": "Texts of the Sysbox dashboard tile (RAM, storage, CPU, GPU, wall power, containers), its settings page and the Snapshots, Safe shutdown and Update manager pages (Settings, Utilities), and the Claude button in the Unraid header. The Discord messages and the technical logs are not here. Product and Unraid names (Sysbox, Unraid, Docker, ZFS, Main, Shares, Mover, Quick Sync, Shelly, Claude, qBittorrent) follow Unraid's own translation or stay as they are."
+ },
+ "tile.reading": {
+  "text": "Reading system…",
+  "note": "grey line under the tile title before the first answer."
+ },
+ "tile.loading": {
+  "text": "Loading…",
+  "note": "grey placeholder in the tile body before the first answer."
+ },
+ "tile.open_docker": {
+  "text": "Open Docker",
+  "note": "tooltip of the cubes icon in the tile header (opens Unraid's Docker page)."
+ },
+ "tile.settings": {
+  "text": "Sysbox settings",
+  "note": "tooltip of the gear icon in the tile header."
+ },
+ "attn.title": {
+  "text": "Needs attention",
+  "note": "title of the warning list at the top of the tile (upper case on screen), followed by the count."
+ },
+ "attn.free": {
+  "text": "{s} free",
+  "note": "small text under a \"is 91% full\" warning: free space."
+ },
+ "ram.usable": {
+  "text": "usable {s}",
+  "note": "grey text on the right of the RAM band: memory the system can use."
+ },
+ "ram.used_of": {
+  "text": "{used} used of {total}",
+  "note": "line over the RAM bar."
+ },
+ "ram.system": {
+  "text": "System",
+  "note": "legend under the RAM bar: memory of Unraid itself. Short, upper case on screen."
+ },
+ "ram.zfs": {
+  "text": "ZFS cache",
+  "note": "legend under the RAM bar: the ZFS ARC cache. Short."
+ },
+ "ram.free": {
+  "text": "Free",
+  "note": "legend under the RAM bar. Short."
+ },
+ "sto.title": {
+  "text": "Storage",
+  "note": "band title of the boot, log and Docker vdisk usage (upper case on screen)."
+ },
+ "cpu.cores": {
+  "text": "{c} cores / {t} threads",
+  "note": "grey text on the right of the CPU band."
+ },
+ "cpu.load": {
+  "text": "Load",
+  "note": "label over the CPU load figure. Short, upper case on screen."
+ },
+ "cpu.temp": {
+  "text": "Temp",
+  "note": "label over the CPU temperature. Short, upper case on screen."
+ },
+ "cpu.power": {
+  "text": "Power",
+  "note": "label over the CPU package power (W). Short, upper case on screen."
+ },
+ "cpu.clock": {
+  "text": "Clock",
+  "note": "label over the CPU clock (GHz). Short, upper case on screen."
+ },
+ "cpu.loadavg": {
+  "text": "load avg {v}",
+  "note": "small text under the CPU graph: the 1 minute load average."
+ },
+ "cpu.hottest": {
+  "text": "hottest core {t}°C",
+  "note": "small text under the CPU graph."
+ },
+ "cpu.last_min": {
+  "text": "last {n} min",
+  "note": "small text under the CPU load graph: how many minutes it shows."
+ },
+ "cpu.thread_tip": {
+  "text": "thread {i}: {p}%",
+  "note": "tooltip of one per-thread meter."
+ },
+ "cpu.per_thread": {
+  "text": "per thread",
+  "note": "small text under the per-thread meters."
+ },
+ "gpu.unavailable": {
+  "text": "unavailable",
+  "note": "grey text on the right of the GPU band when it cannot be read."
+ },
+ "gpu.video": {
+  "text": "Video",
+  "note": "label of the GPU video engine meter. Short, upper case on screen."
+ },
+ "gpu.render": {
+  "text": "Render",
+  "note": "label of the GPU render engine meter. Short, upper case on screen."
+ },
+ "gpu.idle": {
+  "text": "idle",
+  "note": "small text under the GPU meters when the GPU clock is 0."
+ },
+ "gpu.active": {
+  "text": "active",
+  "note": "small text under the GPU meters while it works."
+ },
+ "pow.title": {
+  "text": "Power",
+  "note": "band title of the smart socket part (upper case on screen)."
+ },
+ "pow.socket": {
+  "text": "smart socket",
+  "note": "grey text on the right of the Power band when the socket has no name."
+ },
+ "pow.unreachable": {
+  "text": "Socket not reachable",
+  "note": "message in the Power part (a reason may follow)."
+ },
+ "pow.wall": {
+  "text": "Wall",
+  "note": "label over the power drawn at the wall (W). Short, upper case on screen."
+ },
+ "pow.today": {
+  "text": "Today",
+  "note": "label over the energy used today (kWh). Short, upper case on screen."
+ },
+ "pow.month": {
+  "text": "This month",
+  "note": "label over the energy used this month (kWh). Short, upper case on screen."
+ },
+ "pow.cost": {
+  "text": "Cost",
+  "note": "label over the energy cost of this month. Short, upper case on screen."
+ },
+ "con.stopped": {
+  "text": "STOPPED",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.created": {
+  "text": "CREATED",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.restarting": {
+  "text": "RESTARTING",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.paused": {
+  "text": "PAUSED",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.dead": {
+  "text": "DEAD",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.removing": {
+  "text": "REMOVING",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.starting": {
+  "text": "STARTING",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.stopping": {
+  "text": "STOPPING",
+  "note": "small badge after a container name: its Docker state. Short, upper case."
+ },
+ "con.unhealthy": {
+  "text": "UNHEALTHY",
+  "note": "small badge: the container's health check fails. Short, upper case."
+ },
+ "con.title": {
+  "text": "Containers",
+  "note": "band title of the container list (upper case on screen)."
+ },
+ "con.no_docker": {
+  "text": "Docker is not running",
+  "note": "message in the Containers part."
+ },
+ "con.selected": {
+  "text": "selected",
+  "note": "after the band title when the list holds the chosen containers."
+ },
+ "con.top": {
+  "text": "Top {n} containers · by {by}",
+  "note": "band title when the list holds the busiest containers ({by} is CPU or RAM)."
+ },
+ "con.cpu_tip": {
+  "text": "CPU: {p}% of one core",
+  "note": "tooltip of a container's CPU and RAM figures."
+ },
+ "con.restart": {
+  "text": "Restart",
+  "note": "tooltip of a small icon button on a container row; Stop is also the red button that confirms it."
+ },
+ "con.stop": {
+  "text": "Stop",
+  "note": "tooltip of a small icon button on a container row; Stop is also the red button that confirms it."
+ },
+ "con.start": {
+  "text": "Start",
+  "note": "tooltip of a small icon button on a container row; Stop is also the red button that confirms it."
+ },
+ "con.log": {
+  "text": "Log",
+  "note": "tooltip of a small icon button on a container row; Stop is also the red button that confirms it."
+ },
+ "con.stop_q": {
+  "text": "Stop {name}?",
+  "note": "question on the row before a container is stopped."
+ },
+ "con.cancel": {
+  "text": "Cancel",
+  "note": "button next to \"Stop name?\". Short."
+ },
+ "log.refresh": {
+  "text": "Refresh",
+  "note": "link over an opened container log. Short."
+ },
+ "log.copy": {
+  "text": "Copy",
+  "note": "link over an opened container log: copies it. Short."
+ },
+ "log.close": {
+  "text": "Close",
+  "note": "link over an opened container log. Short."
+ },
+ "log.err": {
+  "text": "could not read the log",
+  "note": "message in an opened container log."
+ },
+ "sum.unavailable": {
+  "text": "Unavailable",
+  "note": "line under the tile title when the data cannot be read."
+ },
+ "sum.no_data": {
+  "text": "System data unavailable",
+  "note": "message in the tile."
+ },
+ "sum.up": {
+  "text": "up {t}",
+  "note": "part of the line under the tile title: uptime, like \"up 12 d 4 h\"."
+ },
+ "attn.used": {
+  "text": "is {p}% used",
+  "note": "Needs attention line after RAM."
+ },
+ "attn.full": {
+  "text": "is {p}% full",
+  "note": "Needs attention line after BOOT, LOG or DOCKER VDISK."
+ },
+ "sto.vdisk": {
+  "text": "DOCKER VDISK",
+  "note": "name of the Docker image file in the Storage part (upper case)."
+ },
+ "attn.too_hot": {
+  "text": "is too hot",
+  "note": "Needs attention line after CPU (red)."
+ },
+ "attn.hot": {
+  "text": "is running hot",
+  "note": "Needs attention line after CPU (amber)."
+ },
+ "attn.restarting": {
+  "text": "is restarting",
+  "note": "Needs attention line after a container name (a restart loop)."
+ },
+ "attn.unhealthy": {
+  "text": "is unhealthy",
+  "note": "Needs attention line after a container name (its health check fails)."
+ },
+ "set.h.tile": {
+  "text": "Dashboard tile",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.tile_sub": {
+  "text": "switch a part off, choose what it shows; the arrows change the order",
+  "note": "small grey text next to the Dashboard tile heading."
+ },
+ "set.h.con": {
+  "text": "Containers",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.limits": {
+  "text": "Limits (warning, critical)",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.socket": {
+  "text": "Smart socket (Shelly, Gen2 and newer)",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.discord": {
+  "text": "Discord alerts",
+  "note": "section heading (upper case on screen)."
+ },
+ "blk.ram_leg": {
+  "text": "breakdown (System, ZFS cache, Docker, Free)",
+  "note": "switch of the RAM part: show the legend under the bar."
+ },
+ "blk.sto_hint": {
+  "text": "boot drive, log and Docker vdisk; the limits are below",
+  "note": "hint of the Storage part."
+ },
+ "blk.cpu_load": {
+  "text": "Load (total)",
+  "note": "switch of the CPU part."
+ },
+ "blk.cpu_temp": {
+  "text": "Temperature",
+  "note": "switch of the CPU part."
+ },
+ "blk.cpu_pow": {
+  "text": "Package power",
+  "note": "switch of the CPU part."
+ },
+ "blk.cpu_hist": {
+  "text": "History graph",
+  "note": "switch of the CPU part."
+ },
+ "blk.cpu_per": {
+  "text": "Per thread",
+  "note": "switch of the CPU part: the per-thread meters."
+ },
+ "blk.cpu_la": {
+  "text": "Load average (footer)",
+  "note": "switch of the CPU part."
+ },
+ "blk.gpu_hint": {
+  "text": "Intel Quick Sync (intel_gpu_top): video and render load",
+  "note": "hint of the GPU part."
+ },
+ "blk.pow_w": {
+  "text": "Wall (W)",
+  "note": "switch of the Power part."
+ },
+ "blk.pow_day": {
+  "text": "Today (kWh)",
+  "note": "switch of the Power part."
+ },
+ "blk.pow_mon": {
+  "text": "This month (kWh)",
+  "note": "switch of the Power part."
+ },
+ "blk.pow_name": {
+  "text": "Socket name",
+  "note": "switch of the Power part: show the socket's name on the band."
+ },
+ "blk.pow_hint": {
+  "text": "Today counts from midnight with the socket's own energy counter. The socket address and the price are under Smart socket below. UPS figures need a UPS data cable; Unraid sees no UPS now.",
+  "note": "hint of the Power part."
+ },
+ "blk.con_hint": {
+  "text": "which ones, rows, buttons and logs: in the Containers band below",
+  "note": "hint of the Containers part."
+ },
+ "set.up": {
+  "text": "Move up",
+  "note": "tooltip of the up arrow of a tile part."
+ },
+ "set.down": {
+  "text": "Move down",
+  "note": "tooltip of the down arrow of a tile part."
+ },
+ "set.graph": {
+  "text": "graph",
+  "note": "word before the graph minutes field (\"graph 30 min\")."
+ },
+ "set.refresh": {
+  "text": "refresh",
+  "note": "word before the refresh seconds of the CPU figures."
+ },
+ "set.clk_refresh": {
+  "text": "clock refresh",
+  "note": "words before the refresh seconds of the CPU clock."
+ },
+ "set.hist_hint": {
+  "text": "The last hour of load is recorded in the background, so the graph is full as soon as the page opens. A longer refresh is gentler on the server.",
+  "note": "hint under the CPU graph settings."
+ },
+ "set.attn_note": {
+  "text": "The Needs attention list stays on top of the tile whatever is switched off.",
+  "note": "note under the tile parts."
+ },
+ "set.top_mode": {
+  "text": "Which containers:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.top_n": {
+  "text": "Number of rows (busiest modes):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.sel": {
+  "text": "Selected containers:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.controls": {
+  "text": "Start, stop and restart buttons:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.logs": {
+  "text": "Log button:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.log_lines": {
+  "text": "Log lines to show:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.ram": {
+  "text": "RAM used, % (the ZFS cache is not counted):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.log": {
+  "text": "Log filesystem, %:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.vd": {
+  "text": "Docker vdisk, %:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.temp": {
+  "text": "CPU temperature, °C:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.sock_host": {
+  "text": "Socket address:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.sock_id": {
+  "text": "Socket channel:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.price": {
+  "text": "Energy price per kWh (optional):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_hook": {
+  "text": "Webhook for the system channel:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_ping": {
+  "text": "Ping on red alerts:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_con": {
+  "text": "Containers (stopped unexpectedly, restart loop, unhealthy):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_ram": {
+  "text": "Memory (Limits above):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_sto": {
+  "text": "Boot drive, log and Docker vdisk:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_cpu": {
+  "text": "CPU temperature:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_boot": {
+  "text": "Server restarted:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_remind": {
+  "text": "Repeat a red alert every (hours):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_on": {
+  "text": "Weekly summary:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.try": {
+  "text": "Try it:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.mode_cpu": {
+  "text": "The busiest by CPU",
+  "note": "choice of Which containers."
+ },
+ "set.mode_ram": {
+  "text": "The busiest by RAM",
+  "note": "choice of Which containers."
+ },
+ "set.mode_sel": {
+  "text": "The containers I select below",
+  "note": "choice of Which containers."
+ },
+ "set.no_con": {
+  "text": "No containers found (Docker is not running, or there are none).",
+  "note": "text instead of the container list."
+ },
+ "set.controls_hint": {
+  "text": "stopping asks for confirmation",
+  "note": "text next to the buttons checkbox."
+ },
+ "set.price_ph": {
+  "text": "e.g. 36",
+  "note": "grey example in the price field."
+ },
+ "set.saved_keep": {
+  "text": "(saved, leave empty to keep)",
+  "note": "grey text inside the empty webhook field: a webhook is saved; leaving it empty keeps it."
+ },
+ "set.hook_hint": {
+  "text": "the saved webhook is not sent to the page; type - to remove it",
+  "note": "grey text next to the webhook field."
+ },
+ "set.ping_ph": {
+  "text": "your Discord user ID, role:ID, @here or @everyone",
+  "note": "grey example in the ping field. Keep role:ID, @here and @everyone."
+ },
+ "set.ping_hint": {
+  "text": "empty = no ping. Amber alerts and all-clear messages never ping",
+  "note": "text next to the ping field."
+ },
+ "set.never": {
+  "text": "0 = never",
+  "note": "text next to the repeat hours field."
+ },
+ "date.long.mon": {
+  "text": "Monday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.tue": {
+  "text": "Tuesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.wed": {
+  "text": "Wednesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.thu": {
+  "text": "Thursday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.fri": {
+  "text": "Friday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sat": {
+  "text": "Saturday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sun": {
+  "text": "Sunday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "set.oclock": {
+  "text": "o'clock",
+  "note": "after the hour field (0 to 23)."
+ },
+ "set.btn.test": {
+  "text": "Send test message",
+  "note": "button of Try it."
+ },
+ "set.btn.sample": {
+  "text": "Send sample alerts",
+  "note": "button of Try it."
+ },
+ "set.btn.weekly": {
+  "text": "Send weekly summary now",
+  "note": "button of Try it."
+ },
+ "set.btn.apply": {
+  "text": "Apply",
+  "note": "button: saves the settings (Unraid's usual word). Short."
+ },
+ "set.btn.done": {
+  "text": "Done",
+  "note": "button: leaves the page (Unraid's usual word). Short."
+ },
+ "set.help_tile": {
+  "text": "Sysbox replaces the System and Processor tiles (hide them in the dashboard's tile management) and, when switched on, takes over the server load of the Streambox tile. The container buttons use the Docker command line with the exact name of an existing container; nothing else can be started from the dashboard. Statistics, GPU and socket readings are collected in the background only while the dashboard is open. The monthly energy figure is the socket's own counter since the 1st of the month, and a small cron job keeps it exact even when nobody has the dashboard open.",
+  "note": "grey paragraph at the bottom of the settings page."
+ },
+ "set.help_discord": {
+  "text": "Discord alerts: Unraid checks every minute and posts to the webhook only when something changes: a problem appears, gets worse, or is over. A container that stops with a normal exit (code 0 or a plain stop) or through the dashboard button is not reported; one that crashes, is killed or runs out of memory is. Memory, CPU temperature and unhealthy checks must last a few minutes before they are reported, and a restart loop means three restarts within ten minutes. Red alerts can repeat after the chosen number of hours. The buttons use the saved settings, so press Apply first. Create a webhook in Discord under channel settings, Integrations, Webhooks.",
+  "note": "grey paragraph at the bottom of the settings page."
+ },
+ "set.sending": {
+  "text": "Sending...",
+  "note": "message next to the test buttons while sending."
+ },
+ "set.saving": {
+  "text": "Saving...",
+  "note": "message next to Apply while saving."
+ },
+ "set.saved": {
+  "text": "Saved. The dashboard picks it up within a few seconds.",
+  "note": "message next to Apply after saving."
+ },
+ "set.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message when saving failed."
+ },
+ "set.unknown_error": {
+  "text": "unknown error",
+  "note": "reason when none is known."
+ },
+ "set.sent": {
+  "text": "Sent.",
+  "note": "message next to the test buttons after sending."
+ },
+ "set.not_sent": {
+  "text": "Not sent: {e}",
+  "note": "message when sending failed."
+ },
+ "save.err_number": {
+  "text": "{name} must be a number between {min} and {max}",
+  "note": "error after \"Not saved:\" ({name} the field name)."
+ },
+ "save.err_hook": {
+  "text": "the webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_secs": {
+  "text": "{name} must be one of {list} seconds",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_ping": {
+  "text": "the ping must be a Discord user ID, role:<role ID>, @here or @everyone",
+  "note": "error after \"Not saved:\". Keep role:<role ID>, @here and @everyone."
+ },
+ "save.err_mode": {
+  "text": "unknown container mode",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_sock": {
+  "text": "the socket address may only contain letters, digits, dots and dashes",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_price": {
+  "text": "the energy price must be a number",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_limits": {
+  "text": "a warning limit cannot be higher than its critical limit",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_write": {
+  "text": "could not write the settings file",
+  "note": "error after \"Not saved:\"."
+ },
+ "test.no_hook": {
+  "text": "No valid Discord webhook is saved yet. Enter it, press Apply, then try again.",
+  "note": "error after \"Not sent:\"."
+ },
+ "snp.intro": {
+  "text": "A ZFS snapshot freezes a dataset as it is: it costs almost no space at first and grows only with the changes. A daily one before the container updates lets you bring back any container's data from the last days. The whole dataset is never rolled back; a single container can be restored, with a safety snapshot first.",
+  "note": "lead line at the top of the Snapshots page (Settings, Utilities, Snapshots). \"safety snapshot\" is a snapshot of now, made before a restore."
+ },
+ "snp.h.activity": {
+  "text": "Activity",
+  "note": "band title (upper case on screen)."
+ },
+ "snp.loading": {
+  "text": "Loading...",
+  "note": "placeholder before the first answer."
+ },
+ "snp.h.datasets": {
+  "text": "Datasets",
+  "note": "band title: the ZFS datasets and their snapshots (upper case on screen)."
+ },
+ "snp.h.settings": {
+  "text": "Settings",
+  "note": "band title (upper case on screen)."
+ },
+ "snp.h.settings_sub": {
+  "text": "daily snapshots",
+  "note": "grey text on the right of the Settings band."
+ },
+ "ago.d": {
+  "text": "{n} d ago",
+  "note": "age of a snapshot in days. Short."
+ },
+ "ago.h": {
+  "text": "{n} h ago",
+  "note": "age of a snapshot in hours. Short."
+ },
+ "ago.m": {
+  "text": "{n} m ago",
+  "note": "age of a snapshot in minutes. Short."
+ },
+ "snp.restoring": {
+  "text": "Restoring {c} from {s}",
+  "note": "Activity row while a container is restored ({c} container, {s} snapshot name)."
+ },
+ "snp.earlier": {
+  "text": "Earlier lines",
+  "note": "foldable bar with the older lines of the snapshot log."
+ },
+ "snp.lines": {
+  "one": "{n} line",
+  "other": "{n} lines",
+  "note": "count on the right of the log bar."
+ },
+ "snp.nothing": {
+  "text": "Nothing has happened yet. The first daily snapshot is made at {t}.",
+  "note": "Activity before the first snapshot ({t} like 05:30)."
+ },
+ "snp.ab_restoring": {
+  "text": "restoring {c}",
+  "note": "grey text on the right of the Activity band."
+ },
+ "snp.ab_last": {
+  "text": "last: {t}",
+  "note": "grey text on the right of the Activity band ({t} date and time)."
+ },
+ "snp.ab_nothing": {
+  "text": "nothing yet",
+  "note": "grey text on the right of the Activity band."
+ },
+ "snp.no_zfs": {
+  "text": "ZFS is not available on this server (no pool).",
+  "note": "message in the Datasets part."
+ },
+ "snp.free": {
+  "text": "{s} free",
+  "note": "grey text on the right of the Datasets band."
+ },
+ "snp.daily": {
+  "text": "daily",
+  "note": "chip after a dataset that gets a daily snapshot. Short."
+ },
+ "snp.n_snaps": {
+  "one": "{n} snapshot",
+  "other": "{n} snapshots",
+  "note": "count on a dataset bar."
+ },
+ "snp.held": {
+  "text": "{s} held",
+  "note": "space the snapshots of a dataset hold (would be freed by deleting them)."
+ },
+ "snp.pool_full": {
+  "text": "pool {p} % full",
+  "note": "fill of the pool on a dataset bar."
+ },
+ "snp.browse": {
+  "text": "Every snapshot can be browsed as a folder: {path}. A container is restored with the button under a snapshot; the others keep running.",
+  "note": "lead line inside a dataset ({path} is the folder, shown as code)."
+ },
+ "snp.make": {
+  "text": "Make one now",
+  "note": "button: makes a manual snapshot of the dataset now."
+ },
+ "snp.none": {
+  "text": "No snapshot yet.",
+  "note": "message inside a dataset."
+ },
+ "snp.manual": {
+  "text": "manual: never removed by itself",
+  "note": "chip after a manual snapshot."
+ },
+ "snp.delete": {
+  "text": "Delete",
+  "note": "small button on a snapshot row. Short."
+ },
+ "snp.restore_from": {
+  "text": "Restore a container from {s}",
+  "note": "foldable bar under a snapshot."
+ },
+ "snp.restore_sub": {
+  "text": "the folders each one uses, read from its settings",
+  "note": "grey text on the right of that bar."
+ },
+ "snp.no_ds": {
+  "text": "No ZFS dataset under /mnt.",
+  "note": "message in the Datasets part."
+ },
+ "snp.loading_ctr": {
+  "text": "Loading the containers...",
+  "note": "placeholder inside the restore bar."
+ },
+ "snp.no_ctr": {
+  "text": "No container keeps its data in this dataset.",
+  "note": "message inside the restore bar."
+ },
+ "snp.safety": {
+  "text": "Before a restore a safety snapshot of now is made (before-restore-<name>-<date>), so a restore can be undone the same way. Only that container is stopped.",
+  "note": "grey note at the top of the restore bar. Keep before-restore-<name>-<date> as it is."
+ },
+ "snp.claude_stops": {
+  "text": "this Claude session stops",
+  "note": "amber chip after the claude container in the restore list."
+ },
+ "snp.restore": {
+  "text": "Restore",
+  "note": "button on a container row of the restore list. Short."
+ },
+ "snp.del_confirm": {
+  "text": "Delete the snapshot {s}?\n\nThe data that only this snapshot holds is gone for good; the live data does not change.",
+  "note": "confirmation box. Keep the two line breaks (\\n\\n)."
+ },
+ "snp.comparing": {
+  "text": "Comparing with the snapshot...",
+  "note": "message while the restore preview runs."
+ },
+ "snp.restore_q": {
+  "one": "Restore {c} from {s}? {n} file differs.",
+  "other": "Restore {c} from {s}? {n} files differ.",
+  "note": "confirmation row before a restore ({c} container name in bold, {s} snapshot name, {n} files that differ from the snapshot)."
+ },
+ "snp.restore_steps": {
+  "text": "1) safety snapshot of now, 2) stop {c}, 3) its folders become exactly as in the snapshot (newer files are removed), 4) start {c}.",
+  "note": "the steps of a restore, after the question."
+ },
+ "snp.claude_back": {
+  "text": "This Claude session stops; the Claude button brings it back.",
+  "note": "added when the claude container is restored."
+ },
+ "snp.yes_restore": {
+  "text": "Yes, restore",
+  "note": "button that starts the restore."
+ },
+ "snp.cancel": {
+  "text": "Cancel",
+  "note": "button. Short."
+ },
+ "snp.s.daily": {
+  "text": "Daily snapshots",
+  "note": "label of a setting (left column)."
+ },
+ "snp.s.on": {
+  "text": "on",
+  "note": "text next to the checkbox. Short."
+ },
+ "snp.s.none": {
+  "text": "none",
+  "note": "text when no dataset exists. Short."
+ },
+ "snp.s.ds_hint": {
+  "text": "only the datasets of the pools are offered (ZFS); the array disks are XFS and have no snapshots",
+  "note": "hint under the dataset choice."
+ },
+ "snp.s.time": {
+  "text": "Time and how long to keep",
+  "note": "label of a setting (left column)."
+ },
+ "snp.s.every": {
+  "text": "every day at",
+  "note": "words before the hour field (\"every day at 05 : 30\")."
+ },
+ "snp.s.keep": {
+  "text": "keep",
+  "note": "word before the days field (\"keep 7 days\")."
+ },
+ "snp.s.days_stop": {
+  "text": "days, stop above",
+  "note": "words between the days field and the pool fill field (\"keep 7 days, stop above 90 % pool fill\")."
+ },
+ "snp.s.pool_fill": {
+  "text": "% pool fill",
+  "note": "after the pool fill field."
+ },
+ "snp.s.time_hint": {
+  "text": "set CA Auto Update after this time, so the snapshot is made before the updates. Only the daily auto- snapshots are removed by themselves; a manual one stays until you delete it",
+  "note": "hint under the time setting. CA Auto Update is a plugin name; auto- is the name prefix of the daily snapshots."
+ },
+ "snp.s.dc": {
+  "text": "tell me when a daily snapshot fails or a restore stops (the Sysbox webhook)",
+  "note": "text next to the Discord checkbox."
+ },
+ "snp.save": {
+  "text": "Save",
+  "note": "button of the settings. Short."
+ },
+ "snp.saving": {
+  "text": "Saving...",
+  "note": "message next to Save."
+ },
+ "snp.saved": {
+  "text": "Saved.",
+  "note": "message next to Save."
+ },
+ "snpe.dataset": {
+  "text": "unknown dataset",
+  "note": "error on the Snapshots page."
+ },
+ "snpe.name_rule": {
+  "text": "use letters, digits, - _ . : (and not auto-, which is the daily ones)",
+  "note": "error when a snapshot name is not allowed."
+ },
+ "snpe.bad_name": {
+  "text": "bad name",
+  "note": "error: a dataset, snapshot or container name is not valid."
+ },
+ "snpe.no_folder": {
+  "text": "this container has no folder in {ds}",
+  "note": "error of the restore preview."
+ },
+ "snpe.busy": {
+  "text": "a snapshot or restore is running, try again in a minute",
+  "note": "error on the Snapshots page."
+ },
+ "snpe.range": {
+  "text": "{name} must be between {min} and {max}",
+  "note": "error next to Save ({name} the field name)."
+ },
+ "sd.intro": {
+  "text": "Stops the containers (qBittorrent first, with up to 5 minutes to close its files) and the VMs, shows every process that still uses the array or pool disks, then calls Unraid's own shutdown or restart, the same as the buttons on the Main page. Nothing is stopped until you press a button.",
+  "note": "lead line at the top of the Safe shutdown page (Settings, Utilities, Safe shutdown). Main is Unraid's page."
+ },
+ "sd.h.activity": {
+  "text": "Activity",
+  "note": "band title (upper case on screen)."
+ },
+ "sd.nothing": {
+  "text": "Nothing has been stopped from this page.",
+  "note": "Activity before anything was done."
+ },
+ "sd.log": {
+  "text": "Log of the last run",
+  "note": "foldable bar with the technical log."
+ },
+ "sd.h1": {
+  "text": "Before you start",
+  "note": "band title of step 1 (upper case on screen)."
+ },
+ "sd.checking": {
+  "text": "Checking...",
+  "note": "placeholder of step 1."
+ },
+ "sd.h2": {
+  "text": "Containers and VMs",
+  "note": "band title of step 2 (upper case on screen)."
+ },
+ "sd.s2": {
+  "text": "qBittorrent stops first with up to 5 minutes to close its files, then the others together. The server keeps running; the stopped ones can be started again here.",
+  "note": "lead line of step 2."
+ },
+ "sd.btn.stop": {
+  "text": "Stop the containers and VMs",
+  "note": "main button of step 2."
+ },
+ "sd.btn.cancel": {
+  "text": "Cancel",
+  "note": "button while the stop runs. Short."
+ },
+ "sd.btn.start": {
+  "text": "Start them again",
+  "note": "button: starts the containers this page stopped."
+ },
+ "sd.h3": {
+  "text": "Still using the disks",
+  "note": "band title of step 3 (upper case on screen)."
+ },
+ "sd.s3": {
+  "text": "Every process that has a file open on the array or pool disks. Ask to quit sends TERM, so the program can save and close its files; Force quit sends KILL, only for what does not quit (unsaved data of that program is lost). What Unraid stops by itself (Samba, Docker, the VM manager) or what runs inside a container is not offered.",
+  "note": "lead line of step 3. TERM and KILL are signal names: keep them."
+ },
+ "sd.btn.term": {
+  "text": "Ask the ticked ones to quit",
+  "note": "button of step 3 (sends TERM)."
+ },
+ "sd.btn.kill": {
+  "text": "Force quit",
+  "note": "red button of step 3 (sends KILL)."
+ },
+ "sd.btn.refresh": {
+  "text": "Check again",
+  "note": "button of step 3."
+ },
+ "sd.h4": {
+  "text": "Shut down",
+  "note": "band title of step 4 (upper case on screen)."
+ },
+ "sd.h4_sub": {
+  "text": "Unraid's own shutdown, as on the Main page",
+  "note": "grey text on the right of the step 4 band."
+ },
+ "sd.btn.off": {
+  "text": "Shut down",
+  "note": "button: Unraid shutdown. Short."
+ },
+ "sd.btn.reboot": {
+  "text": "Restart",
+  "note": "button: Unraid restart. Short."
+ },
+ "sd.foot": {
+  "text": "When the last row is green, nothing uses the disks and no container or VM runs.",
+  "note": "grey line at the bottom of the page."
+ },
+ "dur.ms": {
+  "text": "{m} m {s} s",
+  "note": "a duration. Short."
+ },
+ "dur.s": {
+  "text": "{s} s",
+  "note": "a duration in seconds. Short."
+ },
+ "sd.ab_idle": {
+  "text": "nothing running",
+  "note": "grey text on the right of the Activity band."
+ },
+ "sd.st.done": {
+  "text": "Done",
+  "note": "state of the stop or start run in Activity (bold)."
+ },
+ "sd.st.error": {
+  "text": "Stopped with an error",
+  "note": "state of the stop or start run in Activity (bold)."
+ },
+ "sd.st.cancelled": {
+  "text": "Cancelled",
+  "note": "state of the stop or start run in Activity (bold)."
+ },
+ "sd.st.starting": {
+  "text": "Starting",
+  "note": "state of the stop or start run in Activity (bold)."
+ },
+ "sd.st.stopping": {
+  "text": "Stopping",
+  "note": "state of the stop or start run in Activity (bold)."
+ },
+ "sd.ab_starting": {
+  "text": "starting the containers",
+  "note": "grey text on the right of the Activity band."
+ },
+ "sd.ab_stopping": {
+  "text": "stopping the containers",
+  "note": "grey text on the right of the Activity band."
+ },
+ "sd.n_of_stopped": {
+  "text": "{n} of {tot} stopped",
+  "note": "progress of the stop run."
+ },
+ "sd.back": {
+  "text": "since then {n} started again outside this page (Unraid autostart or the Docker page)",
+  "note": "grey addition in Activity."
+ },
+ "sd.removed_n": {
+  "text": "{n} removed",
+  "note": "grey addition in Activity: containers removed since."
+ },
+ "sd.nothing_left": {
+  "text": "nothing left to start",
+  "note": "grey addition in Activity."
+ },
+ "sd.qb_closing": {
+  "text": "qBittorrent is closing its files (up to 5 min)",
+  "note": "amber text in Activity."
+ },
+ "sd.qb_first": {
+  "text": "first, up to 5 min",
+  "note": "amber chip after qBittorrent."
+ },
+ "sd.stopping_waiting": {
+  "text": "stopping or waiting",
+  "note": "state of a container during the stop run."
+ },
+ "sd.c_starting": {
+  "text": "starting",
+  "note": "state of a container. Short."
+ },
+ "sd.c_stopped": {
+  "text": "stopped",
+  "note": "state of a container. Short."
+ },
+ "sd.c_removed": {
+  "text": "removed",
+  "note": "state of a container that no longer exists. Short."
+ },
+ "sd.lines": {
+  "one": "{n} line",
+  "other": "{n} lines",
+  "note": "count on the right of the log bar."
+ },
+ "sd.no_checks": {
+  "text": "No checks.",
+  "note": "text in step 1."
+ },
+ "sd.n_things": {
+  "one": "{n} thing to look at",
+  "other": "{n} things to look at",
+  "note": "state on the right of the step 1 band."
+ },
+ "sd.all_clear": {
+  "text": "all clear",
+  "note": "state on the right of the step 1 band."
+ },
+ "sd.running": {
+  "text": "running",
+  "note": "state of a container or VM. Short."
+ },
+ "sd.none_running": {
+  "text": "No container or VM is running.",
+  "note": "text in step 2."
+ },
+ "sd.n_ctr": {
+  "one": "{n} container",
+  "other": "{n} containers",
+  "note": "count on the step 2 band."
+ },
+ "sd.n_vm": {
+  "one": "{n} VM",
+  "other": "{n} VMs",
+  "note": "count on the step 2 band."
+ },
+ "sd.no_vm": {
+  "text": "no VM",
+  "note": "on the step 2 band."
+ },
+ "sd.n_stopped_here": {
+  "text": "{n} stopped here",
+  "note": "on the step 2 band: stopped by this page."
+ },
+ "sd.btn.start_n": {
+  "text": "Start them again ({n})",
+  "note": "button with the count."
+ },
+ "sd.starting_": {
+  "text": "Starting...",
+  "note": "message under step 2."
+ },
+ "sd.stopping_": {
+  "text": "Stopping...",
+  "note": "message under step 2."
+ },
+ "sd.more": {
+  "text": "+{n} more",
+  "note": "after a short list of open files."
+ },
+ "sd.can_stop": {
+  "text": "can be stopped here",
+  "note": "state of a process that the buttons of step 3 can stop."
+ },
+ "sd.free": {
+  "text": "Nothing uses the array or pool disks right now.",
+  "note": "text in step 3."
+ },
+ "sd.n_proc": {
+  "one": "{n} process",
+  "other": "{n} processes",
+  "note": "count on the step 3 band."
+ },
+ "sd.n_prot": {
+  "text": "{n} protected",
+  "note": "count on the step 3 band: processes Unraid stops by itself."
+ },
+ "sd.nothing_b": {
+  "text": "nothing",
+  "note": "on the step 3 band. Short."
+ },
+ "sd.f.wait": {
+  "text": "Wait until the containers have stopped.",
+  "note": "text of step 4 while the stop runs."
+ },
+ "sd.f.ready": {
+  "text": "Ready: nothing uses the disks, no container or VM runs.",
+  "note": "green text of step 4."
+ },
+ "sd.f.prot_left": {
+  "one": "({n} protected process left: Unraid stops it by itself.)",
+  "other": "({n} protected processes left: Unraid stops them by itself.)",
+  "note": "added to the Ready text."
+ },
+ "sd.f.ctr": {
+  "one": "{n} container still runs",
+  "other": "{n} containers still run",
+  "note": "part of the amber text of step 4."
+ },
+ "sd.f.vm": {
+  "one": "{n} VM still runs",
+  "other": "{n} VMs still run",
+  "note": "part of the amber text of step 4."
+ },
+ "sd.f.proc": {
+  "one": "{n} process still uses the disks",
+  "other": "{n} processes still use the disks",
+  "note": "part of the amber text of step 4."
+ },
+ "sd.f.hang": {
+  "text": "Unraid tries to stop them during the shutdown, but that is where a shutdown can hang.",
+  "note": "after the list in the amber text of step 4."
+ },
+ "sd.f.prot_more": {
+  "text": "({n} more that Unraid stops by itself, for example the share service while containers still read files.)",
+  "note": "added to the amber text of step 4."
+ },
+ "sd.btn.off_any": {
+  "text": "Shut down anyway",
+  "note": "button when something still runs."
+ },
+ "sd.btn.reboot_any": {
+  "text": "Restart anyway",
+  "note": "button when something still runs."
+ },
+ "sd.c.stop": {
+  "one": "Stop {n} container?\n\nqBittorrent first (up to 5 minutes), then the others together. The server keeps running; you can start them again from this page.",
+  "other": "Stop {n} containers?\n\nqBittorrent first (up to 5 minutes), then the others together. The server keeps running; you can start them again from this page.",
+  "note": "confirmation box. Keep the line breaks (\\n\\n)."
+ },
+ "sd.c.stop_vm": {
+  "text": "Stop {n} container(s) and shut down {v} VM(s)?\n\nqBittorrent first (up to 5 minutes), then the others together. The server keeps running; you can start them again from this page.",
+  "note": "confirmation box when VMs run too. Keep the line breaks."
+ },
+ "sd.c.start": {
+  "text": "Start again the containers this page stopped?",
+  "note": "confirmation box."
+ },
+ "sd.c.kill": {
+  "one": "Force quit {n} process? It cannot save anything first.",
+  "other": "Force quit {n} processes? They cannot save anything first.",
+  "note": "confirmation box of Force quit."
+ },
+ "sd.c.term": {
+  "one": "Ask {n} process to quit?",
+  "other": "Ask {n} processes to quit?",
+  "note": "confirmation box."
+ },
+ "sd.sent": {
+  "text": "Sent to {l}.",
+  "note": "message after the quit buttons ({l} process ids)."
+ },
+ "sd.not_sent": {
+  "text": "Not sent: {l}.",
+  "note": "message after the quit buttons."
+ },
+ "sd.again5": {
+  "text": "Checking again in 5 s...",
+  "note": "message after the quit buttons."
+ },
+ "sd.n_proc_disks": {
+  "one": "{n} process on the disks",
+  "other": "{n} processes on the disks",
+  "note": "a line in the confirmation box of Shut down anyway."
+ },
+ "sd.c.off": {
+  "text": "Shut down the server now?",
+  "note": "confirmation box."
+ },
+ "sd.c.reboot": {
+  "text": "Restart the server now?",
+  "note": "confirmation box."
+ },
+ "sd.c.off_any": {
+  "text": "Shut down the server anyway?\n\nStill running:\n{list}\n\nUnraid tries to stop them during the shutdown, but that is where a shutdown can hang.",
+  "note": "confirmation box ({list} the lines of what still runs). Keep the line breaks (\\n)."
+ },
+ "sd.c.reboot_any": {
+  "text": "Restart the server anyway?\n\nStill running:\n{list}\n\nUnraid tries to stop them during the shutdown, but that is where a shutdown can hang.",
+  "note": "confirmation box. Keep the line breaks."
+ },
+ "sdb.died": {
+  "text": "The worker stopped unexpectedly.",
+  "note": "red text in Activity when the background run died."
+ },
+ "sdb.busy": {
+  "text": "A stop or start run is already going.",
+  "note": "error on the Safe shutdown page."
+ },
+ "sdb.nothing": {
+  "text": "There is nothing to start again.",
+  "note": "error on the Safe shutdown page."
+ },
+ "sdb.none_sel": {
+  "text": "Nothing is selected.",
+  "note": "error on the Safe shutdown page."
+ },
+ "prot.system": {
+  "text": "system",
+  "note": "why a process is not offered in step 3 (the kernel)."
+ },
+ "prot.unraid": {
+  "text": "Unraid stops this itself",
+  "note": "why a process is not offered in step 3."
+ },
+ "prot.mover": {
+  "text": "the mover: stop it on the Main page",
+  "note": "why a process is not offered in step 3."
+ },
+ "prot.balance": {
+  "text": "Diskbox Balance is moving: stop it on its page",
+  "note": "why a process is not offered in step 3."
+ },
+ "prot.ctr": {
+  "text": "runs in the container {c}: stop the container",
+  "note": "why a process is not offered in step 3."
+ },
+ "chk.array": {
+  "text": "Array: {s}, Unraid shutdown time-out {t} s",
+  "note": "first row of step 1 ({s} Unraid's array state, like STARTED)."
+ },
+ "chk.parity": {
+  "text": "A parity check or rebuild is running ({p} %). Shutting down stops it.",
+  "note": "amber row of step 1."
+ },
+ "chk.mover": {
+  "text": "The mover is running. Wait for it or stop it on the Main page.",
+  "note": "amber row of step 1."
+ },
+ "chk.balance": {
+  "text": "Diskbox Balance is moving files. Stop it on its page first (the title being copied is rolled back).",
+  "note": "amber row of step 1."
+ },
+ "sdr.nothing": {
+  "text": "Nothing to start.",
+  "note": "result text in Activity."
+ },
+ "sdr.failed": {
+  "text": "Could not start: {l}",
+  "note": "result text in Activity ({l} container names)."
+ },
+ "sdr.started": {
+  "text": "The containers run again.",
+  "note": "result text in Activity."
+ },
+ "sdr.cancelled": {
+  "text": "Stopped by you; the containers stopped so far stay stopped (Start them again below).",
+  "note": "result text in Activity after Cancel."
+ },
+ "sdr.not_stopped": {
+  "text": "Not stopped: {l}",
+  "note": "result text in Activity."
+ },
+ "sdr.done": {
+  "one": "{n} container stopped.",
+  "other": "{n} containers stopped.",
+  "note": "result text in Activity."
+ },
+ "sdr.done_vm": {
+  "text": "{n} container(s) and {v} VM(s) stopped.",
+  "note": "result text in Activity."
+ },
+ "upm.intro": {
+  "text": "What the waiting updates change and what of ours uses the container, before you install them. The page and the daily check only read (the containers' labels, the registries, GitHub, Unraid's own update check); a container is updated only with its button, after a ZFS snapshot of its data.",
+  "note": "lead line at the top of the Update manager page (Settings, Utilities, Update manager)."
+ },
+ "upm.h.activity": {
+  "text": "Activity",
+  "note": "band title (upper case on screen)."
+ },
+ "upm.h.summary": {
+  "text": "Summary",
+  "note": "band title (upper case on screen)."
+ },
+ "upm.h.docker": {
+  "text": "Docker containers",
+  "note": "band title (upper case on screen)."
+ },
+ "upm.h.os": {
+  "text": "Unraid OS",
+  "note": "band title (upper case on screen)."
+ },
+ "upm.h.plugins": {
+  "text": "Plugins",
+  "note": "band title (upper case on screen)."
+ },
+ "upm.h.test": {
+  "text": "Self-test",
+  "note": "band title (upper case on screen)."
+ },
+ "upm.h.settings": {
+  "text": "Settings",
+  "note": "band title (upper case on screen)."
+ },
+ "upm.h.settings_sub": {
+  "text": "daily check",
+  "note": "grey text on the right of the Settings band."
+ },
+ "upm.loading": {
+  "text": "Loading...",
+  "note": "placeholder before the first answer."
+ },
+ "risk.red": {
+  "text": "Wait",
+  "note": "red chip of an update: better wait with it. Short."
+ },
+ "risk.amber": {
+  "text": "Look first",
+  "note": "amber chip of an update: read the changes first. Short."
+ },
+ "risk.green": {
+  "text": "Safe",
+  "note": "green chip of an update. Short."
+ },
+ "kind.rebuild": {
+  "text": "image rebuild",
+  "note": "chip: the same program version, the image was rebuilt."
+ },
+ "kind.patch": {
+  "text": "patch",
+  "note": "chip: a bug-fix version."
+ },
+ "kind.feature": {
+  "text": "new features",
+  "note": "chip: a version with new features."
+ },
+ "kind.major": {
+  "text": "major version",
+  "note": "chip: a major new version."
+ },
+ "kind.unknown": {
+  "text": "version not labelled",
+  "note": "chip: the image does not say its version."
+ },
+ "upm.started_at": {
+  "text": "started {t}",
+  "note": "grey line under a running job before its first log line ({t} like 09:30)."
+ },
+ "upm.fin_today": {
+  "text": "Finished today",
+  "note": "foldable bar in Activity."
+ },
+ "upm.log": {
+  "text": "Log",
+  "note": "foldable bar with the technical log."
+ },
+ "upm.lines": {
+  "one": "{n} line",
+  "other": "{n} lines",
+  "note": "count on the right of the log bar."
+ },
+ "upm.nothing_run": {
+  "text": "Nothing has run yet.",
+  "note": "Activity before the first job."
+ },
+ "upm.n_running": {
+  "text": "{n} running",
+  "note": "grey text on the right of the Activity band."
+ },
+ "upm.n_fin": {
+  "text": "{n} finished today",
+  "note": "grey text on the right of the Activity band."
+ },
+ "upm.no_check": {
+  "text": "No check has run yet. The first one reads the containers' labels and asks the registries for the newest images; it takes about a minute.",
+  "note": "Summary before the first check."
+ },
+ "upm.checking": {
+  "text": "Checking...",
+  "note": "the Check now button while it runs."
+ },
+ "upm.check_now": {
+  "text": "Check now",
+  "note": "button: checks for updates now."
+ },
+ "upm.waiting": {
+  "one": "{n} update waiting.",
+  "other": "{n} updates waiting.",
+  "note": "bold start of the Summary."
+ },
+ "upm.n_safe": {
+  "text": "{n} safe (image rebuild or patch)",
+  "note": "part of the Summary."
+ },
+ "upm.n_look": {
+  "text": "{n} to look at first",
+  "note": "part of the Summary."
+ },
+ "upm.n_wait": {
+  "text": "{n} to wait with",
+  "note": "part of the Summary."
+ },
+ "upm.own_button": {
+  "text": "Each one installs only with its button.",
+  "note": "end of the Summary."
+ },
+ "upm.all_current": {
+  "text": "Everything is up to date.",
+  "note": "Summary when nothing waits."
+ },
+ "upm.green": {
+  "text": "green",
+  "note": "count label in the Summary strip. Short."
+ },
+ "upm.amber": {
+  "text": "amber",
+  "note": "count label in the Summary strip. Short."
+ },
+ "upm.red": {
+  "text": "red",
+  "note": "count label in the Summary strip. Short."
+ },
+ "upm.available": {
+  "text": "{v} available",
+  "note": "a newer Unraid OS version exists."
+ },
+ "upm.checked_ago": {
+  "text": "checked {t}",
+  "note": "when the last check ran ({t} like \"2 h ago\")."
+ },
+ "upm.last_check": {
+  "text": "last check: {t}",
+  "note": "grey text on the right of the Summary band."
+ },
+ "upm.today": {
+  "text": "today",
+  "note": "age of a release: from today. Short."
+ },
+ "upm.days_old": {
+  "one": "{n} day old",
+  "other": "{n} days old",
+  "note": "age of a release."
+ },
+ "upm.no_deps": {
+  "text": "nothing of ours uses it",
+  "note": "grey text in the column that lists our plugins using the container."
+ },
+ "upm.no_words": {
+  "text": "no warning words in the notes",
+  "note": "grey text when the release notes have no words like breaking or removed."
+ },
+ "upm.stopped": {
+  "text": "stopped",
+  "note": "small text: the container is not running."
+ },
+ "upm.btn.changes": {
+  "text": "Changes",
+  "note": "small button: shows the release notes. Short."
+ },
+ "upm.claude_reading": {
+  "text": "Claude is reading...",
+  "note": "the Ask Claude button while Claude works."
+ },
+ "upm.ask_again": {
+  "text": "Ask Claude again",
+  "note": "small button."
+ },
+ "upm.ask": {
+  "text": "Ask Claude",
+  "note": "small button: Claude reads the notes and our code and gives an opinion."
+ },
+ "upm.btn.update": {
+  "text": "Update",
+  "note": "button: installs the update of the container. Short."
+ },
+ "upm.no_check_short": {
+  "text": "No check yet.",
+  "note": "text before the first check."
+ },
+ "upm.g.red": {
+  "text": "Major version and something of ours uses it",
+  "note": "title of the red group of updates."
+ },
+ "upm.g.amber": {
+  "text": "New features, a fresh release, warning words or no version label",
+  "note": "title of the amber group."
+ },
+ "upm.g.green": {
+  "text": "Image rebuild or patch: the program barely changes",
+  "note": "title of the green group."
+ },
+ "upm.none": {
+  "text": "None.",
+  "note": "text in an empty group."
+ },
+ "upm.g.current": {
+  "text": "Up to date",
+  "note": "title of the group of current containers."
+ },
+ "upm.none_l": {
+  "text": "none",
+  "note": "text in an empty list. Short."
+ },
+ "upm.local": {
+  "text": "built on this server: nothing to compare with",
+  "note": "why a container cannot be checked."
+ },
+ "upm.g.other": {
+  "text": "Not checkable",
+  "note": "title of the group of containers that cannot be checked."
+ },
+ "upm.n_ctr": {
+  "one": "{n} container",
+  "other": "{n} containers",
+  "note": "grey text on the right of the Docker containers band."
+ },
+ "upm.n_upd": {
+  "one": "{n} update",
+  "other": "{n} updates",
+  "note": "grey text on the right of a band."
+ },
+ "upm.todo_saved": {
+  "text": "saved as a to-do {t} (updates_todo.md: Claude moves it into the task list)",
+  "note": "grey text under a Claude answer that was saved ({t} like \"2 h ago\")."
+ },
+ "upm.todo_btn": {
+  "text": "Save as a to-do",
+  "note": "small button under a Claude answer."
+ },
+ "upm.todo_hint": {
+  "text": "the Sysbox writes it to updates_todo.md in the repo; the next Claude session moves it into the task list",
+  "note": "grey hint next to it."
+ },
+ "upm.for_version": {
+  "text": "{t}, for this version",
+  "note": "header of a Claude answer ({t} like \"2 h ago\")."
+ },
+ "upm.saving": {
+  "text": "Saving...",
+  "note": "a button while it saves."
+ },
+ "upm.source": {
+  "text": "source",
+  "note": "link next to \"What changed\" (the release notes page)."
+ },
+ "upm.no_notes": {
+  "text": "No release notes found.",
+  "note": "text when no notes exist."
+ },
+ "upm.what_changed": {
+  "text": "What changed",
+  "note": "heading over the release notes."
+ },
+ "upm.not_asked": {
+  "text": "Claude has not been asked about this version.",
+  "note": "grey text next to the notes."
+ },
+ "upm.ask_reads": {
+  "text": "Ask Claude reads these notes and our code that uses the program (read-only).",
+  "note": "grey text added to it."
+ },
+ "upm.c.title": {
+  "text": "Update {name}",
+  "note": "start of the confirmation row of an update (bold), followed by \"old → new?\"."
+ },
+ "upm.c.s1_snap": {
+  "text": "1) a ZFS snapshot of its data (restore it on the Snapshots page if needed),",
+  "note": "first step in the confirmation row."
+ },
+ "upm.c.s1_nosnap": {
+  "text": "1) no snapshot (switched off),",
+  "note": "first step when the snapshot is switched off."
+ },
+ "upm.c.s2": {
+  "text": "2) stop it,",
+  "note": "second step."
+ },
+ "upm.c.s2_qb": {
+  "text": "2) stop it (up to 5 minutes, qBittorrent saves its torrents' state),",
+  "note": "second step for qBittorrent."
+ },
+ "upm.c.s3": {
+  "text": "3) Unraid pulls the new image and recreates it from its template,",
+  "note": "third step."
+ },
+ "upm.c.s4": {
+  "text": "4) start it again.",
+  "note": "fourth step."
+ },
+ "upm.c.s4_test": {
+  "text": "4) start it again and run the self-test.",
+  "note": "fourth step with the self-test."
+ },
+ "upm.c.red": {
+  "text": "This one is red: read Changes first.",
+  "note": "red warning in the confirmation row."
+ },
+ "upm.c.amber": {
+  "text": "This one is amber: read Changes first.",
+  "note": "amber warning in the confirmation row."
+ },
+ "upm.c.moving": {
+  "text": "qBittorrent is moving {n} torrent(s) now (at the last self-test): the move is interrupted.",
+  "note": "amber warning when qBittorrent is moving data."
+ },
+ "upm.c.claude": {
+  "text": "The Claude session stops.",
+  "note": "added for the claude container."
+ },
+ "upm.c.yes": {
+  "text": "Yes, update",
+  "note": "button that starts the update."
+ },
+ "upm.c.cancel": {
+  "text": "Cancel",
+  "note": "button. Short."
+ },
+ "os.released": {
+  "text": "released {d} · checked {t}",
+  "note": "grey line under the new Unraid version ({d} release date, {t} like \"3 h ago\")."
+ },
+ "os.php": {
+  "text": "PHP changes",
+  "note": "amber chip: the new Unraid has a new PHP version."
+ },
+ "os.all_ours": {
+  "text": "all 5 of our plugins",
+  "note": "chip: what uses Unraid OS."
+ },
+ "os.reboot": {
+  "text": "needs a reboot",
+  "note": "small text under the OS update."
+ },
+ "os.notes": {
+  "text": "Release notes",
+  "note": "small button of the OS update."
+ },
+ "os.page": {
+  "text": "Update OS page",
+  "note": "link to Unraid's Tools, Update OS page."
+ },
+ "os.not_here": {
+  "text": "The OS is not installed from here. Before it: no parity check running, qBittorrent stopped (Safe shutdown).",
+  "note": "grey note under the OS update. Safe shutdown is the Sysbox page."
+ },
+ "os.current": {
+  "text": "no newer version at Unraid's last check, {t}",
+  "note": "text when the OS is current ({t} like \"3 h ago\")."
+ },
+ "os.never": {
+  "text": "Unraid has not checked for an OS update yet (Tools, Update OS, Check)",
+  "note": "text before Unraid's first OS check. Tools, Update OS, Check are Unraid's words."
+ },
+ "pl.ours": {
+  "text": "ours: {n}",
+  "note": "chip after one of our plugins ({n} its name)."
+ },
+ "pl.update": {
+  "text": "update",
+  "note": "state of a plugin with a newer version. Short."
+ },
+ "pl.n_upd": {
+  "one": "{n} plugin update (install them on the Plugins page; ours with their .plg)",
+  "other": "{n} plugin updates (install them on the Plugins page; ours with their .plg)",
+  "note": "title of the plugins bar."
+ },
+ "pl.current": {
+  "text": "Up to date at Unraid's last plugin check",
+  "note": "title of the plugins bar."
+ },
+ "pl.n": {
+  "one": "{n} plugin",
+  "other": "{n} plugins",
+  "note": "count of plugins."
+ },
+ "test.lead": {
+  "text": "Read-only checks of our connections: logins and GET requests. It runs by itself after an update; Discord gets the result.",
+  "note": "lead line of the Self-test part."
+ },
+ "test.testing": {
+  "text": "Testing...",
+  "note": "the self-test button while it runs."
+ },
+ "test.run": {
+  "text": "Run the self-test",
+  "note": "button."
+ },
+ "test.for": {
+  "text": "for {w}",
+  "note": "grey line under a test: which of our plugins use the connection ({w} plugin names)."
+ },
+ "test.band": {
+  "text": "last: {t} · {ok}/{n} passed",
+  "note": "grey text on the right of the Self-test band ({t} like \"2 h ago\")."
+ },
+ "test.not_run": {
+  "text": "not run yet",
+  "note": "grey text on the right of the Self-test band."
+ },
+ "set.daily": {
+  "text": "Daily check",
+  "note": "label of a setting (left column)."
+ },
+ "set.on": {
+  "text": "on",
+  "note": "text next to a checkbox. Short."
+ },
+ "set.at": {
+  "text": "at",
+  "note": "word before the hour field (\"on at 04 : 30\")."
+ },
+ "set.daily_hint": {
+  "text": "only reads (registries, GitHub). Nothing is installed by itself",
+  "note": "hint under the daily check."
+ },
+ "set.soak": {
+  "text": "Maturing time",
+  "note": "label of a setting: how old a release must be before it counts as safe."
+ },
+ "set.days": {
+  "text": "days",
+  "note": "after a number of days."
+ },
+ "set.soak_hint": {
+  "text": "a new-features release younger than this is amber, even without warning words",
+  "note": "hint under it."
+ },
+ "set.dc_warn": {
+  "text": "amber and red ones",
+  "note": "choice: which new updates go to Discord."
+ },
+ "set.dc_all": {
+  "text": "every new update",
+  "note": "choice."
+ },
+ "set.dc_off": {
+  "text": "off",
+  "note": "choice. Short."
+ },
+ "set.dc_hint": {
+  "text": "after the daily check, once per update (the Sysbox webhook); updates you start always report their result",
+  "note": "hint under the Discord choice."
+ },
+ "set.before": {
+  "text": "Before an update",
+  "note": "label of a setting."
+ },
+ "set.bk": {
+  "text": "ZFS snapshot of the container's data",
+  "note": "checkbox."
+ },
+ "set.st": {
+  "text": "self-test after it",
+  "note": "checkbox."
+ },
+ "set.bk_hint": {
+  "text": "the snapshot is named before-update-<name>-<date> and stays until you delete it on the Snapshots page",
+  "note": "hint. Keep before-update-<name>-<date> as it is."
+ },
+ "set.cl": {
+  "text": "show the button",
+  "note": "checkbox of Ask Claude."
+ },
+ "set.cl_ro": {
+  "text": "read-only: Read, Grep",
+  "note": "purple chip. Read and Grep are tool names: keep them."
+ },
+ "set.cl_hint": {
+  "text": "Claude Code in the claude container, in the repo folder, without a saved session; it never runs commands or writes. The answer is kept per version. A new Unraid OS version is asked about by itself after a check, once",
+  "note": "hint under Ask Claude."
+ },
+ "set.save": {
+  "text": "Save",
+  "note": "button. Short."
+ },
+ "upm.saved": {
+  "text": "Saved.",
+  "note": "message next to Save."
+ },
+ "cl.starting": {
+  "text": "Starting the Claude session on {host}...",
+  "note": "text of the new browser tab while the Claude button starts the session ({host} the server name)."
+ },
+ "cl.failed": {
+  "text": "Claude could not be started: {e}",
+  "note": "text of the new tab when it failed."
+ },
+ "cl.base": {
+  "text": "Claude Code: open the session",
+  "note": "first line of the tooltip of the Claude button in the Unraid header."
+ },
+ "cl.just_now": {
+  "text": "just now",
+  "note": "in the tooltip: when the usage was last read."
+ },
+ "cl.min_ago": {
+  "text": "{m} min ago",
+  "note": "in the tooltip."
+ },
+ "cl.hm_ago": {
+  "text": "{h} h {m} min ago",
+  "note": "in the tooltip."
+ },
+ "cl.d_ago": {
+  "text": "{d} d ago",
+  "note": "in the tooltip."
+ },
+ "cl.dh": {
+  "text": "{d} d {h} h",
+  "note": "a time span in the tooltip."
+ },
+ "cl.hm": {
+  "text": "{h} h {m} min",
+  "note": "a time span in the tooltip."
+ },
+ "cl.m": {
+  "text": "{m} min",
+  "note": "a time span in the tooltip."
+ },
+ "cl.dow.sun": {
+  "text": "Sun",
+  "note": "short day name in the tooltip (when the weekly limit resets)."
+ },
+ "cl.dow.mon": {
+  "text": "Mon",
+  "note": "short day name in the tooltip (when the weekly limit resets)."
+ },
+ "cl.dow.tue": {
+  "text": "Tue",
+  "note": "short day name in the tooltip (when the weekly limit resets)."
+ },
+ "cl.dow.wed": {
+  "text": "Wed",
+  "note": "short day name in the tooltip (when the weekly limit resets)."
+ },
+ "cl.dow.thu": {
+  "text": "Thu",
+  "note": "short day name in the tooltip (when the weekly limit resets)."
+ },
+ "cl.dow.fri": {
+  "text": "Fri",
+  "note": "short day name in the tooltip (when the weekly limit resets)."
+ },
+ "cl.dow.sat": {
+  "text": "Sat",
+  "note": "short day name in the tooltip (when the weekly limit resets)."
+ },
+ "cl.no_usage": {
+  "text": "usage not available",
+  "note": "second line of the tooltip when no usage data exists."
+ },
+ "cl.week_new": {
+  "text": "Week:     new week since {t}, no data yet",
+  "note": "tooltip line. The spaces after the colon line the values up in a monospace tooltip: keep the label and the spaces about as long."
+ },
+ "cl.week": {
+  "text": "Week:     {p}  (resets {t}, in {left})",
+  "note": "tooltip line: the weekly plan usage."
+ },
+ "cl.today": {
+  "text": "Today:    {v}",
+  "note": "tooltip line: used today."
+ },
+ "cl.from_tomorrow": {
+  "text": "from tomorrow",
+  "note": "value of the Today line before a full day of data."
+ },
+ "cl.avg": {
+  "text": "Average:  {p}/day  (allowance {q}/day)",
+  "note": "tooltip line."
+ },
+ "cl.five": {
+  "text": "5 hours:  {p}  (resets in {left})",
+  "note": "tooltip line: the 5-hour limit."
+ },
+ "cl.updated": {
+  "text": "updated {t}",
+  "note": "last tooltip line."
+ },
+ "cl.e_nodata": {
+  "text": "no usage data yet (the status line writes it while Claude Code works)",
+  "note": "second line of the tooltip."
+ },
+ "cl.e_docker": {
+  "text": "Docker is not running (is the array started?)",
+  "note": "error of the Claude button."
+ },
+ "cl.e_noct": {
+  "text": "There is no container named {c}.",
+  "note": "error of the Claude button."
+ },
+ "cl.e_nostart": {
+  "text": "The {c} container did not start.",
+  "note": "error of the Claude button."
+ },
+ "cl.e_tmux": {
+  "text": "Could not start the tmux session in the container.",
+  "note": "error of the Claude button."
+ },
+ "ue.bad_name": {
+  "text": "bad container name",
+  "note": "error on the Update manager page."
+ },
+ "ue.scan_busy": {
+  "text": "a check is already running",
+  "note": "error on the Update manager page."
+ },
+ "ue.test_busy": {
+  "text": "the self-test is already running",
+  "note": "error on the Update manager page."
+ },
+ "ue.claude_off": {
+  "text": "Ask Claude is switched off in the settings",
+  "note": "error on the Update manager page."
+ },
+ "ue.claude_busy": {
+  "text": "Claude is already answering another question",
+  "note": "error on the Update manager page."
+ },
+ "ue.claude_ct": {
+  "text": "the claude container is built here; it is not updated from a registry",
+  "note": "error on the Update manager page."
+ },
+ "ue.upd_busy": {
+  "text": "another update is running, try again when it has finished",
+  "note": "error on the Update manager page."
+ },
+ "ue.no_update": {
+  "text": "no waiting update for {n}",
+  "note": "error on the Update manager page."
+ },
+ "uj.check_failed": {
+  "text": "Check failed: {e}",
+  "note": "Activity row of a failed update check."
+ },
+ "uj.summary": {
+  "one": "{n} update: {g} green, {a} amber, {r} red",
+  "other": "{n} updates: {g} green, {a} amber, {r} red",
+  "note": "result of an update check in Activity."
+ },
+ "uj.current": {
+  "text": "everything is up to date",
+  "note": "result of an update check in Activity."
+ },
+ "uj.checked": {
+  "text": "Check: {m}",
+  "note": "Activity row of a finished check."
+ },
+ "uj.checked_one": {
+  "text": "{n} checked: {m}",
+  "note": "Activity row of a finished check of one container."
+ },
+ "uj.selftest": {
+  "text": "Self-test: {ok}/{n} passed",
+  "note": "Activity row of a finished self-test."
+ },
+ "uj.failed_list": {
+  "text": "{l} FAILED",
+  "note": "added to the self-test row: which tests failed (in capitals on purpose)."
+ },
+ "uj.claude_ok": {
+  "text": "Claude answered about {n}",
+  "note": "Activity row."
+ },
+ "uj.claude_err": {
+  "text": "Ask Claude about {n}: {e}",
+  "note": "Activity row when it failed."
+ },
+ "uj.claude_ask": {
+  "text": "Ask Claude about {n}",
+  "note": "Activity row while Claude works."
+ },
+ "uj.updating": {
+  "text": "Updating {n}",
+  "note": "Activity row while a container is updated."
+ },
+ "ut.ab_nokey": {
+  "text": "connected (no API key in Seedbox Tools: the IRC feed is not checked)",
+  "note": "self-test result of autobrr."
+ },
+ "ut.ab_irc": {
+  "text": "connected, but the IRC state could not be read ({e})",
+  "note": "self-test result of autobrr."
+ },
+ "ut.unreachable": {
+  "text": "not reachable",
+  "note": "in a self-test result: the service does not answer."
+ },
+ "ut.ab_nonet": {
+  "text": "connected, but no IRC network is enabled: no live feed",
+  "note": "self-test result of autobrr."
+ },
+ "ut.ab_bad": {
+  "text": "connected, no live feed: {l}",
+  "note": "self-test result of autobrr ({l} what is wrong)."
+ },
+ "ut.ab_ok": {
+  "text": "connected, live feed available",
+  "note": "self-test result of autobrr."
+ },
+ "ut.ab_last": {
+  "text": "last announce {t} ago ({ch})",
+  "note": "added to it ({t} like 12 min, {ch} the IRC channel)."
+ }
+}

@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/i18n.php';
+// texts the pages show (lang/en.json, see i18n.php); the Discord texts have their own language (discord.php)
+function sx_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 // Sysbox helpers: settings, Docker access, small utilities.
 const SX_CFG = '/boot/config/plugins/sysbox/settings.cfg';
 

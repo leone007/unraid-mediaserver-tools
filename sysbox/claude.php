@@ -53,7 +53,7 @@ if (($_POST['op'] ?? '') === 'usage') {
     $d = sx_docker();
     $dir = $d !== '' ? cl_usage_dir($d) : '';
     $u = $dir !== '' ? cl_usage($dir, time()) : null;
-    sx_json($u ? ['ok' => true] + $u : ['ok' => false, 'error' => 'no usage data yet (the status line writes it while Claude Code works)']);
+    sx_json($u ? ['ok' => true] + $u : ['ok' => false, 'error' => sx_tr('cl.e_nodata')]);
 }
 
 function cl_run($cmd, &$rc = null) { $o = []; @exec($cmd . ' 2>&1', $o, $rc); return trim(implode("\n", $o)); }
@@ -67,16 +67,16 @@ function cl_url($d) {
 }
 
 $d = sx_docker();
-if ($d === '') { sx_json(['ok' => false, 'error' => 'Docker is not running (is the array started?)']); }
+if ($d === '') { sx_json(['ok' => false, 'error' => sx_tr('cl.e_docker')]); }
 $host = preg_replace('/[^A-Za-z0-9_.\-]/', '', (string)gethostname()) ?: 'unraid';
 $steps = [];
 
 // 1. the container
 $st = cl_run(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . CL_CONTAINER, $rc);
-if ($rc !== 0) { sx_json(['ok' => false, 'error' => 'There is no container named ' . CL_CONTAINER . '.']); }
+if ($rc !== 0) { sx_json(['ok' => false, 'error' => sx_tr('cl.e_noct', ['c' => CL_CONTAINER])]); }
 if ($st !== 'true') {
     cl_run(escapeshellarg($d) . ' start ' . CL_CONTAINER, $rc);
-    if ($rc !== 0) { sx_json(['ok' => false, 'error' => 'The ' . CL_CONTAINER . ' container did not start.']); }
+    if ($rc !== 0) { sx_json(['ok' => false, 'error' => sx_tr('cl.e_nostart', ['c' => CL_CONTAINER])]); }
     for ($i = 0; $i < 20 && cl_run(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . CL_CONTAINER) !== 'true'; $i++) { sleep(1); }
     $steps[] = 'container started';
 }
@@ -86,7 +86,7 @@ $cmd = 'claude --continue --remote-control ' . $host;
 cl_exec($d, 'tmux has-session -t ' . CL_TMUX, $rc);
 if ($rc !== 0) {
     cl_exec($d, 'tmux new-session -d -s ' . CL_TMUX . ' ' . escapeshellarg($cmd), $rc);
-    if ($rc !== 0) { sx_json(['ok' => false, 'error' => 'Could not start the tmux session in the container.']); }
+    if ($rc !== 0) { sx_json(['ok' => false, 'error' => sx_tr('cl.e_tmux')]); }
     $steps[] = 'Claude started with Remote Control';
 } else {
     $cur = cl_exec($d, 'tmux display-message -p -t ' . CL_TMUX . ' ' . escapeshellarg('#{pane_current_command}'));

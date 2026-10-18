@@ -27,7 +27,7 @@ function sd_prune($run, $all) {
 if ($op === 'state') {
     $run = sd_status();
     $running = sd_running();
-    if (!$running && ($run['state'] ?? '') === 'running' && time() - (int)($run['started'] ?? 0) > 20) { $run['state'] = 'error'; $run['msg'] = 'The worker stopped unexpectedly.'; }
+    if (!$running && ($run['state'] ?? '') === 'running' && time() - (int)($run['started'] ?? 0) > 20) { $run['state'] = 'error'; $run['msg'] = sx_tr('sdb.died'); }
     $all = sx_ps(true);
     if (!$running) { $run = sd_prune($run, $all); }
     $cts = [];
@@ -36,9 +36,9 @@ if ($op === 'state') {
 }
 
 if ($op === 'stop' || $op === 'start') {
-    if (sd_running()) { sx_json(['ok' => false, 'error' => 'A stop or start run is already going.']); }
+    if (sd_running()) { sx_json(['ok' => false, 'error' => sx_tr('sdb.busy')]); }
     $prev = $op === 'start' ? sd_prune(sd_status(), sx_ps(true)) : sd_status();
-    if ($op === 'start' && !($prev['stopped'] ?? [])) { sx_json(['ok' => false, 'error' => 'There is nothing to start again.']); }
+    if ($op === 'start' && !($prev['stopped'] ?? [])) { sx_json(['ok' => false, 'error' => sx_tr('sdb.nothing')]); }
     sd_status_write(['state' => 'running', 'mode' => $op, 'started' => time(), 'log' => ['starting...'], 'stopped' => (array)($prev['stopped'] ?? []), 'vms' => [], 'msg' => '']);
     sd_spawn($op);
     sx_json(['ok' => true]);
@@ -55,7 +55,7 @@ if ($op === 'kill') {
     $sig = (string)($_POST['sig'] ?? '');
     if (!in_array($sig, ['TERM', 'KILL'], true)) { sx_json(['ok' => false, 'error' => 'unknown signal'], 400); }
     $want = json_decode((string)($_POST['pids'] ?? ''), true);
-    if (!is_array($want) || !$want) { sx_json(['ok' => false, 'error' => 'Nothing is selected.'], 400); }
+    if (!is_array($want) || !$want) { sx_json(['ok' => false, 'error' => sx_tr('sdb.none_sel')], 400); }
     $now = [];
     foreach (sd_holders() as $h) { $now[$h['pid']] = $h; }
     $done = []; $skip = [];

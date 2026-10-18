@@ -5,7 +5,7 @@ require_once __DIR__ . '/upd_lib.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
 sx_guard();
 $op = (string)($_POST['op'] ?? 'state');
-function upd_name_arg() { $n = (string)($_POST['name'] ?? ''); if (!sx_valid_name($n)) { sx_json(['ok' => false, 'error' => 'bad container name']); } return $n; }
+function upd_name_arg() { $n = (string)($_POST['name'] ?? ''); if (!sx_valid_name($n)) { sx_json(['ok' => false, 'error' => sx_tr('ue.bad_name')]); } return $n; }
 
 if ($op === 'state') {
     $scan = upd_json(upd_scan_file(), []); $cache = upd_json(upd_cache_file(), []);
@@ -31,26 +31,26 @@ if ($op === 'detail') {
         sx_json(['ok' => true, 'notes' => (string)($c['notes'] ?? ''), 'url' => (string)($c['url'] ?? ''), 'claude' => $c['claude'] ?? null]);
     }
     if ($n === 'unraid-os' && !empty($scan['os']['key'])) { $c = $cache[$scan['os']['key']] ?? []; sx_json(['ok' => true, 'notes' => (string)($c['notes'] ?? ''), 'url' => (string)($scan['os']['url'] ?? ''), 'claude' => $c['claude'] ?? null]); }
-    sx_json(['ok' => false, 'error' => 'no waiting update for ' . $n]);
+    sx_json(['ok' => false, 'error' => sx_tr('ue.no_update', ['n' => $n])]);
 }
 if ($op === 'scan') {
-    if (upd_running('scan')) { sx_json(['ok' => false, 'error' => 'a check is already running']); }
+    if (upd_running('scan')) { sx_json(['ok' => false, 'error' => sx_tr('ue.scan_busy')]); }
     upd_spawn(['scan']); sx_json(['ok' => true]);
 }
 if ($op === 'selftest') {
-    if (upd_running('selftest')) { sx_json(['ok' => false, 'error' => 'the self-test is already running']); }
+    if (upd_running('selftest')) { sx_json(['ok' => false, 'error' => sx_tr('ue.test_busy')]); }
     upd_spawn(['selftest']); sx_json(['ok' => true]);
 }
 if ($op === 'ask') {
     $n = upd_name_arg();
-    if (empty(upd_cfg()['claude'])) { sx_json(['ok' => false, 'error' => 'Ask Claude is switched off in the settings']); }
-    if (upd_running('ask')) { sx_json(['ok' => false, 'error' => 'Claude is already answering another question']); }
+    if (empty(upd_cfg()['claude'])) { sx_json(['ok' => false, 'error' => sx_tr('ue.claude_off')]); }
+    if (upd_running('ask')) { sx_json(['ok' => false, 'error' => sx_tr('ue.claude_busy')]); }
     upd_spawn(['ask', $n]); sx_json(['ok' => true, 'now' => time()]);
 }
 if ($op === 'update') {
     $n = upd_name_arg();
-    if ($n === 'claude') { sx_json(['ok' => false, 'error' => 'the claude container is built here; it is not updated from a registry']); }
-    if (upd_running('update')) { sx_json(['ok' => false, 'error' => 'another update is running, try again when it has finished']); }
+    if ($n === 'claude') { sx_json(['ok' => false, 'error' => sx_tr('ue.claude_ct')]); }
+    if (upd_running('update')) { sx_json(['ok' => false, 'error' => sx_tr('ue.upd_busy')]); }
     upd_spawn(['update', $n]); sx_json(['ok' => true]);
 }
 if ($op === 'todo') {
@@ -60,7 +60,7 @@ if ($op === 'todo') {
 if ($op === 'save') {
     $c = upd_cfg();
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'soak' => [0, 60]] as $k => [$lo, $hi]) {
-        $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => $k . ' must be between ' . $lo . ' and ' . $hi]); } $c[$k] = $v;
+        $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
     foreach (['on', 'backup', 'claude', 'selftest'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
     $dc = (string)($_POST['discord'] ?? 'warn'); $c['discord'] = in_array($dc, ['warn', 'all', 'off'], true) ? $dc : 'warn';

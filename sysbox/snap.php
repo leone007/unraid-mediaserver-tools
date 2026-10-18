@@ -6,7 +6,7 @@ sx_guard();
 $op = (string)($_POST['op'] ?? 'state');
 
 function snp_running() { $f = @fopen(snp_lock_file(), 'c'); if (!$f) { return false; } if (flock($f, LOCK_EX | LOCK_NB)) { flock($f, LOCK_UN); fclose($f); return false; } fclose($f); return true; }
-function snp_ds_arg() { $d = (string)($_POST['ds'] ?? ''); if (!snp_ds_ok($d) || !snp_dataset($d)) { sx_json(['ok' => false, 'error' => 'unknown dataset']); } return $d; }
+function snp_ds_arg() { $d = (string)($_POST['ds'] ?? ''); if (!snp_ds_ok($d) || !snp_dataset($d)) { sx_json(['ok' => false, 'error' => sx_tr('snpe.dataset')]); } return $d; }
 
 if ($op === 'state') {
     $c = snp_cfg(); $out = [];
@@ -22,7 +22,7 @@ if ($op === 'state') {
 }
 if ($op === 'make') {
     $ds = snp_ds_arg(); $n = trim((string)($_POST['name'] ?? '')); if ($n === '') { $n = 'manual-' . date('Y-m-d-Hi'); }
-    if (!snp_name_ok($n) || preg_match('/^auto-/', $n)) { sx_json(['ok' => false, 'error' => 'use letters, digits, - _ . : (and not auto-, which is the daily ones)']); }
+    if (!snp_name_ok($n) || preg_match('/^auto-/', $n)) { sx_json(['ok' => false, 'error' => sx_tr('snpe.name_rule')]); }
     $e = snp_make($ds, $n); if ($e === '') { snp_log($ds . '@' . $n . ' made by hand'); }
     sx_json(['ok' => $e === '', 'error' => $e, 'name' => $n]);
 }
@@ -33,15 +33,15 @@ if ($op === 'delete') {
 }
 if ($op === 'preview') {
     $ds = snp_ds_arg(); $snap = (string)($_POST['snap'] ?? ''); $ctr = (string)($_POST['ctr_name'] ?? '');
-    if (!snp_name_ok($snap) || !sx_valid_name($ctr)) { sx_json(['ok' => false, 'error' => 'bad name']); }
+    if (!snp_name_ok($snap) || !sx_valid_name($ctr)) { sx_json(['ok' => false, 'error' => sx_tr('snpe.bad_name')]); }
     $d = snp_dataset($ds); $ct = null; foreach (snp_containers($d) as $x) { if ($x['name'] === $ctr) { $ct = $x; } }
-    if (!$ct) { sx_json(['ok' => false, 'error' => 'this container has no folder in ' . $ds]); }
+    if (!$ct) { sx_json(['ok' => false, 'error' => sx_tr('snpe.no_folder', ['ds' => $ds])]); }
     sx_json(['ok' => true, 'dirs' => $ct['dirs'], 'state' => $ct['state'], 'changed' => snp_diff_count($d, $snap, $ct['dirs'])]);
 }
 if ($op === 'restore') {
-    if (snp_running()) { sx_json(['ok' => false, 'error' => 'a snapshot or restore is running, try again in a minute']); }
+    if (snp_running()) { sx_json(['ok' => false, 'error' => sx_tr('snpe.busy')]); }
     $ds = snp_ds_arg(); $snap = (string)($_POST['snap'] ?? ''); $ctr = (string)($_POST['ctr_name'] ?? '');
-    if (!snp_name_ok($snap) || !sx_valid_name($ctr)) { sx_json(['ok' => false, 'error' => 'bad name']); }
+    if (!snp_name_ok($snap) || !sx_valid_name($ctr)) { sx_json(['ok' => false, 'error' => sx_tr('snpe.bad_name')]); }
     snp_json_write(snp_run_file(), ['state' => 'running', 'ds' => $ds, 'snap' => $snap, 'ctr' => $ctr, 'started' => time(), 'log' => ['starting...'], 'msg' => '']);
     @exec('setsid nohup ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/snap_run.php') . ' restore ' . escapeshellarg($ds) . ' ' . escapeshellarg($snap) . ' ' . escapeshellarg($ctr) . ' >/dev/null 2>&1 &');
     sx_json(['ok' => true]);
@@ -50,7 +50,7 @@ if ($op === 'save') {
     $c = snp_cfg(); $known = array_column(snp_datasets(), 'name');
     $c['datasets'] = array_values(array_intersect(array_filter((array)($_POST['datasets'] ?? []), 'snp_ds_ok'), $known));
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'keep' => [1, 90], 'maxfill' => [10, 99]] as $k => [$lo, $hi]) {
-        $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => $k . ' must be between ' . $lo . ' and ' . $hi]); } $c[$k] = $v;
+        $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
     $c['on'] = !empty($_POST['on']) && $_POST['on'] !== '0' ? 1 : 0;
     $c['discord'] = !empty($_POST['discord']) && $_POST['discord'] !== '0' ? 1 : 0;

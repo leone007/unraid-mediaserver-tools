@@ -8,7 +8,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'er
 sx_guard();
 $cfg = sx_cfg();
 $hook = (string)$cfg['dc_hook'];
-if (!sxn_hook_ok($hook)) { sx_json(['ok' => false, 'error' => 'No valid Discord webhook is saved yet. Enter it, press Apply, then try again.']); }
+if (!sxn_hook_ok($hook)) { sx_json(['ok' => false, 'error' => sx_tr('test.no_hook')]); }
 $lang = sxn_lang($cfg);
 $op = (string)($_POST['op'] ?? 'test');
 

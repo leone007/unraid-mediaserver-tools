@@ -4,6 +4,12 @@ Markdown="false"
 ---
 <?PHP
 $pluginname = "sysbox";
+// texts from the dictionary (lang/en.json and its translations, see i18n.php); own names: Monitor runs this in its scope
+require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
+$sxt_lang = '/usr/local/emhttp/plugins/sysbox/lang';
+$sxt_T = mt_i18n_t($sxt_lang);
+$sxt_t = [];
+foreach (['reading' => 'tile.reading', 'loading' => 'tile.loading', 'docker' => 'tile.open_docker', 'set' => 'tile.settings'] as $sxt_k => $sxt_v) { $sxt_t[$sxt_k] = htmlspecialchars($sxt_T($sxt_v), ENT_QUOTES); }
 
 $mytiles[$pluginname]['column2'] =
 <<<EOT
@@ -14,13 +20,13 @@ $mytiles[$pluginname]['column2'] =
       <i class="f32 sx-ic"></i>
       <div class="section">
         <h3 class="tile-header-main sx-ttl">Sysbox</h3>
-        <span id="sx-summary" class="sx-sum">Reading system&hellip;</span>
+        <span id="sx-summary" class="sx-sum">{$sxt_t['reading']}</span>
       </div>
     </span>
     <span class="tile-header-right">
       <span class="tile-header-right-controls">
-        <a href="/Docker" title="_(Open Docker)_"><i class="fa fa-fw fa-cubes control"></i></a>
-        <a href="/Settings/SysboxSettings" title="_(Sysbox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+        <a href="/Docker" title="{$sxt_t['docker']}"><i class="fa fa-fw fa-cubes control"></i></a>
+        <a href="/Settings/SysboxSettings" title="{$sxt_t['set']}"><i class="fa fa-fw fa-cog control"></i></a>
       </span>
     </span>
   </span>
@@ -28,7 +34,7 @@ $mytiles[$pluginname]['column2'] =
 <tr><td>
   <div class="sx-tile">
     <div id="sx-attn"></div>
-    <div id="sx-mem"><div class="sx-note">Loading&hellip;</div></div>
+    <div id="sx-mem"><div class="sx-note">{$sxt_t['loading']}</div></div>
     <div id="sx-sto"></div>
     <div id="sx-cpu"></div>
     <div id="sx-gpu"></div>
@@ -38,6 +44,7 @@ $mytiles[$pluginname]['column2'] =
 </td></tr>
 </tbody>
 EOT;
+echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'con.', 'log.', 'sum.']);
 ?>
 <style>
 i.f32.sx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/sysbox/icon.png) center/contain no-repeat!important}
@@ -113,6 +120,7 @@ a.sx-b2.rd{background:#e5534b;color:#fff}
 </style>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('sx', k, v); };
   var API = '/plugins/sysbox/api_fetch.php', CPU = '/plugins/sysbox/cpu.php', ACT = '/plugins/sysbox/action.php', LOGS = '/plugins/sysbox/logs.php';
   var histSeeded = false, seededMin = 0, busy = false, cpuBusy = false, clkBusy = false, themed = false, last = null, hist = [], HMAX = 120, HMIN = 2, live = null;
   var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
@@ -185,11 +193,11 @@ $(function () {
     if (!list || !list.length) { return; }
     var worst = 'a';
     $.each(list, function (i, x) { if (x.level === 'rd') { worst = 'rd'; } });
-    $a.append(el('sx-lbl ' + LV[worst]).text('Needs attention · ' + list.length));
+    $a.append(el('sx-lbl ' + LV[worst]).text(T('attn.title') + ' · ' + list.length));
     $.each(list, function (i, x) {
       var small = x.small || '';
       var m = /^@FREE@([0-9.eE+]+) free$/.exec(small);
-      if (m) { small = fmtB(parseFloat(m[1]), x.name === 'RAM') + ' free'; }
+      if (m) { small = T('attn.free', { s: fmtB(parseFloat(m[1]), x.name === 'RAM') }); }
       var $w = el('sx-warn').append(icon('fa-exclamation-triangle', LV[x.level]));
       var $t = $('<span>').append($('<b>').text(x.name));
       if (x.text) { $t.append(document.createTextNode(' ' + x.text)); }
@@ -201,11 +209,11 @@ $(function () {
 
   function renderMem(M, first) {
     var $d = $('#sx-mem').empty();
-    var right = (M.phys ? Math.round(M.phys) + ' GiB' + (M.type ? ' ' + M.type : '') + ' · ' : '') + 'usable ' + fmtB(M.total, true, true);
+    var right = (M.phys ? Math.round(M.phys) + ' GiB' + (M.type ? ' ' + M.type : '') + ' · ' : '') + T('ram.usable', { s: fmtB(M.total, true, true) });
     $d.append(band('RAM', right, first));
     var t = M.total || 1;
     var $b = el('sx-box');
-    $b.append(el('sx-ut').append(txt('span', '', fmtB(M.used, true) + ' used of ' + fmtB(M.total, true, true)), $('<b>').addClass(LV[M.level] || '').text(pct0(M.pct))));
+    $b.append(el('sx-ut').append(txt('span', '', T('ram.used_of', { used: fmtB(M.used, true), total: fmtB(M.total, true, true) })), $('<b>').addClass(LV[M.level] || '').text(pct0(M.pct))));
     var $s = el('sx-stk');
     $s.append($('<i>').css({ width: (M.system / t * 100) + '%', background: '#9a9a9a' }));
     $s.append($('<i>').css({ width: (M.zfs / t * 100) + '%', background: '#9a7de6' }));
@@ -213,10 +221,10 @@ $(function () {
     $b.append($s);
     var $l = el('sx-leg');
     function lg(c, n, v) { $l.append($('<div>').append($('<i>').css('background', c), document.createTextNode(n), $('<b>').text(v))); }
-    lg('#9a9a9a', 'System', fmtB(M.system, true));
-    lg('#9a7de6', 'ZFS cache', fmtB(M.zfs, true));
+    lg('#9a9a9a', T('ram.system'), fmtB(M.system, true));
+    lg('#9a7de6', T('ram.zfs'), fmtB(M.zfs, true));
     lg('#4a90e2', 'Docker', M.docker_known ? fmtB(M.docker, true) : '\u2013');
-    lg('rgba(128,128,128,.4)', 'Free', fmtB(M.free, true));
+    lg('rgba(128,128,128,.4)', T('ram.free'), fmtB(M.free, true));
     if (mx('ram_leg')) { $b.append($l); }
     $d.append($b);
   }
@@ -224,7 +232,7 @@ $(function () {
   function renderSto(list) {
     var $d = $('#sx-sto').empty();
     if (!list || !list.length) { return; }
-    $d.append(band('Storage', 'boot · log · docker'));
+    $d.append(band(T('sto.title'), 'boot · log · docker'));
     var $box = el('mt-box').appendTo($d);
     $.each(list, function (i, s) {
       var lv = s.level || '';
@@ -268,20 +276,20 @@ $(function () {
   function renderCpu(C0) {
     var C = $.extend({}, C0, live || {});
     var $d = $('#sx-cpu').empty();
-    $d.append(band('CPU', C.model + ' · ' + C.cores + ' cores / ' + C.threads + ' threads'));
+    $d.append(band('CPU', C.model + ' · ' + T('cpu.cores', { c: C.cores, t: C.threads })));
     var $b = el('sx-box');
     var items = [];
     var lv = (C.load === null || C.load === undefined) ? 'g' : lvLoad(C.load);
-    if (mx('cpu_load')) items.push(kp('Load', [document.createTextNode(C.load === null || C.load === undefined ? '–' : Math.round(C.load)), small('%')], LV[lv]));
-    if (mx('cpu_temp') && C.temp !== null && C.temp !== undefined) { items.push(kp('Temp', [document.createTextNode(C.temp), small('°C')], LV[C.tlevel] || 'sx-g')); }
-    if (mx('cpu_pow') && C.power !== null && C.power !== undefined) { items.push(kp('Power', [document.createTextNode(C.power.toFixed(1)), small(' W')], '')); }
+    if (mx('cpu_load')) items.push(kp(T('cpu.load'), [document.createTextNode(C.load === null || C.load === undefined ? '–' : Math.round(C.load)), small('%')], LV[lv]));
+    if (mx('cpu_temp') && C.temp !== null && C.temp !== undefined) { items.push(kp(T('cpu.temp'), [document.createTextNode(C.temp), small('°C')], LV[C.tlevel] || 'sx-g')); }
+    if (mx('cpu_pow') && C.power !== null && C.power !== undefined) { items.push(kp(T('cpu.power'), [document.createTextNode(C.power.toFixed(1)), small(' W')], '')); }
     var clk = showClock ? (clockVal !== null ? clockVal : C.clock) : null;
-    if (clk !== null && clk !== undefined) { items.push(kp('Clock', [document.createTextNode(clk.toFixed(2)), small(' GHz')], '')); }
+    if (clk !== null && clk !== undefined) { items.push(kp(T('cpu.clock'), [document.createTextNode(clk.toFixed(2)), small(' GHz')], '')); }
     var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
     $.each(items, function (i, x) { $k.append(x); });
     if (items.length) { $b.append($k); }
-    var laTxt = (mx('cpu_la') && C.loadavg !== null && C.loadavg !== undefined) ? 'load avg ' + C.loadavg : '';
-    var hotTxt = (mx('cpu_temp') && C.hot_core !== null && C.hot_core !== undefined) ? 'hottest core ' + C.hot_core + '°C' : '';
+    var laTxt = (mx('cpu_la') && C.loadavg !== null && C.loadavg !== undefined) ? T('cpu.loadavg', { v: C.loadavg }) : '';
+    var hotTxt = (mx('cpu_temp') && C.hot_core !== null && C.hot_core !== undefined) ? T('cpu.hottest', { t: C.hot_core }) : '';
     var foot = $.grep([hotTxt, laTxt], function (x) { return x !== ''; }).join(' · ');
 
     if (mx('cpu_hist')) {
@@ -303,7 +311,7 @@ $(function () {
     }
     g += '</svg>';
     $b.append($('<span>').html(g).children());
-    $b.append(el('sx-cl').append(txt('span', '', 'last ' + HMIN + ' min'), txt('span', '', mx('cpu_per') ? '' : foot)));
+    $b.append(el('sx-cl').append(txt('span', '', T('cpu.last_min', { n: HMIN })), txt('span', '', mx('cpu_per') ? '' : foot)));
     }
 
     // per-thread LED meters: eight segments, lit from the bottom, green to yellow to red
@@ -311,11 +319,11 @@ $(function () {
       var $c = el('sx-led').css('grid-template-columns', 'repeat(' + C.per.length + ',1fr)');
       $.each(C.per, function (i, v) {
         var segs = v < 1 ? 0 : Math.min(8, Math.ceil(v / 12.5));
-        $c.append($('<div class="sx-cell">').attr('title', 'thread ' + i + ': ' + Math.round(v) + '%')
+        $c.append($('<div class="sx-cell">').attr('title', T('cpu.thread_tip', { i: i, p: Math.round(v) }))
           .append($('<i class="d">'), $('<i class="l">').css('--v', segs / 8)));
       });
       $b.append($c);
-      $b.append(el('sx-cl').append(txt('span', '', 'per thread'), txt('span', '', foot)));
+      $b.append(el('sx-cl').append(txt('span', '', T('cpu.per_thread')), txt('span', '', foot)));
     }
     if (!mx('cpu_hist') && !mx('cpu_per') && foot) { $b.append(el('sx-cl').append(txt('span', '', ''), txt('span', '', foot))); }
     if ($b.children().length) { $d.append($b); }
@@ -326,7 +334,7 @@ $(function () {
     if (!G) { return; }
     if (!G.data) {
       if (G.pending || !G.note) { return; }
-      $d.append(band('GPU', 'unavailable'));
+      $d.append(band('GPU', T('gpu.unavailable')));
       $d.append(el('sx-box').append(txt('div', 'sx-fine', G.note).css('margin', 0)));
       return;
     }
@@ -337,8 +345,8 @@ $(function () {
       $b.append(el('sx-gr').append(txt('span', 'n', n), el('sx-tr').append($('<i>').addClass(v >= 85 ? 'rd' : (v >= 60 ? 'a' : '')).css('width', Math.min(100, v) + '%')),
         $('<span class="sx-val">').append($('<b>').addClass(LV[lvLoad(v)]).text(Math.round(v) + '%'))));
     }
-    row('Video', D.video); row('Render', D.render);
-    $b.append(el('sx-cl').css('margin-top', '6px').append(txt('span', '', D.freq > 0 ? Math.round(D.freq) + ' MHz' : 'idle'), txt('span', '', (D.video >= 1 || D.render >= 1) ? 'active' : '')));
+    row(T('gpu.video'), D.video); row(T('gpu.render'), D.render);
+    $b.append(el('sx-cl').css('margin-top', '6px').append(txt('span', '', D.freq > 0 ? Math.round(D.freq) + ' MHz' : T('gpu.idle')), txt('span', '', (D.video >= 1 || D.render >= 1) ? T('gpu.active') : '')));
     $d.append($b);
   }
 
@@ -347,17 +355,17 @@ $(function () {
     if (!P) { return; }
     if (!P.data) {
       if (P.pending) { return; }
-      $d.append(band('Power', 'smart socket'));
-      $d.append(el('sx-box').append(txt('div', 'sx-fine sx-a', 'Socket not reachable' + (P.note ? ': ' + P.note : '')).css('margin', 0)));
+      $d.append(band(T('pow.title'), T('pow.socket')));
+      $d.append(el('sx-box').append(txt('div', 'sx-fine sx-a', T('pow.unreachable') + (P.note ? ': ' + P.note : '')).css('margin', 0)));
       return;
     }
     var D = P.data;
-    $d.append(band('Power', mx('pow_name') ? (D.name || 'smart socket') : ''));
+    $d.append(band(T('pow.title'), mx('pow_name') ? (D.name || T('pow.socket')) : ''));
     var items = [];
-    if (mx('pow_w')) items.push(kp('Wall', [document.createTextNode(D.power >= 100 ? D.power.toFixed(0) : D.power.toFixed(1)), small(' W')], ''));
-    if (mx('pow_day') && D.day_kwh !== null && D.day_kwh !== undefined) { items.push(kp('Today', [document.createTextNode(D.day_kwh.toFixed(1)), small(' kWh')], '')); }
-    if (mx('pow_mon') && D.month_kwh !== null && D.month_kwh !== undefined) { items.push(kp('This month', [document.createTextNode(D.month_kwh.toFixed(1)), small(' kWh')], '')); }
-    if (mx('pow_cost') && P.cost !== null && P.cost !== undefined) { items.push(kp('Cost', [document.createTextNode(Math.round(P.cost).toLocaleString('en-US').replace(/,/g, ' ')), small(' ' + P.currency)], '')); }
+    if (mx('pow_w')) items.push(kp(T('pow.wall'), [document.createTextNode(D.power >= 100 ? D.power.toFixed(0) : D.power.toFixed(1)), small(' W')], ''));
+    if (mx('pow_day') && D.day_kwh !== null && D.day_kwh !== undefined) { items.push(kp(T('pow.today'), [document.createTextNode(D.day_kwh.toFixed(1)), small(' kWh')], '')); }
+    if (mx('pow_mon') && D.month_kwh !== null && D.month_kwh !== undefined) { items.push(kp(T('pow.month'), [document.createTextNode(D.month_kwh.toFixed(1)), small(' kWh')], '')); }
+    if (mx('pow_cost') && P.cost !== null && P.cost !== undefined) { items.push(kp(T('pow.cost'), [document.createTextNode(Math.round(P.cost).toLocaleString('en-US').replace(/,/g, ' ')), small(' ' + P.currency)], '')); }
     var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
     $.each(items, function (i, x) { $k.append(x); });
     if (items.length) { $d.append(el('sx-box').append($k)); }
@@ -369,7 +377,7 @@ $(function () {
     var $pre = $('<pre>');
     if (S.logErr[name]) { return $pre.text(S.logErr[name]).addClass('sx-a'); }
     var raw = S.logs[name];
-    if (raw === undefined) { return $pre.text('Loading…'); }
+    if (raw === undefined) { return $pre.text(T('tile.loading')); }
     var lines = stripAnsi(raw).split('\n');
     if (lines.length && lines[lines.length - 1] === '') { lines.pop(); }
     if (!lines.length) { return $pre.text('(the log is empty)'); }
@@ -393,7 +401,7 @@ $(function () {
     $.getJSON(LOGS, { name: name, lines: C ? C.log_lines : 100, _: Date.now() })
       .done(function (r) {
         if (r && r.ok) { S.logs[name] = r.text; delete S.logErr[name]; }
-        else { S.logErr[name] = (r && r.error) ? r.error : 'could not read the log'; }
+        else { S.logErr[name] = (r && r.error) ? r.error : T('log.err'); }
       })
       .fail(function (x) { S.logErr[name] = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; })
       .always(function () { if (S.logOpen === name) { renderCon(); } });
@@ -422,15 +430,15 @@ $(function () {
       .always(function () { delete S.busy[name]; poll(); });
   }
 
-  var PILL = { exited: ['mu', 'STOPPED'], created: ['mu', 'CREATED'], restarting: ['am', 'RESTARTING'], paused: ['am', 'PAUSED'], dead: ['rd', 'DEAD'], removing: ['am', 'REMOVING'] };
-  var BUSYTXT = { start: 'STARTING', stop: 'STOPPING', restart: 'RESTARTING' };
+  var PILL = { exited: ['mu', T('con.stopped')], created: ['mu', T('con.created')], restarting: ['am', T('con.restarting')], paused: ['am', T('con.paused')], dead: ['rd', T('con.dead')], removing: ['am', T('con.removing')] };
+  var BUSYTXT = { start: T('con.starting'), stop: T('con.stopping'), restart: T('con.restarting') };
 
   function renderCon() {
     var $d = $('#sx-con').empty();
     var C = last && last.containers;
     if (!C || !C.enabled) { return; }
-    if (!C.docker) { $d.append(band('Containers', '')); $d.append(el('sx-box').append(txt('div', 'sx-fine', 'Docker is not running').css('margin', 0))); return; }
-    var title = C.mode === 'selected' ? 'Containers · selected' : 'Top ' + C.n + ' containers · by ' + (C.mode === 'ram' ? 'RAM' : 'CPU');
+    if (!C.docker) { $d.append(band(T('con.title'), '')); $d.append(el('sx-box').append(txt('div', 'sx-fine', T('con.no_docker')).css('margin', 0))); return; }
+    var title = C.mode === 'selected' ? T('con.title') + ' · ' + T('con.selected') : T('con.top', { n: C.n, by: C.mode === 'ram' ? 'RAM' : 'CPU' });
     $d.append(band(title, 'CPU · RAM'));
     if (S.err) { $d.append(el('sx-warn sx-rd').append(icon('fa-exclamation-triangle', 'sx-rd'), txt('span', '', S.err))); }
     if (!C.rows.length) { $d.append(el('sx-note').text(C.pending ? 'Reading containers…' : (C.mode === 'selected' ? 'No containers selected (see the Sysbox settings)' : 'No running containers'))); return; }
@@ -440,37 +448,37 @@ $(function () {
       var stripe = c.unhealthy || c.state === 'dead' ? 'red' : (bz || c.state === 'restarting' || c.state === 'paused' || c.state === 'removing' ? 'amber' : (running ? 'green' : 'grey'));
       var $row = el('sx-cr mt-r mt-n mt-s-' + stripe + (running ? '' : ' off')).css('grid-template-columns', 'minmax(0,1fr) 44px 92px 68px');
       var $n = txt('span', 'n', c.name).attr('title', c.name + (c.status ? ' — ' + c.status : ''));
-      var pill = bz ? ['am', BUSYTXT[bz]] : (c.unhealthy ? ['rd', 'UNHEALTHY'] : PILL[c.state]);
+      var pill = bz ? ['am', BUSYTXT[bz]] : (c.unhealthy ? ['rd', T('con.unhealthy')] : PILL[c.state]);
       if (pill) { $n.append($('<span class="sx-pill">').addClass(pill[0]).text(pill[1])); }
       $row.append($('<div>').css({ minWidth: 0, overflow: 'hidden' }).append($n));
       $row.append(el('sx-mini').append($('<i>').css('width', (c.bar || 0) + '%')));
       var v = running ? ((c.cpu !== null && c.cpu !== undefined ? (c.cpu >= 100 ? c.cpu.toFixed(0) : c.cpu.toFixed(1)) + '%' : '…') + (c.mem !== null && c.mem !== undefined ? ' · ' + fmtB(c.mem, true, false).replace('iB', 'B') : '')) : (c.status || '');
-      $row.append($('<span class="sx-val sx-sub">').text(v).attr('title', v + (running && c.cpu_core !== null && c.cpu_core !== undefined ? ' \u2014 CPU: ' + c.cpu_core.toFixed(1) + '% of one core' : '')));
+      $row.append($('<span class="sx-val sx-sub">').text(v).attr('title', v + (running && c.cpu_core !== null && c.cpu_core !== undefined ? ' \u2014 ' + T('con.cpu_tip', { p: c.cpu_core.toFixed(1) }) : '')));
       var $a = el('sx-act');
       if (C.controls) {
         if (running) {
-          $a.append(btn('restart', 'Restart', bz ? 'dis' : '', function () { doOp(c.name, 'restart'); }));
-          $a.append(btn('stop', 'Stop', (bz ? 'dis ' : '') + (S.confirm === c.name ? 'on' : ''), function () { S.confirm = (S.confirm === c.name) ? null : c.name; renderCon(); }));
+          $a.append(btn('restart', T('con.restart'), bz ? 'dis' : '', function () { doOp(c.name, 'restart'); }));
+          $a.append(btn('stop', T('con.stop'), (bz ? 'dis ' : '') + (S.confirm === c.name ? 'on' : ''), function () { S.confirm = (S.confirm === c.name) ? null : c.name; renderCon(); }));
         } else {
-          $a.append(btn('play', 'Start', 'go' + (bz ? ' dis' : ''), function () { doOp(c.name, 'start'); }));
+          $a.append(btn('play', T('con.start'), 'go' + (bz ? ' dis' : ''), function () { doOp(c.name, 'start'); }));
         }
       }
-      if (C.logs) { $a.append(btn('logs', 'Log', S.logOpen === c.name ? 'on' : '', function () { toggleLog(c.name); })); }
+      if (C.logs) { $a.append(btn('logs', T('con.log'), S.logOpen === c.name ? 'on' : '', function () { toggleLog(c.name); })); }
       $row.append($a);
       $box.append($row);
       if (S.confirm === c.name && running) {
         $box.append(el('sx-conf').append(
-          $('<span class="sp">').append($('<b>').text('Stop ' + c.name + '?')),
-          $('<a href="#" class="sx-b2">').text('Cancel').on('click', function (e) { e.preventDefault(); S.confirm = null; renderCon(); }),
-          $('<a href="#" class="sx-b2 rd">').text('Stop').on('click', function (e) { e.preventDefault(); doOp(c.name, 'stop'); })));
+          $('<span class="sp">').append($('<b>').text(T('con.stop_q', { name: c.name }))),
+          $('<a href="#" class="sx-b2">').text(T('con.cancel')).on('click', function (e) { e.preventDefault(); S.confirm = null; renderCon(); }),
+          $('<a href="#" class="sx-b2 rd">').text(T('con.stop')).on('click', function (e) { e.preventDefault(); doOp(c.name, 'stop'); })));
       }
       if (S.logOpen === c.name) {
         var $pre = renderLogBody(c.name);
         $box.append(el('sx-log').append(
           el('sx-lh').append(txt('span', '', c.name + ' · last ' + C.log_lines + ' lines'),
-            $('<a href="#">').text('Refresh').on('click', function (e) { e.preventDefault(); fetchLog(c.name); }),
-            $('<a href="#">').text('Copy').on('click', function (e) { e.preventDefault(); copyText(S.logs[c.name] ? stripAnsi(S.logs[c.name]) : ''); }),
-            $('<a href="#">').text('Close').on('click', function (e) { e.preventDefault(); toggleLog(c.name); })),
+            $('<a href="#">').text(T('log.refresh')).on('click', function (e) { e.preventDefault(); fetchLog(c.name); }),
+            $('<a href="#">').text(T('log.copy')).on('click', function (e) { e.preventDefault(); copyText(S.logs[c.name] ? stripAnsi(S.logs[c.name]) : ''); }),
+            $('<a href="#">').text(T('log.close')).on('click', function (e) { e.preventDefault(); toggleLog(c.name); })),
           $pre));
         var p = $pre[0]; if (p) { p.scrollTop = p.scrollHeight; }
       }
@@ -490,9 +498,9 @@ $(function () {
     last = r;
     var $s = $('#sx-summary');
     if (!r || !r.ok) {
-      $s.text('Unavailable');
+      $s.text(T('sum.unavailable'));
       $('#sx-attn,#sx-sto,#sx-cpu,#sx-gpu,#sx-pow,#sx-con').empty();
-      $('#sx-mem').empty().append(el('sx-note').text('System data unavailable'));
+      $('#sx-mem').empty().append(el('sx-note').text(T('sum.no_data')));
       return;
     }
     var m = r.summary, parts = [Math.round(m.ram) + '% RAM'];
@@ -500,7 +508,7 @@ $(function () {
     if (cl !== null && cl !== undefined) { parts.push(Math.round(cl) + '% CPU'); }
     var ct = (live && live.temp !== undefined && live.temp !== null) ? live.temp : m.temp;
     if (ct !== null && ct !== undefined) { parts.push(ct + '\u00B0C'); }
-    parts.push('up ' + m.uptime);
+    parts.push(T('sum.up', { t: m.uptime }));
     $s.text(parts.join(' · '));
     if (r.ui) { applyUi(r.ui); }
     if (r.ui && r.ui.metrics) { MX = r.ui.metrics; }
@@ -581,7 +589,7 @@ $(function () {
         var m = last.summary, parts = [Math.round(m.ram) + '% RAM'];
         if (r.load !== null && r.load !== undefined) { parts.push(Math.round(r.load) + '% CPU'); }
         if (r.temp !== null && r.temp !== undefined) { parts.push(r.temp + '\u00B0C'); }
-        parts.push('up ' + m.uptime);
+        parts.push(T('sum.up', { t: m.uptime }));
         $('#sx-summary').text(parts.join(' \u00B7 '));
       })
       .always(function () { cpuBusy = false; });

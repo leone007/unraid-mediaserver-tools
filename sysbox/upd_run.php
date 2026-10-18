@@ -59,11 +59,11 @@ if ($mode === 'daily') {
 if ($mode === 'scan') {
     $id = upd_job_start('scan', $arg, $arg !== '' ? 'Checking ' . $arg : 'Checking containers, Unraid OS and plugins');
     $s = upd_scan($arg !== '' ? $arg : null);
-    if (empty($s['ok'])) { upd_job($id, ['state' => 'error', 'text' => 'Check failed: ' . ($s['error'] ?? '?')]); upd_log('check failed: ' . ($s['error'] ?? '?')); exit(0); }
+    if (empty($s['ok'])) { upd_job($id, ['state' => 'error', 'text' => sx_tr('uj.check_failed', ['e' => ($s['error'] ?? '?')])]); upd_log('check failed: ' . ($s['error'] ?? '?')); exit(0); }
     $n = upd_summary($s); $tot = count($n['green']) + count($n['amber']) + count($n['red']);
-    $msg = $tot ? $tot . ' update' . ($tot > 1 ? 's' : '') . ': ' . count($n['green']) . ' green, ' . count($n['amber']) . ' amber, ' . count($n['red']) . ' red' : 'everything is up to date';
+    $msg = $tot ? sx_tr('uj.summary', ['n' => $tot, 'g' => count($n['green']), 'a' => count($n['amber']), 'r' => count($n['red'])]) : sx_tr('uj.current');
     if (!empty($s['os']['new'])) { $msg .= '; Unraid ' . $s['os']['new'] . ' available'; }
-    upd_job($id, ['state' => 'done', 'text' => ($arg !== '' ? $arg . ' checked: ' : 'Check: ') . $msg]);
+    upd_job($id, ['state' => 'done', 'text' => ($arg !== '' ? sx_tr('uj.checked_one', ['n' => $arg, 'm' => $msg]) : sx_tr('uj.checked', ['m' => $msg]))]);
     upd_log('check' . ($arg !== '' ? ' ' . $arg : '') . ': ' . $msg);
     // a new Unraid OS version: Claude is asked about it by itself, once per version (owner's rule, 2026-10-15)
     $o = $s['os'] ?? []; $c = upd_cfg();
@@ -97,14 +97,14 @@ if ($mode === 'scan') {
 if ($mode === 'selftest') {
     $id = upd_job_start('selftest', '', 'Self-test of our connections');
     $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
-    upd_job($id, ['state' => $bad ? 'error' : 'done', 'text' => 'Self-test: ' . (count($t['tests']) - count($bad)) . '/' . count($t['tests']) . ' passed' . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' failed)' : '')]);
+    upd_job($id, ['state' => $bad ? 'error' : 'done', 'text' => sx_tr('uj.selftest', ['ok' => count($t['tests']) - count($bad), 'n' => count($t['tests'])]) . ($bad ? ' (' . sx_tr('uj.failed_list', ['l' => implode(', ', array_column($bad, 'name'))]) . ')' : '')]);
     exit(0);
 }
 
 if ($mode === 'ask') {
-    $id = upd_job_start('ask', $arg, 'Ask Claude about ' . $arg);
+    $id = upd_job_start('ask', $arg, sx_tr('uj.claude_ask', ['n' => $arg]));
     $e = upd_ask($arg);
-    upd_job($id, ['state' => $e === '' ? 'done' : 'error', 'text' => $e === '' ? 'Claude answered about ' . $arg : 'Ask Claude about ' . $arg . ': ' . $e]);
+    upd_job($id, ['state' => $e === '' ? 'done' : 'error', 'text' => $e === '' ? sx_tr('uj.claude_ok', ['n' => $arg]) : sx_tr('uj.claude_err', ['n' => $arg, 'e' => $e])]);
     exit(0);
 }
 
@@ -112,7 +112,7 @@ if ($mode === 'update') {
     $cfg = upd_cfg(); $name = $arg;
     $scan = upd_json(upd_scan_file(), []); $row = null;
     foreach ($scan['rows'] ?? [] as $r) { if ($r['name'] === $name) { $row = $r; } }
-    $id = upd_job_start('update', $name, 'Updating ' . $name);
+    $id = upd_job_start('update', $name, sx_tr('uj.updating', ['n' => $name]));
     $end = function ($state, $msg) use ($id, $name) {
         upd_job($id, ['state' => $state, 'text' => $msg], $msg); upd_log($msg);
         upd_discord($state === 'done' ? 'g' : 'rd', 'Update manager: ' . $name . ($state === 'done' ? ' updated' : ' update failed'), $msg);

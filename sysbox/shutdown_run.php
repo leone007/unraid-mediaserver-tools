@@ -34,7 +34,7 @@ $d = sx_docker();
 
 if ($mode === 'start') {
     $names = array_values(array_filter($S['stopped'], 'sx_valid_name'));
-    if ($d === '' || !$names) { $S['state'] = 'done'; $S['msg'] = 'Nothing to start.'; $S['finished'] = time(); sd_status_write($S); exit(0); }
+    if ($d === '' || !$names) { $S['state'] = 'done'; $S['msg'] = sx_tr('sdr.nothing'); $S['finished'] = time(); sd_status_write($S); exit(0); }
     sd_log('starting ' . count($names) . ' container(s) again');
     $failed = [];
     foreach ($names as $n) {
@@ -45,7 +45,7 @@ if ($mode === 'start') {
     @unlink('/tmp/sysbox_ps.json');
     $S['stopped'] = $failed;
     $S['state'] = $failed ? 'error' : 'done';
-    $S['msg'] = $failed ? 'Could not start: ' . implode(', ', $failed) : 'The containers run again.';
+    $S['msg'] = $failed ? sx_tr('sdr.failed', ['l' => implode(', ', $failed)]) : sx_tr('sdr.started');
     $S['finished'] = time(); sd_status_write($S);
     exit(0);
 }
@@ -99,8 +99,8 @@ if ($vms) {
 }
 
 $S['finished'] = time();
-if (sd_cancelled()) { $S['state'] = 'cancelled'; $S['msg'] = 'Stopped by you; the containers stopped so far stay stopped (Start them again below).'; }
-elseif ($err) { $S['state'] = 'error'; $S['msg'] = 'Not stopped: ' . implode(', ', $err); }
-else { $S['state'] = 'done'; $S['msg'] = count($S['stopped']) . ' container(s)' . ($S['vms'] ? ' and ' . count($S['vms']) . ' VM(s)' : '') . ' stopped.'; }
+if (sd_cancelled()) { $S['state'] = 'cancelled'; $S['msg'] = sx_tr('sdr.cancelled'); }
+elseif ($err) { $S['state'] = 'error'; $S['msg'] = sx_tr('sdr.not_stopped', ['l' => implode(', ', $err)]); }
+else { $S['state'] = 'done'; $S['msg'] = $S['vms'] ? sx_tr('sdr.done_vm', ['n' => count($S['stopped']), 'v' => count($S['vms'])]) : sx_tr('sdr.done', ['n' => count($S['stopped'])]); }
 sd_log($S['msg']);
 @unlink(SD_CANCEL);

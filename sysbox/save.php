@@ -6,27 +6,27 @@ sx_guard();
 
 function sx_int($v, $min, $max, $name) {
     $v = trim((string)$v);
-    if ($v === '' || !is_numeric($v) || $v < $min || $v > $max) { sx_json(['ok' => false, 'error' => $name . ' must be a number between ' . $min . ' and ' . $max], 400); }
+    if ($v === '' || !is_numeric($v) || $v < $min || $v > $max) { sx_json(['ok' => false, 'error' => sx_tr('save.err_number', ['name' => $name, 'min' => $min, 'max' => $max])], 400); }
     return (string)(int)$v;
 }
 function sx_hook($v) {
     $v = trim((string)$v);
-    if ($v !== '' && !preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $v)) { sx_json(['ok' => false, 'error' => 'the webhook is not a valid Discord webhook URL'], 400); }
+    if ($v !== '' && !preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $v)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_hook')], 400); }
     return $v;
 }
 // the page does not get the saved webhook: empty keeps it, - removes it
 function sx_hook_keep($v) { $v = trim((string)$v); if ($v === '') { return (string)(sx_cfg()['dc_hook'] ?? ''); } if ($v === '-') { return ''; } return sx_hook($v); }
 function sx_choice($v, $allowed, $name) {
     $v = trim((string)$v);
-    if (!in_array($v, $allowed, true)) { sx_json(['ok' => false, 'error' => $name . ' must be one of ' . implode(', ', $allowed) . ' seconds'], 400); }
+    if (!in_array($v, $allowed, true)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_secs', ['name' => $name, 'list' => implode(', ', $allowed)])], 400); }
     return $v;
 }
 function sx_bool($v) { return in_array(strtolower(trim((string)$v)), ['1', 'yes', 'true', 'on'], true) ? '1' : '0'; }
 
 $ping = trim((string)($_POST['dc_ping'] ?? ''));
-if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { sx_json(['ok' => false, 'error' => 'the ping must be a Discord user ID, role:<role ID>, @here or @everyone'], 400); }
+if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_ping')], 400); }
 $mode = (string)($_POST['top_mode'] ?? 'cpu');
-if (!in_array($mode, ['cpu', 'ram', 'selected'], true)) { sx_json(['ok' => false, 'error' => 'unknown container mode'], 400); }
+if (!in_array($mode, ['cpu', 'ram', 'selected'], true)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_mode')], 400); }
 
 $sel = [];
 foreach ((array)($_POST['sel'] ?? []) as $n) {
@@ -35,9 +35,9 @@ foreach ((array)($_POST['sel'] ?? []) as $n) {
 }
 
 $host = trim((string)($_POST['socket_host'] ?? ''));
-if ($host !== '' && !preg_match('/^[A-Za-z0-9.\-]+$/', $host)) { sx_json(['ok' => false, 'error' => 'the socket address may only contain letters, digits, dots and dashes'], 400); }
+if ($host !== '' && !preg_match('/^[A-Za-z0-9.\-]+$/', $host)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_sock')], 400); }
 $price = trim((string)($_POST['kwh_price'] ?? ''));
-if ($price !== '' && (!is_numeric($price) || $price < 0 || $price > 100000)) { sx_json(['ok' => false, 'error' => 'the energy price must be a number'], 400); }
+if ($price !== '' && (!is_numeric($price) || $price < 0 || $price > 100000)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_price')], 400); }
 $cur = preg_replace('/[^\p{L}\p{N}$€£ .\-]/u', '', (string)($_POST['currency'] ?? ''));
 $cur = function_exists('mb_substr') ? mb_substr($cur, 0, 6) : substr($cur, 0, 6);
 
@@ -69,7 +69,7 @@ $new = [
     'wk_on' => sx_bool($_POST['wk_on'] ?? '1'), 'wk_day' => sx_int($_POST['wk_day'] ?? '7', 1, 7, 'Weekly day'), 'wk_hour' => sx_int($_POST['wk_hour'] ?? '19', 0, 23, 'Weekly hour'),
 ];
 foreach (['ram', 'log', 'vd', 'temp'] as $k) {
-    if ((int)$new[$k . '_warn'] > (int)$new[$k . '_crit']) { sx_json(['ok' => false, 'error' => 'a warning limit cannot be higher than its critical limit'], 400); }
+    if ((int)$new[$k . '_warn'] > (int)$new[$k . '_crit']) { sx_json(['ok' => false, 'error' => sx_tr('save.err_limits')], 400); }
 }
 
 $text = '';
@@ -78,7 +78,7 @@ foreach ($new as $k => $v) { $text .= $k . '="' . str_replace('"', '', $v) . '"'
 $dir = dirname(SX_CFG);
 if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
 $tmp = SX_CFG . '.tmp';
-if (@file_put_contents($tmp, $text) === false) { sx_json(['ok' => false, 'error' => 'could not write the settings file'], 500); }
+if (@file_put_contents($tmp, $text) === false) { sx_json(['ok' => false, 'error' => sx_tr('save.err_write')], 500); }
 if (!@rename($tmp, SX_CFG)) { @file_put_contents(SX_CFG, $text); @unlink($tmp); }
 @chmod(SX_CFG, 0600);
 @unlink('/tmp/sysbox_slow.json');

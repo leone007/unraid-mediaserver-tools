@@ -26,10 +26,10 @@ function sd_watched($p) {
 
 // processes Unraid stops by itself during the array stop, or that must not be killed by hand
 function sd_protect($comm, $cmd, $pid) {
-    if ($pid <= 2) { return 'system'; }
-    if (preg_match('/^(emhttpd?|shfs|dockerd|containerd|containerd-shim.*|docker-proxy|runc|libvirtd|virtlogd|virtlockd|qemu-system.*|smbd|nmbd|winbindd|rpc\..*|nfsd.*|mountd)$/', $comm)) { return 'Unraid stops this itself'; }
-    if ($comm === 'mover' || $comm === 'move' || strpos($cmd, '/usr/local/sbin/mover') !== false) { return 'the mover: stop it on the Main page'; }
-    if ($comm === 'rsync' && is_file('/tmp/diskbox_balance_status.json') && strpos((string)@file_get_contents('/tmp/diskbox_balance_status.json'), '"running"') !== false) { return 'Diskbox Balance is moving: stop it on its page'; }
+    if ($pid <= 2) { return sx_tr('prot.system'); }
+    if (preg_match('/^(emhttpd?|shfs|dockerd|containerd|containerd-shim.*|docker-proxy|runc|libvirtd|virtlogd|virtlockd|qemu-system.*|smbd|nmbd|winbindd|rpc\..*|nfsd.*|mountd)$/', $comm)) { return sx_tr('prot.unraid'); }
+    if ($comm === 'mover' || $comm === 'move' || strpos($cmd, '/usr/local/sbin/mover') !== false) { return sx_tr('prot.mover'); }
+    if ($comm === 'rsync' && is_file('/tmp/diskbox_balance_status.json') && strpos((string)@file_get_contents('/tmp/diskbox_balance_status.json'), '"running"') !== false) { return sx_tr('prot.balance'); }
     return '';
 }
 
@@ -75,7 +75,7 @@ function sd_holders() {
         }
         $st = @stat($pd);
         $user = $st ? (function_exists('posix_getpwuid') ? ((posix_getpwuid($st['uid'])['name'] ?? '') ?: (string)$st['uid']) : (string)$st['uid']) : '';
-        $prot = $ct !== '' ? 'runs in the container ' . $ct . ': stop the container' : sd_protect($comm, $cmd, $pid);
+        $prot = $ct !== '' ? sx_tr('prot.ctr', ['c' => $ct]) : sd_protect($comm, $cmd, $pid);
         $fl = array_keys($files); sort($fl);
         $rows[] = ['pid' => $pid, 'start' => $start, 'comm' => $comm, 'cmd' => mb_substr($cmd, 0, 220), 'user' => $user, 'container' => $ct,
                    'files' => array_slice($fl, 0, 6), 'nfiles' => count($fl), 'protected' => $prot];
@@ -123,15 +123,15 @@ function sd_checks() {
     $v = @parse_ini_file('/var/local/emhttp/var.ini');
     $v = is_array($v) ? $v : [];
     $w = [];
-    $w[] = ['k' => 'array', 'ok' => true, 'text' => 'Array: ' . ($v['mdState'] ?? 'unknown') . ', Unraid shutdown time-out ' . ($v['shutdownTimeout'] ?? '?') . ' s'];
+    $w[] = ['k' => 'array', 'ok' => true, 'text' => sx_tr('chk.array', ['s' => ($v['mdState'] ?? '?'), 't' => ($v['shutdownTimeout'] ?? '?')])];
     if ((float)($v['mdResync'] ?? 0) > 0) {
         $pct = (float)($v['mdResync'] ?? 0) > 0 ? round((float)($v['mdResyncPos'] ?? 0) / (float)$v['mdResync'] * 100, 1) : 0;
-        $w[] = ['k' => 'parity', 'ok' => false, 'text' => 'A parity check or rebuild is running (' . $pct . ' %). Shutting down stops it.'];
+        $w[] = ['k' => 'parity', 'ok' => false, 'text' => sx_tr('chk.parity', ['p' => $pct])];
     }
-    if (trim((string)@shell_exec('pgrep -x mover 2>/dev/null')) !== '') { $w[] = ['k' => 'mover', 'ok' => false, 'text' => 'The mover is running. Wait for it or stop it on the Main page.']; }
+    if (trim((string)@shell_exec('pgrep -x mover 2>/dev/null')) !== '') { $w[] = ['k' => 'mover', 'ok' => false, 'text' => sx_tr('chk.mover')]; }
     $bl = is_file('/tmp/diskbox_balance.lock') ? @fopen('/tmp/diskbox_balance.lock', 'r') : false;
     if ($bl) {
-        if (!flock($bl, LOCK_EX | LOCK_NB)) { $w[] = ['k' => 'balance', 'ok' => false, 'text' => 'Diskbox Balance is moving files. Stop it on its page first (the title being copied is rolled back).']; }
+        if (!flock($bl, LOCK_EX | LOCK_NB)) { $w[] = ['k' => 'balance', 'ok' => false, 'text' => sx_tr('chk.balance')]; }
         else { flock($bl, LOCK_UN); }
         fclose($bl);
     }

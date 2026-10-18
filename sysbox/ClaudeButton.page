@@ -7,37 +7,42 @@ Icon="fa-comments"
    Claude Code with Remote Control when they are not running yet, and opens the session on claude.ai in a new tab. */
 $cl_var = @parse_ini_file('/var/local/emhttp/var.ini');
 $cl_tok = is_array($cl_var) ? (string)($cl_var['csrf_token'] ?? '') : '';
+// texts from the dictionary (lang/en.json, see i18n.php): only the cl. keys, this button is on every page
+require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
+echo mt_i18n_js('/usr/local/emhttp/plugins/sysbox/lang', 'sxcl', ['cl.']);
 ?>
 <script>
 function ClaudeButton() {
+  var T = function (k, v) { return MTL.t('sxcl', k, v); };
   // the tab is opened right away (a popup blocker allows it only during the click) and shows the progress
   var w = window.open('', '_blank');
   function say(t) { try { if (w && w.document) { w.document.title = 'Claude'; w.document.body.style.cssText = 'background:#141414;color:#e8e8e8;font:15px/1.5 system-ui,sans-serif;padding:40px'; w.document.body.textContent = t; } } catch (e) {} }
-  say('Starting the Claude session on <?=htmlspecialchars(gethostname(), ENT_QUOTES)?>...');
+  say(T('cl.starting', { host: <?=json_encode((string)gethostname())?> }));
   $.post('/plugins/sysbox/claude.php', {op: 'open', csrf_token: '<?=htmlspecialchars($cl_tok, ENT_QUOTES)?>'}, null, 'json').done(function (r) {
-    if (!r.ok) { say('Claude could not be started: ' + r.error); return; }
+    if (!r.ok) { say(T('cl.failed', { e: r.error })); return; }
     if (w) { w.location.href = r.url; } else { window.open(r.url, '_blank'); }
-  }).fail(function (x) { say('Claude could not be started: HTTP ' + (x && x.status)); });
+  }).fail(function (x) { say(T('cl.failed', { e: 'HTTP ' + (x && x.status) })); });
 }
 // Tooltip with the plan usage (item 62): asked when the page loads and again on hover when it is older than a minute
 (function () {
-  var got = 0, busy = false, base = 'Claude Code: open the session';
+  var T = function (k, v) { return window.MTL ? MTL.t('sxcl', k, v) : k; };
+  var got = 0, busy = false, base = T('cl.base');
   function btn() { return $('[onclick*="ClaudeButton"]'); }
-  function ago(s) { s = Math.max(0, Math.round(s / 60)); return s < 1 ? 'just now' : s < 60 ? s + ' min ago' : s < 1440 ? Math.floor(s / 60) + ' h ' + (s % 60) + ' min ago' : Math.floor(s / 1440) + ' d ago'; }
-  function left(s) { s = Math.max(0, Math.round(s / 60)); var d = Math.floor(s / 1440), h = Math.floor(s % 1440 / 60); return d ? d + ' d ' + h + ' h' : h ? h + ' h ' + (s % 60) + ' min' : (s % 60) + ' min'; }
+  function ago(s) { s = Math.max(0, Math.round(s / 60)); return s < 1 ? T('cl.just_now') : s < 60 ? T('cl.min_ago', { m: s }) : s < 1440 ? T('cl.hm_ago', { h: Math.floor(s / 60), m: s % 60 }) : T('cl.d_ago', { d: Math.floor(s / 1440) }); }
+  function left(s) { s = Math.max(0, Math.round(s / 60)); var d = Math.floor(s / 1440), h = Math.floor(s % 1440 / 60); return d ? T('cl.dh', { d: d, h: h }) : h ? T('cl.hm', { h: h, m: s % 60 }) : T('cl.m', { m: s % 60 }); }
   function pct(v) { return (Math.round(v * 10) / 10).toString() + '%'; }
-  function when(ts) { var d = new Date(ts * 1000); return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function when(ts) { var d = new Date(ts * 1000); return T('cl.dow.' + ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d.getDay()]) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function text(r) {
-    if (!r || !r.ok) { return base + '\n' + ((r && r.error) || 'usage not available'); }
+    if (!r || !r.ok) { return base + '\n' + ((r && r.error) || T('cl.no_usage')); }
     var t = [base];
-    if (r.expired) { t.push('Week:     new week since ' + when(r.reset) + ', no data yet'); }
+    if (r.expired) { t.push(T('cl.week_new', { t: when(r.reset) })); }
     else {
-      t.push('Week:     ' + pct(r.week) + '  (resets ' + when(r.reset) + ', in ' + left(r.reset - r.now) + ')');
-      t.push('Today:    ' + (r.today === null ? 'from tomorrow' : pct(r.today)));
-      t.push('Average:  ' + pct(r.avg) + '/day  (allowance ' + pct(r.quota) + '/day)');
+      t.push(T('cl.week', { p: pct(r.week), t: when(r.reset), left: left(r.reset - r.now) }));
+      t.push(T('cl.today', { v: r.today === null ? T('cl.from_tomorrow') : pct(r.today) }));
+      t.push(T('cl.avg', { p: pct(r.avg), q: pct(r.quota) }));
     }
-    if (r.five) { t.push('5 hours:  ' + pct(r.five.pct) + '  (resets in ' + left(r.five.reset - r.now) + ')'); }
-    t.push('updated ' + ago(r.now - r.seen));
+    if (r.five) { t.push(T('cl.five', { p: pct(r.five.pct), left: left(r.five.reset - r.now) })); }
+    t.push(T('cl.updated', { t: ago(r.now - r.seen) }));
     return t.join('\n');
   }
   function load() {

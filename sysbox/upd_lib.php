@@ -300,10 +300,10 @@ function upd_autobrr_test($u, $key, $now = null) {
     $now = $now ?? time();
     [$c] = upd_http($u . '/api/healthz/liveness', [], 10);
     if ($c !== 200) { return [false, $c ? 'HTTP ' . $c : 'not reachable']; }
-    if ($key === '') { return [true, 'connected (no API key in Seedbox Tools: the IRC feed is not checked)']; }
+    if ($key === '') { return [true, sx_tr('ut.ab_nokey')]; }
     [$c, , $b] = upd_http($u . '/api/irc', ['X-API-Token: ' . $key, 'Accept: application/json'], 15);
     $nets = json_decode($b, true);
-    if ($c !== 200 || !is_array($nets)) { return [false, 'connected, but the IRC state could not be read (' . ($c ? 'HTTP ' . $c : 'not reachable') . ')']; }
+    if ($c !== 200 || !is_array($nets)) { return [false, sx_tr('ut.ab_irc', ['e' => ($c ? 'HTTP ' . $c : sx_tr('ut.unreachable'))])]; }
     $bad = []; $n = 0; $last = 0; $lastCh = '';
     foreach ($nets as $net) {
         if (empty($net['enabled'])) { continue; }
@@ -315,10 +315,10 @@ function upd_autobrr_test($u, $key, $now = null) {
             $t = strtotime((string)($ch['last_announce'] ?? '')); if ($t !== false && $t > 0 && $t > $last) { $last = $t; $lastCh = (string)($ch['name'] ?? ''); }
         }
     }
-    if (!$n) { return [false, 'connected, but no IRC network is enabled: no live feed']; }
-    if ($bad) { return [false, 'connected, no live feed: ' . implode(', ', $bad)]; }
+    if (!$n) { return [false, sx_tr('ut.ab_nonet')]; }
+    if ($bad) { return [false, sx_tr('ut.ab_bad', ['l' => implode(', ', $bad)])]; }
     $ago = $now - $last; $ago = $ago < 3600 ? max(1, (int)round($ago / 60)) . ' min' : ($ago < 86400 ? round($ago / 3600, 1) . ' h' : round($ago / 86400, 1) . ' d');
-    return [true, 'connected, live feed available' . ($last ? ' · last announce ' . $ago . ' ago (' . $lastCh . ')' : '')];
+    return [true, sx_tr('ut.ab_ok') . ($last ? ' · ' . sx_tr('ut.ab_last', ['t' => $ago, 'ch' => $lastCh]) : '')];
 }
 
 // ---- self-tests: read-only checks of our connections (logins and GETs) ----------------------------------------

@@ -8,7 +8,7 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/action.php','sysbox/action.php','CONTAINER ACTIONS'),('&plugdir;/logs.php','sysbox/logs.php','CONTAINER LOGS'),('&plugdir;/save.php','sysbox/save.php','SAVE'),
  ('&plugdir;/energy.php','sysbox/energy.php','SMART SOCKET ENERGY'),('&plugdir;/sample.php','sysbox/sample.php','ENERGY SAMPLER'),('&plugdir;/cpu.php','sysbox/cpu.php','CPU ENDPOINT'),('&plugdir;/cpuhist.php','sysbox/cpuhist.php','CPU HISTORY SAMPLER'),('&plugdir;/discord.php','sysbox/discord.php','DISCORD HELPERS'),('&plugdir;/alerts.php','sysbox/alerts.php','DISCORD ALERT TEXTS'),('&plugdir;/notify.php','sysbox/notify.php','DISCORD ALERTS'),('&plugdir;/weekly.php','sysbox/weekly.php','DISCORD WEEKLY'),('&plugdir;/test.php','sysbox/test.php','DISCORD TEST'),
  ('/usr/local/emhttp/plugins/Sysbox/README.md','sysbox/README.md','README'),
- ('&plugdir;/lang.php','common/lang.php','SHARED LANGUAGE SETTING'),('&plugdir;/lang_block.php','common/lang_block.php','LANGUAGE BLOCK OF THE SETTINGS PAGE'),('&plugdir;/lang_save.php','common/lang_save.php','LANGUAGE SAVE'),
+ ('&plugdir;/lang.php','common/lang.php','SHARED LANGUAGE SETTING'),('&plugdir;/lang_block.php','common/lang_block.php','LANGUAGE BLOCK OF THE SETTINGS PAGE'),('&plugdir;/lang_save.php','common/lang_save.php','LANGUAGE SAVE'),('&plugdir;/i18n.php','common/i18n.php','DICTIONARIES'),('&plugdir;/lang/en.json','sysbox/lang/en.json','ENGLISH DICTIONARY (the source of translations)'),
  ('&plugdir;/SysboxShutdown.page','sysbox/SysboxShutdown.page','SAFE SHUTDOWN PAGE'),('&plugdir;/shutdown_lib.php','sysbox/shutdown_lib.php','SAFE SHUTDOWN LIBRARY'),('&plugdir;/shutdown.php','sysbox/shutdown.php','SAFE SHUTDOWN ENDPOINT'),('&plugdir;/shutdown_run.php','sysbox/shutdown_run.php','SAFE SHUTDOWN WORKER'),
  ('&plugdir;/ClaudeButton.page','sysbox/ClaudeButton.page','CLAUDE HEADER BUTTON'),('&plugdir;/claude.php','sysbox/claude.php','CLAUDE BUTTON ENDPOINT'),
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
@@ -19,7 +19,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.22l">
+<!ENTITY version   "2026.10.22m">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -33,6 +33,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- The texts of the tile, the settings page, the Snapshots, Safe shutdown and Update manager pages and the Claude button come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet
+###2026.10.22l
 - Language block: saving failed with csrf token mismatch (Unraid checks the token itself and then removes it from the request); fixed
 ###2026.10.22k
 - Language block: the save button (now Save language) was greyed out, because Unraid disables Apply buttons outside a changed form; it works now

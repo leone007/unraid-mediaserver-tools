@@ -2,7 +2,7 @@
 
 The texts of the pages and tiles live in dictionaries, one per plugin: `<plugin>/lang/en.json` is the English source, and a translation is a file next to it named by the two-letter language code (`de.json`, `hu.json`, ...). The plugins show the language chosen in the Language block of any settings page (by default Unraid's own language, Settings, Display Settings). Any text that is missing from a translation shows in English, so a partial translation is fine.
 
-Dictionaries so far: `monitor/lang/en.json` (11 texts), `streambox/lang/en.json` (241) and `diskbox/lang/en.json` (371); Sysbox and Seedbox follow. Not in the dictionaries: the Discord messages (their own language setting, English or Hungarian) and short technical diagnostics (an HTTP code, a CSRF error, the raw output of a tool).
+Dictionaries so far: `monitor/lang/en.json` (11 texts), `streambox/lang/en.json` (241) and `diskbox/lang/en.json` (371) and `sysbox/lang/en.json` (508); Seedbox follows. Not in the dictionaries: the Discord messages (their own language setting, English or Hungarian) and short technical diagnostics (an HTTP code, a CSRF error, the raw output of a tool).
 
 ## The format
 

@@ -4,6 +4,13 @@ Title="Update manager"
 Icon="sysbox.png"
 Markdown="false"
 ---
+<?PHP
+// texts from the dictionary (lang/en.json, see i18n.php)
+require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
+$upm_lang = '/usr/local/emhttp/plugins/sysbox/lang';
+$upm_T = mt_i18n_t($upm_lang);
+$upm_t = function ($k, $v = []) use ($upm_T) { return htmlspecialchars($upm_T($k, $v), ENT_QUOTES); };
+?>
 <style>
 /* the Dashboard tile look (common/tile.css, inserted by the build): Activity on top, then a band and a box per part */
 /*@@TILE_CSS@@*/
@@ -70,39 +77,41 @@ Markdown="false"
 @media (max-width:860px){#upm .upm-ct{grid-template-columns:1fr 1fr}#upm .upm-ct .upm-acts{grid-column:1/-1;justify-content:flex-start}#upm .upm-det{grid-template-columns:1fr}#upm .upm-set{grid-template-columns:1fr}#upm .upm-test{grid-template-columns:22px minmax(0,1fr)}#upm .upm-test>:nth-child(n+3){grid-column:2}}
 </style>
 <div id="upm">
-<p class="upm-sub">What the waiting updates change and what of ours uses the container, before you install them. The page and the daily check only read (the containers' labels, the registries, GitHub, Unraid's own update check); a container is updated only with its button, after a ZFS snapshot of its data.</p>
+<p class="upm-sub"><?=$upm_t('upm.intro')?></p>
 
-<div class="mt-band"><span>Activity</span><b id="upm-aband"></b></div>
-<div class="mt-box" id="upm-act"><div class="upm-status upm-mut">Loading...</div></div>
+<div class="mt-band"><span><?=$upm_t('upm.h.activity')?></span><b id="upm-aband"></b></div>
+<div class="mt-box" id="upm-act"><div class="upm-status upm-mut"><?=$upm_t('upm.loading')?></div></div>
 
-<div class="mt-band"><span>Summary</span><b id="upm-sband"></b></div>
+<div class="mt-band"><span><?=$upm_t('upm.h.summary')?></span><b id="upm-sband"></b></div>
 <div class="mt-box" id="upm-sum"></div>
 
-<div class="mt-band"><span>Docker containers</span><b id="upm-dband"></b></div>
+<div class="mt-band"><span><?=$upm_t('upm.h.docker')?></span><b id="upm-dband"></b></div>
 <div class="mt-box" id="upm-ct"></div>
 
-<div class="mt-band"><span>Unraid OS</span><b id="upm-oband"></b></div>
+<div class="mt-band"><span><?=$upm_t('upm.h.os')?></span><b id="upm-oband"></b></div>
 <div class="mt-box" id="upm-os"></div>
 
-<div class="mt-band"><span>Plugins</span><b id="upm-pband"></b></div>
+<div class="mt-band"><span><?=$upm_t('upm.h.plugins')?></span><b id="upm-pband"></b></div>
 <div class="mt-box" id="upm-pl"></div>
 
-<div class="mt-band"><span>Self-test</span><b id="upm-tband"></b></div>
+<div class="mt-band"><span><?=$upm_t('upm.h.test')?></span><b id="upm-tband"></b></div>
 <div class="mt-box" id="upm-test"></div>
 
-<div class="mt-band"><span>Settings</span><b>daily check</b></div>
+<div class="mt-band"><span><?=$upm_t('upm.h.settings')?></span><b><?=$upm_t('upm.h.settings_sub')?></b></div>
 <div class="mt-box" id="upm-set"></div>
 </div>
 
+<?=mt_i18n_js($upm_lang, 'upm')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('upm', k, v); };
   var URL = '/plugins/sysbox/upd.php', D = null, OPEN = {}, DET = {}, CONF = null, pollT = null;
-  var RISK = {red: ['r', 's-red', 'Wait'], amber: ['a', 's-amber', 'Look first'], green: ['g', 's-green', 'Safe']};
-  var KIND = {rebuild: ['g', 'image rebuild'], patch: ['g', 'patch'], feature: ['a', 'new features'], major: ['r', 'major version'], unknown: ['a', 'version not labelled']};
+  var RISK = {red: ['r', 's-red', T('risk.red')], amber: ['a', 's-amber', T('risk.amber')], green: ['g', 's-green', T('risk.green')]};
+  var KIND = {rebuild: ['g', T('kind.rebuild')], patch: ['g', T('kind.patch')], feature: ['a', T('kind.feature')], major: ['r', T('kind.major')], unknown: ['a', T('kind.unknown')]};
   function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
-  function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? Math.floor(s / 86400) + ' d' : s >= 3600 ? Math.floor(s / 3600) + ' h' : Math.max(1, Math.floor(s / 60)) + ' min'; }
+  function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? T('ago.d', { n: Math.floor(s / 86400) }) : s >= 3600 ? T('ago.h', { n: Math.floor(s / 3600) }) : T('ago.m', { n: Math.max(1, Math.floor(s / 60)) }); }
   function hm(t) { var d = new Date(t * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function gbar(g, cls, title, count, empty) { return '<div class="upm-gbar ' + cls + (empty ? ' empty' : '') + '" data-g="' + esc(g) + '"><span class="pm">' + (OPEN[g] ? '&minus;' : '+') + '</span><span>' + title + '</span><span class="c">' + count + '</span></div>'; }
   function grp(g, inner) { return '<div class="upm-grp" data-g="' + esc(g) + '"' + (OPEN[g] ? '' : ' hidden') + '>' + inner + '</div>'; }
@@ -114,28 +123,28 @@ $(function () {
     $.each(r.jobs || [], function (i, j) { (j.state === 'running' ? run : fin).push(j); });
     fin.sort(function (a, b) { return (b.finished || 0) - (a.finished || 0); });
     var h = '';
-    $.each(run, function (i, j) { h += '<div class="upm-row upm-job ' + (j.kind === 'ask' ? 's-purple' : 's-blue') + '"><span class="upm-ico">&#8635;</span><span><b>' + esc(j.text) + '</b><small>' + esc((j.log || []).slice(-2).join(' · ') || 'started ' + hm(j.started)) + '</small></span><span class="upm-num">' + ago(j.started) + '</span></div>'; });
+    $.each(run, function (i, j) { h += '<div class="upm-row upm-job ' + (j.kind === 'ask' ? 's-purple' : 's-blue') + '"><span class="upm-ico">&#8635;</span><span><b>' + esc(j.text) + '</b><small>' + esc((j.log || []).slice(-2).join(' · ') || T('upm.started_at', { t: hm(j.started) })) + '</small></span><span class="upm-num">' + esc(ago(j.started)) + '</span></div>'; });
     var f = '';
     $.each(fin, function (i, j) { var ok = j.state === 'done'; f += '<div class="upm-row upm-job ' + (ok ? 's-green' : 's-red') + '"><span class="upm-ico ' + (ok ? 'upm-ok">&#10003;' : 'upm-er">!') + '</span><span>' + esc(j.text) + (j.log && j.log.length ? '<small>' + esc(j.log.join(' · ')) + '</small>' : '') + '</span><span class="upm-num">' + hm(j.finished || j.started) + '</span></div>'; });
-    if (fin.length) { h += gbar('fin', 's-grey', 'Finished today', fin.length) + grp('fin', f); }
-    if (r.log && r.log.length) { h += gbar('log', 's-grey', 'Log', r.log.length + ' lines') + grp('log', '<div class="upm-log">' + esc(r.log.slice().reverse().join('\n')) + '</div>'); }
-    $('#upm-act').html(h || '<div class="upm-status upm-mut">Nothing has run yet.</div>');
-    $('#upm-aband').text(run.length ? run.length + ' running' : fin.length ? fin.length + ' finished today' : '');
+    if (fin.length) { h += gbar('fin', 's-grey', esc(T('upm.fin_today')), fin.length) + grp('fin', f); }
+    if (r.log && r.log.length) { h += gbar('log', 's-grey', esc(T('upm.log')), esc(T('upm.lines', { n: r.log.length }))) + grp('log', '<div class="upm-log">' + esc(r.log.slice().reverse().join('\n')) + '</div>'); }
+    $('#upm-act').html(h || '<div class="upm-status upm-mut">' + esc(T('upm.nothing_run')) + '</div>');
+    $('#upm-aband').text(run.length ? T('upm.n_running', { n: run.length }) : fin.length ? T('upm.n_fin', { n: fin.length }) : '');
   }
 
   // ---- Summary
   function counts(s) { var n = {red: 0, amber: 0, green: 0}; $.each((s && s.rows) || [], function (i, x) { if (x.state === 'update') { n[x.risk]++; } }); return n; }
   function drawSum(r) {
     var s = r.scan, busy = r.busy.scan;
-    if (!s) { $('#upm-sum').html('<div class="upm-lead"><p>No check has run yet. The first one reads the containers\' labels and asks the registries for the newest images; it takes about a minute.</p><input type="button" class="upm-scan" value="' + (busy ? 'Checking...' : 'Check now') + '"' + (busy ? ' disabled' : '') + '></div>'); $('#upm-sband').text(''); return; }
+    if (!s) { $('#upm-sum').html('<div class="upm-lead"><p>' + esc(T('upm.no_check')) + '</p><input type="button" class="upm-scan" value="' + esc(busy ? T('upm.checking') : T('upm.check_now')) + '"' + (busy ? ' disabled' : '') + '></div>'); $('#upm-sband').text(''); return; }
     var n = counts(s), tot = n.red + n.amber + n.green;
-    var lead = tot ? '<b>' + tot + ' update' + (tot > 1 ? 's' : '') + ' waiting.</b> ' + [n.green ? n.green + ' safe (image rebuild or patch)' : '', n.amber ? n.amber + ' to look at first' : '', n.red ? n.red + ' to wait with' : ''].filter(Boolean).join(', ') + '. Each one installs only with its button.' : '<b>Everything is up to date.</b>';
-    $('#upm-sum').html('<div class="upm-lead"><p>' + lead + '</p><input type="button" class="upm-scan" value="' + (busy ? 'Checking...' : 'Check now') + '"' + (busy ? ' disabled' : '') + '></div>' +
-      '<div class="upm-status"><span><b class="upm-ok">' + n.green + '</b> green</span><span><b class="upm-am">' + n.amber + '</b> amber</span><span><b class="upm-er">' + n.red + '</b> red</span>' +
-      '<span>Unraid OS: <b>' + esc(s.os.cur) + '</b>' + (s.os.new ? ' &rarr; ' + esc(s.os.new) + ' available' : '') + '</span><span class="upm-mut">checked ' + ago(s.t) + ' ago</span></div>');
-    $('#upm-sband').text('last check: ' + ago(s.t) + ' ago');
+    var lead = tot ? '<b>' + esc(T('upm.waiting', { n: tot })) + '</b> ' + esc([n.green ? T('upm.n_safe', { n: n.green }) : '', n.amber ? T('upm.n_look', { n: n.amber }) : '', n.red ? T('upm.n_wait', { n: n.red }) : ''].filter(Boolean).join(', ') + '. ' + T('upm.own_button')) : '<b>' + esc(T('upm.all_current')) + '</b>';
+    $('#upm-sum').html('<div class="upm-lead"><p>' + lead + '</p><input type="button" class="upm-scan" value="' + esc(busy ? T('upm.checking') : T('upm.check_now')) + '"' + (busy ? ' disabled' : '') + '></div>' +
+      '<div class="upm-status"><span><b class="upm-ok">' + n.green + '</b> ' + esc(T('upm.green')) + '</span><span><b class="upm-am">' + n.amber + '</b> ' + esc(T('upm.amber')) + '</span><span><b class="upm-er">' + n.red + '</b> ' + esc(T('upm.red')) + '</span>' +
+      '<span>Unraid OS: <b>' + esc(s.os.cur) + '</b>' + (s.os.new ? ' &rarr; ' + esc(T('upm.available', { v: s.os.new })) : '') + '</span><span class="upm-mut">' + esc(T('upm.checked_ago', { t: ago(s.t) })) + '</span></div>');
+    $('#upm-sband').text(T('upm.last_check', { t: ago(s.t) }));
   }
-  $(document).on('click', '#upm .upm-scan', function () { $(this).prop('disabled', true).val('Checking...'); api('scan').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); });
+  $(document).on('click', '#upm .upm-scan', function () { $(this).prop('disabled', true).val(T('upm.checking')); api('scan').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); });
 
   // ---- containers
   function updating(r) { var u = {}; $.each(r.jobs || [], function (i, j) { if (j.kind === 'update' && j.state === 'running') { u[j.name] = 1; } }); return u; }
@@ -145,17 +154,17 @@ $(function () {
     $.each(c.flags || {}, function (w, n) { fl.push('<span class="upm-chip ' + (w === 'breaking' || w === 'removed' ? 'r' : 'a') + '">' + esc(w) + ' &times;' + n + '</span>'); });
     var h = '<div class="upm-row upm-ct ' + rk[1] + '" data-name="' + esc(c.name) + '">' +
       '<div><b>' + esc(c.name) + '</b><span class="upm-img">' + esc(c.image) + '</span></div>' +
-      '<div><div class="upm-ver">' + esc(c.ver || '?') + '<i>&rarr;</i>' + esc(c.rver || '?') + '</div><span class="upm-chip ' + k[0] + '">' + k[1] + '</span>' + (c.age !== null && c.age !== undefined ? '<span class="upm-mut" style="font-size:12px">' + (c.age < 1 ? 'today' : Math.floor(c.age) + ' day' + (Math.floor(c.age) === 1 ? '' : 's') + ' old') + '</span>' : '') + '</div>' +
-      '<div>' + ($.map(c.deps || [], function (d) { return '<span class="upm-chip b">' + esc(d) + '</span>'; }).join('') || '<span class="upm-mut" style="font-size:12px">nothing of ours uses it</span>') + '</div>' +
-      '<div>' + (fl.join('') || '<span class="upm-mut" style="font-size:12px">no warning words in the notes</span>') + (c.running ? '' : '<small>stopped</small>') + '</div>' +
-      '<div class="upm-acts"><input type="button" class="upm-det-b upm-ghost upm-sm" value="Changes">' +
-      (r.cfg.claude && r.claude ? '<input type="button" class="upm-ask upm-ghost upm-sm" value="' + (ask[c.name] ? 'Claude is reading...' : c.claude_t ? 'Ask Claude again' : 'Ask Claude') + '"' + (ask[c.name] || r.busy.ask ? ' disabled' : '') + '>' : '') +
-      '<input type="button" class="upm-upd upm-sm" value="Update"' + (r.busy.update ? ' disabled' : '') + '></div>';
+      '<div><div class="upm-ver">' + esc(c.ver || '?') + '<i>&rarr;</i>' + esc(c.rver || '?') + '</div><span class="upm-chip ' + k[0] + '">' + esc(k[1]) + '</span>' + (c.age !== null && c.age !== undefined ? '<span class="upm-mut" style="font-size:12px">' + esc(c.age < 1 ? T('upm.today') : T('upm.days_old', { n: Math.floor(c.age) })) + '</span>' : '') + '</div>' +
+      '<div>' + ($.map(c.deps || [], function (d) { return '<span class="upm-chip b">' + esc(d) + '</span>'; }).join('') || '<span class="upm-mut" style="font-size:12px">' + esc(T('upm.no_deps')) + '</span>') + '</div>' +
+      '<div>' + (fl.join('') || '<span class="upm-mut" style="font-size:12px">' + esc(T('upm.no_words')) + '</span>') + (c.running ? '' : '<small>' + esc(T('upm.stopped')) + '</small>') + '</div>' +
+      '<div class="upm-acts"><input type="button" class="upm-det-b upm-ghost upm-sm" value="' + esc(T('upm.btn.changes')) + '">' +
+      (r.cfg.claude && r.claude ? '<input type="button" class="upm-ask upm-ghost upm-sm" value="' + esc(ask[c.name] ? T('upm.claude_reading') : c.claude_t ? T('upm.ask_again') : T('upm.ask')) + '"' + (ask[c.name] || r.busy.ask ? ' disabled' : '') + '>' : '') +
+      '<input type="button" class="upm-upd upm-sm" value="' + esc(T('upm.btn.update')) + '"' + (r.busy.update ? ' disabled' : '') + '></div>';
     if (DET[c.name]) { h += '<div class="upm-det" data-for="' + esc(c.name) + '">' + DET[c.name] + '</div>'; }
     return h + ansHtml(c.claude) + '</div>';
   }
   function drawCt(r) {
-    var s = r.scan; if (!s) { $('#upm-ct').html('<div class="upm-status upm-mut">No check yet.</div>'); $('#upm-dband').text(''); return; }
+    var s = r.scan; if (!s) { $('#upm-ct').html('<div class="upm-status upm-mut">' + esc(T('upm.no_check_short')) + '</div>'); $('#upm-dband').text(''); return; }
     var up = updating(r), ask = asking(r), G = {red: [], amber: [], green: [], current: [], other: []};
     $.each(s.rows, function (i, c) {
       if (up[c.name]) { return; }   // its update runs: it is in Activity, back here only if it fails
@@ -165,14 +174,14 @@ $(function () {
     $.each(['red', 'amber', 'green'], function (i, k) {
       var L = G[k], rk = RISK[k], g = 'ct|' + k, inner = '';
       $.each(L, function (j, c) { inner += ctRow(c, r, ask); });
-      h += gbar(g, rk[1], '<span class="upm-chip ' + rk[0] + '">' + rk[2] + '</span> ' + {red: 'Major version and something of ours uses it', amber: 'New features, a fresh release, warning words or no version label', green: 'Image rebuild or patch: the program barely changes'}[k], L.length, !L.length) + grp(g, inner || '<div class="upm-status upm-mut">None.</div>');
+      h += gbar(g, rk[1], '<span class="upm-chip ' + rk[0] + '">' + esc(rk[2]) + '</span> ' + esc(T('upm.g.' + k)), L.length, !L.length) + grp(g, inner || '<div class="upm-status upm-mut">' + esc(T('upm.none')) + '</div>');
     });
     var cur = $.map(G.current, function (c) { return esc(c.name) + (c.ver ? ' <span class="upm-mut">' + esc(c.ver) + '</span>' : ''); }).join(', ');
-    h += gbar('ct|cur', 's-grey', 'Up to date', G.current.length, !G.current.length) + grp('ct|cur', '<div class="upm-status">' + (cur || 'none') + '</div>');
-    var oth = $.map(G.other, function (c) { return '<div class="upm-row upm-pl s-grey"><span><b>' + esc(c.name) + '</b> <span class="upm-mut">' + esc(c.image) + '</span><small>' + (c.state === 'local' ? 'built on this server: nothing to compare with' : esc(c.error)) + '</small></span><span></span></div>'; }).join('');
-    h += gbar('ct|oth', 's-grey', 'Not checkable', G.other.length, !G.other.length) + grp('ct|oth', oth || '<div class="upm-status upm-mut">None.</div>');
+    h += gbar('ct|cur', 's-grey', esc(T('upm.g.current')), G.current.length, !G.current.length) + grp('ct|cur', '<div class="upm-status">' + (cur || esc(T('upm.none_l'))) + '</div>');
+    var oth = $.map(G.other, function (c) { return '<div class="upm-row upm-pl s-grey"><span><b>' + esc(c.name) + '</b> <span class="upm-mut">' + esc(c.image) + '</span><small>' + (c.state === 'local' ? esc(T('upm.local')) : esc(c.error)) + '</small></span><span></span></div>'; }).join('');
+    h += gbar('ct|oth', 's-grey', esc(T('upm.g.other')), G.other.length, !G.other.length) + grp('ct|oth', oth || '<div class="upm-status upm-mut">' + esc(T('upm.none')) + '</div>');
     $('#upm-ct').html(h);
-    $('#upm-dband').text(s.rows.length + ' containers · ' + (G.red.length + G.amber.length + G.green.length) + ' updates');
+    $('#upm-dband').text(T('upm.n_ctr', { n: s.rows.length }) + ' · ' + T('upm.n_upd', { n: G.red.length + G.amber.length + G.green.length }));
   }
   // Claude's answer: only **bold** and `code` are shown as such (escaped first)
   function md(t) {
@@ -185,27 +194,28 @@ $(function () {
   // the answer stays under its row (also after a reload) for as long as that version is the waiting update
   function ansHtml(cl) {
     if (!cl || !cl.text) { return ''; }
-    var td = cl.todo ? '<span class="upm-mut" style="font-size:12px">&#10003; saved as a to-do ' + ago(cl.todo) + ' ago (updates_todo.md: Claude moves it into the task list)</span>'
-      : '<input type="button" class="upm-todo upm-ghost upm-sm" value="Save as a to-do"><span class="upm-mut" style="font-size:12px">the Sysbox writes it to updates_todo.md in the repo; the next Claude session moves it into the task list</span>';
-    return '<div class="upm-det upm-ans"><div class="upm-claude"><div class="who"><span>CLAUDE</span><span>' + ago(cl.t) + ' ago, for this version</span></div>' + md(cl.text) + '<div class="upm-tdo">' + td + '</div></div></div>';
+    var td = cl.todo ? '<span class="upm-mut" style="font-size:12px">&#10003; ' + esc(T('upm.todo_saved', { t: ago(cl.todo) })) + '</span>'
+      : '<input type="button" class="upm-todo upm-ghost upm-sm" value="' + esc(T('upm.todo_btn')) + '"><span class="upm-mut" style="font-size:12px">' + esc(T('upm.todo_hint')) + '</span>';
+    return '<div class="upm-det upm-ans"><div class="upm-claude"><div class="who"><span>CLAUDE</span><span>' + esc(T('upm.for_version', { t: ago(cl.t) })) + '</span></div>' + md(cl.text) + '<div class="upm-tdo">' + td + '</div></div></div>';
   }
   $(document).on('click', '#upm .upm-todo', function () {
-    var name = String($(this).closest('[data-name]').data('name')); $(this).prop('disabled', true).val('Saving...');
+    var name = String($(this).closest('[data-name]').data('name')); $(this).prop('disabled', true).val(T('upm.saving'));
     api('todo', {name: name}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); load(); });
   });
   function detHtml(name, d) {
-    if (d.claude) { return '<div style="grid-column:1/-1"><h4>What changed' + (d.url ? ' · <a href="' + esc(d.url) + '" target="_blank" rel="noopener">source</a>' : '') + '</h4><pre class="upm-notes">' + (d.notes ? mark(d.notes) : 'No release notes found.') + '</pre></div>'; }
-    var cl = '<div class="upm-status upm-mut" style="padding:0">Claude has not been asked about this version.' + (D && D.cfg.claude ? ' Ask Claude reads these notes and our code that uses the program (read-only).' : '') + '</div>';
-    return '<div><h4>What changed' + (d.url ? ' · <a href="' + esc(d.url) + '" target="_blank" rel="noopener">source</a>' : '') + '</h4><pre class="upm-notes">' + (d.notes ? mark(d.notes) : 'No release notes found.') + '</pre></div><div><h4>Ask Claude</h4>' + cl + '</div>';
+    var src = d.url ? ' · <a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(T('upm.source')) + '</a>' : '', nt = d.notes ? mark(d.notes) : esc(T('upm.no_notes'));
+    if (d.claude) { return '<div style="grid-column:1/-1"><h4>' + esc(T('upm.what_changed')) + src + '</h4><pre class="upm-notes">' + nt + '</pre></div>'; }
+    var cl = '<div class="upm-status upm-mut" style="padding:0">' + esc(T('upm.not_asked')) + (D && D.cfg.claude ? ' ' + esc(T('upm.ask_reads')) : '') + '</div>';
+    return '<div><h4>' + esc(T('upm.what_changed')) + src + '</h4><pre class="upm-notes">' + nt + '</pre></div><div><h4>' + esc(T('upm.ask')) + '</h4>' + cl + '</div>';
   }
   function openDet(name, force) {
     if (DET[name] && !force) { delete DET[name]; draw(D); return; }
-    DET[name] = '<div class="upm-mut">Loading...</div>'; draw(D);
+    DET[name] = '<div class="upm-mut">' + esc(T('upm.loading')) + '</div>'; draw(D);
     api('detail', {name: name}).done(function (d) { DET[name] = d.ok ? detHtml(name, d) : '<div class="upm-er">' + esc(d.error) + '</div>'; draw(D); });
   }
   $(document).on('click', '#upm .upm-det-b', function () { openDet(String($(this).closest('[data-name]').data('name'))); });
   $(document).on('click', '#upm .upm-ask', function () {
-    var name = String($(this).closest('[data-name]').data('name')); $(this).prop('disabled', true).val('Claude is reading...');
+    var name = String($(this).closest('[data-name]').data('name')); $(this).prop('disabled', true).val(T('upm.claude_reading'));
     api('ask', {name: name}).done(function (r) { if (!r.ok) { window.alert(r.error); } else { WATCH[name] = r.now || Math.floor(Date.now() / 1000) - 5; } load(); }).fail(function (x) { window.alert(err(x)); });
   });
   var WATCH = {};   // name => server time of the click: polling goes on until that answer (or the job's error) arrives
@@ -215,13 +225,12 @@ $(function () {
     if (!c || $row.find('.upm-conf').length) { return; }
     var qb = /qbittorrent/i.test(c.image), t = D.test && $.grep(D.test.tests || [], function (x) { return x.name === 'qBittorrent'; })[0];
     var mv = qb && t && /(\d+) moving/.exec(t.msg);
-    var txt = '<b>Update ' + esc(name) + '</b> ' + esc(c.ver || '?') + ' &rarr; ' + esc(c.rver || '?') + '? ' +
-      (D.cfg.backup ? '1) a ZFS snapshot of its data (restore it on the Snapshots page if needed), ' : '1) no snapshot (switched off), ') +
-      '2) stop it' + (qb ? ' (up to 5 minutes, qBittorrent saves its torrents\' state)' : '') + ', 3) Unraid pulls the new image and recreates it from its template, 4) start it again' + (D.cfg.selftest ? ' and run the self-test' : '') + '.' +
-      (c.risk !== 'green' ? ' <span class="upm-er">This one is ' + (c.risk === 'red' ? 'red' : 'amber') + ': read Changes first.</span>' : '') +
-      (mv ? ' <span class="upm-am">qBittorrent is moving ' + mv[1] + ' torrent(s) now (at the last self-test): the move is interrupted.</span>' : '') +
-      (name === 'claude' ? ' The Claude session stops.' : '');
-    $row.append('<div class="upm-conf"><span>' + txt + '</span><input type="button" class="upm-go upm-sm" value="Yes, update"><input type="button" class="upm-no upm-ghost upm-sm" value="Cancel"></div>');
+    var txt = '<b>' + esc(T('upm.c.title', { name: name })) + '</b> ' + esc(c.ver || '?') + ' &rarr; ' + esc(c.rver || '?') + '? ' +
+      esc((D.cfg.backup ? T('upm.c.s1_snap') : T('upm.c.s1_nosnap')) + ' ' + (qb ? T('upm.c.s2_qb') : T('upm.c.s2')) + ' ' + T('upm.c.s3') + ' ' + (D.cfg.selftest ? T('upm.c.s4_test') : T('upm.c.s4'))) +
+      (c.risk !== 'green' ? ' <span class="upm-er">' + esc(T(c.risk === 'red' ? 'upm.c.red' : 'upm.c.amber')) + '</span>' : '') +
+      (mv ? ' <span class="upm-am">' + esc(T('upm.c.moving', { n: mv[1] })) + '</span>' : '') +
+      (name === 'claude' ? ' ' + esc(T('upm.c.claude')) : '');
+    $row.append('<div class="upm-conf"><span>' + txt + '</span><input type="button" class="upm-go upm-sm" value="' + esc(T('upm.c.yes')) + '"><input type="button" class="upm-no upm-ghost upm-sm" value="' + esc(T('upm.c.cancel')) + '"></div>');
   });
   $(document).on('click', '#upm .upm-no', function () { $(this).closest('.upm-conf').remove(); });
   $(document).on('click', '#upm .upm-go', function () {
@@ -231,54 +240,54 @@ $(function () {
 
   // ---- Unraid OS and plugins
   function drawOs(r) {
-    var s = r.scan; if (!s) { $('#upm-os').html('<div class="upm-status upm-mut">No check yet.</div>'); return; }
+    var s = r.scan; if (!s) { $('#upm-os').html('<div class="upm-status upm-mut">' + esc(T('upm.no_check_short')) + '</div>'); return; }
     var o = s.os, h;
     if (o.new) {
       var fl = []; $.each(o.flags || {}, function (w, n) { fl.push('<span class="upm-chip ' + (w === 'breaking' || w === 'removed' ? 'r' : 'a') + '">' + esc(w) + ' &times;' + n + '</span>'); });
       var k = KIND[o.kind] || KIND.unknown, ask = asking(r);
-      h = '<div class="upm-row upm-ct ' + (o.risk === 'green' ? 's-green' : 's-amber') + '" data-name="unraid-os"><div><b>Unraid ' + esc(o.new) + '</b><span class="upm-img">released ' + esc(o.date) + ' · checked ' + (o.checked ? ago(o.checked) + ' ago' : '?') + '</span></div>' +
-        '<div><div class="upm-ver">' + esc(o.cur) + '<i>&rarr;</i>' + esc(o.new) + '</div><span class="upm-chip ' + k[0] + '">' + (o.kind === 'feature' ? 'new features' : k[1]) + '</span>' + (o.age !== null && o.age !== undefined ? '<span class="upm-mut" style="font-size:12px">' + Math.floor(o.age) + ' days old</span>' : '') + (o.php ? '<span class="upm-chip a">PHP changes</span>' : '') + '</div>' +
-        '<div><span class="upm-chip b">all 5 of our plugins</span></div><div>' + (fl.join('') || '<span class="upm-mut" style="font-size:12px">no warning words in the notes</span>') + '<small>needs a reboot</small></div>' +
-        '<div class="upm-acts"><input type="button" class="upm-det-b upm-ghost upm-sm" value="Release notes">' +
-        (r.cfg.claude && r.claude ? '<input type="button" class="upm-ask upm-ghost upm-sm" value="' + (ask['unraid-os'] ? 'Claude is reading...' : o.claude_t ? 'Ask Claude again' : 'Ask Claude') + '"' + (ask['unraid-os'] || r.busy.ask ? ' disabled' : '') + '>' : '') +
-        '<a href="/Tools/Update" style="font-size:12px;align-self:center">Update OS page</a></div>' + (DET['unraid-os'] ? '<div class="upm-det">' + DET['unraid-os'] + '</div>' : '') + ansHtml(o.claude) + '</div>' +
-        '<div class="upm-status upm-mut">The OS is not installed from here. Before it: no parity check running, qBittorrent stopped (Safe shutdown).</div>';
+      h = '<div class="upm-row upm-ct ' + (o.risk === 'green' ? 's-green' : 's-amber') + '" data-name="unraid-os"><div><b>Unraid ' + esc(o.new) + '</b><span class="upm-img">' + esc(T('os.released', { d: o.date, t: o.checked ? ago(o.checked) : '?' })) + '</span></div>' +
+        '<div><div class="upm-ver">' + esc(o.cur) + '<i>&rarr;</i>' + esc(o.new) + '</div><span class="upm-chip ' + k[0] + '">' + esc(o.kind === 'feature' ? T('kind.feature') : k[1]) + '</span>' + (o.age !== null && o.age !== undefined ? '<span class="upm-mut" style="font-size:12px">' + esc(T('upm.days_old', { n: Math.floor(o.age) })) + '</span>' : '') + (o.php ? '<span class="upm-chip a">' + esc(T('os.php')) + '</span>' : '') + '</div>' +
+        '<div><span class="upm-chip b">' + esc(T('os.all_ours')) + '</span></div><div>' + (fl.join('') || '<span class="upm-mut" style="font-size:12px">' + esc(T('upm.no_words')) + '</span>') + '<small>' + esc(T('os.reboot')) + '</small></div>' +
+        '<div class="upm-acts"><input type="button" class="upm-det-b upm-ghost upm-sm" value="' + esc(T('os.notes')) + '">' +
+        (r.cfg.claude && r.claude ? '<input type="button" class="upm-ask upm-ghost upm-sm" value="' + esc(ask['unraid-os'] ? T('upm.claude_reading') : o.claude_t ? T('upm.ask_again') : T('upm.ask')) + '"' + (ask['unraid-os'] || r.busy.ask ? ' disabled' : '') + '>' : '') +
+        '<a href="/Tools/Update" style="font-size:12px;align-self:center">' + esc(T('os.page')) + '</a></div>' + (DET['unraid-os'] ? '<div class="upm-det">' + DET['unraid-os'] + '</div>' : '') + ansHtml(o.claude) + '</div>' +
+        '<div class="upm-status upm-mut">' + esc(T('os.not_here')) + '</div>';
     } else {
-      h = '<div class="upm-status"><span>Unraid <b>' + esc(o.cur) + '</b> · ' + (o.checked ? 'no newer version at Unraid\'s last check, ' + ago(o.checked) + ' ago' : 'Unraid has not checked for an OS update yet (Tools, Update OS, Check)') + '</span></div>';
+      h = '<div class="upm-status"><span>Unraid <b>' + esc(o.cur) + '</b> · ' + esc(o.checked ? T('os.current', { t: ago(o.checked) }) : T('os.never')) + '</span></div>';
     }
     $('#upm-os').html(h); $('#upm-oband').text(o.new ? o.cur + ' → ' + o.new : o.cur);
     var P = s.plugins || [], up = $.grep(P, function (p) { return p.new; });
-    var rows = $.map(P, function (p) { return '<div class="upm-row upm-pl ' + (p.new ? 's-amber' : 's-grey') + '"><span><b>' + esc(p.id) + '</b>' + (p.ours ? ' <span class="upm-chip b">ours: ' + esc(p.ours) + '</span>' : '') + '<small>' + esc(p.cur || '?') + (p.new ? ' &rarr; ' + esc(p.new) : '') + '</small></span><span class="upm-num">' + (p.new ? 'update' : '') + '</span></div>'; }).join('');
-    $('#upm-pl').html(gbar('pl', up.length ? 's-amber' : 's-grey', up.length ? up.length + ' plugin update' + (up.length > 1 ? 's' : '') + ' (install them on the Plugins page; ours with their .plg)' : 'Up to date at Unraid\'s last plugin check', P.length + ' plugins') + grp('pl', rows));
-    $('#upm-pband').text(P.length + ' plugins · ' + up.length + ' updates');
+    var rows = $.map(P, function (p) { return '<div class="upm-row upm-pl ' + (p.new ? 's-amber' : 's-grey') + '"><span><b>' + esc(p.id) + '</b>' + (p.ours ? ' <span class="upm-chip b">' + esc(T('pl.ours', { n: p.ours })) + '</span>' : '') + '<small>' + esc(p.cur || '?') + (p.new ? ' &rarr; ' + esc(p.new) : '') + '</small></span><span class="upm-num">' + (p.new ? esc(T('pl.update')) : '') + '</span></div>'; }).join('');
+    $('#upm-pl').html(gbar('pl', up.length ? 's-amber' : 's-grey', esc(up.length ? T('pl.n_upd', { n: up.length }) : T('pl.current')), esc(T('pl.n', { n: P.length }))) + grp('pl', rows));
+    $('#upm-pband').text(T('pl.n', { n: P.length }) + ' · ' + T('upm.n_upd', { n: up.length }));
   }
 
   // ---- self-test
   function drawTest(r) {
-    var t = r.test, busy = r.busy.selftest, h = '<div class="upm-lead"><p>Read-only checks of our connections: logins and GET requests. It runs by itself after an update; Discord gets the result.</p><input type="button" class="upm-test-b upm-ghost" value="' + (busy ? 'Testing...' : 'Run the self-test') + '"' + (busy ? ' disabled' : '') + '></div>';
-    if (t) { $.each(t.tests, function (i, x) { h += '<div class="upm-row upm-test ' + (x.ok ? 's-green' : 's-red') + '"><span class="upm-ico ' + (x.ok ? 'upm-ok">&#10003;' : 'upm-er">!') + '</span><span><b>' + esc(x.name) + '</b><small>for ' + esc(x.for) + '</small></span><span>' + esc(x.msg) + '</span><span class="upm-num">' + x.ms + ' ms</span></div>'; }); }
+    var t = r.test, busy = r.busy.selftest, h = '<div class="upm-lead"><p>' + esc(T('test.lead')) + '</p><input type="button" class="upm-test-b upm-ghost" value="' + esc(busy ? T('test.testing') : T('test.run')) + '"' + (busy ? ' disabled' : '') + '></div>';
+    if (t) { $.each(t.tests, function (i, x) { h += '<div class="upm-row upm-test ' + (x.ok ? 's-green' : 's-red') + '"><span class="upm-ico ' + (x.ok ? 'upm-ok">&#10003;' : 'upm-er">!') + '</span><span><b>' + esc(x.name) + '</b><small>' + esc(T('test.for', { w: x.for })) + '</small></span><span>' + esc(x.msg) + '</span><span class="upm-num">' + x.ms + ' ms</span></div>'; }); }
     $('#upm-test').html(h);
-    $('#upm-tband').text(t ? 'last: ' + ago(t.t) + ' ago · ' + $.grep(t.tests, function (x) { return x.ok; }).length + '/' + t.tests.length + ' passed' : 'not run yet');
+    $('#upm-tband').text(t ? T('test.band', { t: ago(t.t), ok: $.grep(t.tests, function (x) { return x.ok; }).length, n: t.tests.length }) : T('test.not_run'));
   }
-  $(document).on('click', '#upm .upm-test-b', function () { $(this).prop('disabled', true).val('Testing...'); api('selftest').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }); });
+  $(document).on('click', '#upm .upm-test-b', function () { $(this).prop('disabled', true).val(T('test.testing')); api('selftest').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }); });
 
   // ---- settings
   function drawSet(r) {
     var c = r.cfg;
     function ck(id, on, text) { return '<label><input type="checkbox" id="' + id + '"' + (+on ? ' checked' : '') + '> ' + text + '</label>'; }
     $('#upm-set').html(
-      '<div class="upm-row upm-set"><span class="lb">Daily check</span><div class="upm-ctl">' + ck('upm-on', c.on, 'on') + ' at <input type="number" id="upm-h" min="0" max="23" value="' + c.hour + '"> : <input type="number" id="upm-m" min="0" max="59" value="' + c.min + '"><span class="upm-hint">only reads (registries, GitHub). Nothing is installed by itself</span></div></div>' +
-      '<div class="upm-row upm-set"><span class="lb">Maturing time</span><div class="upm-ctl"><input type="number" id="upm-soak" min="0" max="60" value="' + c.soak + '"> days<span class="upm-hint">a new-features release younger than this is amber, even without warning words</span></div></div>' +
-      '<div class="upm-row upm-set"><span class="lb">Discord</span><div class="upm-ctl"><select id="upm-dc"><option value="warn"' + (c.discord === 'warn' ? ' selected' : '') + '>amber and red ones</option><option value="all"' + (c.discord === 'all' ? ' selected' : '') + '>every new update</option><option value="off"' + (c.discord === 'off' ? ' selected' : '') + '>off</option></select><span class="upm-hint">after the daily check, once per update (the Sysbox webhook); updates you start always report their result</span></div></div>' +
-      '<div class="upm-row upm-set"><span class="lb">Before an update</span><div class="upm-ctl">' + ck('upm-bk', c.backup, 'ZFS snapshot of the container\'s data') + ck('upm-st', c.selftest, 'self-test after it') + '<span class="upm-hint">the snapshot is named before-update-&lt;name&gt;-&lt;date&gt; and stays until you delete it on the Snapshots page</span></div></div>' +
-      '<div class="upm-row upm-set"><span class="lb">Ask Claude</span><div class="upm-ctl">' + ck('upm-cl', c.claude, 'show the button') + '<span class="upm-chip p">read-only: Read, Grep</span><span class="upm-hint">Claude Code in the claude container, in the repo folder, without a saved session; it never runs commands or writes. The answer is kept per version. A new Unraid OS version is asked about by itself after a check, once</span></div></div>' +
-      '<div class="upm-row upm-set"><span></span><div class="upm-ctl"><input type="button" id="upm-save" value="Save"><span id="upm-smsg"></span></div></div>');
+      '<div class="upm-row upm-set"><span class="lb">' + esc(T('set.daily')) + '</span><div class="upm-ctl">' + ck('upm-on', c.on, esc(T('set.on'))) + ' ' + esc(T('set.at')) + ' <input type="number" id="upm-h" min="0" max="23" value="' + c.hour + '"> : <input type="number" id="upm-m" min="0" max="59" value="' + c.min + '"><span class="upm-hint">' + esc(T('set.daily_hint')) + '</span></div></div>' +
+      '<div class="upm-row upm-set"><span class="lb">' + esc(T('set.soak')) + '</span><div class="upm-ctl"><input type="number" id="upm-soak" min="0" max="60" value="' + c.soak + '"> ' + esc(T('set.days')) + '<span class="upm-hint">' + esc(T('set.soak_hint')) + '</span></div></div>' +
+      '<div class="upm-row upm-set"><span class="lb">Discord</span><div class="upm-ctl"><select id="upm-dc"><option value="warn"' + (c.discord === 'warn' ? ' selected' : '') + '>' + esc(T('set.dc_warn')) + '</option><option value="all"' + (c.discord === 'all' ? ' selected' : '') + '>' + esc(T('set.dc_all')) + '</option><option value="off"' + (c.discord === 'off' ? ' selected' : '') + '>' + esc(T('set.dc_off')) + '</option></select><span class="upm-hint">' + esc(T('set.dc_hint')) + '</span></div></div>' +
+      '<div class="upm-row upm-set"><span class="lb">' + esc(T('set.before')) + '</span><div class="upm-ctl">' + ck('upm-bk', c.backup, esc(T('set.bk'))) + ck('upm-st', c.selftest, esc(T('set.st'))) + '<span class="upm-hint">' + esc(T('set.bk_hint')) + '</span></div></div>' +
+      '<div class="upm-row upm-set"><span class="lb">' + esc(T('upm.ask')) + '</span><div class="upm-ctl">' + ck('upm-cl', c.claude, esc(T('set.cl'))) + '<span class="upm-chip p">' + esc(T('set.cl_ro')) + '</span><span class="upm-hint">' + esc(T('set.cl_hint')) + '</span></div></div>' +
+      '<div class="upm-row upm-set"><span></span><div class="upm-ctl"><input type="button" id="upm-save" value="' + esc(T('set.save')) + '"><span id="upm-smsg"></span></div></div>');
   }
   $(document).on('click', '#upm-save', function () {
-    var $m = $('#upm-smsg').attr('class', '').text('Saving...');
+    var $m = $('#upm-smsg').attr('class', '').text(T('upm.saving'));
     api('save', {on: $('#upm-on').prop('checked') ? 1 : 0, hour: $('#upm-h').val(), min: $('#upm-m').val(), soak: $('#upm-soak').val(), discord: $('#upm-dc').val(),
       backup: $('#upm-bk').prop('checked') ? 1 : 0, selftest: $('#upm-st').prop('checked') ? 1 : 0, claude: $('#upm-cl').prop('checked') ? 1 : 0})
-      .done(function (r) { if (r.ok) { $m.attr('class', 'upm-ok').text('Saved.'); load(); } else { $m.attr('class', 'upm-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'upm-er').text(err(x)); });
+      .done(function (r) { if (r.ok) { $m.attr('class', 'upm-ok').text(T('upm.saved')); load(); } else { $m.attr('class', 'upm-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'upm-er').text(err(x)); });
   });
 
   function draw(r) {

@@ -5,6 +5,11 @@ Icon="sysbox.png"
 Markdown="false"
 ---
 <?PHP
+// texts from the dictionary (lang/en.json, see i18n.php); $sxs_t escapes, $sxs_T is raw
+require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
+$sxs_lang = '/usr/local/emhttp/plugins/sysbox/lang';
+$sxs_T = mt_i18n_t($sxs_lang);
+$sxs_t = function ($k, $v = []) use ($sxs_T) { return htmlspecialchars($sxs_T($k, $v), ENT_QUOTES); };
 require_once '/usr/local/emhttp/plugins/sysbox/lib.php';
 $sx = sx_cfg();
 $sx_ps = sx_ps(true);
@@ -34,7 +39,7 @@ if (!function_exists('sx_chk')) {
 <form id="sx-form" class="uset" method="POST" action="/plugins/sysbox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=sx_h($sx_tok)?>">
 
-<h3>Dashboard tile <small>switch a part off, choose what it shows; the arrows change the order</small></h3>
+<h3><?=$sxs_t('set.h.tile')?> <small><?=$sxs_t('set.h.tile_sub')?></small></h3>
 <input type="hidden" name="order" id="sx-order" value="<?=sx_h(implode(',', sx_order($sx)))?>">
 <div id="sx-blocks">
 <?php
@@ -43,29 +48,29 @@ if (!function_exists('sx_sel_opts')) {
   function sx_sel_opts($cur, $opts) { $o = ''; foreach ($opts as $v) { $o .= '<option value="' . $v . '"' . ((string)$cur === $v ? ' selected' : '') . '>' . $v . '</option>'; } return $o; }
 }
 $sx_blk = [
-  'ram' => ['RAM', 'show_ram', [['ram_leg', 'breakdown (System, ZFS cache, Docker, Free)']], ''],
-  'sto' => ['Storage', 'show_sto', [], 'boot drive, log and Docker vdisk; the limits are below'],
-  'cpu' => ['CPU', 'show_cpu', [['cpu_load', 'Load (total)'], ['cpu_temp', 'Temperature'], ['cpu_pow', 'Package power'], ['show_clock', 'Clock'], ['cpu_hist', 'History graph'], ['cpu_per', 'Per thread'], ['cpu_la', 'Load average (footer)']], ''],
-  'gpu' => ['GPU', 'show_gpu', [], 'Intel Quick Sync (intel_gpu_top): video and render load'],
-  'pow' => ['Power', 'show_pow', [['pow_w', 'Wall (W)'], ['pow_day', 'Today (kWh)'], ['pow_mon', 'This month (kWh)'], ['pow_cost', 'Cost'], ['pow_name', 'Socket name']], 'Today counts from midnight with the socket\'s own energy counter. The socket address and the price are under Smart socket below. UPS figures need a UPS data cable; Unraid sees no UPS now.'],
-  'con' => ['Containers', 'show_containers', [], 'which ones, rows, buttons and logs: in the Containers band below'],
+  'ram' => ['RAM', 'show_ram', [['ram_leg', $sxs_T('blk.ram_leg')]], ''],
+  'sto' => [$sxs_T('sto.title'), 'show_sto', [], $sxs_T('blk.sto_hint')],
+  'cpu' => ['CPU', 'show_cpu', [['cpu_load', $sxs_T('blk.cpu_load')], ['cpu_temp', $sxs_T('blk.cpu_temp')], ['cpu_pow', $sxs_T('blk.cpu_pow')], ['show_clock', $sxs_T('cpu.clock')], ['cpu_hist', $sxs_T('blk.cpu_hist')], ['cpu_per', $sxs_T('blk.cpu_per')], ['cpu_la', $sxs_T('blk.cpu_la')]], ''],
+  'gpu' => ['GPU', 'show_gpu', [], $sxs_T('blk.gpu_hint')],
+  'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')]], $sxs_T('blk.pow_hint')],
+  'con' => [$sxs_T('con.title'), 'show_containers', [], $sxs_T('blk.con_hint')],
 ];
 foreach (sx_order($sx) as $sx_k):
   $sx_b = $sx_blk[$sx_k];
 ?>
 <dl class="sx-blk" data-k="<?=$sx_k?>">
-<dt><label class="sx-sw"><input type="hidden" name="<?=$sx_b[1]?>" value="0"><input type="checkbox" name="<?=$sx_b[1]?>" value="1" <?=sx_chk($sx[$sx_b[1]])?>> <?=$sx_b[0]?></label>
-<span class="sx-mv"><a href="#" class="up" title="Move up">&#9650;</a><a href="#" class="dn" title="Move down">&#9660;</a></span></dt>
+<dt><label class="sx-sw"><input type="hidden" name="<?=$sx_b[1]?>" value="0"><input type="checkbox" name="<?=$sx_b[1]?>" value="1" <?=sx_chk($sx[$sx_b[1]])?>> <?=sx_h($sx_b[0])?></label>
+<span class="sx-mv"><a href="#" class="up" title="<?=$sxs_t('set.up')?>">&#9650;</a><a href="#" class="dn" title="<?=$sxs_t('set.down')?>">&#9660;</a></span></dt>
 <dd>
 <?php foreach ($sx_b[2] as $sx_c): ?>
-  <label class="sx-chip"><input type="hidden" name="<?=$sx_c[0]?>" value="0"><input type="checkbox" name="<?=$sx_c[0]?>" value="1" <?=sx_chk($sx[$sx_c[0]])?>><?=$sx_c[1]?></label>
+  <label class="sx-chip"><input type="hidden" name="<?=$sx_c[0]?>" value="0"><input type="checkbox" name="<?=$sx_c[0]?>" value="1" <?=sx_chk($sx[$sx_c[0]])?>><?=sx_h($sx_c[1])?></label>
 <?php endforeach; ?>
 <?php if ($sx_k === 'cpu'): ?>
   <span class="uset-brk"></span>
-  graph <input type="number" name="hist_min" min="1" max="60" class="narrow" style="width:60px!important" value="<?=sx_h($sx['hist_min'])?>"> min
-  &middot; refresh <select name="cpu_sec"><?=sx_sel_opts($sx['cpu_sec'], $sx_secs)?></select> s
-  &middot; clock refresh <select name="clk_sec"><?=sx_sel_opts($sx['clk_sec'], $sx_secs)?></select> s
-  <span class="uset-hint">The last hour of load is recorded in the background, so the graph is full as soon as the page opens. A longer refresh is gentler on the server.</span>
+  <?=$sxs_t('set.graph')?> <input type="number" name="hist_min" min="1" max="60" class="narrow" style="width:60px!important" value="<?=sx_h($sx['hist_min'])?>"> min
+  &middot; <?=$sxs_t('set.refresh')?> <select name="cpu_sec"><?=sx_sel_opts($sx['cpu_sec'], $sx_secs)?></select> s
+  &middot; <?=$sxs_t('set.clk_refresh')?> <select name="clk_sec"><?=sx_sel_opts($sx['clk_sec'], $sx_secs)?></select> s
+  <span class="uset-hint"><?=$sxs_t('set.hist_hint')?></span>
 <?php endif; ?>
 <?php if ($sx_b[3] !== ''): ?>
   <span class="uset-hint"><?=sx_h($sx_b[3])?></span>
@@ -74,115 +79,117 @@ foreach (sx_order($sx) as $sx_k):
 </dl>
 <?php endforeach; ?>
 </div>
-<p class="sx-attn-note">The Needs attention list stays on top of the tile whatever is switched off.</p>
+<p class="sx-attn-note"><?=$sxs_t('set.attn_note')?></p>
 
-<h3>Containers</h3>
+<h3><?=$sxs_t('set.h.con')?></h3>
 <dl>
-<dt>Which containers:</dt>
+<dt><?=$sxs_t('set.top_mode')?></dt>
 <dd>
   <select name="top_mode" id="sx-mode" style="width:auto">
-    <option value="cpu" <?=$sx['top_mode'] === 'cpu' ? 'selected' : ''?>>The busiest by CPU</option>
-    <option value="ram" <?=$sx['top_mode'] === 'ram' ? 'selected' : ''?>>The busiest by RAM</option>
-    <option value="selected" <?=$sx['top_mode'] === 'selected' ? 'selected' : ''?>>The containers I select below</option>
+    <option value="cpu" <?=$sx['top_mode'] === 'cpu' ? 'selected' : ''?>><?=$sxs_t('set.mode_cpu')?></option>
+    <option value="ram" <?=$sx['top_mode'] === 'ram' ? 'selected' : ''?>><?=$sxs_t('set.mode_ram')?></option>
+    <option value="selected" <?=$sx['top_mode'] === 'selected' ? 'selected' : ''?>><?=$sxs_t('set.mode_sel')?></option>
   </select>
 </dd>
 
-<dt>Number of rows (busiest modes):</dt>
+<dt><?=$sxs_t('set.top_n')?></dt>
 <dd><input type="number" name="top_n" min="1" max="10" class="narrow" value="<?=sx_h($sx['top_n'])?>"></dd>
 
-<dt>Selected containers:</dt>
+<dt><?=$sxs_t('set.sel')?></dt>
 <dd>
 <?php if (!$sx_ps): ?>
-  <i>No containers found (Docker is not running, or there are none).</i>
+  <i><?=$sxs_t('set.no_con')?></i>
 <?php else: foreach ($sx_ps as $sx_n => $sx_p): ?>
   <label style="display:block"><input type="checkbox" name="sel[]" value="<?=sx_h($sx_n)?>" <?=in_array($sx_n, $sx_sel, true) ? 'checked' : ''?>> <?=sx_h($sx_n)?></label>
 <?php endforeach; endif; ?>
 </dd>
 
-<dt>Start, stop and restart buttons:</dt>
-<dd><input type="hidden" name="controls" value="0"><input type="checkbox" name="controls" value="1" <?=sx_chk($sx['controls'])?>> stopping asks for confirmation</dd>
+<dt><?=$sxs_t('set.controls')?></dt>
+<dd><input type="hidden" name="controls" value="0"><input type="checkbox" name="controls" value="1" <?=sx_chk($sx['controls'])?>> <?=$sxs_t('set.controls_hint')?></dd>
 
-<dt>Log button:</dt>
+<dt><?=$sxs_t('set.logs')?></dt>
 <dd><input type="hidden" name="logs" value="0"><input type="checkbox" name="logs" value="1" <?=sx_chk($sx['logs'])?>></dd>
 
-<dt>Log lines to show:</dt>
+<dt><?=$sxs_t('set.log_lines')?></dt>
 <dd><input type="number" name="log_lines" min="10" max="500" class="narrow" value="<?=sx_h($sx['log_lines'])?>"></dd>
 </dl>
 
-<h3>Limits (warning, critical)</h3>
+<h3><?=$sxs_t('set.h.limits')?></h3>
 <dl>
-<dt>RAM used, % (the ZFS cache is not counted):</dt>
+<dt><?=$sxs_t('set.ram')?></dt>
 <dd><input type="number" name="ram_warn" min="1" max="100" class="narrow" value="<?=sx_h($sx['ram_warn'])?>"> <input type="number" name="ram_crit" min="1" max="100" class="narrow" value="<?=sx_h($sx['ram_crit'])?>"></dd>
-<dt>Log filesystem, %:</dt>
+<dt><?=$sxs_t('set.log')?></dt>
 <dd><input type="number" name="log_warn" min="1" max="100" class="narrow" value="<?=sx_h($sx['log_warn'])?>"> <input type="number" name="log_crit" min="1" max="100" class="narrow" value="<?=sx_h($sx['log_crit'])?>"></dd>
-<dt>Docker vdisk, %:</dt>
+<dt><?=$sxs_t('set.vd')?></dt>
 <dd><input type="number" name="vd_warn" min="1" max="100" class="narrow" value="<?=sx_h($sx['vd_warn'])?>"> <input type="number" name="vd_crit" min="1" max="100" class="narrow" value="<?=sx_h($sx['vd_crit'])?>"></dd>
-<dt>CPU temperature, &deg;C:</dt>
+<dt><?=$sxs_t('set.temp')?></dt>
 <dd><input type="number" name="temp_warn" min="20" max="120" class="narrow" value="<?=sx_h($sx['temp_warn'])?>"> <input type="number" name="temp_crit" min="20" max="120" class="narrow" value="<?=sx_h($sx['temp_crit'])?>"></dd>
 </dl>
 
-<h3>Smart socket (Shelly, Gen2 and newer)</h3>
+<h3><?=$sxs_t('set.h.socket')?></h3>
 <dl>
-<dt>Socket address:</dt>
+<dt><?=$sxs_t('set.sock_host')?></dt>
 <dd><input type="text" name="socket_host" class="narrow" placeholder="192.168.1.50" value="<?=sx_h($sx['socket_host'])?>"></dd>
-<dt>Socket channel:</dt>
+<dt><?=$sxs_t('set.sock_id')?></dt>
 <dd><input type="number" name="socket_id" min="0" max="3" class="narrow" value="<?=sx_h($sx['socket_id'])?>"></dd>
-<dt>Energy price per kWh (optional):</dt>
-<dd><input type="text" name="kwh_price" class="narrow" placeholder="e.g. 36" value="<?=sx_h($sx['kwh_price'])?>"> <input type="text" name="currency" class="narrow" maxlength="6" style="width:60px" value="<?=sx_h($sx['currency'])?>"></dd>
+<dt><?=$sxs_t('set.price')?></dt>
+<dd><input type="text" name="kwh_price" class="narrow" placeholder="<?=$sxs_t('set.price_ph')?>" value="<?=sx_h($sx['kwh_price'])?>"> <input type="text" name="currency" class="narrow" maxlength="6" style="width:60px" value="<?=sx_h($sx['currency'])?>"></dd>
 </dl>
 
-<h3>Discord alerts</h3>
+<h3><?=$sxs_t('set.h.discord')?></h3>
 <dl>
-<dt>Webhook for the system channel:</dt>
-<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$sx['dc_hook'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""> <span style="opacity:.6">the saved webhook is not sent to the page; type - to remove it</span></dd>
+<dt><?=$sxs_t('set.dc_hook')?></dt>
+<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$sx['dc_hook'] !== '' ? $sxs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""> <span style="opacity:.6"><?=$sxs_t('set.hook_hint')?></span></dd>
 
-<dt>Ping on red alerts:</dt>
-<dd><input type="text" name="dc_ping" placeholder="your Discord user ID, role:ID, @here or @everyone" value="<?=sx_h($sx['dc_ping'])?>"> empty = no ping. Amber alerts and all-clear messages never ping</dd>
+<dt><?=$sxs_t('set.dc_ping')?></dt>
+<dd><input type="text" name="dc_ping" placeholder="<?=$sxs_t('set.ping_ph')?>" value="<?=sx_h($sx['dc_ping'])?>"> <?=$sxs_t('set.ping_hint')?></dd>
 
-<dt>Containers (stopped unexpectedly, restart loop, unhealthy):</dt>
+<dt><?=$sxs_t('set.n_con')?></dt>
 <dd><input type="hidden" name="n_containers" value="0"><input type="checkbox" name="n_containers" value="1" <?=sx_chk($sx['n_containers'])?>></dd>
 
-<dt>Memory (Limits above):</dt>
+<dt><?=$sxs_t('set.n_ram')?></dt>
 <dd><input type="hidden" name="n_ram" value="0"><input type="checkbox" name="n_ram" value="1" <?=sx_chk($sx['n_ram'])?>></dd>
 
-<dt>Boot drive, log and Docker vdisk:</dt>
+<dt><?=$sxs_t('set.n_sto')?></dt>
 <dd><input type="hidden" name="n_storage" value="0"><input type="checkbox" name="n_storage" value="1" <?=sx_chk($sx['n_storage'])?>></dd>
 
-<dt>CPU temperature:</dt>
+<dt><?=$sxs_t('set.n_cpu')?></dt>
 <dd><input type="hidden" name="n_cpu" value="0"><input type="checkbox" name="n_cpu" value="1" <?=sx_chk($sx['n_cpu'])?>></dd>
 
-<dt>Server restarted:</dt>
+<dt><?=$sxs_t('set.n_boot')?></dt>
 <dd><input type="hidden" name="n_boot" value="0"><input type="checkbox" name="n_boot" value="1" <?=sx_chk($sx['n_boot'])?>></dd>
 
-<dt>Repeat a red alert every (hours):</dt>
-<dd><input type="number" name="n_remind" min="0" max="168" class="narrow" value="<?=sx_h($sx['n_remind'])?>"> 0 = never</dd>
+<dt><?=$sxs_t('set.n_remind')?></dt>
+<dd><input type="number" name="n_remind" min="0" max="168" class="narrow" value="<?=sx_h($sx['n_remind'])?>"> <?=$sxs_t('set.never')?></dd>
 
-<dt>Weekly summary:</dt>
+<dt><?=$sxs_t('set.wk_on')?></dt>
 <dd><input type="hidden" name="wk_on" value="0"><input type="checkbox" name="wk_on" value="1" <?=sx_chk($sx['wk_on'])?>>
- <select name="wk_day"><?php foreach ([1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'] as $sx_dn => $sx_dl) { echo '<option value="' . $sx_dn . '"' . ((int)$sx['wk_day'] === $sx_dn ? ' selected' : '') . '>' . $sx_dl . '</option>'; } ?></select>
- <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=sx_h($sx['wk_hour'])?>"> o'clock</dd>
+ <select name="wk_day"><?php foreach ([1 => $sxs_T('date.long.mon'), 2 => $sxs_T('date.long.tue'), 3 => $sxs_T('date.long.wed'), 4 => $sxs_T('date.long.thu'), 5 => $sxs_T('date.long.fri'), 6 => $sxs_T('date.long.sat'), 7 => $sxs_T('date.long.sun')] as $sx_dn => $sx_dl) { echo '<option value="' . $sx_dn . '"' . ((int)$sx['wk_day'] === $sx_dn ? ' selected' : '') . '>' . sx_h($sx_dl) . '</option>'; } ?></select>
+ <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=sx_h($sx['wk_hour'])?>"> <?=$sxs_t('set.oclock')?></dd>
 
-<dt>Try it:</dt>
-<dd><input type="button" id="sx-test" value="Send test message"> <input type="button" id="sx-sample" value="Send sample alerts"> <input type="button" id="sx-weekly" value="Send weekly summary now"> <span id="sx-tmsg" style="margin-left:12px"></span></dd>
+<dt><?=$sxs_t('set.try')?></dt>
+<dd><input type="button" id="sx-test" value="<?=$sxs_t('set.btn.test')?>"> <input type="button" id="sx-sample" value="<?=$sxs_t('set.btn.sample')?>"> <input type="button" id="sx-weekly" value="<?=$sxs_t('set.btn.weekly')?>"> <span id="sx-tmsg" style="margin-left:12px"></span></dd>
 </dl>
 
 <dl class="uset-save">
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="sx-save" value="Apply">
-  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <input type="button" id="sx-save" value="<?=$sxs_t('set.btn.apply')?>">
+  <input type="button" value="<?=$sxs_t('set.btn.done')?>" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
   <span id="sx-msg" style="margin-left:12px"></span>
 </dd>
 </dl>
 </form>
 <?php $mt_lang_post = '/plugins/sysbox/lang_save.php'; include '/usr/local/emhttp/plugins/sysbox/lang_block.php'; ?>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Sysbox replaces the System and Processor tiles (hide them in the dashboard's tile management) and, when switched on, takes over the server load of the Streambox tile. The container buttons use the Docker command line with the exact name of an existing container; nothing else can be started from the dashboard. Statistics, GPU and socket readings are collected in the background only while the dashboard is open. The monthly energy figure is the socket's own counter since the 1st of the month, and a small cron job keeps it exact even when nobody has the dashboard open.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sxs_t('set.help_tile')?></p>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Discord alerts: Unraid checks every minute and posts to the webhook only when something changes: a problem appears, gets worse, or is over. A container that stops with a normal exit (code 0 or a plain stop) or through the dashboard button is not reported; one that crashes, is killed or runs out of memory is. Memory, CPU temperature and unhealthy checks must last a few minutes before they are reported, and a restart loop means three restarts within ten minutes. Red alerts can repeat after the chosen number of hours. The buttons use the saved settings, so press Apply first. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sxs_t('set.help_discord')?></p>
 
+<?=mt_i18n_js($sxs_lang, 'sxs')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('sxs', k, v); };
   function sxOrder() { $('#sx-order').val($('#sx-blocks .sx-blk').map(function () { return $(this).data('k'); }).get().join(',')); }
   function sxOff() { $('#sx-blocks .sx-blk').each(function () { $(this).toggleClass('off', !$(this).find('.sx-sw input[type=checkbox]').prop('checked')); }); }
   $('#sx-blocks').on('click', '.sx-mv a', function (e) {
@@ -196,25 +203,25 @@ $(function () {
   $.each({test: '#sx-test', sample: '#sx-sample', weekly: '#sx-weekly'}, function (op, sel) {
     $(sel).on('click', function () {
       var $b = $(this).prop('disabled', true);
-      $tm.css('color', '').text('Sending...');
+      $tm.css('color', '').text(T('set.sending'));
       $.post('/plugins/sysbox/test.php', {op: op}, null, 'json')
-        .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text('Sent.'); } else { $tm.css('color', '#e5534b').text('Not sent: ' + ((r && r.error) ? r.error : 'unknown error')); } })
-        .fail(function (x) { var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; $tm.css('color', '#e5534b').text('Not sent: ' + e); })
+        .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text(T('set.sent')); } else { $tm.css('color', '#e5534b').text(T('set.not_sent', { e: (r && r.error) ? r.error : T('set.unknown_error') })); } })
+        .fail(function (x) { var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; $tm.css('color', '#e5534b').text(T('set.not_sent', { e: e })); })
         .always(function () { $b.prop('disabled', false); });
     });
   });
   var $msg = $('#sx-msg');
   $('#sx-save').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $msg.css('color', '').text('Saving...');
+    $msg.css('color', '').text(T('set.saving'));
     $.post('/plugins/sysbox/save.php', $('#sx-form').serialize(), null, 'json')
       .done(function (r) {
-        if (r && r.ok) { $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.'); }
-        else { $msg.css('color', '#e5534b').text('Not saved: ' + ((r && r.error) ? r.error : 'unknown error')); }
+        if (r && r.ok) { $msg.css('color', '#3fa24a').text(T('set.saved')); }
+        else { $msg.css('color', '#e5534b').text(T('set.not_saved', { e: (r && r.error) ? r.error : T('set.unknown_error') })); }
       })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
-        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+        $msg.css('color', '#e5534b').text(T('set.not_saved', { e: e }));
       })
       .always(function () { $b.prop('disabled', false); });
   });

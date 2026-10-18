@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22j">
+<!ENTITY version   "2026.10.22k">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -28,6 +28,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- The dashboard tile gets only the texts it shows from the dictionary (a smaller page); nothing changes on the screen
+###2026.10.22j
 - The texts of the tile, the settings page and the Diskbox Balance page come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet
 ###2026.10.22i
 - Language block: saving failed with csrf token mismatch (Unraid checks the token itself and then removes it from the request); fixed

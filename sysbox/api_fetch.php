@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/i18n.php';
+$sxx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile (lang/en.json)
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
@@ -65,7 +67,7 @@ $memPct = $mTotal > 0 ? $mUsed / $mTotal * 100 : 0;
 $memAlertPct = $mTotal > 0 ? max(0.0, $mUsed - $arc) / $mTotal * 100 : 0;   // the ZFS cache gives way to applications
 if ($memAlertPct >= (float)$cfg['ram_warn']) {
     $crit = $memAlertPct >= (float)$cfg['ram_crit'];
-    $attn[] = [$crit ? 'rd' : 'a', 'RAM', 'is ' . round($memAlertPct) . '% used', '@FREE@' . $mAvail . ' free'];
+    $attn[] = [$crit ? 'rd' : 'a', 'RAM', $sxx_T('attn.used', ['p' => round($memAlertPct)]), '@FREE@' . $mAvail . ' free'];
 }
 $memory = [
     'total' => $mTotal, 'used' => $mUsed, 'pct' => $memPct, 'free' => $mAvail,
@@ -83,18 +85,19 @@ function sx_mounted($path) {
     return false;
 }
 function sx_fs($label, $path, $warn, $crit, &$attn) {
+    global $sxx_T;
     $t = @disk_total_space($path); $f = @disk_free_space($path);
     if (!$t) { return null; }
     $used = $t - $f; $pct = $used / $t * 100;
     $lv = $pct >= $crit ? 'rd' : ($pct >= $warn ? 'a' : '');
-    if ($lv !== '') { $attn[] = [$lv, $label, 'is ' . number_format($pct, 0) . '% full', '@FREE@' . $f . ' free']; }
+    if ($lv !== '') { $attn[] = [$lv, $label, $sxx_T('attn.full', ['p' => number_format($pct, 0)]), '@FREE@' . $f . ' free']; }
     return ['label' => $label, 'size' => $t, 'used' => $used, 'pct' => $pct, 'level' => $lv];
 }
 $storage = [];
 $s = sx_fs('BOOT', '/boot', 90, 97, $attn); if ($s) { $storage[] = $s; }
 $s = sx_fs('LOG', '/var/log', (float)$cfg['log_warn'], (float)$cfg['log_crit'], $attn); if ($s) { $storage[] = $s; }
 if (sx_mounted('/var/lib/docker')) {
-    $s = sx_fs('DOCKER VDISK', '/var/lib/docker', (float)$cfg['vd_warn'], (float)$cfg['vd_crit'], $attn); if ($s) { $storage[] = $s; }
+    $s = sx_fs($sxx_T('sto.vdisk'), '/var/lib/docker', (float)$cfg['vd_warn'], (float)$cfg['vd_crit'], $attn); if ($s) { $storage[] = $s; }
 }
 
 // ---- CPU -----------------------------------------------------------------------------------------
@@ -106,7 +109,7 @@ $gpuRaw = (is_array($slow) && isset($slow['gpu']) && is_array($slow['gpu'])) ? $
 $tlevel = '';
 if ($tPkg !== null) {
     $tlevel = $tPkg >= (float)$cfg['temp_crit'] ? 'rd' : ($tPkg >= (float)$cfg['temp_warn'] ? 'a' : '');
-    if ($tlevel !== '') { $attn[] = [$tlevel, 'CPU', $tlevel === 'rd' ? 'is too hot' : 'is running hot', $tPkg . '°C']; }
+    if ($tlevel !== '') { $attn[] = [$tlevel, 'CPU', $tlevel === 'rd' ? $sxx_T('attn.too_hot') : $sxx_T('attn.hot'), $tPkg . '°C']; }
 }
 $la = @sys_getloadavg();
 $cpu = [
@@ -151,8 +154,8 @@ if ($cont['enabled']) {
             'cpu_core' => ($st && $p['state'] === 'running') ? $st['cpu'] : null,
             'mem' => ($st && $p['state'] === 'running') ? $st['mem'] : null,
         ];
-        if ($p['state'] === 'restarting') { $attn[] = ['a', $n, 'is restarting', $p['status']]; }
-        elseif ($p['unhealthy']) { $attn[] = ['a', $n, 'is unhealthy', '']; }
+        if ($p['state'] === 'restarting') { $attn[] = ['a', $n, $sxx_T('attn.restarting'), $p['status']]; }
+        elseif ($p['unhealthy']) { $attn[] = ['a', $n, $sxx_T('attn.unhealthy'), '']; }
     }
     $mode = in_array($cont['mode'], ['cpu', 'ram', 'selected'], true) ? $cont['mode'] : 'cpu';
     $n = max(1, min(10, (int)$cfg['top_n']));
