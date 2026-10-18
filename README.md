@@ -86,6 +86,7 @@ Updates: *Plugins, Check for updates* reads the `.plg` from this repository (`pl
 - `streambox/`: the files unpacked from the `.plg` for reading (`tools/extract_plg.py`); the `.plg` in `dist/` is the source of truth for Streambox
 - `icons/`: plugin icons and the Discord webhook avatars
 - `dist/`: the built plugins
+- `tools/screenshots/`: renders the screenshots from the real pages with the made-up data in `mock/` (`sh tools/screenshots/shoot_all.sh`, needs php, node and Playwright)
 - `NOTES.md`: development notes
 
 ## Build
