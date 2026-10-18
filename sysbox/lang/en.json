@@ -52,6 +52,10 @@
   "text": "Storage",
   "note": "band title of the boot, log and Docker vdisk usage (upper case on screen)."
  },
+ "sto.of": {
+  "text": "{used} of {size}",
+  "note": "grey line under BOOT, LOG and DOCKER VDISK in the Storage part: used and total size, like \"1.32 GB of 14.4 GB\"."
+ },
  "cpu.cores": {
   "text": "{c} cores / {t} threads",
   "note": "grey text on the right of the CPU band."

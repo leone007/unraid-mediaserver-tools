@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14n">
+<!ENTITY version   "2026.10.14o">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
+###2026.10.14n
 - The dashboard tile gets only the texts it shows from the dictionary (a smaller page); nothing changes on the screen
 ###2026.10.14m
 - The texts of the tile and the settings page come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet; the dates of This week's episodes are made on the page now
@@ -2491,7 +2493,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
 <INLINE><![CDATA[<?php
 // Shared language setting of the media server tools (Sysbox, Diskbox, Seedbox, Streambox): one file on the
 // flash drive that every plugin reads, so changing it on any settings page changes it for all of them.
-//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en
+//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en | hu
 //   discord = auto (follow Unraid) | en | hu
 // A language the pages or Discord are not translated to falls back to English. Every plugin ships its own
 // copy of this file; the guard keeps a second copy from being declared again in the same request.
@@ -2499,7 +2501,7 @@ if (!function_exists('mt_lang_cfg')) {
 
 define('MT_LANG_FILE', '/boot/config/plugins/mediaserver-tools/lang.cfg');
 
-function mt_lang_have($what) { return $what === 'discord' ? ['en', 'hu'] : ['en']; }
+function mt_lang_have($what) { return ['en', 'hu']; }
 
 // Unraid's display language as a locale ('' = English, the built-in one)
 function mt_lang_unraid() {
@@ -2611,6 +2613,7 @@ $mtl_sel = function ($a, $b) { return $a === $b ? ' selected' : ''; };
         <select id="mtl-ui">
           <option value="auto"<?=$mtl_sel($mtl_c['ui'], 'auto')?>>Follow Unraid (now: <?=$mtl_h($mtl_ui_now)?>)</option>
           <option value="en"<?=$mtl_sel($mtl_c['ui'], 'en')?>>English</option>
+          <option value="hu"<?=$mtl_sel($mtl_c['ui'], 'hu')?>>Magyar</option>
         </select>
         <span class="mtl-hint">Unraid's language is set under Settings, Display Settings. A language the plugins are not translated to yet shows in English. More languages come here as they are translated.</span>
       </div>
@@ -3718,6 +3721,743 @@ function mt_i18n_js($dir, $name, $only = null) {
  "date.day_short": {
   "text": "{dow} {d}",
   "note": "the first day of the week on the This week's episodes band when both days are in the same month, for example the \"Mon 12\" of \"Mon 12 – Sun 18 Oct\". Same order as date.day, without the month."
+ }
+}]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang/hu.json">
+<INLINE><![CDATA[{
+ "_meta": {
+  "language": "Magyar",
+  "translator": "Claude (AI), átnézendő"
+ },
+ "tile.connecting": {
+  "text": "Kapcsolódás…"
+ },
+ "tile.loading": {
+  "text": "Betöltés…"
+ },
+ "tile.open_jellyfin": {
+  "text": "Jellyfin megnyitása"
+ },
+ "tile.settings": {
+  "text": "Streambox beállítások"
+ },
+ "mode.direct_play": {
+  "text": "Közvetlen"
+ },
+ "mode.direct_stream": {
+  "text": "Közv. stream"
+ },
+ "mode.transcode": {
+  "text": "Átkódolás"
+ },
+ "time.left_hm": {
+  "text": "még {h} ó {m} p"
+ },
+ "time.left_m": {
+  "text": "még {m} p"
+ },
+ "time.left_s": {
+  "text": "még {s} mp"
+ },
+ "time.just_now": {
+  "text": "most"
+ },
+ "time.ago_m": {
+  "text": "{m} perce"
+ },
+ "time.ago_h": {
+  "text": "{h} órája"
+ },
+ "time.ago_d": {
+  "text": "{d} napja"
+ },
+ "pill.online": {
+  "text": "Elérhető"
+ },
+ "pill.api_key": {
+  "text": "API-kulcs"
+ },
+ "pill.offline": {
+  "text": "Nem elérhető"
+ },
+ "pill.streaming": {
+  "text": "{n} lejátszás"
+ },
+ "pill.transcoding": {
+  "text": "{n} átkódolás"
+ },
+ "sum.unavailable": {
+  "text": "Nem elérhető"
+ },
+ "sum.no_streams": {
+  "text": "Nincs aktív lejátszás"
+ },
+ "sum.streams": {
+  "one": "{n} lejátszás",
+  "other": "{n} lejátszás"
+ },
+ "sum.users": {
+  "one": "{n} felhasználó",
+  "other": "{n} felhasználó"
+ },
+ "now.err_auth": {
+  "text": "A Jellyfin elutasította az API-kulcsot (nézd meg a Streambox beállításait)"
+ },
+ "now.err_nokey": {
+  "text": "Add meg a Jellyfin API-kulcsát a Streambox beállításaiban"
+ },
+ "now.err_down": {
+  "text": "A Jellyfin nem érhető el"
+ },
+ "now.title": {
+  "text": "Most megy"
+ },
+ "col.title": {
+  "text": "Cím"
+ },
+ "col.user": {
+  "text": "Néző"
+ },
+ "col.device": {
+  "text": "Eszköz"
+ },
+ "col.mode": {
+  "text": "Mód"
+ },
+ "now.paused": {
+  "text": "Szünetel"
+ },
+ "now.live": {
+  "text": "ÉLŐ"
+ },
+ "added.title": {
+  "text": "Nemrég hozzáadva"
+ },
+ "added.meta": {
+  "text": "a legújabbak a Jellyfinből"
+ },
+ "col.type": {
+  "text": "Típus"
+ },
+ "col.quality": {
+  "text": "Minőség"
+ },
+ "col.added": {
+  "text": "Mikor"
+ },
+ "type.movie": {
+  "text": "Film"
+ },
+ "type.episode": {
+  "text": "Epizód"
+ },
+ "load.video": {
+  "text": "Videó"
+ },
+ "load.render": {
+  "text": "Render"
+ },
+ "load.idle": {
+  "text": "tétlen"
+ },
+ "load.all_cores": {
+  "text": "minden mag"
+ },
+ "load.title": {
+  "text": "Szerverterhelés"
+ },
+ "load.socket": {
+  "text": "Konnektor"
+ },
+ "load.power_tip": {
+  "text": "A CPU-tok fogyasztása (az integrált GPU-val együtt); nem a konnektorból felvett teljesítmény"
+ },
+ "load.kwh_month": {
+  "text": "{kwh} kWh/hó"
+ },
+ "load.socket_tip": {
+  "text": "Okoskonnektor: a falból felvett teljesítmény. A havi érték a konnektor saját energiaszámlálója a hónap 1-je óta."
+ },
+ "load.na": {
+  "text": "n/a"
+ },
+ "date.dow.sun": {
+  "text": "V"
+ },
+ "date.dow.mon": {
+  "text": "H"
+ },
+ "date.dow.tue": {
+  "text": "K"
+ },
+ "date.dow.wed": {
+  "text": "Sze"
+ },
+ "date.dow.thu": {
+  "text": "Cs"
+ },
+ "date.dow.fri": {
+  "text": "P"
+ },
+ "date.dow.sat": {
+  "text": "Szo"
+ },
+ "date.mon.jan": {
+  "text": "jan."
+ },
+ "date.mon.feb": {
+  "text": "febr."
+ },
+ "date.mon.mar": {
+  "text": "márc."
+ },
+ "date.mon.apr": {
+  "text": "ápr."
+ },
+ "date.mon.may": {
+  "text": "máj."
+ },
+ "date.mon.jun": {
+  "text": "jún."
+ },
+ "date.mon.jul": {
+  "text": "júl."
+ },
+ "date.mon.aug": {
+  "text": "aug."
+ },
+ "date.mon.sep": {
+  "text": "szept."
+ },
+ "date.mon.oct": {
+  "text": "okt."
+ },
+ "date.mon.nov": {
+  "text": "nov."
+ },
+ "date.mon.dec": {
+  "text": "dec."
+ },
+ "date.day": {
+  "text": "{mon} {d}. {dow}"
+ },
+ "date.range": {
+  "text": "{from} – {to}"
+ },
+ "week.st.jf": {
+  "text": "Jellyfinben"
+ },
+ "week.st.file": {
+  "text": "Letöltve"
+ },
+ "week.st.imp": {
+  "text": "Importálás"
+ },
+ "week.st.scan": {
+  "text": "Importálva"
+ },
+ "week.st.dl": {
+  "text": "Töltődik"
+ },
+ "week.st.grab": {
+  "text": "Elküldve"
+ },
+ "week.st.pause": {
+  "text": "Szünetel"
+ },
+ "week.st.fail": {
+  "text": "Hiba"
+ },
+ "week.st.late": {
+  "text": "Nincs release"
+ },
+ "week.st.aired": {
+  "text": "Leadták"
+ },
+ "week.st.wait": {
+  "text": "Várakozik"
+ },
+ "week.title": {
+  "text": "Heti epizódok"
+ },
+ "week.err_nosonarr": {
+  "text": "Nincs beállítva Sonarr (Streambox beállítások)"
+ },
+ "week.err_auth": {
+  "text": "A Sonarr elutasította az API-kulcsot"
+ },
+ "week.err_down": {
+  "text": "A Sonarr nem érhető el"
+ },
+ "week.n_jf": {
+  "text": "{n} a Jellyfinben"
+ },
+ "week.n_dl": {
+  "text": "{n} töltődik"
+ },
+ "week.n_late": {
+  "text": "{n} késik"
+ },
+ "week.none": {
+  "text": "Ezen a héten nem jön figyelt epizód"
+ },
+ "week.today": {
+  "text": "Ma"
+ },
+ "week.new": {
+  "text": "Új"
+ },
+ "week.new_tip": {
+  "text": "Új sorozat: az első epizódja ezen a héten jön"
+ },
+ "week.late_usual": {
+  "text": "általában {usual} a vetítés után, most {now}"
+ },
+ "week.late_ago": {
+  "text": "{t} ezelőtt adták le"
+ },
+ "week.airs_in": {
+  "text": "{t} múlva"
+ },
+ "week.in": {
+  "text": "{t} múlva"
+ },
+ "week.due_now": {
+  "text": "most esedékes"
+ },
+ "week.overdue": {
+  "text": "{t} késés"
+ },
+ "week.aired_at": {
+  "text": "leadva {t}"
+ },
+ "week.tip_airs": {
+  "text": "Vetítés: {t}"
+ },
+ "week.tip_expected": {
+  "text": "várható ~{t}"
+ },
+ "week.tip_nohist": {
+  "text": "Még nincs letöltési előzmény: a vetítés utáni szokásos késés nem ismert"
+ },
+ "week.tip_delay_series": {
+  "one": "Szokásos késés a vetítés után: {t} (a sorozat {n} epizódjának mediánja)",
+  "other": "Szokásos késés a vetítés után: {t} (a sorozat {n} epizódjának mediánja)"
+ },
+ "week.tip_delay_all": {
+  "one": "Szokásos késés a vetítés után: {t} (az összes sorozat {n} epizódjának mediánja)",
+  "other": "Szokásos késés a vetítés után: {t} (az összes sorozat {n} epizódjának mediánja)"
+ },
+ "week.scan_tip": {
+  "text": "A Sonarr importálta, a Jellyfin még nem listázza"
+ },
+ "why.container": {
+  "text": "Konténer"
+ },
+ "why.video_codec": {
+  "text": "Videokodek"
+ },
+ "why.audio_codec": {
+  "text": "Hangkodek"
+ },
+ "why.subtitles": {
+  "text": "Felirat"
+ },
+ "why.audio_channels": {
+  "text": "Hangcsatornák"
+ },
+ "why.bitrate_limit": {
+  "text": "Bitráta-korlát"
+ },
+ "why.video_bitrate": {
+  "text": "Videó bitráta"
+ },
+ "why.audio_bitrate": {
+  "text": "Hang bitráta"
+ },
+ "why.interlaced": {
+  "text": "Váltottsoros"
+ },
+ "why.resolution": {
+  "text": "Felbontás"
+ },
+ "why.video_profile": {
+  "text": "Videóprofil"
+ },
+ "why.video_level": {
+  "text": "Videószint"
+ },
+ "why.hdr_format": {
+  "text": "HDR-formátum"
+ },
+ "det.audio": {
+  "text": "Hang"
+ },
+ "det.deinterlace": {
+  "text": "Deinterlace"
+ },
+ "det.video": {
+  "text": "Videó"
+ },
+ "det.video_transcode": {
+  "text": "Videó átkódolás"
+ },
+ "info.method": {
+  "text": "Mód: {m}"
+ },
+ "info.source": {
+  "text": "Forrás: {s}"
+ },
+ "info.reasons": {
+  "text": "Okok: {r}"
+ },
+ "info.none_reported": {
+  "text": "nincs megadva"
+ },
+ "info.no_details": {
+  "text": "A Jellyfin nem adott átkódolási részleteket ehhez a lejátszáshoz"
+ },
+ "info.client": {
+  "text": "Kliens: {c}"
+ },
+ "sock.invalid": {
+  "text": "érvénytelen konnektorcím"
+ },
+ "sock.down": {
+  "text": "a konnektor nem érhető el"
+ },
+ "sock.password": {
+  "text": "a konnektor jelszót kér (nem támogatott)"
+ },
+ "sock.bad": {
+  "text": "váratlan válasz a konnektortól"
+ },
+ "sock.http": {
+  "text": "a konnektor HTTP {code} kóddal válaszolt"
+ },
+ "wtest.own_missing": {
+  "text": "Add meg a Sonarr címét és API-kulcsát, majd Alkalmaz."
+ },
+ "wtest.seedbox_missing": {
+  "text": "A Seedboxban nincs Sonarr-cím és -kulcs (Seedbox Tools, Connections)."
+ },
+ "wtest.auth": {
+  "text": "az API-kulcsot elutasította"
+ },
+ "wtest.ok": {
+  "one": "A Sonarr {v} válaszol; a szokásos késést az elmúlt 60 nap {n} letöltéséből számolja.",
+  "other": "A Sonarr {v} válaszol; a szokásos késést az elmúlt 60 nap {n} letöltéséből számolja."
+ },
+ "save.err_key": {
+  "text": "az API-kulcs érvénytelen karaktert tartalmaz"
+ },
+ "save.err_url": {
+  "text": "érvénytelen Jellyfin link URL"
+ },
+ "save.err_socket": {
+  "text": "érvénytelen okoskonnektor-cím"
+ },
+ "save.err_hook_movies": {
+  "text": "a filmes webhook nem érvényes Discord webhook URL"
+ },
+ "save.err_hook_series": {
+  "text": "a sorozatos webhook nem érvényes Discord webhook URL"
+ },
+ "save.err_hook_weekly": {
+  "text": "a heti összefoglaló webhookja nem érvényes Discord webhook URL"
+ },
+ "save.err_son_key": {
+  "text": "a Sonarr API-kulcs érvénytelen karaktert tartalmaz"
+ },
+ "save.err_son_url": {
+  "text": "érvénytelen Sonarr-cím"
+ },
+ "save.err_write": {
+  "text": "nem sikerült írni a beállításfájlt"
+ },
+ "save.err_nick": {
+  "text": "nem sikerült írni a becenévfájlt"
+ },
+ "save.err_dir": {
+  "text": "a Jellyfin mappájának /mnt alatti útvonalnak kell lennie (csak betű, szám, . _ -)"
+ },
+ "ntest.no_hook": {
+  "text": "Még nincs mentett érvényes Discord webhook. Add meg a webhook(ok)at, nyomd meg az Alkalmaz gombot, és próbáld újra."
+ },
+ "ntest.ch_movies": {
+  "text": "filmek"
+ },
+ "ntest.ch_series": {
+  "text": "sorozatok"
+ },
+ "ntest.ch_weekly": {
+  "text": "heti"
+ },
+ "ntest.sent": {
+  "text": "elküldve"
+ },
+ "ntest.failed": {
+  "text": "sikertelen ({e})"
+ },
+ "ntest.no_jf": {
+  "text": "Előbb mentsd el a Jellyfin címét és API-kulcsát."
+ },
+ "ntest.no_weekly": {
+  "text": "Még nincs mentett érvényes webhook a heti összefoglalóhoz."
+ },
+ "ntest.jf_down": {
+  "text": "A Jellyfin nem olvasható."
+ },
+ "ntest.nothing": {
+  "text": "Az elmúlt 7 napban semmi sem került be, nincs mit küldeni."
+ },
+ "ntest.weekly": {
+  "text": "heti összefoglaló"
+ },
+ "ntest.movie": {
+  "text": "film: „{t}”"
+ },
+ "ntest.no_movie": {
+  "text": "nincs film"
+ },
+ "ntest.season": {
+  "text": "évad: „{t}”"
+ },
+ "ntest.no_episode": {
+  "text": "nincs epizód"
+ },
+ "set.saved_keep": {
+  "text": "(mentve, üresen hagyva megmarad)"
+ },
+ "set.h.jellyfin": {
+  "text": "Jellyfin és a csempe"
+ },
+ "set.h.week_sub": {
+  "text": "hétfőtől vasárnapig, a Sonarrból; csak olvas"
+ },
+ "set.h.discord": {
+  "text": "Discord-értesítések"
+ },
+ "set.h.nicks": {
+  "text": "Felhasználói becenevek"
+ },
+ "set.jf_host": {
+  "text": "Jellyfin cím (az Unraid felől nézve):"
+ },
+ "set.jf_port": {
+  "text": "Jellyfin port:"
+ },
+ "set.jf_key": {
+  "text": "Jellyfin API-kulcs:"
+ },
+ "set.jf_url": {
+  "text": "Jellyfin link URL (a Discord-kártyákban is):"
+ },
+ "set.streams_max": {
+  "text": "Legfeljebb ennyi sor a Most megy részben:"
+ },
+ "set.added_rows": {
+  "text": "Sorok a Nemrég hozzáadva részben (0 = elrejt):"
+ },
+ "set.show_load": {
+  "text": "Szerverterhelés mutatása (GPU, CPU, okoskonnektor):"
+ },
+ "set.socket_host": {
+  "text": "Okoskonnektor (Shelly) címe:"
+ },
+ "set.socket_id": {
+  "text": "Okoskonnektor csatornája:"
+ },
+ "set.wk_show": {
+  "text": "Mutatás a Dashboardon:"
+ },
+ "set.wk_src": {
+  "text": "Sonarr-kapcsolat:"
+ },
+ "set.son_url": {
+  "text": "Sonarr cím (saját):"
+ },
+ "set.son_key": {
+  "text": "Sonarr API-kulcs (saját):"
+ },
+ "set.wk_delay": {
+  "text": "Szokásos késés:"
+ },
+ "set.wk_late": {
+  "text": "Késik, ha (órával a szokásos idő után):"
+ },
+ "set.wk_dc": {
+  "text": "Késő epizódok küldése Discordra:"
+ },
+ "set.wk_web": {
+  "text": "Sor a Jellyfin kezdőlapján:"
+ },
+ "set.wk_web_view": {
+  "text": "Alapnézet a Jellyfinben:"
+ },
+ "set.wk_web_dir": {
+  "text": "Mappa a Jellyfinnek:"
+ },
+ "set.notify": {
+  "text": "Új filmek és évadok bejelentése:"
+ },
+ "set.dc_movies": {
+  "text": "Webhook a filmekhez (#filmek):"
+ },
+ "set.dc_series": {
+  "text": "Webhook a sorozatokhoz (#sorozatok):"
+ },
+ "set.weekly": {
+  "text": "Heti összefoglaló az új filmekről és sorozatokról:"
+ },
+ "set.dc_weekly": {
+  "text": "Webhook a heti összefoglalóhoz:"
+ },
+ "set.weekly_when": {
+  "text": "A heti összefoglaló napja és órája:"
+ },
+ "set.notify_settle": {
+  "text": "Várakozás további epizódokra (perc):"
+ },
+ "set.notify_wait": {
+  "text": "Várakozás a metaadatra és a poszterre (perc):"
+ },
+ "set.key_hint": {
+  "text": "a mentett kulcsok és webhookok nem kerülnek az oldalra; egy - beírásával törölheted"
+ },
+ "set.show_load_hint": {
+  "text": "kapcsold ki, ha a Sysbox csempe már mutatja"
+ },
+ "set.wk_show.always": {
+  "text": "mindig"
+ },
+ "set.wk_show.airs": {
+  "text": "csak ha a héten jön epizód"
+ },
+ "set.wk_show.never": {
+  "text": "soha"
+ },
+ "set.wk_show_hint": {
+  "text": "A héten vetített figyelt epizódok naponként: a vetítés ideje, mikor jön általában a torrent, és hol tart most. Az új hét vasárnap éjfélkor kezdődik."
+ },
+ "set.wk_src.seedbox": {
+  "text": "a Seedbox Sonarr-beállításai"
+ },
+ "set.wk_src.own": {
+  "text": "saját"
+ },
+ "set.btn.test_sonarr": {
+  "text": "Sonarr teszt"
+ },
+ "set.wk_src_hint": {
+  "text": "A Seedboxban már megvan a Sonarr címe és API-kulcsa (Seedbox Tools, Connections). Az alábbi mezők csak a „saját” választásnál számítanak."
+ },
+ "set.wk_delay.series": {
+  "text": "sorozatonként"
+ },
+ "set.wk_delay.idx": {
+  "text": "sorozatonként és indexerenként"
+ },
+ "set.wk_delay.all": {
+  "text": "egy érték minden sorozatra"
+ },
+ "set.wk_delay_hint": {
+  "text": "A vetítéstől az első letöltésig (grab) eltelt idő mediánja a Sonarr elmúlt 60 napos előzményeiből (a vetítés után 3 napnál később indult letöltések kimaradnak). Ha egy sorozatnak 3-nál kevesebb epizódja van, az összes sorozat mediánja számít. Indexerenként: a leggyorsabb indexer dönt, a többi a cím alatt látszik."
+ },
+ "set.wk_dc_hint": {
+  "text": "epizódonként egyszer, a sorozatos webhookra (lent)"
+ },
+ "set.wk_web_hint": {
+  "text": "„Ezen a héten”, csak a webes kliensben és a Jellyfin Desktopban"
+ },
+ "set.wk_web_long": {
+  "text": "Streambox 2 percenként megírja a week.json (sorozatok, epizódkódok, időpontok; kulcsok nélkül) és a week.js fájlt az alábbi mappába. Csatold ezt csak olvashatóan a Jellyfin konténerbe /usr/share/jellyfin/web/streambox néven, majd add hozzá ezt a szkriptet a Jellyfinben (Vezérlőpult, JS Injector, bekapcsolva): <code>var s=document.createElement('script');s.src='streambox/week.js?v='+Date.now();document.head.appendChild(s);</code> Aki megnyitja a Jellyfin címét, az olvashatja a week.json fájlt."
+ },
+ "set.wk_view.grid": {
+  "text": "naptár (hét napkártya)"
+ },
+ "set.wk_view.row": {
+  "text": "poszterek (egy sor)"
+ },
+ "set.wk_view_hint": {
+  "text": "Minden néző válthat a cím melletti két ikonnal; a választást az adott böngésző megjegyzi."
+ },
+ "date.long.mon": {
+  "text": "hétfő"
+ },
+ "date.long.tue": {
+  "text": "kedd"
+ },
+ "date.long.wed": {
+  "text": "szerda"
+ },
+ "date.long.thu": {
+  "text": "csütörtök"
+ },
+ "date.long.fri": {
+  "text": "péntek"
+ },
+ "date.long.sat": {
+  "text": "szombat"
+ },
+ "date.long.sun": {
+  "text": "vasárnap"
+ },
+ "set.btn.ntest": {
+  "text": "Tesztüzenet küldése"
+ },
+ "set.btn.nprev": {
+  "text": "Előnézet küldése (legújabb film és évad)"
+ },
+ "set.btn.nweek": {
+  "text": "Heti összefoglaló küldése most"
+ },
+ "set.nicks_none": {
+  "text": "A felhasználólista nem tölthető be. Add meg fent a Jellyfin címét, portját és API-kulcsát, nyomd meg az Alkalmaz gombot, majd töltsd újra az oldalt."
+ },
+ "set.nicks_hint": {
+  "text": "A becenevek látszanak a hosszú felhasználónevek helyett a Dashboard csempén. Üresen hagyva az automatikus rövid név marad (halványan látszik)."
+ },
+ "set.btn.apply": {
+  "text": "Alkalmaz"
+ },
+ "set.btn.done": {
+  "text": "Kész"
+ },
+ "set.log": {
+  "text": "Értesítő napló (legutóbbi bejegyzések):"
+ },
+ "set.help_discord": {
+  "text": "Discord-kártyák: az Unraid percenként megnézi a Jellyfint. Egy filmet akkor jelent be, ha már megvan a leírása (a Jellyfin metaadat-nyelvén) és a posztere; az epizódokat évadonként csoportosítja, és akkor jelenti be, ha a „várakozás további epizódokra” ideje alatt nem jött újabb. Az értesítő első bekapcsolásakor csak az onnantól hozzáadottakat jelenti be. A heti összefoglaló a választott napon és órában (a szerver időzónája szerint) felsorol mindent, ami az elmúlt 7 napban került be; ha a szerver abban az órában ki volt kapcsolva, aznap a következő indulásakor küldi el. A gombok a mentett beállításokkal dolgoznak, ezért előbb nyomd meg az Alkalmaz gombot. Ha a Jellyfin link URL üres, a kártyákból kimarad a Jellyfin-link. Webhookot a Discordban a csatorna beállításainál, az Integrációk, Webhookok alatt hozhatsz létre."
+ },
+ "set.help_general": {
+  "text": "A Jellyfin API-kulcsot a Jellyfinben a Vezérlőpult, Speciális, API-kulcsok alatt hozhatod létre. A tétlen (semmit sem lejátszó) kapcsolatok nem látszanak. A GPU-terhelést az intel_gpu_top adja, a CPU-terhelést a rendszerstatisztika. Ha a Jellyfin link URL üres, a szerver címe és a Jellyfin port lesz a link. Ha az okoskonnektor címe üres, a Konnektor érték nem látszik. A havi fogyasztás a konnektor saját energiaszámlálójából jön, amit az Unraid 10 percenként olvas le, így az első hónap a konnektor beállításának napjától számít."
+ },
+ "set.saving": {
+  "text": "Mentés..."
+ },
+ "set.saved": {
+  "text": "Mentve. A Dashboard néhány másodpercen belül átveszi."
+ },
+ "set.not_saved": {
+  "text": "Nincs mentve: {e}"
+ },
+ "set.unknown_error": {
+  "text": "ismeretlen hiba"
+ },
+ "set.asking_sonarr": {
+  "text": "A Sonarr kérdezése... (ha módosítottad a kapcsolatot, előbb Alkalmaz)"
+ },
+ "set.unknown_answer": {
+  "text": "ismeretlen válasz"
+ },
+ "set.sending": {
+  "text": "Küldés..."
+ },
+ "date.day_short": {
+  "text": "{d}. {dow}"
  }
 }]]></INLINE>
 </FILE>

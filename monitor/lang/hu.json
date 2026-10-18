@@ -1,0 +1,14 @@
+{
+ "_meta": {"language": "Magyar", "translator": "Claude (AI), átnézendő"},
+ "btn.full_screen": {"text": "Teljes képernyő"},
+ "btn.unraid_menu": {"text": "Unraid menü"},
+ "btn.reorder": {"text": "Sorrend"},
+ "btn.done": {"text": "Kész"},
+ "btn.reset": {"text": "Alaphelyzet"},
+ "btn.hide": {"text": "Elrejt"},
+ "btn.show": {"text": "Mutat"},
+ "btn.up": {"text": "Feljebb"},
+ "btn.down": {"text": "Lejjebb"},
+ "note.no_tiles": {"text": "Nincs csempe. Előbb telepítsd a Sysboxot, a Diskboxot, a Streamboxot vagy a Seedboxot."},
+ "note.saved_here": {"text": "A sorrend csak ezen az eszközön mentődik."}
+}

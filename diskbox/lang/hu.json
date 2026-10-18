@@ -1,0 +1,1158 @@
+{
+ "_meta": {
+  "language": "Magyar",
+  "translator": "Claude (AI), átnézendő"
+ },
+ "sub.zeroed": {
+  "text": "kinullázva · kivehető"
+ },
+ "sub.zero_stopped": {
+  "text": "a kinullázás leállt: {p}%"
+ },
+ "sub.zeroing": {
+  "text": "kinullázás {p}%"
+ },
+ "time.left": {
+  "text": "még {t}"
+ },
+ "health.unknown": {
+  "text": "Még nincs SMART-adat"
+ },
+ "health.passed": {
+  "text": "SMART rendben"
+ },
+ "health.failed": {
+  "text": "A SMART állapotellenőrzés hibát jelez"
+ },
+ "attn.smart_failing": {
+  "text": "SMART-érték hibás"
+ },
+ "attn.smart_warning": {
+  "text": "SMART-figyelmeztetés"
+ },
+ "health.acked": {
+  "text": "SMART-figyelmeztetés nyugtázva"
+ },
+ "health.errors": {
+  "one": "{n} olvasási/írási hiba",
+  "other": "{n} olvasási/írási hiba"
+ },
+ "attn.full": {
+  "text": "{p}%-ban tele"
+ },
+ "sub.idle": {
+  "text": "tétlen"
+ },
+ "sub.reading": {
+  "text": "olvas {r}"
+ },
+ "sub.writing": {
+  "text": "ír {r}"
+ },
+ "sub.new": {
+  "text": "új lemez"
+ },
+ "sub.invalid": {
+  "text": "érvénytelen"
+ },
+ "sub.emulated": {
+  "text": "emulált"
+ },
+ "sub.missing": {
+  "text": "hiányzik"
+ },
+ "sub.disabled": {
+  "text": "letiltva"
+ },
+ "sub.unmountable": {
+  "text": "nem csatolható"
+ },
+ "attn.unmountable": {
+  "text": "nem csatolható"
+ },
+ "sub.spun_down": {
+  "text": "leállítva (alszik)"
+ },
+ "sub.valid": {
+  "text": "érvényes"
+ },
+ "attn.too_hot": {
+  "text": "túl forró"
+ },
+ "attn.hot": {
+  "text": "melegszik"
+ },
+ "attn.emulated": {
+  "text": "emulált"
+ },
+ "attn.emulated_why": {
+  "text": "a lemez hiányzik vagy le van tiltva; az adatait a paritásból számolja vissza"
+ },
+ "attn.invalid": {
+  "text": "érvénytelen"
+ },
+ "health.zfs": {
+  "text": "ZFS pool: {s}"
+ },
+ "attn.pool_state": {
+  "text": "a pool állapota: {s}"
+ },
+ "sub.no_parity": {
+  "text": "hiányzik · nincs lemez kijelölve"
+ },
+ "health.no_parity": {
+  "text": "nincs paritáslemez"
+ },
+ "chip.protected": {
+  "text": "PARITÁSSAL VÉDETT"
+ },
+ "chip.stopped": {
+  "text": "LEÁLLÍTVA"
+ },
+ "chip.unprotected": {
+  "text": "NEM VÉDETT"
+ },
+ "chip.emulated": {
+  "text": "EMULÁLT LEMEZ"
+ },
+ "chip.error": {
+  "text": "LEMEZHIBA"
+ },
+ "chip.degraded": {
+  "text": "SÉRÜLT PARITÁS"
+ },
+ "chip.rebuild": {
+  "text": "ÚJRAÉPÍTÉS"
+ },
+ "chip.sync": {
+  "text": "PARITÁS-SZINKRON"
+ },
+ "chip.clear": {
+  "text": "NULLÁZÁS"
+ },
+ "chip.check": {
+  "text": "PARITÁSELLENŐRZÉS"
+ },
+ "attn.unprotected": {
+  "text": "A tömb nem védett"
+ },
+ "attn.no_parity": {
+  "text": "nincs paritáslemez kijelölve"
+ },
+ "attn.parity_gone": {
+  "text": "a paritáslemez hiányzik vagy le van tiltva"
+ },
+ "attn.until_sync": {
+  "text": "a paritás-szinkron végéig"
+ },
+ "sub.checking": {
+  "text": "ellenőrzés"
+ },
+ "sub.building": {
+  "text": "építés"
+ },
+ "sub.rebuilding": {
+  "text": "újraépítés"
+ },
+ "sub.clearing": {
+  "text": "nullázás"
+ },
+ "bar.cleared": {
+  "text": "nullázva"
+ },
+ "attn.rebuilding": {
+  "text": "újraépül a paritásból"
+ },
+ "ua.pct_left": {
+  "text": "még {p}%"
+ },
+ "ua.test_running": {
+  "text": "SMART-teszt fut"
+ },
+ "ua.h_ago": {
+  "text": "{n} órája"
+ },
+ "ua.d_ago": {
+  "text": "{n} napja"
+ },
+ "ua.passed": {
+  "text": "{t} teszt sikeres"
+ },
+ "ua.aborted": {
+  "text": "{t} teszt megszakítva"
+ },
+ "ua.aborted_at": {
+  "text": "{t} teszt megszakítva, még {p}% volt hátra"
+ },
+ "ua.failed": {
+  "text": "{t} teszt hibás: {e}"
+ },
+ "attn.test_failed": {
+  "text": "nem ment át a SMART-önteszten"
+ },
+ "ua.asleep": {
+  "text": "alszik"
+ },
+ "ua.reading_smart": {
+  "text": "SMART olvasása…"
+ },
+ "pc.paused_step": {
+  "text": "preclear {s} szünetel"
+ },
+ "pc.paused": {
+  "text": "szünetel"
+ },
+ "pc.running": {
+  "text": "preclear: {s}"
+ },
+ "pc.failed_s": {
+  "text": "a preclear hibás: {s}"
+ },
+ "pc.failed": {
+  "text": "a preclear hibás"
+ },
+ "pc.done": {
+  "text": "preclear kész"
+ },
+ "pc.stopped": {
+  "text": "a preclear leállt: {s}"
+ },
+ "bar.preclear": {
+  "text": "preclear"
+ },
+ "bar.test": {
+  "text": "teszt"
+ },
+ "bal.stopped_unexpectedly": {
+  "text": "az áthelyezés váratlanul leállt"
+ },
+ "tile.reading": {
+  "text": "Lemezek olvasása…"
+ },
+ "tile.loading": {
+  "text": "Betöltés…"
+ },
+ "tile.open_main": {
+  "text": "Main megnyitása"
+ },
+ "tile.settings": {
+  "text": "Diskbox beállítások"
+ },
+ "bar.built": {
+  "text": "kész"
+ },
+ "bar.checked": {
+  "text": "ellenőrizve"
+ },
+ "attn.title": {
+  "text": "Figyelmet igényel"
+ },
+ "attn.free": {
+  "text": "{s} szabad"
+ },
+ "attn.ack": {
+  "text": "Nyugtázás"
+ },
+ "attn.ack_tip": {
+  "text": "A figyelmeztetés elfogadása; a Diskbox csak akkor jelez újra, ha rosszabb lesz"
+ },
+ "attn.ack_confirm": {
+  "text": "Nyugtázod a(z) {name} SMART-figyelmeztetését?\n\nA lemezen megmarad, de a Diskbox csak akkor figyelmeztet újra, ha rosszabb lesz."
+ },
+ "hd.array": {
+  "text": "Tömb"
+ },
+ "hd.devices": {
+  "one": "{n} eszköz",
+  "other": "{n} eszköz"
+ },
+ "card.array": {
+  "text": "TÖMB"
+ },
+ "card.used_of": {
+  "text": "{used} foglalt / {size}"
+ },
+ "bal.moving": {
+  "one": "Áthelyezés: {ok} / {n} cím",
+  "other": "Áthelyezés: {ok} / {n} cím"
+ },
+ "time.h_ago": {
+  "text": "{n} órája"
+ },
+ "time.m_ago": {
+  "text": "{n} perce"
+ },
+ "bal.finished": {
+  "one": "Kész: {ok} / {n} cím, {size}",
+  "other": "Kész: {ok} / {n} cím, {size}"
+ },
+ "bal.stopped": {
+  "one": "Leállítva: {ok} / {n} cím, {size}",
+  "other": "Leállítva: {ok} / {n} cím, {size}"
+ },
+ "bal.error": {
+  "one": "Hibával leállt: {ok} / {n} cím, {size}",
+  "other": "Hibával leállt: {ok} / {n} cím, {size}"
+ },
+ "bal.skipped": {
+  "text": "{n} kihagyva"
+ },
+ "hd.balance": {
+  "text": "Balance"
+ },
+ "hd.pool": {
+  "text": "Pool"
+ },
+ "hd.unassigned": {
+  "text": "Nem kijelölt"
+ },
+ "sum.unavailable": {
+  "text": "Nem elérhető"
+ },
+ "sum.stopped": {
+  "text": "a tömb leállítva"
+ },
+ "sum.used_of": {
+  "text": "{used} / {size} foglalt"
+ },
+ "sum.hottest": {
+  "text": "legmelegebb {t}°C"
+ },
+ "sum.tests": {
+  "one": "{n} SMART-teszt fut",
+  "other": "{n} SMART-teszt fut"
+ },
+ "sum.clearing": {
+  "text": "{disks} nullázása {p}%"
+ },
+ "sum.preclears": {
+  "one": "{n} preclear fut",
+  "other": "{n} preclear fut"
+ },
+ "err.nodata": {
+  "text": "Az Unraidtől még nincs lemezadat"
+ },
+ "err.unavailable": {
+  "text": "A lemezadatok nem elérhetők"
+ },
+ "set.h.util": {
+  "text": "Telítettség"
+ },
+ "set.h.temp": {
+  "text": "Hőmérséklet"
+ },
+ "set.h.health": {
+  "text": "Állapot"
+ },
+ "set.h.acked": {
+  "text": "Nyugtázott SMART-figyelmeztetések"
+ },
+ "set.h.discord": {
+  "text": "Discord-riasztások"
+ },
+ "set.warn_use": {
+  "text": "Figyelmeztető telítettség (%):"
+ },
+ "set.crit_use": {
+  "text": "Kritikus telítettség (%):"
+ },
+ "set.hot_temp": {
+  "text": "Meleg hőmérséklet (°C):"
+ },
+ "set.max_temp": {
+  "text": "Maximális hőmérséklet (°C):"
+ },
+ "set.smart": {
+  "text": "SMART-állapot olvasása a háttérben:"
+ },
+ "set.dc_hook": {
+  "text": "Webhook a rendszercsatornához:"
+ },
+ "set.dc_ping": {
+  "text": "Pingelés piros riasztásnál:"
+ },
+ "set.n_array": {
+  "text": "A tömb védettsége, emulált vagy hibás lemez:"
+ },
+ "set.n_temp": {
+  "text": "Lemezhőmérséklet (a fenti Meleg és Maximális határral):"
+ },
+ "set.n_smart": {
+  "text": "SMART-problémák (Pre-fail vagy Old age):"
+ },
+ "set.n_fill": {
+  "text": "Lemezek és poolok telítettsége (figyelmeztető, kritikus %):"
+ },
+ "set.n_pool": {
+  "text": "ZFS pool állapota:"
+ },
+ "set.n_parity": {
+  "text": "Paritásellenőrzés és újraépítés (indulás, eredmény):"
+ },
+ "set.n_utest": {
+  "text": "Nem kijelölt lemez SMART-öntesztje (sikeres, megszakított, hibás):"
+ },
+ "set.n_remind": {
+  "text": "Piros riasztás ismétlése (óránként):"
+ },
+ "set.wk_on": {
+  "text": "Heti összefoglaló:"
+ },
+ "set.try": {
+  "text": "Kipróbálás:"
+ },
+ "set.warn_hint": {
+  "text": "sárga a Figyelmet igényel alatt; üres = az Unraid értéke ({v}%)"
+ },
+ "set.crit_hint": {
+  "text": "piros; üres = az Unraid értéke ({v}%)"
+ },
+ "set.hot_hint": {
+  "text": "merevlemezek, sárga; üres = az Unraid értéke ({v}°C)"
+ },
+ "set.max_hint": {
+  "text": "merevlemezek, piros; üres = az Unraid értéke ({v}°C)"
+ },
+ "set.acked_at": {
+  "text": "nyugtázva: {t}"
+ },
+ "set.acked_attr": {
+  "text": "({a}. attribútum)"
+ },
+ "set.btn.forget": {
+  "text": "Elfelejt"
+ },
+ "set.saved_keep": {
+  "text": "(mentve, üresen hagyva megmarad)"
+ },
+ "set.hook_hint": {
+  "text": "a mentett webhook nem kerül az oldalra; egy - beírásával törölheted"
+ },
+ "set.ping_ph": {
+  "text": "a Discord-felhasználó ID-d, role:ID, @here vagy @everyone"
+ },
+ "set.ping_hint": {
+  "text": "üres = nincs pingelés. A sárga riasztások és a megszűnésükről szóló üzenetek sosem pingelnek"
+ },
+ "set.utest_hint": {
+  "text": "egy üzenet, amikor egy futó teszt véget ér"
+ },
+ "set.never_hint": {
+  "text": "0 = soha"
+ },
+ "date.long.mon": {
+  "text": "hétfő"
+ },
+ "date.long.tue": {
+  "text": "kedd"
+ },
+ "date.long.wed": {
+  "text": "szerda"
+ },
+ "date.long.thu": {
+  "text": "csütörtök"
+ },
+ "date.long.fri": {
+  "text": "péntek"
+ },
+ "date.long.sat": {
+  "text": "szombat"
+ },
+ "date.long.sun": {
+  "text": "vasárnap"
+ },
+ "set.oclock": {
+  "text": "órakor"
+ },
+ "set.btn.test": {
+  "text": "Tesztüzenet küldése"
+ },
+ "set.btn.sample": {
+  "text": "Mintariasztások küldése"
+ },
+ "set.btn.weekly": {
+  "text": "Heti összefoglaló küldése most"
+ },
+ "set.btn.apply": {
+  "text": "Alkalmaz"
+ },
+ "set.btn.done": {
+  "text": "Kész"
+ },
+ "set.help_tile": {
+  "text": "A Diskbox a Disk Viewer csempét váltja ki. A tömb egy kártyán látszik, alatta a paritás sorával: zöld, ha a tömb védett, sárga, amíg paritásellenőrzés vagy újraépítés fut, piros, ha nincs védelem, egy adatlemez emulált vagy egy lemez meghibásodott. A Figyelmet igényel lista gyűjti a túl teli, túl forró, SMART-figyelmeztetést mutató vagy rossz állapotú lemezeket."
+ },
+ "set.help_smart": {
+  "text": "Az SSD-k és NVMe eszközök hőmérsékleti határait az Unraid saját megjelenítési beállításaiból veszi (Settings, Display Settings). A SMART-adatokat 20 percenként gyűjti a <code>smartctl</code>; a leállított (alvó) lemezeket kihagyja, így a Diskbox sosem ébreszt fel alvó lemezt. A telítettség és a hőmérséklet színei a fenti értékeket használják, üres mező esetén az Unraid sajátjait."
+ },
+ "set.help_discord": {
+  "text": "Discord-riasztások: az Unraid percenként ellenőriz, és csak akkor ír a webhookra, ha valami változik: megjelenik egy probléma, rosszabb lesz vagy megszűnik. Hőmérsékleti riasztáshoz három egymást követő perc kell, a megszűnéshez pedig az, hogy a lemez két fokot hűljön; a piros riasztások a választott óraszám után ismétlődhetnek. Egy SMART-figyelmeztetés a Dashboard csempén a mellette lévő gombbal nyugtázható; ezután csak akkor számít újra, ha rosszabb lesz (nő az attribútum nyers értéke). Hibás állapotellenőrzés nem nyugtázható. A SMART-riasztások minden attribútumot megneveznek, megmondják, Pre-fail vagy Old age típusú-e, és mutatják a nyers értéket, az előző értéket, valamint a value, worst és threshold értékeket. A gombok a mentett beállításokkal dolgoznak, ezért előbb nyomd meg az Alkalmaz gombot. Webhookot a Discordban a csatorna beállításainál, az Integrációk, Webhookok alatt hozhatsz létre."
+ },
+ "set.sending": {
+  "text": "Küldés..."
+ },
+ "set.sent": {
+  "text": "Elküldve."
+ },
+ "set.not_sent": {
+  "text": "Nincs elküldve: {e}"
+ },
+ "set.unknown_error": {
+  "text": "ismeretlen hiba"
+ },
+ "set.forgotten": {
+  "text": "elfelejtve: ennek a lemeznek a figyelmeztetése újra számít"
+ },
+ "set.saving_s": {
+  "text": "Mentés..."
+ },
+ "set.saved": {
+  "text": "Mentve. A Dashboard néhány másodpercen belül átveszi."
+ },
+ "set.not_saved": {
+  "text": "Nincs mentve: {e}"
+ },
+ "save.err_range": {
+  "text": "{name} értéke {min} és {max} között lehet"
+ },
+ "save.err_number": {
+  "text": "{name} értéke {min} és {max} közötti szám lehet"
+ },
+ "save.err_hook": {
+  "text": "a webhook nem érvényes Discord webhook URL"
+ },
+ "save.err_ping": {
+  "text": "a ping Discord-felhasználó ID, role:<szerep ID>, @here vagy @everyone lehet"
+ },
+ "save.err_fill": {
+  "text": "a figyelmeztető telítettség nem lehet nagyobb a kritikusnál"
+ },
+ "save.err_write": {
+  "text": "nem sikerült írni a beállításfájlt"
+ },
+ "test.no_hook": {
+  "text": "Még nincs mentett érvényes Discord webhook. Add meg, nyomd meg az Alkalmaz gombot, és próbáld újra."
+ },
+ "test.no_data": {
+  "text": "Most nincs elérhető lemezadat."
+ },
+ "bal.intro": {
+  "text": "Teljes címeket (egy letöltési mappát a hardlinkelt médiafájljaival együtt) helyez át a tömb lemezei között, a hardlinkek megmaradnak. Semmi sem mozdul, amíg meg nem nyomod az Áthelyezés gombot. A <code>/mnt/user</code> alatti útvonalak nem változnak, így a qBittorrent, a Sonarr, a Radarr és a Jellyfin zavartalanul működik tovább."
+ },
+ "bal.h.activity": {
+  "text": "Tevékenység"
+ },
+ "bal.btn.stop": {
+  "text": "Leállítás e cím után"
+ },
+ "bal.log_run": {
+  "text": "A mostani futás naplója"
+ },
+ "bal.h.setup": {
+  "text": "Beállítás"
+ },
+ "bal.f.pairs": {
+  "text": "Mappák a lemezen (soronként egy pár):"
+ },
+ "bal.f.mode": {
+  "text": "Mit csináljon:"
+ },
+ "bal.f.target": {
+  "text": "Cél telítettség (%):"
+ },
+ "bal.f.strategy": {
+  "text": "Melyik címek előbb:"
+ },
+ "bal.f.disks": {
+  "text": "Bevont lemezek:"
+ },
+ "bal.f.drain": {
+  "text": "Kiürítendő lemezek:"
+ },
+ "bal.f.remove": {
+  "text": "Eltávolítandó lemezek:"
+ },
+ "bal.f.pairs_hint": {
+  "text": "letöltési mappa = médiamappa a hardlinkekkel, a lemez gyökeréhez képest (például a <code>data</code> megosztás <code>downloads/FILM</code> mappája). A letöltési mappán belüli minden közvetlen almappa egy cím. A média rész elhagyható."
+ },
+ "bal.mode.balance": {
+  "text": "Az adatok egyenletes elosztása"
+ },
+ "bal.mode.drain": {
+  "text": "Lemezek kiürítése (minden lekerül róluk)"
+ },
+ "bal.mode.remove": {
+  "text": "Lemezek eltávolítása (ürítés, ellenőrzés, kinullázás, kivétel)"
+ },
+ "bal.f.target_ph": {
+  "text": "átlag"
+ },
+ "bal.f.target_hint": {
+  "text": "üres = egyforma telítettség minden bevont lemezen (a tömb átlaga); az átlag alatti cél nem érhető el, ezért átlagra emeli"
+ },
+ "bal.strat.old": {
+  "text": "A legrégebbiek előbb"
+ },
+ "bal.strat.big": {
+  "text": "A legnagyobbak előbb"
+ },
+ "bal.f.drain_hint": {
+  "text": "A fenti mappákban minden átkerül a többi bevont lemezre: a címek a hardlinkjeikkel, a letöltés nélküli médiafájlok (.nfo, képek, feliratok is) és a Seedbox kukájának tartalma (.seedbox_trash). A terv felsorolja, mi maradna még a lemezen, így látod, kivehető-e a tömbből."
+ },
+ "bal.btn.plan": {
+  "text": "Terv készítése"
+ },
+ "rm.h2": {
+  "text": "Ne kerüljön rájuk új fájl"
+ },
+ "rm.s2": {
+  "text": "Módosítsd az itt felsorolt összes megosztást a <a href=\"/Shares\">Shares</a> oldalon: tedd a lemezeket az <b>Excluded disk(s)</b> közé (vagy vedd ki őket az Included disk(s) közül). A Diskbox csak ellenőriz, megosztást nem módosít."
+ },
+ "rm.btn.check_again": {
+  "text": "Újraellenőrzés"
+ },
+ "rm.h3": {
+  "text": "Kiürítés"
+ },
+ "rm.s3": {
+  "text": "Készíts tervet a fenti Beállításban: a terv (lent) mindent átvisz a Beállítás mappáiból a többi lemezre, utána nyomd meg az Áthelyezés gombot. Amit nem figyel (például az appdata), az a terv alatt látszik; azt helyezd át magad."
+ },
+ "rm.h4": {
+  "text": "Üresek-e?"
+ },
+ "rm.s4": {
+  "text": "Felsorol minden fájlt, ami még a lemezeken van, a rejtetteket is (az üres mappák nem számítanak). Kinullázni csak akkor lehet, ha semmi sem maradt."
+ },
+ "rm.btn.check": {
+  "text": "Lemezek ellenőrzése"
+ },
+ "rm.h5": {
+  "text": "Kinullázás"
+ },
+ "rm.s5": {
+  "text": "Minden lemezt lecsatol, és a paritáson keresztül (párhuzamosan) nullákkal tölt fel, így a paritás nélküle is érvényes marad: kb. 7 óra TB-onként. <b>Ez mindent letöröl a lemezről.</b> Ha közben leáll a szerver, újraindítás után az Unraid Unmountable állapotúnak mutatja a lemezt: <b>ne</b> formázd meg, indítsd újra itt a kinullázást."
+ },
+ "rm.h6": {
+  "text": "Kivétel a tömbből"
+ },
+ "bal.h.plan": {
+  "text": "Terv"
+ },
+ "bal.legend": {
+  "text": "kék = mostani telítettség · zöld = a kipipált áthelyezések után (sárga: nő, piros: majdnem tele) · szürke csíkos = a fájlrendszer saját helye egy kiürítendő lemezen (metaadat, nem adat; a lemezzel együtt megy) · a narancs jel a cél"
+ },
+ "bal.selall": {
+  "text": "Mind kijelöl / mind töröl"
+ },
+ "bal.all_titles": {
+  "text": "minden cím"
+ },
+ "bal.tick_hint": {
+  "text": "a javaslat ki van pipálva; a pipákat és a céllemezt kedved szerint módosíthatod"
+ },
+ "bal.skipped_bar": {
+  "text": "Kimaradó címek"
+ },
+ "bal.btn.go": {
+  "text": "A kijelölt címek áthelyezése"
+ },
+ "bal.foot": {
+  "text": "Minden címet átmásol, ellenőriz (méretek és hardlinkek), és csak ezután töröl a régi lemezről. Ha egy ellenőrzés hibát talál, a másolatot törli, és a régi fájlok maradnak. Az áthelyezés a háttérben, alacsony (idle) lemezprioritással fut; ehhez a tömbnek futnia kell, és nem futhat paritásellenőrzés, újraépítés vagy Mover. Az oldal bezárása nem állítja le."
+ },
+ "dur.hm": {
+  "text": "{h} ó {m} p"
+ },
+ "dur.ms": {
+  "text": "{m} p {s} mp"
+ },
+ "bal.no_disks": {
+  "text": "Nincs adatlemez a tömbben (fut a tömb?)"
+ },
+ "bal.used": {
+  "text": "{s} foglalt"
+ },
+ "bal.n_disks": {
+  "one": "{n} tömblemez",
+  "other": "{n} tömblemez"
+ },
+ "rm.can_write": {
+  "text": "még írhat új fájlt ide: {d}"
+ },
+ "rm.change_it": {
+  "text": "módosítás"
+ },
+ "rm.no_share": {
+  "text": "Egy megosztás sem ír ide: {d}"
+ },
+ "rm.no_share_sub": {
+  "text": "minden megosztás kizárja őket, vagy csak poolt használ"
+ },
+ "rm.done": {
+  "text": "kész"
+ },
+ "rm.n_shares": {
+  "one": "{n} megosztást kell módosítani",
+  "other": "{n} megosztást kell módosítani"
+ },
+ "rm.not_mounted": {
+  "text": "nincs csatolva"
+ },
+ "rm.used_fs": {
+  "text": "{s} foglalt (a fájlrendszer saját helyével)"
+ },
+ "rm.emptied": {
+  "text": "kiürítve"
+ },
+ "rm.after": {
+  "text": "a(z) {n}. lépés után"
+ },
+ "rm.moving": {
+  "text": "áthelyezés"
+ },
+ "rm.todo": {
+  "text": "tennivaló"
+ },
+ "rm.empty": {
+  "text": "üres"
+ },
+ "rm.files": {
+  "one": "{n} fájl",
+  "other": "{n} fájl"
+ },
+ "rm.unreadable": {
+  "text": "nem olvasható"
+ },
+ "rm.files_left": {
+  "one": "{n} fájl maradt, {s}",
+  "other": "{n} fájl maradt, {s}"
+ },
+ "rm.not_empty": {
+  "text": "nem üres"
+ },
+ "rm.checked_at": {
+  "text": "ellenőrizve: {t}"
+ },
+ "rm.left": {
+  "text": "még {t}"
+ },
+ "rm.zeros": {
+  "text": "nullák írása a paritáson keresztül"
+ },
+ "rm.clearing": {
+  "text": "nullázás"
+ },
+ "rm.clearing_d": {
+  "text": "{d} kinullázása"
+ },
+ "rm.zeroed": {
+  "text": "{d} kinullázva"
+ },
+ "rm.zeroed_sub": {
+  "text": "ellenőrizve: a lemez vége nullát olvas"
+ },
+ "rm.ready": {
+  "text": "kivehető"
+ },
+ "rm.stopped_at": {
+  "text": "{d}: a kinullázás leállt {p} %-nál"
+ },
+ "rm.see_log_again": {
+  "text": "nézd meg a naplót; ha az ok megszűnt, indítsd újra"
+ },
+ "rm.not_started": {
+  "text": "{d}: a kinullázás nem indult el"
+ },
+ "rm.see_log": {
+  "text": "lásd a naplót"
+ },
+ "rm.type_confirm": {
+  "text": "A megerősítéshez írd be: {names}"
+ },
+ "rm.btn.clear": {
+  "text": "{d} kinullázása"
+ },
+ "rm.log": {
+  "text": "A kinullázás naplója"
+ },
+ "rm.running": {
+  "text": "fut"
+ },
+ "rm.log_empty": {
+  "text": "üres"
+ },
+ "rm.out": {
+  "text": "{d} kikerült a tömbből"
+ },
+ "rm.btn.finish": {
+  "text": "Befejezés"
+ },
+ "rm.nc1": {
+  "text": "Main &rarr; a tömb leállítása (<b>Stop</b>)."
+ },
+ "rm.nc2": {
+  "text": "Tools &rarr; <b>New Config</b> &rarr; Preserve current assignments: <b>All</b> &rarr; Apply."
+ },
+ "rm.nc3": {
+  "text": "Main &rarr; a(z) {d} legyen <b>no device</b>; a többi helyet hagyd, ahogy van."
+ },
+ "rm.nc4": {
+  "text": "Pipáld ki: <b>Parity is already valid</b> &rarr; <b>Start</b>."
+ },
+ "rm.nc5": {
+  "text": "Állítsd le a szervert, és vedd ki: {ids}."
+ },
+ "rm.ready_turn": {
+  "text": "Kész: te jössz"
+ },
+ "rm.your_turn": {
+  "text": "te jössz"
+ },
+ "rm.aband": {
+  "text": "{d} kinullázása"
+ },
+ "rm.checking": {
+  "text": "Ellenőrzés..."
+ },
+ "rm.confirm": {
+  "text": "Kinullázod: {d}?\n\nMinden lemezt lecsatol, és minden bájtját nullával írja felül (a paritáson keresztül, így a paritás érvényes marad). Ez nem vonható vissza."
+ },
+ "bal.plus_fs": {
+  "text": "+ {s} fájlrendszer"
+ },
+ "bal.chip_empty": {
+  "text": "ürítés"
+ },
+ "bal.bars_tip": {
+  "text": "most {now}%, utána {after}%"
+ },
+ "bal.bars_tip_fs": {
+  "text": ", ebből {s} a fájlrendszer saját helye (metaadat), nem adat"
+ },
+ "bal.n_titles": {
+  "one": "{n} cím",
+  "other": "{n} cím"
+ },
+ "bal.n_media": {
+  "one": "{n} csak média elem",
+  "other": "{n} csak média elem"
+ },
+ "bal.ticked": {
+  "text": "{sel} / {n} kipipálva"
+ },
+ "bal.to": {
+  "text": "ide: {d}"
+ },
+ "bal.btn.go_n": {
+  "one": "{n} cím áthelyezése ({s})",
+  "other": "{n} cím áthelyezése ({s})"
+ },
+ "bal.waits": {
+  "text": "Az áthelyezés vár: {why}."
+ },
+ "bal.pb_empty": {
+  "text": "ürítés: {d}"
+ },
+ "bal.pb_spread": {
+  "text": "egyenletes elosztás"
+ },
+ "bal.pb_spread_to": {
+  "text": "egyenletes elosztás {p}%-ra"
+ },
+ "bal.selall_disk": {
+  "text": "Minden kijelölése / törlése erről a lemezről"
+ },
+ "bal.from": {
+  "text": "Innen: {d}"
+ },
+ "bal.also_on": {
+  "text": "a mappa itt is megvan: {d}"
+ },
+ "bal.no_other": {
+  "text": "más lemezen nincs"
+ },
+ "bal.vid_nodl": {
+  "text": "videó letöltés nélkül"
+ },
+ "bal.more": {
+  "text": "Még {m} mutatása ({n} van hátra)"
+ },
+ "bal.lib_tip": {
+  "text": "A lemez médiamappáiban lévő fájlok, amelyeknek nincs hardlinkjük (hardlink nem mehet át másik lemezre, így sehol sincs párjuk). Többnyire képek és .nfo fájlok, amelyeket a Radarr, a Sonarr vagy a Jellyfin írt egy olyan film mellé, amelynek a videója és a letöltése másik lemezen van. Ha itt videófájl van, annak elveszett a letöltése: semmi sem seedeli."
+ },
+ "bal.lib_bar": {
+  "text": "Könyvtárfájlok hardlink nélkül"
+ },
+ "bal.n_folders": {
+  "one": "{n} mappa",
+  "other": "{n} mappa"
+ },
+ "bal.n_also": {
+  "text": "{n} másik lemezen is"
+ },
+ "bal.n_only": {
+  "text": "{n} csak itt"
+ },
+ "bal.n_vid": {
+  "one": "{n} videófájl letöltés nélkül",
+  "other": "{n} videófájl letöltés nélkül"
+ },
+ "bal.nothing": {
+  "text": "Nincs mit áthelyezni: a lemezek kiegyenlítettek, vagy egy cím sem helyezhető át."
+ },
+ "bal.stays": {
+  "text": "A kiürítendő lemezen marad (a fenti mappákon kívül van, vagy kimaradt; helyezd át vagy töröld magad)"
+ },
+ "bal.nothing_stays": {
+  "text": "A kipipált címek áthelyezése után semmi más nem marad a kiürítendő lemezen"
+ },
+ "bal.scanning": {
+  "text": "Keresés..."
+ },
+ "bal.saving": {
+  "text": "Mentés..."
+ },
+ "bal.scanning_long": {
+  "text": "A lemezek átnézése, ez eltarthat egy percig..."
+ },
+ "bal.confirm": {
+  "one": "Áthelyezel {n} címet ({s}) a lemezek között?\n\nA fájlokat átmásolja, ellenőrzi, és csak utána törli a régi lemezről. Ez órákig tarthat. Ha lehet, előbb szüneteltesd vagy állítsd le ezeknek a címeknek a torrentjeit.",
+  "other": "Áthelyezel {n} címet ({s}) a lemezek között?\n\nA fájlokat átmásolja, ellenőrzi, és csak utána törli a régi lemezről. Ez órákig tarthat. Ha lehet, előbb szüneteltesd vagy állítsd le ezeknek a címeknek a torrentjeit."
+ },
+ "run.moving": {
+  "text": "Áthelyezés"
+ },
+ "run.finished": {
+  "text": "Kész"
+ },
+ "run.stopped": {
+  "text": "Leállítva"
+ },
+ "run.error": {
+  "text": "Hibával leállt"
+ },
+ "run.line": {
+  "text": "{ok} / {n} cím · {done} / {total} ({p}%)"
+ },
+ "run.aband": {
+  "text": "áthelyezés folyamatban · {p}%"
+ },
+ "run.of_titles": {
+  "one": "{ok} / {n} cím",
+  "other": "{ok} / {n} cím"
+ },
+ "it.wait": {
+  "text": "vár"
+ },
+ "it.run": {
+  "text": "mozog"
+ },
+ "it.ok": {
+  "text": "kész"
+ },
+ "it.skip": {
+  "text": "kihagyva"
+ },
+ "it.fail": {
+  "text": "HIBA"
+ },
+ "run.more_waiting": {
+  "text": "még {n} vár"
+ },
+ "run.not_moved": {
+  "text": "{n} nincs áthelyezve"
+ },
+ "run.n_skipped": {
+  "text": "{n} kihagyva"
+ },
+ "run.n_done": {
+  "text": "{n} kész"
+ },
+ "run.lines": {
+  "one": "{n} sor",
+  "other": "{n} sor"
+ },
+ "hist.title": {
+  "text": "Korábbi áthelyezések"
+ },
+ "hist.runs": {
+  "one": "{n} futás",
+  "other": "{n} futás"
+ },
+ "hist.stopped": {
+  "text": "{n} leállítva"
+ },
+ "hist.last": {
+  "text": "utoljára: {d}"
+ },
+ "hist.none": {
+  "text": "Még nem volt áthelyezés."
+ },
+ "hist.idle": {
+  "text": "nem fut semmi"
+ },
+ "hist.idle_last": {
+  "text": "nem fut semmi · utolsó áthelyezés: {d}"
+ },
+ "why.not_started": {
+  "text": "a tömb nem fut"
+ },
+ "why.resync": {
+  "text": "paritásellenőrzés vagy újraépítés fut"
+ },
+ "why.mover": {
+  "text": "a Mover fut"
+ },
+ "skip.shares": {
+  "text": "fájlokon osztozik egy másik címmel"
+ },
+ "skip.outside": {
+  "text": "a beállított mappákon kívül is vannak hardlinkjei"
+ },
+ "skip.partial": {
+  "text": "befejezetlennek tűnik (részleges letöltés)"
+ },
+ "skip.recent": {
+  "text": "az elmúlt 2 órában változott"
+ },
+ "plan.two_disks": {
+  "text": "Legalább két adatlemezt be kell vonni."
+ },
+ "plan.no_pair": {
+  "text": "Nincs érvényes mappapár beállítva."
+ },
+ "plan.target_raised": {
+  "text": "A tömb egésze {avg}%-ban tele, így a {req}% nem érhető el; helyette {avg}%-ra egyenlít ki."
+ },
+ "plan.balanced": {
+  "text": "A lemezek már kiegyenlítettek."
+ },
+ "plan.tick_drain": {
+  "text": "Pipálj ki legalább egy kiürítendő lemezt."
+ },
+ "plan.one_stays": {
+  "text": "Legalább egy bevont lemeznek maradnia kell, hogy fogadja az adatokat."
+ },
+ "run.died": {
+  "text": "A háttérfolyamat váratlanul leállt."
+ },
+ "err.bad_line": {
+  "text": "Érvénytelen mappasor: {line} (a lemez gyökeréhez képesti útvonalat adj meg, például data/downloads/FILM = data/media/film)"
+ },
+ "err.no_folder": {
+  "text": "Adj meg legalább egy letöltési mappát."
+ },
+ "err.target": {
+  "text": "A cél telítettség 5 és 95 százalék között lehet."
+ },
+ "err.write": {
+  "text": "nem sikerült menteni a beállításokat"
+ },
+ "err.running": {
+  "text": "Áthelyezés fut."
+ },
+ "err.already": {
+  "text": "Már fut egy áthelyezés."
+ },
+ "err.no_plan": {
+  "text": "Előbb készíts tervet."
+ },
+ "err.nothing": {
+  "text": "Nincs semmi kijelölve."
+ },
+ "err.bad_sel": {
+  "text": "Érvénytelen kijelölés."
+ },
+ "err.tick_remove": {
+  "text": "Pipáld ki az eltávolítandó lemez(eke)t."
+ },
+ "err.tick_drain": {
+  "text": "Pipáld ki a kiürítendő lemez(eke)t."
+ },
+ "err.cannot_plan": {
+  "text": "Most nem lehet tervezni: {why}."
+ },
+ "err.cannot_start": {
+  "text": "Nem indítható: {why}."
+ },
+ "why.disk_not_ok": {
+  "text": "{d} nincs rendben ({s})"
+ },
+ "why.no_parity": {
+  "text": "nincs paritáslemez"
+ },
+ "rm.err.choose": {
+  "text": "Előbb válaszd a Beállításban a Lemezek eltávolítása módot, és pipáld ki a lemezeket."
+ },
+ "rm.err.move_check": {
+  "text": "Áthelyezés fut; ellenőrizd, ha véget ért."
+ },
+ "rm.err.step2": {
+  "text": "Előbb a 2. lépés: egy megosztás még írhat a lemezekre."
+ },
+ "rm.err.step4": {
+  "text": "Előbb a 4. lépés: ellenőrizd, hogy a lemezek üresek."
+ },
+ "rm.err.clearing": {
+  "text": "Kinullázás fut."
+ },
+ "rm.err.cannot": {
+  "text": "Nem nullázható ki: {why}."
+ },
+ "rm.err.nodev": {
+  "text": "A(z) {d} paritással védett eszköze nem található."
+ },
+ "run.nothing": {
+  "text": "Nincs mit áthelyezni."
+ },
+ "run.gone": {
+  "text": "egy fájl eltűnt a forrásról"
+ },
+ "run.exists": {
+  "text": "egy fájl már létezik a célon"
+ },
+ "run.changed": {
+  "text": "egy fájl az elmúlt 2 órában változott"
+ },
+ "run.links": {
+  "text": "a hardlinkek változtak a keresés óta"
+ },
+ "run.space": {
+  "text": "nincs elég szabad hely itt: {d}"
+ },
+ "run.verify": {
+  "text": "az ellenőrzés hibát talált: {p}"
+ },
+ "run.verify_link": {
+  "text": "az ellenőrzés hibát talált: a hardlink nem maradt meg ({p})"
+ },
+ "run.verify_count": {
+  "text": "az ellenőrzés hibát talált: linkszám ({p})"
+ },
+ "run.stopped_copy": {
+  "text": "leállítva, a másolat törölve"
+ },
+ "run.rm_fail": {
+  "text": "nem sikerült törölni a forrásfájlokat"
+ },
+ "run.rm_fail_t": {
+  "text": "nem sikerült törölni a(z) {t} forrásfájljait"
+ },
+ "rm.err.step2_shares": {
+  "text": "Előbb a 2. lépés: {l} még írhat az eltávolítandó lemezekre."
+ },
+ "run.fatal_why": {
+  "text": "Leállítva: {why}."
+ },
+ "run.stopped_msg": {
+  "text": "Leállítva."
+ },
+ "bal.btn.stop_now": {
+  "text": "Leállítás most"
+ },
+ "bal.stopping_after": {
+  "text": "Leáll e cím után..."
+ },
+ "bal.stop_now_confirm": {
+  "text": "Leállítod most?\n\nA másolás alatt álló címet visszagörgeti: a másolatát törli a céllemezről, az eredeti a helyén marad. Az eddigi másolás rajta elvész. A Leállítás e cím után gomb ezzel szemben befejezi."
+ }
+}

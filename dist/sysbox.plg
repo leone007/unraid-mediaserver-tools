@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.22m">
+<!ENTITY version   "2026.10.22n">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
+###2026.10.22m
 - The texts of the tile, the settings page, the Snapshots, Safe shutdown and Update manager pages and the Claude button come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet
 ###2026.10.22l
 - Language block: saving failed with csrf token mismatch (Unraid checks the token itself and then removes it from the request); fixed
@@ -487,7 +489,7 @@ $(function () {
     $.each(list, function (i, s) {
       var lv = s.level || '';
       $box.append(el('sx-r mt-r mt-n mt-s-' + (lv === 'rd' ? 'red' : (lv === 'a' ? 'amber' : 'green'))).css('grid-template-columns', '108px minmax(0,1fr) 44px').append(
-        el('').append(txt('div', 'sx-nm', s.label), txt('div', 'sx-sub', fmtB(s.used) + ' of ' + fmtB(s.size, false, true))),
+        el('').append(txt('div', 'sx-nm', s.label), txt('div', 'sx-sub', T('sto.of', { used: fmtB(s.used), size: fmtB(s.size, false, true) }))),
         el('sx-tr').append($('<i>').addClass(lv).css('width', Math.min(100, s.pct) + '%')),
         $('<span class="sx-val">').append($('<b>').addClass(LV[lv] || '').text(pct0(s.pct)))));
     });
@@ -2612,7 +2614,7 @@ Settings: Settings, Utilities, Sysbox (or the gear icon on the tile).
 <INLINE><![CDATA[<?php
 // Shared language setting of the media server tools (Sysbox, Diskbox, Seedbox, Streambox): one file on the
 // flash drive that every plugin reads, so changing it on any settings page changes it for all of them.
-//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en
+//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en | hu
 //   discord = auto (follow Unraid) | en | hu
 // A language the pages or Discord are not translated to falls back to English. Every plugin ships its own
 // copy of this file; the guard keeps a second copy from being declared again in the same request.
@@ -2620,7 +2622,7 @@ if (!function_exists('mt_lang_cfg')) {
 
 define('MT_LANG_FILE', '/boot/config/plugins/mediaserver-tools/lang.cfg');
 
-function mt_lang_have($what) { return $what === 'discord' ? ['en', 'hu'] : ['en']; }
+function mt_lang_have($what) { return ['en', 'hu']; }
 
 // Unraid's display language as a locale ('' = English, the built-in one)
 function mt_lang_unraid() {
@@ -2735,6 +2737,7 @@ $mtl_sel = function ($a, $b) { return $a === $b ? ' selected' : ''; };
         <select id="mtl-ui">
           <option value="auto"<?=$mtl_sel($mtl_c['ui'], 'auto')?>>Follow Unraid (now: <?=$mtl_h($mtl_ui_now)?>)</option>
           <option value="en"<?=$mtl_sel($mtl_c['ui'], 'en')?>>English</option>
+          <option value="hu"<?=$mtl_sel($mtl_c['ui'], 'hu')?>>Magyar</option>
         </select>
         <span class="mtl-hint">Unraid's language is set under Settings, Display Settings. A language the plugins are not translated to yet shows in English. More languages come here as they are translated.</span>
       </div>
@@ -2930,6 +2933,10 @@ function mt_i18n_js($dir, $name, $only = null) {
  "sto.title": {
   "text": "Storage",
   "note": "band title of the boot, log and Docker vdisk usage (upper case on screen)."
+ },
+ "sto.of": {
+  "text": "{used} of {size}",
+  "note": "grey line under BOOT, LOG and DOCKER VDISK in the Storage part: used and total size, like \"1.32 GB of 14.4 GB\"."
  },
  "cpu.cores": {
   "text": "{c} cores / {t} threads",
@@ -4939,6 +4946,1570 @@ function mt_i18n_js($dir, $name, $only = null) {
  "ut.ab_last": {
   "text": "last announce {t} ago ({ch})",
   "note": "added to it ({t} like 12 min, {ch} the IRC channel)."
+ }
+}]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- HUNGARIAN DICTIONARY -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/lang/hu.json">
+<INLINE><![CDATA[{
+ "_meta": {
+  "language": "Magyar",
+  "translator": "Claude (AI), átnézendő"
+ },
+ "tile.reading": {
+  "text": "Rendszer olvasása…"
+ },
+ "tile.loading": {
+  "text": "Betöltés…"
+ },
+ "tile.open_docker": {
+  "text": "Docker megnyitása"
+ },
+ "tile.settings": {
+  "text": "Sysbox beállítások"
+ },
+ "attn.title": {
+  "text": "Figyelmet igényel"
+ },
+ "attn.free": {
+  "text": "{s} szabad"
+ },
+ "ram.usable": {
+  "text": "használható {s}"
+ },
+ "ram.used_of": {
+  "text": "{used} foglalt / {total}"
+ },
+ "ram.system": {
+  "text": "Rendszer"
+ },
+ "ram.zfs": {
+  "text": "ZFS cache"
+ },
+ "ram.free": {
+  "text": "Szabad"
+ },
+ "sto.title": {
+  "text": "Tárhely"
+ },
+ "sto.of": {
+  "text": "{used} / {size}"
+ },
+ "cpu.cores": {
+  "text": "{c} mag / {t} szál"
+ },
+ "cpu.load": {
+  "text": "Terhelés"
+ },
+ "cpu.temp": {
+  "text": "Hőfok"
+ },
+ "cpu.power": {
+  "text": "Fogyasztás"
+ },
+ "cpu.clock": {
+  "text": "Órajel"
+ },
+ "cpu.loadavg": {
+  "text": "átl. terhelés {v}"
+ },
+ "cpu.hottest": {
+  "text": "legmelegebb mag {t}°C"
+ },
+ "cpu.last_min": {
+  "text": "utolsó {n} perc"
+ },
+ "cpu.thread_tip": {
+  "text": "{i}. szál: {p}%"
+ },
+ "cpu.per_thread": {
+  "text": "szálanként"
+ },
+ "gpu.unavailable": {
+  "text": "nem elérhető"
+ },
+ "gpu.video": {
+  "text": "Videó"
+ },
+ "gpu.render": {
+  "text": "Render"
+ },
+ "gpu.idle": {
+  "text": "tétlen"
+ },
+ "gpu.active": {
+  "text": "aktív"
+ },
+ "pow.title": {
+  "text": "Áram"
+ },
+ "pow.socket": {
+  "text": "okoskonnektor"
+ },
+ "pow.unreachable": {
+  "text": "A konnektor nem érhető el"
+ },
+ "pow.wall": {
+  "text": "Fal"
+ },
+ "pow.today": {
+  "text": "Ma"
+ },
+ "pow.month": {
+  "text": "E hónap"
+ },
+ "pow.cost": {
+  "text": "Költség"
+ },
+ "con.stopped": {
+  "text": "LEÁLLÍTVA"
+ },
+ "con.created": {
+  "text": "LÉTREHOZVA"
+ },
+ "con.restarting": {
+  "text": "ÚJRAINDUL"
+ },
+ "con.paused": {
+  "text": "SZÜNETEL"
+ },
+ "con.dead": {
+  "text": "HALOTT"
+ },
+ "con.removing": {
+  "text": "TÖRLÉS"
+ },
+ "con.starting": {
+  "text": "INDUL"
+ },
+ "con.stopping": {
+  "text": "LEÁLL"
+ },
+ "con.unhealthy": {
+  "text": "BETEG"
+ },
+ "con.title": {
+  "text": "Konténerek"
+ },
+ "con.no_docker": {
+  "text": "A Docker nem fut"
+ },
+ "con.selected": {
+  "text": "kiválasztott"
+ },
+ "con.top": {
+  "text": "A {n} legterheltebb konténer · {by} szerint"
+ },
+ "con.cpu_tip": {
+  "text": "CPU: egy mag {p}%-a"
+ },
+ "con.restart": {
+  "text": "Újraindítás"
+ },
+ "con.stop": {
+  "text": "Leállítás"
+ },
+ "con.start": {
+  "text": "Indítás"
+ },
+ "con.log": {
+  "text": "Napló"
+ },
+ "con.stop_q": {
+  "text": "Leállítod: {name}?"
+ },
+ "con.cancel": {
+  "text": "Mégse"
+ },
+ "log.refresh": {
+  "text": "Frissítés"
+ },
+ "log.copy": {
+  "text": "Másolás"
+ },
+ "log.close": {
+  "text": "Bezárás"
+ },
+ "log.err": {
+  "text": "a napló nem olvasható"
+ },
+ "sum.unavailable": {
+  "text": "Nem elérhető"
+ },
+ "sum.no_data": {
+  "text": "A rendszeradatok nem elérhetők"
+ },
+ "sum.up": {
+  "text": "fut {t}"
+ },
+ "attn.used": {
+  "text": "{p}%-ban foglalt"
+ },
+ "attn.full": {
+  "text": "{p}%-ban tele"
+ },
+ "sto.vdisk": {
+  "text": "DOCKER VDISK"
+ },
+ "attn.too_hot": {
+  "text": "túl forró"
+ },
+ "attn.hot": {
+  "text": "melegszik"
+ },
+ "attn.restarting": {
+  "text": "újraindulásokba ragadt"
+ },
+ "attn.unhealthy": {
+  "text": "beteg (health check hiba)"
+ },
+ "set.h.tile": {
+  "text": "Dashboard csempe"
+ },
+ "set.h.tile_sub": {
+  "text": "kapcsolj ki egy részt, válaszd ki, mit mutasson; a nyilakkal a sorrend változik"
+ },
+ "set.h.con": {
+  "text": "Konténerek"
+ },
+ "set.h.limits": {
+  "text": "Határok (figyelmeztető, kritikus)"
+ },
+ "set.h.socket": {
+  "text": "Okoskonnektor (Shelly, Gen2 és újabb)"
+ },
+ "set.h.discord": {
+  "text": "Discord-riasztások"
+ },
+ "blk.ram_leg": {
+  "text": "bontás (Rendszer, ZFS cache, Docker, Szabad)"
+ },
+ "blk.sto_hint": {
+  "text": "boot meghajtó, napló és Docker vdisk; a határok lent vannak"
+ },
+ "blk.cpu_load": {
+  "text": "Terhelés (összes)"
+ },
+ "blk.cpu_temp": {
+  "text": "Hőmérséklet"
+ },
+ "blk.cpu_pow": {
+  "text": "CPU-tok fogyasztása"
+ },
+ "blk.cpu_hist": {
+  "text": "Előzménygrafikon"
+ },
+ "blk.cpu_per": {
+  "text": "Szálanként"
+ },
+ "blk.cpu_la": {
+  "text": "Átlagos terhelés (lábléc)"
+ },
+ "blk.gpu_hint": {
+  "text": "Intel Quick Sync (intel_gpu_top): videó- és renderterhelés"
+ },
+ "blk.pow_w": {
+  "text": "Fal (W)"
+ },
+ "blk.pow_day": {
+  "text": "Ma (kWh)"
+ },
+ "blk.pow_mon": {
+  "text": "E hónap (kWh)"
+ },
+ "blk.pow_name": {
+  "text": "A konnektor neve"
+ },
+ "blk.pow_hint": {
+  "text": "A Ma érték éjféltől számol a konnektor saját energiaszámlálójával. A konnektor címe és az ár lent, az Okoskonnektor résznél van. A szünetmentes (UPS) adataihoz UPS-adatkábel kell; az Unraid most nem lát UPS-t."
+ },
+ "blk.con_hint": {
+  "text": "melyek, hány sor, gombok és naplók: lent, a Konténerek résznél"
+ },
+ "set.up": {
+  "text": "Feljebb"
+ },
+ "set.down": {
+  "text": "Lejjebb"
+ },
+ "set.graph": {
+  "text": "grafikon"
+ },
+ "set.refresh": {
+  "text": "frissítés"
+ },
+ "set.clk_refresh": {
+  "text": "órajel frissítése"
+ },
+ "set.hist_hint": {
+  "text": "Az utolsó óra terhelését a háttérben rögzíti, így a grafikon az oldal megnyitásakor már tele van. A ritkább frissítés kíméli a szervert."
+ },
+ "set.attn_note": {
+  "text": "A Figyelmet igényel lista mindig a csempe tetején marad, akármi van kikapcsolva."
+ },
+ "set.top_mode": {
+  "text": "Melyik konténerek:"
+ },
+ "set.top_n": {
+  "text": "Sorok száma (legterheltebbek):"
+ },
+ "set.sel": {
+  "text": "Kiválasztott konténerek:"
+ },
+ "set.controls": {
+  "text": "Indítás, leállítás és újraindítás gombok:"
+ },
+ "set.logs": {
+  "text": "Napló gomb:"
+ },
+ "set.log_lines": {
+  "text": "Megjelenített naplósorok:"
+ },
+ "set.ram": {
+  "text": "Foglalt RAM, % (a ZFS cache nem számít bele):"
+ },
+ "set.log": {
+  "text": "Napló fájlrendszer, %:"
+ },
+ "set.vd": {
+  "text": "Docker vdisk, %:"
+ },
+ "set.temp": {
+  "text": "CPU-hőmérséklet, °C:"
+ },
+ "set.sock_host": {
+  "text": "Konnektor címe:"
+ },
+ "set.sock_id": {
+  "text": "Konnektor csatornája:"
+ },
+ "set.price": {
+  "text": "Áramár kWh-nként (nem kötelező):"
+ },
+ "set.dc_hook": {
+  "text": "Webhook a rendszercsatornához:"
+ },
+ "set.dc_ping": {
+  "text": "Pingelés piros riasztásnál:"
+ },
+ "set.n_con": {
+  "text": "Konténerek (váratlan leállás, újraindulási hurok, beteg):"
+ },
+ "set.n_ram": {
+  "text": "Memória (a fenti határokkal):"
+ },
+ "set.n_sto": {
+  "text": "Boot meghajtó, napló és Docker vdisk:"
+ },
+ "set.n_cpu": {
+  "text": "CPU-hőmérséklet:"
+ },
+ "set.n_boot": {
+  "text": "A szerver újraindult:"
+ },
+ "set.n_remind": {
+  "text": "Piros riasztás ismétlése (óránként):"
+ },
+ "set.wk_on": {
+  "text": "Heti összefoglaló:"
+ },
+ "set.try": {
+  "text": "Kipróbálás:"
+ },
+ "set.mode_cpu": {
+  "text": "A CPU szerint legterheltebbek"
+ },
+ "set.mode_ram": {
+  "text": "A RAM szerint legterheltebbek"
+ },
+ "set.mode_sel": {
+  "text": "Az általam lent kiválasztottak"
+ },
+ "set.no_con": {
+  "text": "Nincs konténer (a Docker nem fut, vagy nincs egy sem)."
+ },
+ "set.controls_hint": {
+  "text": "leállítás előtt megerősítést kér"
+ },
+ "set.price_ph": {
+  "text": "pl. 36"
+ },
+ "set.saved_keep": {
+  "text": "(mentve, üresen hagyva megmarad)"
+ },
+ "set.hook_hint": {
+  "text": "a mentett webhook nem kerül az oldalra; egy - beírásával törölheted"
+ },
+ "set.ping_ph": {
+  "text": "a Discord-felhasználó ID-d, role:ID, @here vagy @everyone"
+ },
+ "set.ping_hint": {
+  "text": "üres = nincs pingelés. A sárga riasztások és a megszűnésükről szóló üzenetek sosem pingelnek"
+ },
+ "set.never": {
+  "text": "0 = soha"
+ },
+ "date.long.mon": {
+  "text": "hétfő"
+ },
+ "date.long.tue": {
+  "text": "kedd"
+ },
+ "date.long.wed": {
+  "text": "szerda"
+ },
+ "date.long.thu": {
+  "text": "csütörtök"
+ },
+ "date.long.fri": {
+  "text": "péntek"
+ },
+ "date.long.sat": {
+  "text": "szombat"
+ },
+ "date.long.sun": {
+  "text": "vasárnap"
+ },
+ "set.oclock": {
+  "text": "órakor"
+ },
+ "set.btn.test": {
+  "text": "Tesztüzenet küldése"
+ },
+ "set.btn.sample": {
+  "text": "Mintariasztások küldése"
+ },
+ "set.btn.weekly": {
+  "text": "Heti összefoglaló küldése most"
+ },
+ "set.btn.apply": {
+  "text": "Alkalmaz"
+ },
+ "set.btn.done": {
+  "text": "Kész"
+ },
+ "set.help_tile": {
+  "text": "A Sysbox a System és a Processor csempét váltja ki (ezeket rejtsd el a Dashboard csempekezelésében), és bekapcsolva átveszi a Streambox csempe szerverterhelés-részét is. A konténergombok a Docker parancssorát használják, egy létező konténer pontos nevével; mást nem lehet a Dashboardról indítani. A statisztikát, a GPU- és a konnektoradatokat csak akkor gyűjti a háttérben, amíg a Dashboard nyitva van. A havi energiaérték a konnektor saját számlálója a hónap 1-je óta, és egy kis cron-feladat akkor is pontosan tartja, ha senki sem nézi a Dashboardot."
+ },
+ "set.help_discord": {
+  "text": "Discord-riasztások: az Unraid percenként ellenőriz, és csak akkor ír a webhookra, ha valami változik: megjelenik egy probléma, rosszabb lesz vagy megszűnik. A normálisan (0-s kóddal vagy sima leállítással) vagy a Dashboard gombjával leállított konténert nem jelenti; azt igen, amelyik összeomlik, kilövik vagy kifut a memóriából. A memória, a CPU-hőmérséklet és a beteg állapot csak akkor kerül jelentésre, ha néhány percig tart, újraindulási hurok pedig az, ha tíz percen belül háromszor újraindul. A piros riasztások a választott óraszám után ismétlődhetnek. A gombok a mentett beállításokkal dolgoznak, ezért előbb nyomd meg az Alkalmaz gombot. Webhookot a Discordban a csatorna beállításainál, az Integrációk, Webhookok alatt hozhatsz létre."
+ },
+ "set.sending": {
+  "text": "Küldés..."
+ },
+ "set.saving": {
+  "text": "Mentés..."
+ },
+ "set.saved": {
+  "text": "Mentve. A Dashboard néhány másodpercen belül átveszi."
+ },
+ "set.not_saved": {
+  "text": "Nincs mentve: {e}"
+ },
+ "set.unknown_error": {
+  "text": "ismeretlen hiba"
+ },
+ "set.sent": {
+  "text": "Elküldve."
+ },
+ "set.not_sent": {
+  "text": "Nincs elküldve: {e}"
+ },
+ "save.err_number": {
+  "text": "{name} értéke {min} és {max} közötti szám lehet"
+ },
+ "save.err_hook": {
+  "text": "a webhook nem érvényes Discord webhook URL"
+ },
+ "save.err_secs": {
+  "text": "{name} értéke ezek egyike lehet: {list} másodperc"
+ },
+ "save.err_ping": {
+  "text": "a ping Discord-felhasználó ID, role:<role ID>, @here vagy @everyone lehet"
+ },
+ "save.err_mode": {
+  "text": "ismeretlen konténermód"
+ },
+ "save.err_sock": {
+  "text": "a konnektor címe csak betűt, számot, pontot és kötőjelet tartalmazhat"
+ },
+ "save.err_price": {
+  "text": "az áramárnak számnak kell lennie"
+ },
+ "save.err_limits": {
+  "text": "a figyelmeztető határ nem lehet nagyobb a kritikusnál"
+ },
+ "save.err_write": {
+  "text": "nem sikerült írni a beállításfájlt"
+ },
+ "test.no_hook": {
+  "text": "Még nincs mentett érvényes Discord webhook. Add meg, nyomd meg az Alkalmaz gombot, és próbáld újra."
+ },
+ "snp.intro": {
+  "text": "A ZFS-pillanatkép (snapshot) a datasetet úgy fagyasztja be, ahogy éppen van: eleinte szinte nem foglal helyet, és csak a változásokkal nő. A konténerfrissítések előtti napi pillanatképből bármelyik konténer adatait visszahozhatod az elmúlt napokból. A teljes datasetet sosem görgeti vissza; egyetlen konténer állítható vissza, előtte egy biztonsági pillanatképpel."
+ },
+ "snp.h.activity": {
+  "text": "Tevékenység"
+ },
+ "snp.loading": {
+  "text": "Betöltés..."
+ },
+ "snp.h.datasets": {
+  "text": "Datasetek"
+ },
+ "snp.h.settings": {
+  "text": "Beállítások"
+ },
+ "snp.h.settings_sub": {
+  "text": "napi pillanatképek"
+ },
+ "ago.d": {
+  "text": "{n} napja"
+ },
+ "ago.h": {
+  "text": "{n} órája"
+ },
+ "ago.m": {
+  "text": "{n} perce"
+ },
+ "snp.restoring": {
+  "text": "{c} visszaállítása innen: {s}"
+ },
+ "snp.earlier": {
+  "text": "Korábbi sorok"
+ },
+ "snp.lines": {
+  "one": "{n} sor",
+  "other": "{n} sor"
+ },
+ "snp.nothing": {
+  "text": "Még nem történt semmi. Az első napi pillanatkép {t}-kor készül."
+ },
+ "snp.ab_restoring": {
+  "text": "{c} visszaállítása"
+ },
+ "snp.ab_last": {
+  "text": "utolsó: {t}"
+ },
+ "snp.ab_nothing": {
+  "text": "még semmi"
+ },
+ "snp.no_zfs": {
+  "text": "Ezen a szerveren nincs ZFS (nincs pool)."
+ },
+ "snp.free": {
+  "text": "{s} szabad"
+ },
+ "snp.daily": {
+  "text": "napi"
+ },
+ "snp.n_snaps": {
+  "one": "{n} pillanatkép",
+  "other": "{n} pillanatkép"
+ },
+ "snp.held": {
+  "text": "{s} lekötve"
+ },
+ "snp.pool_full": {
+  "text": "a pool {p} %-ban tele"
+ },
+ "snp.browse": {
+  "text": "Minden pillanatkép mappaként böngészhető: {path}. Egy konténert a pillanatkép alatti gombbal lehet visszaállítani; a többi közben fut tovább."
+ },
+ "snp.make": {
+  "text": "Készíts egyet most"
+ },
+ "snp.none": {
+  "text": "Még nincs pillanatkép."
+ },
+ "snp.manual": {
+  "text": "kézi: magától sosem törlődik"
+ },
+ "snp.delete": {
+  "text": "Törlés"
+ },
+ "snp.restore_from": {
+  "text": "Konténer visszaállítása innen: {s}"
+ },
+ "snp.restore_sub": {
+  "text": "az egyes konténerek mappái, a beállításaikból kiolvasva"
+ },
+ "snp.no_ds": {
+  "text": "Nincs ZFS dataset a /mnt alatt."
+ },
+ "snp.loading_ctr": {
+  "text": "Konténerek betöltése..."
+ },
+ "snp.no_ctr": {
+  "text": "Egy konténer sem tárolja az adatait ebben a datasetben."
+ },
+ "snp.safety": {
+  "text": "Visszaállítás előtt biztonsági pillanatkép készül a mostani állapotról (before-restore-<name>-<date>), így a visszaállítás ugyanígy visszacsinálható. Csak az adott konténer áll le."
+ },
+ "snp.claude_stops": {
+  "text": "ez a Claude-munkamenet leáll"
+ },
+ "snp.restore": {
+  "text": "Visszaállítás"
+ },
+ "snp.del_confirm": {
+  "text": "Törlöd a(z) {s} pillanatképet?\n\nAz adat, amit csak ez a pillanatkép őriz, végleg elvész; az élő adatok nem változnak."
+ },
+ "snp.comparing": {
+  "text": "Összevetés a pillanatképpel..."
+ },
+ "snp.restore_q": {
+  "one": "Visszaállítod: {c}, innen: {s}? {n} fájl eltér.",
+  "other": "Visszaállítod: {c}, innen: {s}? {n} fájl eltér."
+ },
+ "snp.restore_steps": {
+  "text": "1) biztonsági pillanatkép a mostani állapotról, 2) {c} leállítása, 3) a mappái pontosan olyanok lesznek, mint a pillanatképben (az újabb fájlok törlődnek), 4) {c} indítása."
+ },
+ "snp.claude_back": {
+  "text": "Ez a Claude-munkamenet leáll; a Claude gomb visszahozza."
+ },
+ "snp.yes_restore": {
+  "text": "Igen, visszaállítás"
+ },
+ "snp.cancel": {
+  "text": "Mégse"
+ },
+ "snp.s.daily": {
+  "text": "Napi pillanatképek"
+ },
+ "snp.s.on": {
+  "text": "be"
+ },
+ "snp.s.none": {
+  "text": "nincs"
+ },
+ "snp.s.ds_hint": {
+  "text": "csak a poolok datasetjei választhatók (ZFS); a tömb lemezei XFS-ek, nincs pillanatképük"
+ },
+ "snp.s.time": {
+  "text": "Időpont és megőrzés"
+ },
+ "snp.s.every": {
+  "text": "minden nap"
+ },
+ "snp.s.keep": {
+  "text": "megőrzés"
+ },
+ "snp.s.days_stop": {
+  "text": "napig, leáll"
+ },
+ "snp.s.pool_fill": {
+  "text": "% pooltelítettség felett"
+ },
+ "snp.s.time_hint": {
+  "text": "a CA Auto Update-et erre az időpont utánra állítsd, hogy a pillanatkép a frissítések előtt készüljön. Csak a napi auto- pillanatképek törlődnek maguktól; a kézi addig marad, amíg nem törlöd"
+ },
+ "snp.s.dc": {
+  "text": "szólj, ha egy napi pillanatkép nem sikerül vagy egy visszaállítás leáll (a Sysbox webhookja)"
+ },
+ "snp.save": {
+  "text": "Mentés"
+ },
+ "snp.saving": {
+  "text": "Mentés..."
+ },
+ "snp.saved": {
+  "text": "Mentve."
+ },
+ "snpe.dataset": {
+  "text": "ismeretlen dataset"
+ },
+ "snpe.name_rule": {
+  "text": "betűt, számot, - _ . : karaktert használj (és ne auto- kezdetet, az a napiaké)"
+ },
+ "snpe.bad_name": {
+  "text": "hibás név"
+ },
+ "snpe.no_folder": {
+  "text": "ennek a konténernek nincs mappája itt: {ds}"
+ },
+ "snpe.busy": {
+  "text": "pillanatkép vagy visszaállítás fut, próbáld újra egy perc múlva"
+ },
+ "snpe.range": {
+  "text": "{name} értéke {min} és {max} között lehet"
+ },
+ "sd.intro": {
+  "text": "Leállítja a konténereket (először a qBittorrentet, legfeljebb 5 percet adva a fájljai lezárására) és a virtuális gépeket, megmutat minden folyamatot, amely még használja a tömb vagy a pool lemezeit, majd meghívja az Unraid saját leállítását vagy újraindítását, ugyanúgy, mint a Main oldal gombjai. Semmi sem áll le, amíg meg nem nyomsz egy gombot."
+ },
+ "sd.h.activity": {
+  "text": "Tevékenység"
+ },
+ "sd.nothing": {
+  "text": "Erről az oldalról még semmit sem állítottál le."
+ },
+ "sd.log": {
+  "text": "Az utolsó futás naplója"
+ },
+ "sd.h1": {
+  "text": "Mielőtt elkezded"
+ },
+ "sd.checking": {
+  "text": "Ellenőrzés..."
+ },
+ "sd.h2": {
+  "text": "Konténerek és VM-ek"
+ },
+ "sd.s2": {
+  "text": "Először a qBittorrent áll le, legfeljebb 5 percet kapva a fájljai lezárására, utána a többi egyszerre. A szerver fut tovább; a leállítottak itt újraindíthatók."
+ },
+ "sd.btn.stop": {
+  "text": "Konténerek és VM-ek leállítása"
+ },
+ "sd.btn.cancel": {
+  "text": "Mégse"
+ },
+ "sd.btn.start": {
+  "text": "Újraindításuk"
+ },
+ "sd.h3": {
+  "text": "Még használja a lemezeket"
+ },
+ "sd.s3": {
+  "text": "Minden folyamat, amelynek nyitott fájlja van a tömb vagy a pool lemezein. A Kilépés kérése TERM jelet küld, így a program el tudja menteni és le tudja zárni a fájljait; a Kényszerített kilépés KILL jelet küld, csak arra, ami nem lép ki (a program nem mentett adatai elvesznek). Amit az Unraid magától leállít (Samba, Docker, a VM-kezelő), vagy ami konténerben fut, azt nem ajánlja fel."
+ },
+ "sd.btn.term": {
+  "text": "A kipipáltak kilépésének kérése"
+ },
+ "sd.btn.kill": {
+  "text": "Kényszerített kilépés"
+ },
+ "sd.btn.refresh": {
+  "text": "Újraellenőrzés"
+ },
+ "sd.h4": {
+  "text": "Leállítás"
+ },
+ "sd.h4_sub": {
+  "text": "az Unraid saját leállítása, mint a Main oldalon"
+ },
+ "sd.btn.off": {
+  "text": "Leállítás"
+ },
+ "sd.btn.reboot": {
+  "text": "Újraindítás"
+ },
+ "sd.foot": {
+  "text": "Ha az utolsó sor zöld, semmi sem használja a lemezeket, és nem fut konténer vagy VM."
+ },
+ "dur.ms": {
+  "text": "{m} p {s} mp"
+ },
+ "dur.s": {
+  "text": "{s} mp"
+ },
+ "sd.ab_idle": {
+  "text": "nem fut semmi"
+ },
+ "sd.st.done": {
+  "text": "Kész"
+ },
+ "sd.st.error": {
+  "text": "Hibával leállt"
+ },
+ "sd.st.cancelled": {
+  "text": "Megszakítva"
+ },
+ "sd.st.starting": {
+  "text": "Indítás"
+ },
+ "sd.st.stopping": {
+  "text": "Leállítás"
+ },
+ "sd.ab_starting": {
+  "text": "konténerek indítása"
+ },
+ "sd.ab_stopping": {
+  "text": "konténerek leállítása"
+ },
+ "sd.n_of_stopped": {
+  "text": "{n} / {tot} leállítva"
+ },
+ "sd.back": {
+  "text": "azóta {n} újraindult ezen az oldalon kívül (Unraid autostart vagy a Docker oldal)"
+ },
+ "sd.removed_n": {
+  "text": "{n} törölve"
+ },
+ "sd.nothing_left": {
+  "text": "nincs mit újraindítani"
+ },
+ "sd.qb_closing": {
+  "text": "A qBittorrent lezárja a fájljait (legfeljebb 5 perc)"
+ },
+ "sd.qb_first": {
+  "text": "először, legfeljebb 5 perc"
+ },
+ "sd.stopping_waiting": {
+  "text": "leáll vagy vár"
+ },
+ "sd.c_starting": {
+  "text": "indul"
+ },
+ "sd.c_stopped": {
+  "text": "leállítva"
+ },
+ "sd.c_removed": {
+  "text": "törölve"
+ },
+ "sd.lines": {
+  "one": "{n} sor",
+  "other": "{n} sor"
+ },
+ "sd.no_checks": {
+  "text": "Nincs ellenőrzés."
+ },
+ "sd.n_things": {
+  "one": "{n} dolgot kell megnézni",
+  "other": "{n} dolgot kell megnézni"
+ },
+ "sd.all_clear": {
+  "text": "minden rendben"
+ },
+ "sd.running": {
+  "text": "fut"
+ },
+ "sd.none_running": {
+  "text": "Nem fut konténer vagy VM."
+ },
+ "sd.n_ctr": {
+  "one": "{n} konténer",
+  "other": "{n} konténer"
+ },
+ "sd.n_vm": {
+  "one": "{n} VM",
+  "other": "{n} VM"
+ },
+ "sd.no_vm": {
+  "text": "nincs VM"
+ },
+ "sd.n_stopped_here": {
+  "text": "{n} itt leállítva"
+ },
+ "sd.btn.start_n": {
+  "text": "Újraindításuk ({n})"
+ },
+ "sd.starting_": {
+  "text": "Indítás..."
+ },
+ "sd.stopping_": {
+  "text": "Leállítás..."
+ },
+ "sd.more": {
+  "text": "+{n} további"
+ },
+ "sd.can_stop": {
+  "text": "itt leállítható"
+ },
+ "sd.free": {
+  "text": "Most semmi sem használja a tömb vagy a pool lemezeit."
+ },
+ "sd.n_proc": {
+  "one": "{n} folyamat",
+  "other": "{n} folyamat"
+ },
+ "sd.n_prot": {
+  "text": "{n} védett"
+ },
+ "sd.nothing_b": {
+  "text": "semmi"
+ },
+ "sd.f.wait": {
+  "text": "Várd meg, amíg a konténerek leállnak."
+ },
+ "sd.f.ready": {
+  "text": "Kész: semmi sem használja a lemezeket, nem fut konténer vagy VM."
+ },
+ "sd.f.prot_left": {
+  "one": "({n} védett folyamat maradt: az Unraid magától leállítja.)",
+  "other": "({n} védett folyamat maradt: az Unraid magától leállítja.)"
+ },
+ "sd.f.ctr": {
+  "one": "{n} konténer még fut",
+  "other": "{n} konténer még fut"
+ },
+ "sd.f.vm": {
+  "one": "{n} VM még fut",
+  "other": "{n} VM még fut"
+ },
+ "sd.f.proc": {
+  "one": "{n} folyamat még használja a lemezeket",
+  "other": "{n} folyamat még használja a lemezeket"
+ },
+ "sd.f.hang": {
+  "text": "Az Unraid a leállítás közben megpróbálja leállítani őket, de épp itt akadhat el egy leállítás."
+ },
+ "sd.f.prot_more": {
+  "text": "(és még {n}, amit az Unraid magától leállít, például a megosztási szolgáltatás, amíg konténerek még fájlokat olvasnak.)"
+ },
+ "sd.btn.off_any": {
+  "text": "Leállítás mégis"
+ },
+ "sd.btn.reboot_any": {
+  "text": "Újraindítás mégis"
+ },
+ "sd.c.stop": {
+  "one": "Leállítasz {n} konténert?\n\nElőször a qBittorrent (legfeljebb 5 perc), utána a többi egyszerre. A szerver fut tovább; erről az oldalról újraindíthatod őket.",
+  "other": "Leállítasz {n} konténert?\n\nElőször a qBittorrent (legfeljebb 5 perc), utána a többi egyszerre. A szerver fut tovább; erről az oldalról újraindíthatod őket."
+ },
+ "sd.c.stop_vm": {
+  "text": "Leállítasz {n} konténert és {v} VM-et?\n\nElőször a qBittorrent (legfeljebb 5 perc), utána a többi egyszerre. A szerver fut tovább; erről az oldalról újraindíthatod őket."
+ },
+ "sd.c.start": {
+  "text": "Újraindítod a konténereket, amelyeket ez az oldal leállított?"
+ },
+ "sd.c.kill": {
+  "one": "Kényszerítve leállítasz {n} folyamatot? Előtte semmit sem tud menteni.",
+  "other": "Kényszerítve leállítasz {n} folyamatot? Előtte semmit sem tud menteni."
+ },
+ "sd.c.term": {
+  "one": "Kéred {n} folyamat kilépését?",
+  "other": "Kéred {n} folyamat kilépését?"
+ },
+ "sd.sent": {
+  "text": "Elküldve: {l}."
+ },
+ "sd.not_sent": {
+  "text": "Nincs elküldve: {l}."
+ },
+ "sd.again5": {
+  "text": "Újraellenőrzés 5 mp múlva..."
+ },
+ "sd.n_proc_disks": {
+  "one": "{n} folyamat a lemezeken",
+  "other": "{n} folyamat a lemezeken"
+ },
+ "sd.c.off": {
+  "text": "Leállítod most a szervert?"
+ },
+ "sd.c.reboot": {
+  "text": "Újraindítod most a szervert?"
+ },
+ "sd.c.off_any": {
+  "text": "Mégis leállítod a szervert?\n\nMég fut:\n{list}\n\nAz Unraid a leállítás közben megpróbálja leállítani őket, de épp itt akadhat el egy leállítás."
+ },
+ "sd.c.reboot_any": {
+  "text": "Mégis újraindítod a szervert?\n\nMég fut:\n{list}\n\nAz Unraid a leállítás közben megpróbálja leállítani őket, de épp itt akadhat el egy leállítás."
+ },
+ "sdb.died": {
+  "text": "A háttérfolyamat váratlanul leállt."
+ },
+ "sdb.busy": {
+  "text": "Már fut egy leállítás vagy indítás."
+ },
+ "sdb.nothing": {
+  "text": "Nincs mit újraindítani."
+ },
+ "sdb.none_sel": {
+  "text": "Nincs semmi kijelölve."
+ },
+ "prot.system": {
+  "text": "rendszer"
+ },
+ "prot.unraid": {
+  "text": "ezt az Unraid magától leállítja"
+ },
+ "prot.mover": {
+  "text": "a Mover: a Main oldalon állíthatod le"
+ },
+ "prot.balance": {
+  "text": "a Diskbox Balance áthelyez: az oldalán állíthatod le"
+ },
+ "prot.ctr": {
+  "text": "a(z) {c} konténerben fut: állítsd le a konténert"
+ },
+ "chk.array": {
+  "text": "Tömb: {s}, az Unraid leállítási időkorlátja {t} mp"
+ },
+ "chk.parity": {
+  "text": "Paritásellenőrzés vagy újraépítés fut ({p} %). A leállítás megszakítja."
+ },
+ "chk.mover": {
+  "text": "A Mover fut. Várd meg, vagy állítsd le a Main oldalon."
+ },
+ "chk.balance": {
+  "text": "A Diskbox Balance fájlokat helyez át. Előbb állítsd le az oldalán (a másolás alatt álló címet visszagörgeti)."
+ },
+ "sdr.nothing": {
+  "text": "Nincs mit indítani."
+ },
+ "sdr.failed": {
+  "text": "Nem indult el: {l}"
+ },
+ "sdr.started": {
+  "text": "A konténerek újra futnak."
+ },
+ "sdr.cancelled": {
+  "text": "Leállítottad; az eddig leállított konténerek leállítva maradnak (lent Újraindításuk)."
+ },
+ "sdr.not_stopped": {
+  "text": "Nem állt le: {l}"
+ },
+ "sdr.done": {
+  "one": "{n} konténer leállítva.",
+  "other": "{n} konténer leállítva."
+ },
+ "sdr.done_vm": {
+  "text": "{n} konténer és {v} VM leállítva."
+ },
+ "upm.intro": {
+  "text": "Mit változtatnak a várakozó frissítések, és mi használja tőlünk a konténert, mielőtt telepíted őket. Az oldal és a napi ellenőrzés csak olvas (a konténerek címkéit, a registryket, a GitHubot, az Unraid saját frissítésellenőrzését); konténer csak a saját gombjával frissül, az adatairól készült ZFS-pillanatkép után."
+ },
+ "upm.h.activity": {
+  "text": "Tevékenység"
+ },
+ "upm.h.summary": {
+  "text": "Összegzés"
+ },
+ "upm.h.docker": {
+  "text": "Docker konténerek"
+ },
+ "upm.h.os": {
+  "text": "Unraid OS"
+ },
+ "upm.h.plugins": {
+  "text": "Pluginok"
+ },
+ "upm.h.test": {
+  "text": "Önteszt"
+ },
+ "upm.h.settings": {
+  "text": "Beállítások"
+ },
+ "upm.h.settings_sub": {
+  "text": "napi ellenőrzés"
+ },
+ "upm.loading": {
+  "text": "Betöltés..."
+ },
+ "risk.red": {
+  "text": "Várj"
+ },
+ "risk.amber": {
+  "text": "Előbb nézd meg"
+ },
+ "risk.green": {
+  "text": "Biztonságos"
+ },
+ "kind.rebuild": {
+  "text": "image újraépítés"
+ },
+ "kind.patch": {
+  "text": "javítás"
+ },
+ "kind.feature": {
+  "text": "új funkciók"
+ },
+ "kind.major": {
+  "text": "főverzió"
+ },
+ "kind.unknown": {
+  "text": "nincs verziócímke"
+ },
+ "upm.started_at": {
+  "text": "indult {t}"
+ },
+ "upm.fin_today": {
+  "text": "Ma befejezve"
+ },
+ "upm.log": {
+  "text": "Napló"
+ },
+ "upm.lines": {
+  "one": "{n} sor",
+  "other": "{n} sor"
+ },
+ "upm.nothing_run": {
+  "text": "Még nem futott semmi."
+ },
+ "upm.n_running": {
+  "text": "{n} fut"
+ },
+ "upm.n_fin": {
+  "text": "{n} ma befejezve"
+ },
+ "upm.no_check": {
+  "text": "Még nem volt ellenőrzés. Az első kiolvassa a konténerek címkéit, és lekérdezi a registryktől a legújabb image-eket; kb. egy percig tart."
+ },
+ "upm.checking": {
+  "text": "Ellenőrzés..."
+ },
+ "upm.check_now": {
+  "text": "Ellenőrzés most"
+ },
+ "upm.waiting": {
+  "one": "{n} frissítés vár.",
+  "other": "{n} frissítés vár."
+ },
+ "upm.n_safe": {
+  "text": "{n} biztonságos (image újraépítés vagy javítás)"
+ },
+ "upm.n_look": {
+  "text": "{n} előbb megnézendő"
+ },
+ "upm.n_wait": {
+  "text": "{n} várjon"
+ },
+ "upm.own_button": {
+  "text": "Mindegyik csak a saját gombjával települ."
+ },
+ "upm.all_current": {
+  "text": "Minden naprakész."
+ },
+ "upm.green": {
+  "text": "zöld"
+ },
+ "upm.amber": {
+  "text": "sárga"
+ },
+ "upm.red": {
+  "text": "piros"
+ },
+ "upm.available": {
+  "text": "{v} elérhető"
+ },
+ "upm.checked_ago": {
+  "text": "ellenőrizve {t}"
+ },
+ "upm.last_check": {
+  "text": "utolsó ellenőrzés: {t}"
+ },
+ "upm.today": {
+  "text": "mai"
+ },
+ "upm.days_old": {
+  "one": "{n} napos",
+  "other": "{n} napos"
+ },
+ "upm.no_deps": {
+  "text": "tőlünk semmi sem használja"
+ },
+ "upm.no_words": {
+  "text": "nincs figyelmeztető szó a leírásban"
+ },
+ "upm.stopped": {
+  "text": "leállítva"
+ },
+ "upm.btn.changes": {
+  "text": "Változások"
+ },
+ "upm.claude_reading": {
+  "text": "Claude olvas..."
+ },
+ "upm.ask_again": {
+  "text": "Kérdezd újra Claude-ot"
+ },
+ "upm.ask": {
+  "text": "Kérdezd Claude-ot"
+ },
+ "upm.btn.update": {
+  "text": "Frissítés"
+ },
+ "upm.no_check_short": {
+  "text": "Még nincs ellenőrzés."
+ },
+ "upm.g.red": {
+  "text": "Főverzió, és tőlünk valami használja"
+ },
+ "upm.g.amber": {
+  "text": "Új funkciók, friss kiadás, figyelmeztető szavak vagy nincs verziócímke"
+ },
+ "upm.g.green": {
+  "text": "Image újraépítés vagy javítás: a program alig változik"
+ },
+ "upm.none": {
+  "text": "Nincs."
+ },
+ "upm.g.current": {
+  "text": "Naprakész"
+ },
+ "upm.none_l": {
+  "text": "nincs"
+ },
+ "upm.local": {
+  "text": "ezen a szerveren épült: nincs mihez hasonlítani"
+ },
+ "upm.g.other": {
+  "text": "Nem ellenőrizhető"
+ },
+ "upm.n_ctr": {
+  "one": "{n} konténer",
+  "other": "{n} konténer"
+ },
+ "upm.n_upd": {
+  "one": "{n} frissítés",
+  "other": "{n} frissítés"
+ },
+ "upm.todo_saved": {
+  "text": "teendőként mentve {t} (updates_todo.md: Claude beviszi a feladatlistába)"
+ },
+ "upm.todo_btn": {
+  "text": "Mentés teendőként"
+ },
+ "upm.todo_hint": {
+  "text": "a Sysbox az updates_todo.md-be írja a repóban; a következő Claude-munkamenet beviszi a feladatlistába"
+ },
+ "upm.for_version": {
+  "text": "{t}, erre a verzióra"
+ },
+ "upm.saving": {
+  "text": "Mentés..."
+ },
+ "upm.source": {
+  "text": "forrás"
+ },
+ "upm.no_notes": {
+  "text": "Nincs kiadási megjegyzés."
+ },
+ "upm.what_changed": {
+  "text": "Mi változott"
+ },
+ "upm.not_asked": {
+  "text": "Erről a verzióról még nem kérdezted Claude-ot."
+ },
+ "upm.ask_reads": {
+  "text": "A Kérdezd Claude-ot elolvassa ezeket a megjegyzéseket és a programot használó kódunkat (csak olvas)."
+ },
+ "upm.c.title": {
+  "text": "{name} frissítése"
+ },
+ "upm.c.s1_snap": {
+  "text": "1) ZFS-pillanatkép az adatairól (szükség esetén a Snapshots oldalon állítható vissza),"
+ },
+ "upm.c.s1_nosnap": {
+  "text": "1) nincs pillanatkép (kikapcsolva),"
+ },
+ "upm.c.s2": {
+  "text": "2) leállítás,"
+ },
+ "upm.c.s2_qb": {
+  "text": "2) leállítás (legfeljebb 5 perc, a qBittorrent elmenti a torrentjei állapotát),"
+ },
+ "upm.c.s3": {
+  "text": "3) az Unraid letölti az új image-et, és a sablonjából újra létrehozza,"
+ },
+ "upm.c.s4": {
+  "text": "4) újraindítás."
+ },
+ "upm.c.s4_test": {
+  "text": "4) újraindítás és önteszt."
+ },
+ "upm.c.red": {
+  "text": "Ez piros: előbb olvasd el a Változásokat."
+ },
+ "upm.c.amber": {
+  "text": "Ez sárga: előbb olvasd el a Változásokat."
+ },
+ "upm.c.moving": {
+  "text": "A qBittorrent most {n} torrentet helyez át (a legutóbbi öntesztkor): az áthelyezés megszakad."
+ },
+ "upm.c.claude": {
+  "text": "A Claude-munkamenet leáll."
+ },
+ "upm.c.yes": {
+  "text": "Igen, frissítés"
+ },
+ "upm.c.cancel": {
+  "text": "Mégse"
+ },
+ "os.released": {
+  "text": "kiadva {d} · ellenőrizve {t}"
+ },
+ "os.php": {
+  "text": "PHP-változás"
+ },
+ "os.all_ours": {
+  "text": "mind az 5 pluginunk"
+ },
+ "os.reboot": {
+  "text": "újraindítás kell"
+ },
+ "os.notes": {
+  "text": "Kiadási megjegyzések"
+ },
+ "os.page": {
+  "text": "Update OS oldal"
+ },
+ "os.not_here": {
+  "text": "Az OS nem innen települ. Előtte: ne fusson paritásellenőrzés, a qBittorrent legyen leállítva (Safe shutdown)."
+ },
+ "os.current": {
+  "text": "nincs újabb verzió az Unraid legutóbbi ellenőrzésekor, {t}"
+ },
+ "os.never": {
+  "text": "Az Unraid még nem kereste az OS-frissítést (Tools, Update OS, Check)"
+ },
+ "pl.ours": {
+  "text": "a miénk: {n}"
+ },
+ "pl.update": {
+  "text": "frissítés"
+ },
+ "pl.n_upd": {
+  "one": "{n} pluginfrissítés (a Plugins oldalon telepítsd; a mieinket a .plg fájljukkal)",
+  "other": "{n} pluginfrissítés (a Plugins oldalon telepítsd; a mieinket a .plg fájljukkal)"
+ },
+ "pl.current": {
+  "text": "Naprakész az Unraid legutóbbi pluginellenőrzésekor"
+ },
+ "pl.n": {
+  "one": "{n} plugin",
+  "other": "{n} plugin"
+ },
+ "test.lead": {
+  "text": "A kapcsolataink csak olvasó ellenőrzése: bejelentkezések és GET kérések. Frissítés után magától lefut; az eredmény Discordra megy."
+ },
+ "test.testing": {
+  "text": "Teszt..."
+ },
+ "test.run": {
+  "text": "Önteszt futtatása"
+ },
+ "test.for": {
+  "text": "ehhez: {w}"
+ },
+ "test.band": {
+  "text": "utolsó: {t} · {ok}/{n} sikeres"
+ },
+ "test.not_run": {
+  "text": "még nem futott"
+ },
+ "set.daily": {
+  "text": "Napi ellenőrzés"
+ },
+ "set.on": {
+  "text": "be"
+ },
+ "set.at": {
+  "text": "időpont"
+ },
+ "set.daily_hint": {
+  "text": "csak olvas (registryk, GitHub). Magától semmi sem települ"
+ },
+ "set.soak": {
+  "text": "Érési idő"
+ },
+ "set.days": {
+  "text": "nap"
+ },
+ "set.soak_hint": {
+  "text": "az ennél fiatalabb, új funkciós kiadás sárga, figyelmeztető szavak nélkül is"
+ },
+ "set.dc_warn": {
+  "text": "a sárgák és pirosak"
+ },
+ "set.dc_all": {
+  "text": "minden új frissítés"
+ },
+ "set.dc_off": {
+  "text": "ki"
+ },
+ "set.dc_hint": {
+  "text": "a napi ellenőrzés után, frissítésenként egyszer (a Sysbox webhookja); az általad indított frissítések eredménye mindig megy"
+ },
+ "set.before": {
+  "text": "Frissítés előtt"
+ },
+ "set.bk": {
+  "text": "ZFS-pillanatkép a konténer adatairól"
+ },
+ "set.st": {
+  "text": "utána önteszt"
+ },
+ "set.bk_hint": {
+  "text": "a pillanatkép neve before-update-<name>-<date>, és addig marad, amíg a Snapshots oldalon nem törlöd"
+ },
+ "set.cl": {
+  "text": "a gomb mutatása"
+ },
+ "set.cl_ro": {
+  "text": "csak olvas: Read, Grep"
+ },
+ "set.cl_hint": {
+  "text": "Claude Code a claude konténerben, a repó mappájában, mentett munkamenet nélkül; sosem futtat parancsot és nem ír. A válasz verziónként megmarad. Egy új Unraid OS verzióról ellenőrzés után magától egyszer megkérdezi"
+ },
+ "set.save": {
+  "text": "Mentés"
+ },
+ "upm.saved": {
+  "text": "Mentve."
+ },
+ "cl.starting": {
+  "text": "Claude-munkamenet indítása itt: {host}..."
+ },
+ "cl.failed": {
+  "text": "A Claude nem indítható: {e}"
+ },
+ "cl.base": {
+  "text": "Claude Code: munkamenet megnyitása"
+ },
+ "cl.just_now": {
+  "text": "épp most"
+ },
+ "cl.min_ago": {
+  "text": "{m} perce"
+ },
+ "cl.hm_ago": {
+  "text": "{h} ó {m} perce"
+ },
+ "cl.d_ago": {
+  "text": "{d} napja"
+ },
+ "cl.dh": {
+  "text": "{d} nap {h} ó"
+ },
+ "cl.hm": {
+  "text": "{h} ó {m} perc"
+ },
+ "cl.m": {
+  "text": "{m} perc"
+ },
+ "cl.dow.sun": {
+  "text": "V"
+ },
+ "cl.dow.mon": {
+  "text": "H"
+ },
+ "cl.dow.tue": {
+  "text": "K"
+ },
+ "cl.dow.wed": {
+  "text": "Sze"
+ },
+ "cl.dow.thu": {
+  "text": "Cs"
+ },
+ "cl.dow.fri": {
+  "text": "P"
+ },
+ "cl.dow.sat": {
+  "text": "Szo"
+ },
+ "cl.no_usage": {
+  "text": "a használat nem elérhető"
+ },
+ "cl.week_new": {
+  "text": "Hét:      új hét {t} óta, még nincs adat"
+ },
+ "cl.week": {
+  "text": "Hét:      {p}  (nullázás {t}, {left} múlva)"
+ },
+ "cl.today": {
+  "text": "Ma:       {v}"
+ },
+ "cl.from_tomorrow": {
+  "text": "holnaptól"
+ },
+ "cl.avg": {
+  "text": "Átlag:    {p}/nap  (keret {q}/nap)"
+ },
+ "cl.five": {
+  "text": "5 óra:    {p}  (nullázás {left} múlva)"
+ },
+ "cl.updated": {
+  "text": "frissítve {t}"
+ },
+ "cl.e_nodata": {
+  "text": "még nincs használati adat (az állapotsor írja, amíg a Claude Code dolgozik)"
+ },
+ "cl.e_docker": {
+  "text": "A Docker nem fut (elindult a tömb?)"
+ },
+ "cl.e_noct": {
+  "text": "Nincs {c} nevű konténer."
+ },
+ "cl.e_nostart": {
+  "text": "A(z) {c} konténer nem indult el."
+ },
+ "cl.e_tmux": {
+  "text": "Nem sikerült elindítani a tmux munkamenetet a konténerben."
+ },
+ "ue.bad_name": {
+  "text": "hibás konténernév"
+ },
+ "ue.scan_busy": {
+  "text": "már fut egy ellenőrzés"
+ },
+ "ue.test_busy": {
+  "text": "már fut az önteszt"
+ },
+ "ue.claude_off": {
+  "text": "a Kérdezd Claude-ot ki van kapcsolva a beállításokban"
+ },
+ "ue.claude_busy": {
+  "text": "Claude épp egy másik kérdésre válaszol"
+ },
+ "ue.claude_ct": {
+  "text": "a claude konténer itt épül; nem registryből frissül"
+ },
+ "ue.upd_busy": {
+  "text": "egy másik frissítés fut, próbáld újra, ha véget ért"
+ },
+ "ue.no_update": {
+  "text": "nincs várakozó frissítés ehhez: {n}"
+ },
+ "uj.check_failed": {
+  "text": "Az ellenőrzés hibás: {e}"
+ },
+ "uj.summary": {
+  "one": "{n} frissítés: {g} zöld, {a} sárga, {r} piros",
+  "other": "{n} frissítés: {g} zöld, {a} sárga, {r} piros"
+ },
+ "uj.current": {
+  "text": "minden naprakész"
+ },
+ "uj.checked": {
+  "text": "Ellenőrzés: {m}"
+ },
+ "uj.checked_one": {
+  "text": "{n} ellenőrizve: {m}"
+ },
+ "uj.selftest": {
+  "text": "Önteszt: {ok}/{n} sikeres"
+ },
+ "uj.failed_list": {
+  "text": "{l} HIBÁS"
+ },
+ "uj.claude_ok": {
+  "text": "Claude válaszolt ezzel kapcsolatban: {n}"
+ },
+ "uj.claude_err": {
+  "text": "Claude kérdezése ({n}): {e}"
+ },
+ "uj.claude_ask": {
+  "text": "Claude kérdezése: {n}"
+ },
+ "uj.updating": {
+  "text": "{n} frissítése"
+ },
+ "ut.ab_nokey": {
+  "text": "csatlakozva (nincs API-kulcs a Seedbox Toolsban: az IRC-feed nincs ellenőrizve)"
+ },
+ "ut.ab_irc": {
+  "text": "csatlakozva, de az IRC-állapot nem olvasható ({e})"
+ },
+ "ut.unreachable": {
+  "text": "nem érhető el"
+ },
+ "ut.ab_nonet": {
+  "text": "csatlakozva, de nincs bekapcsolt IRC-hálózat: nincs élő feed"
+ },
+ "ut.ab_bad": {
+  "text": "csatlakozva, nincs élő feed: {l}"
+ },
+ "ut.ab_ok": {
+  "text": "csatlakozva, élő feed elérhető"
+ },
+ "ut.ab_last": {
+  "text": "utolsó bejelentés {t} ezelőtt ({ch})"
  }
 }]]></INLINE>
 </FILE>

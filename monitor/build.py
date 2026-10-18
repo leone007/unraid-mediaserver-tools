@@ -3,14 +3,14 @@ import os
 D=os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..'))+'/'
 def rd(p): return open(D+p,encoding='utf-8').read()
 def b64(p): return base64.encodebytes(open(D+p,'rb').read()).decode().strip()
-files=[('&plugdir;/Monitor.page','monitor/Monitor.page','MONITOR PAGE'),('&plugdir;/lang.php','common/lang.php','SHARED LANGUAGE SETTING'),('&plugdir;/i18n.php','common/i18n.php','DICTIONARIES'),('&plugdir;/lang/en.json','monitor/lang/en.json','ENGLISH DICTIONARY (the source of translations)')]
+files=[('&plugdir;/Monitor.page','monitor/Monitor.page','MONITOR PAGE'),('&plugdir;/lang.php','common/lang.php','SHARED LANGUAGE SETTING'),('&plugdir;/i18n.php','common/i18n.php','DICTIONARIES'),('&plugdir;/lang/en.json','monitor/lang/en.json','ENGLISH DICTIONARY (the source of translations)'),('&plugdir;/lang/hu.json','monitor/lang/hu.json','HUNGARIAN DICTIONARY')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "mediaserver_monitor">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Monitor">
-<!ENTITY version   "2026.10.07i">
+<!ENTITY version   "2026.10.07j">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 ]>
 
@@ -23,6 +23,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
+###2026.10.07i
 - The dictionary also works when another plugin with an older language file was loaded first
 ###2026.10.07h
 - The page texts come from a dictionary (lang/en.json) that can be translated; the page follows the shared language setting and shows English where a translation is missing. Nothing changes on the page yet

@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zz">
+<!ENTITY version   "2026.10.99zza">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zza
+- Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
+
 ###2026.10.99zz
 - The texts of the tile, the widget settings page and the Seedbox Tools page (also the messages of the scans, searches and replacements) come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet. Discord messages keep their own language setting
 
@@ -599,6 +602,10 @@ exit 0
 
 <FILE Name="&plugdir;/lang/en.json">
 <INLINE><![CDATA[@@SRC:seedbox/lang/en.json@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang/hu.json">
+<INLINE><![CDATA[@@SRC:seedbox/lang/hu.json@@]]></INLINE>
 </FILE>
 
 <!-- Permissions + done -->

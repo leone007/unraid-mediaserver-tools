@@ -3,7 +3,7 @@
 <!ENTITY name      "mediaserver_monitor">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Monitor">
-<!ENTITY version   "2026.10.07i">
+<!ENTITY version   "2026.10.07j">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 ]>
 
@@ -16,6 +16,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
+###2026.10.07i
 - The dictionary also works when another plugin with an older language file was loaded first
 ###2026.10.07h
 - The page texts come from a dictionary (lang/en.json) that can be translated; the page follows the shared language setting and shows English where a translation is missing. Nothing changes on the page yet
@@ -353,7 +355,7 @@ a.mon-btn{text-decoration:none;display:inline-block}
 <INLINE><![CDATA[<?php
 // Shared language setting of the media server tools (Sysbox, Diskbox, Seedbox, Streambox): one file on the
 // flash drive that every plugin reads, so changing it on any settings page changes it for all of them.
-//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en
+//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en | hu
 //   discord = auto (follow Unraid) | en | hu
 // A language the pages or Discord are not translated to falls back to English. Every plugin ships its own
 // copy of this file; the guard keeps a second copy from being declared again in the same request.
@@ -361,7 +363,7 @@ if (!function_exists('mt_lang_cfg')) {
 
 define('MT_LANG_FILE', '/boot/config/plugins/mediaserver-tools/lang.cfg');
 
-function mt_lang_have($what) { return $what === 'discord' ? ['en', 'hu'] : ['en']; }
+function mt_lang_have($what) { return ['en', 'hu']; }
 
 // Unraid's display language as a locale ('' = English, the built-in one)
 function mt_lang_unraid() {
@@ -486,12 +488,21 @@ function mt_i18n_t($dir) {
     return function ($key, $vars = []) use ($tab) { $s = mt_i18n_fmt($tab[$key] ?? null, (array)$vars); return $s === null ? $key : $s; };
 }
 
-// the same dictionary for the page's JavaScript: MTL.t(name, key, vars)
-function mt_i18n_js($dir, $name) {
+// the same dictionary for the page's JavaScript: MTL.t(name, key, vars). $only limits it to some keys (a tile on the
+// Dashboard or a header button does not need the texts of the tool pages): 'group.' takes every key that starts with
+// it, anything else one exact key
+function mt_i18n_js($dir, $name, $only = null) {
+    $tab = mt_i18n($dir);
+    if (is_array($only)) {
+        $tab = array_filter($tab, function ($k) use ($only) {
+            foreach ($only as $o) { if ($k === $o || (substr($o, -1) === '.' && strpos($k, $o) === 0)) { return true; } }
+            return false;
+        }, ARRAY_FILTER_USE_KEY);
+    }
     return '<script>window.MTL=window.MTL||{d:{},t:function(n,k,v){var e=(this.d[n]||{})[k],s;if(!e){return k;}v=v||{};'
         . 'if(e.other!==undefined){var c=Math.abs(+v.n||0);s=(c===1&&e.one!==undefined)?e.one:e.other;}else{s=e.text||"";}'
         . 'return s.replace(/\{([a-z0-9_]+)\}/g,function(a,b){return v.hasOwnProperty(b)?String(v[b]):a;});}};'
-        . 'MTL.d[' . json_encode((string)$name) . ']=' . json_encode(mt_i18n($dir), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+        . 'MTL.d[' . json_encode((string)$name) . ']=' . json_encode((object)$tab, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
 }
 
 }
@@ -516,6 +527,24 @@ function mt_i18n_js($dir, $name) {
   "btn.down": {"text": "Move down", "note": "tooltip of the down arrow button next to a tile's name while editing."},
   "note.no_tiles": {"text": "No tiles found. Install Sysbox, Diskbox, Streambox or Seedbox first.", "note": "small centred line when none of the four plugins is installed."},
   "note.saved_here": {"text": "The order is saved on this device only.", "note": "small centred line under the tiles: the order and the hidden tiles are kept in this browser, not on the server."}
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang/hu.json">
+<INLINE><![CDATA[{
+ "_meta": {"language": "Magyar", "translator": "Claude (AI), átnézendő"},
+ "btn.full_screen": {"text": "Teljes képernyő"},
+ "btn.unraid_menu": {"text": "Unraid menü"},
+ "btn.reorder": {"text": "Sorrend"},
+ "btn.done": {"text": "Kész"},
+ "btn.reset": {"text": "Alaphelyzet"},
+ "btn.hide": {"text": "Elrejt"},
+ "btn.show": {"text": "Mutat"},
+ "btn.up": {"text": "Feljebb"},
+ "btn.down": {"text": "Lejjebb"},
+ "note.no_tiles": {"text": "Nincs csempe. Előbb telepítsd a Sysboxot, a Diskboxot, a Streamboxot vagy a Seedboxot."},
+ "note.saved_here": {"text": "A sorrend csak ezen az eszközön mentődik."}
 }
 ]]></INLINE>
 </FILE>

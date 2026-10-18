@@ -33,6 +33,7 @@ $mtl_sel = function ($a, $b) { return $a === $b ? ' selected' : ''; };
         <select id="mtl-ui">
           <option value="auto"<?=$mtl_sel($mtl_c['ui'], 'auto')?>>Follow Unraid (now: <?=$mtl_h($mtl_ui_now)?>)</option>
           <option value="en"<?=$mtl_sel($mtl_c['ui'], 'en')?>>English</option>
+          <option value="hu"<?=$mtl_sel($mtl_c['ui'], 'hu')?>>Magyar</option>
         </select>
         <span class="mtl-hint">Unraid's language is set under Settings, Display Settings. A language the plugins are not translated to yet shows in English. More languages come here as they are translated.</span>
       </div>

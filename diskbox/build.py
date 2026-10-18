@@ -6,15 +6,15 @@ def rd(p): return open(D+p,encoding='utf-8').read().replace('/*@@TILE_CSS@@*/',o
 icon=base64.encodebytes(open(D+'icons/diskbox_mono.png','rb').read()).decode().strip()
 files=[('&plugdir;/diskbox.page','diskbox/diskbox.page'),('&plugdir;/DiskboxSettings.page','diskbox/DiskboxSettings.page'),
  ('&plugdir;/lib.php','diskbox/lib.php'),('&plugdir;/api_fetch.php','diskbox/api_fetch.php'),('&plugdir;/smart.php','diskbox/smart.php'),('&plugdir;/unassigned.php','diskbox/unassigned.php'),
- ('&plugdir;/save.php','diskbox/save.php'),('&plugdir;/discord.php','diskbox/discord.php'),('&plugdir;/alerts.php','diskbox/alerts.php'),('&plugdir;/notify.php','diskbox/notify.php'),('&plugdir;/weekly.php','diskbox/weekly.php'),('&plugdir;/test.php','diskbox/test.php'),('&plugdir;/ack.php','diskbox/ack.php'),('/usr/local/emhttp/plugins/Diskbox/README.md','diskbox/README.md'),('&plugdir;/lang.php','common/lang.php'),('&plugdir;/lang_block.php','common/lang_block.php'),('&plugdir;/lang_save.php','common/lang_save.php'),('&plugdir;/i18n.php','common/i18n.php'),('&plugdir;/lang/en.json','diskbox/lang/en.json'),('&plugdir;/DiskboxBalance.page','diskbox/DiskboxBalance.page'),('&plugdir;/balance_lib.php','diskbox/balance_lib.php'),('&plugdir;/balance.php','diskbox/balance.php'),('&plugdir;/remove.php','diskbox/remove.php'),('&plugdir;/balance_run.php','diskbox/balance_run.php')]
+ ('&plugdir;/save.php','diskbox/save.php'),('&plugdir;/discord.php','diskbox/discord.php'),('&plugdir;/alerts.php','diskbox/alerts.php'),('&plugdir;/notify.php','diskbox/notify.php'),('&plugdir;/weekly.php','diskbox/weekly.php'),('&plugdir;/test.php','diskbox/test.php'),('&plugdir;/ack.php','diskbox/ack.php'),('/usr/local/emhttp/plugins/Diskbox/README.md','diskbox/README.md'),('&plugdir;/lang.php','common/lang.php'),('&plugdir;/lang_block.php','common/lang_block.php'),('&plugdir;/lang_save.php','common/lang_save.php'),('&plugdir;/i18n.php','common/i18n.php'),('&plugdir;/lang/en.json','diskbox/lang/en.json'),('&plugdir;/lang/hu.json','diskbox/lang/hu.json'),('&plugdir;/DiskboxBalance.page','diskbox/DiskboxBalance.page'),('&plugdir;/balance_lib.php','diskbox/balance_lib.php'),('&plugdir;/balance.php','diskbox/balance.php'),('&plugdir;/remove.php','diskbox/remove.php'),('&plugdir;/balance_run.php','diskbox/balance_run.php')]
 for _,p in files: assert ']]>' not in rd(p),p
-assert len(files)==24
+assert len(files)==25
 out=r'''<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22m">
+<!ENTITY version   "2026.10.22n">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -28,6 +28,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
+###2026.10.22m
 - Diskbox Balance: two ways to stop a move. Stop after this title lets the title being copied finish (copied, checked, removed from the old disk) and then stops; Stop now (with a confirmation) stops at once and rolls that title back. The old button said after the current file set but rolled the title back at once
 - Balance: a selected title that is missing from the plan files is written to the log instead of being left out silently; a file name that is not valid UTF-8 no longer stops the plan files from being written
 ###2026.10.22l
@@ -182,9 +184,9 @@ exit 0
 </FILE>
 
 '''
-assert len(files)==24
+assert len(files)==25
 sep=lambda t:'<!-- ========================================================= -->\n<!-- %s -->\n<!-- ========================================================= -->\n'%t
-TITLES=['DASHBOARD TILE','SETTINGS PAGE','LIBRARY','DATA ENDPOINT','SMART COLLECTOR','UNASSIGNED DISKS','SAVE','DISCORD HELPERS','DISCORD ALERT TEXTS','DISCORD ALERTS','DISCORD WEEKLY','DISCORD TEST','ACKNOWLEDGE','README','SHARED LANGUAGE SETTING','LANGUAGE BLOCK OF THE SETTINGS PAGE','LANGUAGE SAVE','DICTIONARIES','ENGLISH DICTIONARY (the source of translations)','BALANCE PAGE','BALANCE LIBRARY','BALANCE ENDPOINT','REMOVE DISKS','BALANCE WORKER']
+TITLES=['DASHBOARD TILE','SETTINGS PAGE','LIBRARY','DATA ENDPOINT','SMART COLLECTOR','UNASSIGNED DISKS','SAVE','DISCORD HELPERS','DISCORD ALERT TEXTS','DISCORD ALERTS','DISCORD WEEKLY','DISCORD TEST','ACKNOWLEDGE','README','SHARED LANGUAGE SETTING','LANGUAGE BLOCK OF THE SETTINGS PAGE','LANGUAGE SAVE','DICTIONARIES','ENGLISH DICTIONARY (the source of translations)','HUNGARIAN DICTIONARY','BALANCE PAGE','BALANCE LIBRARY','BALANCE ENDPOINT','REMOVE DISKS','BALANCE WORKER']
 # zip() would silently drop the files past the end of a shorter title list (2026.10.22 lost balance_run.php that way)
 assert len(TITLES)==len(files),(len(TITLES),len(files))
 for (name,p),t in zip(files,TITLES):

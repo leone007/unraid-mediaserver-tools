@@ -237,7 +237,7 @@ $(function () {
     $.each(list, function (i, s) {
       var lv = s.level || '';
       $box.append(el('sx-r mt-r mt-n mt-s-' + (lv === 'rd' ? 'red' : (lv === 'a' ? 'amber' : 'green'))).css('grid-template-columns', '108px minmax(0,1fr) 44px').append(
-        el('').append(txt('div', 'sx-nm', s.label), txt('div', 'sx-sub', fmtB(s.used) + ' of ' + fmtB(s.size, false, true))),
+        el('').append(txt('div', 'sx-nm', s.label), txt('div', 'sx-sub', T('sto.of', { used: fmtB(s.used), size: fmtB(s.size, false, true) }))),
         el('sx-tr').append($('<i>').addClass(lv).css('width', Math.min(100, s.pct) + '%')),
         $('<span class="sx-val">').append($('<b>').addClass(LV[lv] || '').text(pct0(s.pct)))));
     });

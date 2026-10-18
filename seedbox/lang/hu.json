@@ -1,0 +1,2052 @@
+{
+ "_meta": {
+  "language": "Magyar",
+  "translator": "Claude (AI), átnézendő"
+ },
+ "ab.ago": {
+  "text": "{t} ezelőtt"
+ },
+ "ab.band": {
+  "text": "autobrr figyelve · utolsó ellenőrzés {t} ezelőtt"
+ },
+ "ab.disabled": {
+  "text": "kikapcsolva"
+ },
+ "ab.gone": {
+  "text": "már nincs az autobrr-ben"
+ },
+ "ab.last": {
+  "text": "utolsó:"
+ },
+ "ab.last_check": {
+  "text": "utolsó ellenőrzés {t} ezelőtt"
+ },
+ "ab.no_filters": {
+  "text": "az autobrr-ben nincs szűrő"
+ },
+ "ab.since": {
+  "text": "figyelés {t} óta"
+ },
+ "ab.skipped": {
+  "text": "{n} egyedi epizód kihagyva"
+ },
+ "ab.using": {
+  "text": "használt: {l}"
+ },
+ "ab.using_all": {
+  "text": "használt: minden szűrő"
+ },
+ "ab.watching": {
+  "text": "figyel"
+ },
+ "abw.bot": {
+  "text": "a választási lehetőségeket tartalmazó Discord-üzenet akkor jön, amikor a Sonarr listázza a csomagot"
+ },
+ "abw.busy": {
+  "text": "{s}: ennek az évadnak a csomagcseréje folyamatban van"
+ },
+ "abw.dc": {
+  "text": "jelentve Discordon"
+ },
+ "abw.ep": {
+  "text": "egy epizód"
+ },
+ "abw.filter": {
+  "text": "a(z) {f} szűrőből, nincs kiválasztva"
+ },
+ "abw.imported": {
+  "text": "{s}: már egy csomagból importálva"
+ },
+ "abw.listed": {
+  "text": "listázva"
+ },
+ "abw.lowres": {
+  "text": "{s}: kisebb felbontás ({r}p, neked {c}p van)"
+ },
+ "abw.multi": {
+  "text": "több évad"
+ },
+ "abw.new": {
+  "text": "{s}: új évadcsomag"
+ },
+ "abw.noep": {
+  "text": "{s}: ebből az évadból még nincs epizód (az a Sonarr dolga)"
+ },
+ "abw.nohun": {
+  "text": "{s}: nem magyar (a te epizódjaid azok)"
+ },
+ "abw.noseries": {
+  "text": "a sorozat nincs a Sonarrban"
+ },
+ "abw.notlisted": {
+  "text": "nincs listázva: {w}"
+ },
+ "abw.reported": {
+  "text": "(már jelentve)"
+ },
+ "abw.retry": {
+  "text": "a Sonarr még nem listáz csomagot, később újrapróbálja"
+ },
+ "abw.seamon": {
+  "text": "{s}: az évad nincs figyelve"
+ },
+ "abw.seeded": {
+  "text": "{s}: már egy torrentként seedelődik"
+ },
+ "abw.sermon": {
+  "text": "{s}: a sorozat nincs figyelve"
+ },
+ "abw.specials": {
+  "text": "különkiadások"
+ },
+ "act.all": {
+  "text": "mind a {n} mutatása"
+ },
+ "act.b_add": {
+  "text": "torrent hozzáadása"
+ },
+ "act.b_pack": {
+  "text": "évadcsomag"
+ },
+ "act.b_replace": {
+  "text": "csere"
+ },
+ "act.clear": {
+  "text": "lista ürítése"
+ },
+ "act.clear_tip": {
+  "text": "A befejezett bejegyzések eltávolítása a listából"
+ },
+ "act.dismiss": {
+  "text": "Elrejt"
+ },
+ "act.dismiss_tip": {
+  "text": "A sor elrejtése; semmi sem törlődik"
+ },
+ "act.fewer": {
+  "text": "kevesebb"
+ },
+ "act.finished": {
+  "text": "befejezve"
+ },
+ "act.force": {
+  "text": "Import kényszerítése"
+ },
+ "act.force_confirm": {
+  "text": "Megkéred a Radarrt, hogy most importálja a letöltött fájlt?\n\nA Radarr a médiamappában lecseréli a régi fájlt az újra. Akkor használd, ha a feladat „Not an upgrade” üzenettel vár. Utána a régi fájlok a szokásos módon takarítódnak."
+ },
+ "act.n_running": {
+  "text": "most {n} fut"
+ },
+ "act.nothing_fin": {
+  "text": "Még semmi sem fejeződött be."
+ },
+ "act.processing": {
+  "text": "Folyamatban"
+ },
+ "act.queue": {
+  "text": "Sor: még {n} torrent vár, egymás után kerülnek be."
+ },
+ "act.results": {
+  "text": "Eredmények"
+ },
+ "act.rm_confirm": {
+  "text": "Eltávolítod a RÉGI torrentet a qBittorrentből a teljes mappájával együtt?\n\nA mappa (a videó és minden, ami vele van: nfo, képek, feliratok) a kukába kerül, és a kuka napjai után törlődik (azonnal, ha ez 0). Ha egy másik torrent ugyanezeket a fájlokat seedeli, csak a régi torrent kerül ki. Csak akkor tedd, ha ellenőrizted, hogy az új verzió lejátszható."
+ },
+ "act.rm_old": {
+  "text": "Régi fájlok eltávolítása"
+ },
+ "act.rm_old_t": {
+  "text": "Régi torrent és fájlok eltávolítása"
+ },
+ "act.stop_queue": {
+  "text": "A sor leállítása"
+ },
+ "ago.d": {
+  "text": "{n} nap"
+ },
+ "ago.days": {
+  "text": "{n} napja"
+ },
+ "ago.h": {
+  "text": "{n} órája"
+ },
+ "ago.hs": {
+  "text": "{n} ó"
+ },
+ "ago.m": {
+  "text": "{n} p"
+ },
+ "ago.min": {
+  "text": "{n} perce"
+ },
+ "ago.now": {
+  "text": "épp most"
+ },
+ "attn.cols": {
+  "text": "Torrent · Probléma"
+ },
+ "attn.more": {
+  "text": "+{n} további megjelölt"
+ },
+ "attn.title": {
+  "text": "Figyelmet igényel"
+ },
+ "busy.added": {
+  "text": "torrent hozzáadva, a fájlok ellenőrzése: {m}"
+ },
+ "busy.allocating": {
+  "text": "Helyfoglalás"
+ },
+ "busy.checking": {
+  "text": "Ellenőrzés"
+ },
+ "busy.moving": {
+  "text": "Áthelyezés"
+ },
+ "busy.queue": {
+  "text": "vár a sorban"
+ },
+ "busy.repl": {
+  "text": "csere: {m}"
+ },
+ "cfg.bot_ok": {
+  "text": "Tesztüzenet elküldve {m} néven: reagálj rá a Discordban, egy percen belül zöld lesz"
+ },
+ "cfg.loading": {
+  "text": "Betöltés..."
+ },
+ "cfg.saved": {
+  "text": "Mentve."
+ },
+ "cfg.saved_keep": {
+  "text": "(mentve, üresen hagyva megmarad)"
+ },
+ "cfg.saving": {
+  "text": "Mentés..."
+ },
+ "cfg.sending": {
+  "text": "Küldés..."
+ },
+ "cfg.testing": {
+  "text": "Tesztelés..."
+ },
+ "cl.deleted": {
+  "text": "régi fájlok törölve"
+ },
+ "cl.links": {
+  "text": "{n} régi médialink eltávolítva"
+ },
+ "cl.torrent": {
+  "text": "a régi torrent kikerült a qBittorrentből (a fájlok megmaradtak)"
+ },
+ "cl.torrent_rm": {
+  "text": "a régi torrent kikerült a qBittorrentből"
+ },
+ "cl.trash": {
+  "text": "a régi fájlok ide kerültek: {f} ({n} nap után törlődnek)"
+ },
+ "col.indexer": {
+  "text": "Indexer"
+ },
+ "col.quality": {
+  "text": "Minőség"
+ },
+ "col.release": {
+  "text": "Release"
+ },
+ "col.seeders": {
+  "text": "Seederek"
+ },
+ "col.size": {
+  "text": "Méret"
+ },
+ "col.size_vs": {
+  "text": "Méret a mostanihoz"
+ },
+ "dr.big": {
+  "text": "túl nagy"
+ },
+ "dr.dvonly": {
+  "text": "csak DV: nincs HDR10 tartalék DV nélküli tévéhez"
+ },
+ "dr.ep": {
+  "text": "másik epizód"
+ },
+ "dr.lowhdr": {
+  "text": "gyengébb HDR-formátum"
+ },
+ "dr.lowres": {
+  "text": "kisebb felbontás"
+ },
+ "dr.nohun": {
+  "text": "nem magyar"
+ },
+ "dr.nores": {
+  "text": "ismeretlen felbontás"
+ },
+ "dr.nosave": {
+  "text": "nem elég kicsi, nem is jobb"
+ },
+ "dr.noseed": {
+  "text": "nincs seeder"
+ },
+ "dr.notpack": {
+  "text": "nem évadcsomag"
+ },
+ "dr.pack": {
+  "text": "évadcsomag vagy több epizód"
+ },
+ "dr.season": {
+  "text": "másik évad"
+ },
+ "dr.upg_big": {
+  "text": "jobb, de túl nagy"
+ },
+ "dur.dh": {
+  "text": "{d} nap {h} ó"
+ },
+ "dur.hm": {
+  "text": "{h} ó {m} p"
+ },
+ "dur.m": {
+  "text": "{m} p"
+ },
+ "e.ab_answer": {
+  "text": "váratlan válasz az autobrr-től"
+ },
+ "e.ab_nocfg": {
+  "text": "az autobrr nincs beállítva"
+ },
+ "e.already_rm": {
+  "text": "a régi fájlok már el vannak távolítva"
+ },
+ "e.bad": {
+  "text": "ismeretlen elem (töltsd újra az oldalt)"
+ },
+ "e.bad_resp": {
+  "text": "hibás válasz"
+ },
+ "e.bad_series": {
+  "text": "a sorozat neve túl hosszú, vagy furcsa karaktereket tartalmaz"
+ },
+ "e.bot_cfg": {
+  "text": "előbb mentsd el a bot tokent és a felhasználói ID-det"
+ },
+ "e.bot_tok": {
+  "text": "a bot token nem működik: {e}"
+ },
+ "e.dc_nohook": {
+  "text": "nincs Discord webhook beállítva"
+ },
+ "e.dc_off": {
+  "text": "ennél az eszköznél ki vannak kapcsolva a Discord-üzenetek"
+ },
+ "e.dc_refused": {
+  "text": "a Discord nem fogadta el az üzenetet"
+ },
+ "e.dl_torrent": {
+  "text": "a .torrent fájl nem tölthető le ({e})"
+ },
+ "e.exists": {
+  "text": "ez a torrent már benne van a qBittorrentben ({n})"
+ },
+ "e.force_sonarr": {
+  "text": "az import kényszerítése egyelőre csak a Radarrnál (filmek) működik: importáld kézzel a Sonarrban, Activity, Queue"
+ },
+ "e.gone": {
+  "text": "a mappa már nincs meg"
+ },
+ "e.hash": {
+  "text": "a torrent hash nem olvasható"
+ },
+ "e.inprog": {
+  "text": "ennek a címnek már folyamatban van a cseréje"
+ },
+ "e.lock": {
+  "text": "épp most indul vagy kerül törlésre egy másik csere; próbáld újra egy perc múlva"
+ },
+ "e.mi_count": {
+  "text": "egy videófájlt vártam a letöltésben, de {n} van: importáld kézzel a Radarrban"
+ },
+ "e.mi_list": {
+  "text": "a Radarr nem tudta listázni a letöltött fájlokat: {e}"
+ },
+ "e.mi_refused": {
+  "text": "a Radarr elutasította az importot: {e}"
+ },
+ "e.nodel_root": {
+  "text": "{p} nem törlöm: nincs beállított letöltési mappán belül"
+ },
+ "e.nodel_seed": {
+  "text": "{p} nem törlöm: a(z) „{t}” torrent seedeli"
+ },
+ "e.nodelete": {
+  "text": "{p} nem törölhető"
+ },
+ "e.nodismiss": {
+  "text": "ez a feladat nem rejthető el"
+ },
+ "e.nolink": {
+  "text": "az eredménynek nincs letöltési linkje"
+ },
+ "e.norm_root": {
+  "text": "{p} nem távolítom el: nincs beállított letöltési mappán belül"
+ },
+ "e.norm_seed": {
+  "text": "{p} nem távolítom el: a(z) „{t}” torrent seedeli"
+ },
+ "e.notblocked": {
+  "text": "ez a csere nincs elakadva"
+ },
+ "e.notimp": {
+  "text": "a csere még nincs importálva"
+ },
+ "e.notqueue": {
+  "text": "a letöltés nincs a Radarr sorában (lehet, hogy még töltődik, vagy már importálva van)"
+ },
+ "e.notrash": {
+  "text": "{p} nem helyezhető át a kukába"
+ },
+ "e.qb_noanswer": {
+  "text": "a qBittorrent nem válaszolt"
+ },
+ "e.qb_nodel": {
+  "text": "a qBittorrent nem válaszolt; semmi sem törlődött"
+ },
+ "e.qb_refused": {
+  "text": "a qBittorrent elutasította ({e})"
+ },
+ "e.rel_gone": {
+  "text": "a(z) {k} már nem kínálja ezt a release-t (keress újra)"
+ },
+ "e.rel_refused": {
+  "text": "a(z) {k} elutasította a release-t: {e}"
+ },
+ "e.scan_busy": {
+  "text": "keresés fut; próbáld újra, ha véget ért"
+ },
+ "e.scan_busy_bg": {
+  "text": "keresés fut; az ellenőrzés utána magától elindul"
+ },
+ "e.sp_busy": {
+  "text": "ennek az évadnak már folyamatban van a cseréje"
+ },
+ "e.sp_gone": {
+  "text": "a Sonarr már nem kínálja ezt a csomagot (keress újra)"
+ },
+ "e.sp_pack": {
+  "text": "ismeretlen csomag (keress újra)"
+ },
+ "e.sp_season": {
+  "text": "ismeretlen évad (keress újra)"
+ },
+ "e.trash_fail": {
+  "text": "nem törölhető: {l}"
+ },
+ "e.unexpected": {
+  "text": "váratlan hiba: {e}"
+ },
+ "e.unknown_item": {
+  "text": "ismeretlen elem"
+ },
+ "e.unknown_job": {
+  "text": "ismeretlen feladat (töltsd újra az oldalt)"
+ },
+ "e.unknown_op": {
+  "text": "ismeretlen művelet"
+ },
+ "e.unknown_rel": {
+  "text": "ismeretlen elem vagy release (keress újra)"
+ },
+ "f.add_confirm": {
+  "text": "Hozzáadod ezt a torrentet a qBittorrenthez?\n\nLeállítva kerül be, és a meglévő fájljaidhoz ellenőrzi. Ha egyezik a fájljaiddal (mindegyikkel, vagy néhány kivételével, lásd a beállításokat), elindul a seedelés; különben újra törlődik, és a fájljaid érintetlenek maradnak."
+ },
+ "f.added": {
+  "text": "Hozzáadva, ellenőrzés..."
+ },
+ "f.adding": {
+  "text": "Hozzáadás..."
+ },
+ "f.all_seeded": {
+  "text": "A letöltési mappákban minden fájl seedelődik."
+ },
+ "f.btn_add": {
+  "text": "Torrent hozzáadása"
+ },
+ "f.col_match": {
+  "text": "Egyezés / minőség"
+ },
+ "f.col_name": {
+  "text": "Mappa / release"
+ },
+ "f.del_confirm": {
+  "text": "Végleg törlöd ezt a mappát?\n\nEz nem vonható vissza. Ha egy tracker által eltávolított torrent tartozik hozzá, az kikerül a qBittorrentből."
+ },
+ "f.delete": {
+  "text": "Törlés"
+ },
+ "f.delete_tip": {
+  "text": "A mappa kukába helyezése (vagy azonnali törlése, ha a kuka napjai 0)"
+ },
+ "f.do_add": {
+  "text": "Torrent hozzáadása"
+ },
+ "f.do_fix": {
+  "text": "javítás a qBittorrentben"
+ },
+ "f.do_replace": {
+  "text": "Csere"
+ },
+ "f.failed_below": {
+  "text": "az utolsó próba hibás, lásd lent"
+ },
+ "f.found": {
+  "text": "eredeti megtalálva"
+ },
+ "f.g0": {
+  "text": "Nincs torrent: a tartalom cseréje"
+ },
+ "f.g1": {
+  "text": "Csak a név hasonló: a tartalom cseréje"
+ },
+ "f.g2": {
+  "text": "Más release, hasonló méret: a tartalom cseréje"
+ },
+ "f.g25": {
+  "text": "A tracker eltávolította: a tartalom cseréje"
+ },
+ "f.g27": {
+  "text": "A tracker elutasítja a passkeyt: frissítsd a tracker URL-t a qBittorrentben"
+ },
+ "f.g3": {
+  "text": "Azonos név és méret: torrent hozzáadása"
+ },
+ "f.g4": {
+  "text": "Folyamatban"
+ },
+ "f.ignore": {
+  "text": "Mellőz"
+ },
+ "f.last_failed": {
+  "text": "az utolsó próba hibás: {e}"
+ },
+ "f.n_folders": {
+  "one": "{n} mappa",
+  "other": "{n} mappa"
+ },
+ "f.n_not_seeded": {
+  "one": "{n} mappa nincs seedelve",
+  "other": "{n} mappa nincs seedelve"
+ },
+ "f.pass": {
+  "text": "passkey elutasítva"
+ },
+ "f.pass_line": {
+  "text": "a tracker elutasítja a torrent passt: frissítsd a tracker URL-t a qBittorrentben"
+ },
+ "f.pass_tip": {
+  "text": "A tracker azt válaszolja: unregistered torrent pass, vagyis az announce URL-ben lévő passkey érvénytelen (megváltozott vagy újragenerálták); maga a torrent valószínűleg még megvan"
+ },
+ "f.removed": {
+  "text": "a tracker eltávolította"
+ },
+ "f.removed_tip": {
+  "text": "A tracker már nem ismeri ezt a torrentet"
+ },
+ "f.replace": {
+  "text": "Csere..."
+ },
+ "f.replace_again": {
+  "text": "Csere újra"
+ },
+ "f.replace_instead": {
+  "text": "{why}: inkább a tartalom cseréje"
+ },
+ "f.replace_tip": {
+  "text": "Azonos vagy jobb release keresése a Radarrban/Sonarrban; a régi fájlok az új importja után kerülnek el"
+ },
+ "f.scanned": {
+  "text": "keresve {t} ezelőtt"
+ },
+ "f.searching": {
+  "text": "Keresés..."
+ },
+ "f.starting": {
+  "text": "Indítás..."
+ },
+ "f.toggle_cat": {
+  "text": "A kategória mutatása vagy elrejtése"
+ },
+ "f.toggle_res": {
+  "text": "A keresési találatok mutatása vagy elrejtése"
+ },
+ "f.trash_confirm": {
+  "text": "Kukába teszed ezt a mappát?\n\n{n} nap után végleg törlődik. Ha egy tracker által eltávolított torrent tartozik hozzá, az kikerül a qBittorrentből."
+ },
+ "f.waiting_row": {
+  "text": "várakozás a keresésre..."
+ },
+ "f.waiting_search": {
+  "text": "Várakozás a keresésre..."
+ },
+ "f.why_noident": {
+  "text": "nincs azonos torrent"
+ },
+ "f.why_none": {
+  "text": "nincs torrent"
+ },
+ "f.why_removed": {
+  "text": "a tracker eltávolította ezt a torrentet"
+ },
+ "f.working": {
+  "text": "Dolgozik..."
+ },
+ "fo.band": {
+  "text": "{w} figyelve · {l} médiakönyvtár"
+ },
+ "fo.col_folder": {
+  "text": "Mappa"
+ },
+ "fo.col_role": {
+  "text": "Szerep"
+ },
+ "fo.movies": {
+  "text": "Filmek"
+ },
+ "fo.music": {
+  "text": "Zene"
+ },
+ "fo.n_movies": {
+  "text": "médiakönyvtár · Radarr"
+ },
+ "fo.n_music": {
+  "text": "médiakönyvtár · még nincs hozzá eszköz"
+ },
+ "fo.n_new": {
+  "text": "{n} új"
+ },
+ "fo.n_off": {
+  "text": "egy eszköz sem nézi"
+ },
+ "fo.n_other": {
+  "text": "csak seedelés (például ratio torrentek): csak a Find my torrent nézi"
+ },
+ "fo.n_series": {
+  "text": "médiakönyvtár · Sonarr"
+ },
+ "fo.new": {
+  "text": "új"
+ },
+ "fo.none": {
+  "text": "Nincs mappa a letöltési mappában (fut a tömb, jó az útvonal?)"
+ },
+ "fo.off": {
+  "text": "Nincs figyelve"
+ },
+ "fo.other": {
+  "text": "Egyéb"
+ },
+ "fo.role_of": {
+  "text": "{n} szerepe"
+ },
+ "fo.series": {
+  "text": "Sorozatok"
+ },
+ "fq.add_all": {
+  "text": "Minden egyező hozzáadása ({n})"
+ },
+ "fq.add_all_hint": {
+  "text": "minden mappát hozzáad, amelyhez azonos torrent van, egyszerre egy ellenőrzéssel"
+ },
+ "fq.confirm": {
+  "text": "Hozzáadsz minden listázott torrentet, amelynek a neve és mérete egyezik a mappádéval?\n\nEgymás után kerülnek be, egyszerre egy fájlellenőrzéssel. Mindegyik csak akkor indul el, ha egyezik a fájljaiddal (lásd a beállításokat); különben újra törlődik, és a fájljaid érintetlenek maradnak. A sort bármikor leállíthatod."
+ },
+ "iss.conn_name": {
+  "text": "qBittorrent-kapcsolat"
+ },
+ "iss.disc_why": {
+  "text": "Nincs hálózati kapcsolat"
+ },
+ "iss.dl_stopped": {
+  "text": "A letöltés nem fut"
+ },
+ "iss.error": {
+  "text": "Hiba"
+ },
+ "iss.error_why": {
+  "text": "A torrent hibás állapotban van"
+ },
+ "iss.firewalled_why": {
+  "text": "A bejövő port nem érhető el, ellenőrizd a porttovábbítást"
+ },
+ "iss.missing": {
+  "text": "Hiányzik"
+ },
+ "iss.missing_why": {
+  "text": "A fájlok hiányoznak a lemezről"
+ },
+ "iss.not_seeding": {
+  "text": "Nem seedel"
+ },
+ "iss.paused": {
+  "text": "Szünetel"
+ },
+ "iss.queued": {
+  "text": "Sorban"
+ },
+ "iss.queued_why": {
+  "text": "Szabad helyre vár"
+ },
+ "iss.stopped": {
+  "text": "Leállítva"
+ },
+ "iss.unknown": {
+  "text": "Ismeretlen"
+ },
+ "iss.unknown_why": {
+  "text": "Ismeretlen állapot"
+ },
+ "job.checking": {
+  "text": "ellenőrzés {p}%"
+ },
+ "job.checking_files": {
+  "text": "a meglévő fájlok ellenőrzése"
+ },
+ "job.dismissed": {
+  "text": "elrejtve; a régi fájlok a helyükön maradtak"
+ },
+ "job.dl": {
+  "text": "letöltés {p}%"
+ },
+ "job.forced": {
+  "text": "import kérve a Radarrtól, várakozás rá"
+ },
+ "job.gone": {
+  "text": "a torrent eltűnt a qBittorrentből"
+ },
+ "job.imp_radarr": {
+  "text": "a Radarr importálta; a régi fájl lecserélve"
+ },
+ "job.imp_sonarr": {
+  "text": "a Sonarr importálta; a régi fájlok lecserélve"
+ },
+ "job.left": {
+  "text": "még {t}"
+ },
+ "job.lost": {
+  "text": "nincs a sorban és nincs importálva: nézd meg a(z) {k} programban"
+ },
+ "job.matched": {
+  "text": "minden fájl egyezik, a seedelés elindult"
+ },
+ "job.matched_part": {
+  "text": "{p}% egyezik, a seedelés elindult; a qBittorrent letölti a hiányzó {m}"
+ },
+ "job.n_files": {
+  "one": "{n} fájlt ({s})",
+  "other": "{n} fájlt ({s})"
+ },
+ "job.nomatch": {
+  "text": "a fájlok nem egyeztek ({p}% található); a torrent törölve, a fájljaid érintetlenek"
+ },
+ "job.old_kept": {
+  "text": "a régi fájlok nem kerültek el: {m}"
+ },
+ "job.old_removed": {
+  "text": "a régi torrent eltávolítva (a fájlok megmaradtak)"
+ },
+ "job.rm_all": {
+  "text": "a régi torrent és a fájljai eltávolítva"
+ },
+ "job.rm_kept": {
+  "text": "a régi torrent eltávolítva; a fájljai megmaradtak, mert a(z) „{t}” torrent is seedeli őket"
+ },
+ "job.sent": {
+  "text": "elküldve ide: {k}"
+ },
+ "job.waiting": {
+  "text": "vár: {m}"
+ },
+ "pill.attention": {
+  "text": "{n} figyelmet igényel"
+ },
+ "pill.connected": {
+  "text": "Kapcsolódva"
+ },
+ "pill.disconnected": {
+  "text": "Nincs kapcsolat"
+ },
+ "pill.firewalled": {
+  "text": "Tűzfal mögött"
+ },
+ "pill.healthy": {
+  "text": "Minden rendben"
+ },
+ "pill.offline": {
+  "text": "Nem elérhető"
+ },
+ "pill.unknown": {
+  "text": "Ismeretlen"
+ },
+ "pk.already": {
+  "text": "a Sonarr már importálta a csomagot ({n} epizód)"
+ },
+ "pk.deleted": {
+  "text": "az évad fájljai törölve a Sonarrban, várakozás a csomag importjára"
+ },
+ "pk.done": {
+  "text": "kész: {n} epizód most a csomagból jön, {m} egyedi epizódmappa a kukába került"
+ },
+ "pk.fewer": {
+  "text": "a csomagban kevesebb epizód van, mint neked; semmi sem törlődött vagy változott."
+ },
+ "pk.imported": {
+  "text": "a Sonarr {n} epizódot importált a csomagból"
+ },
+ "pk.miss": {
+  "text": "a csomagból hiányzik az alábbi, nálad meglévő epizód: {l}; semmi sem törlődött vagy változott."
+ },
+ "pk.nodel": {
+  "text": "a Sonarr nem törölte az évad fájljait: {e}. Semmi sem változott."
+ },
+ "pk.nodl": {
+  "text": "a csomag 30 percen belül nem jelent meg a qBittorrentben: nézd meg a Sonarrban, Activity, Queue. Semmi sem törlődött."
+ },
+ "pk.noimp": {
+  "text": "a Sonarr 15 percen belül nem importálta a csomagot ({n}/{m} epizód). A régi epizódok fájljai még a letöltési mappában vannak, és a csomag seedel: importáld kézzel a Sonarrban, Activity, Queue."
+ },
+ "pk.remon": {
+  "text": "a figyelést nem sikerült visszaállítani: {e}"
+ },
+ "pk.scan": {
+  "text": "(a Sonarr kérve, hogy nézze át a letöltést)"
+ },
+ "pk.scan_fail": {
+  "text": "(az átnézés kérése hibás: {e})"
+ },
+ "pk.sent": {
+  "text": "elküldve a Sonarrnak, várakozás a letöltés indulására"
+ },
+ "pk.unmon": {
+  "text": "nem sikerült kikapcsolni az epizódok figyelését a Sonarrban: {e}. Semmi sem törlődött."
+ },
+ "pk.wait": {
+  "text": "várakozás az importra: {n}/{m} epizód"
+ },
+ "pr.about": {
+  "text": "kb. {t}"
+ },
+ "pr.about_at": {
+  "text": "kb. {t} {r} sebességgel"
+ },
+ "pr.all_done": {
+  "text": "minden kész kb. {t} múlva"
+ },
+ "pr.downloaded": {
+  "text": "letöltve"
+ },
+ "pr.downloading": {
+  "text": "letöltés {p}%"
+ },
+ "pr.hardly": {
+  "text": "alig mozdul ({s} KB/s)"
+ },
+ "pr.left": {
+  "text": "még {t}"
+ },
+ "pr.movewait": {
+  "text": "letöltve, a tömbre áthelyezésre vár"
+ },
+ "pr.moving": {
+  "text": "áthelyezés a tömbre {p}%"
+ },
+ "pr.n_dl": {
+  "text": "{n} töltődik"
+ },
+ "pr.n_stalled": {
+  "text": "{n} elakadt"
+ },
+ "pr.no_eta": {
+  "text": "nincs becslés"
+ },
+ "pr.no_seeder": {
+  "text": "nincs elérhető seeder"
+ },
+ "pr.seeds_none": {
+  "one": "{n} seeder csatlakozva, de nem jön semmi",
+  "other": "{n} seeder csatlakozva, de nem jön semmi"
+ },
+ "pr.stalled": {
+  "text": "elakadt: {why}"
+ },
+ "pr.stalled_b": {
+  "text": "elakadt"
+ },
+ "pr.swarm": {
+  "text": "(a tracker szerint {n})"
+ },
+ "pr.then": {
+  "text": "utána"
+ },
+ "pr.to_move": {
+  "text": "{s} vár a tömbre áthelyezésre (még nincs mért sebesség)"
+ },
+ "pr.to_move_at": {
+  "text": "{s} vár a tömbre áthelyezésre, {r} sebességgel"
+ },
+ "pr.wait_import": {
+  "text": "várakozás az importra"
+ },
+ "q.dv_only": {
+  "text": "csak DV"
+ },
+ "q.dv_only_tip": {
+  "text": "Dolby Vision HDR10 alapréteg nélkül: lila-zöld kép DV nélküli tévén"
+ },
+ "q.must": {
+  "text": "kell"
+ },
+ "q.rejected": {
+  "text": "elutasítva"
+ },
+ "rep.blocked": {
+  "text": "Elakadt"
+ },
+ "rep.done": {
+  "text": "Kész"
+ },
+ "rep.downloading": {
+  "text": "Letöltés"
+ },
+ "rep.grabbed": {
+  "text": "Sorban"
+ },
+ "rep.imported": {
+  "text": "Befejezés"
+ },
+ "rep.importing": {
+  "text": "Importálás"
+ },
+ "rep.moving": {
+  "text": "Áthelyezés"
+ },
+ "rep.tip_done": {
+  "text": "{n}: a Season Repacker csomagra cserélte"
+ },
+ "rep.tip_run": {
+  "text": "{n}: a Season Repacker most cseréli csomagra"
+ },
+ "rep.wait_move": {
+  "text": "áthelyezésre vár"
+ },
+ "rep.wait_sonarr": {
+  "text": "az évad fájljai törölve, várakozás a Sonarrra"
+ },
+ "rs.confirm_repl": {
+  "text": "Lecseréled ezt a tartalmat a kiválasztott release-re?\n\nA Radarr/Sonarr letölti és importálja. Az import után a RÉGI fájlok (a letöltési mappában lévő mappa és a médialinkje) a kukába kerülnek, vagy törlődnek, ha a kuka 0 napra van állítva, és a régi torrent kikerül a qBittorrentből (a qBittorrent a fájljait nem törli)."
+ },
+ "rs.confirm_upd": {
+  "text": "Elküldöd ezt a release-t a Radarrnak/Sonarrnak?\n\nCsereként töltődik le és importálódik. A mostani fájljaid csak az importkor cserélődnek le; a régi torrent addig marad, amíg itt el nem távolítod."
+ },
+ "rs.do_radarr": {
+  "text": "csináld, Radarr!"
+ },
+ "rs.ep1": {
+  "text": "(egy epizód: {e})"
+ },
+ "rs.ep_fail": {
+  "text": "(az epizód keresése hibás, az évadot keresem)"
+ },
+ "rs.filtered": {
+  "text": "kiszűrve: {t}"
+ },
+ "rs.filtered_out": {
+  "text": "Kiszűrve: {l}"
+ },
+ "rs.lang": {
+  "text": "nyelv: {l}"
+ },
+ "rs.no_offer": {
+  "text": "Egy release sem felel meg a feltételeknek."
+ },
+ "rs.none": {
+  "text": "nincs azonos vagy jobb release seederrel"
+ },
+ "rs.orig": {
+  "text": "A cím eredeti nyelve: {l}"
+ },
+ "rs.profile": {
+  "text": "A cím profilja: {p}"
+ },
+ "rs.replace_this": {
+  "text": "Csere erre"
+ },
+ "rs.returned": {
+  "one": "{k}: {n} release{e}, {s} mp alatt",
+  "other": "{k}: {n} release{e}, {s} mp alatt"
+ },
+ "rs.searching": {
+  "text": "Keresés a Radarrban/Sonarrban... ez eltarthat egy percig."
+ },
+ "rs.upg_no": {
+  "text": "upgrade NEM engedélyezett"
+ },
+ "rs.upg_yes": {
+  "text": "upgrade engedélyezett"
+ },
+ "run.dirs": {
+  "text": "A letöltési mappák olvasása..."
+ },
+ "run.match": {
+  "text": "Egyeztetés a Radarrral és a Sonarrral..."
+ },
+ "run.qb": {
+  "text": "A qBittorrent olvasása..."
+ },
+ "run.qb_fail": {
+  "text": "A torrentlista nem olvasható a qBittorrentből (nézd meg a Seedbox beállításait)."
+ },
+ "run.repl_n": {
+  "text": "Cserék keresése: {n} / {m}..."
+ },
+ "run.search_n": {
+  "text": "Keresés: {n} / {m}..."
+ },
+ "run.sonarr": {
+  "text": "A Sonarr olvasása..."
+ },
+ "run.sp_n": {
+  "text": "{n}/{m} {t} ({f} találat)"
+ },
+ "run.trk": {
+  "text": "A trackerek ellenőrzése..."
+ },
+ "run.trk_n": {
+  "text": "A trackerek ellenőrzése ({n} / {m})..."
+ },
+ "set.ab": {
+  "text": "az autobrr figyeléséhez kell az autobrr és a Sonarr címe és kulcsa"
+ },
+ "set.ab_key": {
+  "text": "az autobrr címe vagy kulcsa hibásnak tűnik"
+ },
+ "set.accept": {
+  "text": "az elfogadott egyezés 90 és 100 százalék között lehet"
+ },
+ "set.base": {
+  "text": "a letöltési mappa /mnt/ alatti útvonal kell legyen"
+ },
+ "set.base_ex": {
+  "text": "a letöltési mappa /mnt/ alatti útvonal kell legyen (például /mnt/user/data/downloads)"
+ },
+ "set.bot": {
+  "text": "a bot token hibásnak tűnik (Developer Portal, Bot, Reset Token)"
+ },
+ "set.bot_hook": {
+  "text": "a bot a Seedbox-üzenetek alatt reagál: Discord webhookot is ments"
+ },
+ "set.cats": {
+  "text": "a Shape up-hoz legalább egy kell ezek közül: megtakarítás, HDR / DV upgrade, felbontás-upgrade"
+ },
+ "set.growth": {
+  "text": "a legnagyobb méretnövekedés 0 és 1000 százalék között lehet"
+ },
+ "set.hook": {
+  "text": "a Discord webhook címe hibásnak tűnik"
+ },
+ "set.key": {
+  "text": "a(z) {k} API-kulcs hibásnak tűnik"
+ },
+ "set.map": {
+  "text": "érvénytelen mappamegfeleltetés"
+ },
+ "set.missing": {
+  "text": "a hiányzó fájlok száma 0 és 20 között lehet"
+ },
+ "set.nodir": {
+  "text": "nincs ilyen mappa: {p}"
+ },
+ "set.noroot": {
+  "text": "egy mappa sincs figyelve: legalább egy mappának adj a Nincs figyelve helyett más szerepet"
+ },
+ "set.range": {
+  "text": "egy küszöbérték a megengedett tartományon kívül esik"
+ },
+ "set.roles": {
+  "text": "hiányoznak a mappák szerepei (töltsd újra az oldalt)"
+ },
+ "set.sched": {
+  "text": "az ütemezett kereséshez kell egy nap és egy óra (0-23)"
+ },
+ "set.trash": {
+  "text": "a kuka napjai 0 és 60 között lehetnek"
+ },
+ "set.uid": {
+  "text": "a Discord-felhasználó ID egy 17-20 jegyű szám (Fejlesztői mód, jobb klikk a nevedre, Felhasználói azonosító másolása)"
+ },
+ "set.upg": {
+  "text": "az upgrade méretnövekedése 0 és 1000 százalék között lehet"
+ },
+ "set.url": {
+  "text": "a(z) {k} címe http:// vagy https:// kezdetű kell legyen"
+ },
+ "set.write": {
+  "text": "nem sikerült menteni a beállításokat"
+ },
+ "sp.ab_nomatch": {
+  "text": "a Sonarr nem listázza az autobrr által látott release-t ({n}); ez a legjobb csomag, amit talált"
+ },
+ "sp.brings": {
+  "text": "hozza: {l}"
+ },
+ "sp.brings_tip": {
+  "text": "Itt hiányzik; a Sonarr a csomagból importálja"
+ },
+ "sp.checking": {
+  "text": "{n} ellenőrzése a Sonarrral"
+ },
+ "sp.col_pack": {
+  "text": "Csomag"
+ },
+ "sp.col_replaces": {
+  "text": "Ezt cseréli"
+ },
+ "sp.col_season": {
+  "text": "Évad"
+ },
+ "sp.confirm": {
+  "text": "Lecseréled ennek az évadnak az egyedi epizódjait az évadcsomagra?\n\n1. A Sonarr letölti a csomagot (az epizódok addig maradnak, ahogy vannak).\n2. Ha 100%-ban kész, és minden nálad meglévő epizódot tartalmaz, az évad figyelése kikapcsol, és a fájljai TÖRLŐDNEK a Sonarrban.\n3. A Sonarr importálja a csomagot; utána a figyelés visszaáll, és az egyedi epizódok torrentjei a kukába kerülnek.\n\nA háttérben fut; ha a 2. lépés előtt valami elromlik, semmi sem változik."
+ },
+ "sp.from_ab": {
+  "text": "Az autobrr-ből"
+ },
+ "sp.from_scan": {
+  "text": "A könyvtár átnézéséből"
+ },
+ "sp.n_files": {
+  "one": "{n} fájl",
+  "other": "{n} fájl"
+ },
+ "sp.n_running": {
+  "text": "{n} fut"
+ },
+ "sp.n_seasons": {
+  "one": "{n} évad",
+  "other": "{n} évad"
+ },
+ "sp.n_torrents": {
+  "text": "{n} torrent"
+ },
+ "sp.none": {
+  "text": "Nincs cserélhető évad."
+ },
+ "sp.none_for": {
+  "text": "Nincs cserélhető évad ehhez: „{q}”."
+ },
+ "sp.now": {
+  "text": "most: {q}, {n} epizód, {s}"
+ },
+ "sp.old_list": {
+  "text": "Az import után a kukába kerülő egyedi epizódtorrentek ({n}, {s} a lemezen, a csomag {p})"
+ },
+ "sp.only": {
+  "text": "csak „{q}”"
+ },
+ "sp.other_packs": {
+  "text": "{n} másik csomag"
+ },
+ "sp.replace": {
+  "text": "Csere csomagra"
+ },
+ "sp.scanning": {
+  "text": "keresés"
+ },
+ "sp.show": {
+  "text": "mutat"
+ },
+ "sp.skipped": {
+  "text": "Kihagyva: {l}."
+ },
+ "sp.use": {
+  "text": "Ezt a csomagot"
+ },
+ "spw.airing": {
+  "text": "még fut"
+ },
+ "spw.noanswer": {
+  "text": "a Sonarr nem válaszolt"
+ },
+ "spw.nopack": {
+  "text": "nincs csomag"
+ },
+ "spw.nothing": {
+  "text": "nincs mit cserélni"
+ },
+ "spw.pack": {
+  "text": "már csomag"
+ },
+ "spw.search": {
+  "text": "a keresés hibás"
+ },
+ "sum.all_seeding": {
+  "text": "Mind a {n} seedel"
+ },
+ "sum.busy": {
+  "text": "{n} dolgozik"
+ },
+ "sum.downloading": {
+  "text": "{n} töltődik"
+ },
+ "sum.not_seeded": {
+  "text": "{n} nincs seedelve"
+ },
+ "sum.ns_tip": {
+  "one": "{n} mappa a letöltési mappákban, amit egy torrent sem seedel (legutóbbi Find my torrent keresés)",
+  "other": "{n} mappa a letöltési mappákban, amit egy torrent sem seedel (legutóbbi Find my torrent keresés)"
+ },
+ "sum.of_seeded": {
+  "text": "{n} / {all} seedelve"
+ },
+ "sum.seeding": {
+  "text": "{n} seedel"
+ },
+ "sum.unavailable": {
+  "text": "Nem elérhető"
+ },
+ "test.ab_off": {
+  "text": "(a figyelés ki van kapcsolva)"
+ },
+ "test.ab_ok": {
+  "text": "ok, {n} szűrő: {l}"
+ },
+ "test.dc_alloff": {
+  "text": "(az üzenetek minden eszköznél ki vannak kapcsolva)"
+ },
+ "test.dc_ok": {
+  "text": "ok, tesztüzenet elküldve"
+ },
+ "test.map": {
+  "text": "{n} / {m} mintatorrent megtalálva ezen a szerveren"
+ },
+ "test.map_check": {
+  "text": "(ellenőrizd a mappamegfeleltetést)"
+ },
+ "test.nocfg": {
+  "text": "nincs beállítva"
+ },
+ "test.nohook": {
+  "text": "nincs webhook beállítva"
+ },
+ "test.qb_fail": {
+  "text": "nem lehet kapcsolódni vagy bejelentkezni"
+ },
+ "test.qb_ok": {
+  "one": "ok, {n} torrent",
+  "other": "ok, {n} torrent"
+ },
+ "test.ver": {
+  "text": "ok, {v} verzió"
+ },
+ "tile.connecting": {
+  "text": "Kapcsolódás…"
+ },
+ "tile.loading": {
+  "text": "Betöltés…"
+ },
+ "tile.open_webui": {
+  "text": "A qBittorrent webes felületének megnyitása"
+ },
+ "tile.settings": {
+  "text": "Seedbox beállítások"
+ },
+ "tl.all_seeded": {
+  "text": "Mind seedelve"
+ },
+ "tl.latest": {
+  "text": "legutóbbi {t}"
+ },
+ "tl.n_not_seeded": {
+  "text": "{n} nincs seedelve"
+ },
+ "tl.n_passkey": {
+  "text": "{n} passkey"
+ },
+ "tl.n_removed": {
+  "text": "{n} eltávolítva a trackerről"
+ },
+ "tl.not_scanned": {
+  "text": "Még nincs keresve"
+ },
+ "tl.nothing_rep": {
+  "text": "Nincs mit csomagolni"
+ },
+ "tl.nothing_upd": {
+  "text": "Nincs mit javítani"
+ },
+ "tl.offers": {
+  "one": "{n} ajánlat",
+  "other": "{n} ajánlat"
+ },
+ "tl.open": {
+  "text": "Seedbox Tools megnyitása, {n}"
+ },
+ "tl.packs_ab": {
+  "one": "{n} csomag az autobrr-ből",
+  "other": "{n} csomag az autobrr-ből"
+ },
+ "tl.scanned": {
+  "text": "keresve {t}"
+ },
+ "tl.scanning": {
+  "text": "Keresés"
+ },
+ "tl.searched": {
+  "text": "{d} / {n} keresve"
+ },
+ "tl.seasons": {
+  "one": "{n} évad csomagolható",
+  "other": "{n} évad csomagolható"
+ },
+ "tl.tag_find": {
+  "text": "egészségesen tartja a seedet 😉"
+ },
+ "tl.tag_rep": {
+  "text": "rendben tartja az adataidat"
+ },
+ "tl.tag_upd": {
+  "text": "karcsúbb vagy erősebb, jobb formában"
+ },
+ "tl.tip_find": {
+  "text": "minden fájl seedel · egy fájl sem marad seedeletlen"
+ },
+ "tl.tip_rep": {
+  "text": "évadonként egy torrent · egyben tartja az évadokat"
+ },
+ "tl.tip_upd": {
+  "text": "kisebb, jobb HDR vagy nagyobb felbontás · sosem gyengébb minőség"
+ },
+ "tl.to_fix": {
+  "text": "{n} javítandó"
+ },
+ "tl.to_search": {
+  "text": "{n} keresendő"
+ },
+ "tools.action": {
+  "text": "Teendő"
+ },
+ "tools.title": {
+  "text": "Seedbox eszközök"
+ },
+ "tp.about.a_seedbox_or_a": {
+  "text": "Egy seedbox, vagy egy seedelő médiaszerver csak akkor végzi jól a dolgát, ha a médiafájljai közül minél többet seedel. Amit semmi sem seedel, az kárba megy: nem nő a ratio, és a trackerek akár ki is tehetnek. A három eszköz a Prowlarrral, a Radarrral, a Sonarrral és a qBittorrenttel dolgozik."
+ },
+ "tp.about.find_my_torrent_looks": {
+  "text": "A <b>Find my torrent</b> torrentet keres (a Prowlarron át) a letöltési mappáid olyan fájljaihoz, amelyeket semmi sem seedel. A <b>Shape up</b> (korábban Update me) a háttérben minden nagy, régi, seedelt címhez keres, és kisebb release-t, jobb HDR-formátumot vagy nagyobb felbontást ajánl, amit jóváhagyásod után a Radarr vagy a Sonarr cserél le. A <b>Season repacker</b> egy befejezett évad egyedi epizódjait cseréli az évadcsomagra, hogy egyetlen torrent seedelje az egész évadot (az általa hozzáadott torrentek a <code>seasonrepacker</code> címkét kapják); az autobrr-t is figyelheti új évadcsomagokért."
+ },
+ "tp.about.what_do_the_tools": {
+  "text": "Mit csinálnak az eszközök?"
+ },
+ "tp.at": {
+  "text": "időpont"
+ },
+ "tp.band.activity": {
+  "text": "Tevékenység"
+ },
+ "tp.band.connections": {
+  "text": "Kapcsolatok"
+ },
+ "tp.band.find_my_torrent": {
+  "text": "Find my torrent"
+ },
+ "tp.band.folders": {
+  "text": "Mappák"
+ },
+ "tp.band.scans_and_trash": {
+  "text": "Keresések és kuka"
+ },
+ "tp.band.season_repacker": {
+  "text": "Season repacker"
+ },
+ "tp.band.shape_up": {
+  "text": "Shape up"
+ },
+ "tp.bandb.nothing_to_set_it": {
+  "text": "nincs mit beállítani: a Sonarr figyelt sorozataival és évadaival dolgozik"
+ },
+ "tp.bandb.replacements_and_added_torrents": {
+  "text": "cserék és hozzáadott torrentek"
+ },
+ "tp.bandb.shared_by_the_three": {
+  "text": "a három eszköz közös beállításai"
+ },
+ "tp.bandb.slimmer_or_stronger_a": {
+  "text": "karcsúbb vagy erősebb: kisebb release, jobb HDR-formátum vagy nagyobb felbontás"
+ },
+ "tp.btn.empty_the_trash_now": {
+  "text": "A kuka ürítése most"
+ },
+ "tp.btn.load_filters": {
+  "text": "Szűrők betöltése"
+ },
+ "tp.btn.read_the_folders_again": {
+  "text": "A mappák újraolvasása"
+ },
+ "tp.btn.save": {
+  "text": "Mentés"
+ },
+ "tp.btn.scan_for_season_packs": {
+  "text": "Évadcsomagok keresése"
+ },
+ "tp.btn.scan_the_downloads_folders": {
+  "text": "A letöltési mappák átnézése"
+ },
+ "tp.btn.scan_the_seeded_torrents": {
+  "text": "A seedelt torrentek átnézése"
+ },
+ "tp.btn.test_the_bot": {
+  "text": "A bot tesztelése"
+ },
+ "tp.btn.test_the_connections": {
+  "text": "A kapcsolatok tesztelése"
+ },
+ "tp.days": {
+  "text": "nap"
+ },
+ "tp.dt.autobrr_address_and_api": {
+  "text": "autobrr címe és API-kulcsa:"
+ },
+ "tp.dt.autobrr_filters_to_use": {
+  "text": "Használt autobrr szűrők:"
+ },
+ "tp.dt.check_the_connections": {
+  "text": "A kapcsolatok ellenőrzése:"
+ },
+ "tp.dt.data_folder_as_qbittorrent": {
+  "text": "Adatmappa a qBittorrent szerint / ezen a szerveren:"
+ },
+ "tp.dt.discord_bot_reactions": {
+  "text": "Discord bot (reakciók):"
+ },
+ "tp.dt.discord_messages": {
+  "text": "Discord-üzenetek:"
+ },
+ "tp.dt.discord_webhook": {
+  "text": "Discord webhook:"
+ },
+ "tp.dt.dolby_vision_on_your": {
+  "text": "Dolby Vision a tévéiden:"
+ },
+ "tp.dt.downloads_folder_on_this": {
+  "text": "Letöltési mappa ezen a szerveren:"
+ },
+ "tp.dt.find_my_torrent_accepted": {
+  "text": "Find my torrent: elfogadott egyezés (%):"
+ },
+ "tp.dt.find_my_torrent_category": {
+  "text": "Find my torrent: kategória:"
+ },
+ "tp.dt.find_my_torrent_files": {
+  "text": "Find my torrent: hiányozható fájlok:"
+ },
+ "tp.dt.find_my_torrent_size": {
+  "text": "Find my torrent: mérettűrés (%):"
+ },
+ "tp.dt.lidarr_address_and_api": {
+  "text": "Lidarr címe és API-kulcsa:"
+ },
+ "tp.dt.minimum_size_gb_age": {
+  "text": "Legkisebb méret (GB), kor (nap), megtakarítás (%):"
+ },
+ "tp.dt.offer": {
+  "text": "Ajánlat:"
+ },
+ "tp.dt.prowlarr_address_and_api": {
+  "text": "Prowlarr címe és API-kulcsa:"
+ },
+ "tp.dt.radarr_address_and_api": {
+  "text": "Radarr címe és API-kulcsa:"
+ },
+ "tp.dt.replace_unseeded_content_maximum": {
+  "text": "Seedeletlen tartalom cseréje: legnagyobb méretnövekedés (%):"
+ },
+ "tp.dt.replaced_files_stay_in": {
+  "text": "A lecserélt fájlok ennyi napig maradnak a kukában:"
+ },
+ "tp.dt.scheduled_scan": {
+  "text": "Ütemezett keresés:"
+ },
+ "tp.dt.season_packs_from_autobrr": {
+  "text": "Évadcsomagok az autobrr-ből:"
+ },
+ "tp.dt.show_on_the_dashboard": {
+  "text": "Mutatás a Dashboardon:"
+ },
+ "tp.dt.sonarr_address_and_api": {
+  "text": "Sonarr címe és API-kulcsa:"
+ },
+ "tp.dt.widget_tagline": {
+  "text": "Szlogen a csempén:"
+ },
+ "tp.dt.x": {
+  "text": " "
+ },
+ "tp.hint.0_delete_at_once": {
+  "text": "0 = azonnali törlés. A régi mappa a letöltési mappáján belüli <code>.seedbox_trash</code> mappába kerül, és ennyi nap után törlődik"
+ },
+ "tp.hint.0_no_limit_a": {
+  "text": "(0 = nincs korlát). Egy release sosem kisebb felbontású vagy gyengébb HDR-formátumú annál, ami neked van"
+ },
+ "tp.hint.a_dolby_vision_only": {
+  "text": "a csak Dolby Vision release (DV HDR10 nélkül, többnyire webes release-ek) lila-zöld képet ad DV nélküli tévén. Ha nem minden tévé ilyen, az ilyen release sosem upgrade, és meg van jelölve; a DV HDR10-zel (DV+HDR) a legjobb. A váltás után: Shape up, Találatok elfelejtése, keresés újra"
+ },
+ "tp.hint.a_replacement_may_be": {
+  "text": "egy csere legfeljebb ennyivel lehet nagyobb annál, ami neked van (0 = nincs korlát). Az azonos felbontás és HDR-formátum, a méretben legközelebbi jön előre"
+ },
+ "tp.hint.a_torrent_may_be": {
+  "text": "egy torrent ennyivel lehet nagyobb a mappánál (extra fájlok, például .nfo)"
+ },
+ "tp.hint.after_the_check_a": {
+  "text": "az ellenőrzés után az a torrent indul el, amelyik legalább ennyiben egyezik a fájljaiddal; a hiányzó maradékot a qBittorrent letölti (például egy .nfo fájlt). Ez alatt a torrent újra törlődik"
+ },
+ "tp.hint.every_5_minutes_the": {
+  "text": "5 percenként a Sonarrral ellenőrzi azokat a release-eket, amelyeket az autobrr szűrőid átengednek. Egy figyelt évad csomagja, amelynek legalább egy epizódja megvan neked, nem kisebb felbontású (és magyar, ha az epizódjaid azok), a Season repackerben Az autobrr-ből alatt jelenik meg, és Discordon jelentve lesz (ezzel a kapcsolóval akkor is, ha a lenti üzenetek ki vannak kapcsolva). Semmi sem indul el magától"
+ },
+ "tp.hint.every_folder_directly_inside": {
+  "text": "minden benne lévő közvetlen almappa lent látszik egy szereppel. Egy új mappa magától Egyéb szereppel jelenik meg (új jelöléssel): a Find my torrent látja, a Shape up és a Season repacker békén hagyja, amíg meg nem változtatod. Változtatás után ments."
+ },
+ "tp.hint.if_everything_else_matches": {
+  "text": "ha minden más egyezik, és a torrentből legfeljebb ennyi fájl hiányzik a mappádból, a torrent elindul, és a qBittorrent letölti ezeket a fájlokat"
+ },
+ "tp.hint.off_by_default_replacement": {
+  "text": "alapból ki. Csere elindult, importálva, elakadt, régi fájlok eltávolítva."
+ },
+ "tp.hint.off_by_default_season": {
+  "text": "alapból ki. Évadcsomag-csere elindult, kész (az importált és kukába tett fájlokkal) vagy elakadt."
+ },
+ "tp.hint.off_by_default_the": {
+  "text": "alapból ki. A heti ellenőrzés eredménye (a tracker által eltávolított torrentekről mentett webhook esetén mindig jön üzenet), és ami egy cserével történik: elindult, importálva, elakadt, régi fájlok eltávolítva."
+ },
+ "tp.hint.one_webhook_for_all": {
+  "text": "egy webhook minden eszköznek; lent minden eszköznek saját kapcsolója van az üzenetküldéshez. Egy - beírásával törölheted a mentett webhookot"
+ },
+ "tp.hint.optional_for_the_music": {
+  "text": "nem kötelező, a Zene mappákhoz (az eszközök még nem használják)"
+ },
+ "tp.hint.optional_only_for_the": {
+  "text": "nem kötelező, csak a Season repacker évadcsomag-üzeneteihez (autobrr, Settings, API keys)"
+ },
+ "tp.hint.optional_the_seedbox_message": {
+  "text": "nem kötelező. A Seedbox-üzenet 1️⃣ 2️⃣ 3️⃣ 👎 reakciókat kap a botodtól; egy szám elindítja azt a cserét (ugyanazokkal az ellenőrzésekkel, mint az itteni gomb), a 👎 elveti. Csak a te reakcióid számítanak, 24 óráig; a bot percenként egyszer néz rá. Token: Discord Developer Portal, az alkalmazásod, Bot, Reset Token (üresen hagyva megmarad, - törli). Felhasználói ID: Discord, Beállítások, Speciális, Fejlesztői mód, majd jobb klikk a nevedre, Felhasználói azonosító másolása. A botnak a webhook csatornájában kell a View Channel, az Add Reactions és a Read Message History jog"
+ },
+ "tp.hint.relevant_a_season_that": {
+  "text": "Releváns: csomagolható évad, futó csomagolás vagy keresés, még sosem volt keresés. A hibás vagy elakadt sor minden módban látszik, kivéve a sosem módot. Ha nem marad sor, a csempe eszközrésze elrejtődik."
+ },
+ "tp.hint.relevant_an_offer_a": {
+  "text": "Releváns: ajánlat, futó keresés vagy háttérkeresés, még sosem volt keresés. A hibás vagy elakadt sor minden módban látszik, kivéve a sosem módot. Ha nem marad sor, a csempe eszközrésze elrejtődik."
+ },
+ "tp.hint.relevant_something_to_fix": {
+  "text": "Releváns: van javítanivaló, futó keresés, még sosem volt keresés. A hibás vagy elakadt sor minden módban látszik, kivéve a sosem módot. Ha nem marad sor, a csempe eszközrésze elrejtődik."
+ },
+ "tp.hint.tests_the_saved_settings": {
+  "text": "a mentett beállításokat teszteli (változtatás után előbb ments): qBittorrent, mappamegfeleltetés, Discord (tesztüzenetet küld), Prowlarr, Radarr, Sonarr, Lidarr, autobrr"
+ },
+ "tp.hint.the_category_set_in": {
+  "text": "a Radarr (filmek) vagy a Sonarr (sorozatok) qBittorrent letöltőkliensében beállított kategória, alapból radarr, illetve sonarr; a Radarrban vagy a Sonarrban a letöltőkliens beállításainál módosíthatod. Az egyik címhez sem illő torrentek azt a kategóriát kapják, amelyik az ugyanabban a mappában lévő torrentek többségéé"
+ },
+ "tp.hint.the_line_under_the": {
+  "text": "a sor az eszköz neve alatt a Dashboard csempén; üresen hagyva az alapértelmezett"
+ },
+ "tp.hint.the_ticked_tools_scan": {
+  "text": "a kipipált eszközök abban az időpontban egymás után keresnek. Magától csak keresés fut, semmi sem kerül hozzáadásra, cserére vagy törlésre a kattintásod nélkül. A tracker által eltávolított torrenteket Discordon jelenti (ha van mentett webhook, akkor is, ha a többi üzenet ki van kapcsolva), és a Seedbox csempén <i>figyelmet igényel</i> jelölést kapnak"
+ },
+ "tp.hint.tick_the_filters_whose": {
+  "text": "pipáld ki a szűrőket, amelyek release-eit ellenőrizze; ha egy sincs kipipálva, mind. Utána Mentés"
+ },
+ "tp.hint.titles_at_least_this": {
+  "text": "az ennél nem kisebb és nem fiatalabb címek listázódnak, és a háttérben keresi őket; egy release akkor számít megtakarításnak, ha legalább ennyivel kisebb"
+ },
+ "tp.lbl.find_my_torrent": {
+  "text": "Find my torrent"
+ },
+ "tp.lbl.give_added_torrents_the": {
+  "text": "a hozzáadott torrentek kapják meg a Radarr / Sonarr kategóriáját"
+ },
+ "tp.lbl.hdr_dv_upgrade": {
+  "text": "HDR / DV upgrade"
+ },
+ "tp.lbl.resolution_upgrade": {
+  "text": "felbontás-upgrade"
+ },
+ "tp.lbl.saving": {
+  "text": "megtakarítás"
+ },
+ "tp.lbl.season_packs_from_autobrr": {
+  "text": "évadcsomagok az autobrr-ből"
+ },
+ "tp.lbl.season_repacker": {
+  "text": "Season repacker"
+ },
+ "tp.lbl.send_them": {
+  "text": "küldés"
+ },
+ "tp.lbl.shape_up": {
+  "text": "Shape up"
+ },
+ "tp.lbl.torrents_removed_from_the": {
+  "text": "a trackerről eltávolított torrentek (napi ellenőrzés)"
+ },
+ "tp.lbl.watch_autobrr": {
+  "text": "autobrr figyelése"
+ },
+ "tp.opt.always": {
+  "text": "mindig"
+ },
+ "tp.opt.every_day": {
+  "text": "minden nap"
+ },
+ "tp.opt.every_tv_plays_it": {
+  "text": "minden tévé lejátssza"
+ },
+ "tp.opt.every_week": {
+  "text": "minden héten"
+ },
+ "tp.opt.for_n_days_after": {
+  "text": "egy keresés után N napig"
+ },
+ "tp.opt.friday": {
+  "text": "péntek"
+ },
+ "tp.opt.monday": {
+  "text": "hétfő"
+ },
+ "tp.opt.never": {
+  "text": "soha"
+ },
+ "tp.opt.not_every_tv_plays": {
+  "text": "nem minden tévé játssza le"
+ },
+ "tp.opt.only_when_relevant": {
+  "text": "csak ha releváns"
+ },
+ "tp.opt.saturday": {
+  "text": "szombat"
+ },
+ "tp.opt.sunday": {
+  "text": "vasárnap"
+ },
+ "tp.opt.thursday": {
+  "text": "csütörtök"
+ },
+ "tp.opt.tuesday": {
+  "text": "kedd"
+ },
+ "tp.opt.wednesday": {
+  "text": "szerda"
+ },
+ "tp.p.every_listed_torrent_is": {
+  "text": "Minden listázott torrentet a háttérben keres, nagyjából 90 másodpercenként egyet, a találat 10 napig megmarad. Ajánlat: a megtakarítás mértékével kisebb release, jobb HDR-formátum (SDR, HDR, DV) vagy nagyobb felbontás, sosem kisebb. A magyar hang előnyt kap, de nem feltétel."
+ },
+ "tp.p.folders_in_the_downloads": {
+  "text": "A letöltési mappák olyan mappái, amelyeket egy torrent sem seedel: az eredeti torrentet a trackereken keresi, vagy a tartalom lecserélhető."
+ },
+ "tp.p.seasons_downloaded_episode_by": {
+  "text": "Epizódonként letöltött évadok, a Sonarron keresztül évadcsomagra cserélve; csak figyelt sorozatok és évadok, azonos vagy nagyobb felbontás, DV / HDR előnyben. Semmi sem törlődik, amíg a csomag nem teljes, és nem tartalmaz minden nálad meglévő epizódot; a hiányzó epizódok (gyakran az évadzáró) a csomagból jönnek. Ha az autobrr figyelve van, az új csomagok maguktól megjelennek itt; a könyvtár átnézése a már meglévőket rendezi."
+ },
+ "tp.ph.api_key": {
+  "text": "API-kulcs"
+ },
+ "tp.ph.bot_token": {
+  "text": "bot token"
+ },
+ "tp.ph.filter_by_name": {
+  "text": "szűrés névre"
+ },
+ "tp.ph.http_192_168_1": {
+  "text": "http://192.168.1.10:9696"
+ },
+ "tp.ph.http_192_168_12": {
+  "text": "http://192.168.1.10:7878"
+ },
+ "tp.ph.http_192_168_13": {
+  "text": "http://192.168.1.10:8989"
+ },
+ "tp.ph.http_192_168_14": {
+  "text": "http://192.168.1.10:8686"
+ },
+ "tp.ph.http_192_168_15": {
+  "text": "http://192.168.1.10:7474"
+ },
+ "tp.ph.https_discord_com_api": {
+  "text": "https://discord.com/api/webhooks/..."
+ },
+ "tp.ph.keeps_your_data_tidy": {
+  "text": "rendben tartja az adataidat"
+ },
+ "tp.ph.keeps_your_seed_healthy": {
+  "text": "egészségesen tartja a seedet 😉"
+ },
+ "tp.ph.series_name_empty_all": {
+  "text": "sorozat neve (üres = mind)"
+ },
+ "tp.ph.slimmer_or_stronger_in": {
+  "text": "karcsúbb vagy erősebb, jobb formában"
+ },
+ "tp.ph.your_discord_user_id": {
+  "text": "a Discord-felhasználó ID-d"
+ },
+ "tp.settings": {
+  "text": "Beállítások"
+ },
+ "tp.sub": {
+  "text": "Magától csak keresés fut. Semmi sem kerül hozzáadásra, cserére vagy törlésre a kattintásod nélkül."
+ },
+ "tp.upd_foot": {
+  "text": "A keresés a torrentjeid fájlméreteit veti össze a Radarr és a Sonarr fájljaival; a több évadot tartalmazó torrent listázódik, de még nem támogatott. Hogy a választott release upgrade-e, azt a Radarr és a Sonarr dönti el: ha „Not an upgrade” üzenettel vár, importáld kézzel az Activity, Queue alatt. Az import után a régi torrent és a fájljai itt egy újabb kattintással eltávolíthatók."
+ },
+ "tp.upg_growth": {
+  "text": "az upgrade legfeljebb ennyivel lehet nagyobb:"
+ },
+ "tp.weekly_on": {
+  "text": "hetente:"
+ },
+ "tr.confirm": {
+  "text": "Kiüríted most a kukát?\n\nA .seedbox_trash mappákban minden azonnal törlődik {info}. Ez nem vonható vissza. Hely csak azoknál a fájloknál szabadul fel, amelyeknek nincs más hardlinkje (például a médiamappában)."
+ },
+ "tr.empty": {
+  "text": "üres"
+ },
+ "tr.items": {
+  "one": "{n} elem, {s}",
+  "other": "{n} elem, {s}"
+ },
+ "u.approx": {
+  "text": "kb."
+ },
+ "u.approx_tip": {
+  "text": "Minden torrentnél az első listázott release-szel számolva. A hardlinkelt fájlok (a Radarrba vagy a Sonarrba importáltak) csak akkor szabadítanak fel helyet, ha minden linkjük megszűnt."
+ },
+ "u.band": {
+  "text": "{t}, legalább {gb} GB és {d}"
+ },
+ "u.cat_hdr": {
+  "text": "HDR / DV"
+ },
+ "u.cat_res": {
+  "text": "felbontás"
+ },
+ "u.cat_save": {
+  "text": "megtakarítás"
+ },
+ "u.done": {
+  "text": "kész"
+ },
+ "u.find_alt": {
+  "text": "Alternatívák keresése"
+ },
+ "u.first": {
+  "text": "első"
+ },
+ "u.forget": {
+  "text": "Találatok elfelejtése, keresés újra"
+ },
+ "u.forget_confirm": {
+  "text": "Elfelejted az összes Shape up találatot, és újrakeresed az egész listát?\n\nA(z) {n} torrentet a háttérben újra keresi, nagyjából 90 másodpercenként egyet (kb. {h} óra). A qBittorrentben, a Radarrban és a Sonarrban semmi sem változik."
+ },
+ "u.forget_tip": {
+  "text": "A lista összes találatának elfelejtése, és minden torrent újrakeresése a háttérben (például a megtakarítás, az ajánlatok vagy a méretkorlát megváltoztatása után)"
+ },
+ "u.free": {
+  "one": "A(z) {n} megtakarítási ajánlat kb. {s} helyet szabadítana fel",
+  "other": "A(z) {n} megtakarítási ajánlat kb. {s} helyet szabadítana fel"
+ },
+ "u.g_dead": {
+  "text": "A tracker eltávolította: cseréld le"
+ },
+ "u.g_hdr": {
+  "text": "HDR / DV upgrade"
+ },
+ "u.g_must": {
+  "text": "Kötelező"
+ },
+ "u.g_must_sub": {
+  "text": "kisebb és jobb: nincs mit gondolkodni"
+ },
+ "u.g_res": {
+  "text": "Felbontás-upgrade"
+ },
+ "u.g_save": {
+  "text": "Megtakarítás: kisebb release"
+ },
+ "u.hide": {
+  "text": "Elrejt"
+ },
+ "u.hide_tip": {
+  "text": "A torrent kihagyása a Shape up listából (a qBittorrentben és a lemezen semmi sem változik)"
+ },
+ "u.in_client": {
+  "text": "{t} a kliensben"
+ },
+ "u.more": {
+  "text": "Még {m} mutatása ({n} van hátra)"
+ },
+ "u.n_days": {
+  "one": "{n} napos",
+  "other": "{n} napos"
+ },
+ "u.n_must": {
+  "text": "{n} kötelező"
+ },
+ "u.n_nomatch": {
+  "text": "nincs egyező film vagy sorozat a Radarrban/Sonarrban"
+ },
+ "u.n_notscan": {
+  "text": "Ez a torrent nincs benne a legutóbbi keresésben"
+ },
+ "u.n_novideo": {
+  "text": "nincs videófájl"
+ },
+ "u.n_offers": {
+  "one": "{n} ajánlat",
+  "other": "{n} ajánlat"
+ },
+ "u.n_outside": {
+  "text": "a könyvtáron kívül: {l}"
+ },
+ "u.n_rel": {
+  "one": "{n} release",
+  "other": "{n} release"
+ },
+ "u.n_seasons": {
+  "text": "több évad egy helyen: még nem támogatott (itt {n} videófájl; egyezések: {l})"
+ },
+ "u.n_torrents": {
+  "one": "{n} torrent",
+  "other": "{n} torrent"
+ },
+ "u.none_big": {
+  "text": "Egy torrent sem elég nagy és régi (lásd a fenti küszöböket)."
+ },
+ "u.not_listed": {
+  "one": "{n} torrent nincs listázva ({why})",
+  "other": "{n} torrent nincs listázva ({why})"
+ },
+ "u.not_matched": {
+  "text": "nincs egyezés"
+ },
+ "u.not_searched": {
+  "text": "még nincs keresve"
+ },
+ "u.not_searched_n": {
+  "text": "{n} még nincs keresve"
+ },
+ "u.nothing": {
+  "text": "Nincs mit listázni."
+ },
+ "u.nothing_better": {
+  "text": "nincs jobb"
+ },
+ "u.now": {
+  "text": "most: {t}"
+ },
+ "u.rest": {
+  "one": "{n} torrent ajánlat nélkül",
+  "other": "{n} torrent ajánlat nélkül"
+ },
+ "u.search_again": {
+  "text": "Keresés újra"
+ },
+ "u.search_failed": {
+  "text": "a keresés hibás: {e}"
+ },
+ "u.search_now": {
+  "text": "Keresés most"
+ },
+ "u.search_rest": {
+  "text": "A többi keresése"
+ },
+ "u.searched": {
+  "text": "{d} / {n} keresve"
+ },
+ "u.searching_now": {
+  "text": "keresés most"
+ },
+ "u.show_again": {
+  "text": "Mutat újra"
+ },
+ "u.sk_hidden": {
+  "text": "te rejtetted el"
+ },
+ "u.sk_novideo": {
+  "text": "nincs videófájl"
+ },
+ "u.sk_seasons": {
+  "text": "több évad egy torrentben"
+ },
+ "u.stop_search": {
+  "text": "Keresés leállítása"
+ },
+ "u.stopped": {
+  "text": "leállítva"
+ },
+ "u.take_less": {
+  "one": "a(z) {n} upgrade kb. {s} helyet foglalna kevesebbet",
+  "other": "a(z) {n} upgrade kb. {s} helyet foglalna kevesebbet"
+ },
+ "u.take_more": {
+  "one": "a(z) {n} upgrade kb. {s} helyet foglalna többet",
+  "other": "a(z) {n} upgrade kb. {s} helyet foglalna többet"
+ },
+ "u.toggle": {
+  "text": "A release-ek mutatása vagy elrejtése"
+ },
+ "u.with_offer": {
+  "text": "{n} ajánlattal"
+ },
+ "ws.btn.apply": {
+  "text": "Alkalmaz"
+ },
+ "ws.btn.done": {
+  "text": "Kész"
+ },
+ "ws.btn.test": {
+  "text": "A kapcsolat tesztelése"
+ },
+ "ws.check": {
+  "text": "Ellenőrzés:"
+ },
+ "ws.col_bar": {
+  "text": "folyamatjelző a név alatt"
+ },
+ "ws.cols": {
+  "text": "Oszlopok:"
+ },
+ "ws.cols_hint": {
+  "text": "a torrentnév oszlopa mindig látszik"
+ },
+ "ws.conn_state": {
+  "one": "{s} · {n} torrent",
+  "other": "{s} · {n} torrent"
+ },
+ "ws.e_auth": {
+  "text": "hibás a felhasználónév vagy a jelszó"
+ },
+ "ws.e_bad": {
+  "text": "váratlan válasz"
+ },
+ "ws.e_none": {
+  "text": "nincs válasz"
+ },
+ "ws.e_quote": {
+  "text": "a felhasználónévben és a jelszóban nem lehet idézőjel"
+ },
+ "ws.e_unreach": {
+  "text": "a qBittorrent nem érhető el (cím vagy port)"
+ },
+ "ws.h.conn": {
+  "text": "qBittorrent-kapcsolat"
+ },
+ "ws.h.rows": {
+  "text": "Csempesorok"
+ },
+ "ws.h.rows_sub": {
+  "text": "Átvitel alatt és Figyelmet igényel"
+ },
+ "ws.help": {
+  "text": "Az elakadt (stalled) torrenteket figyelmen kívül hagyja: a qBittorrentben normális, ha egy tétlen seedből senki sem tölt. A hibás, hiányzó fájlú, szüneteltetett vagy leállított és a sorban álló torrentek a Figyelmet igényel alatt látszanak; az áthelyezés, ellenőrzés vagy helyfoglalás alatt állók az Átvitel alatt részben. Ha a kliens tűzfal mögött van vagy nincs kapcsolata, egyetlen kapcsolatsor látszik."
+ },
+ "ws.host": {
+  "text": "Cím és webes felület port:"
+ },
+ "ws.host_hint": {
+  "text": "az Unraid felől nézve; 127.0.0.1, ha a qBittorrent ezen a szerveren, konténerben fut, kiengedett porttal"
+ },
+ "ws.not_saved": {
+  "text": "Nincs mentve: {e}"
+ },
+ "ws.pass_hint": {
+  "text": "a mentett jelszó nem kerül az oldalra: üresen hagyva megmarad, egy - beírásával törölheted; idézőjel nem lehet benne"
+ },
+ "ws.password": {
+  "text": "jelszó"
+ },
+ "ws.rows": {
+  "text": "Legfeljebb ennyi sor:"
+ },
+ "ws.rows_hint": {
+  "text": "a további sorokat a sáv címe számolja"
+ },
+ "ws.saved": {
+  "text": "(mentve)"
+ },
+ "ws.saved_msg": {
+  "text": "Mentve. A Dashboard néhány másodpercen belül átveszi."
+ },
+ "ws.saving": {
+  "text": "Mentés..."
+ },
+ "ws.test_hint": {
+  "text": "a mentett beállításokat teszteli (változtatás után előbb Alkalmaz)"
+ },
+ "ws.test_ok": {
+  "one": "ok, {n} torrent, {s}",
+  "other": "ok, {n} torrent, {s}"
+ },
+ "ws.testing": {
+  "text": "Tesztelés..."
+ },
+ "ws.tools_line": {
+  "text": "torrentet keres a nem seedelt fájlokhoz, a tartalmat és a nagy címeket jobb vagy kisebb release-re cseréli a Radarron és a Sonarron át, és évadokat csomagol."
+ },
+ "ws.unknown_error": {
+  "text": "ismeretlen hiba"
+ },
+ "ws.url": {
+  "text": "Webes felület linkje (nem kötelező):"
+ },
+ "ws.url_hint": {
+  "text": "a csempe ház ikonja ezt nyitja meg; üres = a szerver címe a webes felület portjával"
+ },
+ "ws.user": {
+  "text": "Felhasználónév és jelszó:"
+ },
+ "wse.replace": {
+  "text": "nem sikerült lecserélni a beállításfájlt"
+ },
+ "wse.url": {
+  "text": "érvénytelen webes felület link URL"
+ },
+ "wse.write": {
+  "text": "nem sikerült írni a beállításfájlt"
+ },
+ "xfer.col_down": {
+  "text": "Le"
+ },
+ "xfer.col_eta": {
+  "text": "Hátra"
+ },
+ "xfer.col_torrent": {
+  "text": "Torrent"
+ },
+ "xfer.col_up": {
+  "text": "Fel"
+ },
+ "xfer.err_auth": {
+  "text": "Sikertelen bejelentkezés (nézd meg a Seedbox beállításait)"
+ },
+ "xfer.err_down": {
+  "text": "A qBittorrent nem érhető el"
+ },
+ "xfer.more": {
+  "text": "+{n} további átvitel alatt"
+ },
+ "xfer.nothing": {
+  "text": "Most nincs átvitel"
+ },
+ "xfer.title": {
+  "text": "Átvitel alatt"
+ },
+ "xfer.waiting": {
+  "text": "vár"
+ }
+}

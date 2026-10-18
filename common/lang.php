@@ -1,7 +1,7 @@
 <?php
 // Shared language setting of the media server tools (Sysbox, Diskbox, Seedbox, Streambox): one file on the
 // flash drive that every plugin reads, so changing it on any settings page changes it for all of them.
-//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en
+//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en | hu
 //   discord = auto (follow Unraid) | en | hu
 // A language the pages or Discord are not translated to falls back to English. Every plugin ships its own
 // copy of this file; the guard keeps a second copy from being declared again in the same request.
@@ -9,7 +9,7 @@ if (!function_exists('mt_lang_cfg')) {
 
 define('MT_LANG_FILE', '/boot/config/plugins/mediaserver-tools/lang.cfg');
 
-function mt_lang_have($what) { return $what === 'discord' ? ['en', 'hu'] : ['en']; }
+function mt_lang_have($what) { return ['en', 'hu']; }
 
 // Unraid's display language as a locale ('' = English, the built-in one)
 function mt_lang_unraid() {
