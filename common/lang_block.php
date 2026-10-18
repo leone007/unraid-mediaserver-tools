@@ -21,7 +21,7 @@ $mtl_sel = function ($a, $b) { return $a === $b ? ' selected' : ''; };
 #mtl .mtl-row select{width:auto;min-width:260px;max-width:100%;margin:0}
 #mtl .mtl-hint{display:block;opacity:.6;line-height:1.5;margin-top:6px;white-space:normal}
 #mtl .mtl-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px}
-#mtl .mtl-foot input{margin:0}
+#mtl .mtl-foot button{margin:0}
 @media (max-width:700px){#mtl .mtl-row{grid-template-columns:1fr;gap:4px}}
 </style>
 <div id="mtl">
@@ -50,12 +50,16 @@ $mtl_sel = function ($a, $b) { return $a === $b ? ' selected' : ''; };
     </div>
     <div class="mtl-foot">
       <span id="mtl-msg" class="mtl-hint" style="margin:0">Saved for all plugins at once.</span>
-      <input type="button" id="mtl-apply" value="Apply">
+      <button type="button" id="mtl-apply">Save language</button>
     </div>
   </div>
 </div>
 <script>
 $(function () {
+  // Unraid disables the Apply buttons of a page until its form changes: this block is outside every form, so it is a
+  // button of its own name, enabled here (also after Unraid's own page scripts ran)
+  var en = function () { $('#mtl-apply').prop('disabled', false).removeAttr('disabled'); };
+  en(); setTimeout(en, 500); $('#mtl-ui, #mtl-dc').on('change', en);
   $('#mtl-apply').on('click', function () {
     var $b = $(this).prop('disabled', true), $m = $('#mtl-msg');
     $.post(<?=json_encode((string)$mt_lang_post)?>, { ui: $('#mtl-ui').val(), discord: $('#mtl-dc').val(), csrf_token: <?=json_encode($mtl_tok)?> }, null, 'json')

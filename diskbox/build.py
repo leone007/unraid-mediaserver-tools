@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22g">
+<!ENTITY version   "2026.10.22h">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -28,6 +28,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Language block: the save button (now Save language) was greyed out, because Unraid disables Apply buttons outside a changed form; it works now
+###2026.10.22g
 - Language: one setting for all the plugins (Sysbox, Diskbox, Seedbox, Streambox), the Language block at the bottom of each settings page: pages and tiles (Follow Unraid or English; only English exists yet) and Discord messages (Follow Unraid, English or Magyar). A server that already sends Discord messages keeps the language it had; a new install starts in English. The old Language of the messages row is gone
 ###2026.10.22f
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
