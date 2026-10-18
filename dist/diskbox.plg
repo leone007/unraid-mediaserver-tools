@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22h">
+<!ENTITY version   "2026.10.22i">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Language block: saving failed with csrf token mismatch (Unraid checks the token itself and then removes it from the request); fixed
+###2026.10.22h
 - Language block: the save button (now Save language) was greyed out, because Unraid disables Apply buttons outside a changed form; it works now
 ###2026.10.22g
 - Language: one setting for all the plugins (Sysbox, Diskbox, Seedbox, Streambox), the Language block at the bottom of each settings page: pages and tiles (Follow Unraid or English; only English exists yet) and Discord messages (Follow Unraid, English or Magyar). A server that already sends Discord messages keeps the language it had; a new install starts in English. The old Language of the messages row is gone
@@ -2627,7 +2629,14 @@ function mt_out($ok, $extra = []) { echo json_encode(array_merge(['ok' => $ok], 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { http_response_code(405); mt_out(false, ['error' => 'method']); }
 $var = @parse_ini_file('/var/local/emhttp/var.ini');
 $tok = is_array($var) ? (string)($var['csrf_token'] ?? '') : '';
-if ($tok === '' || !hash_equals($tok, (string)($_POST['csrf_token'] ?? ''))) { http_response_code(403); mt_out(false, ['error' => 'csrf token mismatch']); }
+// Unraid's own prepend checks the token of every POST and then removes it from $_POST: no token here means it was
+// checked already, which is accepted for an AJAX request only (like the other endpoints of these plugins)
+$sent = (string)($_POST['csrf_token'] ?? '');
+if ($sent !== '') {
+    if ($tok === '' || !hash_equals($tok, $sent)) { http_response_code(403); mt_out(false, ['error' => 'csrf token mismatch']); }
+} elseif (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403); mt_out(false, ['error' => 'csrf: token removed and request is not AJAX']);
+}
 if (!mt_lang_save((string)($_POST['ui'] ?? ''), (string)($_POST['discord'] ?? ''))) { mt_out(false, ['error' => 'could not save the language setting']); }
 mt_out(true);
 ]]></INLINE>
