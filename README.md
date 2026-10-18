@@ -1,6 +1,6 @@
 # unraid-mediaserver-tools
 
-Dashboard plugins for **Unraid 7.x** that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
+Dashboard plugins for **Unraid 7** (tested on **7.3.2**, see [Compatibility](#compatibility)) that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
 
 **The rule of every tool here: nothing is added, replaced or deleted without your click.** The tools scan and report by themselves; every step that changes something is a button with a confirmation.
 
@@ -67,6 +67,16 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 - **Replace** (used by all three): Radarr/Sonarr is asked for an equal or better release (same or higher resolution and HDR, closest in size, with seeders). After the import the old files go to a trash folder (deleted after a number of days you set) and the new release is seeded.
 - **Activity** on top shows what is running now and what has finished; an item whose job has started leaves the result lists and comes back only if the job fails.
 - **Scheduled scans** (daily or weekly) and **Discord**: summaries, torrents removed by their tracker, packs from autobrr. With the optional **Discord bot** you answer with a reaction (1, 2, 3 to pick a release, thumbs down to dismiss), and the message follows the job.
+
+## Compatibility
+
+| | |
+|---|---|
+| **Tested on** | **Unraid 7.3.2**, every plugin, in daily use on one server (Intel i5-12500T with Quick Sync, XFS array with two parity slots, one ZFS cache pool) |
+| **Should work** | other Unraid 7 releases; the dashboard tiles use the Unraid 7 dashboard layout |
+| **Not tested** | Unraid 6.x (the `.plg` files still say `min="6.12.0"`, but nothing was tried there) |
+
+Optional parts depend on what you have: Intel GPU engines (Sysbox, Streambox), a Shelly smart socket for wall power, Unassigned Devices and UD Preclear for the unassigned disks and the preclear progress (Diskbox), Radarr, Sonarr, Prowlarr and autobrr for the Seedbox Tools. If you run it on another release, an issue with the version and what you saw is welcome.
 
 ## Install
 
