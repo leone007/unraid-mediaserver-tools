@@ -1,61 +1,66 @@
 # unraid-mediaserver-tools
 
-Dashboard plugins for **Unraid 7.x** that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
+Dashboard plugins for **Unraid 7.x** that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
+
+**The rule of every tool here: nothing is added, replaced or deleted without your click.** The tools scan and report by themselves; every step that changes something is a button with a confirmation.
 
 > The screenshots below are **mockups with made-up data**, drawn to show the layout.
 
 | Plugin | Replaces / adds | Highlights |
 |---|---|---|
-| [**Sysbox**](#sysbox) | System and Processor tiles | RAM breakdown, storage, CPU load / temperature / power, per-thread meters, GPU, containers, Discord alerts |
-| **Monitor** | Settings → Utilities → Monitor | A phone-friendly page with the Sysbox, Diskbox, Streambox and Seedbox tiles in one column; reorder or hide tiles, add it to the iPhone home screen (install `mediaserver_monitor.plg`) |
-| [**Streambox**](#streambox) | new Jellyfin tile | Now playing, recently added |
-| [**Seedbox**](#seedbox) | new qBittorrent tile and *Seedbox Tools* page | Speeds, torrents; find torrents for unseeded files, replace content through Radarr/Sonarr |
-| [**Diskbox**](#diskbox) | Disk Viewer tile | Array, parity, pools, SMART health, Discord alerts, **Balance** |
+| [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, containers; Update manager, Snapshots, Safe shutdown pages |
+| [**Diskbox**](#diskbox) | Disk Viewer tile | Array, parity, pools, unassigned disks, SMART, preclear and clearing progress; **Balance** page |
+| [**Streambox**](#streambox) | new Jellyfin tile | Now playing, this week's episodes, recently added, Discord announcements |
+| [**Seedbox**](#seedbox) | new qBittorrent tile and *Seedbox Tools* page | Find my torrent, Shape up, Season Repacker, autobrr watch, Discord bot |
+| **Monitor** | Settings, Utilities, Monitor | The tiles in one column for the phone; reorder or hide them, add the page to the iPhone home screen |
 
 ## Sysbox
 
 ![Sysbox](screenshots/sysbox.png)
 
-One tile instead of the System and Processor tiles. Memory split into system, ZFS cache, Docker and free; boot, log and Docker vdisk usage; CPU load, temperature and power with a 10 minute history (green to yellow to red); per-thread meters; GPU load (Intel Quick Sync); selected containers; energy; Discord alerts with warning and critical limits you set.
+One tile instead of the System and Processor tiles: memory as one bar (system, ZFS cache, Docker, free), boot, log and Docker vdisk usage, CPU load with a 10 minute history, temperature and power, a per-thread heat map, the Intel GPU engines (Quick Sync), wall power from a Shelly smart socket with the monthly kWh, and the busiest or selected containers with start, stop, restart and log buttons. Anything that needs attention is listed at the top; Discord alerts with warning and critical limits you set.
+
+Pages under *Settings, Utilities*:
+- **Update manager**: every container with a waiting update, sorted *Wait*, *Look first* and *Safe* (rebuild, patch, feature or major change, from the image labels and the release notes), with a self-test of the services after an update.
+- **Snapshots**: daily ZFS snapshots of the dataset that holds the containers' data, taken before the container updates and kept for a number of days.
+- **Safe shutdown**: shows what could hang a shutdown (parity check, mover, Diskbox Balance, containers, VMs, processes with files open on the array) and stops the containers in a safe order with one button.
+
+## Diskbox
+
+![Diskbox](screenshots/balance_tile_mockup.png)
+
+A tile instead of Disk Viewer: the array as one card with its protection state, parity rows (amber during a check or rebuild, red when protection is lost), every data disk and pool with usage, temperature and SMART health, and the unassigned disks with their SMART self-test. A running UD Preclear and Unraid's clearing of a new data disk show step, speed and time left. A *Needs attention* list for full, hot or failing disks, and Discord alerts (also when a preclear or a SMART test ends).
+
+### Diskbox Balance
+
+*Settings, Utilities, Diskbox Balance.* Spreads the data over the array disks, or empties chosen disks. Choose a target fill (or equal fill), get a plan, tick the titles, and move. A title is a downloads folder together with its hardlinked media files; they are copied with `rsync -aH`, checked (sizes and hardlinks) and only then removed from the old disk. Files hardlinked outside the configured folders, unfinished downloads and files changed in the last 2 hours are left out. It needs the array started and no parity check, rebuild or mover running.
+
+**Back up first and try it with one small title.**
 
 ## Streambox
 
 ![Streambox](screenshots/streambox.png)
 
-Jellyfin at a glance: who is watching right now, and what was added recently (movies and episodes, with quality).
+Jellyfin at a glance: who is watching right now (direct play, direct stream or transcode, with progress), GPU and CPU load with the power draw, **this week's episodes** from the Sonarr calendar (air time, the usual delay until the release shows up, countdowns), and what was added recently. It can announce new movies and seasons in Discord, send a weekly summary, and put the week's episodes on Jellyfin's home page.
 
 ## Seedbox
 
 ![Seedbox](screenshots/seedbox.png)
 
-A qBittorrent tile with speeds, ratio and the state of your torrents.
+A qBittorrent tile: connection state, torrents that need attention, what is in transfer right now with speeds, ETA and progress, and one row per Seedbox tool with its state. Idle seeds are never listed, so the tile stays short even with hundreds of torrents.
 
 ### Seedbox Tools
 
-*Settings, Utilities, Seedbox Tools.* Two helpers that work with Prowlarr, Radarr and Sonarr. Nothing is added, replaced or deleted without your click.
+*Settings, Utilities, Seedbox Tools.* Helpers that work with qBittorrent, Prowlarr, Radarr, Sonarr and autobrr.
 
 ![Seedbox Tools](screenshots/seedbox_tools.png)
 
-- **Find my torrent** scans your downloads folders for content that nothing is seeding and searches for it through Prowlarr. Results are sorted into four groups:
-  1. *Same name and size*: add the torrent. qBittorrent checks it against your files and seeds it (up to a few missing files are downloaded, for example an `.nfo`); otherwise it is removed again and your files stay untouched.
-  2. *Different release, similar size*, 3. *only the name is similar*, 4. *no torrent found*: **replace the content** through Radarr or Sonarr.
-- **Replace**: Radarr/Sonarr is asked for an equal or better release (same or higher resolution and HDR, closest in size, with seeders). After the import the old files go to a trash folder (deleted after a number of days you set) and the new release is seeded.
-- **Update me** looks for smaller releases of big, old, seeded titles and replaces them after you approve.
-- **Add all matching** adds every identical torrent, one check at a time.
-- **Weekly check** (on by default) scans by itself, reports torrents removed by their tracker on Discord and flags them in the Seedbox tile under *Needs attention*.
-- **Activity** shows what is *processing* now and what has *finished*; the scan list holds the work that is still to do. Optional Discord summaries say what happened and why.
-
-## Diskbox
-
-A tile instead of Disk Viewer: array fill, parity, pools, temperatures, SMART health and Discord alerts. The three tiles below show Balance running, finished and stopped with an error.
-
-![Diskbox](screenshots/balance_tile_mockup.png)
-
-### Diskbox Balance
-
-*Settings, Utilities, Diskbox Balance.* Choose a target fill (or equal fill), get a plan, tick the titles, and move. A title is a downloads folder together with its hardlinked media files; they are copied with `rsync -aH`, checked (sizes and hardlinks) and only then removed from the old disk. Files hardlinked outside the configured folders, unfinished downloads and files changed in the last 2 hours are left out. It needs the array started and no parity check, rebuild or mover running.
-
-**Back up first and try it with one small title.**
+- **Find my torrent** scans your downloads folders for content that nothing is seeding and searches for it through Prowlarr. Results are sorted into categories: *same name and size* (add the torrent: qBittorrent checks it against your files and seeds it), *removed from the tracker*, *different release*, *only the name is similar* and *no torrent found* (replace the content through Radarr or Sonarr, or delete it).
+- **Shape up** looks at your big, old seeded torrents for a release that is smaller, has a better HDR format or a higher resolution. *Must do* lists the no-brainers (smaller and better at the same time); the other offers are grouped by kind.
+- **Season Repacker** finds the season pack for seasons whose episodes were downloaded one by one, checks that it holds every episode you have, lets Sonarr import it and seeds the pack instead of the single episodes. With **autobrr watch** a new season pack that autobrr lets through is offered by itself.
+- **Replace** (used by all three): Radarr/Sonarr is asked for an equal or better release (same or higher resolution and HDR, closest in size, with seeders). After the import the old files go to a trash folder (deleted after a number of days you set) and the new release is seeded.
+- **Activity** on top shows what is running now and what has finished; an item whose job has started leaves the result lists and comes back only if the job fails.
+- **Scheduled scans** (daily or weekly) and **Discord**: summaries, torrents removed by their tracker, packs from autobrr. With the optional **Discord bot** you answer with a reaction (1, 2, 3 to pick a release, thumbs down to dismiss), and the message follows the job.
 
 ## Install
 
