@@ -65,9 +65,6 @@ if (!function_exists('dbx_n')) {
 <dt>Ping on red alerts:</dt>
 <dd><input type="text" name="dc_ping" placeholder="your Discord user ID, role:ID, @here or @everyone" value="<?=dbx_h($dbx['dc_ping'])?>"> empty = no ping. Amber alerts and all-clear messages never ping</dd>
 
-<dt>Language of the messages:</dt>
-<dd><select name="dc_lang"><option value="hu" <?=$dbx['dc_lang'] !== 'en' ? 'selected' : ''?>>Magyar</option><option value="en" <?=$dbx['dc_lang'] === 'en' ? 'selected' : ''?>>English</option></select></dd>
-
 <dt>Array protection, emulated or failed disk:</dt>
 <dd><input type="hidden" name="n_array" value="0"><input type="checkbox" name="n_array" value="1" <?=db_on($dbx['n_array']) ? 'checked' : ''?>></dd>
 
@@ -110,6 +107,7 @@ if (!function_exists('dbx_n')) {
 </dd>
 </dl>
 </form>
+<?php $mt_lang_post = '/plugins/diskbox/lang_save.php'; include '/usr/local/emhttp/plugins/diskbox/lang_block.php'; ?>
 
 <p style="opacity:.6;font-size:12px;max-width:130ch">Diskbox replaces the Disk Viewer tile. The array is shown as one card with a parity row underneath: green when the array is protected, amber while a parity check or rebuild runs, red when there is no protection, a data disk is emulated, or a disk has failed. The Needs attention list collects disks that are too full, too hot, show SMART warnings or are in a bad state.</p>
 

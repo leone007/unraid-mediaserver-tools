@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22f">
+<!ENTITY version   "2026.10.22g">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Language: one setting for all the plugins (Sysbox, Diskbox, Seedbox, Streambox), the Language block at the bottom of each settings page: pages and tiles (Follow Unraid or English; only English exists yet) and Discord messages (Follow Unraid, English or Magyar). A server that already sends Discord messages keeps the language it had; a new install starts in English. The old Language of the messages row is gone
+###2026.10.22f
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
 ###2026.10.22e
 - Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed
@@ -666,9 +668,6 @@ if (!function_exists('dbx_n')) {
 <dt>Ping on red alerts:</dt>
 <dd><input type="text" name="dc_ping" placeholder="your Discord user ID, role:ID, @here or @everyone" value="<?=dbx_h($dbx['dc_ping'])?>"> empty = no ping. Amber alerts and all-clear messages never ping</dd>
 
-<dt>Language of the messages:</dt>
-<dd><select name="dc_lang"><option value="hu" <?=$dbx['dc_lang'] !== 'en' ? 'selected' : ''?>>Magyar</option><option value="en" <?=$dbx['dc_lang'] === 'en' ? 'selected' : ''?>>English</option></select></dd>
-
 <dt>Array protection, emulated or failed disk:</dt>
 <dd><input type="hidden" name="n_array" value="0"><input type="checkbox" name="n_array" value="1" <?=db_on($dbx['n_array']) ? 'checked' : ''?>></dd>
 
@@ -711,6 +710,7 @@ if (!function_exists('dbx_n')) {
 </dd>
 </dl>
 </form>
+<?php $mt_lang_post = '/plugins/diskbox/lang_save.php'; include '/usr/local/emhttp/plugins/diskbox/lang_block.php'; ?>
 
 <p style="opacity:.6;font-size:12px;max-width:130ch">Diskbox replaces the Disk Viewer tile. The array is shown as one card with a parity row underneath: green when the array is protected, amber while a parity check or rebuild runs, red when there is no protection, a data disk is emulated, or a disk has failed. The Needs attention list collects disks that are too full, too hot, show SMART warnings or are in a bad state.</p>
 
@@ -1756,7 +1756,9 @@ const DBN_TMP   = '/tmp/diskbox_notify_tmp.json';
 
 function dbn_hook_ok($u) { return (bool)preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', (string)$u); }
 
-function dbn_lang($cfg) { return (($cfg['dc_lang'] ?? 'hu') === 'en') ? 'en' : 'hu'; }
+require_once __DIR__ . '/lang.php';
+// the Discord language is shared by all the plugins (lang.php; Settings, the Language block of any of them)
+function dbn_lang($cfg) { return mt_lang_discord(); }
 
 // Returns ['ok'|'retry'|'fail', message]
 // The text that pings someone on red alerts: a user ID, "role:<id>", "@here" or "@everyone" (setting dc_ping)
@@ -2437,12 +2439,191 @@ dba_out(db_ack_write($ack));
 </FILE>
 
 <!-- ========================================================= -->
-<!-- BALANCE PAGE -->
+<!-- SHARED LANGUAGE SETTING -->
 <!-- ========================================================= -->
 <FILE Name="/usr/local/emhttp/plugins/Diskbox/README.md">
 <INLINE><![CDATA[**Diskbox** replaces the Disk Viewer dashboard tile with a native-looking one: the array as a single card with its protection state, a parity row that turns amber during a parity check or rebuild and red when protection is lost or a disk is emulated, every data disk and pool with usage, temperature and SMART health, and a Needs attention list for full, hot or failing disks.
 
 Settings: Settings, Utilities, Diskbox (or the gear icon on the tile).
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- LANGUAGE BLOCK OF THE SETTINGS PAGE -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/lang.php">
+<INLINE><![CDATA[<?php
+// Shared language setting of the media server tools (Sysbox, Diskbox, Seedbox, Streambox): one file on the
+// flash drive that every plugin reads, so changing it on any settings page changes it for all of them.
+//   ui      = auto (follow Unraid's language, Settings, Display Settings) | en
+//   discord = auto (follow Unraid) | en | hu
+// A language the pages or Discord are not translated to falls back to English. Every plugin ships its own
+// copy of this file; the guard keeps a second copy from being declared again in the same request.
+if (!function_exists('mt_lang_cfg')) {
+
+define('MT_LANG_FILE', '/boot/config/plugins/mediaserver-tools/lang.cfg');
+
+function mt_lang_have($what) { return $what === 'discord' ? ['en', 'hu'] : ['en']; }
+
+// Unraid's display language as a locale ('' = English, the built-in one)
+function mt_lang_unraid() {
+    $d = @parse_ini_file('/boot/config/plugins/dynamix/dynamix.cfg', true);
+    return (is_array($d) && isset($d['display']) && is_array($d['display'])) ? trim((string)($d['display']['locale'] ?? '')) : '';
+}
+function mt_lang_code($locale) { $c = strtolower(substr((string)$locale, 0, 2)); return preg_match('/^[a-z]{2}$/', $c) ? $c : 'en'; }
+function mt_lang_name($code) {
+    $n = ['en' => 'English', 'hu' => 'Magyar', 'de' => 'Deutsch', 'fr' => 'Français', 'es' => 'Español', 'it' => 'Italiano', 'nl' => 'Nederlands',
+          'pl' => 'Polski', 'pt' => 'Português', 'ru' => 'Русский', 'zh' => '中文', 'ja' => '日本語', 'ko' => '한국어', 'cs' => 'Čeština', 'sv' => 'Svenska'];
+    return $n[$code] ?? $code;
+}
+
+// Before the shared setting existed every plugin had its own Discord language, Hungarian by default: a server
+// that already sends Discord messages keeps the language it had; a new install starts in English.
+function mt_lang_legacy() {
+    $ini = function ($f) { $c = is_file($f) ? @parse_ini_file($f, false, INI_SCANNER_RAW) : false; return is_array($c) ? $c : null; };
+    foreach (['/boot/config/plugins/sysbox/settings.cfg', '/boot/config/plugins/diskbox/settings.cfg'] as $f) {
+        $c = $ini($f);
+        if ($c === null) { continue; }
+        if (isset($c['dc_lang'])) { return trim((string)$c['dc_lang'], "\"' ") === 'en' ? 'en' : 'hu'; }
+        if (trim((string)($c['dc_hook'] ?? ''), "\"' ") !== '') { return 'hu'; }
+    }
+    $j = @json_decode((string)@file_get_contents('/boot/config/plugins/qbittorrent_widget/tools.json'), true);
+    if (is_array($j)) {
+        if (isset($j['dc_lang'])) { return $j['dc_lang'] === 'en' ? 'en' : 'hu'; }
+        if (trim((string)($j['dc_hook'] ?? '')) !== '') { return 'hu'; }
+    }
+    $c = $ini('/boot/config/plugins/streambox/settings.cfg');
+    if ($c !== null && (trim((string)($c['dc_movies'] ?? ''), "\"' ") !== '' || trim((string)($c['dc_series'] ?? ''), "\"' ") !== '')) { return 'hu'; }
+    return 'en';
+}
+
+function mt_lang_cfg() {
+    $c = ['ui' => 'auto', 'discord' => ''];
+    $f = is_file(MT_LANG_FILE) ? @parse_ini_file(MT_LANG_FILE) : false;
+    if (is_array($f)) {
+        if (in_array($f['ui'] ?? '', ['auto', 'en'], true)) { $c['ui'] = $f['ui']; }
+        if (in_array($f['discord'] ?? '', ['auto', 'en', 'hu'], true)) { $c['discord'] = $f['discord']; }
+    }
+    if ($c['discord'] === '') { $c['discord'] = mt_lang_legacy(); }
+    return $c;
+}
+
+// The language the pages and tiles use, and the one Discord messages use (always one that exists)
+function mt_lang_ui() {
+    $c = mt_lang_cfg();
+    $w = $c['ui'] === 'auto' ? mt_lang_code(mt_lang_unraid()) : $c['ui'];
+    return in_array($w, mt_lang_have('ui'), true) ? $w : 'en';
+}
+function mt_lang_discord() {
+    static $l = null;
+    if ($l !== null) { return $l; }
+    $c = mt_lang_cfg();
+    $w = $c['discord'] === 'auto' ? mt_lang_code(mt_lang_unraid()) : $c['discord'];
+    return $l = in_array($w, mt_lang_have('discord'), true) ? $w : 'en';
+}
+
+function mt_lang_save($ui, $discord) {
+    if (!in_array($ui, ['auto', 'en'], true) || !in_array($discord, ['auto', 'en', 'hu'], true)) { return false; }
+    @mkdir(dirname(MT_LANG_FILE), 0777, true);
+    $tmp = MT_LANG_FILE . '.tmp';
+    if (@file_put_contents($tmp, 'ui="' . $ui . "\"\ndiscord=\"" . $discord . "\"\n") === false) { return false; }
+    return @rename($tmp, MT_LANG_FILE);
+}
+
+}
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- LANGUAGE SAVE -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/lang_block.php">
+<INLINE><![CDATA[<?php
+// The Language block of every settings page (Sysbox, Diskbox, Seedbox Tools, Streambox): the shared setting of
+// lang.php. The page sets $mt_lang_post (this plugin's lang_save.php) and includes this file.
+require_once __DIR__ . '/lang.php';
+$mtl_c = mt_lang_cfg();
+$mtl_u = mt_lang_code(mt_lang_unraid());
+$mtl_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$mtl_tok = is_array($mtl_var) ? (string)($mtl_var['csrf_token'] ?? '') : '';
+$mtl_ui_now = in_array($mtl_u, mt_lang_have('ui'), true) ? mt_lang_name($mtl_u) : mt_lang_name($mtl_u) . ', shown in English';
+$mtl_dc_now = in_array($mtl_u, mt_lang_have('discord'), true) ? mt_lang_name($mtl_u) : mt_lang_name($mtl_u) . ', sent in English';
+$mtl_h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES); };
+$mtl_sel = function ($a, $b) { return $a === $b ? ' selected' : ''; };
+?>
+<style>
+#mtl{margin:28px 0 8px;max-width:1100px}
+#mtl .mtl-band{display:flex;justify-content:space-between;align-items:center;gap:12px;background:rgba(0,0,0,.35);padding:10px 14px;text-transform:uppercase;letter-spacing:1.5px;font-size:12px}
+#mtl .mtl-band b{font-weight:normal;text-transform:none;letter-spacing:0;opacity:.6}
+#mtl .mtl-box{background:rgba(128,128,128,.08);border-radius:0 0 6px 6px}
+#mtl .mtl-row{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;padding:14px 16px;border-left:3px solid #8a8a8a;border-bottom:1px solid rgba(128,128,128,.15)}
+#mtl .mtl-row label{padding-top:6px}
+#mtl .mtl-row select{width:auto;min-width:260px;max-width:100%;margin:0}
+#mtl .mtl-hint{display:block;opacity:.6;line-height:1.5;margin-top:6px;white-space:normal}
+#mtl .mtl-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px}
+#mtl .mtl-foot input{margin:0}
+@media (max-width:700px){#mtl .mtl-row{grid-template-columns:1fr;gap:4px}}
+</style>
+<div id="mtl">
+  <div class="mtl-band"><span>Language</span><b>shared by Sysbox, Diskbox, Seedbox and Streambox</b></div>
+  <div class="mtl-box">
+    <div class="mtl-row">
+      <label for="mtl-ui">Pages and tiles:</label>
+      <div>
+        <select id="mtl-ui">
+          <option value="auto"<?=$mtl_sel($mtl_c['ui'], 'auto')?>>Follow Unraid (now: <?=$mtl_h($mtl_ui_now)?>)</option>
+          <option value="en"<?=$mtl_sel($mtl_c['ui'], 'en')?>>English</option>
+        </select>
+        <span class="mtl-hint">Unraid's language is set under Settings, Display Settings. A language the plugins are not translated to yet shows in English. More languages come here as they are translated.</span>
+      </div>
+    </div>
+    <div class="mtl-row">
+      <label for="mtl-dc">Discord messages:</label>
+      <div>
+        <select id="mtl-dc">
+          <option value="auto"<?=$mtl_sel($mtl_c['discord'], 'auto')?>>Follow Unraid (now: <?=$mtl_h($mtl_dc_now)?>)</option>
+          <option value="en"<?=$mtl_sel($mtl_c['discord'], 'en')?>>English</option>
+          <option value="hu"<?=$mtl_sel($mtl_c['discord'], 'hu')?>>Magyar</option>
+        </select>
+        <span class="mtl-hint">Every message of the four plugins: alerts, weekly summaries, new movies and series, the Discord bot. Movie and series titles stay as Jellyfin and Sonarr give them.</span>
+      </div>
+    </div>
+    <div class="mtl-foot">
+      <span id="mtl-msg" class="mtl-hint" style="margin:0">Saved for all plugins at once.</span>
+      <input type="button" id="mtl-apply" value="Apply">
+    </div>
+  </div>
+</div>
+<script>
+$(function () {
+  $('#mtl-apply').on('click', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#mtl-msg');
+    $.post(<?=json_encode((string)$mt_lang_post)?>, { ui: $('#mtl-ui').val(), discord: $('#mtl-dc').val(), csrf_token: <?=json_encode($mtl_tok)?> }, null, 'json')
+      .done(function (r) { $m.css({ color: r.ok ? '#3fa24a' : '#e5534b', opacity: 1 }).text(r.ok ? 'Saved for Sysbox, Diskbox, Seedbox and Streambox.' : (r.error || 'Not saved')); })
+      .fail(function (x) { $m.css({ color: '#e5534b', opacity: 1 }).text((x.responseJSON && x.responseJSON.error) || 'Not saved'); })
+      .always(function () { $b.prop('disabled', false); });
+  });
+});
+</script>
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- BALANCE PAGE -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/lang_save.php">
+<INLINE><![CDATA[<?php
+// Saves the shared language setting (see lang.php). POST ui, discord, csrf_token.
+require_once __DIR__ . '/lang.php';
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+function mt_out($ok, $extra = []) { echo json_encode(array_merge(['ok' => $ok], $extra)); exit; }
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { http_response_code(405); mt_out(false, ['error' => 'method']); }
+$var = @parse_ini_file('/var/local/emhttp/var.ini');
+$tok = is_array($var) ? (string)($var['csrf_token'] ?? '') : '';
+if ($tok === '' || !hash_equals($tok, (string)($_POST['csrf_token'] ?? ''))) { http_response_code(403); mt_out(false, ['error' => 'csrf token mismatch']); }
+if (!mt_lang_save((string)($_POST['ui'] ?? ''), (string)($_POST['discord'] ?? ''))) { mt_out(false, ['error' => 'could not save the language setting']); }
+mt_out(true);
 ]]></INLINE>
 </FILE>
 

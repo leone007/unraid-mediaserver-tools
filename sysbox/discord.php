@@ -6,7 +6,9 @@ const SXN_TMP   = '/tmp/sysbox_notify_tmp.json';
 
 function sxn_hook_ok($u) { return (bool)preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', (string)$u); }
 
-function sxn_lang($cfg) { return (($cfg['dc_lang'] ?? 'hu') === 'en') ? 'en' : 'hu'; }
+require_once __DIR__ . '/lang.php';
+// the Discord language is shared by all the plugins (lang.php; Settings, the Language block of any of them)
+function sxn_lang($cfg) { return mt_lang_discord(); }
 
 // Returns ['ok'|'retry'|'fail', message]
 // The text that pings someone on red alerts: a user ID, "role:<id>", "@here" or "@everyone" (setting dc_ping)

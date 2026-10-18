@@ -76,6 +76,8 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 | **Should work** | other Unraid 7 releases; the dashboard tiles use the Unraid 7 dashboard layout |
 | **Not supported** | Unraid 6.x: never tried there, so the `.plg` files ask for 7.0.0 or newer (`min="7.0.0"`) and the Plugins page refuses them on 6.x |
 
+**Language.** The pages and tiles are in English. Discord messages can be English or Hungarian (Magyar). One setting for all plugins, the Language block at the bottom of each settings page; by default it follows Unraid's language (Settings, Display Settings). The texts are being moved into a dictionary so that more languages can be added.
+
 Optional parts depend on what you have: Intel GPU engines (Sysbox, Streambox), a Shelly smart socket for wall power, Unassigned Devices and UD Preclear for the unassigned disks and the preclear progress (Diskbox), Radarr, Sonarr, Prowlarr and autobrr for the Seedbox Tools. If you run it on another release, an issue with the version and what you saw is welcome.
 
 ## Install

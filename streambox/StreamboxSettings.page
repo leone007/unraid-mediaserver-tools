@@ -241,13 +241,14 @@ if (!function_exists('sb_auto')) {
 </dd>
 </dl>
 </form>
+<?php $mt_lang_post = '/plugins/streambox/lang_save.php'; include '/usr/local/emhttp/plugins/streambox/lang_block.php'; ?>
 
 <?php if ($sb_log !== ''): ?>
 <p style="opacity:.6;font-size:12px;max-width:130ch">Notifier log (latest entries):</p>
 <pre><?=sb_h($sb_log)?></pre>
 <?php endif; ?>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Discord cards: Unraid checks Jellyfin every minute. A movie is announced once its Hungarian description and poster exist; episodes are grouped per season and announced when no new episode has arrived for the "wait for more episodes" time. The first time the notifier is switched on, only items added from then on are announced. The weekly summary lists everything added in the last 7 days at the chosen day and hour (server time zone); if the server was off at that hour it is sent when it is next up the same day. The buttons use the saved settings, so press Apply first. The Jellyfin link in the cards is left out when the Jellyfin link URL is empty. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch">Discord cards: Unraid checks Jellyfin every minute. A movie is announced once its description (in Jellyfin's metadata language) and poster exist; episodes are grouped per season and announced when no new episode has arrived for the "wait for more episodes" time. The first time the notifier is switched on, only items added from then on are announced. The weekly summary lists everything added in the last 7 days at the chosen day and hour (server time zone); if the server was off at that hour it is sent when it is next up the same day. The buttons use the saved settings, so press Apply first. The Jellyfin link in the cards is left out when the Jellyfin link URL is empty. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
 
 <p style="opacity:.6;font-size:12px;max-width:130ch">The Jellyfin API key is created in Jellyfin under Dashboard, Advanced, API Keys. Streams that are idle (nothing playing) are not shown. GPU load is read with intel_gpu_top, CPU load from the system statistics. Leave the Jellyfin link URL empty to use this server's address with the Jellyfin port. Leave the smart socket address empty to hide the Socket reading. The monthly consumption is taken from the socket's own energy counter, which Unraid samples every 10 minutes, so the first month counts from the day the socket is set up.</p>
 

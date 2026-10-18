@@ -139,9 +139,6 @@ foreach (sx_order($sx) as $sx_k):
 <dt>Ping on red alerts:</dt>
 <dd><input type="text" name="dc_ping" placeholder="your Discord user ID, role:ID, @here or @everyone" value="<?=sx_h($sx['dc_ping'])?>"> empty = no ping. Amber alerts and all-clear messages never ping</dd>
 
-<dt>Language of the messages:</dt>
-<dd><select name="dc_lang"><option value="hu" <?=$sx['dc_lang'] !== 'en' ? 'selected' : ''?>>Magyar</option><option value="en" <?=$sx['dc_lang'] === 'en' ? 'selected' : ''?>>English</option></select></dd>
-
 <dt>Containers (stopped unexpectedly, restart loop, unhealthy):</dt>
 <dd><input type="hidden" name="n_containers" value="0"><input type="checkbox" name="n_containers" value="1" <?=sx_chk($sx['n_containers'])?>></dd>
 
@@ -178,6 +175,7 @@ foreach (sx_order($sx) as $sx_k):
 </dd>
 </dl>
 </form>
+<?php $mt_lang_post = '/plugins/sysbox/lang_save.php'; include '/usr/local/emhttp/plugins/sysbox/lang_block.php'; ?>
 
 <p style="opacity:.6;font-size:12px;max-width:130ch">Sysbox replaces the System and Processor tiles (hide them in the dashboard's tile management) and, when switched on, takes over the server load of the Streambox tile. The container buttons use the Docker command line with the exact name of an existing container; nothing else can be started from the dashboard. Statistics, GPU and socket readings are collected in the background only while the dashboard is open. The monthly energy figure is the socket's own counter since the 1st of the month, and a small cron job keeps it exact even when nobody has the dashboard open.</p>
 

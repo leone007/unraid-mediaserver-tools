@@ -27,7 +27,7 @@ $report = [];
 if ($mode === 'test') {
     foreach (['movies' => $hm, 'series' => $hs, 'weekly' => $hw] as $label => $h) {
         if ($h === '') { continue; }
-        list($r, $m) = nf_send($h, ['username' => 'Streambox', 'content' => '✅ Streambox: tesztüzenet (' . $label . ' csatorna)']);
+        list($r, $m) = nf_send($h, ['username' => 'Streambox', 'content' => nf_t('✅ Streambox: tesztüzenet (' . $label . ' csatorna)', '✅ Streambox: test message (' . $label . ' channel)')]);
         $report[] = $label . ': ' . ($r === 'ok' ? 'sent' : 'failed (' . $m . ')');
     }
     nt_out(true, implode('; ', $report));

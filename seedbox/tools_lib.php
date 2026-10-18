@@ -415,7 +415,9 @@ function st_has_video($p) {
 // ---- Discord summaries: what happened and why --------------------------------------------------------------
 function st_dc_hook_ok($u) { return (bool)preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', (string)$u); }
 // Hungarian or English text, by the setting
-function st_l($hu, $en) { static $l = null; if ($l === null) { $c = st_cfg(); $l = ($c['dc_lang'] ?? 'hu') === 'en' ? 'en' : 'hu'; } return $l === 'en' ? $en : $hu; }
+require_once __DIR__ . '/lang.php';
+// Discord texts: the language is shared by all the plugins (lang.php)
+function st_l($hu, $en) { return mt_lang_discord() === 'en' ? $en : $hu; }
 // $level: rd red, a amber, g green, i blue. $fields: [[name, value, inline?], ...]. Returns [ok, error]. Never throws.
 // which tool a job belongs to: replacements of unseeded content are Find my torrent, the rest is Update me
 function st_ntool($j) { return (($j['mode'] ?? '') === 'repl') ? 'find' : 'upd'; }

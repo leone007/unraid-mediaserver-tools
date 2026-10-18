@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zv">
+<!ENTITY version   "2026.10.99zw">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,8 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zw
+- Language: one setting for all the plugins (Sysbox, Diskbox, Seedbox, Streambox), the Language block at the bottom of each settings page: pages and tiles (Follow Unraid or English; only English exists yet) and Discord messages (Follow Unraid, English or Magyar). A server that already sends Discord messages keeps the language it had; a new install starts in English. The old Language of the messages row is gone
 ###2026.10.99zv
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
 ###2026.10.99zu
@@ -570,6 +572,18 @@ exit 0
 
 <FILE Name="/usr/local/emhttp/plugins/Seedbox/README.md">
 <INLINE><![CDATA[@@SRC:seedbox/README.md@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang.php">
+<INLINE><![CDATA[@@SRC:common/lang.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang_block.php">
+<INLINE><![CDATA[@@SRC:common/lang_block.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang_save.php">
+<INLINE><![CDATA[@@SRC:common/lang_save.php@@]]></INLINE>
 </FILE>
 
 <!-- Permissions + done -->

@@ -214,8 +214,8 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 <dd><input type="text" name="lidarr_url" placeholder="http://192.168.50.30:8686" style="width:260px"> <input type="password" name="lidarr_key" autocomplete="new-password" placeholder="API key" style="width:260px"> <span class="stt-hint">optional, for the Music folders (not used by the tools yet)</span></dd>
 <dt>autobrr address and API key:</dt>
 <dd><input type="text" name="autobrr_url" placeholder="http://192.168.50.30:7474" style="width:260px"> <input type="password" name="autobrr_key" autocomplete="new-password" placeholder="API key" style="width:260px"> <span class="stt-hint">optional, only for the season pack messages of the Season repacker (autobrr, Settings, API keys)</span></dd>
-<dt>Discord webhook and language:</dt>
-<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="https://discord.com/api/webhooks/..." style="width:420px"> <select name="dc_lang"><option value="hu">Magyar</option><option value="en">English</option></select> <span class="stt-hint">one webhook for all tools; each tool below has its own switch for sending messages. Type - to remove the saved webhook</span></dd>
+<dt>Discord webhook:</dt>
+<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="https://discord.com/api/webhooks/..." style="width:420px"> <span class="stt-hint">one webhook for all tools; each tool below has its own switch for sending messages. Type - to remove the saved webhook</span></dd>
 <dt>Discord bot (reactions):</dt>
 <dd><input type="password" name="bot_token" autocomplete="new-password" placeholder="bot token" style="width:300px"> <input type="text" name="bot_user" placeholder="your Discord user ID" style="width:200px" inputmode="numeric">
 <span class="stt-brk"></span><label><input type="checkbox" name="bot_rep" value="1"> season packs from autobrr</label> &nbsp; <label><input type="checkbox" name="bot_find" value="1"> torrents removed from the tracker (daily check)</label> &nbsp; <input type="button" id="stt-bottest" value="Test the bot" class="stt-ghost"> <span id="stt-botmsg" class="stt-mut"></span>
@@ -292,6 +292,7 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 <dd><input type="button" id="stt-save" value="Save"> <span id="stt-cmsg" style="margin-left:10px"></span></dd>
 </dl>
 </form>
+<?php $mt_lang_post = '/plugins/qbittorrent_widget/lang_save.php'; include '/usr/local/emhttp/plugins/qbittorrent_widget/lang_block.php'; ?>
 
 </div>
 

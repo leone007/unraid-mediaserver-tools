@@ -6,15 +6,15 @@ def rd(p): return open(D+p,encoding='utf-8').read().replace('/*@@TILE_CSS@@*/',o
 icon=base64.encodebytes(open(D+'icons/diskbox_mono.png','rb').read()).decode().strip()
 files=[('&plugdir;/diskbox.page','diskbox/diskbox.page'),('&plugdir;/DiskboxSettings.page','diskbox/DiskboxSettings.page'),
  ('&plugdir;/lib.php','diskbox/lib.php'),('&plugdir;/api_fetch.php','diskbox/api_fetch.php'),('&plugdir;/smart.php','diskbox/smart.php'),('&plugdir;/unassigned.php','diskbox/unassigned.php'),
- ('&plugdir;/save.php','diskbox/save.php'),('&plugdir;/discord.php','diskbox/discord.php'),('&plugdir;/alerts.php','diskbox/alerts.php'),('&plugdir;/notify.php','diskbox/notify.php'),('&plugdir;/weekly.php','diskbox/weekly.php'),('&plugdir;/test.php','diskbox/test.php'),('&plugdir;/ack.php','diskbox/ack.php'),('/usr/local/emhttp/plugins/Diskbox/README.md','diskbox/README.md'),('&plugdir;/DiskboxBalance.page','diskbox/DiskboxBalance.page'),('&plugdir;/balance_lib.php','diskbox/balance_lib.php'),('&plugdir;/balance.php','diskbox/balance.php'),('&plugdir;/remove.php','diskbox/remove.php'),('&plugdir;/balance_run.php','diskbox/balance_run.php')]
+ ('&plugdir;/save.php','diskbox/save.php'),('&plugdir;/discord.php','diskbox/discord.php'),('&plugdir;/alerts.php','diskbox/alerts.php'),('&plugdir;/notify.php','diskbox/notify.php'),('&plugdir;/weekly.php','diskbox/weekly.php'),('&plugdir;/test.php','diskbox/test.php'),('&plugdir;/ack.php','diskbox/ack.php'),('/usr/local/emhttp/plugins/Diskbox/README.md','diskbox/README.md'),('&plugdir;/lang.php','common/lang.php'),('&plugdir;/lang_block.php','common/lang_block.php'),('&plugdir;/lang_save.php','common/lang_save.php'),('&plugdir;/DiskboxBalance.page','diskbox/DiskboxBalance.page'),('&plugdir;/balance_lib.php','diskbox/balance_lib.php'),('&plugdir;/balance.php','diskbox/balance.php'),('&plugdir;/remove.php','diskbox/remove.php'),('&plugdir;/balance_run.php','diskbox/balance_run.php')]
 for _,p in files: assert ']]>' not in rd(p),p
-assert len(files)==19
+assert len(files)==22
 out=r'''<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22f">
+<!ENTITY version   "2026.10.22g">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -28,6 +28,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Language: one setting for all the plugins (Sysbox, Diskbox, Seedbox, Streambox), the Language block at the bottom of each settings page: pages and tiles (Follow Unraid or English; only English exists yet) and Discord messages (Follow Unraid, English or Magyar). A server that already sends Discord messages keeps the language it had; a new install starts in English. The old Language of the messages row is gone
+###2026.10.22f
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
 ###2026.10.22e
 - Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed
@@ -167,9 +169,9 @@ exit 0
 </FILE>
 
 '''
-assert len(files)==19
+assert len(files)==22
 sep=lambda t:'<!-- ========================================================= -->\n<!-- %s -->\n<!-- ========================================================= -->\n'%t
-for (name,p),t in zip(files,['DASHBOARD TILE','SETTINGS PAGE','LIBRARY','DATA ENDPOINT','SMART COLLECTOR','SAVE','DISCORD HELPERS','DISCORD ALERT TEXTS','DISCORD ALERTS','DISCORD WEEKLY','DISCORD TEST','ACKNOWLEDGE','README','BALANCE PAGE','BALANCE LIBRARY','BALANCE ENDPOINT','REMOVE DISKS','BALANCE WORKER']):
+for (name,p),t in zip(files,['DASHBOARD TILE','SETTINGS PAGE','LIBRARY','DATA ENDPOINT','SMART COLLECTOR','SAVE','DISCORD HELPERS','DISCORD ALERT TEXTS','DISCORD ALERTS','DISCORD WEEKLY','DISCORD TEST','ACKNOWLEDGE','README','SHARED LANGUAGE SETTING','LANGUAGE BLOCK OF THE SETTINGS PAGE','LANGUAGE SAVE','BALANCE PAGE','BALANCE LIBRARY','BALANCE ENDPOINT','REMOVE DISKS','BALANCE WORKER']):
     out+=sep(t)+'<FILE Name="%s">\n<INLINE><![CDATA[%s]]></INLINE>\n</FILE>\n\n'%(name,rd(p) if not p.endswith('README.md') else rd(p).rstrip('\n')+'\n')
 out+=r'''<!-- Permissions + done -->
 <FILE Name="/tmp/&name;_finish.sh" Run="/bin/bash">

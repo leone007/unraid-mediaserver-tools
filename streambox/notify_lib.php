@@ -1,6 +1,10 @@
 <?php
 // Discord notifier helpers (Streambox): Hungarian cards for new movies and seasons.
 
+require_once __DIR__ . '/lang.php';
+// Discord texts in the shared language (lang.php): Hungarian or English
+function nf_t($hu, $en) { return mt_lang_discord() === 'en' ? $en : $hu; }
+function nf_dec() { return mt_lang_discord() === 'en' ? '.' : ','; }
 const NF_FIELDS = 'Overview,Genres,People,MediaStreams,MediaSources,DateCreated,OriginalTitle,ProductionYear';
 
 function nf_cfg() {
@@ -106,6 +110,7 @@ function nf_runtime($ticks) {
     if ($min <= 0) { return ''; }
     $h = intdiv($min, 60);
     $m = $min % 60;
+    if (mt_lang_discord() === 'en') { return $h > 0 ? $h . ' h' . ($m > 0 ? ' ' . $m . ' min' : '') : $m . ' min'; }
     if ($h > 0) { return $h . ' óra' . ($m > 0 ? ' ' . $m . ' perc' : ''); }
     return $m . ' perc';
 }
@@ -113,8 +118,8 @@ function nf_runtime($ticks) {
 function nf_size($bytes) {
     $b = (float)$bytes;
     if ($b <= 0) { return ''; }
-    if ($b >= 1073741824) { return number_format($b / 1073741824, 1, ',', '') . ' GB'; }
-    return number_format($b / 1048576, 0, ',', '') . ' MB';
+    if ($b >= 1073741824) { return number_format($b / 1073741824, 1, nf_dec(), '') . ' GB'; }
+    return number_format($b / 1048576, 0, nf_dec(), '') . ' MB';
 }
 
 function nf_genres($list, $max = 4) {
@@ -130,7 +135,8 @@ function nf_genres($list, $max = 4) {
         'Sport' => 'Sport', 'Anime' => 'Anime',
     ];
     $out = [];
-    foreach ((array)$list as $g) { $g = (string)$g; $out[] = $map[$g] ?? $g; }
+    $en = mt_lang_discord() === 'en';   // Jellyfin's genre names are English already
+    foreach ((array)$list as $g) { $g = (string)$g; $out[] = $en ? $g : ($map[$g] ?? $g); }
     return implode(', ', array_slice($out, 0, $max));
 }
 
@@ -158,7 +164,20 @@ function nf_lang($code) {
         'eus' => 'baszk', 'glg' => 'galego', 'afr' => 'afrikaans', 'ben' => 'bengáli', 'tam' => 'tamil', 'tel' => 'telugu',
         'fil' => 'filippínó', 'tgl' => 'filippínó', 'urd' => 'urdu',
     ];
+    static $en = ['eng' => 'English', 'hun' => 'Hungarian', 'ger' => 'German', 'deu' => 'German', 'fre' => 'French', 'fra' => 'French',
+        'spa' => 'Spanish', 'ita' => 'Italian', 'jpn' => 'Japanese', 'kor' => 'Korean', 'chi' => 'Chinese', 'zho' => 'Chinese',
+        'rus' => 'Russian', 'por' => 'Portuguese', 'pol' => 'Polish', 'cze' => 'Czech', 'ces' => 'Czech', 'dut' => 'Dutch',
+        'nld' => 'Dutch', 'swe' => 'Swedish', 'tur' => 'Turkish', 'hin' => 'Hindi', 'dan' => 'Danish', 'nor' => 'Norwegian',
+        'fin' => 'Finnish', 'rum' => 'Romanian', 'ron' => 'Romanian', 'slo' => 'Slovak', 'slk' => 'Slovak', 'hrv' => 'Croatian',
+        'srp' => 'Serbian', 'ukr' => 'Ukrainian', 'ara' => 'Arabic', 'heb' => 'Hebrew', 'gre' => 'Greek', 'ell' => 'Greek',
+        'tha' => 'Thai', 'vie' => 'Vietnamese', 'bul' => 'Bulgarian', 'slv' => 'Slovenian', 'bos' => 'Bosnian',
+        'mac' => 'Macedonian', 'mkd' => 'Macedonian', 'alb' => 'Albanian', 'sqi' => 'Albanian', 'lit' => 'Lithuanian', 'lav' => 'Latvian',
+        'est' => 'Estonian', 'ice' => 'Icelandic', 'isl' => 'Icelandic', 'nob' => 'Norwegian', 'nno' => 'Norwegian', 'per' => 'Persian',
+        'fas' => 'Persian', 'ind' => 'Indonesian', 'may' => 'Malay', 'msa' => 'Malay', 'cat' => 'Catalan', 'baq' => 'Basque',
+        'eus' => 'Basque', 'glg' => 'Galician', 'afr' => 'Afrikaans', 'ben' => 'Bengali', 'tam' => 'Tamil', 'tel' => 'Telugu',
+        'fil' => 'Filipino', 'tgl' => 'Filipino', 'urd' => 'Urdu'];
     $c = strtolower(trim((string)$code));
+    if (mt_lang_discord() === 'en') { return ($c === '' || $c === 'und') ? 'unknown' : ($en[$c] ?? $c); }
     if ($c === '' || $c === 'und') { return 'ismeretlen'; }
     return $map[$c] ?? $c;
 }
@@ -211,9 +230,10 @@ function nf_audio_sub($item) {
     $lines = array_slice($aud, 0, 3);
     if ($subs) {
         $labels = array_keys($subs);
-        // Hungarian first, the rest in file order
-        usort($labels, function ($a, $b) { return (($a === 'magyar') ? 0 : 1) <=> (($b === 'magyar') ? 0 : 1); });
-        $lines[] = 'felirat: ' . implode(', ', array_slice($labels, 0, 6));
+        // the message's language first, the rest in file order
+        $hu = nf_lang(mt_lang_discord() === 'en' ? 'eng' : 'hun');   // the message's own language first
+        usort($labels, function ($a, $b) use ($hu) { return (($a === $hu) ? 0 : 1) <=> (($b === $hu) ? 0 : 1); });
+        $lines[] = nf_t('felirat: ', 'subtitles: ') . implode(', ', array_slice($labels, 0, 6));
     }
     return $lines ? implode("\n", $lines) : '';
 }
@@ -256,7 +276,7 @@ function nf_build($cfg, $o) {
     $desc = '';
     if ($o['orig'] !== '') { $desc .= '*' . nf_md($o['orig']) . "*\n"; }
     if ($o['overview'] !== '') { $desc .= nf_md(nf_trunc($o['overview'], 280)) . "\n"; }
-    if ($o['url'] !== '') { $desc .= "\n[Megnyitás a Jellyfinben](" . $o['url'] . ')'; }
+    if ($o['url'] !== '') { $desc .= "\n[" . nf_t('Megnyitás a Jellyfinben', 'Open in Jellyfin') . "](" . $o['url'] . ')'; }
     $info = nf_info($cfg);
     $host = strtoupper((string)(gethostname() ?: 'SERVER'));
     $emb = [
@@ -278,18 +298,18 @@ function nf_card_movie($cfg, $m, $preview = false) {
     if ($orig !== '' && mb_strtolower($orig) === mb_strtolower($name)) { $orig = ''; }
     $id = (string)$m['Id'];
     return nf_build($cfg, [
-        'author'   => ($preview ? 'ELŐNÉZET · ' : '') . 'Új film',
+        'author'   => ($preview ? nf_t('ELŐNÉZET · ', 'PREVIEW · ') : '') . nf_t('Új film', 'New movie'),
         'title'    => $name . (!empty($m['ProductionYear']) ? ' (' . (int)$m['ProductionYear'] . ')' : ''),
         'orig'     => $orig,
         'overview' => (string)($m['Overview'] ?? ''),
         'url'      => nf_link($cfg, $id),
         'ts'       => nf_ts($m['DateCreated'] ?? ''),
         'fields'   => [
-            nf_field('Hossz', nf_runtime($m['RunTimeTicks'] ?? 0), true),
-            nf_field('Minőség', nf_quality($m), true),
-            nf_field('Műfaj', nf_genres($m['Genres'] ?? []), true),
-            nf_field('Hang · felirat', nf_audio_sub($m), false),
-            nf_field('Szereplők', nf_cast($m), false),
+            nf_field(nf_t('Hossz', 'Length'), nf_runtime($m['RunTimeTicks'] ?? 0), true),
+            nf_field(nf_t('Minőség', 'Quality'), nf_quality($m), true),
+            nf_field(nf_t('Műfaj', 'Genre'), nf_genres($m['Genres'] ?? []), true),
+            nf_field(nf_t('Hang · felirat', 'Audio · subtitles'), nf_audio_sub($m), false),
+            nf_field(nf_t('Szereplők', 'Cast'), nf_cast($m), false),
         ],
         'poster'   => nf_image($cfg, $id, 'Primary', 400),
         'backdrop' => !empty($m['BackdropImageTags']) ? nf_image($cfg, $id, 'Backdrop', 1280) : null,
@@ -340,31 +360,31 @@ function nf_card_season($cfg, $series, $season, $eps, $preview = false) {
         $ts = max($ts, nf_ts($e['DateCreated'] ?? ''));
     }
     $count = count($eps);
-    $label = $hasFirst ? 'Új évad' : 'Új epizódok';
-    $seasonTxt = $sn === 0 ? 'Különlegességek' : $sn . '. évad';
+    $label = $hasFirst ? nf_t('Új évad', 'New season') : nf_t('Új epizódok', 'New episodes');
+    $seasonTxt = $sn === 0 ? nf_t('Különlegességek', 'Specials') : nf_t($sn . '. évad', 'Season ' . $sn);
 
     $overview = trim((string)($season['Overview'] ?? ''));
     if ($overview === '') { $overview = (string)($series['Overview'] ?? ''); }
 
     $posterId = ($season && !empty($season['ImageTags']['Primary'])) ? $seasonId : $sid;
     $rt = nf_runtime($first['RunTimeTicks'] ?? 0);
-    $epTxt = $count . ' új epizód: ' . nf_ep_range($eps);
+    $epTxt = $count . nf_t(' új epizód: ', $count === 1 ? ' new episode: ' : ' new episodes: ') . nf_ep_range($eps);
     $sz = nf_size($total);
 
     return nf_build($cfg, [
-        'author'   => ($preview ? 'ELŐNÉZET · ' : '') . $label,
+        'author'   => ($preview ? nf_t('ELŐNÉZET · ', 'PREVIEW · ') : '') . $label,
         'title'    => $name . (!empty($series['ProductionYear']) ? ' (' . (int)$series['ProductionYear'] . ')' : '') . ' · ' . $seasonTxt,
         'orig'     => $orig,
         'overview' => $overview,
         'url'      => nf_link($cfg, $seasonId !== '' ? $seasonId : $sid),
         'ts'       => $ts,
         'fields'   => [
-            nf_field('Epizódok', $epTxt, false),
-            nf_field('Hossz', $rt !== '' ? 'epizódonként kb. ' . $rt : '', true),
-            nf_field('Minőség', nf_quality($first, 0) . ($sz !== '' ? ' · összesen ' . $sz : ''), true),
-            nf_field('Műfaj', nf_genres($series['Genres'] ?? []), true),
-            nf_field('Hang · felirat', nf_audio_sub($first), false),
-            nf_field('Szereplők', nf_cast($series), false),
+            nf_field(nf_t('Epizódok', 'Episodes'), $epTxt, false),
+            nf_field(nf_t('Hossz', 'Length'), $rt !== '' ? nf_t('epizódonként kb. ', 'about ') . $rt . nf_t('', ' per episode') : '', true),
+            nf_field(nf_t('Minőség', 'Quality'), nf_quality($first, 0) . ($sz !== '' ? nf_t(' · összesen ', ' · in all ') . $sz : ''), true),
+            nf_field(nf_t('Műfaj', 'Genre'), nf_genres($series['Genres'] ?? []), true),
+            nf_field(nf_t('Hang · felirat', 'Audio · subtitles'), nf_audio_sub($first), false),
+            nf_field(nf_t('Szereplők', 'Cast'), nf_cast($series), false),
         ],
         'poster'   => $posterId !== '' ? nf_image($cfg, $posterId, 'Primary', 400) : null,
         'backdrop' => ($sid !== '' && !empty($series['BackdropImageTags'])) ? nf_image($cfg, $sid, 'Backdrop', 1280) : null,
@@ -380,6 +400,7 @@ function nf_tz() {
 }
 
 function nf_hu_date($ts) {
+    if (mt_lang_discord() === 'en') { return date('M j', $ts); }
     static $m = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.'];
     return $m[(int)date('n', $ts) - 1] . ' ' . (int)date('j', $ts) . '.';
 }
@@ -398,7 +419,7 @@ function nf_res_short($item) {
 
 function nf_stars($item) {
     $r = (float)($item['CommunityRating'] ?? 0);
-    return $r > 0 ? '★ ' . number_format($r, 1, ',', '') : '';
+    return $r > 0 ? '★ ' . number_format($r, 1, nf_dec(), '') : '';
 }
 
 function nf_title_link($cfg, $name, $id) {
@@ -411,7 +432,7 @@ function nf_join_lines($lines, $budget) {
     $out = '';
     $n = 0;
     foreach ($lines as $l) {
-        if (mb_strlen($out) + mb_strlen($l) + 40 > $budget) { return rtrim($out) . "\n…és még " . (count($lines) - $n) . ' további'; }
+        if (mb_strlen($out) + mb_strlen($l) + 40 > $budget) { return rtrim($out) . "\n…" . nf_t('és még ' . (count($lines) - $n) . ' további', 'and ' . (count($lines) - $n) . ' more'); }
         $out .= $l . "\n";
         $n++;
     }
@@ -451,21 +472,21 @@ function nf_weekly($cfg, $from, $now, $preview = false) {
         $sn = (int)($g['eps'][0]['ParentIndexNumber'] ?? 0);
         $line = nf_title_link($cfg, $ser['Name'] ?? $g['name'], $g['sid']);
         if (!empty($ser['ProductionYear'])) { $line .= ' (' . (int)$ser['ProductionYear'] . ')'; }
-        $line .= ' · ' . ($sn === 0 ? 'különlegességek' : $sn . '. évad') . ' · ' . count($g['eps']) . ' új epizód (' . nf_ep_range($g['eps']) . ')';
+        $line .= ' · ' . ($sn === 0 ? nf_t('különlegességek', 'specials') : nf_t($sn . '. évad', 'season ' . $sn)) . ' · ' . count($g['eps']) . nf_t(' új epizód (', count($g['eps']) === 1 ? ' new episode (' : ' new episodes (') . nf_ep_range($g['eps']) . ')';
         $bits = array_filter([nf_genres($ser['Genres'] ?? [], 3), nf_stars($ser)]);
         $slines[] = $line . ($bits ? ' · ' . implode(' · ', $bits) : '');
     }
 
     $embeds = [];
-    if ($mlines) { $embeds[] = ['title' => '🎬 Új filmek (' . count($mlines) . ')', 'description' => nf_join_lines($mlines, 2800), 'color' => 6967248]; }
-    if ($slines) { $embeds[] = ['title' => '📺 Új sorozatok és évadok (' . count($slines) . ')', 'description' => nf_join_lines($slines, 2800), 'color' => 6967248]; }
+    if ($mlines) { $embeds[] = ['title' => '🎬 ' . nf_t('Új filmek', 'New movies') . ' (' . count($mlines) . ')', 'description' => nf_join_lines($mlines, 2800), 'color' => 6967248]; }
+    if ($slines) { $embeds[] = ['title' => '📺 ' . nf_t('Új sorozatok és évadok', 'New series and seasons') . ' (' . count($slines) . ')', 'description' => nf_join_lines($slines, 2800), 'color' => 6967248]; }
     if (!$embeds) { return null; }
     $info = nf_info($cfg);
     $host = strtoupper((string)(gethostname() ?: 'SERVER'));
     $embeds[count($embeds) - 1]['footer'] = ['text' => $host . ' · ' . nf_hu_date($from) . ' – ' . nf_hu_date($now)];
     return [
         'username' => 'Streambox',
-        'content'  => ($preview ? '**ELŐNÉZET** · ' : '') . '🍿 **Hétvégi műsor** – ezek érkeztek a héten, jó szórakozást!',
+        'content'  => ($preview ? nf_t('**ELŐNÉZET** · ', '**PREVIEW** · ') : '') . nf_t('🍿 **Hétvégi műsor** – ezek érkeztek a héten, jó szórakozást!', '🍿 **Weekend lineup** – this came in this week, enjoy!'),
         'embeds'   => $embeds,
     ];
 }

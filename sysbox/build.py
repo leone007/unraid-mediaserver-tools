@@ -8,6 +8,7 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/action.php','sysbox/action.php','CONTAINER ACTIONS'),('&plugdir;/logs.php','sysbox/logs.php','CONTAINER LOGS'),('&plugdir;/save.php','sysbox/save.php','SAVE'),
  ('&plugdir;/energy.php','sysbox/energy.php','SMART SOCKET ENERGY'),('&plugdir;/sample.php','sysbox/sample.php','ENERGY SAMPLER'),('&plugdir;/cpu.php','sysbox/cpu.php','CPU ENDPOINT'),('&plugdir;/cpuhist.php','sysbox/cpuhist.php','CPU HISTORY SAMPLER'),('&plugdir;/discord.php','sysbox/discord.php','DISCORD HELPERS'),('&plugdir;/alerts.php','sysbox/alerts.php','DISCORD ALERT TEXTS'),('&plugdir;/notify.php','sysbox/notify.php','DISCORD ALERTS'),('&plugdir;/weekly.php','sysbox/weekly.php','DISCORD WEEKLY'),('&plugdir;/test.php','sysbox/test.php','DISCORD TEST'),
  ('/usr/local/emhttp/plugins/Sysbox/README.md','sysbox/README.md','README'),
+ ('&plugdir;/lang.php','common/lang.php','SHARED LANGUAGE SETTING'),('&plugdir;/lang_block.php','common/lang_block.php','LANGUAGE BLOCK OF THE SETTINGS PAGE'),('&plugdir;/lang_save.php','common/lang_save.php','LANGUAGE SAVE'),
  ('&plugdir;/SysboxShutdown.page','sysbox/SysboxShutdown.page','SAFE SHUTDOWN PAGE'),('&plugdir;/shutdown_lib.php','sysbox/shutdown_lib.php','SAFE SHUTDOWN LIBRARY'),('&plugdir;/shutdown.php','sysbox/shutdown.php','SAFE SHUTDOWN ENDPOINT'),('&plugdir;/shutdown_run.php','sysbox/shutdown_run.php','SAFE SHUTDOWN WORKER'),
  ('&plugdir;/ClaudeButton.page','sysbox/ClaudeButton.page','CLAUDE HEADER BUTTON'),('&plugdir;/claude.php','sysbox/claude.php','CLAUDE BUTTON ENDPOINT'),
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
@@ -18,7 +19,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.22i">
+<!ENTITY version   "2026.10.22j">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -32,6 +33,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Language: one setting for all the plugins (Sysbox, Diskbox, Seedbox, Streambox), the Language block at the bottom of each settings page: pages and tiles (Follow Unraid or English; only English exists yet) and Discord messages (Follow Unraid, English or Magyar). A server that already sends Discord messages keeps the language it had; a new install starts in English. The old Language of the messages row is gone
+###2026.10.22i
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
 ###2026.10.22h
 - Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed
