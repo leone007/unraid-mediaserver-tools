@@ -21,7 +21,8 @@ i.f32{display:inline-block;width:32px;height:32px}
  await pg.route('**/*',async r=>{const u=new URL(r.request().url());
    if(u.hostname==='nas.local'){
      if(u.pathname==='/Dashboard'){return r.fulfill({contentType:'text/html',body:`<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><style>${css}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script></head><body>${fs.readFileSync(frag,'utf8')}</body></html>`});}
-     const f=path.basename(u.pathname); if(f==='tools.php'){const op=new URLSearchParams(r.request().postData()||'').get('op')||'state';const fn='tools_'+op+'.json';return r.fulfill({contentType:'application/json',body:fs.existsSync(M+fn)?fs.readFileSync(M+fn,'utf8'):'{"ok":true}'});}
+     const f=path.basename(u.pathname); const pop=new URLSearchParams(r.request().postData()||'').get('op'); if(pop && f!=='tools.php' && fs.existsSync(M+f.replace('.php','')+'_'+pop+'.json')){return r.fulfill({contentType:'application/json',body:fs.readFileSync(M+f.replace('.php','')+'_'+pop+'.json','utf8')});}
+     if(f==='tools.php'){const op=new URLSearchParams(r.request().postData()||'').get('op')||'state';const fn='tools_'+op+'.json';return r.fulfill({contentType:'application/json',body:fs.existsSync(M+fn)?fs.readFileSync(M+fn,'utf8'):'{"ok":true}'});}
      let key=f+(u.searchParams.get('only')?'?'+u.searchParams.get('only'):'');
      if(map[key]){return r.fulfill({contentType:'application/json',body:fs.readFileSync(M+map[key],'utf8')});}
      if(/icon\.png$/.test(f)){const id=u.pathname.split('/')[2];const n={sysbox:'sysbox',diskbox:'diskbox',streambox:'streambox',qbittorrent_widget:'seedbox'}[id];return r.fulfill({contentType:'image/png',body:fs.readFileSync(path.join(__dirname,'../../icons/',n+'_mono.png'))});}

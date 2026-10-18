@@ -25,17 +25,17 @@ function rm_sel() {
 // '' = parity protects the array now; else why not. An empty parity slot (DISK_NP_DSBL, for example Parity 2 not used) is fine.
 function rm_parity_reason() {
     $v = rm_ini('var.ini', false);
-    if (($v['mdState'] ?? '') !== 'STARTED') { return 'the array is not started'; }
-    if ((float)($v['mdResync'] ?? 0) > 0) { return 'a parity check or rebuild is running'; }
+    if (($v['mdState'] ?? '') !== 'STARTED') { return bl_tr('why.not_started'); }
+    if ((float)($v['mdResync'] ?? 0) > 0) { return bl_tr('why.resync'); }
     $np = 0;
     foreach (rm_ini('disks.ini', true) as $k => $d) {
         if (!is_array($d) || (string)($d['device'] ?? '') === '') { continue; }
         $t = (string)($d['type'] ?? '');
         if ($t !== 'Parity' && $t !== 'Data') { continue; }
-        if (($d['status'] ?? '') !== 'DISK_OK') { return strtoupper($k) . ' is not OK (' . ($d['status'] ?? '?') . ')'; }
+        if (($d['status'] ?? '') !== 'DISK_OK') { return bl_tr('why.disk_not_ok', ['d' => strtoupper($k), 's' => ($d['status'] ?? '?')]); }
         if ($t === 'Parity') { $np++; }
     }
-    return $np ? '' : 'there is no parity disk';
+    return $np ? '' : bl_tr('why.no_parity');
 }
 
 // shares that may still write new files onto the chosen disks: [[share, [disks]]]. A share only on a pool (useCache=only)
@@ -104,10 +104,10 @@ function rm_status() {
 function rm_op($op) {
     $s = rm_status(); $sel = $s['sel']; $st = $s['st']; unset($s['st']);
     if ($op === 'rm_state') { bl_out(true, ['rm' => $s]); }
-    if (!$sel) { bl_out(false, ['error' => 'Choose Remove disks in the Setup and tick the disks first.']); }
+    if (!$sel) { bl_out(false, ['error' => bl_tr('rm.err.choose')]); }
     if ($op === 'rm_check') {
         if ($s['shares']) { bl_out(false, ['error' => 'Step 2 first: ' . count($s['shares']) . ' share(s) can still write to the disks.']); }
-        if ($s['balance']) { bl_out(false, ['error' => 'A move is running; check when it has finished.']); }
+        if ($s['balance']) { bl_out(false, ['error' => bl_tr('rm.err.move_check')]); }
         $res = []; $ok = true;
         foreach ($sel as $d) { $r = rm_scan($d); $res[$d] = $r; if ($r['n'] !== 0) { $ok = false; } }
         $st['check'] = ['t' => time(), 'ok' => $ok, 'res' => $res];
@@ -117,17 +117,17 @@ function rm_op($op) {
     if ($op === 'rm_clear') {
         $want = implode(' ', $sel);
         if (trim(preg_replace('/\s+/', ' ', (string)($_POST['confirm'] ?? ''))) !== $want) { bl_out(false, ['error' => 'Type exactly: ' . $want]); }
-        if ($s['parity'] !== '') { bl_out(false, ['error' => 'Cannot clear: ' . $s['parity'] . '.']); }
-        if ($s['busy'] !== '') { bl_out(false, ['error' => 'Cannot clear: ' . $s['busy'] . '.']); }
-        if ($s['balance']) { bl_out(false, ['error' => 'A move is running.']); }
-        if ($s['shares']) { bl_out(false, ['error' => 'Step 2 first: a share can still write to the disks.']); }
-        if (!($s['check']['ok'] ?? false)) { bl_out(false, ['error' => 'Step 4 first: check that the disks are empty.']); }
+        if ($s['parity'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['parity']])]); }
+        if ($s['busy'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['busy']])]); }
+        if ($s['balance']) { bl_out(false, ['error' => bl_tr('err.running')]); }
+        if ($s['shares']) { bl_out(false, ['error' => bl_tr('rm.err.step2')]); }
+        if (!($s['check']['ok'] ?? false)) { bl_out(false, ['error' => bl_tr('rm.err.step4')]); }
         foreach ($sel as $d) { // checked again now: something may have arrived since the check
             $r = rm_scan($d);
             if ($r['n'] !== 0) { $st['check'] = ['t' => time(), 'ok' => false, 'res' => [$d => $r]]; bl_json_write(RM_STATE, $st, 0600); bl_out(false, ['error' => strtoupper($d) . ' is not empty any more (' . $r['n'] . ' files). See step 4.']); }
             if (!$s['disks'][$d]['mounted']) { bl_out(false, ['error' => strtoupper($d) . ' is not mounted.']); }
             if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['run']) { bl_out(false, ['error' => strtoupper($d) . ' is being cleared already.']); }
-            if (rm_dev($d) === '') { bl_out(false, ['error' => 'The parity-protected device of ' . strtoupper($d) . ' was not found.']); }
+            if (rm_dev($d) === '') { bl_out(false, ['error' => bl_tr('rm.err.nodev', ['d' => strtoupper($d)])]); }
         }
         foreach ($sel as $d) {
             $n = (int)substr($d, 4); $dev = rm_dev($d); $mnt = bl_mnt() . '/' . $d; $img = '/tmp/xmini' . $n . '.img'; $log = '/tmp/dbx_clear_' . $n . '.log';
@@ -153,7 +153,7 @@ function rm_op($op) {
         bl_out(true, ['log' => $o]);
     }
     if ($op === 'rm_reset') {
-        foreach ($s['disks'] as $d => $i) { if ($i['zero'] && $i['zero']['run']) { bl_out(false, ['error' => 'A clearing is running.']); } }
+        foreach ($s['disks'] as $d => $i) { if ($i['zero'] && $i['zero']['run']) { bl_out(false, ['error' => bl_tr('rm.err.clearing')]); } }
         @unlink(RM_STATE);
         bl_out(true);
     }

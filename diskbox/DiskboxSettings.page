@@ -6,6 +6,11 @@ Markdown="false"
 ---
 <?PHP
 require_once '/usr/local/emhttp/plugins/diskbox/lib.php';
+// texts from the dictionary (lang/en.json, see i18n.php); $dbs_t escapes, $dbs_T is raw (texts with HTML)
+require_once '/usr/local/emhttp/plugins/diskbox/i18n.php';
+$dbs_lang = '/usr/local/emhttp/plugins/diskbox/lang';
+$dbs_T = mt_i18n_t($dbs_lang);
+$dbs_t = function ($k, $v = []) use ($dbs_T) { return htmlspecialchars($dbs_T($k, $v), ENT_QUOTES); };
 $dbx = db_cfg();
 $dbx_thr = db_thr(['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '']);
 $dbx_var = @parse_ini_file('/var/local/emhttp/var.ini');
@@ -23,130 +28,132 @@ if (!function_exists('dbx_n')) {
 <form id="dbx-form" class="uset" method="POST" action="/plugins/diskbox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=dbx_h($dbx_tok)?>">
 
-<h3>Utilization</h3>
+<h3><?=$dbs_t('set.h.util')?></h3>
 <dl>
-<dt>Warning utilization (%):</dt>
-<dd><input type="number" name="warn_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['warn']))?>" value="<?=dbx_h($dbx['warn_use'])?>"> amber below Needs attention; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['warn']))?>%)</dd>
+<dt><?=$dbs_t('set.warn_use')?></dt>
+<dd><input type="number" name="warn_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['warn']))?>" value="<?=dbx_h($dbx['warn_use'])?>"> <?=$dbs_t('set.warn_hint', ['v' => dbx_n($dbx_thr['warn'])])?></dd>
 
-<dt>Critical utilization (%):</dt>
-<dd><input type="number" name="crit_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['crit']))?>" value="<?=dbx_h($dbx['crit_use'])?>"> red; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['crit']))?>%)</dd>
+<dt><?=$dbs_t('set.crit_use')?></dt>
+<dd><input type="number" name="crit_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['crit']))?>" value="<?=dbx_h($dbx['crit_use'])?>"> <?=$dbs_t('set.crit_hint', ['v' => dbx_n($dbx_thr['crit'])])?></dd>
 </dl>
 
-<h3>Temperature</h3>
+<h3><?=$dbs_t('set.h.temp')?></h3>
 <dl>
-<dt>Hot temperature (&deg;C):</dt>
-<dd><input type="number" name="hot_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['hot']))?>" value="<?=dbx_h($dbx['hot_temp'])?>"> hard disks, amber; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['hot']))?>&deg;C)</dd>
+<dt><?=$dbs_t('set.hot_temp')?></dt>
+<dd><input type="number" name="hot_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['hot']))?>" value="<?=dbx_h($dbx['hot_temp'])?>"> <?=$dbs_t('set.hot_hint', ['v' => dbx_n($dbx_thr['hot'])])?></dd>
 
-<dt>Maximum temperature (&deg;C):</dt>
-<dd><input type="number" name="max_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['max']))?>" value="<?=dbx_h($dbx['max_temp'])?>"> hard disks, red; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['max']))?>&deg;C)</dd>
+<dt><?=$dbs_t('set.max_temp')?></dt>
+<dd><input type="number" name="max_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['max']))?>" value="<?=dbx_h($dbx['max_temp'])?>"> <?=$dbs_t('set.max_hint', ['v' => dbx_n($dbx_thr['max'])])?></dd>
 </dl>
 
-<h3>Health</h3>
+<h3><?=$dbs_t('set.h.health')?></h3>
 <dl>
-<dt>Read SMART health in the background:</dt>
+<dt><?=$dbs_t('set.smart')?></dt>
 <dd><input type="hidden" name="smart" value="0"><input type="checkbox" name="smart" value="1" <?=db_on($dbx['smart']) ? 'checked' : ''?>></dd>
 </dl>
 
 <?php $dbx_ack = db_ack(); if ($dbx_ack) { ?>
-<h3>Acknowledged SMART warnings</h3>
+<h3><?=$dbs_t('set.h.acked')?></h3>
 <dl>
 <?php foreach ($dbx_ack as $dbx_an => $dbx_a) { $dbx_bits = []; foreach (($dbx_a['raw'] ?? []) as $dbx_id => $dbx_rv) { if ((int)$dbx_rv > 0) { $dbx_bits[] = $dbx_id . ': ' . $dbx_rv; } } ?>
 <dt><?=dbx_h(strtoupper($dbx_an))?>:</dt>
-<dd>acknowledged <?=dbx_h(date('Y-m-d H:i', (int)($dbx_a['t'] ?? 0)))?><?=$dbx_bits ? ' (attribute ' . dbx_h(implode(', ', $dbx_bits)) . ')' : ''?> <input type="button" class="dbx-forget" data-disk="<?=dbx_h($dbx_an)?>" value="Forget"></dd>
+<dd><?=$dbs_t('set.acked_at', ['t' => date('Y-m-d H:i', (int)($dbx_a['t'] ?? 0))])?><?=$dbx_bits ? ' ' . $dbs_t('set.acked_attr', ['a' => implode(', ', $dbx_bits)]) : ''?> <input type="button" class="dbx-forget" data-disk="<?=dbx_h($dbx_an)?>" value="<?=$dbs_t('set.btn.forget')?>"></dd>
 <?php } ?>
 </dl>
 <?php } ?>
 
-<h3>Discord alerts</h3>
+<h3><?=$dbs_t('set.h.discord')?></h3>
 <dl>
-<dt>Webhook for the system channel:</dt>
-<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$dbx['dc_hook'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""> <span style="opacity:.6">the saved webhook is not sent to the page; type - to remove it</span></dd>
+<dt><?=$dbs_t('set.dc_hook')?></dt>
+<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$dbx['dc_hook'] !== '' ? $dbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""> <span style="opacity:.6"><?=$dbs_t('set.hook_hint')?></span></dd>
 
-<dt>Ping on red alerts:</dt>
-<dd><input type="text" name="dc_ping" placeholder="your Discord user ID, role:ID, @here or @everyone" value="<?=dbx_h($dbx['dc_ping'])?>"> empty = no ping. Amber alerts and all-clear messages never ping</dd>
+<dt><?=$dbs_t('set.dc_ping')?></dt>
+<dd><input type="text" name="dc_ping" placeholder="<?=$dbs_t('set.ping_ph')?>" value="<?=dbx_h($dbx['dc_ping'])?>"> <?=$dbs_t('set.ping_hint')?></dd>
 
-<dt>Array protection, emulated or failed disk:</dt>
+<dt><?=$dbs_t('set.n_array')?></dt>
 <dd><input type="hidden" name="n_array" value="0"><input type="checkbox" name="n_array" value="1" <?=db_on($dbx['n_array']) ? 'checked' : ''?>></dd>
 
-<dt>Disk temperature (Hot and Maximum limits above):</dt>
+<dt><?=$dbs_t('set.n_temp')?></dt>
 <dd><input type="hidden" name="n_temp" value="0"><input type="checkbox" name="n_temp" value="1" <?=db_on($dbx['n_temp']) ? 'checked' : ''?>></dd>
 
-<dt>SMART problems (Pre-fail or Old age):</dt>
+<dt><?=$dbs_t('set.n_smart')?></dt>
 <dd><input type="hidden" name="n_smart" value="0"><input type="checkbox" name="n_smart" value="1" <?=db_on($dbx['n_smart']) ? 'checked' : ''?>></dd>
 
-<dt>Disk and pool fill level (warning, critical %):</dt>
+<dt><?=$dbs_t('set.n_fill')?></dt>
 <dd><input type="hidden" name="n_fill" value="0"><input type="checkbox" name="n_fill" value="1" <?=db_on($dbx['n_fill']) ? 'checked' : ''?>> <input type="number" name="n_fill_warn" min="1" max="100" class="narrow" value="<?=dbx_h($dbx['n_fill_warn'])?>"> <input type="number" name="n_fill_crit" min="1" max="100" class="narrow" value="<?=dbx_h($dbx['n_fill_crit'])?>"></dd>
 
-<dt>ZFS pool health:</dt>
+<dt><?=$dbs_t('set.n_pool')?></dt>
 <dd><input type="hidden" name="n_pool" value="0"><input type="checkbox" name="n_pool" value="1" <?=db_on($dbx['n_pool']) ? 'checked' : ''?>></dd>
 
-<dt>Parity check and rebuild (start, result):</dt>
+<dt><?=$dbs_t('set.n_parity')?></dt>
 <dd><input type="hidden" name="n_parity" value="0"><input type="checkbox" name="n_parity" value="1" <?=db_on($dbx['n_parity']) ? 'checked' : ''?>></dd>
 
-<dt>SMART self-test of an unassigned disk (passed, aborted, failed):</dt>
-<dd><input type="hidden" name="n_utest" value="0"><input type="checkbox" name="n_utest" value="1" <?=db_on($dbx['n_utest']) ? 'checked' : ''?>> one message when a test that was running is over</dd>
+<dt><?=$dbs_t('set.n_utest')?></dt>
+<dd><input type="hidden" name="n_utest" value="0"><input type="checkbox" name="n_utest" value="1" <?=db_on($dbx['n_utest']) ? 'checked' : ''?>> <?=$dbs_t('set.utest_hint')?></dd>
 
-<dt>Repeat a red alert every (hours):</dt>
-<dd><input type="number" name="n_remind" min="0" max="168" class="narrow" value="<?=dbx_h($dbx['n_remind'])?>"> 0 = never</dd>
+<dt><?=$dbs_t('set.n_remind')?></dt>
+<dd><input type="number" name="n_remind" min="0" max="168" class="narrow" value="<?=dbx_h($dbx['n_remind'])?>"> <?=$dbs_t('set.never_hint')?></dd>
 
-<dt>Weekly summary:</dt>
+<dt><?=$dbs_t('set.wk_on')?></dt>
 <dd><input type="hidden" name="wk_on" value="0"><input type="checkbox" name="wk_on" value="1" <?=db_on($dbx['wk_on']) ? 'checked' : ''?>>
- <select name="wk_day"><?php foreach ([1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'] as $dn => $dl) { echo '<option value="' . $dn . '"' . ((int)$dbx['wk_day'] === $dn ? ' selected' : '') . '>' . $dl . '</option>'; } ?></select>
- <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=dbx_h($dbx['wk_hour'])?>"> o'clock</dd>
+ <select name="wk_day"><?php foreach ([1 => $dbs_T('date.long.mon'), 2 => $dbs_T('date.long.tue'), 3 => $dbs_T('date.long.wed'), 4 => $dbs_T('date.long.thu'), 5 => $dbs_T('date.long.fri'), 6 => $dbs_T('date.long.sat'), 7 => $dbs_T('date.long.sun')] as $dn => $dl) { echo '<option value="' . $dn . '"' . ((int)$dbx['wk_day'] === $dn ? ' selected' : '') . '>' . dbx_h($dl) . '</option>'; } ?></select>
+ <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=dbx_h($dbx['wk_hour'])?>"> <?=$dbs_t('set.oclock')?></dd>
 
-<dt>Try it:</dt>
-<dd><input type="button" id="dbx-test" value="Send test message"> <input type="button" id="dbx-sample" value="Send sample alerts"> <input type="button" id="dbx-weekly" value="Send weekly summary now"> <span id="dbx-tmsg" style="margin-left:12px"></span></dd>
+<dt><?=$dbs_t('set.try')?></dt>
+<dd><input type="button" id="dbx-test" value="<?=$dbs_t('set.btn.test')?>"> <input type="button" id="dbx-sample" value="<?=$dbs_t('set.btn.sample')?>"> <input type="button" id="dbx-weekly" value="<?=$dbs_t('set.btn.weekly')?>"> <span id="dbx-tmsg" style="margin-left:12px"></span></dd>
 </dl>
 
 <dl class="uset-save">
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="dbx-save" value="Apply">
-  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <input type="button" id="dbx-save" value="<?=$dbs_t('set.btn.apply')?>">
+  <input type="button" value="<?=$dbs_t('set.btn.done')?>" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
   <span id="dbx-msg" style="margin-left:12px"></span>
 </dd>
 </dl>
 </form>
 <?php $mt_lang_post = '/plugins/diskbox/lang_save.php'; include '/usr/local/emhttp/plugins/diskbox/lang_block.php'; ?>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Diskbox replaces the Disk Viewer tile. The array is shown as one card with a parity row underneath: green when the array is protected, amber while a parity check or rebuild runs, red when there is no protection, a data disk is emulated, or a disk has failed. The Needs attention list collects disks that are too full, too hot, show SMART warnings or are in a bad state.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$dbs_t('set.help_tile')?></p>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Temperature limits for SSDs and NVMe devices are taken from Unraid's own display settings (Settings, Display Settings). SMART data is collected every 20 minutes with <code>smartctl</code>; disks that are spun down are skipped, so Diskbox never wakes a sleeping disk. Utilization and temperature colours use the values above, or Unraid's own when a field is empty.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$dbs_T('set.help_smart')?></p>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Discord alerts: Unraid checks every minute and posts to the webhook only when something changes: a problem appears, gets worse, or is over. A temperature alert needs three minutes in a row and an all-clear only after the disk has cooled two degrees; red alerts can repeat after the chosen number of hours. A SMART warning can be acknowledged with the button next to it on the dashboard tile; it then counts again only when it gets worse (the attribute's raw value rises). A failed health check cannot be acknowledged. SMART alerts name each attribute, say whether it is Pre-fail or Old age, and show its raw value, its previous value, and the value, worst and threshold. The buttons use the saved settings, so press Apply first. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$dbs_t('set.help_discord')?></p>
 
+<?=mt_i18n_js($dbs_lang, 'dbs')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('dbs', k, v); };
   var $tm = $('#dbx-tmsg');
   $.each({test: '#dbx-test', sample: '#dbx-sample', weekly: '#dbx-weekly'}, function (op, sel) {
     $(sel).on('click', function () {
       var $b = $(this).prop('disabled', true);
-      $tm.css('color', '').text('Sending...');
+      $tm.css('color', '').text(T('set.sending'));
       $.post('/plugins/diskbox/test.php', {op: op}, null, 'json')
-        .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text('Sent.'); } else { $tm.css('color', '#e5534b').text('Not sent: ' + ((r && r.error) ? r.error : 'unknown error')); } })
-        .fail(function (x) { var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; $tm.css('color', '#e5534b').text('Not sent: ' + e); })
+        .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text(T('set.sent')); } else { $tm.css('color', '#e5534b').text(T('set.not_sent', { e: (r && r.error) ? r.error : T('set.unknown_error') })); } })
+        .fail(function (x) { var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; $tm.css('color', '#e5534b').text(T('set.not_sent', { e: e })); })
         .always(function () { $b.prop('disabled', false); });
     });
   });
   $('.dbx-forget').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $.post('/plugins/diskbox/ack.php', { name: $b.data('disk'), op: 'forget' }, null, 'json').always(function () { $b.closest('dd').prev('dt').remove(); $b.closest('dd').text('forgotten: a warning on this disk counts again'); });
+    $.post('/plugins/diskbox/ack.php', { name: $b.data('disk'), op: 'forget' }, null, 'json').always(function () { $b.closest('dd').prev('dt').remove(); $b.closest('dd').text(T('set.forgotten')); });
   });
   var $msg = $('#dbx-msg');
   $('#dbx-save').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $msg.css('color', '').text('Saving...');
+    $msg.css('color', '').text(T('set.saving_s'));
     $.post('/plugins/diskbox/save.php', $('#dbx-form').serialize(), null, 'json')
       .done(function (r) {
         if (r && r.ok) {
-          $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.');
+          $msg.css('color', '#3fa24a').text(T('set.saved'));
         } else {
-          $msg.css('color', '#e5534b').text('Not saved: ' + ((r && r.error) ? r.error : 'unknown error'));
+          $msg.css('color', '#e5534b').text(T('set.not_saved', { e: (r && r.error) ? r.error : T('set.unknown_error') }));
         }
       })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
-        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+        $msg.css('color', '#e5534b').text(T('set.not_saved', { e: e }));
       })
       .always(function () { $b.prop('disabled', false); });
   });

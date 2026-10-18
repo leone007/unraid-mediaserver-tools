@@ -1,17 +1,20 @@
 <?php
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/i18n.php';
+$dbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile (lang/en.json)
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
 function db_out($d) { echo json_encode($d, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); exit; }
 
 function db_zero_text($z) {
+    global $dbx_T;
     $pct = $z['size'] > 0 ? min(100, $z['pos'] / $z['size'] * 100) : 0;
-    if (!$z['running']) { return !empty($z['done']) ? 'zeroed · ready to remove' : 'zeroing stopped at ' . number_format($pct, 1) . '%'; }
-    $t = 'zeroing ' . number_format($pct, 1) . '%';
+    if (!$z['running']) { return !empty($z['done']) ? $dbx_T('sub.zeroed') : $dbx_T('sub.zero_stopped', ['p' => number_format($pct, 1)]); }
+    $t = $dbx_T('sub.zeroing', ['p' => number_format($pct, 1)]);
     if ($z['rate'] > 0) {
         $left = ($z['size'] - $z['pos']) / $z['rate']; $h = (int)floor($left / 3600); $mi = (int)ceil(($left - $h * 3600) / 60);
-        $t .= ' · ' . db_rate($z['rate']) . ' · ' . ($h ? $h . ' h ' . $mi . ' m' : max(1, $mi) . ' m') . ' left';
+        $t .= ' · ' . db_rate($z['rate']) . ' · ' . $dbx_T('time.left', ['t' => ($h ? $h . ' h ' . $mi . ' m' : max(1, $mi) . ' m')]);
     }
     return $t;
 }
@@ -85,12 +88,13 @@ function db_tlevel($temp, $ssd, $thr) {
 }
 
 function db_health($name, $label, $d, $smart, &$attn) {
+    global $dbx_T;
     $lvl = 'unk';
-    $title = 'SMART data not collected yet';
+    $title = $dbx_T('health.unknown');
     $s = $smart[$name] ?? null;
     if (is_array($s)) {
         $lvl = 'ok';
-        $title = 'SMART passed';
+        $title = $dbx_T('health.passed');
         $iss = db_smart_issues($name, $s, $GLOBALS['dbx_ack']);
         $w = [];
         foreach ($iss['attrs'] as $x) { $w[] = $x[0] . ' ' . $x[1] . ': ' . $x[3]; }
@@ -98,25 +102,26 @@ function db_health($name, $label, $d, $smart, &$attn) {
         $failedAttr = false;
         foreach ($iss['attrs'] as $x) { if ($x[7]) { $failedAttr = true; } }
         if ($iss['health']) {
-            $lvl = 'rd'; $title = 'SMART health check failed';
-            $attn[] = ['rd', $label, 'SMART health check failed', '', ''];
+            $lvl = 'rd'; $title = $dbx_T('health.failed');
+            $attn[] = ['rd', $label, $dbx_T('health.failed'), '', ''];
         } elseif ($w) {
             $lvl = $failedAttr ? 'rd' : 'a'; $title = implode(', ', $w);
-            $attn[] = [$lvl, $label, $failedAttr ? 'SMART attribute failing' : 'SMART warning', implode(' · ', array_slice($w, 0, 2)), $name];
+            $attn[] = [$lvl, $label, $failedAttr ? $dbx_T('attn.smart_failing') : $dbx_T('attn.smart_warning'), implode(' · ', array_slice($w, 0, 2)), $name];
         } elseif ($iss['hidden'] > 0) {
-            $title = 'SMART warning acknowledged';
+            $title = $dbx_T('health.acked');
         }
     }
     $errs = (int)($d['numErrors'] ?? 0);
     if ($errs > 0 && $lvl !== 'rd') {
         $lvl = 'a';
-        $title = $errs . ' read/write errors';
-        $attn[] = ['a', $label, $errs . ' read/write errors', ''];
+        $title = $dbx_T('health.errors', ['n' => $errs]);
+        $attn[] = ['a', $label, $dbx_T('health.errors', ['n' => $errs]), ''];
     }
     return [$lvl, $title];
 }
 
 function db_row($name, $d, $kind, $rates, $smart, $thr, $started, &$attn, $zero = []) {
+    global $dbx_T;
     $label = strtoupper($name);
     $dev = (string)($d['device'] ?? '');
     $spun = (($d['spundown'] ?? '0') === '1');
@@ -135,36 +140,36 @@ function db_row($name, $d, $kind, $rates, $smart, $thr, $started, &$attn, $zero 
         $pct = $fsUsed / $fsSize * 100;
         if ($thr['crit'] > 0 && $pct >= $thr['crit']) { $ulevel = 'rd'; }
         elseif ($thr['warn'] > 0 && $pct >= $thr['warn']) { $ulevel = 'a'; }
-        if ($ulevel !== '') { $attn[] = [$ulevel, $label, 'is ' . number_format($pct, 1) . '% full', ($fsSize - $fsUsed) > 0 ? '@FREE@' . ($fsSize - $fsUsed) : '']; }
+        if ($ulevel !== '') { $attn[] = [$ulevel, $label, $dbx_T('attn.full', ['p' => number_format($pct, 1)]), ($fsSize - $fsUsed) > 0 ? '@FREE@' . ($fsSize - $fsUsed) : '']; }
     }
 
     // activity text
-    $io = 'idle';
+    $io = $dbx_T('sub.idle');
     if (isset($rates[$dev])) {
         $r = $rates[$dev];
         $parts = [];
-        if ($r[0] >= 1024) { $parts[] = 'reading ' . db_rate($r[0]); }
-        if ($r[1] >= 1024) { $parts[] = 'writing ' . db_rate($r[1]); }
+        if ($r[0] >= 1024) { $parts[] = $dbx_T('sub.reading', ['r' => db_rate($r[0])]); }
+        if ($r[1] >= 1024) { $parts[] = $dbx_T('sub.writing', ['r' => db_rate($r[1])]); }
         if ($parts) { $io = implode(' · ', $parts); }
     }
     if ($state !== 'ok') {
-        $sub = ($kind === 'data') ? ($state === 'new' ? 'new disk' : ($state === 'invalid' ? 'invalid' : 'emulated')) : ($state === 'new' ? 'new disk' : ($state === 'missing' ? 'missing' : ($state === 'invalid' ? 'invalid' : 'disabled')));
+        $sub = ($kind === 'data') ? ($state === 'new' ? $dbx_T('sub.new') : ($state === 'invalid' ? $dbx_T('sub.invalid') : $dbx_T('sub.emulated'))) : ($state === 'new' ? $dbx_T('sub.new') : ($state === 'missing' ? $dbx_T('sub.missing') : ($state === 'invalid' ? $dbx_T('sub.invalid') : $dbx_T('sub.disabled'))));
     } elseif ($started && $kind === 'data' && ($d['fsStatus'] ?? 'Mounted') !== 'Mounted' && ($d['fsStatus'] ?? '') !== '') {
-        $sub = 'unmountable';
-        $attn[] = ['rd', $label, 'is unmountable', (string)$d['fsStatus']];
+        $sub = $dbx_T('sub.unmountable');
+        $attn[] = ['rd', $label, $dbx_T('attn.unmountable'), (string)$d['fsStatus']];
     } else {
-        $sub = $spun ? 'spun down' : $io;
-        if ($kind === 'parity') { $sub = 'valid · ' . $sub; }
+        $sub = $spun ? $dbx_T('sub.spun_down') : $io;
+        if ($kind === 'parity') { $sub = $dbx_T('sub.valid') . ' · ' . $sub; }
     }
     // a disk being zeroed for removal: its progress replaces the activity text and the usage bar
     $z = ($kind === 'data') ? ($zero[$name] ?? null) : null;
     if ($z) { $sub = db_zero_text($z); $used = $z['pos']; if ($z['size'] > 0) { $size = $z['size']; } /* the device, not the stand-in image mounted on it */ $pct = $z['size'] > 0 ? min(100, $z['pos'] / $z['size'] * 100) : 0; $ulevel = ''; }
     $tlevel = db_tlevel($temp, $ssd, $thr);
     if ($temp !== null && ($tlevel === 'rd' || $tlevel === 'a')) {
-        $attn[] = [$tlevel, $label, $tlevel === 'rd' ? 'is too hot' : 'is running hot', $temp . '°C'];
+        $attn[] = [$tlevel, $label, $tlevel === 'rd' ? $dbx_T('attn.too_hot') : $dbx_T('attn.hot'), $temp . '°C'];
     }
-    if ($emul) { $attn[] = ['rd', $label, 'is emulated', 'the disk is missing or disabled; its data is rebuilt from parity']; }
-    elseif ($state === 'invalid') { $attn[] = ['rd', $label, 'is invalid', (string)($d['status'] ?? '')]; }
+    if ($emul) { $attn[] = ['rd', $label, $dbx_T('attn.emulated'), $dbx_T('attn.emulated_why')]; }
+    elseif ($state === 'invalid') { $attn[] = ['rd', $label, $dbx_T('attn.invalid'), (string)($d['status'] ?? '')]; }
 
     list($hl, $ht) = db_health($name, $label, $d, $smart, $attn);
     $hsmart = [$hl, $ht]; // the SMART result alone, shown again while the disk is being built
@@ -228,8 +233,8 @@ foreach ($disks as $key => $d) {
         if (!db_assigned($d) || trim((string)($d['fsType'] ?? '')) === '') { continue; }
         $row = db_row($name, $d, 'pool', $rates, $smart, $thr, $started, $attn);
         if (strtolower($row['fs']) === 'zfs' && isset($zp[$name]) && $zp[$name] !== 'ONLINE') {
-            $row['health'] = ['rd', 'ZFS pool ' . $zp[$name]];
-            $attn[] = ['rd', $row['label'], 'pool is ' . strtolower($zp[$name]), ''];
+            $row['health'] = ['rd', $dbx_T('health.zfs', ['s' => $zp[$name]])];
+            $attn[] = ['rd', $row['label'], $dbx_T('attn.pool_state', ['s' => strtolower($zp[$name])]), ''];
         }
         $pools[] = $row;
         if ($row['temp'] !== null) { $hottest = ($hottest === null) ? $row['temp'] : max($hottest, $row['temp']); }
@@ -239,8 +244,8 @@ foreach ($disks as $key => $d) {
 // no parity disk at all: a placeholder row so the missing protection is visible
 if ($started && !$parityRows && $dataRows) {
     $parityRows[] = ['name' => 'parity', 'label' => 'PARITY', 'kind' => 'parity', 'state' => 'missing', 'emulated' => false, 'dot' => 'rd',
-        'sub' => 'missing · no disk assigned', 'fs' => '', 'size' => 0, 'used' => null, 'pct' => null, 'ulevel' => '',
-        'temp' => null, 'tlevel' => 'mu', 'health' => ['rd', 'no parity disk'], 'link' => '/Main'];
+        'sub' => $dbx_T('sub.no_parity'), 'fs' => '', 'size' => 0, 'used' => null, 'pct' => null, 'ulevel' => '',
+        'temp' => null, 'tlevel' => 'mu', 'health' => ['rd', $dbx_T('health.no_parity')], 'link' => '/Main'];
 }
 
 // resync (parity check / rebuild)
@@ -261,27 +266,27 @@ if ($started && (float)($var['mdResync'] ?? 0) > 0) {
 }
 
 // protection chip
-$chip = ['g', 'PARITY PROTECTED'];
+$chip = ['g', $dbx_T('chip.protected')];
 $arrState = 'ok';
-if (!$started) { $chip = ['mu', 'STOPPED']; $arrState = 'stopped'; }
+if (!$started) { $chip = ['mu', $dbx_T('chip.stopped')]; $arrState = 'stopped'; }
 else {
     $rebuilding = ($resync && $resync['action'] !== 'check' && $resync['action'] !== 'clear');
     // a parity disk being built (a new Parity 2, a replaced parity) is invalid until the sync ends: that is the sync, not an error
     $syncing = ($resync && $resync['action'] === 'sync');
     if ($syncing) { foreach ($parityRows as $pr) { if (in_array($pr['name'], $resync['targets'], true) && $pr['state'] !== 'ok') { $parityAssigned--; } } }
-    if ($parityAssigned === 0 || $parityOk === 0) { $chip = ['rd', 'NOT PROTECTED']; $arrState = 'unprotected'; }
-    elseif ($emulated > 0) { $chip = ['rd', 'DISK EMULATED']; $arrState = 'emulated'; }
-    elseif ($invalid > 0) { $chip = ['rd', 'DISK ERROR']; $arrState = 'invalid'; }
-    elseif ($parityOk < $parityAssigned) { $chip = ['a', 'PARITY DEGRADED']; $arrState = 'degraded'; }
+    if ($parityAssigned === 0 || $parityOk === 0) { $chip = ['rd', $dbx_T('chip.unprotected')]; $arrState = 'unprotected'; }
+    elseif ($emulated > 0) { $chip = ['rd', $dbx_T('chip.emulated')]; $arrState = 'emulated'; }
+    elseif ($invalid > 0) { $chip = ['rd', $dbx_T('chip.error')]; $arrState = 'invalid'; }
+    elseif ($parityOk < $parityAssigned) { $chip = ['a', $dbx_T('chip.degraded')]; $arrState = 'degraded'; }
     // clearing a newly added data disk leaves the parity valid and the array protected: no chip, no amber state;
     // its progress is on the disk's row and in the header summary
     if ($resync && $resync['action'] !== 'clear' && ($arrState === 'ok' || $arrState === 'degraded' || $rebuilding)) {
-        $lab = ['rebuild' => 'REBUILD', 'sync' => 'PARITY-SYNC', 'clear' => 'CLEARING'][$resync['action']] ?? 'PARITY CHECK';
+        $lab = ['rebuild' => $dbx_T('chip.rebuild'), 'sync' => $dbx_T('chip.sync'), 'clear' => $dbx_T('chip.clear')][$resync['action']] ?? $dbx_T('chip.check');
         $chip = [$syncing ? 'bl' : 'a', $lab . ' ' . round($resync['pct']) . '%'];
         $arrState = $resync['action'];
     }
-    if ($arrState === 'unprotected') { $attn[] = ['rd', 'Array is not protected', '', $parityAssigned === 0 ? 'no parity disk assigned' : 'the parity disk is missing or disabled']; }
-    elseif ($syncing && $parityOk === 0) { $attn[] = ['rd', 'Array is not protected', '', 'until the parity sync ends']; }
+    if ($arrState === 'unprotected') { $attn[] = ['rd', $dbx_T('attn.unprotected'), '', $parityAssigned === 0 ? $dbx_T('attn.no_parity') : $dbx_T('attn.parity_gone')]; }
+    elseif ($syncing && $parityOk === 0) { $attn[] = ['rd', $dbx_T('attn.unprotected'), '', $dbx_T('attn.until_sync')]; }
 }
 
 // rows while a check / parity sync / rebuild / clearing runs (item 68): the disk being built shows its progress in blue instead of a red
@@ -292,7 +297,7 @@ if ($resync) {
     $tail = ' · ' . db_rate($resync['speed']);
     if ($resync['left'] !== null) {
         $h = intdiv($resync['left'], 3600); $m = intdiv($resync['left'] % 3600, 60);
-        $tail .= ' · ' . ($h > 0 ? $h . ' h ' : '') . $m . ' m left';
+        $tail .= ' · ' . $dbx_T('time.left', ['t' => ($h > 0 ? $h . ' h ' : '') . $m . ' m']);
     }
     $built = [];
     foreach ([&$parityRows, &$dataRows] as &$rows) {
@@ -300,17 +305,17 @@ if ($resync) {
             $mine = in_array($r['name'], $tg, true);
             if ($resync['action'] === 'check') {
                 if ($r['kind'] === 'parity' && $r['state'] === 'ok' && (!$tg || $mine)) {
-                    $r['sub'] = 'checking' . $tail; $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
+                    $r['sub'] = $dbx_T('sub.checking') . $tail; $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
                 }
             } elseif ($mine && ($resync['action'] === 'sync' || $resync['action'] === 'rebuild')) {
-                $r['sub'] = ($r['kind'] === 'parity' ? 'building' : 'rebuilding') . $tail;
+                $r['sub'] = ($r['kind'] === 'parity' ? $dbx_T('sub.building') : $dbx_T('sub.rebuilding')) . $tail;
                 $r['build'] = 1; $r['dot'] = 'on'; $r['health'] = $r['hsmart'];
                 $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
                 $built[$r['label']] = $r['kind'];
             } elseif ($resync['action'] === 'clear' && $r['kind'] === 'data' && $r['state'] === 'new') {
                 // "clear" names no disk: Unraid zeroes the newly added data disk(s), outside parity (zeros do not change it)
-                $r['sub'] = 'clearing' . $tail;
-                $r['build'] = 1; $r['blab'] = 'cleared'; $r['dot'] = 'on';
+                $r['sub'] = $dbx_T('sub.clearing') . $tail;
+                $r['build'] = 1; $r['blab'] = $dbx_T('bar.cleared'); $r['dot'] = 'on';
                 $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
                 $clearing[] = $r['label'];
             }
@@ -320,10 +325,10 @@ if ($resync) {
     unset($rows);
     // its 'is invalid' / 'is emulated' attention line goes; a data disk being rebuilt keeps one amber line
     if ($built) {
-        $attn = array_values(array_filter($attn, function ($x) use ($built) {
-            return !(isset($built[$x[1]]) && in_array($x[2], ['is invalid', 'is emulated'], true));
+        $attn = array_values(array_filter($attn, function ($x) use ($built, $dbx_T) {
+            return !(isset($built[$x[1]]) && in_array($x[2], [$dbx_T('attn.invalid'), $dbx_T('attn.emulated')], true));
         }));
-        foreach ($built as $lab => $k) { if ($k === 'data') { $attn[] = ['a', $lab, 'is being rebuilt from parity', round($resync['pct']) . '%']; } }
+        foreach ($built as $lab => $k) { if ($k === 'data') { $attn[] = ['a', $lab, $dbx_T('attn.rebuilding'), round($resync['pct']) . '%']; } }
     }
 }
 
@@ -344,37 +349,37 @@ foreach (db_devs() as $k => $d) {
         if ($e['hours'] !== null) { $sub[] = number_format($e['hours'], 0, '.', ' ') . ' h'; }
         $T = $e['test']; $L = $e['last'];
         if (!empty($T['run'])) {
-            $lv = 'bl'; $uaRun++; $tp = max(0, min(100, 100 - (int)$T['left'])); $tl = $T['left'] . '% left';
-            $sub[] = 'SMART test running';
+            $lv = 'bl'; $uaRun++; $tp = max(0, min(100, 100 - (int)$T['left'])); $tl = $dbx_T('ua.pct_left', ['p' => $T['left']]);
+            $sub[] = $dbx_T('ua.test_running');
         } elseif ($L) {
             $ago = ($L['hours'] !== null && $e['hours'] !== null) ? max(0, $e['hours'] - $L['hours']) : null;
-            $when = $ago === null ? '' : ($ago < 48 ? ' · ' . $ago . ' h ago' : ' · ' . intdiv($ago, 24) . ' d ago');
-            if ($L['status'] === 'passed') { $lv = 'g'; $sub[] = $L['type'] . ' test passed' . $when; }
-            elseif ($L['status'] === 'aborted') { $lv = 'a'; $sub[] = $L['type'] . ' test aborted' . ($L['left'] !== null ? ' at ' . $L['left'] . '% left' : '') . $when; }
-            else { $lv = 'rd'; $sub[] = $L['type'] . ' test failed: ' . $L['text']; $attn[] = ['rd', $label . ' ' . $e['serial'], 'failed its SMART self-test', $L['text']]; }
+            $when = $ago === null ? '' : ' · ' . ($ago < 48 ? $dbx_T('ua.h_ago', ['n' => $ago]) : $dbx_T('ua.d_ago', ['n' => intdiv($ago, 24)]));
+            if ($L['status'] === 'passed') { $lv = 'g'; $sub[] = $dbx_T('ua.passed', ['t' => $L['type']]) . $when; }
+            elseif ($L['status'] === 'aborted') { $lv = 'a'; $sub[] = ($L['left'] !== null ? $dbx_T('ua.aborted_at', ['t' => $L['type'], 'p' => $L['left']]) : $dbx_T('ua.aborted', ['t' => $L['type']])) . $when; }
+            else { $lv = 'rd'; $sub[] = $dbx_T('ua.failed', ['t' => $L['type'], 'e' => $L['text']]); $attn[] = ['rd', $label . ' ' . $e['serial'], $dbx_T('attn.test_failed'), $L['text']]; }
         }
-        if ($spun || !empty($e['sleep'])) { $sub[] = 'asleep'; }
-    } else { $sub[] = $spun ? 'asleep' : 'reading SMART…'; }
+        if ($spun || !empty($e['sleep'])) { $sub[] = $dbx_T('ua.asleep'); }
+    } else { $sub[] = $spun ? $dbx_T('ua.asleep') : $dbx_T('ua.reading_smart'); }
     // a UD Preclear on this disk (item 63): it replaces the SMART test line while it runs, and its result stays until cleared
     $pc = db_preclear($d['device']);
     if ($pc) {
         $sub = array_slice($sub, 0, $e ? (($e['hours'] !== null && !$pc['run']) ? 2 : 1) : 0);   // while it runs: serial only, the step line is long
-        if ($pc['run'] && $pc['paused']) { $lv = 'a'; $sub[] = 'preclear ' . strtolower($pc['step']) . ' paused'; $tp = $pc['pct']; $tl = 'paused'; }
+        if ($pc['run'] && $pc['paused']) { $lv = 'a'; $sub[] = $dbx_T('pc.paused_step', ['s' => strtolower($pc['step'])]); $tp = $pc['pct']; $tl = $dbx_T('pc.paused'); }
         elseif ($pc['run'] && $pc['pct'] !== null) {
             $lv = 'bl'; $pcRun++; $tp = $pc['pct']; $tl = $pc['pct'] . '%';
             $el = db_hms($pc['elapsed']); $left = $pc['pct'] > 0 ? (int)round($el * (100 - $pc['pct']) / $pc['pct']) : 0;
             $sub[] = $pc['step'] . ($pc['of'] ? ' ' . $pc['n'] . '/' . $pc['of'] : '') . ' · ' . $pc['speed'] . ' MB/s' .
-                     ($left > 0 ? ' · ~' . ($left >= 3600 ? round($left / 3600, 1) . ' h' : max(1, (int)round($left / 60)) . ' min') . ' left' : '');
+                     ($left > 0 ? ' · ~' . $dbx_T('time.left', ['t' => ($left >= 3600 ? round($left / 3600, 1) . ' h' : max(1, (int)round($left / 60)) . ' min')]) : '');
         }
-        elseif ($pc['run']) { $lv = 'bl'; $pcRun++; $sub[] = 'preclear: ' . $pc['text']; }
-        elseif ($pc['fail']) { $lv = 'rd'; $sub[] = 'preclear failed: ' . $pc['text']; $attn[] = ['rd', $label . ($e ? ' ' . $e['serial'] : ''), 'preclear failed', $pc['text']]; }
-        elseif ($pc['done']) { if ($lv !== 'rd') { $lv = 'g'; } $sub[] = 'precleared · ' . date('M j H:i', $pc['t']); }
-        else { $lv = 'a'; $sub[] = 'preclear stopped: ' . $pc['text']; }
+        elseif ($pc['run']) { $lv = 'bl'; $pcRun++; $sub[] = $dbx_T('pc.running', ['s' => $pc['text']]); }
+        elseif ($pc['fail']) { $lv = 'rd'; $sub[] = $dbx_T('pc.failed_s', ['s' => $pc['text']]); $attn[] = ['rd', $label . ($e ? ' ' . $e['serial'] : ''), $dbx_T('pc.failed'), $pc['text']]; }
+        elseif ($pc['done']) { if ($lv !== 'rd') { $lv = 'g'; } $sub[] = $dbx_T('pc.done') . ' · ' . date('M j H:i', $pc['t']); }
+        else { $lv = 'a'; $sub[] = $dbx_T('pc.stopped', ['s' => $pc['text']]); }
     }
     if ($hl === 'rd') { $lv = 'rd'; } elseif ($hl === 'a' && $lv !== 'rd') { $lv = 'a'; }
     $ua[] = ['name' => $id, 'label' => $label, 'kind' => 'ua', 'bus' => $usb ? 'USB' : 'SATA', 'sub' => implode(' · ', $sub),
              'size' => $e && $e['bytes'] > 0 ? $e['bytes'] : (float)($d['sectors'] ?? 0) * (float)($d['sector_size'] ?? 512),
-             'lv' => $lv, 'tpct' => $tp, 'tleft' => $tl, 'tlab' => $pc ? 'preclear' : 'test', 'temp' => $temp, 'tlevel' => db_tlevel($temp, ($d['rotational'] ?? '1') === '0', $thr),
+             'lv' => $lv, 'tpct' => $tp, 'tleft' => $tl, 'tlab' => $pc ? $dbx_T('bar.preclear') : $dbx_T('bar.test'), 'temp' => $temp, 'tlevel' => db_tlevel($temp, ($d['rotational'] ?? '1') === '0', $thr),
              'health' => [$hl, $ht], 'dot' => $spun ? 'off' : 'on', 'link' => '/Main'];
 }
 
@@ -390,7 +395,7 @@ $bsf = '/tmp/diskbox_balance_status.json';
 $bs = is_file($bsf) ? json_decode((string)@file_get_contents($bsf), true) : null;
 if (is_array($bs) && !empty($bs['state'])) {
     $bst = (string)$bs['state']; $bfin = (int)($bs['finished'] ?? 0); $bmsg = (string)($bs['msg'] ?? '');
-    if ($bst === 'running' && time() - (int)@filemtime($bsf) > 180) { $bst = 'error'; $bmsg = 'the move stopped unexpectedly'; $bfin = (int)@filemtime($bsf); }
+    if ($bst === 'running' && time() - (int)@filemtime($bsf) > 180) { $bst = 'error'; $bmsg = $dbx_T('bal.stopped_unexpectedly'); $bfin = (int)@filemtime($bsf); }
     if ($bst === 'running' || ($bfin > 0 && time() - $bfin < 86400 && in_array($bst, ['done', 'aborted', 'error'], true))) {
         $nd = 0; $ns = 0; $nf = 0; $nt = 0;
         foreach ((array)($bs['items'] ?? []) as $bi) { $nt++; if (($bi['state'] ?? '') === 'ok') { $nd++; } elseif (($bi['state'] ?? '') === 'skip') { $ns++; } elseif (($bi['state'] ?? '') === 'fail') { $nf++; } }
@@ -400,8 +405,8 @@ if (is_array($bs) && !empty($bs['state'])) {
 }
 
 $devices = count($parityRows) + count($dataRows) + count($pools);
-if (!empty($parityRows) && $parityRows[0]['state'] === 'missing' && $parityRows[0]['sub'] === 'missing · no disk assigned') { $devices--; }
-$arrDevices = count($dataRows) + count(array_filter($parityRows, function ($r) { return $r['sub'] !== 'missing · no disk assigned'; }));
+if (!empty($parityRows) && $parityRows[0]['state'] === 'missing' && $parityRows[0]['sub'] === $dbx_T('sub.no_parity')) { $devices--; }
+$arrDevices = count($dataRows) + count(array_filter($parityRows, function ($r) { return $r['sub'] !== $GLOBALS['dbx_T']('sub.no_parity'); }));
 
 db_out([
     'ok' => true, 'started' => $started, 'ts' => time(),

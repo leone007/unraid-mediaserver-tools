@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22i">
+<!ENTITY version   "2026.10.22j">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- The texts of the tile, the settings page and the Diskbox Balance page come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet
+###2026.10.22i
 - Language block: saving failed with csrf token mismatch (Unraid checks the token itself and then removes it from the request); fixed
 ###2026.10.22h
 - Language block: the save button (now Save language) was greyed out, because Unraid disables Apply buttons outside a changed form; it works now
@@ -232,6 +234,12 @@ Markdown="false"
 ---
 <?PHP
 $pluginname = "diskbox";
+// texts from the dictionary (lang/en.json and its translations, see i18n.php); own names: Monitor runs this in its scope
+require_once '/usr/local/emhttp/plugins/diskbox/i18n.php';
+$dbt_lang = '/usr/local/emhttp/plugins/diskbox/lang';
+$dbt_T = mt_i18n_t($dbt_lang);
+$dbt_t = [];
+foreach (['reading' => 'tile.reading', 'loading' => 'tile.loading', 'main' => 'tile.open_main', 'set' => 'tile.settings'] as $dbt_k => $dbt_v) { $dbt_t[$dbt_k] = htmlspecialchars($dbt_T($dbt_v), ENT_QUOTES); }
 
 $mytiles[$pluginname]['column2'] =
 <<<EOT
@@ -242,13 +250,13 @@ $mytiles[$pluginname]['column2'] =
       <i class="f32 dbx-ic"></i>
       <div class="section">
         <h3 class="tile-header-main dbx-ttl">Diskbox</h3>
-        <span id="dbx-summary" class="dbx-sum">Reading disks&hellip;</span>
+        <span id="dbx-summary" class="dbx-sum">{$dbt_t['reading']}</span>
       </div>
     </span>
     <span class="tile-header-right">
       <span class="tile-header-right-controls">
-        <a href="/Main" title="_(Open Main)_"><i class="fa fa-fw fa-home control"></i></a>
-        <a href="/Settings/DiskboxSettings" title="_(Diskbox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+        <a href="/Main" title="{$dbt_t['main']}"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/DiskboxSettings" title="{$dbt_t['set']}"><i class="fa fa-fw fa-cog control"></i></a>
       </span>
     </span>
   </span>
@@ -257,13 +265,14 @@ $mytiles[$pluginname]['column2'] =
   <div class="dbx-tile">
     <div id="dbx-attn"></div>
     <div id="dbx-bal"></div>
-    <div id="dbx-array"><div class="dbx-note">Loading&hellip;</div></div>
+    <div id="dbx-array"><div class="dbx-note">{$dbt_t['loading']}</div></div>
     <div id="dbx-pools"></div>
     <div id="dbx-ua"></div>
   </div>
 </td></tr>
 </tbody>
 EOT;
+echo mt_i18n_js($dbt_lang, 'dbx');
 ?>
 <style>
 i.f32.dbx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/diskbox/icon.png) center/contain no-repeat!important}
@@ -338,6 +347,7 @@ i.f32.dbx-ic.dbx-inv{filter:invert(1)}
 </style>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('dbx', k, v); };
   var API = '/plugins/diskbox/api_fetch.php';
   var busy = false, themed = false;
   var LVL = { g: 'dbx-g', a: 'dbx-a', rd: 'dbx-rd', mu: 'dbx-mu', bl: 'dbx-bl', ok: 'dbx-g', unk: 'dbx-mu' };
@@ -417,12 +427,12 @@ $(function () {
       // a check (amber, 'checked') or a disk being built (blue, 'built')
       var rp = Math.max(0, Math.min(100, r.rpct)), bc = r.build ? 'bl' : 'a';
       $r.append(el('dbx-pg' + (r.rstill ? ' st' : '')).append(
-        el('dbx-ut').append($('<span>').text(r.blab || (r.build ? 'built' : 'checked')), $('<b>').addClass(LVL[bc]).text(pct1(rp))),
+        el('dbx-ut').append($('<span>').text(r.blab || (r.build ? T('bar.built') : T('bar.checked'))), $('<b>').addClass(LVL[bc]).text(pct1(rp))),
         el('dbx-tr').append($('<i>').addClass(bc).css('width', rp + '%'))));
     } else if (r.kind === 'ua') {
       // a running SMART self-test (how much is done, the % left that the disk reports) or a UD Preclear step
       $r.append(r.tpct === null || r.tpct === undefined ? $('<span>') : el('dbx-pg').append(
-        el('dbx-ut').append($('<span>').text(r.tlab || 'test'), $('<b>').text(r.tleft)),
+        el('dbx-ut').append($('<span>').text(r.tlab || T('bar.test')), $('<b>').text(r.tleft)),
         el('dbx-tr').append($('<i>').addClass('bl').css('width', r.tpct + '%'))));
     } else { $r.append(r.kind === 'parity' ? $('<span>') : usageCell(r, opts.warn, opts.crit)); }
     $r.append($('<span class="dbx-tp">').addClass(LVL[r.tlevel] || '').text(r.temp === null || r.temp === undefined ? '–' : r.temp + '°C'));
@@ -444,20 +454,20 @@ $(function () {
     if (!list || !list.length) { return; }
     var worst = 'a';
     $.each(list, function (i, x) { if (x.level === 'rd') { worst = 'rd'; } });
-    $a.append(el('dbx-sec dbx-first').addClass(LVL[worst]).text('Needs attention · ' + list.length));
+    $a.append(el('dbx-sec dbx-first').addClass(LVL[worst]).text(T('attn.title') + ' · ' + list.length));
     $.each(list, function (i, x) {
       var small = x.small || '';
       var m = /^@FREE@([0-9.eE+]+)$/.exec(small);
-      if (m) { small = fmt(parseFloat(m[1])) + ' free'; }
+      if (m) { small = T('attn.free', { s: fmt(parseFloat(m[1])) }); }
       var $w = el('dbx-warn').append(ic('exclamation-triangle', LVL[x.level], 14));
       var $t = $('<span>').append($('<b>').text(x.name));
       if (x.text) { $t.append(document.createTextNode(' ' + x.text)); }
       $w.append($t);
       if (small) { $w.append($('<small>').text(small)); }
       if (x.ack) {
-        $w.append($('<a href="#" class="dbx-ackbtn">').text('Acknowledge').attr('title', 'Accept this warning; Diskbox will report it again only if it gets worse').on('click', function (e) {
+        $w.append($('<a href="#" class="dbx-ackbtn">').text(T('attn.ack')).attr('title', T('attn.ack_tip')).on('click', function (e) {
           e.preventDefault();
-          if (!window.confirm('Acknowledge the SMART warning for ' + x.name + '?\n\nIt stays on the disk, but Diskbox will warn again only when it gets worse.')) { return; }
+          if (!window.confirm(T('attn.ack_confirm', { name: x.name }))) { return; }
           $.post('/plugins/diskbox/ack.php', { name: x.ack, op: 'ack' }, null, 'json').always(function () { poll(); });
         }));
       }
@@ -467,11 +477,11 @@ $(function () {
 
   function renderArray(r) {
     var A = r.array, $d = $('#dbx-array').empty();
-    $d.append(el('dbx-hd' + (($('#dbx-attn').children().length || $('#dbx-bal').children().length) ? '' : ' dbx-first')).append($('<span>').text('Array \u00B7 ' + A.devices + (A.devices === 1 ? ' device' : ' devices'))));
+    $d.append(el('dbx-hd' + (($('#dbx-attn').children().length || $('#dbx-bal').children().length) ? '' : ' dbx-first')).append($('<span>').text(T('hd.array') + ' \u00B7 ' + T('hd.devices', { n: A.devices }))));
     var chip = A.chip || ['mu', ''];
     var $card = el('dbx-arr');
     $card.append(el('dbx-at').append(
-      $('<span class="dbx-an">').text('ARRAY'),
+      $('<span class="dbx-an">').text(T('card.array')),
       A.fs ? $('<span class="dbx-fs">').text(A.fs) : $('<span>'),
       (function () {
         var $c = $('<span class="dbx-chip">').addClass(chip[0]).text(chip[1]);
@@ -480,7 +490,7 @@ $(function () {
       })()));
     var lv = barLevel(A.pct, A.warn, A.crit);
     $card.append(
-      el('dbx-ut').css('margin-top', '9px').append($('<span>').text(fmt(A.used) + ' used of ' + fmt(A.size, true)), $('<b>').text(pct1(A.pct))),
+      el('dbx-ut').css('margin-top', '9px').append($('<span>').text(T('card.used_of', { used: fmt(A.used), size: fmt(A.size, true) })), $('<b>').text(pct1(A.pct))),
       el('dbx-tr').css('height', '7px').append($('<i>').addClass(lv).css('width', Math.min(100, A.pct) + '%')));
     $d.append($card);
     $.each(A.parity || [], function (i, p) {
@@ -500,14 +510,14 @@ $(function () {
     var now = Math.floor(Date.now() / 1000), txt, right;
     if (B.state === 'running') {
       var el_ = Math.max(1, now - B.started), eta = (B.done > 0 && B.total > B.done) ? Math.round(el_ * (B.total - B.done) / B.done) : 0;
-      txt = 'Moving ' + B.ok + ' of ' + B.n + ' titles';
-      right = pct.toFixed(0) + '%' + (eta ? ' \u00B7 ' + (eta >= 3600 ? Math.floor(eta / 3600) + ' h ' : '') + Math.floor(eta % 3600 / 60) + ' m left' : '');
+      txt = T('bal.moving', { ok: B.ok, n: B.n });
+      right = pct.toFixed(0) + '%' + (eta ? ' \u00B7 ' + T('time.left', { t: (eta >= 3600 ? Math.floor(eta / 3600) + ' h ' : '') + Math.floor(eta % 3600 / 60) + ' m' }) : '');
     } else {
-      var ago = now - B.finished, agot = ago >= 3600 ? Math.floor(ago / 3600) + ' h ago' : Math.max(1, Math.floor(ago / 60)) + ' m ago';
-      txt = ({done: 'Finished', aborted: 'Stopped', error: 'Stopped with an error'}[B.state]) + ': ' + B.ok + ' of ' + B.n + ' titles, ' + fmt(B.done) + (B.skip ? ', ' + B.skip + ' skipped' : '');
+      var ago = now - B.finished, agot = ago >= 3600 ? T('time.h_ago', { n: Math.floor(ago / 3600) }) : T('time.m_ago', { n: Math.max(1, Math.floor(ago / 60)) });
+      txt = T({done: 'bal.finished', aborted: 'bal.stopped', error: 'bal.error'}[B.state], { ok: B.ok, n: B.n, size: fmt(B.done) }) + (B.skip ? ', ' + T('bal.skipped', { n: B.skip }) : '');
       right = agot;
     }
-    $b.append(el('dbx-hd' + ($('#dbx-attn').children().length ? '' : ' dbx-first')).append($('<span>').text('Balance')));
+    $b.append(el('dbx-hd' + ($('#dbx-attn').children().length ? '' : ' dbx-first')).append($('<span>').text(T('hd.balance'))));
     var $c = el('dbx-arr');
     $c.append(el('dbx-ut').append($('<span>').text(txt), $('<b>').text(right)));
     if (B.state === 'running') { $c.append(el('dbx-tr').css({height: '7px', 'margin-top': '6px'}).append($('<i>').addClass(lv).css('width', pct + '%'))); }
@@ -519,7 +529,7 @@ $(function () {
     var $p = $('#dbx-pools').empty();
     $.each(r.pools || [], function (i, x) {
       var n = x.devices || 1;
-      $p.append(el('dbx-hd').append($('<span>').text('Pool \u00B7 ' + n + (n === 1 ? ' device' : ' devices'))));
+      $p.append(el('dbx-hd').append($('<span>').text(T('hd.pool') + ' \u00B7 ' + T('hd.devices', { n: n }))));
       $p.append(row(x, { cls: 'dbx-gx dbx-gp dbx-f', warn: r.array.warn, crit: r.array.crit }));
     });
   }
@@ -527,7 +537,7 @@ $(function () {
   function renderUnassigned(r) {
     var $u = $('#dbx-ua').empty(), L = r.unassigned || [];
     if (!L.length) { return; }
-    $u.append(el('dbx-hd').append($('<span>').text('Unassigned \u00B7 ' + L.length + (L.length === 1 ? ' device' : ' devices'))));
+    $u.append(el('dbx-hd').append($('<span>').text(T('hd.unassigned') + ' \u00B7 ' + T('hd.devices', { n: L.length }))));
     $.each(L, function (i, x) {
       $u.append(row(x, { cls: 'dbx-gx dbx-u-' + (x.lv || 'mu') + (i === 0 ? ' dbx-f' : '') }).attr('title', x.name));
     });
@@ -535,14 +545,14 @@ $(function () {
 
   function renderSummary(r) {
     var $s = $('#dbx-summary');
-    if (!r || !r.ok) { $s.text('Unavailable'); return; }
-    var S = r.summary, t = S.devices + (S.devices === 1 ? ' device' : ' devices');
-    if (!r.started) { t += ' · array stopped'; }
-    else { t += ' · ' + fmt(S.used) + ' of ' + fmt(S.size, true) + ' used'; }
-    if (S.hottest !== null && S.hottest !== undefined) { t += ' · hottest ' + S.hottest + '°C'; }
-    if (r.ua_running) { t += ' · ' + r.ua_running + ' SMART test' + (r.ua_running === 1 ? '' : 's') + ' running'; }
-    if (S.clearing) { t += ' · ' + S.clearing.disks.map(function (d) { return d.charAt(0) + d.slice(1).toLowerCase().replace(/(\d+)$/, ' $1'); }).join(', ') + ' clearing ' + S.clearing.pct + '%'; }
-    if (r.pc_running) { t += ' · ' + r.pc_running + ' preclear' + (r.pc_running === 1 ? '' : 's') + ' running'; }
+    if (!r || !r.ok) { $s.text(T('sum.unavailable')); return; }
+    var S = r.summary, t = T('hd.devices', { n: S.devices });
+    if (!r.started) { t += ' · ' + T('sum.stopped'); }
+    else { t += ' · ' + T('sum.used_of', { used: fmt(S.used), size: fmt(S.size, true) }); }
+    if (S.hottest !== null && S.hottest !== undefined) { t += ' · ' + T('sum.hottest', { t: S.hottest }); }
+    if (r.ua_running) { t += ' · ' + T('sum.tests', { n: r.ua_running }); }
+    if (S.clearing) { t += ' · ' + T('sum.clearing', { disks: S.clearing.disks.map(function (d) { return d.charAt(0) + d.slice(1).toLowerCase().replace(/(\d+)$/, ' $1'); }).join(', '), p: S.clearing.pct }); }
+    if (r.pc_running) { t += ' · ' + T('sum.preclears', { n: r.pc_running }); }
     $s.text(t);
   }
 
@@ -551,7 +561,7 @@ $(function () {
     renderSummary(r);
     if (!r || !r.ok) {
       $('#dbx-attn').empty(); $('#dbx-pools').empty(); $('#dbx-bal').empty(); $('#dbx-ua').empty();
-      $('#dbx-array').empty().append(el('dbx-note').text(r && r.error === 'nodata' ? 'No disk information from Unraid yet' : 'Disk data unavailable'));
+      $('#dbx-array').empty().append(el('dbx-note').text(r && r.error === 'nodata' ? T('err.nodata') : T('err.unavailable')));
       return;
     }
     renderAttn(r.attention);
@@ -589,6 +599,11 @@ Markdown="false"
 ---
 <?PHP
 require_once '/usr/local/emhttp/plugins/diskbox/lib.php';
+// texts from the dictionary (lang/en.json, see i18n.php); $dbs_t escapes, $dbs_T is raw (texts with HTML)
+require_once '/usr/local/emhttp/plugins/diskbox/i18n.php';
+$dbs_lang = '/usr/local/emhttp/plugins/diskbox/lang';
+$dbs_T = mt_i18n_t($dbs_lang);
+$dbs_t = function ($k, $v = []) use ($dbs_T) { return htmlspecialchars($dbs_T($k, $v), ENT_QUOTES); };
 $dbx = db_cfg();
 $dbx_thr = db_thr(['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '']);
 $dbx_var = @parse_ini_file('/var/local/emhttp/var.ini');
@@ -630,130 +645,132 @@ if (!function_exists('dbx_n')) {
 <form id="dbx-form" class="uset" method="POST" action="/plugins/diskbox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=dbx_h($dbx_tok)?>">
 
-<h3>Utilization</h3>
+<h3><?=$dbs_t('set.h.util')?></h3>
 <dl>
-<dt>Warning utilization (%):</dt>
-<dd><input type="number" name="warn_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['warn']))?>" value="<?=dbx_h($dbx['warn_use'])?>"> amber below Needs attention; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['warn']))?>%)</dd>
+<dt><?=$dbs_t('set.warn_use')?></dt>
+<dd><input type="number" name="warn_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['warn']))?>" value="<?=dbx_h($dbx['warn_use'])?>"> <?=$dbs_t('set.warn_hint', ['v' => dbx_n($dbx_thr['warn'])])?></dd>
 
-<dt>Critical utilization (%):</dt>
-<dd><input type="number" name="crit_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['crit']))?>" value="<?=dbx_h($dbx['crit_use'])?>"> red; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['crit']))?>%)</dd>
+<dt><?=$dbs_t('set.crit_use')?></dt>
+<dd><input type="number" name="crit_use" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['crit']))?>" value="<?=dbx_h($dbx['crit_use'])?>"> <?=$dbs_t('set.crit_hint', ['v' => dbx_n($dbx_thr['crit'])])?></dd>
 </dl>
 
-<h3>Temperature</h3>
+<h3><?=$dbs_t('set.h.temp')?></h3>
 <dl>
-<dt>Hot temperature (&deg;C):</dt>
-<dd><input type="number" name="hot_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['hot']))?>" value="<?=dbx_h($dbx['hot_temp'])?>"> hard disks, amber; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['hot']))?>&deg;C)</dd>
+<dt><?=$dbs_t('set.hot_temp')?></dt>
+<dd><input type="number" name="hot_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['hot']))?>" value="<?=dbx_h($dbx['hot_temp'])?>"> <?=$dbs_t('set.hot_hint', ['v' => dbx_n($dbx_thr['hot'])])?></dd>
 
-<dt>Maximum temperature (&deg;C):</dt>
-<dd><input type="number" name="max_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['max']))?>" value="<?=dbx_h($dbx['max_temp'])?>"> hard disks, red; empty = Unraid's value (<?=dbx_h(dbx_n($dbx_thr['max']))?>&deg;C)</dd>
+<dt><?=$dbs_t('set.max_temp')?></dt>
+<dd><input type="number" name="max_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['max']))?>" value="<?=dbx_h($dbx['max_temp'])?>"> <?=$dbs_t('set.max_hint', ['v' => dbx_n($dbx_thr['max'])])?></dd>
 </dl>
 
-<h3>Health</h3>
+<h3><?=$dbs_t('set.h.health')?></h3>
 <dl>
-<dt>Read SMART health in the background:</dt>
+<dt><?=$dbs_t('set.smart')?></dt>
 <dd><input type="hidden" name="smart" value="0"><input type="checkbox" name="smart" value="1" <?=db_on($dbx['smart']) ? 'checked' : ''?>></dd>
 </dl>
 
 <?php $dbx_ack = db_ack(); if ($dbx_ack) { ?>
-<h3>Acknowledged SMART warnings</h3>
+<h3><?=$dbs_t('set.h.acked')?></h3>
 <dl>
 <?php foreach ($dbx_ack as $dbx_an => $dbx_a) { $dbx_bits = []; foreach (($dbx_a['raw'] ?? []) as $dbx_id => $dbx_rv) { if ((int)$dbx_rv > 0) { $dbx_bits[] = $dbx_id . ': ' . $dbx_rv; } } ?>
 <dt><?=dbx_h(strtoupper($dbx_an))?>:</dt>
-<dd>acknowledged <?=dbx_h(date('Y-m-d H:i', (int)($dbx_a['t'] ?? 0)))?><?=$dbx_bits ? ' (attribute ' . dbx_h(implode(', ', $dbx_bits)) . ')' : ''?> <input type="button" class="dbx-forget" data-disk="<?=dbx_h($dbx_an)?>" value="Forget"></dd>
+<dd><?=$dbs_t('set.acked_at', ['t' => date('Y-m-d H:i', (int)($dbx_a['t'] ?? 0))])?><?=$dbx_bits ? ' ' . $dbs_t('set.acked_attr', ['a' => implode(', ', $dbx_bits)]) : ''?> <input type="button" class="dbx-forget" data-disk="<?=dbx_h($dbx_an)?>" value="<?=$dbs_t('set.btn.forget')?>"></dd>
 <?php } ?>
 </dl>
 <?php } ?>
 
-<h3>Discord alerts</h3>
+<h3><?=$dbs_t('set.h.discord')?></h3>
 <dl>
-<dt>Webhook for the system channel:</dt>
-<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$dbx['dc_hook'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""> <span style="opacity:.6">the saved webhook is not sent to the page; type - to remove it</span></dd>
+<dt><?=$dbs_t('set.dc_hook')?></dt>
+<dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$dbx['dc_hook'] !== '' ? $dbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""> <span style="opacity:.6"><?=$dbs_t('set.hook_hint')?></span></dd>
 
-<dt>Ping on red alerts:</dt>
-<dd><input type="text" name="dc_ping" placeholder="your Discord user ID, role:ID, @here or @everyone" value="<?=dbx_h($dbx['dc_ping'])?>"> empty = no ping. Amber alerts and all-clear messages never ping</dd>
+<dt><?=$dbs_t('set.dc_ping')?></dt>
+<dd><input type="text" name="dc_ping" placeholder="<?=$dbs_t('set.ping_ph')?>" value="<?=dbx_h($dbx['dc_ping'])?>"> <?=$dbs_t('set.ping_hint')?></dd>
 
-<dt>Array protection, emulated or failed disk:</dt>
+<dt><?=$dbs_t('set.n_array')?></dt>
 <dd><input type="hidden" name="n_array" value="0"><input type="checkbox" name="n_array" value="1" <?=db_on($dbx['n_array']) ? 'checked' : ''?>></dd>
 
-<dt>Disk temperature (Hot and Maximum limits above):</dt>
+<dt><?=$dbs_t('set.n_temp')?></dt>
 <dd><input type="hidden" name="n_temp" value="0"><input type="checkbox" name="n_temp" value="1" <?=db_on($dbx['n_temp']) ? 'checked' : ''?>></dd>
 
-<dt>SMART problems (Pre-fail or Old age):</dt>
+<dt><?=$dbs_t('set.n_smart')?></dt>
 <dd><input type="hidden" name="n_smart" value="0"><input type="checkbox" name="n_smart" value="1" <?=db_on($dbx['n_smart']) ? 'checked' : ''?>></dd>
 
-<dt>Disk and pool fill level (warning, critical %):</dt>
+<dt><?=$dbs_t('set.n_fill')?></dt>
 <dd><input type="hidden" name="n_fill" value="0"><input type="checkbox" name="n_fill" value="1" <?=db_on($dbx['n_fill']) ? 'checked' : ''?>> <input type="number" name="n_fill_warn" min="1" max="100" class="narrow" value="<?=dbx_h($dbx['n_fill_warn'])?>"> <input type="number" name="n_fill_crit" min="1" max="100" class="narrow" value="<?=dbx_h($dbx['n_fill_crit'])?>"></dd>
 
-<dt>ZFS pool health:</dt>
+<dt><?=$dbs_t('set.n_pool')?></dt>
 <dd><input type="hidden" name="n_pool" value="0"><input type="checkbox" name="n_pool" value="1" <?=db_on($dbx['n_pool']) ? 'checked' : ''?>></dd>
 
-<dt>Parity check and rebuild (start, result):</dt>
+<dt><?=$dbs_t('set.n_parity')?></dt>
 <dd><input type="hidden" name="n_parity" value="0"><input type="checkbox" name="n_parity" value="1" <?=db_on($dbx['n_parity']) ? 'checked' : ''?>></dd>
 
-<dt>SMART self-test of an unassigned disk (passed, aborted, failed):</dt>
-<dd><input type="hidden" name="n_utest" value="0"><input type="checkbox" name="n_utest" value="1" <?=db_on($dbx['n_utest']) ? 'checked' : ''?>> one message when a test that was running is over</dd>
+<dt><?=$dbs_t('set.n_utest')?></dt>
+<dd><input type="hidden" name="n_utest" value="0"><input type="checkbox" name="n_utest" value="1" <?=db_on($dbx['n_utest']) ? 'checked' : ''?>> <?=$dbs_t('set.utest_hint')?></dd>
 
-<dt>Repeat a red alert every (hours):</dt>
-<dd><input type="number" name="n_remind" min="0" max="168" class="narrow" value="<?=dbx_h($dbx['n_remind'])?>"> 0 = never</dd>
+<dt><?=$dbs_t('set.n_remind')?></dt>
+<dd><input type="number" name="n_remind" min="0" max="168" class="narrow" value="<?=dbx_h($dbx['n_remind'])?>"> <?=$dbs_t('set.never_hint')?></dd>
 
-<dt>Weekly summary:</dt>
+<dt><?=$dbs_t('set.wk_on')?></dt>
 <dd><input type="hidden" name="wk_on" value="0"><input type="checkbox" name="wk_on" value="1" <?=db_on($dbx['wk_on']) ? 'checked' : ''?>>
- <select name="wk_day"><?php foreach ([1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'] as $dn => $dl) { echo '<option value="' . $dn . '"' . ((int)$dbx['wk_day'] === $dn ? ' selected' : '') . '>' . $dl . '</option>'; } ?></select>
- <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=dbx_h($dbx['wk_hour'])?>"> o'clock</dd>
+ <select name="wk_day"><?php foreach ([1 => $dbs_T('date.long.mon'), 2 => $dbs_T('date.long.tue'), 3 => $dbs_T('date.long.wed'), 4 => $dbs_T('date.long.thu'), 5 => $dbs_T('date.long.fri'), 6 => $dbs_T('date.long.sat'), 7 => $dbs_T('date.long.sun')] as $dn => $dl) { echo '<option value="' . $dn . '"' . ((int)$dbx['wk_day'] === $dn ? ' selected' : '') . '>' . dbx_h($dl) . '</option>'; } ?></select>
+ <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=dbx_h($dbx['wk_hour'])?>"> <?=$dbs_t('set.oclock')?></dd>
 
-<dt>Try it:</dt>
-<dd><input type="button" id="dbx-test" value="Send test message"> <input type="button" id="dbx-sample" value="Send sample alerts"> <input type="button" id="dbx-weekly" value="Send weekly summary now"> <span id="dbx-tmsg" style="margin-left:12px"></span></dd>
+<dt><?=$dbs_t('set.try')?></dt>
+<dd><input type="button" id="dbx-test" value="<?=$dbs_t('set.btn.test')?>"> <input type="button" id="dbx-sample" value="<?=$dbs_t('set.btn.sample')?>"> <input type="button" id="dbx-weekly" value="<?=$dbs_t('set.btn.weekly')?>"> <span id="dbx-tmsg" style="margin-left:12px"></span></dd>
 </dl>
 
 <dl class="uset-save">
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="dbx-save" value="Apply">
-  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <input type="button" id="dbx-save" value="<?=$dbs_t('set.btn.apply')?>">
+  <input type="button" value="<?=$dbs_t('set.btn.done')?>" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
   <span id="dbx-msg" style="margin-left:12px"></span>
 </dd>
 </dl>
 </form>
 <?php $mt_lang_post = '/plugins/diskbox/lang_save.php'; include '/usr/local/emhttp/plugins/diskbox/lang_block.php'; ?>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Diskbox replaces the Disk Viewer tile. The array is shown as one card with a parity row underneath: green when the array is protected, amber while a parity check or rebuild runs, red when there is no protection, a data disk is emulated, or a disk has failed. The Needs attention list collects disks that are too full, too hot, show SMART warnings or are in a bad state.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$dbs_t('set.help_tile')?></p>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Temperature limits for SSDs and NVMe devices are taken from Unraid's own display settings (Settings, Display Settings). SMART data is collected every 20 minutes with <code>smartctl</code>; disks that are spun down are skipped, so Diskbox never wakes a sleeping disk. Utilization and temperature colours use the values above, or Unraid's own when a field is empty.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$dbs_T('set.help_smart')?></p>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Discord alerts: Unraid checks every minute and posts to the webhook only when something changes: a problem appears, gets worse, or is over. A temperature alert needs three minutes in a row and an all-clear only after the disk has cooled two degrees; red alerts can repeat after the chosen number of hours. A SMART warning can be acknowledged with the button next to it on the dashboard tile; it then counts again only when it gets worse (the attribute's raw value rises). A failed health check cannot be acknowledged. SMART alerts name each attribute, say whether it is Pre-fail or Old age, and show its raw value, its previous value, and the value, worst and threshold. The buttons use the saved settings, so press Apply first. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$dbs_t('set.help_discord')?></p>
 
+<?=mt_i18n_js($dbs_lang, 'dbs')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('dbs', k, v); };
   var $tm = $('#dbx-tmsg');
   $.each({test: '#dbx-test', sample: '#dbx-sample', weekly: '#dbx-weekly'}, function (op, sel) {
     $(sel).on('click', function () {
       var $b = $(this).prop('disabled', true);
-      $tm.css('color', '').text('Sending...');
+      $tm.css('color', '').text(T('set.sending'));
       $.post('/plugins/diskbox/test.php', {op: op}, null, 'json')
-        .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text('Sent.'); } else { $tm.css('color', '#e5534b').text('Not sent: ' + ((r && r.error) ? r.error : 'unknown error')); } })
-        .fail(function (x) { var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; $tm.css('color', '#e5534b').text('Not sent: ' + e); })
+        .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text(T('set.sent')); } else { $tm.css('color', '#e5534b').text(T('set.not_sent', { e: (r && r.error) ? r.error : T('set.unknown_error') })); } })
+        .fail(function (x) { var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; $tm.css('color', '#e5534b').text(T('set.not_sent', { e: e })); })
         .always(function () { $b.prop('disabled', false); });
     });
   });
   $('.dbx-forget').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $.post('/plugins/diskbox/ack.php', { name: $b.data('disk'), op: 'forget' }, null, 'json').always(function () { $b.closest('dd').prev('dt').remove(); $b.closest('dd').text('forgotten: a warning on this disk counts again'); });
+    $.post('/plugins/diskbox/ack.php', { name: $b.data('disk'), op: 'forget' }, null, 'json').always(function () { $b.closest('dd').prev('dt').remove(); $b.closest('dd').text(T('set.forgotten')); });
   });
   var $msg = $('#dbx-msg');
   $('#dbx-save').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $msg.css('color', '').text('Saving...');
+    $msg.css('color', '').text(T('set.saving_s'));
     $.post('/plugins/diskbox/save.php', $('#dbx-form').serialize(), null, 'json')
       .done(function (r) {
         if (r && r.ok) {
-          $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.');
+          $msg.css('color', '#3fa24a').text(T('set.saved'));
         } else {
-          $msg.css('color', '#e5534b').text('Not saved: ' + ((r && r.error) ? r.error : 'unknown error'));
+          $msg.css('color', '#e5534b').text(T('set.not_saved', { e: (r && r.error) ? r.error : T('set.unknown_error') }));
         }
       })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
-        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+        $msg.css('color', '#e5534b').text(T('set.not_saved', { e: e }));
       })
       .always(function () { $b.prop('disabled', false); });
   });
@@ -1055,18 +1072,21 @@ function db_ua_entry($j) {
 <FILE Name="&plugdir;/api_fetch.php">
 <INLINE><![CDATA[<?php
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/i18n.php';
+$dbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile (lang/en.json)
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
 function db_out($d) { echo json_encode($d, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE); exit; }
 
 function db_zero_text($z) {
+    global $dbx_T;
     $pct = $z['size'] > 0 ? min(100, $z['pos'] / $z['size'] * 100) : 0;
-    if (!$z['running']) { return !empty($z['done']) ? 'zeroed · ready to remove' : 'zeroing stopped at ' . number_format($pct, 1) . '%'; }
-    $t = 'zeroing ' . number_format($pct, 1) . '%';
+    if (!$z['running']) { return !empty($z['done']) ? $dbx_T('sub.zeroed') : $dbx_T('sub.zero_stopped', ['p' => number_format($pct, 1)]); }
+    $t = $dbx_T('sub.zeroing', ['p' => number_format($pct, 1)]);
     if ($z['rate'] > 0) {
         $left = ($z['size'] - $z['pos']) / $z['rate']; $h = (int)floor($left / 3600); $mi = (int)ceil(($left - $h * 3600) / 60);
-        $t .= ' · ' . db_rate($z['rate']) . ' · ' . ($h ? $h . ' h ' . $mi . ' m' : max(1, $mi) . ' m') . ' left';
+        $t .= ' · ' . db_rate($z['rate']) . ' · ' . $dbx_T('time.left', ['t' => ($h ? $h . ' h ' . $mi . ' m' : max(1, $mi) . ' m')]);
     }
     return $t;
 }
@@ -1140,12 +1160,13 @@ function db_tlevel($temp, $ssd, $thr) {
 }
 
 function db_health($name, $label, $d, $smart, &$attn) {
+    global $dbx_T;
     $lvl = 'unk';
-    $title = 'SMART data not collected yet';
+    $title = $dbx_T('health.unknown');
     $s = $smart[$name] ?? null;
     if (is_array($s)) {
         $lvl = 'ok';
-        $title = 'SMART passed';
+        $title = $dbx_T('health.passed');
         $iss = db_smart_issues($name, $s, $GLOBALS['dbx_ack']);
         $w = [];
         foreach ($iss['attrs'] as $x) { $w[] = $x[0] . ' ' . $x[1] . ': ' . $x[3]; }
@@ -1153,25 +1174,26 @@ function db_health($name, $label, $d, $smart, &$attn) {
         $failedAttr = false;
         foreach ($iss['attrs'] as $x) { if ($x[7]) { $failedAttr = true; } }
         if ($iss['health']) {
-            $lvl = 'rd'; $title = 'SMART health check failed';
-            $attn[] = ['rd', $label, 'SMART health check failed', '', ''];
+            $lvl = 'rd'; $title = $dbx_T('health.failed');
+            $attn[] = ['rd', $label, $dbx_T('health.failed'), '', ''];
         } elseif ($w) {
             $lvl = $failedAttr ? 'rd' : 'a'; $title = implode(', ', $w);
-            $attn[] = [$lvl, $label, $failedAttr ? 'SMART attribute failing' : 'SMART warning', implode(' · ', array_slice($w, 0, 2)), $name];
+            $attn[] = [$lvl, $label, $failedAttr ? $dbx_T('attn.smart_failing') : $dbx_T('attn.smart_warning'), implode(' · ', array_slice($w, 0, 2)), $name];
         } elseif ($iss['hidden'] > 0) {
-            $title = 'SMART warning acknowledged';
+            $title = $dbx_T('health.acked');
         }
     }
     $errs = (int)($d['numErrors'] ?? 0);
     if ($errs > 0 && $lvl !== 'rd') {
         $lvl = 'a';
-        $title = $errs . ' read/write errors';
-        $attn[] = ['a', $label, $errs . ' read/write errors', ''];
+        $title = $dbx_T('health.errors', ['n' => $errs]);
+        $attn[] = ['a', $label, $dbx_T('health.errors', ['n' => $errs]), ''];
     }
     return [$lvl, $title];
 }
 
 function db_row($name, $d, $kind, $rates, $smart, $thr, $started, &$attn, $zero = []) {
+    global $dbx_T;
     $label = strtoupper($name);
     $dev = (string)($d['device'] ?? '');
     $spun = (($d['spundown'] ?? '0') === '1');
@@ -1190,36 +1212,36 @@ function db_row($name, $d, $kind, $rates, $smart, $thr, $started, &$attn, $zero 
         $pct = $fsUsed / $fsSize * 100;
         if ($thr['crit'] > 0 && $pct >= $thr['crit']) { $ulevel = 'rd'; }
         elseif ($thr['warn'] > 0 && $pct >= $thr['warn']) { $ulevel = 'a'; }
-        if ($ulevel !== '') { $attn[] = [$ulevel, $label, 'is ' . number_format($pct, 1) . '% full', ($fsSize - $fsUsed) > 0 ? '@FREE@' . ($fsSize - $fsUsed) : '']; }
+        if ($ulevel !== '') { $attn[] = [$ulevel, $label, $dbx_T('attn.full', ['p' => number_format($pct, 1)]), ($fsSize - $fsUsed) > 0 ? '@FREE@' . ($fsSize - $fsUsed) : '']; }
     }
 
     // activity text
-    $io = 'idle';
+    $io = $dbx_T('sub.idle');
     if (isset($rates[$dev])) {
         $r = $rates[$dev];
         $parts = [];
-        if ($r[0] >= 1024) { $parts[] = 'reading ' . db_rate($r[0]); }
-        if ($r[1] >= 1024) { $parts[] = 'writing ' . db_rate($r[1]); }
+        if ($r[0] >= 1024) { $parts[] = $dbx_T('sub.reading', ['r' => db_rate($r[0])]); }
+        if ($r[1] >= 1024) { $parts[] = $dbx_T('sub.writing', ['r' => db_rate($r[1])]); }
         if ($parts) { $io = implode(' · ', $parts); }
     }
     if ($state !== 'ok') {
-        $sub = ($kind === 'data') ? ($state === 'new' ? 'new disk' : ($state === 'invalid' ? 'invalid' : 'emulated')) : ($state === 'new' ? 'new disk' : ($state === 'missing' ? 'missing' : ($state === 'invalid' ? 'invalid' : 'disabled')));
+        $sub = ($kind === 'data') ? ($state === 'new' ? $dbx_T('sub.new') : ($state === 'invalid' ? $dbx_T('sub.invalid') : $dbx_T('sub.emulated'))) : ($state === 'new' ? $dbx_T('sub.new') : ($state === 'missing' ? $dbx_T('sub.missing') : ($state === 'invalid' ? $dbx_T('sub.invalid') : $dbx_T('sub.disabled'))));
     } elseif ($started && $kind === 'data' && ($d['fsStatus'] ?? 'Mounted') !== 'Mounted' && ($d['fsStatus'] ?? '') !== '') {
-        $sub = 'unmountable';
-        $attn[] = ['rd', $label, 'is unmountable', (string)$d['fsStatus']];
+        $sub = $dbx_T('sub.unmountable');
+        $attn[] = ['rd', $label, $dbx_T('attn.unmountable'), (string)$d['fsStatus']];
     } else {
-        $sub = $spun ? 'spun down' : $io;
-        if ($kind === 'parity') { $sub = 'valid · ' . $sub; }
+        $sub = $spun ? $dbx_T('sub.spun_down') : $io;
+        if ($kind === 'parity') { $sub = $dbx_T('sub.valid') . ' · ' . $sub; }
     }
     // a disk being zeroed for removal: its progress replaces the activity text and the usage bar
     $z = ($kind === 'data') ? ($zero[$name] ?? null) : null;
     if ($z) { $sub = db_zero_text($z); $used = $z['pos']; if ($z['size'] > 0) { $size = $z['size']; } /* the device, not the stand-in image mounted on it */ $pct = $z['size'] > 0 ? min(100, $z['pos'] / $z['size'] * 100) : 0; $ulevel = ''; }
     $tlevel = db_tlevel($temp, $ssd, $thr);
     if ($temp !== null && ($tlevel === 'rd' || $tlevel === 'a')) {
-        $attn[] = [$tlevel, $label, $tlevel === 'rd' ? 'is too hot' : 'is running hot', $temp . '°C'];
+        $attn[] = [$tlevel, $label, $tlevel === 'rd' ? $dbx_T('attn.too_hot') : $dbx_T('attn.hot'), $temp . '°C'];
     }
-    if ($emul) { $attn[] = ['rd', $label, 'is emulated', 'the disk is missing or disabled; its data is rebuilt from parity']; }
-    elseif ($state === 'invalid') { $attn[] = ['rd', $label, 'is invalid', (string)($d['status'] ?? '')]; }
+    if ($emul) { $attn[] = ['rd', $label, $dbx_T('attn.emulated'), $dbx_T('attn.emulated_why')]; }
+    elseif ($state === 'invalid') { $attn[] = ['rd', $label, $dbx_T('attn.invalid'), (string)($d['status'] ?? '')]; }
 
     list($hl, $ht) = db_health($name, $label, $d, $smart, $attn);
     $hsmart = [$hl, $ht]; // the SMART result alone, shown again while the disk is being built
@@ -1283,8 +1305,8 @@ foreach ($disks as $key => $d) {
         if (!db_assigned($d) || trim((string)($d['fsType'] ?? '')) === '') { continue; }
         $row = db_row($name, $d, 'pool', $rates, $smart, $thr, $started, $attn);
         if (strtolower($row['fs']) === 'zfs' && isset($zp[$name]) && $zp[$name] !== 'ONLINE') {
-            $row['health'] = ['rd', 'ZFS pool ' . $zp[$name]];
-            $attn[] = ['rd', $row['label'], 'pool is ' . strtolower($zp[$name]), ''];
+            $row['health'] = ['rd', $dbx_T('health.zfs', ['s' => $zp[$name]])];
+            $attn[] = ['rd', $row['label'], $dbx_T('attn.pool_state', ['s' => strtolower($zp[$name])]), ''];
         }
         $pools[] = $row;
         if ($row['temp'] !== null) { $hottest = ($hottest === null) ? $row['temp'] : max($hottest, $row['temp']); }
@@ -1294,8 +1316,8 @@ foreach ($disks as $key => $d) {
 // no parity disk at all: a placeholder row so the missing protection is visible
 if ($started && !$parityRows && $dataRows) {
     $parityRows[] = ['name' => 'parity', 'label' => 'PARITY', 'kind' => 'parity', 'state' => 'missing', 'emulated' => false, 'dot' => 'rd',
-        'sub' => 'missing · no disk assigned', 'fs' => '', 'size' => 0, 'used' => null, 'pct' => null, 'ulevel' => '',
-        'temp' => null, 'tlevel' => 'mu', 'health' => ['rd', 'no parity disk'], 'link' => '/Main'];
+        'sub' => $dbx_T('sub.no_parity'), 'fs' => '', 'size' => 0, 'used' => null, 'pct' => null, 'ulevel' => '',
+        'temp' => null, 'tlevel' => 'mu', 'health' => ['rd', $dbx_T('health.no_parity')], 'link' => '/Main'];
 }
 
 // resync (parity check / rebuild)
@@ -1316,27 +1338,27 @@ if ($started && (float)($var['mdResync'] ?? 0) > 0) {
 }
 
 // protection chip
-$chip = ['g', 'PARITY PROTECTED'];
+$chip = ['g', $dbx_T('chip.protected')];
 $arrState = 'ok';
-if (!$started) { $chip = ['mu', 'STOPPED']; $arrState = 'stopped'; }
+if (!$started) { $chip = ['mu', $dbx_T('chip.stopped')]; $arrState = 'stopped'; }
 else {
     $rebuilding = ($resync && $resync['action'] !== 'check' && $resync['action'] !== 'clear');
     // a parity disk being built (a new Parity 2, a replaced parity) is invalid until the sync ends: that is the sync, not an error
     $syncing = ($resync && $resync['action'] === 'sync');
     if ($syncing) { foreach ($parityRows as $pr) { if (in_array($pr['name'], $resync['targets'], true) && $pr['state'] !== 'ok') { $parityAssigned--; } } }
-    if ($parityAssigned === 0 || $parityOk === 0) { $chip = ['rd', 'NOT PROTECTED']; $arrState = 'unprotected'; }
-    elseif ($emulated > 0) { $chip = ['rd', 'DISK EMULATED']; $arrState = 'emulated'; }
-    elseif ($invalid > 0) { $chip = ['rd', 'DISK ERROR']; $arrState = 'invalid'; }
-    elseif ($parityOk < $parityAssigned) { $chip = ['a', 'PARITY DEGRADED']; $arrState = 'degraded'; }
+    if ($parityAssigned === 0 || $parityOk === 0) { $chip = ['rd', $dbx_T('chip.unprotected')]; $arrState = 'unprotected'; }
+    elseif ($emulated > 0) { $chip = ['rd', $dbx_T('chip.emulated')]; $arrState = 'emulated'; }
+    elseif ($invalid > 0) { $chip = ['rd', $dbx_T('chip.error')]; $arrState = 'invalid'; }
+    elseif ($parityOk < $parityAssigned) { $chip = ['a', $dbx_T('chip.degraded')]; $arrState = 'degraded'; }
     // clearing a newly added data disk leaves the parity valid and the array protected: no chip, no amber state;
     // its progress is on the disk's row and in the header summary
     if ($resync && $resync['action'] !== 'clear' && ($arrState === 'ok' || $arrState === 'degraded' || $rebuilding)) {
-        $lab = ['rebuild' => 'REBUILD', 'sync' => 'PARITY-SYNC', 'clear' => 'CLEARING'][$resync['action']] ?? 'PARITY CHECK';
+        $lab = ['rebuild' => $dbx_T('chip.rebuild'), 'sync' => $dbx_T('chip.sync'), 'clear' => $dbx_T('chip.clear')][$resync['action']] ?? $dbx_T('chip.check');
         $chip = [$syncing ? 'bl' : 'a', $lab . ' ' . round($resync['pct']) . '%'];
         $arrState = $resync['action'];
     }
-    if ($arrState === 'unprotected') { $attn[] = ['rd', 'Array is not protected', '', $parityAssigned === 0 ? 'no parity disk assigned' : 'the parity disk is missing or disabled']; }
-    elseif ($syncing && $parityOk === 0) { $attn[] = ['rd', 'Array is not protected', '', 'until the parity sync ends']; }
+    if ($arrState === 'unprotected') { $attn[] = ['rd', $dbx_T('attn.unprotected'), '', $parityAssigned === 0 ? $dbx_T('attn.no_parity') : $dbx_T('attn.parity_gone')]; }
+    elseif ($syncing && $parityOk === 0) { $attn[] = ['rd', $dbx_T('attn.unprotected'), '', $dbx_T('attn.until_sync')]; }
 }
 
 // rows while a check / parity sync / rebuild / clearing runs (item 68): the disk being built shows its progress in blue instead of a red
@@ -1347,7 +1369,7 @@ if ($resync) {
     $tail = ' · ' . db_rate($resync['speed']);
     if ($resync['left'] !== null) {
         $h = intdiv($resync['left'], 3600); $m = intdiv($resync['left'] % 3600, 60);
-        $tail .= ' · ' . ($h > 0 ? $h . ' h ' : '') . $m . ' m left';
+        $tail .= ' · ' . $dbx_T('time.left', ['t' => ($h > 0 ? $h . ' h ' : '') . $m . ' m']);
     }
     $built = [];
     foreach ([&$parityRows, &$dataRows] as &$rows) {
@@ -1355,17 +1377,17 @@ if ($resync) {
             $mine = in_array($r['name'], $tg, true);
             if ($resync['action'] === 'check') {
                 if ($r['kind'] === 'parity' && $r['state'] === 'ok' && (!$tg || $mine)) {
-                    $r['sub'] = 'checking' . $tail; $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
+                    $r['sub'] = $dbx_T('sub.checking') . $tail; $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
                 }
             } elseif ($mine && ($resync['action'] === 'sync' || $resync['action'] === 'rebuild')) {
-                $r['sub'] = ($r['kind'] === 'parity' ? 'building' : 'rebuilding') . $tail;
+                $r['sub'] = ($r['kind'] === 'parity' ? $dbx_T('sub.building') : $dbx_T('sub.rebuilding')) . $tail;
                 $r['build'] = 1; $r['dot'] = 'on'; $r['health'] = $r['hsmart'];
                 $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
                 $built[$r['label']] = $r['kind'];
             } elseif ($resync['action'] === 'clear' && $r['kind'] === 'data' && $r['state'] === 'new') {
                 // "clear" names no disk: Unraid zeroes the newly added data disk(s), outside parity (zeros do not change it)
-                $r['sub'] = 'clearing' . $tail;
-                $r['build'] = 1; $r['blab'] = 'cleared'; $r['dot'] = 'on';
+                $r['sub'] = $dbx_T('sub.clearing') . $tail;
+                $r['build'] = 1; $r['blab'] = $dbx_T('bar.cleared'); $r['dot'] = 'on';
                 $r['rpct'] = round($resync['pct'], 1); $r['rstill'] = $resync['speed'] <= 0;
                 $clearing[] = $r['label'];
             }
@@ -1375,10 +1397,10 @@ if ($resync) {
     unset($rows);
     // its 'is invalid' / 'is emulated' attention line goes; a data disk being rebuilt keeps one amber line
     if ($built) {
-        $attn = array_values(array_filter($attn, function ($x) use ($built) {
-            return !(isset($built[$x[1]]) && in_array($x[2], ['is invalid', 'is emulated'], true));
+        $attn = array_values(array_filter($attn, function ($x) use ($built, $dbx_T) {
+            return !(isset($built[$x[1]]) && in_array($x[2], [$dbx_T('attn.invalid'), $dbx_T('attn.emulated')], true));
         }));
-        foreach ($built as $lab => $k) { if ($k === 'data') { $attn[] = ['a', $lab, 'is being rebuilt from parity', round($resync['pct']) . '%']; } }
+        foreach ($built as $lab => $k) { if ($k === 'data') { $attn[] = ['a', $lab, $dbx_T('attn.rebuilding'), round($resync['pct']) . '%']; } }
     }
 }
 
@@ -1399,37 +1421,37 @@ foreach (db_devs() as $k => $d) {
         if ($e['hours'] !== null) { $sub[] = number_format($e['hours'], 0, '.', ' ') . ' h'; }
         $T = $e['test']; $L = $e['last'];
         if (!empty($T['run'])) {
-            $lv = 'bl'; $uaRun++; $tp = max(0, min(100, 100 - (int)$T['left'])); $tl = $T['left'] . '% left';
-            $sub[] = 'SMART test running';
+            $lv = 'bl'; $uaRun++; $tp = max(0, min(100, 100 - (int)$T['left'])); $tl = $dbx_T('ua.pct_left', ['p' => $T['left']]);
+            $sub[] = $dbx_T('ua.test_running');
         } elseif ($L) {
             $ago = ($L['hours'] !== null && $e['hours'] !== null) ? max(0, $e['hours'] - $L['hours']) : null;
-            $when = $ago === null ? '' : ($ago < 48 ? ' · ' . $ago . ' h ago' : ' · ' . intdiv($ago, 24) . ' d ago');
-            if ($L['status'] === 'passed') { $lv = 'g'; $sub[] = $L['type'] . ' test passed' . $when; }
-            elseif ($L['status'] === 'aborted') { $lv = 'a'; $sub[] = $L['type'] . ' test aborted' . ($L['left'] !== null ? ' at ' . $L['left'] . '% left' : '') . $when; }
-            else { $lv = 'rd'; $sub[] = $L['type'] . ' test failed: ' . $L['text']; $attn[] = ['rd', $label . ' ' . $e['serial'], 'failed its SMART self-test', $L['text']]; }
+            $when = $ago === null ? '' : ' · ' . ($ago < 48 ? $dbx_T('ua.h_ago', ['n' => $ago]) : $dbx_T('ua.d_ago', ['n' => intdiv($ago, 24)]));
+            if ($L['status'] === 'passed') { $lv = 'g'; $sub[] = $dbx_T('ua.passed', ['t' => $L['type']]) . $when; }
+            elseif ($L['status'] === 'aborted') { $lv = 'a'; $sub[] = ($L['left'] !== null ? $dbx_T('ua.aborted_at', ['t' => $L['type'], 'p' => $L['left']]) : $dbx_T('ua.aborted', ['t' => $L['type']])) . $when; }
+            else { $lv = 'rd'; $sub[] = $dbx_T('ua.failed', ['t' => $L['type'], 'e' => $L['text']]); $attn[] = ['rd', $label . ' ' . $e['serial'], $dbx_T('attn.test_failed'), $L['text']]; }
         }
-        if ($spun || !empty($e['sleep'])) { $sub[] = 'asleep'; }
-    } else { $sub[] = $spun ? 'asleep' : 'reading SMART…'; }
+        if ($spun || !empty($e['sleep'])) { $sub[] = $dbx_T('ua.asleep'); }
+    } else { $sub[] = $spun ? $dbx_T('ua.asleep') : $dbx_T('ua.reading_smart'); }
     // a UD Preclear on this disk (item 63): it replaces the SMART test line while it runs, and its result stays until cleared
     $pc = db_preclear($d['device']);
     if ($pc) {
         $sub = array_slice($sub, 0, $e ? (($e['hours'] !== null && !$pc['run']) ? 2 : 1) : 0);   // while it runs: serial only, the step line is long
-        if ($pc['run'] && $pc['paused']) { $lv = 'a'; $sub[] = 'preclear ' . strtolower($pc['step']) . ' paused'; $tp = $pc['pct']; $tl = 'paused'; }
+        if ($pc['run'] && $pc['paused']) { $lv = 'a'; $sub[] = $dbx_T('pc.paused_step', ['s' => strtolower($pc['step'])]); $tp = $pc['pct']; $tl = $dbx_T('pc.paused'); }
         elseif ($pc['run'] && $pc['pct'] !== null) {
             $lv = 'bl'; $pcRun++; $tp = $pc['pct']; $tl = $pc['pct'] . '%';
             $el = db_hms($pc['elapsed']); $left = $pc['pct'] > 0 ? (int)round($el * (100 - $pc['pct']) / $pc['pct']) : 0;
             $sub[] = $pc['step'] . ($pc['of'] ? ' ' . $pc['n'] . '/' . $pc['of'] : '') . ' · ' . $pc['speed'] . ' MB/s' .
-                     ($left > 0 ? ' · ~' . ($left >= 3600 ? round($left / 3600, 1) . ' h' : max(1, (int)round($left / 60)) . ' min') . ' left' : '');
+                     ($left > 0 ? ' · ~' . $dbx_T('time.left', ['t' => ($left >= 3600 ? round($left / 3600, 1) . ' h' : max(1, (int)round($left / 60)) . ' min')]) : '');
         }
-        elseif ($pc['run']) { $lv = 'bl'; $pcRun++; $sub[] = 'preclear: ' . $pc['text']; }
-        elseif ($pc['fail']) { $lv = 'rd'; $sub[] = 'preclear failed: ' . $pc['text']; $attn[] = ['rd', $label . ($e ? ' ' . $e['serial'] : ''), 'preclear failed', $pc['text']]; }
-        elseif ($pc['done']) { if ($lv !== 'rd') { $lv = 'g'; } $sub[] = 'precleared · ' . date('M j H:i', $pc['t']); }
-        else { $lv = 'a'; $sub[] = 'preclear stopped: ' . $pc['text']; }
+        elseif ($pc['run']) { $lv = 'bl'; $pcRun++; $sub[] = $dbx_T('pc.running', ['s' => $pc['text']]); }
+        elseif ($pc['fail']) { $lv = 'rd'; $sub[] = $dbx_T('pc.failed_s', ['s' => $pc['text']]); $attn[] = ['rd', $label . ($e ? ' ' . $e['serial'] : ''), $dbx_T('pc.failed'), $pc['text']]; }
+        elseif ($pc['done']) { if ($lv !== 'rd') { $lv = 'g'; } $sub[] = $dbx_T('pc.done') . ' · ' . date('M j H:i', $pc['t']); }
+        else { $lv = 'a'; $sub[] = $dbx_T('pc.stopped', ['s' => $pc['text']]); }
     }
     if ($hl === 'rd') { $lv = 'rd'; } elseif ($hl === 'a' && $lv !== 'rd') { $lv = 'a'; }
     $ua[] = ['name' => $id, 'label' => $label, 'kind' => 'ua', 'bus' => $usb ? 'USB' : 'SATA', 'sub' => implode(' · ', $sub),
              'size' => $e && $e['bytes'] > 0 ? $e['bytes'] : (float)($d['sectors'] ?? 0) * (float)($d['sector_size'] ?? 512),
-             'lv' => $lv, 'tpct' => $tp, 'tleft' => $tl, 'tlab' => $pc ? 'preclear' : 'test', 'temp' => $temp, 'tlevel' => db_tlevel($temp, ($d['rotational'] ?? '1') === '0', $thr),
+             'lv' => $lv, 'tpct' => $tp, 'tleft' => $tl, 'tlab' => $pc ? $dbx_T('bar.preclear') : $dbx_T('bar.test'), 'temp' => $temp, 'tlevel' => db_tlevel($temp, ($d['rotational'] ?? '1') === '0', $thr),
              'health' => [$hl, $ht], 'dot' => $spun ? 'off' : 'on', 'link' => '/Main'];
 }
 
@@ -1445,7 +1467,7 @@ $bsf = '/tmp/diskbox_balance_status.json';
 $bs = is_file($bsf) ? json_decode((string)@file_get_contents($bsf), true) : null;
 if (is_array($bs) && !empty($bs['state'])) {
     $bst = (string)$bs['state']; $bfin = (int)($bs['finished'] ?? 0); $bmsg = (string)($bs['msg'] ?? '');
-    if ($bst === 'running' && time() - (int)@filemtime($bsf) > 180) { $bst = 'error'; $bmsg = 'the move stopped unexpectedly'; $bfin = (int)@filemtime($bsf); }
+    if ($bst === 'running' && time() - (int)@filemtime($bsf) > 180) { $bst = 'error'; $bmsg = $dbx_T('bal.stopped_unexpectedly'); $bfin = (int)@filemtime($bsf); }
     if ($bst === 'running' || ($bfin > 0 && time() - $bfin < 86400 && in_array($bst, ['done', 'aborted', 'error'], true))) {
         $nd = 0; $ns = 0; $nf = 0; $nt = 0;
         foreach ((array)($bs['items'] ?? []) as $bi) { $nt++; if (($bi['state'] ?? '') === 'ok') { $nd++; } elseif (($bi['state'] ?? '') === 'skip') { $ns++; } elseif (($bi['state'] ?? '') === 'fail') { $nf++; } }
@@ -1455,8 +1477,8 @@ if (is_array($bs) && !empty($bs['state'])) {
 }
 
 $devices = count($parityRows) + count($dataRows) + count($pools);
-if (!empty($parityRows) && $parityRows[0]['state'] === 'missing' && $parityRows[0]['sub'] === 'missing · no disk assigned') { $devices--; }
-$arrDevices = count($dataRows) + count(array_filter($parityRows, function ($r) { return $r['sub'] !== 'missing · no disk assigned'; }));
+if (!empty($parityRows) && $parityRows[0]['state'] === 'missing' && $parityRows[0]['sub'] === $dbx_T('sub.no_parity')) { $devices--; }
+$arrDevices = count($dataRows) + count(array_filter($parityRows, function ($r) { return $r['sub'] !== $GLOBALS['dbx_T']('sub.no_parity'); }));
 
 db_out([
     'ok' => true, 'started' => $started, 'ts' => time(),
@@ -1669,6 +1691,8 @@ if ($pch) { @file_put_contents($pf . '.tmp', json_encode($pcs)); @rename($pf . '
 <INLINE><![CDATA[<?php
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/i18n.php';
+$dbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the settings page (lang/en.json)
 
 function db_out($ok, $extra = []) {
     echo json_encode(array_merge(['ok' => $ok], $extra), JSON_UNESCAPED_UNICODE);
@@ -1696,14 +1720,14 @@ $file = $dir . '/settings.cfg';
 function db_num($v, $min, $max, $name) {
     $v = trim((string)$v);
     if ($v === '') { return ''; }
-    if (!is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $name . ' must be between ' . $min . ' and ' . $max]); }
+    if (!is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $GLOBALS['dbx_T']('save.err_range', ['name' => $name, 'min' => $min, 'max' => $max])]); }
     return (string)(int)$v;
 }
 
 function db_bool($v) { return in_array(strtolower(trim((string)$v)), ['1', 'yes', 'true', 'on'], true) ? '1' : '0'; }
 function db_req($v, $min, $max, $name) {
     $v = trim((string)$v);
-    if ($v === '' || !is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $name . ' must be a number between ' . $min . ' and ' . $max]); }
+    if ($v === '' || !is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $GLOBALS['dbx_T']('save.err_number', ['name' => $name, 'min' => $min, 'max' => $max])]); }
     return (string)(int)$v;
 }
 $hook = trim((string)($_POST['dc_hook'] ?? ''));
@@ -1711,13 +1735,13 @@ $hook = trim((string)($_POST['dc_hook'] ?? ''));
 if ($hook === '') { $oldc = is_file($file) ? @parse_ini_file($file, false, INI_SCANNER_RAW) : []; $hook = is_array($oldc) ? (string)($oldc['dc_hook'] ?? '') : ''; }
 elseif ($hook === '-') { $hook = ''; }
 if ($hook !== '' && !preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $hook)) {
-    db_out(false, ['error' => 'the webhook is not a valid Discord webhook URL']);
+    db_out(false, ['error' => $dbx_T('save.err_hook')]);
 }
 $ping = trim((string)($_POST['dc_ping'] ?? ''));
-if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { db_out(false, ['error' => 'the ping must be a Discord user ID, role:<role ID>, @here or @everyone']); }
+if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { db_out(false, ['error' => $dbx_T('save.err_ping')]); }
 $fw = db_req($_POST['n_fill_warn'] ?? '85', 1, 100, 'Fill warning');
 $fc = db_req($_POST['n_fill_crit'] ?? '95', 1, 100, 'Fill critical');
-if ((int)$fw > (int)$fc) { db_out(false, ['error' => 'the fill warning cannot be higher than the critical value']); }
+if ((int)$fw > (int)$fc) { db_out(false, ['error' => $dbx_T('save.err_fill')]); }
 
 $new = [
     'warn_use' => db_num($_POST['warn_use'] ?? '', 0, 100, 'Warning utilization'),
@@ -1739,7 +1763,7 @@ foreach ($new as $k => $v) { $text .= $k . '="' . str_replace('"', '', (string)$
 
 if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
 $tmp = $file . '.tmp';
-if (@file_put_contents($tmp, $text) === false) { db_out(false, ['error' => 'could not write the settings file']); }
+if (@file_put_contents($tmp, $text) === false) { db_out(false, ['error' => $dbx_T('save.err_write')]); }
 if (!@rename($tmp, $file)) { @file_put_contents($file, $text); @unlink($tmp); }
 @chmod($file, 0600);
 @unlink('/tmp/diskbox_zpool.json');
@@ -2340,6 +2364,8 @@ dbn_write(DBN_STATE, $st);
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/discord.php';
 require_once __DIR__ . '/alerts.php';
+require_once __DIR__ . '/i18n.php';
+$dbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the settings page (lang/en.json)
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
@@ -2357,13 +2383,13 @@ if ($sent !== '') {
 
 $cfg = db_cfg();
 $hook = (string)$cfg['dc_hook'];
-if (!dbn_hook_ok($hook)) { dbt_out(false, ['error' => 'No valid Discord webhook is saved yet. Enter it, press Apply, then try again.']); }
+if (!dbn_hook_ok($hook)) { dbt_out(false, ['error' => $dbx_T('test.no_hook')]); }
 $lang = dbn_lang($cfg);
 $op = (string)($_POST['op'] ?? 'test');
 
 if ($op === 'weekly') {
     $e = dbn_weekly_now($cfg);
-    if ($e === null) { dbt_out(false, ['error' => 'No disk data available right now.']); }
+    if ($e === null) { dbt_out(false, ['error' => $dbx_T('test.no_data')]); }
     $r = dbn_post($hook, [$e]);
     dbt_out($r[0] === 'ok', $r[0] === 'ok' ? [] : ['error' => $r[1]]);
 }
@@ -2505,13 +2531,18 @@ function mt_lang_cfg() {
     $c = ['ui' => 'auto', 'discord' => ''];
     $f = is_file(MT_LANG_FILE) ? @parse_ini_file(MT_LANG_FILE) : false;
     if (is_array($f)) {
-        if (in_array($f['ui'] ?? '', ['auto', 'en'], true)) { $c['ui'] = $f['ui']; }
+        if (($f['ui'] ?? '') === 'auto' || in_array($f['ui'] ?? '', mt_lang_have('ui'), true)) { $c['ui'] = $f['ui']; }
         if (in_array($f['discord'] ?? '', ['auto', 'en', 'hu'], true)) { $c['discord'] = $f['discord']; }
     }
     if ($c['discord'] === '') { $c['discord'] = mt_lang_legacy(); }
     return $c;
 }
 
+// The language the pages and tiles ask for (the dictionaries of i18n.php fall back to English per text)
+function mt_lang_ui_want() {
+    $c = mt_lang_cfg();
+    return $c['ui'] === 'auto' ? mt_lang_code(mt_lang_unraid()) : $c['ui'];
+}
 // The language the pages and tiles use, and the one Discord messages use (always one that exists)
 function mt_lang_ui() {
     $c = mt_lang_cfg();
@@ -2527,7 +2558,7 @@ function mt_lang_discord() {
 }
 
 function mt_lang_save($ui, $discord) {
-    if (!in_array($ui, ['auto', 'en'], true) || !in_array($discord, ['auto', 'en', 'hu'], true)) { return false; }
+    if (($ui !== 'auto' && !in_array($ui, mt_lang_have('ui'), true)) || !in_array($discord, ['auto', 'en', 'hu'], true)) { return false; }
     @mkdir(dirname(MT_LANG_FILE), 0777, true);
     $tmp = MT_LANG_FILE . '.tmp';
     if (@file_put_contents($tmp, 'ui="' . $ui . "\"\ndiscord=\"" . $discord . "\"\n") === false) { return false; }
@@ -2617,7 +2648,7 @@ $(function () {
 </FILE>
 
 <!-- ========================================================= -->
-<!-- BALANCE PAGE -->
+<!-- DICTIONARIES -->
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/lang_save.php">
 <INLINE><![CDATA[<?php
@@ -2643,6 +2674,1588 @@ mt_out(true);
 </FILE>
 
 <!-- ========================================================= -->
+<!-- ENGLISH DICTIONARY (the source of translations) -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/i18n.php">
+<INLINE><![CDATA[<?php
+// Dictionaries of the pages and tiles. Each plugin keeps its texts in <plugdir>/lang/<code>.json:
+// en.json is the source (every key, with a note for the translator), <code>.json a translation of it.
+// The language is the shared setting of lang.php (Follow Unraid or a chosen one); a missing file, key or
+// form falls back to English, so a partial translation never breaks a page.
+//   entry:        "key": {"text": "Hide", "note": "button ..."}
+//   plural entry: "key": {"one": "{n} torrent", "other": "{n} torrents", "note": "..."}
+//   placeholders: {name} in the text, filled from $vars / vars
+// PHP: $T = mt_i18n_t('/usr/local/emhttp/plugins/<id>/lang'); echo $T('key', ['n' => 3]);
+// JS:  echo mt_i18n_js($dir, 'mon'); then MTL.t('mon', 'key', {n: 3}) (pages wrap it as T('key'))
+if (!function_exists('mt_i18n')) {
+
+require_once __DIR__ . '/lang.php';
+
+function mt_i18n($dir) {
+    static $cache = [];
+    if (isset($cache[$dir])) { return $cache[$dir]; }
+    $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+    $en = $read($dir . '/en.json');
+    $code = function_exists('mt_lang_ui_want') ? mt_lang_ui_want() : mt_lang_ui();   // an older lang.php of another plugin may have been loaded first
+    $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : [];
+    $out = [];
+    foreach ($en as $k => $v) {
+        if ($k === '' || $k[0] === '_' || !is_array($v)) { continue; }
+        $e = [];
+        foreach (['text', 'one', 'other'] as $f) {
+            if (!isset($v[$f])) { continue; }
+            $t = $tr[$k][$f] ?? null;
+            $e[$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$v[$f];
+        }
+        $out[$k] = $e;
+    }
+    return $cache[$dir] = $out;
+}
+
+function mt_i18n_fmt($e, $vars) {
+    if ($e === null) { return null; }
+    if (isset($e['other'])) { $n = (float)($vars['n'] ?? 0); $s = (abs($n) == 1 && isset($e['one'])) ? $e['one'] : $e['other']; }
+    else { $s = $e['text'] ?? ''; }
+    return preg_replace_callback('/\{([a-z0-9_]+)\}/', function ($m) use ($vars) { return array_key_exists($m[1], $vars) ? (string)$vars[$m[1]] : $m[0]; }, $s);
+}
+
+// a translate function for one plugin's dictionary; an unknown key shows as itself (easy to spot)
+function mt_i18n_t($dir) {
+    $tab = mt_i18n($dir);
+    return function ($key, $vars = []) use ($tab) { $s = mt_i18n_fmt($tab[$key] ?? null, (array)$vars); return $s === null ? $key : $s; };
+}
+
+// the same dictionary for the page's JavaScript: MTL.t(name, key, vars)
+function mt_i18n_js($dir, $name) {
+    return '<script>window.MTL=window.MTL||{d:{},t:function(n,k,v){var e=(this.d[n]||{})[k],s;if(!e){return k;}v=v||{};'
+        . 'if(e.other!==undefined){var c=Math.abs(+v.n||0);s=(c===1&&e.one!==undefined)?e.one:e.other;}else{s=e.text||"";}'
+        . 'return s.replace(/\{([a-z0-9_]+)\}/g,function(a,b){return v.hasOwnProperty(b)?String(v[b]):a;});}};'
+        . 'MTL.d[' . json_encode((string)$name) . ']=' . json_encode(mt_i18n($dir), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+}
+
+}
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- BALANCE PAGE -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/lang/en.json">
+<INLINE><![CDATA[{
+ "_meta": {
+  "plugin": "Diskbox",
+  "language": "English",
+  "about": "Texts of the Diskbox dashboard tile (the array, parity, pools and unassigned disks with usage, temperature and SMART health), its settings page and the Diskbox Balance page (moves whole titles between array disks, empties or removes disks). A 'title' is one movie or season: its download folder with the hardlinked files in the media library. The Discord messages and the technical run log are not here. Product and Unraid names (Diskbox, Unraid, Main, Shares, New Config, Mover, SMART, Pre-fail, Old age, ZFS, XFS) follow Unraid's own translation or stay as they are."
+ },
+ "sub.zeroed": {
+  "text": "zeroed · ready to remove",
+  "note": "grey line under a data disk that was cleared with zeros for removal (Diskbox Balance, Remove disks) and can now be taken out."
+ },
+ "sub.zero_stopped": {
+  "text": "zeroing stopped at {p}%",
+  "note": "grey line under a disk whose zeroing stopped before the end."
+ },
+ "sub.zeroing": {
+  "text": "zeroing {p}%",
+  "note": "grey line under a disk being cleared with zeros for removal, followed by speed and time left."
+ },
+ "time.left": {
+  "text": "{t} left",
+  "note": "time left of a long disk job, {t} like \"1 h 33 m\". Short."
+ },
+ "health.unknown": {
+  "text": "SMART data not collected yet",
+  "note": "tooltip of the health icon (grey circle) before the first SMART reading."
+ },
+ "health.passed": {
+  "text": "SMART passed",
+  "note": "tooltip of the green check mark at the end of a disk row."
+ },
+ "health.failed": {
+  "text": "SMART health check failed",
+  "note": "tooltip of the red health icon, and a Needs attention line after the disk name."
+ },
+ "attn.smart_failing": {
+  "text": "SMART attribute failing",
+  "note": "Needs attention line after the disk name: a SMART attribute is below its failure threshold."
+ },
+ "attn.smart_warning": {
+  "text": "SMART warning",
+  "note": "Needs attention line after the disk name: a SMART attribute that warns (reallocated sectors and similar)."
+ },
+ "health.acked": {
+  "text": "SMART warning acknowledged",
+  "note": "tooltip of the health icon: the warning was acknowledged and is shown again only if it gets worse."
+ },
+ "health.errors": {
+  "one": "{n} read/write error",
+  "other": "{n} read/write errors",
+  "note": "tooltip of the health icon and a Needs attention line: Unraid counted read or write errors on the disk."
+ },
+ "attn.full": {
+  "text": "is {p}% full",
+  "note": "Needs attention line after the disk name, like \"DISK1 is 91.2% full\"."
+ },
+ "sub.idle": {
+  "text": "idle",
+  "note": "grey line under a disk: no reads or writes now."
+ },
+ "sub.reading": {
+  "text": "reading {r}",
+  "note": "grey line under a disk: read speed now, like \"reading 657 KB/s\"."
+ },
+ "sub.writing": {
+  "text": "writing {r}",
+  "note": "grey line under a disk: write speed now."
+ },
+ "sub.new": {
+  "text": "new disk",
+  "note": "grey line under a disk: a disk Unraid has just been given. Short."
+ },
+ "sub.invalid": {
+  "text": "invalid",
+  "note": "grey line under a disk: the disk is not valid in the array. Short."
+ },
+ "sub.emulated": {
+  "text": "emulated",
+  "note": "grey line under a disk: the disk is missing or disabled and its data is rebuilt from parity on the fly. Short."
+ },
+ "sub.missing": {
+  "text": "missing",
+  "note": "grey line under a disk: the disk is not there. Short."
+ },
+ "sub.disabled": {
+  "text": "disabled",
+  "note": "grey line under a disk: Unraid disabled the disk. Short."
+ },
+ "sub.unmountable": {
+  "text": "unmountable",
+  "note": "grey line under a data disk whose file system cannot be mounted."
+ },
+ "attn.unmountable": {
+  "text": "is unmountable",
+  "note": "Needs attention line after the disk name."
+ },
+ "sub.spun_down": {
+  "text": "spun down",
+  "note": "grey line under a disk that is spun down (asleep)."
+ },
+ "sub.valid": {
+  "text": "valid",
+  "note": "grey line under a parity disk: parity is valid. Short."
+ },
+ "attn.too_hot": {
+  "text": "is too hot",
+  "note": "Needs attention line after the disk name (red: above the critical temperature)."
+ },
+ "attn.hot": {
+  "text": "is running hot",
+  "note": "Needs attention line after the disk name (amber: above the warning temperature)."
+ },
+ "attn.emulated": {
+  "text": "is emulated",
+  "note": "Needs attention line after the disk name."
+ },
+ "attn.emulated_why": {
+  "text": "the disk is missing or disabled; its data is rebuilt from parity",
+  "note": "small text under the \"is emulated\" line."
+ },
+ "attn.invalid": {
+  "text": "is invalid",
+  "note": "Needs attention line after the disk name."
+ },
+ "health.zfs": {
+  "text": "ZFS pool {s}",
+  "note": "tooltip of the health icon of a ZFS pool that is not ONLINE ({s} is the ZFS state, like DEGRADED)."
+ },
+ "attn.pool_state": {
+  "text": "pool is {s}",
+  "note": "Needs attention line after the pool name ({s} is the ZFS state in lower case, like degraded)."
+ },
+ "sub.no_parity": {
+  "text": "missing · no disk assigned",
+  "note": "grey line of the placeholder PARITY row when the array has no parity disk at all."
+ },
+ "health.no_parity": {
+  "text": "no parity disk",
+  "note": "tooltip of the red health icon of the placeholder PARITY row."
+ },
+ "chip.protected": {
+  "text": "PARITY PROTECTED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): the array is protected by parity."
+ },
+ "chip.stopped": {
+  "text": "STOPPED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): the array is stopped."
+ },
+ "chip.unprotected": {
+  "text": "NOT PROTECTED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): no valid parity."
+ },
+ "chip.emulated": {
+  "text": "DISK EMULATED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a data disk is emulated from parity."
+ },
+ "chip.error": {
+  "text": "DISK ERROR",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a disk is invalid."
+ },
+ "chip.degraded": {
+  "text": "PARITY DEGRADED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): one of two parity disks is not valid."
+ },
+ "chip.rebuild": {
+  "text": "REBUILD",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a disk is being rebuilt; a percentage follows."
+ },
+ "chip.sync": {
+  "text": "PARITY-SYNC",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): parity is being built; a percentage follows."
+ },
+ "chip.clear": {
+  "text": "CLEARING",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a new disk is being cleared; a percentage follows."
+ },
+ "chip.check": {
+  "text": "PARITY CHECK",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a parity check runs; a percentage follows."
+ },
+ "attn.unprotected": {
+  "text": "Array is not protected",
+  "note": "Needs attention line (bold, red)."
+ },
+ "attn.no_parity": {
+  "text": "no parity disk assigned",
+  "note": "small text under \"Array is not protected\"."
+ },
+ "attn.parity_gone": {
+  "text": "the parity disk is missing or disabled",
+  "note": "small text under \"Array is not protected\"."
+ },
+ "attn.until_sync": {
+  "text": "until the parity sync ends",
+  "note": "small text under \"Array is not protected\" while a new parity disk is built."
+ },
+ "sub.checking": {
+  "text": "checking",
+  "note": "grey line under a parity disk during a parity check, followed by speed and time left."
+ },
+ "sub.building": {
+  "text": "building",
+  "note": "grey line under a parity disk being built (parity sync)."
+ },
+ "sub.rebuilding": {
+  "text": "rebuilding",
+  "note": "grey line under a data disk being rebuilt from parity."
+ },
+ "sub.clearing": {
+  "text": "clearing",
+  "note": "grey line under a new data disk Unraid is clearing, followed by speed and time left."
+ },
+ "bar.cleared": {
+  "text": "cleared",
+  "note": "label over the blue progress bar of a disk being cleared (how much is done)."
+ },
+ "attn.rebuilding": {
+  "text": "is being rebuilt from parity",
+  "note": "Needs attention line after the disk name while it is rebuilt."
+ },
+ "ua.pct_left": {
+  "text": "{p}% left",
+  "note": "over the progress bar of a running SMART self-test: what the disk reports as still to do. Short."
+ },
+ "ua.test_running": {
+  "text": "SMART test running",
+  "note": "grey line under an unassigned disk."
+ },
+ "ua.h_ago": {
+  "text": "{n} h ago",
+  "note": "how long ago the last SMART self-test ran, in power-on hours. Short."
+ },
+ "ua.d_ago": {
+  "text": "{n} d ago",
+  "note": "the same in days. Short."
+ },
+ "ua.passed": {
+  "text": "{t} test passed",
+  "note": "grey line under an unassigned disk: the last SMART self-test passed ({t} is its type as the disk says it, like Extended or Short)."
+ },
+ "ua.aborted": {
+  "text": "{t} test aborted",
+  "note": "grey line: the last SMART self-test was stopped."
+ },
+ "ua.aborted_at": {
+  "text": "{t} test aborted at {p}% left",
+  "note": "grey line: the last SMART self-test was stopped, with how much was left."
+ },
+ "ua.failed": {
+  "text": "{t} test failed: {e}",
+  "note": "grey line: the last SMART self-test failed, {e} is what the disk reports."
+ },
+ "attn.test_failed": {
+  "text": "failed its SMART self-test",
+  "note": "Needs attention line after the disk model and serial."
+ },
+ "ua.asleep": {
+  "text": "asleep",
+  "note": "grey line: the unassigned disk is spun down. Short."
+ },
+ "ua.reading_smart": {
+  "text": "reading SMART…",
+  "note": "grey line before the first SMART reading of an unassigned disk."
+ },
+ "pc.paused_step": {
+  "text": "preclear {s} paused",
+  "note": "grey line: a UD Preclear step is paused ({s} is the step name as the preclear script gives it, like zeroing)."
+ },
+ "pc.paused": {
+  "text": "paused",
+  "note": "label over the preclear progress bar while paused. Short."
+ },
+ "pc.running": {
+  "text": "preclear: {s}",
+  "note": "grey line while a preclear runs without a percentage ({s} is the preclear script's own text)."
+ },
+ "pc.failed_s": {
+  "text": "preclear failed: {s}",
+  "note": "grey line: the preclear failed."
+ },
+ "pc.failed": {
+  "text": "preclear failed",
+  "note": "Needs attention line after the disk model and serial."
+ },
+ "pc.done": {
+  "text": "precleared",
+  "note": "grey line: the preclear finished, followed by its date."
+ },
+ "pc.stopped": {
+  "text": "preclear stopped: {s}",
+  "note": "grey line: the preclear stopped before the end."
+ },
+ "bar.preclear": {
+  "text": "preclear",
+  "note": "label over the progress bar of a running preclear. Short."
+ },
+ "bar.test": {
+  "text": "test",
+  "note": "label over the progress bar of a running SMART self-test. Short."
+ },
+ "bal.stopped_unexpectedly": {
+  "text": "the move stopped unexpectedly",
+  "note": "red line on the Balance card of the tile when the background move died."
+ },
+ "tile.reading": {
+  "text": "Reading disks…",
+  "note": "grey line under the tile title before the first answer."
+ },
+ "tile.loading": {
+  "text": "Loading…",
+  "note": "grey placeholder in the tile body before the first answer."
+ },
+ "tile.open_main": {
+  "text": "Open Main",
+  "note": "tooltip of the home icon in the tile header (opens Unraid's Main page)."
+ },
+ "tile.settings": {
+  "text": "Diskbox settings",
+  "note": "tooltip of the gear icon in the tile header."
+ },
+ "bar.built": {
+  "text": "built",
+  "note": "label over the blue progress bar of a disk being built or rebuilt (how much is done). Short."
+ },
+ "bar.checked": {
+  "text": "checked",
+  "note": "label over the amber progress bar of a parity check (how much is checked). Short."
+ },
+ "attn.title": {
+  "text": "Needs attention",
+  "note": "title of the warning list at the top of the tile (upper case on screen), followed by the count."
+ },
+ "attn.free": {
+  "text": "{s} free",
+  "note": "small text under a \"is 91% full\" line: free space, like \"1.2 TB free\"."
+ },
+ "attn.ack": {
+  "text": "Acknowledge",
+  "note": "small button next to a SMART warning. Short."
+ },
+ "attn.ack_tip": {
+  "text": "Accept this warning; Diskbox will report it again only if it gets worse",
+  "note": "tooltip of the Acknowledge button."
+ },
+ "attn.ack_confirm": {
+  "text": "Acknowledge the SMART warning for {name}?\n\nIt stays on the disk, but Diskbox will warn again only when it gets worse.",
+  "note": "confirmation box of Acknowledge. Keep the two line breaks (\\n\\n)."
+ },
+ "hd.array": {
+  "text": "Array",
+  "note": "band title of the array part (upper case on screen)."
+ },
+ "hd.devices": {
+  "one": "{n} device",
+  "other": "{n} devices",
+  "note": "count after a band title (Array · 4 devices) and in the line under the tile title."
+ },
+ "card.array": {
+  "text": "ARRAY",
+  "note": "big title of the array card. Upper case."
+ },
+ "card.used_of": {
+  "text": "{used} used of {size}",
+  "note": "line over the array usage bar, like \"18.24 TB used of 32 TB\"."
+ },
+ "bal.moving": {
+  "one": "Moving {ok} of {n} title",
+  "other": "Moving {ok} of {n} titles",
+  "note": "Balance card on the tile while Diskbox Balance moves data ({n} titles in all, {ok} done)."
+ },
+ "time.h_ago": {
+  "text": "{n} h ago",
+  "note": "how long ago the Balance move ended. Short."
+ },
+ "time.m_ago": {
+  "text": "{n} m ago",
+  "note": "how long ago the Balance move ended. Short."
+ },
+ "bal.finished": {
+  "one": "Finished: {ok} of {n} title, {size}",
+  "other": "Finished: {ok} of {n} titles, {size}",
+  "note": "Balance card on the tile after the move ended ({size} moved, like 1.2 TB)."
+ },
+ "bal.stopped": {
+  "one": "Stopped: {ok} of {n} title, {size}",
+  "other": "Stopped: {ok} of {n} titles, {size}",
+  "note": "Balance card after the move was stopped by hand."
+ },
+ "bal.error": {
+  "one": "Stopped with an error: {ok} of {n} title, {size}",
+  "other": "Stopped with an error: {ok} of {n} titles, {size}",
+  "note": "Balance card after the move stopped because of an error (the error is shown under it)."
+ },
+ "bal.skipped": {
+  "text": "{n} skipped",
+  "note": "added after the Balance result: titles left out (changed or busy)."
+ },
+ "hd.balance": {
+  "text": "Balance",
+  "note": "band title of the Balance card on the tile (Diskbox Balance, the tool that moves data between disks). Upper case on screen."
+ },
+ "hd.pool": {
+  "text": "Pool",
+  "note": "band title of a pool (cache) part. Upper case on screen."
+ },
+ "hd.unassigned": {
+  "text": "Unassigned",
+  "note": "band title of the disks not in the array or a pool. Upper case on screen."
+ },
+ "sum.unavailable": {
+  "text": "Unavailable",
+  "note": "line under the tile title when the disk data cannot be read."
+ },
+ "sum.stopped": {
+  "text": "array stopped",
+  "note": "part of the line under the tile title."
+ },
+ "sum.used_of": {
+  "text": "{used} of {size} used",
+  "note": "part of the line under the tile title, like \"18.24 TB of 32 TB used\"."
+ },
+ "sum.hottest": {
+  "text": "hottest {t}°C",
+  "note": "part of the line under the tile title: the warmest disk."
+ },
+ "sum.tests": {
+  "one": "{n} SMART test running",
+  "other": "{n} SMART tests running",
+  "note": "part of the line under the tile title."
+ },
+ "sum.clearing": {
+  "text": "{disks} clearing {p}%",
+  "note": "part of the line under the tile title while Unraid clears a new disk ({disks} like \"Disk 2\")."
+ },
+ "sum.preclears": {
+  "one": "{n} preclear running",
+  "other": "{n} preclears running",
+  "note": "part of the line under the tile title."
+ },
+ "err.nodata": {
+  "text": "No disk information from Unraid yet",
+  "note": "message in the tile right after a reboot."
+ },
+ "err.unavailable": {
+  "text": "Disk data unavailable",
+  "note": "message in the tile when the data cannot be read."
+ },
+ "set.h.util": {
+  "text": "Utilization",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.temp": {
+  "text": "Temperature",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.health": {
+  "text": "Health",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.acked": {
+  "text": "Acknowledged SMART warnings",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.discord": {
+  "text": "Discord alerts",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.warn_use": {
+  "text": "Warning utilization (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.crit_use": {
+  "text": "Critical utilization (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.hot_temp": {
+  "text": "Hot temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.max_temp": {
+  "text": "Maximum temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.smart": {
+  "text": "Read SMART health in the background:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_hook": {
+  "text": "Webhook for the system channel:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_ping": {
+  "text": "Ping on red alerts:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_array": {
+  "text": "Array protection, emulated or failed disk:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_temp": {
+  "text": "Disk temperature (Hot and Maximum limits above):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_smart": {
+  "text": "SMART problems (Pre-fail or Old age):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_fill": {
+  "text": "Disk and pool fill level (warning, critical %):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_pool": {
+  "text": "ZFS pool health:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_parity": {
+  "text": "Parity check and rebuild (start, result):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_utest": {
+  "text": "SMART self-test of an unassigned disk (passed, aborted, failed):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_remind": {
+  "text": "Repeat a red alert every (hours):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_on": {
+  "text": "Weekly summary:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.try": {
+  "text": "Try it:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.warn_hint": {
+  "text": "amber below Needs attention; empty = Unraid's value ({v}%)",
+  "note": "text next to the warning utilization field."
+ },
+ "set.crit_hint": {
+  "text": "red; empty = Unraid's value ({v}%)",
+  "note": "text next to the critical utilization field."
+ },
+ "set.hot_hint": {
+  "text": "hard disks, amber; empty = Unraid's value ({v}°C)",
+  "note": "text next to the hot temperature field."
+ },
+ "set.max_hint": {
+  "text": "hard disks, red; empty = Unraid's value ({v}°C)",
+  "note": "text next to the maximum temperature field."
+ },
+ "set.acked_at": {
+  "text": "acknowledged {t}",
+  "note": "an acknowledged SMART warning: when ({t} is a date and time)."
+ },
+ "set.acked_attr": {
+  "text": "(attribute {a})",
+  "note": "after the date: which SMART attribute and its raw value, like \"(attribute 187: 2)\"."
+ },
+ "set.btn.forget": {
+  "text": "Forget",
+  "note": "button: forgets the acknowledgement, so the warning counts again. Short."
+ },
+ "set.saved_keep": {
+  "text": "(saved, leave empty to keep)",
+  "note": "grey text inside the empty webhook field: a webhook is saved; leaving the field empty keeps it."
+ },
+ "set.hook_hint": {
+  "text": "the saved webhook is not sent to the page; type - to remove it",
+  "note": "grey text next to the webhook field: the saved webhook is never shown; typing a single - removes it."
+ },
+ "set.ping_ph": {
+  "text": "your Discord user ID, role:ID, @here or @everyone",
+  "note": "grey example text inside the ping field. Keep role:ID, @here and @everyone as they are."
+ },
+ "set.ping_hint": {
+  "text": "empty = no ping. Amber alerts and all-clear messages never ping",
+  "note": "text next to the ping field."
+ },
+ "set.utest_hint": {
+  "text": "one message when a test that was running is over",
+  "note": "text next to the checkbox."
+ },
+ "set.never_hint": {
+  "text": "0 = never",
+  "note": "text next to the repeat hours field."
+ },
+ "date.long.mon": {
+  "text": "Monday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.tue": {
+  "text": "Tuesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.wed": {
+  "text": "Wednesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.thu": {
+  "text": "Thursday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.fri": {
+  "text": "Friday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sat": {
+  "text": "Saturday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sun": {
+  "text": "Sunday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "set.oclock": {
+  "text": "o'clock",
+  "note": "after the hour field of the weekly summary (0 to 23)."
+ },
+ "set.btn.test": {
+  "text": "Send test message",
+  "note": "button: sends a short test message to the webhook."
+ },
+ "set.btn.sample": {
+  "text": "Send sample alerts",
+  "note": "button: sends examples of the alert messages."
+ },
+ "set.btn.weekly": {
+  "text": "Send weekly summary now",
+  "note": "button: sends the weekly summary now."
+ },
+ "set.btn.apply": {
+  "text": "Apply",
+  "note": "button: saves the settings (Unraid's usual word). Short."
+ },
+ "set.btn.done": {
+  "text": "Done",
+  "note": "button: leaves the settings page (Unraid's usual word). Short."
+ },
+ "set.help_tile": {
+  "text": "Diskbox replaces the Disk Viewer tile. The array is shown as one card with a parity row underneath: green when the array is protected, amber while a parity check or rebuild runs, red when there is no protection, a data disk is emulated, or a disk has failed. The Needs attention list collects disks that are too full, too hot, show SMART warnings or are in a bad state.",
+  "note": "grey paragraph at the bottom of the settings page. \"Disk Viewer\" is the name of Unraid's own tile; \"Needs attention\" names the list on the tile."
+ },
+ "set.help_smart": {
+  "text": "Temperature limits for SSDs and NVMe devices are taken from Unraid's own display settings (Settings, Display Settings). SMART data is collected every 20 minutes with <code>smartctl</code>; disks that are spun down are skipped, so Diskbox never wakes a sleeping disk. Utilization and temperature colours use the values above, or Unraid's own when a field is empty.",
+  "note": "grey paragraph at the bottom of the settings page. Settings, Display Settings is Unraid's menu: use Unraid's own words. May contain simple HTML tags: keep them."
+ },
+ "set.help_discord": {
+  "text": "Discord alerts: Unraid checks every minute and posts to the webhook only when something changes: a problem appears, gets worse, or is over. A temperature alert needs three minutes in a row and an all-clear only after the disk has cooled two degrees; red alerts can repeat after the chosen number of hours. A SMART warning can be acknowledged with the button next to it on the dashboard tile; it then counts again only when it gets worse (the attribute's raw value rises). A failed health check cannot be acknowledged. SMART alerts name each attribute, say whether it is Pre-fail or Old age, and show its raw value, its previous value, and the value, worst and threshold. The buttons use the saved settings, so press Apply first. Create a webhook in Discord under channel settings, Integrations, Webhooks.",
+  "note": "grey paragraph at the bottom of the settings page. Pre-fail and Old age are SMART terms: keep them as smartctl shows them."
+ },
+ "set.sending": {
+  "text": "Sending...",
+  "note": "message next to the test buttons while sending."
+ },
+ "set.sent": {
+  "text": "Sent.",
+  "note": "message next to the test buttons after sending."
+ },
+ "set.not_sent": {
+  "text": "Not sent: {e}",
+  "note": "message when sending failed; {e} is the reason."
+ },
+ "set.unknown_error": {
+  "text": "unknown error",
+  "note": "reason when none is known."
+ },
+ "set.forgotten": {
+  "text": "forgotten: a warning on this disk counts again",
+  "note": "text after pressing Forget."
+ },
+ "set.saving_s": {
+  "text": "Saving...",
+  "note": "message next to Apply while saving."
+ },
+ "set.saved": {
+  "text": "Saved. The dashboard picks it up within a few seconds.",
+  "note": "message next to Apply after saving."
+ },
+ "set.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message next to Apply when saving failed; {e} is the reason."
+ },
+ "save.err_range": {
+  "text": "{name} must be between {min} and {max}",
+  "note": "error after \"Not saved:\" ({name} is the setting's field name, like warn_use)."
+ },
+ "save.err_number": {
+  "text": "{name} must be a number between {min} and {max}",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_hook": {
+  "text": "the webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_ping": {
+  "text": "the ping must be a Discord user ID, role:<role ID>, @here or @everyone",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_fill": {
+  "text": "the fill warning cannot be higher than the critical value",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_write": {
+  "text": "could not write the settings file",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "test.no_hook": {
+  "text": "No valid Discord webhook is saved yet. Enter it, press Apply, then try again.",
+  "note": "error after \"Not sent:\" of the test buttons."
+ },
+ "test.no_data": {
+  "text": "No disk data available right now.",
+  "note": "error after \"Not sent:\" of Send sample alerts."
+ },
+ "bal.intro": {
+  "text": "Whole titles (a downloads folder together with its hardlinked media files) are moved between the array disks, and the hardlinks are kept. Nothing moves until you press Move. The paths in <code>/mnt/user</code> do not change, so qBittorrent, Sonarr, Radarr and Jellyfin keep working.",
+  "note": "lead line at the top of the Diskbox Balance page. A \"title\" is one movie or season: its download folder and the hardlinked files in the media library. May contain simple HTML tags: keep them."
+ },
+ "bal.h.activity": {
+  "text": "Activity",
+  "note": "band title (upper case on screen)."
+ },
+ "bal.btn.stop": {
+  "text": "Stop after the current file set",
+  "note": "button while a move runs: stops after the title being copied now."
+ },
+ "bal.log_run": {
+  "text": "Log of this run",
+  "note": "foldable bar with the technical log of the current move."
+ },
+ "bal.h.setup": {
+  "text": "Setup",
+  "note": "band title (upper case on screen)."
+ },
+ "bal.f.pairs": {
+  "text": "Folders on the disk (one pair per line):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.mode": {
+  "text": "What to do:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.target": {
+  "text": "Target fill (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.strategy": {
+  "text": "Which titles first:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.disks": {
+  "text": "Disks included:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.drain": {
+  "text": "Disks to empty:",
+  "note": "label of the disk choice in the Empty disks mode."
+ },
+ "bal.f.remove": {
+  "text": "Disks to remove:",
+  "note": "label of the disk choice in the Remove disks mode."
+ },
+ "bal.f.pairs_hint": {
+  "text": "downloads folder = media folder with the hardlinks, relative to the disk root (for example the share <code>data</code>, folder <code>downloads/FILM</code>). Every folder directly inside the downloads folder is one title. The media part can be left out.",
+  "note": "hint under the folder pairs field. Keep \"downloads folder = media folder\" as the format of a line. May contain simple HTML tags: keep them."
+ },
+ "bal.mode.balance": {
+  "text": "Spread the data evenly",
+  "note": "choice of What to do."
+ },
+ "bal.mode.drain": {
+  "text": "Empty disks (move everything off them)",
+  "note": "choice of What to do."
+ },
+ "bal.mode.remove": {
+  "text": "Remove disks (empty, check, clear, take out)",
+  "note": "choice of What to do."
+ },
+ "bal.f.target_ph": {
+  "text": "average",
+  "note": "grey text in the empty target fill field."
+ },
+ "bal.f.target_hint": {
+  "text": "empty = equal fill on all included disks (the array average); a target below the average is not reachable and is raised to it",
+  "note": "hint next to the target fill field."
+ },
+ "bal.strat.old": {
+  "text": "Oldest first",
+  "note": "choice: which titles are moved first."
+ },
+ "bal.strat.big": {
+  "text": "Largest first",
+  "note": "choice: which titles are moved first."
+ },
+ "bal.f.drain_hint": {
+  "text": "Everything in the folders above is moved to the other included disks: the titles with their hardlinks, the media files without a download (also .nfo, pictures, subtitles) and the items in the Seedbox trash (.seedbox_trash). The plan lists what would still stay on the disk, so you can see whether it can be removed from the array.",
+  "note": "hint under the disks to empty. .seedbox_trash is a folder name: keep it."
+ },
+ "bal.btn.plan": {
+  "text": "Make a plan",
+  "note": "main button of the Setup: scans the disks and suggests the moves."
+ },
+ "rm.h2": {
+  "text": "Keep new files off them",
+  "note": "band title of step 2 of Remove disks (upper case on screen)."
+ },
+ "rm.s2": {
+  "text": "Change every share listed here in <a href=\"/Shares\">Shares</a>: put the disks in <b>Excluded disk(s)</b> (or take them out of Included disk(s)). Diskbox only checks; it changes no share.",
+  "note": "lead line of step 2. Shares, Excluded disk(s) and Included disk(s) are Unraid's words: use Unraid's own translation. Keep the link. May contain simple HTML tags: keep them."
+ },
+ "rm.btn.check_again": {
+  "text": "Check again",
+  "note": "button of step 2: looks at the shares again."
+ },
+ "rm.h3": {
+  "text": "Empty them",
+  "note": "band title of step 3 (upper case on screen)."
+ },
+ "rm.s3": {
+  "text": "Make a plan in the Setup above: the plan (below) moves everything in the folders of the Setup to the other disks, then press Move. What it does not watch (for example appdata) is listed under the plan; move it yourself.",
+  "note": "lead line of step 3."
+ },
+ "rm.h4": {
+  "text": "Check they are empty",
+  "note": "band title of step 4 (upper case on screen)."
+ },
+ "rm.s4": {
+  "text": "Lists every file still on the disks, hidden ones too (empty folders do not count). Clearing is possible only when nothing is left.",
+  "note": "lead line of step 4."
+ },
+ "rm.btn.check": {
+  "text": "Check the disks",
+  "note": "button of step 4."
+ },
+ "rm.h5": {
+  "text": "Clear them",
+  "note": "band title of step 5 (upper case on screen)."
+ },
+ "rm.s5": {
+  "text": "Each disk is unmounted and filled with zeros through parity (side by side), so parity stays valid without it: about 7 hours per TB. <b>This erases everything on the disk.</b> If the server stops meanwhile, Unraid shows the disk as Unmountable after the restart: do <b>not</b> format it, start the clearing again here.",
+  "note": "lead line of step 5: a strong warning. Unmountable is Unraid's word. May contain simple HTML tags: keep them."
+ },
+ "rm.h6": {
+  "text": "Take them out of the array",
+  "note": "band title of step 6 (upper case on screen)."
+ },
+ "bal.h.plan": {
+  "text": "Plan",
+  "note": "band title (upper case on screen)."
+ },
+ "bal.legend": {
+  "text": "blue = fill now · green = after the ticked moves (amber: it grows, red: nearly full) · striped grey = the file system's own space on a disk to empty (metadata, not data; it goes with the disk) · the orange mark is the target",
+  "note": "small legend under the disk bars of the plan."
+ },
+ "bal.selall": {
+  "text": "Select / deselect all",
+  "note": "tooltip of a checkbox that ticks every row."
+ },
+ "bal.all_titles": {
+  "text": "all titles",
+  "note": "label next to the tick-all checkbox."
+ },
+ "bal.tick_hint": {
+  "text": "the suggestion is ticked; change the ticks or the target disk as you like",
+  "note": "grey hint next to it."
+ },
+ "bal.skipped_bar": {
+  "text": "Titles that are left out",
+  "note": "foldable bar of the titles the plan cannot move (the reason is on each row)."
+ },
+ "bal.btn.go": {
+  "text": "Move the selected titles",
+  "note": "main button under the plan when nothing or the count is not known yet."
+ },
+ "bal.foot": {
+  "text": "Each title is copied, checked (sizes and hardlinks), and only then removed from the old disk. If a check fails the copy is removed and the old files stay. Moving runs in the background at idle disk priority; it needs the array started and no parity check, rebuild or mover running. Closing this page does not stop it.",
+  "note": "grey paragraph at the bottom of the page. \"mover\" is Unraid's Mover."
+ },
+ "dur.hm": {
+  "text": "{h} h {m} m",
+  "note": "a duration in hours and minutes. Short."
+ },
+ "dur.ms": {
+  "text": "{m} m {s} s",
+  "note": "a duration in minutes and seconds. Short."
+ },
+ "bal.no_disks": {
+  "text": "No array data disks found (is the array started?)",
+  "note": "text in the Disks included field when none is found."
+ },
+ "bal.used": {
+  "text": "{s} used",
+  "note": "small chip next to a disk in the disk choice, like \"8.48 TB used\"."
+ },
+ "bal.n_disks": {
+  "one": "{n} array disk",
+  "other": "{n} array disks",
+  "note": "grey text on the right of the Setup band."
+ },
+ "rm.can_write": {
+  "text": "can still write new files to {d}",
+  "note": "grey line under a share in step 2 ({d} disk names like DISK2)."
+ },
+ "rm.change_it": {
+  "text": "change it",
+  "note": "link on the right of a share in step 2 (opens the share in Unraid)."
+ },
+ "rm.no_share": {
+  "text": "No share writes to {d}",
+  "note": "row of step 2 when every share is right."
+ },
+ "rm.no_share_sub": {
+  "text": "every share excludes them or uses only a pool",
+  "note": "grey line under it."
+ },
+ "rm.done": {
+  "text": "done",
+  "note": "state of a finished step (right of its band and its rows). Short."
+ },
+ "rm.n_shares": {
+  "one": "{n} share to change",
+  "other": "{n} shares to change",
+  "note": "state on the right of the step 2 band."
+ },
+ "rm.not_mounted": {
+  "text": "not mounted",
+  "note": "grey line under a disk in step 3."
+ },
+ "rm.used_fs": {
+  "text": "{s} used (with the file system's own space)",
+  "note": "grey line under a disk in step 3."
+ },
+ "rm.emptied": {
+  "text": "emptied",
+  "note": "state of a disk after step 3. Short."
+ },
+ "rm.after": {
+  "text": "after step {n}",
+  "note": "state of a step that waits for an earlier one. Short."
+ },
+ "rm.moving": {
+  "text": "moving",
+  "note": "state of step 3 while the move runs. Short."
+ },
+ "rm.todo": {
+  "text": "to do",
+  "note": "state of a step that can be done now. Short."
+ },
+ "rm.empty": {
+  "text": "empty",
+  "note": "state of a disk in step 4: nothing is left on it. Short."
+ },
+ "rm.files": {
+  "one": "{n} file",
+  "other": "{n} files",
+  "note": "how many files are on a disk."
+ },
+ "rm.unreadable": {
+  "text": "could not be read",
+  "note": "step 4: the disk could not be listed."
+ },
+ "rm.files_left": {
+  "one": "{n} file left, {s}",
+  "other": "{n} files left, {s}",
+  "note": "step 4: what is still on the disk."
+ },
+ "rm.not_empty": {
+  "text": "not empty",
+  "note": "state of a disk in step 4. Short."
+ },
+ "rm.checked_at": {
+  "text": "checked {t}",
+  "note": "grey line under step 4: when the check ran."
+ },
+ "rm.left": {
+  "text": "{t} left",
+  "note": "time left of the clearing. Short."
+ },
+ "rm.zeros": {
+  "text": "writing zeros through parity",
+  "note": "grey line under a disk being cleared in step 5."
+ },
+ "rm.clearing": {
+  "text": "clearing",
+  "note": "state of a disk being cleared. Short."
+ },
+ "rm.clearing_d": {
+  "text": "Clearing {d}",
+  "note": "row title in Activity while a disk is cleared ({d} like DISK2)."
+ },
+ "rm.zeroed": {
+  "text": "{d} zeroed",
+  "note": "row of step 5 when a disk is cleared."
+ },
+ "rm.zeroed_sub": {
+  "text": "checked: the end of the disk reads zero",
+  "note": "grey line under it."
+ },
+ "rm.ready": {
+  "text": "ready to remove",
+  "note": "state of a cleared disk. Short."
+ },
+ "rm.stopped_at": {
+  "text": "{d}: clearing stopped at {p} %",
+  "note": "row of step 5 when the clearing stopped before the end."
+ },
+ "rm.see_log_again": {
+  "text": "see the log; start it again when the reason is fixed",
+  "note": "grey line under it."
+ },
+ "rm.not_started": {
+  "text": "{d}: the clearing did not start",
+  "note": "row of step 5."
+ },
+ "rm.see_log": {
+  "text": "see the log",
+  "note": "grey line under it."
+ },
+ "rm.type_confirm": {
+  "text": "Type {names} to confirm:",
+  "note": "step 5: the disk names must be typed in the field next to it before the Clear button works. {names} is shown in bold."
+ },
+ "rm.btn.clear": {
+  "text": "Clear {d}",
+  "note": "the button that starts clearing ({d} the disk names). Short."
+ },
+ "rm.log": {
+  "text": "Log of the clearing",
+  "note": "foldable bar with the log of the zeroing."
+ },
+ "rm.running": {
+  "text": "running",
+  "note": "state of step 5 while it runs. Short."
+ },
+ "rm.log_empty": {
+  "text": "empty",
+  "note": "shown in brackets when a log has no line yet."
+ },
+ "rm.out": {
+  "text": "{d} are out of the array",
+  "note": "row of step 6 when the disks are no longer in the array."
+ },
+ "rm.btn.finish": {
+  "text": "Finish",
+  "note": "button: ends the Remove disks job. Short."
+ },
+ "rm.nc1": {
+  "text": "Main &rarr; <b>Stop</b> the array.",
+  "note": "step 6, first instruction. Main and Stop are Unraid's words: use Unraid's own translation. May contain simple HTML tags: keep them."
+ },
+ "rm.nc2": {
+  "text": "Tools &rarr; <b>New Config</b> &rarr; Preserve current assignments: <b>All</b> &rarr; Apply.",
+  "note": "step 6, second instruction (Unraid's menu words). May contain simple HTML tags: keep them."
+ },
+ "rm.nc3": {
+  "text": "Main &rarr; set {d} to <b>no device</b>; leave the other slots as they are.",
+  "note": "step 6, third instruction ({d} disk names; \"no device\" is Unraid's choice in the slot list). May contain simple HTML tags: keep them."
+ },
+ "rm.nc4": {
+  "text": "Tick <b>Parity is already valid</b> &rarr; <b>Start</b>.",
+  "note": "step 6, fourth instruction (Unraid's words). May contain simple HTML tags: keep them."
+ },
+ "rm.nc5": {
+  "text": "Shut down and take out: {ids}.",
+  "note": "step 6, last instruction ({ids} disk names and serials)."
+ },
+ "rm.ready_turn": {
+  "text": "Ready: your turn",
+  "note": "row of step 6 when the steps in Unraid can be done."
+ },
+ "rm.your_turn": {
+  "text": "your turn",
+  "note": "state on the right of the step 6 band. Short."
+ },
+ "rm.aband": {
+  "text": "clearing {d}",
+  "note": "grey text on the right of the Activity band while disks are cleared."
+ },
+ "rm.checking": {
+  "text": "Checking...",
+  "note": "the Check the disks button while it runs."
+ },
+ "rm.confirm": {
+  "text": "Clear {d}?\n\nEach disk is unmounted and every byte on it is overwritten with zeros (through parity, so parity stays valid). This cannot be undone.",
+  "note": "confirmation box before clearing. Keep the two line breaks (\\n\\n)."
+ },
+ "bal.plus_fs": {
+  "text": "+ {s} file system",
+  "note": "small text: the file system's own space that stays on a disk to empty."
+ },
+ "bal.chip_empty": {
+  "text": "empty",
+  "note": "red chip next to a disk that is to be emptied. Short."
+ },
+ "bal.bars_tip": {
+  "text": "now {now}%, after {after}%",
+  "note": "tooltip of the two bars of a disk in the plan."
+ },
+ "bal.bars_tip_fs": {
+  "text": ", of which {s} is the file system's own space (metadata), not data",
+  "note": "added to that tooltip on a disk to empty (starts with a comma)."
+ },
+ "bal.n_titles": {
+  "one": "{n} title",
+  "other": "{n} titles",
+  "note": "count of titles (one movie or season each)."
+ },
+ "bal.n_media": {
+  "one": "{n} media-only item",
+  "other": "{n} media-only items",
+  "note": "count of folders that have only media files without a download."
+ },
+ "bal.ticked": {
+  "text": "{sel} of {n} ticked",
+  "note": "how many rows of a disk bar are ticked."
+ },
+ "bal.to": {
+  "text": "to {d}",
+  "note": "where the ticked titles go, like \"to DISK2 (12)\"."
+ },
+ "bal.btn.go_n": {
+  "one": "Move {n} title ({s})",
+  "other": "Move {n} titles ({s})",
+  "note": "main button under the plan with the count and size."
+ },
+ "bal.waits": {
+  "text": "Moving waits: {why}.",
+  "note": "amber text next to the Move button when the move cannot start now ({why} like \"a parity check or rebuild is running\")."
+ },
+ "bal.pb_empty": {
+  "text": "empty {d}",
+  "note": "grey text on the right of the Plan band in the Empty disks mode ({d} disk names)."
+ },
+ "bal.pb_spread": {
+  "text": "spread evenly",
+  "note": "grey text on the right of the Plan band."
+ },
+ "bal.pb_spread_to": {
+  "text": "spread evenly to {p}%",
+  "note": "grey text on the right of the Plan band with a target fill."
+ },
+ "bal.selall_disk": {
+  "text": "Select / deselect all from this disk",
+  "note": "tooltip of the checkbox in a disk bar of the plan."
+ },
+ "bal.from": {
+  "text": "From {d}",
+  "note": "title of a foldable bar of the plan: the titles that leave this disk."
+ },
+ "bal.also_on": {
+  "text": "the folder is also on {d}",
+  "note": "grey line under a media-only folder: the same folder exists on another disk."
+ },
+ "bal.no_other": {
+  "text": "on no other disk",
+  "note": "grey line under a media-only folder."
+ },
+ "bal.vid_nodl": {
+  "text": "video without a download",
+  "note": "amber chip: a video file whose download (and torrent) is gone."
+ },
+ "bal.more": {
+  "text": "Show {m} more ({n} left)",
+  "note": "button under a long list: shows the next rows."
+ },
+ "bal.lib_tip": {
+  "text": "Files in the media folders of this disk that have no hardlink (a hardlink cannot cross disks, so they have none anywhere). Mostly pictures and .nfo that Radarr, Sonarr or Jellyfin wrote next to a film whose video and download are on another disk. A video file here has lost its download: nothing seeds it.",
+  "note": "tooltip of the \"Library files without a hardlink\" bar."
+ },
+ "bal.lib_bar": {
+  "text": "Library files without a hardlink",
+  "note": "title of a foldable bar under a disk in the plan."
+ },
+ "bal.n_folders": {
+  "one": "{n} folder",
+  "other": "{n} folders",
+  "note": "count of folders."
+ },
+ "bal.n_also": {
+  "text": "{n} also on another disk",
+  "note": "count: folders that exist on another disk too."
+ },
+ "bal.n_only": {
+  "text": "{n} only here",
+  "note": "count: folders only on this disk."
+ },
+ "bal.n_vid": {
+  "one": "{n} video file without a download",
+  "other": "{n} video files without a download",
+  "note": "amber count in the bar."
+ },
+ "bal.nothing": {
+  "text": "Nothing to move: the disks are balanced or no title can be moved.",
+  "note": "message in the plan when there is nothing to move."
+ },
+ "bal.stays": {
+  "text": "Stays on the disk to empty (outside the folders above, or left out; move or delete it yourself)",
+  "note": "title of the bar that lists what would stay on a disk to empty."
+ },
+ "bal.nothing_stays": {
+  "text": "Nothing else stays on the disk to empty once the ticked titles are moved",
+  "note": "the same bar when nothing would stay."
+ },
+ "bal.scanning": {
+  "text": "Scanning...",
+  "note": "message next to Make a plan while the scan runs."
+ },
+ "bal.saving": {
+  "text": "Saving...",
+  "note": "message next to Make a plan while the setup is saved."
+ },
+ "bal.scanning_long": {
+  "text": "Scanning the disks, this can take a minute...",
+  "note": "message next to Make a plan when the scan starts."
+ },
+ "bal.confirm": {
+  "one": "Move {n} title, {s}, between disks?\n\nThe files are copied, checked and only then removed from the old disk. This can take hours. Pause or stop the torrents of these titles first if you can.",
+  "other": "Move {n} titles, {s}, between disks?\n\nThe files are copied, checked and only then removed from the old disk. This can take hours. Pause or stop the torrents of these titles first if you can.",
+  "note": "confirmation box before the move. Keep the two line breaks (\\n\\n)."
+ },
+ "run.moving": {
+  "text": "Moving",
+  "note": "state of the move in Activity (bold)."
+ },
+ "run.finished": {
+  "text": "Finished",
+  "note": "state of the move after it ended."
+ },
+ "run.stopped": {
+  "text": "Stopped",
+  "note": "state of the move after it was stopped."
+ },
+ "run.error": {
+  "text": "Stopped with an error",
+  "note": "state of the move after an error."
+ },
+ "run.line": {
+  "text": "{ok} / {n} titles · {done} of {total} ({p}%)",
+  "note": "progress line of the move in Activity."
+ },
+ "run.aband": {
+  "text": "moving now · {p}%",
+  "note": "grey text on the right of the Activity band during a move."
+ },
+ "run.of_titles": {
+  "one": "{ok} of {n} title",
+  "other": "{ok} of {n} titles",
+  "note": "after the state on the Activity band when the move ended."
+ },
+ "it.wait": {
+  "text": "waiting",
+  "note": "state of a title in the move list: not started yet. Short."
+ },
+ "it.run": {
+  "text": "moving",
+  "note": "state of a title in the move list: being copied now. Short."
+ },
+ "it.ok": {
+  "text": "done",
+  "note": "state of a title in the move list: moved. Short."
+ },
+ "it.skip": {
+  "text": "skipped",
+  "note": "state of a title in the move list: left out (the reason follows). Short."
+ },
+ "it.fail": {
+  "text": "FAILED",
+  "note": "state of a title in the move list: failed, in capitals on purpose (the reason follows). Short."
+ },
+ "run.more_waiting": {
+  "text": "{n} more waiting",
+  "note": "foldable bar of the titles still waiting."
+ },
+ "run.not_moved": {
+  "text": "{n} not moved",
+  "note": "foldable bar of the titles that were not moved (after a stop)."
+ },
+ "run.n_skipped": {
+  "text": "{n} skipped",
+  "note": "foldable bar of the skipped titles."
+ },
+ "run.n_done": {
+  "text": "{n} done",
+  "note": "foldable bar of the moved titles."
+ },
+ "run.lines": {
+  "one": "{n} line",
+  "other": "{n} lines",
+  "note": "count on the right of the log bar."
+ },
+ "hist.title": {
+  "text": "Recent moves",
+  "note": "foldable bar in Activity with the log of earlier moves."
+ },
+ "hist.runs": {
+  "one": "{n} run",
+  "other": "{n} runs",
+  "note": "count of earlier moves."
+ },
+ "hist.stopped": {
+  "text": "{n} stopped",
+  "note": "count of earlier moves that were stopped."
+ },
+ "hist.last": {
+  "text": "last on {d}",
+  "note": "date of the last move ({d} like 2026-10-14)."
+ },
+ "hist.none": {
+  "text": "Nothing moved yet.",
+  "note": "text in Activity before the first move."
+ },
+ "hist.idle": {
+  "text": "nothing running",
+  "note": "grey text on the right of the Activity band."
+ },
+ "hist.idle_last": {
+  "text": "nothing running · last move on {d}",
+  "note": "grey text on the right of the Activity band."
+ },
+ "why.not_started": {
+  "text": "the array is not started",
+  "note": "reason a plan or a move cannot start (after \"Cannot start:\" or \"Moving waits:\")."
+ },
+ "why.resync": {
+  "text": "a parity check or rebuild is running",
+  "note": "reason a move or the clearing cannot start now."
+ },
+ "why.mover": {
+  "text": "the mover is running",
+  "note": "reason a move cannot start now (Unraid's Mover)."
+ },
+ "skip.shares": {
+  "text": "shares files with another title",
+  "note": "why a title is left out of the plan (grey line under it)."
+ },
+ "skip.outside": {
+  "text": "has hardlinks outside the configured folders",
+  "note": "why a title is left out of the plan."
+ },
+ "skip.partial": {
+  "text": "looks unfinished (partial download)",
+  "note": "why a title is left out of the plan."
+ },
+ "skip.recent": {
+  "text": "changed in the last 2 hours",
+  "note": "why a title is left out of the plan."
+ },
+ "plan.two_disks": {
+  "text": "At least two array data disks must be included.",
+  "note": "error next to Make a plan."
+ },
+ "plan.no_pair": {
+  "text": "No valid folder pair is configured.",
+  "note": "error next to Make a plan."
+ },
+ "plan.target_raised": {
+  "text": "The array as a whole is {avg}% full, so {req}% is not reachable; balancing to {avg}% instead.",
+  "note": "amber note above the plan when the target fill is below the array average."
+ },
+ "plan.balanced": {
+  "text": "The disks are already balanced.",
+  "note": "note above the plan when there is nothing to move."
+ },
+ "plan.tick_drain": {
+  "text": "Tick at least one disk to empty.",
+  "note": "error next to Make a plan."
+ },
+ "plan.one_stays": {
+  "text": "At least one included disk must stay to receive the data.",
+  "note": "error next to Make a plan."
+ },
+ "run.died": {
+  "text": "The worker stopped unexpectedly.",
+  "note": "red text in Activity when the background move died."
+ },
+ "err.bad_line": {
+  "text": "Invalid folder line: {line} (use paths relative to the disk root, for example data/downloads/FILM = data/media/film)",
+  "note": "error next to Make a plan. Keep the example path as it is."
+ },
+ "err.no_folder": {
+  "text": "Enter at least one downloads folder.",
+  "note": "error on the Balance page."
+ },
+ "err.target": {
+  "text": "The target fill must be between 5 and 95 percent.",
+  "note": "error on the Balance page."
+ },
+ "err.write": {
+  "text": "could not write the settings",
+  "note": "error on the Balance page."
+ },
+ "err.running": {
+  "text": "A move is running.",
+  "note": "error on the Balance page."
+ },
+ "err.already": {
+  "text": "A move is already running.",
+  "note": "error on the Balance page."
+ },
+ "err.no_plan": {
+  "text": "Make a plan first.",
+  "note": "error on the Balance page."
+ },
+ "err.nothing": {
+  "text": "Nothing is selected.",
+  "note": "error on the Balance page."
+ },
+ "err.bad_sel": {
+  "text": "Invalid selection.",
+  "note": "error on the Balance page."
+ },
+ "err.tick_remove": {
+  "text": "Tick the disk(s) to remove.",
+  "note": "error on the Balance page."
+ },
+ "err.tick_drain": {
+  "text": "Tick the disk(s) to empty.",
+  "note": "error on the Balance page."
+ },
+ "err.cannot_plan": {
+  "text": "Cannot plan now: {why}.",
+  "note": "error next to Make a plan ({why} a reason like \"the array is not started\")."
+ },
+ "err.cannot_start": {
+  "text": "Cannot start: {why}.",
+  "note": "error next to Move ({why} a reason)."
+ },
+ "why.disk_not_ok": {
+  "text": "{d} is not OK ({s})",
+  "note": "reason the clearing cannot start ({s} is Unraid's disk status code)."
+ },
+ "why.no_parity": {
+  "text": "there is no parity disk",
+  "note": "reason the clearing cannot start."
+ },
+ "rm.err.choose": {
+  "text": "Choose Remove disks in the Setup and tick the disks first.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.move_check": {
+  "text": "A move is running; check when it has finished.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.step2": {
+  "text": "Step 2 first: a share can still write to the disks.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.step4": {
+  "text": "Step 4 first: check that the disks are empty.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.clearing": {
+  "text": "A clearing is running.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.cannot": {
+  "text": "Cannot clear: {why}.",
+  "note": "error of step 5 ({why} a reason)."
+ },
+ "rm.err.nodev": {
+  "text": "The parity-protected device of {d} was not found.",
+  "note": "error of step 5 (technical: the /dev/md device)."
+ },
+ "run.nothing": {
+  "text": "Nothing to move.",
+  "note": "red text in Activity when a started move has no title."
+ },
+ "run.gone": {
+  "text": "a file is gone from the source",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.exists": {
+  "text": "a file already exists on the target",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.changed": {
+  "text": "a file changed in the last 2 hours",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.links": {
+  "text": "the hardlinks changed since the scan",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.space": {
+  "text": "not enough free space on {d}",
+  "note": "why a title was skipped during the move."
+ },
+ "run.verify": {
+  "text": "verification failed: {p}",
+  "note": "why a title failed: the copy of a file differs ({p} the file)."
+ },
+ "run.verify_link": {
+  "text": "verification failed: the hardlink was not kept ({p})",
+  "note": "why a title failed."
+ },
+ "run.verify_count": {
+  "text": "verification failed: link count ({p})",
+  "note": "why a title failed."
+ },
+ "run.stopped_copy": {
+  "text": "stopped, the copy was removed",
+  "note": "state text of the title being copied when the move was stopped."
+ },
+ "run.rm_fail": {
+  "text": "could not remove the source files",
+  "note": "why a title failed after the copy."
+ },
+ "run.rm_fail_t": {
+  "text": "could not remove the source files of {t}",
+  "note": "red text in Activity: the move stopped ({t} the title)."
+ }
+}]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
 <!-- BALANCE LIBRARY -->
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/DiskboxBalance.page">
@@ -2653,6 +4266,11 @@ Icon="diskbox.png"
 Markdown="false"
 ---
 <?PHP
+// texts from the dictionary (lang/en.json, see i18n.php); $dbb_t escapes, $dbb_T is raw (texts with HTML)
+require_once '/usr/local/emhttp/plugins/diskbox/i18n.php';
+$dbb_lang = '/usr/local/emhttp/plugins/diskbox/lang';
+$dbb_T = mt_i18n_t($dbb_lang);
+$dbb_t = function ($k, $v = []) use ($dbb_T) { return htmlspecialchars($dbb_T($k, $v), ENT_QUOTES); };
 $dbb_var = @parse_ini_file('/var/local/emhttp/var.ini');
 $dbb_tok = is_array($dbb_var) ? (string)($dbb_var['csrf_token'] ?? '') : '';
 ?>
@@ -2748,78 +4366,80 @@ $dbb_tok = is_array($dbb_var) ? (string)($dbb_var['csrf_token'] ?? '') : '';
 }
 </style>
 <div id="dbb">
-<p class="dbb-sub">Whole titles (a downloads folder together with its hardlinked media files) are moved between the array disks, and the hardlinks are kept. Nothing moves until you press Move. The paths in <code>/mnt/user</code> do not change, so qBittorrent, Sonarr, Radarr and Jellyfin keep working.</p>
+<p class="dbb-sub"><?=$dbb_T('bal.intro')?></p>
 
-<div class="mt-band"><span>Activity</span><b id="dbb-aband"></b></div>
+<div class="mt-band"><span><?=$dbb_t('bal.h.activity')?></span><b id="dbb-aband"></b></div>
 <div class="mt-box" id="dbb-act">
 <div id="dbb-runbox" style="display:none">
-<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="Stop after the current file set" style="display:none"></div>
+<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop')?>" style="display:none"></div>
 <div id="dbb-rtab"></div>
-<div class="dbb-gbar s-grey" data-g="rlog"><span class="pm">+</span><span></span><span>Log of this run</span><span class="c"></span></div>
+<div class="dbb-gbar s-grey" data-g="rlog"><span class="pm">+</span><span></span><span><?=$dbb_t('bal.log_run')?></span><span class="c"></span></div>
 <div class="dbb-grp" data-g="rlog" hidden><div class="dbb-log" id="dbb-rlog"></div></div>
 </div>
 <div id="dbb-rmact"></div>
 <div id="dbb-hist"></div>
 </div>
 
-<div class="mt-band"><span>Setup</span><b id="dbb-sband"></b></div>
+<div class="mt-band"><span><?=$dbb_t('bal.h.setup')?></span><b id="dbb-sband"></b></div>
 <form id="dbb-form" onsubmit="return false;" class="mt-box">
 <dl>
-<dt>Folders on the disk (one pair per line):</dt>
+<dt><?=$dbb_t('bal.f.pairs')?></dt>
 <dd><textarea id="dbb-pairs" rows="2" placeholder="data/downloads/FILM = data/media/film"></textarea>
-<span class="dbb-hint">downloads folder = media folder with the hardlinks, relative to the disk root (for example the share <code>data</code>, folder <code>downloads/FILM</code>). Every folder directly inside the downloads folder is one title. The media part can be left out.</span></dd>
-<dt>What to do:</dt>
-<dd><select id="dbb-mode"><option value="balance">Spread the data evenly</option><option value="drain">Empty disks (move everything off them)</option><option value="remove">Remove disks (empty, check, clear, take out)</option></select></dd>
-<dt class="dbb-bal">Target fill (%):</dt>
-<dd class="dbb-bal"><input type="number" id="dbb-target" min="5" max="95" class="narrow" placeholder="average"> <span class="dbb-hint">empty = equal fill on all included disks (the array average); a target below the average is not reachable and is raised to it</span></dd>
-<dt class="dbb-bal">Which titles first:</dt>
-<dd class="dbb-bal"><select id="dbb-strategy"><option value="old">Oldest first</option><option value="big">Largest first</option></select></dd>
-<dt>Disks included:</dt>
+<span class="dbb-hint"><?=$dbb_T('bal.f.pairs_hint')?></span></dd>
+<dt><?=$dbb_t('bal.f.mode')?></dt>
+<dd><select id="dbb-mode"><option value="balance"><?=$dbb_t('bal.mode.balance')?></option><option value="drain"><?=$dbb_t('bal.mode.drain')?></option><option value="remove"><?=$dbb_t('bal.mode.remove')?></option></select></dd>
+<dt class="dbb-bal"><?=$dbb_t('bal.f.target')?></dt>
+<dd class="dbb-bal"><input type="number" id="dbb-target" min="5" max="95" class="narrow" placeholder="<?=$dbb_t('bal.f.target_ph')?>"> <span class="dbb-hint"><?=$dbb_t('bal.f.target_hint')?></span></dd>
+<dt class="dbb-bal"><?=$dbb_t('bal.f.strategy')?></dt>
+<dd class="dbb-bal"><select id="dbb-strategy"><option value="old"><?=$dbb_t('bal.strat.old')?></option><option value="big"><?=$dbb_t('bal.strat.big')?></option></select></dd>
+<dt><?=$dbb_t('bal.f.disks')?></dt>
 <dd id="dbb-disks"></dd>
-<dt class="dbb-drn" id="dbb-drnlbl">Disks to empty:</dt>
-<dd class="dbb-drn"><span id="dbb-drain"></span><span class="dbb-hint">Everything in the folders above is moved to the other included disks: the titles with their hardlinks, the media files without a download (also .nfo, pictures, subtitles) and the items in the Seedbox trash (.seedbox_trash). The plan lists what would still stay on the disk, so you can see whether it can be removed from the array.</span></dd>
+<dt class="dbb-drn" id="dbb-drnlbl"><?=$dbb_t('bal.f.drain')?></dt>
+<dd class="dbb-drn"><span id="dbb-drain"></span><span class="dbb-hint"><?=$dbb_t('bal.f.drain_hint')?></span></dd>
 <dt>&nbsp;</dt>
-<dd><input type="button" id="dbb-plan" value="Make a plan"> <span id="dbb-pmsg"></span></dd>
+<dd><input type="button" id="dbb-plan" value="<?=$dbb_t('bal.btn.plan')?>"> <span id="dbb-pmsg"></span></dd>
 </dl>
 </form>
 
 <div id="dbb-rm" style="display:none">
-<div class="mt-band"><span>2 &middot; Keep new files off them</span><b id="dbb-rb2"></b></div>
-<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px">Change every share listed here in <a href="/Shares">Shares</a>: put the disks in <b>Excluded disk(s)</b> (or take them out of Included disk(s)). Diskbox only checks; it changes no share.</span> <input type="button" id="dbb-rm2" class="dbb-ghost" value="Check again"></div><div id="dbb-rs2"></div></div>
-<div class="mt-band"><span>3 &middot; Empty them</span><b id="dbb-rb3"></b></div>
-<div class="mt-box"><div class="dbb-status"><span>Make a plan in the Setup above: the plan (below) moves everything in the folders of the Setup to the other disks, then press Move. What it does not watch (for example appdata) is listed under the plan; move it yourself.</span></div><div id="dbb-rs3"></div></div>
-<div class="mt-band"><span>4 &middot; Check they are empty</span><b id="dbb-rb4"></b></div>
-<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px">Lists every file still on the disks, hidden ones too (empty folders do not count). Clearing is possible only when nothing is left.</span> <input type="button" id="dbb-rm4" value="Check the disks"></div><div id="dbb-rs4"></div></div>
-<div class="mt-band"><span>5 &middot; Clear them</span><b id="dbb-rb5"></b></div>
-<div class="mt-box"><div class="dbb-status"><span>Each disk is unmounted and filled with zeros through parity (side by side), so parity stays valid without it: about 7 hours per TB. <b>This erases everything on the disk.</b> If the server stops meanwhile, Unraid shows the disk as Unmountable after the restart: do <b>not</b> format it, start the clearing again here.</span></div><div id="dbb-rs5"></div></div>
-<div class="mt-band"><span>6 &middot; Take them out of the array</span><b id="dbb-rb6"></b></div>
+<div class="mt-band"><span>2 &middot; <?=$dbb_t('rm.h2')?></span><b id="dbb-rb2"></b></div>
+<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px"><?=$dbb_T('rm.s2')?></span> <input type="button" id="dbb-rm2" class="dbb-ghost" value="<?=$dbb_t('rm.btn.check_again')?>"></div><div id="dbb-rs2"></div></div>
+<div class="mt-band"><span>3 &middot; <?=$dbb_t('rm.h3')?></span><b id="dbb-rb3"></b></div>
+<div class="mt-box"><div class="dbb-status"><span><?=$dbb_t('rm.s3')?></span></div><div id="dbb-rs3"></div></div>
+<div class="mt-band"><span>4 &middot; <?=$dbb_t('rm.h4')?></span><b id="dbb-rb4"></b></div>
+<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px"><?=$dbb_t('rm.s4')?></span> <input type="button" id="dbb-rm4" value="<?=$dbb_t('rm.btn.check')?>"></div><div id="dbb-rs4"></div></div>
+<div class="mt-band"><span>5 &middot; <?=$dbb_t('rm.h5')?></span><b id="dbb-rb5"></b></div>
+<div class="mt-box"><div class="dbb-status"><span><?=$dbb_T('rm.s5')?></span></div><div id="dbb-rs5"></div></div>
+<div class="mt-band"><span>6 &middot; <?=$dbb_t('rm.h6')?></span><b id="dbb-rb6"></b></div>
 <div class="mt-box"><div id="dbb-rs6"></div></div>
 </div>
 
 <div id="dbb-planbox" style="display:none">
-<div class="mt-band"><span>Plan</span><b id="dbb-pband"></b></div>
+<div class="mt-band"><span><?=$dbb_t('bal.h.plan')?></span><b id="dbb-pband"></b></div>
 <div class="mt-box">
 <div id="dbb-note" class="dbb-status dbb-am" style="display:none"></div>
 <div id="dbb-dtab"></div>
-<div class="dbb-status dbb-mut" style="font-size:12px">blue = fill now &middot; green = after the ticked moves (amber: it grows, red: nearly full) &middot; striped grey = the file system's own space on a disk to empty (metadata, not data; it goes with the disk) &middot; the orange mark is the target</div>
+<div class="dbb-status dbb-mut" style="font-size:12px"><?=$dbb_t('bal.legend')?></div>
 </div>
 <div class="mt-box">
-<div class="dbb-status"><label><input type="checkbox" id="dbb-all" title="Select / deselect all"> all titles</label><span class="dbb-mut">the suggestion is ticked; change the ticks or the target disk as you like</span></div>
+<div class="dbb-status"><label><input type="checkbox" id="dbb-all" title="<?=$dbb_t('bal.selall')?>"> <?=$dbb_t('bal.all_titles')?></label><span class="dbb-mut"><?=$dbb_t('bal.tick_hint')?></span></div>
 <div id="dbb-units"></div>
 <div id="dbb-leftbox" style="display:none"><div class="dbb-gbar s-amber" data-g="left"><span class="pm">+</span><span></span><span id="dbb-lefttg"></span><span class="c" id="dbb-leftc"></span></div><div class="dbb-grp" data-g="left" hidden id="dbb-leftlist"></div></div>
-<div id="dbb-skipbox" style="display:none"><div class="dbb-gbar s-grey" data-g="skip"><span class="pm">+</span><span></span><span>Titles that are left out</span><span class="c" id="dbb-skipc"></span></div><div class="dbb-grp" data-g="skip" hidden id="dbb-skiplist"></div></div>
-<div class="dbb-status"><input type="button" id="dbb-go" value="Move the selected titles"> <span id="dbb-gomsg"></span></div>
+<div id="dbb-skipbox" style="display:none"><div class="dbb-gbar s-grey" data-g="skip"><span class="pm">+</span><span></span><span><?=$dbb_t('bal.skipped_bar')?></span><span class="c" id="dbb-skipc"></span></div><div class="dbb-grp" data-g="skip" hidden id="dbb-skiplist"></div></div>
+<div class="dbb-status"><input type="button" id="dbb-go" value="<?=$dbb_t('bal.btn.go')?>"> <span id="dbb-gomsg"></span></div>
 </div>
-<p class="dbb-foot">Each title is copied, checked (sizes and hardlinks), and only then removed from the old disk. If a check fails the copy is removed and the old files stay. Moving runs in the background at idle disk priority; it needs the array started and no parity check, rebuild or mover running. Closing this page does not stop it.</p>
+<p class="dbb-foot"><?=$dbb_t('bal.foot')?></p>
 </div>
 </div>
 
+<?=mt_i18n_js($dbb_lang, 'dbb')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('dbb', k, v); };
   var URL = '/plugins/diskbox/balance.php', P = null, disks = {}, pollT = null, planPoll = null, GOPEN = {}, BUSY = '', busyT = null, LIM = {};
   function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return (b / 1e3).toFixed(0) + ' KB'; }
-  function dur(s) { s = Math.max(0, Math.round(s)); var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + ' h ' + m + ' m' : m + ' m ' + (s % 60) + ' s'; }
+  function dur(s) { s = Math.max(0, Math.round(s)); var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? T('dur.hm', { h: h, m: m }) : T('dur.ms', { m: m, s: s % 60 }); }
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function up(s) { return esc(String(s).toUpperCase()); }
@@ -2838,20 +4458,20 @@ $(function () {
       var on = !c.disks.length || c.disks.indexOf(d.name) >= 0;
       h += '<label><input type="checkbox" class="dbb-dsel" value="' + esc(d.name) + '"' + (on ? ' checked' : '') + '> ' + esc(d.label) + ' <span class="dbb-chip">' + d.pct.toFixed(0) + '%</span></label>';
     });
-    $('#dbb-disks').html(h || '<span class="dbb-mut">No array data disks found (is the array started?)</span>');
+    $('#dbb-disks').html(h || '<span class="dbb-mut">' + esc(T('bal.no_disks')) + '</span>');
     h = '';
     $.each(r.disks, function (i, d) {
-      h += '<label><input type="checkbox" class="dbb-drsel" value="' + esc(d.name) + '"' + ((c.drain || []).indexOf(d.name) >= 0 ? ' checked' : '') + '> ' + esc(d.label) + ' <span class="dbb-chip">' + fb(d.used) + ' used</span></label>';
+      h += '<label><input type="checkbox" class="dbb-drsel" value="' + esc(d.name) + '"' + ((c.drain || []).indexOf(d.name) >= 0 ? ' checked' : '') + '> ' + esc(d.label) + ' <span class="dbb-chip">' + esc(T('bal.used', { s: fb(d.used) })) + '</span></label>';
     });
     $('#dbb-drain').html(h);
     $('#dbb-mode').val(c.mode === 'drain' || c.mode === 'remove' ? c.mode : 'balance'); SAVEDMODE = $('#dbb-mode').val();
-    $('#dbb-sband').text(r.disks.length + ' array disk' + (r.disks.length === 1 ? '' : 's'));
+    $('#dbb-sband').text(T('bal.n_disks', { n: r.disks.length }));
     modeUi();
   }
   function modeUi() {
     var m = $('#dbb-mode').val(), dr = m !== 'balance';
     $('.dbb-bal').toggle(!dr); $('.dbb-drn').toggle(dr);
-    $('#dbb-drnlbl').text(m === 'remove' ? 'Disks to remove:' : 'Disks to empty:');
+    $('#dbb-drnlbl').text(m === 'remove' ? T('bal.f.remove') : T('bal.f.drain'));
     $('#dbb-rm').toggle(m === 'remove' && SAVEDMODE === 'remove');
     if (m === 'remove') { rmLoad(); }
   }
@@ -2871,62 +4491,62 @@ $(function () {
     if (!sel.length) { $('#dbb-rmact').empty(); return; }
     var st = m.step, h, act = '', running = false;
     // 2 shares
-    h = m.shares.length ? $.map(m.shares, function (x) { return rowH('amber', esc(x[0]), 'can still write new files to ' + esc(x[1].join(', ').toUpperCase()), '<a href="/Shares/Share?name=' + encodeURIComponent(x[0]) + '">change it</a>'); }).join('')
-      : rowH('green', 'No share writes to ' + esc(names), 'every share excludes them or uses only a pool', '<span class="dbb-ok">done</span>');
-    $('#dbb-rs2').html(h); $('#dbb-rb2').text(m.shares.length ? m.shares.length + ' share' + (m.shares.length === 1 ? '' : 's') + ' to change' : 'done');
+    h = m.shares.length ? $.map(m.shares, function (x) { return rowH('amber', esc(x[0]), esc(T('rm.can_write', { d: x[1].join(', ').toUpperCase() })), '<a href="/Shares/Share?name=' + encodeURIComponent(x[0]) + '">' + esc(T('rm.change_it')) + '</a>'); }).join('')
+      : rowH('green', esc(T('rm.no_share', { d: names })), esc(T('rm.no_share_sub')), '<span class="dbb-ok">' + esc(T('rm.done')) + '</span>');
+    $('#dbb-rs2').html(h); $('#dbb-rb2').text(m.shares.length ? T('rm.n_shares', { n: m.shares.length }) : T('rm.done'));
     // 3 empty
     h = '';
-    $.each(sel, function (i, d) { var x = m.disks[d]; h += rowH(st > 3 ? 'green' : (st < 3 ? 'grey' : 'blue'), d.toUpperCase(), x.used == null ? 'not mounted' : fb(x.used) + ' used (with the file system\'s own space)', st > 3 ? '<span class="dbb-ok">emptied</span>' : ''); });
-    $('#dbb-rs3').html(h); $('#dbb-rb3').text(st < 3 ? 'after step 2' : (st > 3 ? 'done' : (m.balance ? 'moving' : 'to do')));
+    $.each(sel, function (i, d) { var x = m.disks[d]; h += rowH(st > 3 ? 'green' : (st < 3 ? 'grey' : 'blue'), d.toUpperCase(), esc(x.used == null ? T('rm.not_mounted') : T('rm.used_fs', { s: fb(x.used) })), st > 3 ? '<span class="dbb-ok">' + esc(T('rm.emptied')) + '</span>' : ''); });
+    $('#dbb-rs3').html(h); $('#dbb-rb3').text(st < 3 ? T('rm.after', { n: 2 }) : (st > 3 ? T('rm.done') : (m.balance ? T('rm.moving') : T('rm.todo'))));
     // 4 check
     h = ''; var c = m.check;
     if (c) {
       $.each(sel, function (i, d) {
         var x = c.res[d]; if (!x) { return; }
-        h += x.n === 0 ? rowH('green', d.toUpperCase() + ': empty', '0 files', '<span class="dbb-ok">empty</span>')
-          : rowH('amber', d.toUpperCase() + ': ' + (x.n < 0 ? 'could not be read' : x.n + ' file' + (x.n === 1 ? '' : 's') + ' left, ' + fb(x.bytes)), $.map(x.sample, esc).join('<br>') + (x.n > x.sample.length ? '<br>...' : ''), '<span class="dbb-am">not empty</span>');
+        h += x.n === 0 ? rowH('green', d.toUpperCase() + ': ' + esc(T('rm.empty')), esc(T('rm.files', { n: 0 })), '<span class="dbb-ok">' + esc(T('rm.empty')) + '</span>')
+          : rowH('amber', d.toUpperCase() + ': ' + esc(x.n < 0 ? T('rm.unreadable') : T('rm.files_left', { n: x.n, s: fb(x.bytes) })), $.map(x.sample, esc).join('<br>') + (x.n > x.sample.length ? '<br>...' : ''), '<span class="dbb-am">' + esc(T('rm.not_empty')) + '</span>');
       });
-      h += '<div class="dbb-status dbb-mut" style="font-size:12px">checked ' + when(c.t) + '</div>';
+      h += '<div class="dbb-status dbb-mut" style="font-size:12px">' + esc(T('rm.checked_at', { t: when(c.t) })) + '</div>';
     }
-    $('#dbb-rs4').html(h); $('#dbb-rm4').prop('disabled', st < 3 || m.balance || st > 4); $('#dbb-rb4').text(st < 3 ? 'after step 2' : (c ? (c.ok ? 'empty' : 'not empty') : 'to do'));
+    $('#dbb-rs4').html(h); $('#dbb-rm4').prop('disabled', st < 3 || m.balance || st > 4); $('#dbb-rb4').text(st < 3 ? T('rm.after', { n: 2 }) : (c ? (c.ok ? T('rm.empty') : T('rm.not_empty')) : T('rm.todo')));
     // 5 clear
     h = '';
     $.each(sel, function (i, d) {
       var x = m.disks[d], z = x.zero;
       if (z && z.run) {
         running = true; var pc = z.size > 0 ? z.pos / z.size * 100 : 0, left = z.rate > 0 ? (z.size - z.pos) / z.rate : 0;
-        var line = pc.toFixed(1) + ' %' + (z.rate > 0 ? ' &middot; ' + fb(z.rate) + '/s &middot; ' + dur(left) + ' left' : '');
-        h += rowH('blue', d.toUpperCase(), 'writing zeros through parity &middot; ' + line, '<span>clearing</span>');
-        act += rowH('blue', 'Clearing ' + d.toUpperCase(), 'writing zeros through parity &middot; ' + line, '') + '<div class="dbb-status"><span class="dbb-prog"><i style="width:' + pc.toFixed(1) + '%"></i></span></div>';
+        var line = pc.toFixed(1) + ' %' + (z.rate > 0 ? ' &middot; ' + fb(z.rate) + '/s &middot; ' + esc(T('rm.left', { t: dur(left) })) : '');
+        h += rowH('blue', d.toUpperCase(), esc(T('rm.zeros')) + ' &middot; ' + line, '<span>' + esc(T('rm.clearing')) + '</span>');
+        act += rowH('blue', esc(T('rm.clearing_d', { d: d.toUpperCase() })), esc(T('rm.zeros')) + ' &middot; ' + line, '') + '<div class="dbb-status"><span class="dbb-prog"><i style="width:' + pc.toFixed(1) + '%"></i></span></div>';
       } else if (z && z.done) {
-        h += rowH('green', d.toUpperCase() + ' zeroed', 'checked: the end of the disk reads zero', '<span class="dbb-ok">ready to remove</span>');
+        h += rowH('green', esc(T('rm.zeroed', { d: d.toUpperCase() })), esc(T('rm.zeroed_sub')), '<span class="dbb-ok">' + esc(T('rm.ready')) + '</span>');
       } else if (z) {
-        h += rowH('red', d.toUpperCase() + ': clearing stopped at ' + (z.size > 0 ? (z.pos / z.size * 100).toFixed(1) : 0) + ' %', 'see the log; start it again when the reason is fixed', '');
+        h += rowH('red', esc(T('rm.stopped_at', { d: d.toUpperCase(), p: z.size > 0 ? (z.pos / z.size * 100).toFixed(1) : 0 })), esc(T('rm.see_log_again')), '');
       } else if (m.clear) {
-        h += rowH('amber', d.toUpperCase() + ': the clearing did not start', 'see the log', '');
+        h += rowH('amber', esc(T('rm.not_started', { d: d.toUpperCase() })), esc(T('rm.see_log')), '');
       }
     });
     if (st === 5 && !running && !m.cleared) {
-      h += '<div class="dbb-status"><span>Type <b>' + esc(sel.join(' ')) + '</b> to confirm:</span> <input type="text" id="dbb-rmtype" autocomplete="off" style="width:200px;margin:0"> <input type="button" id="dbb-rm5" value="Clear ' + esc(names) + '" disabled>' + (m.parity || m.busy ? ' <span class="dbb-am">' + esc(m.parity || m.busy) + '</span>' : '') + '</div>';
+      h += '<div class="dbb-status"><span>' + T('rm.type_confirm', { names: '<b>' + esc(sel.join(' ')) + '</b>' }) + '</span> <input type="text" id="dbb-rmtype" autocomplete="off" style="width:200px;margin:0"> <input type="button" id="dbb-rm5" value="' + esc(T('rm.btn.clear', { d: names })) + '" disabled>' + (m.parity || m.busy ? ' <span class="dbb-am">' + esc(m.parity || m.busy) + '</span>' : '') + '</div>';
     }
-    if (m.clear) { h += '<div class="dbb-gbar s-grey" data-g="rmlog"><span class="pm">' + (GOPEN.rmlog ? '&minus;' : '+') + '</span><span></span><span>Log of the clearing</span><span class="c"></span></div><div class="dbb-grp" data-g="rmlog"' + (GOPEN.rmlog ? '' : ' hidden') + '><div class="dbb-log" id="dbb-rmlog"></div></div>'; }
-    $('#dbb-rs5').html(h); $('#dbb-rb5').text(st < 5 ? 'after step 4' : (running ? 'running' : (m.cleared ? 'done' : 'to do')));
-    if (m.clear && GOPEN.rmlog) { api('rm_log').done(function (r) { $('#dbb-rmlog').text($.map(sel, function (d) { return '== ' + d + '\n' + (r.log[d] || '(empty)'); }).join('\n')); }); }
+    if (m.clear) { h += '<div class="dbb-gbar s-grey" data-g="rmlog"><span class="pm">' + (GOPEN.rmlog ? '&minus;' : '+') + '</span><span></span><span>' + esc(T('rm.log')) + '</span><span class="c"></span></div><div class="dbb-grp" data-g="rmlog"' + (GOPEN.rmlog ? '' : ' hidden') + '><div class="dbb-log" id="dbb-rmlog"></div></div>'; }
+    $('#dbb-rs5').html(h); $('#dbb-rb5').text(st < 5 ? T('rm.after', { n: 4 }) : (running ? T('rm.running') : (m.cleared ? T('rm.done') : T('rm.todo'))));
+    if (m.clear && GOPEN.rmlog) { api('rm_log').done(function (r) { $('#dbb-rmlog').text($.map(sel, function (d) { return '== ' + d + '\n' + (r.log[d] || '(' + T('rm.log_empty') + ')'); }).join('\n')); }); }
     // 6 New Config (the owner does it in Unraid)
     var ids = $.map(sel, function (d) { return d.toUpperCase() + (m.disks[d].id ? ' (' + esc(m.disks[d].id) + ')' : ''); }).join(', ');
-    h = m.gone ? rowH('green', esc(names) + ' are out of the array', '', '<input type="button" id="dbb-rmend" class="dbb-ghost" value="Finish">')
-      : '<ol style="margin:0;padding:10px 12px 10px 32px;line-height:1.7"><li>Main &rarr; <b>Stop</b> the array.</li><li>Tools &rarr; <b>New Config</b> &rarr; Preserve current assignments: <b>All</b> &rarr; Apply.</li><li>Main &rarr; set ' + esc(names) + ' to <b>no device</b>; leave the other slots as they are.</li><li>Tick <b>Parity is already valid</b> &rarr; <b>Start</b>.</li><li>Shut down and take out: ' + ids + '.</li></ol>' + rowH(st === 6 ? 'green' : 'grey', st === 6 ? 'Ready: your turn' : 'after step 5', '', '');
-    $('#dbb-rs6').html(h); $('#dbb-rb6').text(m.gone ? 'done' : (st === 6 ? 'your turn' : 'after step 5'));
+    h = m.gone ? rowH('green', esc(T('rm.out', { d: names })), '', '<input type="button" id="dbb-rmend" class="dbb-ghost" value="' + esc(T('rm.btn.finish')) + '">')
+      : '<ol style="margin:0;padding:10px 12px 10px 32px;line-height:1.7"><li>' + T('rm.nc1') + '</li><li>' + T('rm.nc2') + '</li><li>' + T('rm.nc3', { d: esc(names) }) + '</li><li>' + T('rm.nc4') + '</li><li>' + T('rm.nc5', { ids: ids }) + '</li></ol>' + rowH(st === 6 ? 'green' : 'grey', esc(st === 6 ? T('rm.ready_turn') : T('rm.after', { n: 5 })), '', '');
+    $('#dbb-rs6').html(h); $('#dbb-rb6').text(m.gone ? T('rm.done') : (st === 6 ? T('rm.your_turn') : T('rm.after', { n: 5 })));
     $('#dbb-rmact').html(act);
-    if (running) { $('#dbb-aband').text('clearing ' + names); }
+    if (running) { $('#dbb-aband').text(T('rm.aband', { d: names })); }
     if (running || m.balance) { RMT = setTimeout(rmLoad, 15000); }
   }
   $(document).on('input', '#dbb-rmtype', function () { $('#dbb-rm5').prop('disabled', $.trim($(this).val()).replace(/\s+/g, ' ') !== (RM ? RM.sel.join(' ') : '-')); });
   $(document).on('click', '#dbb-rm2', rmLoad);
-  $(document).on('click', '#dbb-rm4', function () { var $b = $(this).prop('disabled', true).val('Checking...'); api('rm_check').always(function () { $b.val('Check the disks'); }).done(rmLoad).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); }); });
+  $(document).on('click', '#dbb-rm4', function () { var $b = $(this).prop('disabled', true).val(T('rm.checking')); api('rm_check').always(function () { $b.val(T('rm.btn.check')); }).done(rmLoad).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); }); });
   $(document).on('click', '#dbb-rm5', function () {
     var names = RM.sel.join(', ').toUpperCase();
-    if (!window.confirm('Clear ' + names + '?\n\nEach disk is unmounted and every byte on it is overwritten with zeros (through parity, so parity stays valid). This cannot be undone.')) { return; }
+    if (!window.confirm(T('rm.confirm', { d: names }))) { return; }
     var $b = $(this).prop('disabled', true);
     api('rm_clear', {confirm: $('#dbb-rmtype').val()}).done(function () { setTimeout(rmLoad, 3000); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
@@ -2965,24 +4585,24 @@ $(function () {
       // a disk to empty: what is still used after the move but is neither a kept folder nor an unticked title is the file system's own space (XFS metadata), not data
       var res = d.drain ? Math.max(0, used[d.name] - (keep[d.name] || 0)) : 0, dataAfter = after - res / d.size * 100, chg;
       if (d.drain && res > 0) {
-        chg = now.toFixed(1) + '% &rarr; ' + ((keep[d.name] || 0) < 1e9 ? 'empty' : dataAfter.toFixed(1) + '%') + '<small>+ ' + fb(res) + ' file system</small>';
+        chg = now.toFixed(1) + '% &rarr; ' + ((keep[d.name] || 0) < 1e9 ? esc(T('rm.empty')) : dataAfter.toFixed(1) + '%') + '<small>' + esc(T('bal.plus_fs', { s: fb(res) })) + '</small>';
       } else { chg = now.toFixed(1) + '% &rarr; ' + after.toFixed(1) + '%'; }
-      h += '<div class="dbb-row dbb-disk ' + (d.drain ? 's-red' : over ? 's-red' : 's-grey') + '"><span><b>' + esc(d.label) + '</b>' + (d.drain ? '<span class="dbb-chip rd">empty</span>' : '') + '</span><span class="dbb-r">' + fb(d.size) + '</span>' +
-           '<span class="dbb-bars" title="now ' + now.toFixed(1) + '%, after ' + after.toFixed(1) + '%' + (res > 0 ? ', of which ' + fb(res) + ' is the file system\'s own space (metadata), not data' : '') + '">' + barHtml(now, P.target) + barHtml(dataAfter, P.target, col, res / d.size * 100) + '</span><span class="dbb-chg">' + chg + '</span></div>';
+      h += '<div class="dbb-row dbb-disk ' + (d.drain ? 's-red' : over ? 's-red' : 's-grey') + '"><span><b>' + esc(d.label) + '</b>' + (d.drain ? '<span class="dbb-chip rd">' + esc(T('bal.chip_empty')) + '</span>' : '') + '</span><span class="dbb-r">' + fb(d.size) + '</span>' +
+           '<span class="dbb-bars" title="' + esc(T('bal.bars_tip', { now: now.toFixed(1), after: after.toFixed(1) }) + (res > 0 ? T('bal.bars_tip_fs', { s: fb(res) }) : '')) + '">' + barHtml(now, P.target) + barHtml(dataAfter, P.target, col, res / d.size * 100) + '</span><span class="dbb-chg">' + chg + '</span></div>';
     });
     $('#dbb-dtab').html(h);
     $.each(grp, function (src, g) {
       var to = $.map(Object.keys(g.to), function (k) { var d = $.grep(P.disks, function (x) { return x.name === k; })[0]; return (d ? d.label : k) + ' (' + g.to[k] + ')'; }).join(', ');
-      var what = (g.t ? g.t + ' title' + (g.t === 1 ? '' : 's') : '') + (g.t && g.m ? ' + ' : '') + (g.m ? g.m + ' media-only item' + (g.m === 1 ? '' : 's') : '');
-      $('#dbb-units .dbb-gbar[data-g="src-' + src + '"] .c').text(what + (g.sel < g.n ? ' · ' + g.sel + ' of ' + g.n + ' ticked' : '') + ' · ' + fb(g.bytes) + (to ? ' · to ' + to : ''));
+      var what = (g.t ? T('bal.n_titles', { n: g.t }) : '') + (g.t && g.m ? ' + ' : '') + (g.m ? T('bal.n_media', { n: g.m }) : '');
+      $('#dbb-units .dbb-gbar[data-g="src-' + src + '"] .c').text(what + (g.sel < g.n ? ' · ' + T('bal.ticked', { sel: g.sel, n: g.n }) : '') + ' · ' + fb(g.bytes) + (to ? ' · ' + T('bal.to', { d: to }) : ''));
       $('#dbb-units .dbb-gall[data-src="' + src + '"]').prop('checked', g.sel === g.n && g.n > 0).prop('indeterminate', g.sel > 0 && g.sel < g.n);
     });
     var tot = $('.dbb-chk').length; $('#dbb-all').prop('checked', tot > 0 && sel === tot).prop('indeterminate', sel > 0 && sel < tot);
-    $('#dbb-go').val(sel ? 'Move ' + sel + ' title' + (sel > 1 ? 's' : '') + ' (' + fb(bytes) + ')' : 'Move the selected titles').prop('disabled', !sel || !!BUSY);
+    $('#dbb-go').val(sel ? T('bal.btn.go_n', { n: sel, s: fb(bytes) }) : T('bal.btn.go')).prop('disabled', !sel || !!BUSY);
     // a plan can be made during a parity check, the move waits for its end: look again every minute
-    $('#dbb-gomsg').toggleClass('dbb-am', !!BUSY).text(BUSY ? 'Moving waits: ' + BUSY + '.' : ($('#dbb-gomsg').hasClass('dbb-am') ? '' : $('#dbb-gomsg').text()));
+    $('#dbb-gomsg').toggleClass('dbb-am', !!BUSY).text(BUSY ? T('bal.waits', { why: BUSY }) : ($('#dbb-gomsg').hasClass('dbb-am') ? '' : $('#dbb-gomsg').text()));
     clearTimeout(busyT); if (BUSY) { busyT = setTimeout(function () { api('state').done(function (r) { BUSY = r.busy || ''; recalc(); }); }, 60000); }
-    $('#dbb-pband').text((P.mode === 'drain' ? 'empty ' + $.map($.grep(P.disks, function (d) { return d.drain; }), function (d) { return d.label; }).join(', ') : 'spread evenly' + (P.target ? ' to ' + (+P.target).toFixed(0) + '%' : '')) + ' · ' + sel + ' title' + (sel === 1 ? '' : 's') + ' · ' + fb(bytes));
+    $('#dbb-pband').text((P.mode === 'drain' ? T('bal.pb_empty', { d: $.map($.grep(P.disks, function (d) { return d.drain; }), function (d) { return d.label; }).join(', ') }) : (P.target ? T('bal.pb_spread_to', { p: (+P.target).toFixed(0) }) : T('bal.pb_spread'))) + ' · ' + T('bal.n_titles', { n: sel }) + ' · ' + fb(bytes));
   }
   function drawPlan(p) {
     P = p; $('#dbb-planbox').show();
@@ -2998,15 +4618,15 @@ $(function () {
     var h = '';
     $.each(order, function (k, src) {
       var g = 'src-' + src, d = $.grep(p.disks, function (x) { return x.name === src; })[0];
-      h += '<div class="dbb-gbar s-blue" data-g="' + g + '"><span class="pm">' + (GOPEN[g] ? '&minus;' : '+') + '</span><input type="checkbox" class="dbb-gall" data-src="' + esc(src) + '" title="Select / deselect all from this disk"><span>From ' + esc(d ? d.label : up(src)) + '</span><span class="c"></span></div>';
+      h += '<div class="dbb-gbar s-blue" data-g="' + g + '"><span class="pm">' + (GOPEN[g] ? '&minus;' : '+') + '</span><input type="checkbox" class="dbb-gall" data-src="' + esc(src) + '" title="' + esc(T('bal.selall_disk')) + '"><span>' + esc(T('bal.from', { d: d ? d.label : String(src).toUpperCase() })) + '</span><span class="c"></span></div>';
       h += '<div class="dbb-grp" data-g="' + g + '"' + (GOPEN[g] ? '' : ' hidden') + '>';
       // the titles first; the media files without a download (.nfo, pictures, subtitles of a title whose download is gone) in their own folded bar
       // every row is in the page (the move takes the hidden ones too); a long list shows 25 rows, then 50 more per click
       var VID = {mkv: 1, mp4: 1, avi: 1, m4v: 1, ts: 1, iso: 1, mov: 1, wmv: 1, m2ts: 1};
       var nVid = function (e) { var n = 0; $.each(e || {}, function (k, v) { if (VID[k]) { n += v; } }); return n; };
       var extTxt = function (e) { return $.map(Object.keys(e || {}), function (k) { return k + (e[k] > 1 ? ' ' + e[k] : ''); }).join(', '); };
-      var row = function (i, n, lk) { var u = p.units[i]; return '<div class="dbb-row dbb-mv" data-i="' + i + '"' + (n >= (LIM[lk] || 25) ? ' data-more="' + lk + '" hidden' : '') + '><input type="checkbox" class="dbb-chk"' + (u.sel ? ' checked' : '') + '><span><b>' + esc(u.title) + '</b><small>' + esc(u.pair) + ' &middot; ' + u.nfiles + ' file' + (u.nfiles === 1 ? '' : 's') + (u.exts ? ' &middot; ' + esc(extTxt(u.exts)) : '') + (u.media && u.also ? (u.also.length ? ' &middot; the folder is also on ' + up(u.also.join(', ')) : ' &middot; on no other disk') : '') + (u.media && nVid(u.exts) ? ' <span class="dbb-chip am">video without a download</span>' : '') + '</small></span><span class="dbb-r">' + fb(u.size) + '</span><span><select class="dbb-dst">' + opts(u.src, u.dst) + '</select></span></div>'; };
-      var more = function (lk, n) { var lim = LIM[lk] || 25; return n > lim ? '<div class="dbb-status"><input type="button" class="dbb-more dbb-ghost" data-k="' + lk + '" value="Show ' + Math.min(50, n - lim) + ' more (' + (n - lim) + ' left)"></div>' : ''; };
+      var row = function (i, n, lk) { var u = p.units[i]; return '<div class="dbb-row dbb-mv" data-i="' + i + '"' + (n >= (LIM[lk] || 25) ? ' data-more="' + lk + '" hidden' : '') + '><input type="checkbox" class="dbb-chk"' + (u.sel ? ' checked' : '') + '><span><b>' + esc(u.title) + '</b><small>' + esc(u.pair) + ' &middot; ' + esc(T('rm.files', { n: u.nfiles })) + (u.exts ? ' &middot; ' + esc(extTxt(u.exts)) : '') + (u.media && u.also ? ' &middot; ' + esc(u.also.length ? T('bal.also_on', { d: u.also.join(', ').toUpperCase() }) : T('bal.no_other')) : '') + (u.media && nVid(u.exts) ? ' <span class="dbb-chip am">' + esc(T('bal.vid_nodl')) + '</span>' : '') + '</small></span><span class="dbb-r">' + fb(u.size) + '</span><span><select class="dbb-dst">' + opts(u.src, u.dst) + '</select></span></div>'; };
+      var more = function (lk, n) { var lim = LIM[lk] || 25; return n > lim ? '<div class="dbb-status"><input type="button" class="dbb-more dbb-ghost" data-k="' + lk + '" value="' + esc(T('bal.more', { m: Math.min(50, n - lim), n: n - lim })) + '"></div>' : ''; };
       var ti = $.grep(by[src], function (i) { return !p.units[i].media; }), mi = $.grep(by[src], function (i) { return !!p.units[i].media; });
       $.each(ti, function (j, i) { h += row(i, j, 't-' + src); });
       h += more('t-' + src, ti.length);
@@ -3016,23 +4636,23 @@ $(function () {
         $.each(mi, function (j, i) { var u = p.units[i]; msz += u.size; $.each(u.exts || {}, function (k, v) { mex[k] = (mex[k] || 0) + v; }); if (u.also) { if (u.also.length) { nEl++; } else { nNo++; } } });
         var mv = 0; $.each(mi, function (j, i) { mv += nVid(p.units[i].exts); });
         var mtop = {}; $.each(Object.keys(mex).sort(function (a, b) { return mex[b] - mex[a]; }).slice(0, 5), function (j, k) { mtop[k] = mex[k]; });
-        h += '<div class="dbb-gbar s-grey" data-g="' + mg + '" style="padding-left:34px" title="Files in the media folders of this disk that have no hardlink (a hardlink cannot cross disks, so they have none anywhere). Mostly pictures and .nfo that Radarr, Sonarr or Jellyfin wrote next to a film whose video and download are on another disk. A video file here has lost its download: nothing seeds it."><span class="pm">' + (GOPEN[mg] ? '&minus;' : '+') + '</span><span></span><span>Library files without a hardlink</span><span class="c">' + mi.length + ' folder' + (mi.length === 1 ? '' : 's') + ' &middot; ' + fb(msz) + (Object.keys(mtop).length ? ' &middot; ' + esc(extTxt(mtop)) : '') + (nEl || nNo ? ' &middot; ' + nEl + ' also on another disk' + (nNo ? ', ' + nNo + ' only here' : '') : '') + (mv ? ' &middot; <span class="dbb-am">' + mv + ' video file' + (mv === 1 ? '' : 's') + ' without a download</span>' : '') + '</span></div>';
+        h += '<div class="dbb-gbar s-grey" data-g="' + mg + '" style="padding-left:34px" title="' + esc(T('bal.lib_tip')) + '"><span class="pm">' + (GOPEN[mg] ? '&minus;' : '+') + '</span><span></span><span>' + esc(T('bal.lib_bar')) + '</span><span class="c">' + esc(T('bal.n_folders', { n: mi.length })) + ' &middot; ' + fb(msz) + (Object.keys(mtop).length ? ' &middot; ' + esc(extTxt(mtop)) : '') + (nEl || nNo ? ' &middot; ' + esc(T('bal.n_also', { n: nEl })) + (nNo ? ', ' + esc(T('bal.n_only', { n: nNo })) : '') : '') + (mv ? ' &middot; <span class="dbb-am">' + esc(T('bal.n_vid', { n: mv })) + '</span>' : '') + '</span></div>';
         h += '<div class="dbb-grp" data-g="' + mg + '"' + (GOPEN[mg] ? '' : ' hidden') + '>';
         $.each(mi, function (j, i) { h += row(i, j, 'm-' + src); });
         h += more('m-' + src, mi.length) + '</div>';
       }
       h += '</div>';
     });
-    $('#dbb-units').html(h || '<div class="dbb-status dbb-mut">Nothing to move: the disks are balanced or no title can be moved.</div>');
+    $('#dbb-units').html(h || '<div class="dbb-status dbb-mut">' + esc(T('bal.nothing')) + '</div>');
     var sk = '';
     $.each(p.skipped || [], function (i, u) { sk += '<div class="dbb-row dbb-left"><span></span><span><b>' + esc(u.title) + '</b><small>' + esc(u.pair) + ' &middot; ' + esc(u.why) + '</small></span><span></span><span class="dbb-r">' + fb(u.size) + '</span></div>'; });
-    $('#dbb-skiplist').html(sk); $('#dbb-skipc').text((p.skipped || []).length + ' title' + ((p.skipped || []).length === 1 ? '' : 's')); $('#dbb-skipbox').toggle(!!sk);
+    $('#dbb-skiplist').html(sk); $('#dbb-skipc').text(T('bal.n_titles', { n: (p.skipped || []).length })); $('#dbb-skipbox').toggle(!!sk);
     var lh = '';
-    $.each(p.left || [], function (i, x) { lh += '<div class="dbb-row dbb-left"><span>' + up(x.disk) + '</span><span><b>' + esc(x.path) + '</b></span><span class="dbb-r">' + x.n + ' files</span><span class="dbb-r">' + fb(x.size) + '</span></div>'; });
+    $.each(p.left || [], function (i, x) { lh += '<div class="dbb-row dbb-left"><span>' + up(x.disk) + '</span><span><b>' + esc(x.path) + '</b></span><span class="dbb-r">' + esc(T('rm.files', { n: x.n })) + '</span><span class="dbb-r">' + fb(x.size) + '</span></div>'; });
     $('#dbb-leftlist').html(lh);
     var nl = (p.left || []).length;
-    $('#dbb-lefttg').text(nl ? 'Stays on the disk to empty (outside the folders above, or left out; move or delete it yourself)' : 'Nothing else stays on the disk to empty once the ticked titles are moved');
-    $('#dbb-leftc').text(nl ? nl + ' folder' + (nl === 1 ? '' : 's') + ' · ' + fb(p.leftSize || 0) : '');
+    $('#dbb-lefttg').text(nl ? T('bal.stays') : T('bal.nothing_stays'));
+    $('#dbb-leftc').text(nl ? T('bal.n_folders', { n: nl }) + ' · ' + fb(p.leftSize || 0) : '');
     $('#dbb-leftbox').toggle(p.mode === 'drain');
     $('#dbb-leftbox .dbb-gbar').toggleClass('s-amber', !!nl).toggleClass('s-green', !nl);
     recalc();
@@ -3041,7 +4661,7 @@ $(function () {
   $(document).on('click', '.dbb-more', function () {
     var k = String($(this).data('k')), $h = $('#dbb-units .dbb-mv[data-more="' + k + '"]').filter('[hidden]'), n = $h.length;
     $h.slice(0, 50).prop('hidden', false).removeAttr('data-more'); LIM[k] = (LIM[k] || 25) + 50;
-    if (n <= 50) { $(this).closest('.dbb-status').remove(); } else { $(this).val('Show ' + Math.min(50, n - 50) + ' more (' + (n - 50) + ' left)'); }
+    if (n <= 50) { $(this).closest('.dbb-status').remove(); } else { $(this).val(T('bal.more', { m: Math.min(50, n - 50), n: n - 50 })); }
   });
   $(document).on('change', '.dbb-gall', function () { var src = String($(this).data('src')), on = $(this).prop('checked'); $('#dbb-units .dbb-mv').each(function () { if (P.units[$(this).data('i')].src === src) { $(this).find('.dbb-chk').prop('checked', on); } }); recalc(); });
   $('#dbb-all').on('change', function () { $('.dbb-chk').prop('checked', $(this).prop('checked')); recalc(); });
@@ -3049,7 +4669,7 @@ $(function () {
   function pollPlan() {
     api('getplan').done(function (r) {
       var p = r.plan;
-      if (p.state === 'running') { $('#dbb-pmsg').css('color', '').text(p.msg || 'Scanning...'); planPoll = setTimeout(pollPlan, 1500); return; }
+      if (p.state === 'running') { $('#dbb-pmsg').css('color', '').text(p.msg || T('bal.scanning')); planPoll = setTimeout(pollPlan, 1500); return; }
       $('#dbb-plan').prop('disabled', false);
       if (p.state === 'ready') { $('#dbb-pmsg').text(''); BUSY = r.busy || ''; drawPlan(p); }
       else if (p.state === 'error') { $('#dbb-pmsg').css('color', '#e5534b').text(p.msg); }
@@ -3057,12 +4677,12 @@ $(function () {
   }
   $('#dbb-plan').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $('#dbb-pmsg').css('color', '').text('Saving...');
+    $('#dbb-pmsg').css('color', '').text(T('bal.saving'));
     api('saveconfig', cfgData()).done(function (r) {
       if (!r.ok) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(r.error); return; }
       api('plan').done(function (r2) {
         if (!r2.ok) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(r2.error); return; }
-        $('#dbb-planbox').hide(); $('#dbb-pmsg').text('Scanning the disks, this can take a minute...'); setTimeout(pollPlan, 1200);
+        $('#dbb-planbox').hide(); $('#dbb-pmsg').text(T('bal.scanning_long')); setTimeout(pollPlan, 1200);
       }).fail(function (x) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(err(x)); });
     }).fail(function (x) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(err(x)); });
   });
@@ -3074,7 +4694,7 @@ $(function () {
       if ($r.find('.dbb-chk').prop('checked')) { sel[u.id] = $r.find('.dbb-dst').val(); n++; bytes += u.size; }
     });
     if (!n) return;
-    if (!window.confirm('Move ' + n + ' title(s), ' + fb(bytes) + ', between disks?\n\nThe files are copied, checked and only then removed from the old disk. This can take hours. Pause or stop the torrents of these titles first if you can.')) return;
+    if (!window.confirm(T('bal.confirm', { n: n, s: fb(bytes) }))) return;
     var $b = $(this).prop('disabled', true);
     api('start', {sel: JSON.stringify(sel)}).done(function (r) {
       if (!r.ok) { $b.prop('disabled', false); $('#dbb-gomsg').css('color', '#e5534b').text(r.error); return; }
@@ -3088,17 +4708,17 @@ $(function () {
     $('#dbb-runbox').show();
     var pct = s.total > 0 ? Math.min(100, (s.done + (s.curBytes || 0)) / s.total * 100) : 0;
     $('#dbb-rbar').css('width', pct + '%');
-    var t = {running: 'Moving', done: 'Finished', aborted: 'Stopped', error: 'Stopped with an error'}[s.state] || s.state;
+    var t = {running: T('run.moving'), done: T('run.finished'), aborted: T('run.stopped'), error: T('run.error')}[s.state] || s.state;
     var cls = {done: 'dbb-ok', error: 'dbb-er', aborted: 'dbb-am'}[s.state] || '';
     var el = ((s.finished || Math.floor(Date.now() / 1000)) - s.started), nok = 0, nall = (s.items || []).length;
     $.each(s.items || [], function (i, it) { if (it.state === 'ok') { nok++; } });
-    $('#dbb-rstat').html('<b class="' + cls + '">' + t + '</b> ' + nok + ' / ' + nall + ' titles &middot; ' + fb(s.done + (s.curBytes || 0)) + ' of ' + fb(s.total) + ' (' + pct.toFixed(0) + '%) &middot; ' + dur(el) + (s.msg ? ' &middot; <span class="' + cls + '">' + esc(s.msg) + '</span>' : ''));
-    $('#dbb-aband').text(s.state === 'running' ? 'moving now · ' + pct.toFixed(0) + '%' : t.toLowerCase() + ' · ' + nok + ' of ' + nall + ' titles');
+    $('#dbb-rstat').html('<b class="' + cls + '">' + esc(t) + '</b> ' + esc(T('run.line', { ok: nok, n: nall, done: fb(s.done + (s.curBytes || 0)), total: fb(s.total), p: pct.toFixed(0) })) + ' &middot; ' + dur(el) + (s.msg ? ' &middot; <span class="' + cls + '">' + esc(s.msg) + '</span>' : ''));
+    $('#dbb-aband').text(s.state === 'running' ? T('run.aband', { p: pct.toFixed(0) }) : t.toLowerCase() + ' · ' + T('run.of_titles', { ok: nok, n: nall }));
     // short list: failed and moving titles and the next 5 waiting ones are shown, the rest is folded (waiting, skipped, done)
     var rowH = function (it) {
-      var st = {wait: 'waiting', run: 'moving', ok: 'done', skip: 'skipped', fail: 'FAILED'}[it.state] || it.state;
+      var st = {wait: T('it.wait'), run: T('it.run'), ok: T('it.ok'), skip: T('it.skip'), fail: T('it.fail')}[it.state] || it.state;
       var c = {ok: 'dbb-ok', fail: 'dbb-er', skip: 'dbb-am'}[it.state] || '', sc = {ok: 's-green', fail: 's-red', skip: 's-amber', run: 's-blue'}[it.state] || 's-grey';
-      return '<div class="dbb-row dbb-run ' + sc + '"><span><b>' + esc(it.title) + '</b><small>' + esc(it.pair) + '</small></span><span class="dbb-r">' + fb(it.size) + '</span><span>' + up(it.src) + ' &rarr; ' + up(it.dst) + '</span><span class="' + c + '">' + st + (it.msg ? ': ' + esc(it.msg) : '') + '</span></div>';
+      return '<div class="dbb-row dbb-run ' + sc + '"><span><b>' + esc(it.title) + '</b><small>' + esc(it.pair) + '</small></span><span class="dbb-r">' + fb(it.size) + '</span><span>' + up(it.src) + ' &rarr; ' + up(it.dst) + '</span><span class="' + c + '">' + esc(st) + (it.msg ? ': ' + esc(it.msg) : '') + '</span></div>';
     };
     var top = '', grp = {wait: [], skip: [], ok: []}, gsz = {wait: 0, skip: 0, ok: 0}, nw = 0;
     $.each(s.items || [], function (i, it) {
@@ -3109,20 +4729,20 @@ $(function () {
       var g = 'r' + k, n = grp[k].length; if (!n) { return ''; }
       return '<div class="dbb-gbar ' + cls + '" data-g="' + g + '"><span class="pm">' + (GOPEN[g] ? '&minus;' : '+') + '</span><span></span><span>' + label(n) + '</span><span class="c">' + fb(gsz[k]) + '</span></div><div class="dbb-grp" data-g="' + g + '"' + (GOPEN[g] ? '' : ' hidden') + '>' + grp[k].join('') + '</div>';
     };
-    $('#dbb-rtab').html(top + bar('wait', 's-grey', function (n) { return n + (s.state === 'running' ? ' more waiting' : ' not moved'); })
-      + bar('skip', 's-amber', function (n) { return n + ' skipped'; }) + bar('ok', 's-green', function (n) { return n + ' done'; }));
+    $('#dbb-rtab').html(top + bar('wait', 's-grey', function (n) { return esc(T(s.state === 'running' ? 'run.more_waiting' : 'run.not_moved', { n: n })); })
+      + bar('skip', 's-amber', function (n) { return esc(T('run.n_skipped', { n: n })); }) + bar('ok', 's-green', function (n) { return esc(T('run.n_done', { n: n })); }));
     var $l = $('#dbb-rlog'), atEnd = $l[0].scrollTop + $l[0].clientHeight >= $l[0].scrollHeight - 5;
     $l.text((s.log || []).join('\n')); if (atEnd) { $l[0].scrollTop = $l[0].scrollHeight; }
-    $('#dbb-runbox .dbb-gbar[data-g="rlog"] .c').text((s.log || []).length + ' lines');
+    $('#dbb-runbox .dbb-gbar[data-g="rlog"] .c').text(T('run.lines', { n: (s.log || []).length }));
     $('#dbb-stop').toggle(!!running).prop('disabled', false);
   }
   // the finished runs, folded under one bar
   function drawHist(r) {
     var hh = (r.history || []).filter(function (x) { return x; }), runs = 0, ab = 0, last = '';
     $.each(hh, function (i, l) { if (/ start /.test(l)) { runs++; } if (/ aborted /.test(l)) { ab++; } last = l.slice(0, 10); });
-    $('#dbb-hist').html(hh.length ? '<div class="dbb-gbar s-grey" data-g="hist"><span class="pm">' + (GOPEN.hist ? '&minus;' : '+') + '</span><span></span><span>Recent moves &middot; ' + runs + ' run' + (runs === 1 ? '' : 's') + '</span><span class="c">' + (ab ? ab + ' stopped &middot; ' : '') + 'last on ' + esc(last) + '</span></div><div class="dbb-grp" data-g="hist"' + (GOPEN.hist ? '' : ' hidden') + '><div class="dbb-log">' + esc(hh.join('\n')) + '</div></div>'
-      : '<div class="dbb-status dbb-mut">Nothing moved yet.</div>');
-    if ((!r.run || r.run.state === 'idle') && !$('#dbb-rmact').children().length) { $('#dbb-aband').text(hh.length ? 'nothing running · last move on ' + last : 'nothing running'); }
+    $('#dbb-hist').html(hh.length ? '<div class="dbb-gbar s-grey" data-g="hist"><span class="pm">' + (GOPEN.hist ? '&minus;' : '+') + '</span><span></span><span>' + esc(T('hist.title') + ' · ' + T('hist.runs', { n: runs })) + '</span><span class="c">' + (ab ? esc(T('hist.stopped', { n: ab })) + ' &middot; ' : '') + esc(T('hist.last', { d: last })) + '</span></div><div class="dbb-grp" data-g="hist"' + (GOPEN.hist ? '' : ' hidden') + '><div class="dbb-log">' + esc(hh.join('\n')) + '</div></div>'
+      : '<div class="dbb-status dbb-mut">' + esc(T('hist.none')) + '</div>');
+    if ((!r.run || r.run.state === 'idle') && !$('#dbb-rmact').children().length) { $('#dbb-aband').text(hh.length ? T('hist.idle_last', { d: last }) : T('hist.idle')); }
   }
   function poll() {
     clearTimeout(pollT);
@@ -3153,6 +4773,9 @@ $(function () {
 // Diskbox Balance: plan and move whole titles (a downloads folder and its hardlinked media files)
 // between array disks, keeping the hardlinks. Used by balance.php (web) and balance_run.php (background).
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/i18n.php';
+// texts the Balance page and the tile show (lang/en.json); the run log stays in English
+function bl_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 
 // DBX_BL_DIR (tests only): keep the settings and the /tmp files in that folder instead
 $bl_t = getenv('DBX_BL_DIR'); $bl_t = ($bl_t !== false && $bl_t !== '') ? rtrim($bl_t, '/') : '';
@@ -3231,13 +4854,13 @@ function bl_disks() {
 function bl_busy_reason($plan = false) {
     $v = db_var();
     if (getenv('DBX_DISKS') === false || getenv('DBX_DISKS') === '') {
-        if (($v['mdState'] ?? '') !== 'STARTED') { return 'the array is not started'; }
+        if (($v['mdState'] ?? '') !== 'STARTED') { return bl_tr('why.not_started'); }
         if (!$plan && (float)($v['mdResync'] ?? 0) > 0) {
             $pos = (float)($v['mdResyncPos'] ?? 0); $size = (float)($v['mdResyncSize'] ?? 0);
-            return 'a parity check or rebuild is running' . ($size > 0 ? ' (' . round($pos / $size * 100) . ' %)' : '');
+            return bl_tr('why.resync') . ($size > 0 ? ' (' . round($pos / $size * 100) . ' %)' : '');
         }
         $m = trim((string)@shell_exec('pgrep -x mover 2>/dev/null'));
-        if ($m !== '') { return 'the mover is running'; }
+        if ($m !== '') { return bl_tr('why.mover'); }
     }
     return '';
 }
@@ -3360,11 +4983,11 @@ function bl_scan_disk($disk, $pairs, $drain = false) {
         $size = 0.0; $why = '';
         foreach ($u['inodes'] as $ino => $v) {
             $size += $v[1];
-            if (count($inodeUnits[$ino]) > 1) { $why = 'shares files with another title'; }
-            elseif ($v[0] != ($found[$ino] ?? 0) && $why === '') { $why = 'has hardlinks outside the configured folders'; }
+            if (count($inodeUnits[$ino]) > 1) { $why = bl_tr('skip.shares'); }
+            elseif ($v[0] != ($found[$ino] ?? 0) && $why === '') { $why = bl_tr('skip.outside'); }
         }
-        if ($why === '' && $u['partial']) { $why = 'looks unfinished (partial download)'; }
-        if ($why === '' && $u['mtime'] > time() - 7200) { $why = 'changed in the last 2 hours'; }
+        if ($why === '' && $u['partial']) { $why = bl_tr('skip.partial'); }
+        if ($why === '' && $u['mtime'] > time() - 7200) { $why = bl_tr('skip.recent'); }
         $row = ['title' => $u['title'], 'pair' => $u['pair'], 'src' => $disk, 'size' => $size, 'nfiles' => count($u['files']), 'mtime' => (int)$u['mtime']];
         // what kind of files the title holds (extension => count), shown on the page instead of a guess
         $ext = []; foreach ($u['files'] as $x) { $e = strtolower(pathinfo((string)$x[0], PATHINFO_EXTENSION)); $e = $e === '' ? '(none)' : substr($e, 0, 8); $ext[$e] = ($ext[$e] ?? 0) + 1; }
@@ -3421,13 +5044,13 @@ function bl_make_plan() {
     $all = bl_disks();
     $want = array_filter((array)$cfg['disks'], 'is_string');
     $disks = $want ? array_intersect_key($all, array_flip($want)) : $all;
-    if (count($disks) < 2) { bl_plan_status('error', 'At least two array data disks must be included.'); return; }
+    if (count($disks) < 2) { bl_plan_status('error', bl_tr('plan.two_disks')); return; }
     $pairs = [];
     foreach ((array)$cfg['pairs'] as $p) {
         $dl = bl_path_ok($p['dl'] ?? ''); $md = trim((string)($p['media'] ?? '')) === '' ? '' : bl_path_ok($p['media']);
         if ($dl !== false && $md !== false) { $pairs[] = ['dl' => $dl, 'media' => $md]; }
     }
-    if (!$pairs) { bl_plan_status('error', 'No valid folder pair is configured.'); return; }
+    if (!$pairs) { bl_plan_status('error', bl_tr('plan.no_pair')); return; }
     if (in_array($cfg['mode'] ?? '', ['drain', 'remove'], true)) { bl_plan_drain($cfg, $disks, $pairs); return; }
 
     $sumSize = 0; $sumUsed = 0;
@@ -3437,7 +5060,7 @@ function bl_make_plan() {
     $note = '';
     if ($req === null || $req < $avg) {
         $T = $avg;
-        if ($req !== null) { $note = 'The array as a whole is ' . number_format($avg, 1) . '% full, so ' . number_format($req, 0) . '% is not reachable; balancing to ' . number_format($avg, 1) . '% instead.'; }
+        if ($req !== null) { $note = bl_tr('plan.target_raised', ['avg' => number_format($avg, 1), 'req' => number_format($req, 0)]); }
     } else { $T = $req; }
     $need = []; $excess = [];
     foreach ($disks as $n => $d) {
@@ -3446,9 +5069,9 @@ function bl_make_plan() {
         $need[$n] = max(0, $tb - $d['used']);
     }
     $totalExcess = array_sum($excess);
-    if ($totalExcess < 0.005 * $sumSize) { bl_plan_status('ready', 'The disks are already balanced.', ['target' => $T, 'avg' => $avg, 'note' => $note, 'disks' => array_values($disks), 'units' => [], 'skipped' => []]); bl_json_write(BL_PLANF, []); return; }
+    if ($totalExcess < 0.005 * $sumSize) { bl_plan_status('ready', bl_tr('plan.balanced'), ['target' => $T, 'avg' => $avg, 'note' => $note, 'disks' => array_values($disks), 'units' => [], 'skipped' => []]); bl_json_write(BL_PLANF, []); return; }
 
-    bl_plan_status('running', 'Scanning the disks...');
+    bl_plan_status('running', bl_tr('bal.scanning_long'));
     $donors = array_keys(array_filter($excess, function ($x, $n) use ($disks) { return $x >= 0.005 * $disks[$n]['size']; }, ARRAY_FILTER_USE_BOTH));
     usort($donors, function ($a, $b) use ($excess) { return $excess[$b] <=> $excess[$a]; });
     $units = []; $skipped = [];
@@ -3501,9 +5124,9 @@ function bl_plan_publish($units, $skipped, $disks, $extra) {
 // full gets the next title, largest titles first). What cannot be moved is listed (skipped titles and leftovers).
 function bl_plan_drain($cfg, $disks, $pairs) {
     $drain = array_values(array_intersect(array_filter((array)$cfg['drain'], 'is_string'), array_keys($disks)));
-    if (!$drain) { bl_plan_status('error', 'Tick at least one disk to empty.'); return; }
+    if (!$drain) { bl_plan_status('error', bl_tr('plan.tick_drain')); return; }
     $targets = array_values(array_diff(array_keys($disks), $drain));
-    if (!$targets) { bl_plan_status('error', 'At least one included disk must stay to receive the data.'); return; }
+    if (!$targets) { bl_plan_status('error', bl_tr('plan.one_stays')); return; }
     $used = []; $room = []; $sumSize = 0; $sumUsed = 0;
     foreach ($disks as $n => $d) { $sumUsed += $d['used']; }
     foreach ($targets as $n) { $used[$n] = $disks[$n]['used']; $room[$n] = $disks[$n]['free'] - max(5e9, 0.01 * $disks[$n]['size']); $sumSize += $disks[$n]['size']; }
@@ -3568,7 +5191,7 @@ if ($op === 'state') {
     unset($plan['units'], $plan['skipped']);
     $st = bl_json_read(BL_STATUS, ['state' => 'idle']);
     $running = bl_running();
-    if (!$running && ($st['state'] ?? '') === 'running' && time() - (int)($st['started'] ?? 0) > 20) { $st['state'] = 'error'; $st['msg'] = 'The worker stopped unexpectedly.'; }
+    if (!$running && ($st['state'] ?? '') === 'running' && time() - (int)($st['started'] ?? 0) > 20) { $st['state'] = 'error'; $st['msg'] = bl_tr('run.died'); }
     bl_out(true, ['cfg' => bl_cfg(), 'disks' => array_values(bl_disks()), 'plan' => $plan, 'run' => $st, 'running' => $running, 'busy' => bl_busy_reason(),
                   'history' => is_file(BL_LOG) ? array_slice(preg_split('/\r?\n/', trim((string)@file_get_contents(BL_LOG))), -8) : []]);
 }
@@ -3580,29 +5203,29 @@ if ($op === 'saveconfig') {
         if ($line === '') { continue; }
         $x = array_map('trim', explode('=', $line, 2));
         $dl = bl_path_ok($x[0]); $md = (($x[1] ?? '') === '') ? '' : bl_path_ok($x[1]);
-        if ($dl === false || $md === false) { bl_out(false, ['error' => 'Invalid folder line: ' . $line . ' (use paths relative to the disk root, for example data/downloads/FILM = data/media/film)']); }
+        if ($dl === false || $md === false) { bl_out(false, ['error' => bl_tr('err.bad_line', ['line' => $line])]); }
         $pairs[] = ['dl' => $dl, 'media' => $md];
     }
-    if (!$pairs) { bl_out(false, ['error' => 'Enter at least one downloads folder.']); }
+    if (!$pairs) { bl_out(false, ['error' => bl_tr('err.no_folder')]); }
     $t = trim((string)($_POST['target'] ?? ''));
-    if ($t !== '' && (!is_numeric($t) || $t < 5 || $t > 95)) { bl_out(false, ['error' => 'The target fill must be between 5 and 95 percent.']); }
+    if ($t !== '' && (!is_numeric($t) || $t < 5 || $t > 95)) { bl_out(false, ['error' => bl_tr('err.target')]); }
     $all = bl_disks();
     $dis = [];
     foreach ((array)($_POST['disks'] ?? []) as $d) { if (is_string($d) && isset($all[$d])) { $dis[] = $d; } }
     $mode = in_array($_POST['mode'] ?? '', ['drain', 'remove'], true) ? (string)$_POST['mode'] : 'balance';
     $drn = [];
     foreach ((array)($_POST['drain'] ?? []) as $d) { if (is_string($d) && isset($all[$d]) && (!$dis || in_array($d, $dis, true))) { $drn[] = $d; } }
-    if ($mode !== 'balance' && !$drn) { bl_out(false, ['error' => $mode === 'remove' ? 'Tick the disk(s) to remove.' : 'Tick the disk(s) to empty.']); }
-    if ($mode !== 'balance' && count($drn) >= count($dis ?: $all)) { bl_out(false, ['error' => 'At least one included disk must stay to receive the data.']); }
+    if ($mode !== 'balance' && !$drn) { bl_out(false, ['error' => $mode === 'remove' ? bl_tr('err.tick_remove') : bl_tr('err.tick_drain')]); }
+    if ($mode !== 'balance' && count($drn) >= count($dis ?: $all)) { bl_out(false, ['error' => bl_tr('plan.one_stays')]); }
     $c = ['pairs' => $pairs, 'target' => $t === '' ? '' : (string)(int)$t, 'strategy' => (($_POST['strategy'] ?? '') === 'big') ? 'big' : 'old', 'disks' => $dis, 'mode' => $mode, 'drain' => $drn];
-    if (!bl_json_write(BL_CFG, $c, 0600)) { bl_out(false, ['error' => 'could not write the settings']); }
+    if (!bl_json_write(BL_CFG, $c, 0600)) { bl_out(false, ['error' => bl_tr('err.write')]); }
     bl_out(true);
 }
 
 if ($op === 'plan') {
-    if (bl_running()) { bl_out(false, ['error' => 'A move is running.']); }
+    if (bl_running()) { bl_out(false, ['error' => bl_tr('err.running')]); }
     $why = bl_busy_reason(true);
-    if ($why !== '') { bl_out(false, ['error' => 'Cannot plan now: ' . $why . '.']); }
+    if ($why !== '') { bl_out(false, ['error' => bl_tr('err.cannot_plan', ['why' => $why])]); }
     $p = bl_json_read(BL_PLAN, []);
     if (($p['state'] ?? '') === 'running' && time() - (int)($p['t'] ?? 0) < 120) { bl_out(true); }
     if ((bl_cfg()['mode'] ?? '') === 'remove') { // Remove disks: emptying (step 3) only after the shares keep new files off them (step 2)
@@ -3621,19 +5244,19 @@ if ($op === 'getplan') {
 }
 
 if ($op === 'start') {
-    if (bl_running()) { bl_out(false, ['error' => 'A move is already running.']); }
+    if (bl_running()) { bl_out(false, ['error' => bl_tr('err.already')]); }
     $why = bl_busy_reason();
-    if ($why !== '') { bl_out(false, ['error' => 'Cannot start: ' . $why . '.']); }
+    if ($why !== '') { bl_out(false, ['error' => bl_tr('err.cannot_start', ['why' => $why])]); }
     $plan = bl_json_read(BL_PLAN, []);
-    if (($plan['state'] ?? '') !== 'ready' || empty($plan['units'])) { bl_out(false, ['error' => 'Make a plan first.']); }
+    if (($plan['state'] ?? '') !== 'ready' || empty($plan['units'])) { bl_out(false, ['error' => bl_tr('err.no_plan')]); }
     $sel = json_decode((string)($_POST['sel'] ?? ''), true);
-    if (!is_array($sel) || !$sel) { bl_out(false, ['error' => 'Nothing is selected.']); }
+    if (!is_array($sel) || !$sel) { bl_out(false, ['error' => bl_tr('err.nothing')]); }
     $disks = bl_disks();
     $byId = [];
     foreach ($plan['units'] as $u) { $byId[$u['id']] = $u; }
     $items = []; $perDst = [];
     foreach ($sel as $id => $dst) {
-        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)) { bl_out(false, ['error' => 'Invalid selection.']); }
+        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)) { bl_out(false, ['error' => bl_tr('err.bad_sel')]); }
         $items[] = ['id' => (string)$id, 'dst' => $dst];
         $perDst[$dst] = ($perDst[$dst] ?? 0) + $byId[$id]['size'];
     }
@@ -3691,17 +5314,17 @@ function rm_sel() {
 // '' = parity protects the array now; else why not. An empty parity slot (DISK_NP_DSBL, for example Parity 2 not used) is fine.
 function rm_parity_reason() {
     $v = rm_ini('var.ini', false);
-    if (($v['mdState'] ?? '') !== 'STARTED') { return 'the array is not started'; }
-    if ((float)($v['mdResync'] ?? 0) > 0) { return 'a parity check or rebuild is running'; }
+    if (($v['mdState'] ?? '') !== 'STARTED') { return bl_tr('why.not_started'); }
+    if ((float)($v['mdResync'] ?? 0) > 0) { return bl_tr('why.resync'); }
     $np = 0;
     foreach (rm_ini('disks.ini', true) as $k => $d) {
         if (!is_array($d) || (string)($d['device'] ?? '') === '') { continue; }
         $t = (string)($d['type'] ?? '');
         if ($t !== 'Parity' && $t !== 'Data') { continue; }
-        if (($d['status'] ?? '') !== 'DISK_OK') { return strtoupper($k) . ' is not OK (' . ($d['status'] ?? '?') . ')'; }
+        if (($d['status'] ?? '') !== 'DISK_OK') { return bl_tr('why.disk_not_ok', ['d' => strtoupper($k), 's' => ($d['status'] ?? '?')]); }
         if ($t === 'Parity') { $np++; }
     }
-    return $np ? '' : 'there is no parity disk';
+    return $np ? '' : bl_tr('why.no_parity');
 }
 
 // shares that may still write new files onto the chosen disks: [[share, [disks]]]. A share only on a pool (useCache=only)
@@ -3770,10 +5393,10 @@ function rm_status() {
 function rm_op($op) {
     $s = rm_status(); $sel = $s['sel']; $st = $s['st']; unset($s['st']);
     if ($op === 'rm_state') { bl_out(true, ['rm' => $s]); }
-    if (!$sel) { bl_out(false, ['error' => 'Choose Remove disks in the Setup and tick the disks first.']); }
+    if (!$sel) { bl_out(false, ['error' => bl_tr('rm.err.choose')]); }
     if ($op === 'rm_check') {
         if ($s['shares']) { bl_out(false, ['error' => 'Step 2 first: ' . count($s['shares']) . ' share(s) can still write to the disks.']); }
-        if ($s['balance']) { bl_out(false, ['error' => 'A move is running; check when it has finished.']); }
+        if ($s['balance']) { bl_out(false, ['error' => bl_tr('rm.err.move_check')]); }
         $res = []; $ok = true;
         foreach ($sel as $d) { $r = rm_scan($d); $res[$d] = $r; if ($r['n'] !== 0) { $ok = false; } }
         $st['check'] = ['t' => time(), 'ok' => $ok, 'res' => $res];
@@ -3783,17 +5406,17 @@ function rm_op($op) {
     if ($op === 'rm_clear') {
         $want = implode(' ', $sel);
         if (trim(preg_replace('/\s+/', ' ', (string)($_POST['confirm'] ?? ''))) !== $want) { bl_out(false, ['error' => 'Type exactly: ' . $want]); }
-        if ($s['parity'] !== '') { bl_out(false, ['error' => 'Cannot clear: ' . $s['parity'] . '.']); }
-        if ($s['busy'] !== '') { bl_out(false, ['error' => 'Cannot clear: ' . $s['busy'] . '.']); }
-        if ($s['balance']) { bl_out(false, ['error' => 'A move is running.']); }
-        if ($s['shares']) { bl_out(false, ['error' => 'Step 2 first: a share can still write to the disks.']); }
-        if (!($s['check']['ok'] ?? false)) { bl_out(false, ['error' => 'Step 4 first: check that the disks are empty.']); }
+        if ($s['parity'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['parity']])]); }
+        if ($s['busy'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['busy']])]); }
+        if ($s['balance']) { bl_out(false, ['error' => bl_tr('err.running')]); }
+        if ($s['shares']) { bl_out(false, ['error' => bl_tr('rm.err.step2')]); }
+        if (!($s['check']['ok'] ?? false)) { bl_out(false, ['error' => bl_tr('rm.err.step4')]); }
         foreach ($sel as $d) { // checked again now: something may have arrived since the check
             $r = rm_scan($d);
             if ($r['n'] !== 0) { $st['check'] = ['t' => time(), 'ok' => false, 'res' => [$d => $r]]; bl_json_write(RM_STATE, $st, 0600); bl_out(false, ['error' => strtoupper($d) . ' is not empty any more (' . $r['n'] . ' files). See step 4.']); }
             if (!$s['disks'][$d]['mounted']) { bl_out(false, ['error' => strtoupper($d) . ' is not mounted.']); }
             if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['run']) { bl_out(false, ['error' => strtoupper($d) . ' is being cleared already.']); }
-            if (rm_dev($d) === '') { bl_out(false, ['error' => 'The parity-protected device of ' . strtoupper($d) . ' was not found.']); }
+            if (rm_dev($d) === '') { bl_out(false, ['error' => bl_tr('rm.err.nodev', ['d' => strtoupper($d)])]); }
         }
         foreach ($sel as $d) {
             $n = (int)substr($d, 4); $dev = rm_dev($d); $mnt = bl_mnt() . '/' . $d; $img = '/tmp/xmini' . $n . '.img'; $log = '/tmp/dbx_clear_' . $n . '.log';
@@ -3819,7 +5442,7 @@ function rm_op($op) {
         bl_out(true, ['log' => $o]);
     }
     if ($op === 'rm_reset') {
-        foreach ($s['disks'] as $d => $i) { if ($i['zero'] && $i['zero']['run']) { bl_out(false, ['error' => 'A clearing is running.']); } }
+        foreach ($s['disks'] as $d => $i) { if ($i['zero'] && $i['zero']['run']) { bl_out(false, ['error' => bl_tr('rm.err.clearing')]); } }
         @unlink(RM_STATE);
         bl_out(true);
     }

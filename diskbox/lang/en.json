@@ -1,0 +1,1512 @@
+{
+ "_meta": {
+  "plugin": "Diskbox",
+  "language": "English",
+  "about": "Texts of the Diskbox dashboard tile (the array, parity, pools and unassigned disks with usage, temperature and SMART health), its settings page and the Diskbox Balance page (moves whole titles between array disks, empties or removes disks). A 'title' is one movie or season: its download folder with the hardlinked files in the media library. The Discord messages and the technical run log are not here. Product and Unraid names (Diskbox, Unraid, Main, Shares, New Config, Mover, SMART, Pre-fail, Old age, ZFS, XFS) follow Unraid's own translation or stay as they are."
+ },
+ "sub.zeroed": {
+  "text": "zeroed · ready to remove",
+  "note": "grey line under a data disk that was cleared with zeros for removal (Diskbox Balance, Remove disks) and can now be taken out."
+ },
+ "sub.zero_stopped": {
+  "text": "zeroing stopped at {p}%",
+  "note": "grey line under a disk whose zeroing stopped before the end."
+ },
+ "sub.zeroing": {
+  "text": "zeroing {p}%",
+  "note": "grey line under a disk being cleared with zeros for removal, followed by speed and time left."
+ },
+ "time.left": {
+  "text": "{t} left",
+  "note": "time left of a long disk job, {t} like \"1 h 33 m\". Short."
+ },
+ "health.unknown": {
+  "text": "SMART data not collected yet",
+  "note": "tooltip of the health icon (grey circle) before the first SMART reading."
+ },
+ "health.passed": {
+  "text": "SMART passed",
+  "note": "tooltip of the green check mark at the end of a disk row."
+ },
+ "health.failed": {
+  "text": "SMART health check failed",
+  "note": "tooltip of the red health icon, and a Needs attention line after the disk name."
+ },
+ "attn.smart_failing": {
+  "text": "SMART attribute failing",
+  "note": "Needs attention line after the disk name: a SMART attribute is below its failure threshold."
+ },
+ "attn.smart_warning": {
+  "text": "SMART warning",
+  "note": "Needs attention line after the disk name: a SMART attribute that warns (reallocated sectors and similar)."
+ },
+ "health.acked": {
+  "text": "SMART warning acknowledged",
+  "note": "tooltip of the health icon: the warning was acknowledged and is shown again only if it gets worse."
+ },
+ "health.errors": {
+  "one": "{n} read/write error",
+  "other": "{n} read/write errors",
+  "note": "tooltip of the health icon and a Needs attention line: Unraid counted read or write errors on the disk."
+ },
+ "attn.full": {
+  "text": "is {p}% full",
+  "note": "Needs attention line after the disk name, like \"DISK1 is 91.2% full\"."
+ },
+ "sub.idle": {
+  "text": "idle",
+  "note": "grey line under a disk: no reads or writes now."
+ },
+ "sub.reading": {
+  "text": "reading {r}",
+  "note": "grey line under a disk: read speed now, like \"reading 657 KB/s\"."
+ },
+ "sub.writing": {
+  "text": "writing {r}",
+  "note": "grey line under a disk: write speed now."
+ },
+ "sub.new": {
+  "text": "new disk",
+  "note": "grey line under a disk: a disk Unraid has just been given. Short."
+ },
+ "sub.invalid": {
+  "text": "invalid",
+  "note": "grey line under a disk: the disk is not valid in the array. Short."
+ },
+ "sub.emulated": {
+  "text": "emulated",
+  "note": "grey line under a disk: the disk is missing or disabled and its data is rebuilt from parity on the fly. Short."
+ },
+ "sub.missing": {
+  "text": "missing",
+  "note": "grey line under a disk: the disk is not there. Short."
+ },
+ "sub.disabled": {
+  "text": "disabled",
+  "note": "grey line under a disk: Unraid disabled the disk. Short."
+ },
+ "sub.unmountable": {
+  "text": "unmountable",
+  "note": "grey line under a data disk whose file system cannot be mounted."
+ },
+ "attn.unmountable": {
+  "text": "is unmountable",
+  "note": "Needs attention line after the disk name."
+ },
+ "sub.spun_down": {
+  "text": "spun down",
+  "note": "grey line under a disk that is spun down (asleep)."
+ },
+ "sub.valid": {
+  "text": "valid",
+  "note": "grey line under a parity disk: parity is valid. Short."
+ },
+ "attn.too_hot": {
+  "text": "is too hot",
+  "note": "Needs attention line after the disk name (red: above the critical temperature)."
+ },
+ "attn.hot": {
+  "text": "is running hot",
+  "note": "Needs attention line after the disk name (amber: above the warning temperature)."
+ },
+ "attn.emulated": {
+  "text": "is emulated",
+  "note": "Needs attention line after the disk name."
+ },
+ "attn.emulated_why": {
+  "text": "the disk is missing or disabled; its data is rebuilt from parity",
+  "note": "small text under the \"is emulated\" line."
+ },
+ "attn.invalid": {
+  "text": "is invalid",
+  "note": "Needs attention line after the disk name."
+ },
+ "health.zfs": {
+  "text": "ZFS pool {s}",
+  "note": "tooltip of the health icon of a ZFS pool that is not ONLINE ({s} is the ZFS state, like DEGRADED)."
+ },
+ "attn.pool_state": {
+  "text": "pool is {s}",
+  "note": "Needs attention line after the pool name ({s} is the ZFS state in lower case, like degraded)."
+ },
+ "sub.no_parity": {
+  "text": "missing · no disk assigned",
+  "note": "grey line of the placeholder PARITY row when the array has no parity disk at all."
+ },
+ "health.no_parity": {
+  "text": "no parity disk",
+  "note": "tooltip of the red health icon of the placeholder PARITY row."
+ },
+ "chip.protected": {
+  "text": "PARITY PROTECTED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): the array is protected by parity."
+ },
+ "chip.stopped": {
+  "text": "STOPPED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): the array is stopped."
+ },
+ "chip.unprotected": {
+  "text": "NOT PROTECTED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): no valid parity."
+ },
+ "chip.emulated": {
+  "text": "DISK EMULATED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a data disk is emulated from parity."
+ },
+ "chip.error": {
+  "text": "DISK ERROR",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a disk is invalid."
+ },
+ "chip.degraded": {
+  "text": "PARITY DEGRADED",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): one of two parity disks is not valid."
+ },
+ "chip.rebuild": {
+  "text": "REBUILD",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a disk is being rebuilt; a percentage follows."
+ },
+ "chip.sync": {
+  "text": "PARITY-SYNC",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): parity is being built; a percentage follows."
+ },
+ "chip.clear": {
+  "text": "CLEARING",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a new disk is being cleared; a percentage follows."
+ },
+ "chip.check": {
+  "text": "PARITY CHECK",
+  "note": "status chip on the right of the ARRAY card (upper case, coloured): a parity check runs; a percentage follows."
+ },
+ "attn.unprotected": {
+  "text": "Array is not protected",
+  "note": "Needs attention line (bold, red)."
+ },
+ "attn.no_parity": {
+  "text": "no parity disk assigned",
+  "note": "small text under \"Array is not protected\"."
+ },
+ "attn.parity_gone": {
+  "text": "the parity disk is missing or disabled",
+  "note": "small text under \"Array is not protected\"."
+ },
+ "attn.until_sync": {
+  "text": "until the parity sync ends",
+  "note": "small text under \"Array is not protected\" while a new parity disk is built."
+ },
+ "sub.checking": {
+  "text": "checking",
+  "note": "grey line under a parity disk during a parity check, followed by speed and time left."
+ },
+ "sub.building": {
+  "text": "building",
+  "note": "grey line under a parity disk being built (parity sync)."
+ },
+ "sub.rebuilding": {
+  "text": "rebuilding",
+  "note": "grey line under a data disk being rebuilt from parity."
+ },
+ "sub.clearing": {
+  "text": "clearing",
+  "note": "grey line under a new data disk Unraid is clearing, followed by speed and time left."
+ },
+ "bar.cleared": {
+  "text": "cleared",
+  "note": "label over the blue progress bar of a disk being cleared (how much is done)."
+ },
+ "attn.rebuilding": {
+  "text": "is being rebuilt from parity",
+  "note": "Needs attention line after the disk name while it is rebuilt."
+ },
+ "ua.pct_left": {
+  "text": "{p}% left",
+  "note": "over the progress bar of a running SMART self-test: what the disk reports as still to do. Short."
+ },
+ "ua.test_running": {
+  "text": "SMART test running",
+  "note": "grey line under an unassigned disk."
+ },
+ "ua.h_ago": {
+  "text": "{n} h ago",
+  "note": "how long ago the last SMART self-test ran, in power-on hours. Short."
+ },
+ "ua.d_ago": {
+  "text": "{n} d ago",
+  "note": "the same in days. Short."
+ },
+ "ua.passed": {
+  "text": "{t} test passed",
+  "note": "grey line under an unassigned disk: the last SMART self-test passed ({t} is its type as the disk says it, like Extended or Short)."
+ },
+ "ua.aborted": {
+  "text": "{t} test aborted",
+  "note": "grey line: the last SMART self-test was stopped."
+ },
+ "ua.aborted_at": {
+  "text": "{t} test aborted at {p}% left",
+  "note": "grey line: the last SMART self-test was stopped, with how much was left."
+ },
+ "ua.failed": {
+  "text": "{t} test failed: {e}",
+  "note": "grey line: the last SMART self-test failed, {e} is what the disk reports."
+ },
+ "attn.test_failed": {
+  "text": "failed its SMART self-test",
+  "note": "Needs attention line after the disk model and serial."
+ },
+ "ua.asleep": {
+  "text": "asleep",
+  "note": "grey line: the unassigned disk is spun down. Short."
+ },
+ "ua.reading_smart": {
+  "text": "reading SMART…",
+  "note": "grey line before the first SMART reading of an unassigned disk."
+ },
+ "pc.paused_step": {
+  "text": "preclear {s} paused",
+  "note": "grey line: a UD Preclear step is paused ({s} is the step name as the preclear script gives it, like zeroing)."
+ },
+ "pc.paused": {
+  "text": "paused",
+  "note": "label over the preclear progress bar while paused. Short."
+ },
+ "pc.running": {
+  "text": "preclear: {s}",
+  "note": "grey line while a preclear runs without a percentage ({s} is the preclear script's own text)."
+ },
+ "pc.failed_s": {
+  "text": "preclear failed: {s}",
+  "note": "grey line: the preclear failed."
+ },
+ "pc.failed": {
+  "text": "preclear failed",
+  "note": "Needs attention line after the disk model and serial."
+ },
+ "pc.done": {
+  "text": "precleared",
+  "note": "grey line: the preclear finished, followed by its date."
+ },
+ "pc.stopped": {
+  "text": "preclear stopped: {s}",
+  "note": "grey line: the preclear stopped before the end."
+ },
+ "bar.preclear": {
+  "text": "preclear",
+  "note": "label over the progress bar of a running preclear. Short."
+ },
+ "bar.test": {
+  "text": "test",
+  "note": "label over the progress bar of a running SMART self-test. Short."
+ },
+ "bal.stopped_unexpectedly": {
+  "text": "the move stopped unexpectedly",
+  "note": "red line on the Balance card of the tile when the background move died."
+ },
+ "tile.reading": {
+  "text": "Reading disks…",
+  "note": "grey line under the tile title before the first answer."
+ },
+ "tile.loading": {
+  "text": "Loading…",
+  "note": "grey placeholder in the tile body before the first answer."
+ },
+ "tile.open_main": {
+  "text": "Open Main",
+  "note": "tooltip of the home icon in the tile header (opens Unraid's Main page)."
+ },
+ "tile.settings": {
+  "text": "Diskbox settings",
+  "note": "tooltip of the gear icon in the tile header."
+ },
+ "bar.built": {
+  "text": "built",
+  "note": "label over the blue progress bar of a disk being built or rebuilt (how much is done). Short."
+ },
+ "bar.checked": {
+  "text": "checked",
+  "note": "label over the amber progress bar of a parity check (how much is checked). Short."
+ },
+ "attn.title": {
+  "text": "Needs attention",
+  "note": "title of the warning list at the top of the tile (upper case on screen), followed by the count."
+ },
+ "attn.free": {
+  "text": "{s} free",
+  "note": "small text under a \"is 91% full\" line: free space, like \"1.2 TB free\"."
+ },
+ "attn.ack": {
+  "text": "Acknowledge",
+  "note": "small button next to a SMART warning. Short."
+ },
+ "attn.ack_tip": {
+  "text": "Accept this warning; Diskbox will report it again only if it gets worse",
+  "note": "tooltip of the Acknowledge button."
+ },
+ "attn.ack_confirm": {
+  "text": "Acknowledge the SMART warning for {name}?\n\nIt stays on the disk, but Diskbox will warn again only when it gets worse.",
+  "note": "confirmation box of Acknowledge. Keep the two line breaks (\\n\\n)."
+ },
+ "hd.array": {
+  "text": "Array",
+  "note": "band title of the array part (upper case on screen)."
+ },
+ "hd.devices": {
+  "one": "{n} device",
+  "other": "{n} devices",
+  "note": "count after a band title (Array · 4 devices) and in the line under the tile title."
+ },
+ "card.array": {
+  "text": "ARRAY",
+  "note": "big title of the array card. Upper case."
+ },
+ "card.used_of": {
+  "text": "{used} used of {size}",
+  "note": "line over the array usage bar, like \"18.24 TB used of 32 TB\"."
+ },
+ "bal.moving": {
+  "one": "Moving {ok} of {n} title",
+  "other": "Moving {ok} of {n} titles",
+  "note": "Balance card on the tile while Diskbox Balance moves data ({n} titles in all, {ok} done)."
+ },
+ "time.h_ago": {
+  "text": "{n} h ago",
+  "note": "how long ago the Balance move ended. Short."
+ },
+ "time.m_ago": {
+  "text": "{n} m ago",
+  "note": "how long ago the Balance move ended. Short."
+ },
+ "bal.finished": {
+  "one": "Finished: {ok} of {n} title, {size}",
+  "other": "Finished: {ok} of {n} titles, {size}",
+  "note": "Balance card on the tile after the move ended ({size} moved, like 1.2 TB)."
+ },
+ "bal.stopped": {
+  "one": "Stopped: {ok} of {n} title, {size}",
+  "other": "Stopped: {ok} of {n} titles, {size}",
+  "note": "Balance card after the move was stopped by hand."
+ },
+ "bal.error": {
+  "one": "Stopped with an error: {ok} of {n} title, {size}",
+  "other": "Stopped with an error: {ok} of {n} titles, {size}",
+  "note": "Balance card after the move stopped because of an error (the error is shown under it)."
+ },
+ "bal.skipped": {
+  "text": "{n} skipped",
+  "note": "added after the Balance result: titles left out (changed or busy)."
+ },
+ "hd.balance": {
+  "text": "Balance",
+  "note": "band title of the Balance card on the tile (Diskbox Balance, the tool that moves data between disks). Upper case on screen."
+ },
+ "hd.pool": {
+  "text": "Pool",
+  "note": "band title of a pool (cache) part. Upper case on screen."
+ },
+ "hd.unassigned": {
+  "text": "Unassigned",
+  "note": "band title of the disks not in the array or a pool. Upper case on screen."
+ },
+ "sum.unavailable": {
+  "text": "Unavailable",
+  "note": "line under the tile title when the disk data cannot be read."
+ },
+ "sum.stopped": {
+  "text": "array stopped",
+  "note": "part of the line under the tile title."
+ },
+ "sum.used_of": {
+  "text": "{used} of {size} used",
+  "note": "part of the line under the tile title, like \"18.24 TB of 32 TB used\"."
+ },
+ "sum.hottest": {
+  "text": "hottest {t}°C",
+  "note": "part of the line under the tile title: the warmest disk."
+ },
+ "sum.tests": {
+  "one": "{n} SMART test running",
+  "other": "{n} SMART tests running",
+  "note": "part of the line under the tile title."
+ },
+ "sum.clearing": {
+  "text": "{disks} clearing {p}%",
+  "note": "part of the line under the tile title while Unraid clears a new disk ({disks} like \"Disk 2\")."
+ },
+ "sum.preclears": {
+  "one": "{n} preclear running",
+  "other": "{n} preclears running",
+  "note": "part of the line under the tile title."
+ },
+ "err.nodata": {
+  "text": "No disk information from Unraid yet",
+  "note": "message in the tile right after a reboot."
+ },
+ "err.unavailable": {
+  "text": "Disk data unavailable",
+  "note": "message in the tile when the data cannot be read."
+ },
+ "set.h.util": {
+  "text": "Utilization",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.temp": {
+  "text": "Temperature",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.health": {
+  "text": "Health",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.acked": {
+  "text": "Acknowledged SMART warnings",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.discord": {
+  "text": "Discord alerts",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.warn_use": {
+  "text": "Warning utilization (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.crit_use": {
+  "text": "Critical utilization (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.hot_temp": {
+  "text": "Hot temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.max_temp": {
+  "text": "Maximum temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.smart": {
+  "text": "Read SMART health in the background:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_hook": {
+  "text": "Webhook for the system channel:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_ping": {
+  "text": "Ping on red alerts:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_array": {
+  "text": "Array protection, emulated or failed disk:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_temp": {
+  "text": "Disk temperature (Hot and Maximum limits above):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_smart": {
+  "text": "SMART problems (Pre-fail or Old age):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_fill": {
+  "text": "Disk and pool fill level (warning, critical %):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_pool": {
+  "text": "ZFS pool health:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_parity": {
+  "text": "Parity check and rebuild (start, result):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_utest": {
+  "text": "SMART self-test of an unassigned disk (passed, aborted, failed):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.n_remind": {
+  "text": "Repeat a red alert every (hours):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_on": {
+  "text": "Weekly summary:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.try": {
+  "text": "Try it:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.warn_hint": {
+  "text": "amber below Needs attention; empty = Unraid's value ({v}%)",
+  "note": "text next to the warning utilization field."
+ },
+ "set.crit_hint": {
+  "text": "red; empty = Unraid's value ({v}%)",
+  "note": "text next to the critical utilization field."
+ },
+ "set.hot_hint": {
+  "text": "hard disks, amber; empty = Unraid's value ({v}°C)",
+  "note": "text next to the hot temperature field."
+ },
+ "set.max_hint": {
+  "text": "hard disks, red; empty = Unraid's value ({v}°C)",
+  "note": "text next to the maximum temperature field."
+ },
+ "set.acked_at": {
+  "text": "acknowledged {t}",
+  "note": "an acknowledged SMART warning: when ({t} is a date and time)."
+ },
+ "set.acked_attr": {
+  "text": "(attribute {a})",
+  "note": "after the date: which SMART attribute and its raw value, like \"(attribute 187: 2)\"."
+ },
+ "set.btn.forget": {
+  "text": "Forget",
+  "note": "button: forgets the acknowledgement, so the warning counts again. Short."
+ },
+ "set.saved_keep": {
+  "text": "(saved, leave empty to keep)",
+  "note": "grey text inside the empty webhook field: a webhook is saved; leaving the field empty keeps it."
+ },
+ "set.hook_hint": {
+  "text": "the saved webhook is not sent to the page; type - to remove it",
+  "note": "grey text next to the webhook field: the saved webhook is never shown; typing a single - removes it."
+ },
+ "set.ping_ph": {
+  "text": "your Discord user ID, role:ID, @here or @everyone",
+  "note": "grey example text inside the ping field. Keep role:ID, @here and @everyone as they are."
+ },
+ "set.ping_hint": {
+  "text": "empty = no ping. Amber alerts and all-clear messages never ping",
+  "note": "text next to the ping field."
+ },
+ "set.utest_hint": {
+  "text": "one message when a test that was running is over",
+  "note": "text next to the checkbox."
+ },
+ "set.never_hint": {
+  "text": "0 = never",
+  "note": "text next to the repeat hours field."
+ },
+ "date.long.mon": {
+  "text": "Monday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.tue": {
+  "text": "Tuesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.wed": {
+  "text": "Wednesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.thu": {
+  "text": "Thursday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.fri": {
+  "text": "Friday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sat": {
+  "text": "Saturday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sun": {
+  "text": "Sunday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "set.oclock": {
+  "text": "o'clock",
+  "note": "after the hour field of the weekly summary (0 to 23)."
+ },
+ "set.btn.test": {
+  "text": "Send test message",
+  "note": "button: sends a short test message to the webhook."
+ },
+ "set.btn.sample": {
+  "text": "Send sample alerts",
+  "note": "button: sends examples of the alert messages."
+ },
+ "set.btn.weekly": {
+  "text": "Send weekly summary now",
+  "note": "button: sends the weekly summary now."
+ },
+ "set.btn.apply": {
+  "text": "Apply",
+  "note": "button: saves the settings (Unraid's usual word). Short."
+ },
+ "set.btn.done": {
+  "text": "Done",
+  "note": "button: leaves the settings page (Unraid's usual word). Short."
+ },
+ "set.help_tile": {
+  "text": "Diskbox replaces the Disk Viewer tile. The array is shown as one card with a parity row underneath: green when the array is protected, amber while a parity check or rebuild runs, red when there is no protection, a data disk is emulated, or a disk has failed. The Needs attention list collects disks that are too full, too hot, show SMART warnings or are in a bad state.",
+  "note": "grey paragraph at the bottom of the settings page. \"Disk Viewer\" is the name of Unraid's own tile; \"Needs attention\" names the list on the tile."
+ },
+ "set.help_smart": {
+  "text": "Temperature limits for SSDs and NVMe devices are taken from Unraid's own display settings (Settings, Display Settings). SMART data is collected every 20 minutes with <code>smartctl</code>; disks that are spun down are skipped, so Diskbox never wakes a sleeping disk. Utilization and temperature colours use the values above, or Unraid's own when a field is empty.",
+  "note": "grey paragraph at the bottom of the settings page. Settings, Display Settings is Unraid's menu: use Unraid's own words. May contain simple HTML tags: keep them."
+ },
+ "set.help_discord": {
+  "text": "Discord alerts: Unraid checks every minute and posts to the webhook only when something changes: a problem appears, gets worse, or is over. A temperature alert needs three minutes in a row and an all-clear only after the disk has cooled two degrees; red alerts can repeat after the chosen number of hours. A SMART warning can be acknowledged with the button next to it on the dashboard tile; it then counts again only when it gets worse (the attribute's raw value rises). A failed health check cannot be acknowledged. SMART alerts name each attribute, say whether it is Pre-fail or Old age, and show its raw value, its previous value, and the value, worst and threshold. The buttons use the saved settings, so press Apply first. Create a webhook in Discord under channel settings, Integrations, Webhooks.",
+  "note": "grey paragraph at the bottom of the settings page. Pre-fail and Old age are SMART terms: keep them as smartctl shows them."
+ },
+ "set.sending": {
+  "text": "Sending...",
+  "note": "message next to the test buttons while sending."
+ },
+ "set.sent": {
+  "text": "Sent.",
+  "note": "message next to the test buttons after sending."
+ },
+ "set.not_sent": {
+  "text": "Not sent: {e}",
+  "note": "message when sending failed; {e} is the reason."
+ },
+ "set.unknown_error": {
+  "text": "unknown error",
+  "note": "reason when none is known."
+ },
+ "set.forgotten": {
+  "text": "forgotten: a warning on this disk counts again",
+  "note": "text after pressing Forget."
+ },
+ "set.saving_s": {
+  "text": "Saving...",
+  "note": "message next to Apply while saving."
+ },
+ "set.saved": {
+  "text": "Saved. The dashboard picks it up within a few seconds.",
+  "note": "message next to Apply after saving."
+ },
+ "set.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message next to Apply when saving failed; {e} is the reason."
+ },
+ "save.err_range": {
+  "text": "{name} must be between {min} and {max}",
+  "note": "error after \"Not saved:\" ({name} is the setting's field name, like warn_use)."
+ },
+ "save.err_number": {
+  "text": "{name} must be a number between {min} and {max}",
+  "note": "error after \"Not saved:\"."
+ },
+ "save.err_hook": {
+  "text": "the webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_ping": {
+  "text": "the ping must be a Discord user ID, role:<role ID>, @here or @everyone",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_fill": {
+  "text": "the fill warning cannot be higher than the critical value",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_write": {
+  "text": "could not write the settings file",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "test.no_hook": {
+  "text": "No valid Discord webhook is saved yet. Enter it, press Apply, then try again.",
+  "note": "error after \"Not sent:\" of the test buttons."
+ },
+ "test.no_data": {
+  "text": "No disk data available right now.",
+  "note": "error after \"Not sent:\" of Send sample alerts."
+ },
+ "bal.intro": {
+  "text": "Whole titles (a downloads folder together with its hardlinked media files) are moved between the array disks, and the hardlinks are kept. Nothing moves until you press Move. The paths in <code>/mnt/user</code> do not change, so qBittorrent, Sonarr, Radarr and Jellyfin keep working.",
+  "note": "lead line at the top of the Diskbox Balance page. A \"title\" is one movie or season: its download folder and the hardlinked files in the media library. May contain simple HTML tags: keep them."
+ },
+ "bal.h.activity": {
+  "text": "Activity",
+  "note": "band title (upper case on screen)."
+ },
+ "bal.btn.stop": {
+  "text": "Stop after the current file set",
+  "note": "button while a move runs: stops after the title being copied now."
+ },
+ "bal.log_run": {
+  "text": "Log of this run",
+  "note": "foldable bar with the technical log of the current move."
+ },
+ "bal.h.setup": {
+  "text": "Setup",
+  "note": "band title (upper case on screen)."
+ },
+ "bal.f.pairs": {
+  "text": "Folders on the disk (one pair per line):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.mode": {
+  "text": "What to do:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.target": {
+  "text": "Target fill (%):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.strategy": {
+  "text": "Which titles first:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.disks": {
+  "text": "Disks included:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "bal.f.drain": {
+  "text": "Disks to empty:",
+  "note": "label of the disk choice in the Empty disks mode."
+ },
+ "bal.f.remove": {
+  "text": "Disks to remove:",
+  "note": "label of the disk choice in the Remove disks mode."
+ },
+ "bal.f.pairs_hint": {
+  "text": "downloads folder = media folder with the hardlinks, relative to the disk root (for example the share <code>data</code>, folder <code>downloads/FILM</code>). Every folder directly inside the downloads folder is one title. The media part can be left out.",
+  "note": "hint under the folder pairs field. Keep \"downloads folder = media folder\" as the format of a line. May contain simple HTML tags: keep them."
+ },
+ "bal.mode.balance": {
+  "text": "Spread the data evenly",
+  "note": "choice of What to do."
+ },
+ "bal.mode.drain": {
+  "text": "Empty disks (move everything off them)",
+  "note": "choice of What to do."
+ },
+ "bal.mode.remove": {
+  "text": "Remove disks (empty, check, clear, take out)",
+  "note": "choice of What to do."
+ },
+ "bal.f.target_ph": {
+  "text": "average",
+  "note": "grey text in the empty target fill field."
+ },
+ "bal.f.target_hint": {
+  "text": "empty = equal fill on all included disks (the array average); a target below the average is not reachable and is raised to it",
+  "note": "hint next to the target fill field."
+ },
+ "bal.strat.old": {
+  "text": "Oldest first",
+  "note": "choice: which titles are moved first."
+ },
+ "bal.strat.big": {
+  "text": "Largest first",
+  "note": "choice: which titles are moved first."
+ },
+ "bal.f.drain_hint": {
+  "text": "Everything in the folders above is moved to the other included disks: the titles with their hardlinks, the media files without a download (also .nfo, pictures, subtitles) and the items in the Seedbox trash (.seedbox_trash). The plan lists what would still stay on the disk, so you can see whether it can be removed from the array.",
+  "note": "hint under the disks to empty. .seedbox_trash is a folder name: keep it."
+ },
+ "bal.btn.plan": {
+  "text": "Make a plan",
+  "note": "main button of the Setup: scans the disks and suggests the moves."
+ },
+ "rm.h2": {
+  "text": "Keep new files off them",
+  "note": "band title of step 2 of Remove disks (upper case on screen)."
+ },
+ "rm.s2": {
+  "text": "Change every share listed here in <a href=\"/Shares\">Shares</a>: put the disks in <b>Excluded disk(s)</b> (or take them out of Included disk(s)). Diskbox only checks; it changes no share.",
+  "note": "lead line of step 2. Shares, Excluded disk(s) and Included disk(s) are Unraid's words: use Unraid's own translation. Keep the link. May contain simple HTML tags: keep them."
+ },
+ "rm.btn.check_again": {
+  "text": "Check again",
+  "note": "button of step 2: looks at the shares again."
+ },
+ "rm.h3": {
+  "text": "Empty them",
+  "note": "band title of step 3 (upper case on screen)."
+ },
+ "rm.s3": {
+  "text": "Make a plan in the Setup above: the plan (below) moves everything in the folders of the Setup to the other disks, then press Move. What it does not watch (for example appdata) is listed under the plan; move it yourself.",
+  "note": "lead line of step 3."
+ },
+ "rm.h4": {
+  "text": "Check they are empty",
+  "note": "band title of step 4 (upper case on screen)."
+ },
+ "rm.s4": {
+  "text": "Lists every file still on the disks, hidden ones too (empty folders do not count). Clearing is possible only when nothing is left.",
+  "note": "lead line of step 4."
+ },
+ "rm.btn.check": {
+  "text": "Check the disks",
+  "note": "button of step 4."
+ },
+ "rm.h5": {
+  "text": "Clear them",
+  "note": "band title of step 5 (upper case on screen)."
+ },
+ "rm.s5": {
+  "text": "Each disk is unmounted and filled with zeros through parity (side by side), so parity stays valid without it: about 7 hours per TB. <b>This erases everything on the disk.</b> If the server stops meanwhile, Unraid shows the disk as Unmountable after the restart: do <b>not</b> format it, start the clearing again here.",
+  "note": "lead line of step 5: a strong warning. Unmountable is Unraid's word. May contain simple HTML tags: keep them."
+ },
+ "rm.h6": {
+  "text": "Take them out of the array",
+  "note": "band title of step 6 (upper case on screen)."
+ },
+ "bal.h.plan": {
+  "text": "Plan",
+  "note": "band title (upper case on screen)."
+ },
+ "bal.legend": {
+  "text": "blue = fill now · green = after the ticked moves (amber: it grows, red: nearly full) · striped grey = the file system's own space on a disk to empty (metadata, not data; it goes with the disk) · the orange mark is the target",
+  "note": "small legend under the disk bars of the plan."
+ },
+ "bal.selall": {
+  "text": "Select / deselect all",
+  "note": "tooltip of a checkbox that ticks every row."
+ },
+ "bal.all_titles": {
+  "text": "all titles",
+  "note": "label next to the tick-all checkbox."
+ },
+ "bal.tick_hint": {
+  "text": "the suggestion is ticked; change the ticks or the target disk as you like",
+  "note": "grey hint next to it."
+ },
+ "bal.skipped_bar": {
+  "text": "Titles that are left out",
+  "note": "foldable bar of the titles the plan cannot move (the reason is on each row)."
+ },
+ "bal.btn.go": {
+  "text": "Move the selected titles",
+  "note": "main button under the plan when nothing or the count is not known yet."
+ },
+ "bal.foot": {
+  "text": "Each title is copied, checked (sizes and hardlinks), and only then removed from the old disk. If a check fails the copy is removed and the old files stay. Moving runs in the background at idle disk priority; it needs the array started and no parity check, rebuild or mover running. Closing this page does not stop it.",
+  "note": "grey paragraph at the bottom of the page. \"mover\" is Unraid's Mover."
+ },
+ "dur.hm": {
+  "text": "{h} h {m} m",
+  "note": "a duration in hours and minutes. Short."
+ },
+ "dur.ms": {
+  "text": "{m} m {s} s",
+  "note": "a duration in minutes and seconds. Short."
+ },
+ "bal.no_disks": {
+  "text": "No array data disks found (is the array started?)",
+  "note": "text in the Disks included field when none is found."
+ },
+ "bal.used": {
+  "text": "{s} used",
+  "note": "small chip next to a disk in the disk choice, like \"8.48 TB used\"."
+ },
+ "bal.n_disks": {
+  "one": "{n} array disk",
+  "other": "{n} array disks",
+  "note": "grey text on the right of the Setup band."
+ },
+ "rm.can_write": {
+  "text": "can still write new files to {d}",
+  "note": "grey line under a share in step 2 ({d} disk names like DISK2)."
+ },
+ "rm.change_it": {
+  "text": "change it",
+  "note": "link on the right of a share in step 2 (opens the share in Unraid)."
+ },
+ "rm.no_share": {
+  "text": "No share writes to {d}",
+  "note": "row of step 2 when every share is right."
+ },
+ "rm.no_share_sub": {
+  "text": "every share excludes them or uses only a pool",
+  "note": "grey line under it."
+ },
+ "rm.done": {
+  "text": "done",
+  "note": "state of a finished step (right of its band and its rows). Short."
+ },
+ "rm.n_shares": {
+  "one": "{n} share to change",
+  "other": "{n} shares to change",
+  "note": "state on the right of the step 2 band."
+ },
+ "rm.not_mounted": {
+  "text": "not mounted",
+  "note": "grey line under a disk in step 3."
+ },
+ "rm.used_fs": {
+  "text": "{s} used (with the file system's own space)",
+  "note": "grey line under a disk in step 3."
+ },
+ "rm.emptied": {
+  "text": "emptied",
+  "note": "state of a disk after step 3. Short."
+ },
+ "rm.after": {
+  "text": "after step {n}",
+  "note": "state of a step that waits for an earlier one. Short."
+ },
+ "rm.moving": {
+  "text": "moving",
+  "note": "state of step 3 while the move runs. Short."
+ },
+ "rm.todo": {
+  "text": "to do",
+  "note": "state of a step that can be done now. Short."
+ },
+ "rm.empty": {
+  "text": "empty",
+  "note": "state of a disk in step 4: nothing is left on it. Short."
+ },
+ "rm.files": {
+  "one": "{n} file",
+  "other": "{n} files",
+  "note": "how many files are on a disk."
+ },
+ "rm.unreadable": {
+  "text": "could not be read",
+  "note": "step 4: the disk could not be listed."
+ },
+ "rm.files_left": {
+  "one": "{n} file left, {s}",
+  "other": "{n} files left, {s}",
+  "note": "step 4: what is still on the disk."
+ },
+ "rm.not_empty": {
+  "text": "not empty",
+  "note": "state of a disk in step 4. Short."
+ },
+ "rm.checked_at": {
+  "text": "checked {t}",
+  "note": "grey line under step 4: when the check ran."
+ },
+ "rm.left": {
+  "text": "{t} left",
+  "note": "time left of the clearing. Short."
+ },
+ "rm.zeros": {
+  "text": "writing zeros through parity",
+  "note": "grey line under a disk being cleared in step 5."
+ },
+ "rm.clearing": {
+  "text": "clearing",
+  "note": "state of a disk being cleared. Short."
+ },
+ "rm.clearing_d": {
+  "text": "Clearing {d}",
+  "note": "row title in Activity while a disk is cleared ({d} like DISK2)."
+ },
+ "rm.zeroed": {
+  "text": "{d} zeroed",
+  "note": "row of step 5 when a disk is cleared."
+ },
+ "rm.zeroed_sub": {
+  "text": "checked: the end of the disk reads zero",
+  "note": "grey line under it."
+ },
+ "rm.ready": {
+  "text": "ready to remove",
+  "note": "state of a cleared disk. Short."
+ },
+ "rm.stopped_at": {
+  "text": "{d}: clearing stopped at {p} %",
+  "note": "row of step 5 when the clearing stopped before the end."
+ },
+ "rm.see_log_again": {
+  "text": "see the log; start it again when the reason is fixed",
+  "note": "grey line under it."
+ },
+ "rm.not_started": {
+  "text": "{d}: the clearing did not start",
+  "note": "row of step 5."
+ },
+ "rm.see_log": {
+  "text": "see the log",
+  "note": "grey line under it."
+ },
+ "rm.type_confirm": {
+  "text": "Type {names} to confirm:",
+  "note": "step 5: the disk names must be typed in the field next to it before the Clear button works. {names} is shown in bold."
+ },
+ "rm.btn.clear": {
+  "text": "Clear {d}",
+  "note": "the button that starts clearing ({d} the disk names). Short."
+ },
+ "rm.log": {
+  "text": "Log of the clearing",
+  "note": "foldable bar with the log of the zeroing."
+ },
+ "rm.running": {
+  "text": "running",
+  "note": "state of step 5 while it runs. Short."
+ },
+ "rm.log_empty": {
+  "text": "empty",
+  "note": "shown in brackets when a log has no line yet."
+ },
+ "rm.out": {
+  "text": "{d} are out of the array",
+  "note": "row of step 6 when the disks are no longer in the array."
+ },
+ "rm.btn.finish": {
+  "text": "Finish",
+  "note": "button: ends the Remove disks job. Short."
+ },
+ "rm.nc1": {
+  "text": "Main &rarr; <b>Stop</b> the array.",
+  "note": "step 6, first instruction. Main and Stop are Unraid's words: use Unraid's own translation. May contain simple HTML tags: keep them."
+ },
+ "rm.nc2": {
+  "text": "Tools &rarr; <b>New Config</b> &rarr; Preserve current assignments: <b>All</b> &rarr; Apply.",
+  "note": "step 6, second instruction (Unraid's menu words). May contain simple HTML tags: keep them."
+ },
+ "rm.nc3": {
+  "text": "Main &rarr; set {d} to <b>no device</b>; leave the other slots as they are.",
+  "note": "step 6, third instruction ({d} disk names; \"no device\" is Unraid's choice in the slot list). May contain simple HTML tags: keep them."
+ },
+ "rm.nc4": {
+  "text": "Tick <b>Parity is already valid</b> &rarr; <b>Start</b>.",
+  "note": "step 6, fourth instruction (Unraid's words). May contain simple HTML tags: keep them."
+ },
+ "rm.nc5": {
+  "text": "Shut down and take out: {ids}.",
+  "note": "step 6, last instruction ({ids} disk names and serials)."
+ },
+ "rm.ready_turn": {
+  "text": "Ready: your turn",
+  "note": "row of step 6 when the steps in Unraid can be done."
+ },
+ "rm.your_turn": {
+  "text": "your turn",
+  "note": "state on the right of the step 6 band. Short."
+ },
+ "rm.aband": {
+  "text": "clearing {d}",
+  "note": "grey text on the right of the Activity band while disks are cleared."
+ },
+ "rm.checking": {
+  "text": "Checking...",
+  "note": "the Check the disks button while it runs."
+ },
+ "rm.confirm": {
+  "text": "Clear {d}?\n\nEach disk is unmounted and every byte on it is overwritten with zeros (through parity, so parity stays valid). This cannot be undone.",
+  "note": "confirmation box before clearing. Keep the two line breaks (\\n\\n)."
+ },
+ "bal.plus_fs": {
+  "text": "+ {s} file system",
+  "note": "small text: the file system's own space that stays on a disk to empty."
+ },
+ "bal.chip_empty": {
+  "text": "empty",
+  "note": "red chip next to a disk that is to be emptied. Short."
+ },
+ "bal.bars_tip": {
+  "text": "now {now}%, after {after}%",
+  "note": "tooltip of the two bars of a disk in the plan."
+ },
+ "bal.bars_tip_fs": {
+  "text": ", of which {s} is the file system's own space (metadata), not data",
+  "note": "added to that tooltip on a disk to empty (starts with a comma)."
+ },
+ "bal.n_titles": {
+  "one": "{n} title",
+  "other": "{n} titles",
+  "note": "count of titles (one movie or season each)."
+ },
+ "bal.n_media": {
+  "one": "{n} media-only item",
+  "other": "{n} media-only items",
+  "note": "count of folders that have only media files without a download."
+ },
+ "bal.ticked": {
+  "text": "{sel} of {n} ticked",
+  "note": "how many rows of a disk bar are ticked."
+ },
+ "bal.to": {
+  "text": "to {d}",
+  "note": "where the ticked titles go, like \"to DISK2 (12)\"."
+ },
+ "bal.btn.go_n": {
+  "one": "Move {n} title ({s})",
+  "other": "Move {n} titles ({s})",
+  "note": "main button under the plan with the count and size."
+ },
+ "bal.waits": {
+  "text": "Moving waits: {why}.",
+  "note": "amber text next to the Move button when the move cannot start now ({why} like \"a parity check or rebuild is running\")."
+ },
+ "bal.pb_empty": {
+  "text": "empty {d}",
+  "note": "grey text on the right of the Plan band in the Empty disks mode ({d} disk names)."
+ },
+ "bal.pb_spread": {
+  "text": "spread evenly",
+  "note": "grey text on the right of the Plan band."
+ },
+ "bal.pb_spread_to": {
+  "text": "spread evenly to {p}%",
+  "note": "grey text on the right of the Plan band with a target fill."
+ },
+ "bal.selall_disk": {
+  "text": "Select / deselect all from this disk",
+  "note": "tooltip of the checkbox in a disk bar of the plan."
+ },
+ "bal.from": {
+  "text": "From {d}",
+  "note": "title of a foldable bar of the plan: the titles that leave this disk."
+ },
+ "bal.also_on": {
+  "text": "the folder is also on {d}",
+  "note": "grey line under a media-only folder: the same folder exists on another disk."
+ },
+ "bal.no_other": {
+  "text": "on no other disk",
+  "note": "grey line under a media-only folder."
+ },
+ "bal.vid_nodl": {
+  "text": "video without a download",
+  "note": "amber chip: a video file whose download (and torrent) is gone."
+ },
+ "bal.more": {
+  "text": "Show {m} more ({n} left)",
+  "note": "button under a long list: shows the next rows."
+ },
+ "bal.lib_tip": {
+  "text": "Files in the media folders of this disk that have no hardlink (a hardlink cannot cross disks, so they have none anywhere). Mostly pictures and .nfo that Radarr, Sonarr or Jellyfin wrote next to a film whose video and download are on another disk. A video file here has lost its download: nothing seeds it.",
+  "note": "tooltip of the \"Library files without a hardlink\" bar."
+ },
+ "bal.lib_bar": {
+  "text": "Library files without a hardlink",
+  "note": "title of a foldable bar under a disk in the plan."
+ },
+ "bal.n_folders": {
+  "one": "{n} folder",
+  "other": "{n} folders",
+  "note": "count of folders."
+ },
+ "bal.n_also": {
+  "text": "{n} also on another disk",
+  "note": "count: folders that exist on another disk too."
+ },
+ "bal.n_only": {
+  "text": "{n} only here",
+  "note": "count: folders only on this disk."
+ },
+ "bal.n_vid": {
+  "one": "{n} video file without a download",
+  "other": "{n} video files without a download",
+  "note": "amber count in the bar."
+ },
+ "bal.nothing": {
+  "text": "Nothing to move: the disks are balanced or no title can be moved.",
+  "note": "message in the plan when there is nothing to move."
+ },
+ "bal.stays": {
+  "text": "Stays on the disk to empty (outside the folders above, or left out; move or delete it yourself)",
+  "note": "title of the bar that lists what would stay on a disk to empty."
+ },
+ "bal.nothing_stays": {
+  "text": "Nothing else stays on the disk to empty once the ticked titles are moved",
+  "note": "the same bar when nothing would stay."
+ },
+ "bal.scanning": {
+  "text": "Scanning...",
+  "note": "message next to Make a plan while the scan runs."
+ },
+ "bal.saving": {
+  "text": "Saving...",
+  "note": "message next to Make a plan while the setup is saved."
+ },
+ "bal.scanning_long": {
+  "text": "Scanning the disks, this can take a minute...",
+  "note": "message next to Make a plan when the scan starts."
+ },
+ "bal.confirm": {
+  "one": "Move {n} title, {s}, between disks?\n\nThe files are copied, checked and only then removed from the old disk. This can take hours. Pause or stop the torrents of these titles first if you can.",
+  "other": "Move {n} titles, {s}, between disks?\n\nThe files are copied, checked and only then removed from the old disk. This can take hours. Pause or stop the torrents of these titles first if you can.",
+  "note": "confirmation box before the move. Keep the two line breaks (\\n\\n)."
+ },
+ "run.moving": {
+  "text": "Moving",
+  "note": "state of the move in Activity (bold)."
+ },
+ "run.finished": {
+  "text": "Finished",
+  "note": "state of the move after it ended."
+ },
+ "run.stopped": {
+  "text": "Stopped",
+  "note": "state of the move after it was stopped."
+ },
+ "run.error": {
+  "text": "Stopped with an error",
+  "note": "state of the move after an error."
+ },
+ "run.line": {
+  "text": "{ok} / {n} titles · {done} of {total} ({p}%)",
+  "note": "progress line of the move in Activity."
+ },
+ "run.aband": {
+  "text": "moving now · {p}%",
+  "note": "grey text on the right of the Activity band during a move."
+ },
+ "run.of_titles": {
+  "one": "{ok} of {n} title",
+  "other": "{ok} of {n} titles",
+  "note": "after the state on the Activity band when the move ended."
+ },
+ "it.wait": {
+  "text": "waiting",
+  "note": "state of a title in the move list: not started yet. Short."
+ },
+ "it.run": {
+  "text": "moving",
+  "note": "state of a title in the move list: being copied now. Short."
+ },
+ "it.ok": {
+  "text": "done",
+  "note": "state of a title in the move list: moved. Short."
+ },
+ "it.skip": {
+  "text": "skipped",
+  "note": "state of a title in the move list: left out (the reason follows). Short."
+ },
+ "it.fail": {
+  "text": "FAILED",
+  "note": "state of a title in the move list: failed, in capitals on purpose (the reason follows). Short."
+ },
+ "run.more_waiting": {
+  "text": "{n} more waiting",
+  "note": "foldable bar of the titles still waiting."
+ },
+ "run.not_moved": {
+  "text": "{n} not moved",
+  "note": "foldable bar of the titles that were not moved (after a stop)."
+ },
+ "run.n_skipped": {
+  "text": "{n} skipped",
+  "note": "foldable bar of the skipped titles."
+ },
+ "run.n_done": {
+  "text": "{n} done",
+  "note": "foldable bar of the moved titles."
+ },
+ "run.lines": {
+  "one": "{n} line",
+  "other": "{n} lines",
+  "note": "count on the right of the log bar."
+ },
+ "hist.title": {
+  "text": "Recent moves",
+  "note": "foldable bar in Activity with the log of earlier moves."
+ },
+ "hist.runs": {
+  "one": "{n} run",
+  "other": "{n} runs",
+  "note": "count of earlier moves."
+ },
+ "hist.stopped": {
+  "text": "{n} stopped",
+  "note": "count of earlier moves that were stopped."
+ },
+ "hist.last": {
+  "text": "last on {d}",
+  "note": "date of the last move ({d} like 2026-10-14)."
+ },
+ "hist.none": {
+  "text": "Nothing moved yet.",
+  "note": "text in Activity before the first move."
+ },
+ "hist.idle": {
+  "text": "nothing running",
+  "note": "grey text on the right of the Activity band."
+ },
+ "hist.idle_last": {
+  "text": "nothing running · last move on {d}",
+  "note": "grey text on the right of the Activity band."
+ },
+ "why.not_started": {
+  "text": "the array is not started",
+  "note": "reason a plan or a move cannot start (after \"Cannot start:\" or \"Moving waits:\")."
+ },
+ "why.resync": {
+  "text": "a parity check or rebuild is running",
+  "note": "reason a move or the clearing cannot start now."
+ },
+ "why.mover": {
+  "text": "the mover is running",
+  "note": "reason a move cannot start now (Unraid's Mover)."
+ },
+ "skip.shares": {
+  "text": "shares files with another title",
+  "note": "why a title is left out of the plan (grey line under it)."
+ },
+ "skip.outside": {
+  "text": "has hardlinks outside the configured folders",
+  "note": "why a title is left out of the plan."
+ },
+ "skip.partial": {
+  "text": "looks unfinished (partial download)",
+  "note": "why a title is left out of the plan."
+ },
+ "skip.recent": {
+  "text": "changed in the last 2 hours",
+  "note": "why a title is left out of the plan."
+ },
+ "plan.two_disks": {
+  "text": "At least two array data disks must be included.",
+  "note": "error next to Make a plan."
+ },
+ "plan.no_pair": {
+  "text": "No valid folder pair is configured.",
+  "note": "error next to Make a plan."
+ },
+ "plan.target_raised": {
+  "text": "The array as a whole is {avg}% full, so {req}% is not reachable; balancing to {avg}% instead.",
+  "note": "amber note above the plan when the target fill is below the array average."
+ },
+ "plan.balanced": {
+  "text": "The disks are already balanced.",
+  "note": "note above the plan when there is nothing to move."
+ },
+ "plan.tick_drain": {
+  "text": "Tick at least one disk to empty.",
+  "note": "error next to Make a plan."
+ },
+ "plan.one_stays": {
+  "text": "At least one included disk must stay to receive the data.",
+  "note": "error next to Make a plan."
+ },
+ "run.died": {
+  "text": "The worker stopped unexpectedly.",
+  "note": "red text in Activity when the background move died."
+ },
+ "err.bad_line": {
+  "text": "Invalid folder line: {line} (use paths relative to the disk root, for example data/downloads/FILM = data/media/film)",
+  "note": "error next to Make a plan. Keep the example path as it is."
+ },
+ "err.no_folder": {
+  "text": "Enter at least one downloads folder.",
+  "note": "error on the Balance page."
+ },
+ "err.target": {
+  "text": "The target fill must be between 5 and 95 percent.",
+  "note": "error on the Balance page."
+ },
+ "err.write": {
+  "text": "could not write the settings",
+  "note": "error on the Balance page."
+ },
+ "err.running": {
+  "text": "A move is running.",
+  "note": "error on the Balance page."
+ },
+ "err.already": {
+  "text": "A move is already running.",
+  "note": "error on the Balance page."
+ },
+ "err.no_plan": {
+  "text": "Make a plan first.",
+  "note": "error on the Balance page."
+ },
+ "err.nothing": {
+  "text": "Nothing is selected.",
+  "note": "error on the Balance page."
+ },
+ "err.bad_sel": {
+  "text": "Invalid selection.",
+  "note": "error on the Balance page."
+ },
+ "err.tick_remove": {
+  "text": "Tick the disk(s) to remove.",
+  "note": "error on the Balance page."
+ },
+ "err.tick_drain": {
+  "text": "Tick the disk(s) to empty.",
+  "note": "error on the Balance page."
+ },
+ "err.cannot_plan": {
+  "text": "Cannot plan now: {why}.",
+  "note": "error next to Make a plan ({why} a reason like \"the array is not started\")."
+ },
+ "err.cannot_start": {
+  "text": "Cannot start: {why}.",
+  "note": "error next to Move ({why} a reason)."
+ },
+ "why.disk_not_ok": {
+  "text": "{d} is not OK ({s})",
+  "note": "reason the clearing cannot start ({s} is Unraid's disk status code)."
+ },
+ "why.no_parity": {
+  "text": "there is no parity disk",
+  "note": "reason the clearing cannot start."
+ },
+ "rm.err.choose": {
+  "text": "Choose Remove disks in the Setup and tick the disks first.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.move_check": {
+  "text": "A move is running; check when it has finished.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.step2": {
+  "text": "Step 2 first: a share can still write to the disks.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.step4": {
+  "text": "Step 4 first: check that the disks are empty.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.clearing": {
+  "text": "A clearing is running.",
+  "note": "error on the Balance page, Remove disks."
+ },
+ "rm.err.cannot": {
+  "text": "Cannot clear: {why}.",
+  "note": "error of step 5 ({why} a reason)."
+ },
+ "rm.err.nodev": {
+  "text": "The parity-protected device of {d} was not found.",
+  "note": "error of step 5 (technical: the /dev/md device)."
+ },
+ "run.nothing": {
+  "text": "Nothing to move.",
+  "note": "red text in Activity when a started move has no title."
+ },
+ "run.gone": {
+  "text": "a file is gone from the source",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.exists": {
+  "text": "a file already exists on the target",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.changed": {
+  "text": "a file changed in the last 2 hours",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.links": {
+  "text": "the hardlinks changed since the scan",
+  "note": "why a title was skipped during the move (after \"skipped:\")."
+ },
+ "run.space": {
+  "text": "not enough free space on {d}",
+  "note": "why a title was skipped during the move."
+ },
+ "run.verify": {
+  "text": "verification failed: {p}",
+  "note": "why a title failed: the copy of a file differs ({p} the file)."
+ },
+ "run.verify_link": {
+  "text": "verification failed: the hardlink was not kept ({p})",
+  "note": "why a title failed."
+ },
+ "run.verify_count": {
+  "text": "verification failed: link count ({p})",
+  "note": "why a title failed."
+ },
+ "run.stopped_copy": {
+  "text": "stopped, the copy was removed",
+  "note": "state text of the title being copied when the move was stopped."
+ },
+ "run.rm_fail": {
+  "text": "could not remove the source files",
+  "note": "why a title failed after the copy."
+ },
+ "run.rm_fail_t": {
+  "text": "could not remove the source files of {t}",
+  "note": "red text in Activity: the move stopped ({t} the title)."
+ }
+}

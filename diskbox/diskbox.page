@@ -4,6 +4,12 @@ Markdown="false"
 ---
 <?PHP
 $pluginname = "diskbox";
+// texts from the dictionary (lang/en.json and its translations, see i18n.php); own names: Monitor runs this in its scope
+require_once '/usr/local/emhttp/plugins/diskbox/i18n.php';
+$dbt_lang = '/usr/local/emhttp/plugins/diskbox/lang';
+$dbt_T = mt_i18n_t($dbt_lang);
+$dbt_t = [];
+foreach (['reading' => 'tile.reading', 'loading' => 'tile.loading', 'main' => 'tile.open_main', 'set' => 'tile.settings'] as $dbt_k => $dbt_v) { $dbt_t[$dbt_k] = htmlspecialchars($dbt_T($dbt_v), ENT_QUOTES); }
 
 $mytiles[$pluginname]['column2'] =
 <<<EOT
@@ -14,13 +20,13 @@ $mytiles[$pluginname]['column2'] =
       <i class="f32 dbx-ic"></i>
       <div class="section">
         <h3 class="tile-header-main dbx-ttl">Diskbox</h3>
-        <span id="dbx-summary" class="dbx-sum">Reading disks&hellip;</span>
+        <span id="dbx-summary" class="dbx-sum">{$dbt_t['reading']}</span>
       </div>
     </span>
     <span class="tile-header-right">
       <span class="tile-header-right-controls">
-        <a href="/Main" title="_(Open Main)_"><i class="fa fa-fw fa-home control"></i></a>
-        <a href="/Settings/DiskboxSettings" title="_(Diskbox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+        <a href="/Main" title="{$dbt_t['main']}"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/DiskboxSettings" title="{$dbt_t['set']}"><i class="fa fa-fw fa-cog control"></i></a>
       </span>
     </span>
   </span>
@@ -29,13 +35,14 @@ $mytiles[$pluginname]['column2'] =
   <div class="dbx-tile">
     <div id="dbx-attn"></div>
     <div id="dbx-bal"></div>
-    <div id="dbx-array"><div class="dbx-note">Loading&hellip;</div></div>
+    <div id="dbx-array"><div class="dbx-note">{$dbt_t['loading']}</div></div>
     <div id="dbx-pools"></div>
     <div id="dbx-ua"></div>
   </div>
 </td></tr>
 </tbody>
 EOT;
+echo mt_i18n_js($dbt_lang, 'dbx');
 ?>
 <style>
 i.f32.dbx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/diskbox/icon.png) center/contain no-repeat!important}
@@ -110,6 +117,7 @@ i.f32.dbx-ic.dbx-inv{filter:invert(1)}
 </style>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('dbx', k, v); };
   var API = '/plugins/diskbox/api_fetch.php';
   var busy = false, themed = false;
   var LVL = { g: 'dbx-g', a: 'dbx-a', rd: 'dbx-rd', mu: 'dbx-mu', bl: 'dbx-bl', ok: 'dbx-g', unk: 'dbx-mu' };
@@ -189,12 +197,12 @@ $(function () {
       // a check (amber, 'checked') or a disk being built (blue, 'built')
       var rp = Math.max(0, Math.min(100, r.rpct)), bc = r.build ? 'bl' : 'a';
       $r.append(el('dbx-pg' + (r.rstill ? ' st' : '')).append(
-        el('dbx-ut').append($('<span>').text(r.blab || (r.build ? 'built' : 'checked')), $('<b>').addClass(LVL[bc]).text(pct1(rp))),
+        el('dbx-ut').append($('<span>').text(r.blab || (r.build ? T('bar.built') : T('bar.checked'))), $('<b>').addClass(LVL[bc]).text(pct1(rp))),
         el('dbx-tr').append($('<i>').addClass(bc).css('width', rp + '%'))));
     } else if (r.kind === 'ua') {
       // a running SMART self-test (how much is done, the % left that the disk reports) or a UD Preclear step
       $r.append(r.tpct === null || r.tpct === undefined ? $('<span>') : el('dbx-pg').append(
-        el('dbx-ut').append($('<span>').text(r.tlab || 'test'), $('<b>').text(r.tleft)),
+        el('dbx-ut').append($('<span>').text(r.tlab || T('bar.test')), $('<b>').text(r.tleft)),
         el('dbx-tr').append($('<i>').addClass('bl').css('width', r.tpct + '%'))));
     } else { $r.append(r.kind === 'parity' ? $('<span>') : usageCell(r, opts.warn, opts.crit)); }
     $r.append($('<span class="dbx-tp">').addClass(LVL[r.tlevel] || '').text(r.temp === null || r.temp === undefined ? '–' : r.temp + '°C'));
@@ -216,20 +224,20 @@ $(function () {
     if (!list || !list.length) { return; }
     var worst = 'a';
     $.each(list, function (i, x) { if (x.level === 'rd') { worst = 'rd'; } });
-    $a.append(el('dbx-sec dbx-first').addClass(LVL[worst]).text('Needs attention · ' + list.length));
+    $a.append(el('dbx-sec dbx-first').addClass(LVL[worst]).text(T('attn.title') + ' · ' + list.length));
     $.each(list, function (i, x) {
       var small = x.small || '';
       var m = /^@FREE@([0-9.eE+]+)$/.exec(small);
-      if (m) { small = fmt(parseFloat(m[1])) + ' free'; }
+      if (m) { small = T('attn.free', { s: fmt(parseFloat(m[1])) }); }
       var $w = el('dbx-warn').append(ic('exclamation-triangle', LVL[x.level], 14));
       var $t = $('<span>').append($('<b>').text(x.name));
       if (x.text) { $t.append(document.createTextNode(' ' + x.text)); }
       $w.append($t);
       if (small) { $w.append($('<small>').text(small)); }
       if (x.ack) {
-        $w.append($('<a href="#" class="dbx-ackbtn">').text('Acknowledge').attr('title', 'Accept this warning; Diskbox will report it again only if it gets worse').on('click', function (e) {
+        $w.append($('<a href="#" class="dbx-ackbtn">').text(T('attn.ack')).attr('title', T('attn.ack_tip')).on('click', function (e) {
           e.preventDefault();
-          if (!window.confirm('Acknowledge the SMART warning for ' + x.name + '?\n\nIt stays on the disk, but Diskbox will warn again only when it gets worse.')) { return; }
+          if (!window.confirm(T('attn.ack_confirm', { name: x.name }))) { return; }
           $.post('/plugins/diskbox/ack.php', { name: x.ack, op: 'ack' }, null, 'json').always(function () { poll(); });
         }));
       }
@@ -239,11 +247,11 @@ $(function () {
 
   function renderArray(r) {
     var A = r.array, $d = $('#dbx-array').empty();
-    $d.append(el('dbx-hd' + (($('#dbx-attn').children().length || $('#dbx-bal').children().length) ? '' : ' dbx-first')).append($('<span>').text('Array \u00B7 ' + A.devices + (A.devices === 1 ? ' device' : ' devices'))));
+    $d.append(el('dbx-hd' + (($('#dbx-attn').children().length || $('#dbx-bal').children().length) ? '' : ' dbx-first')).append($('<span>').text(T('hd.array') + ' \u00B7 ' + T('hd.devices', { n: A.devices }))));
     var chip = A.chip || ['mu', ''];
     var $card = el('dbx-arr');
     $card.append(el('dbx-at').append(
-      $('<span class="dbx-an">').text('ARRAY'),
+      $('<span class="dbx-an">').text(T('card.array')),
       A.fs ? $('<span class="dbx-fs">').text(A.fs) : $('<span>'),
       (function () {
         var $c = $('<span class="dbx-chip">').addClass(chip[0]).text(chip[1]);
@@ -252,7 +260,7 @@ $(function () {
       })()));
     var lv = barLevel(A.pct, A.warn, A.crit);
     $card.append(
-      el('dbx-ut').css('margin-top', '9px').append($('<span>').text(fmt(A.used) + ' used of ' + fmt(A.size, true)), $('<b>').text(pct1(A.pct))),
+      el('dbx-ut').css('margin-top', '9px').append($('<span>').text(T('card.used_of', { used: fmt(A.used), size: fmt(A.size, true) })), $('<b>').text(pct1(A.pct))),
       el('dbx-tr').css('height', '7px').append($('<i>').addClass(lv).css('width', Math.min(100, A.pct) + '%')));
     $d.append($card);
     $.each(A.parity || [], function (i, p) {
@@ -272,14 +280,14 @@ $(function () {
     var now = Math.floor(Date.now() / 1000), txt, right;
     if (B.state === 'running') {
       var el_ = Math.max(1, now - B.started), eta = (B.done > 0 && B.total > B.done) ? Math.round(el_ * (B.total - B.done) / B.done) : 0;
-      txt = 'Moving ' + B.ok + ' of ' + B.n + ' titles';
-      right = pct.toFixed(0) + '%' + (eta ? ' \u00B7 ' + (eta >= 3600 ? Math.floor(eta / 3600) + ' h ' : '') + Math.floor(eta % 3600 / 60) + ' m left' : '');
+      txt = T('bal.moving', { ok: B.ok, n: B.n });
+      right = pct.toFixed(0) + '%' + (eta ? ' \u00B7 ' + T('time.left', { t: (eta >= 3600 ? Math.floor(eta / 3600) + ' h ' : '') + Math.floor(eta % 3600 / 60) + ' m' }) : '');
     } else {
-      var ago = now - B.finished, agot = ago >= 3600 ? Math.floor(ago / 3600) + ' h ago' : Math.max(1, Math.floor(ago / 60)) + ' m ago';
-      txt = ({done: 'Finished', aborted: 'Stopped', error: 'Stopped with an error'}[B.state]) + ': ' + B.ok + ' of ' + B.n + ' titles, ' + fmt(B.done) + (B.skip ? ', ' + B.skip + ' skipped' : '');
+      var ago = now - B.finished, agot = ago >= 3600 ? T('time.h_ago', { n: Math.floor(ago / 3600) }) : T('time.m_ago', { n: Math.max(1, Math.floor(ago / 60)) });
+      txt = T({done: 'bal.finished', aborted: 'bal.stopped', error: 'bal.error'}[B.state], { ok: B.ok, n: B.n, size: fmt(B.done) }) + (B.skip ? ', ' + T('bal.skipped', { n: B.skip }) : '');
       right = agot;
     }
-    $b.append(el('dbx-hd' + ($('#dbx-attn').children().length ? '' : ' dbx-first')).append($('<span>').text('Balance')));
+    $b.append(el('dbx-hd' + ($('#dbx-attn').children().length ? '' : ' dbx-first')).append($('<span>').text(T('hd.balance'))));
     var $c = el('dbx-arr');
     $c.append(el('dbx-ut').append($('<span>').text(txt), $('<b>').text(right)));
     if (B.state === 'running') { $c.append(el('dbx-tr').css({height: '7px', 'margin-top': '6px'}).append($('<i>').addClass(lv).css('width', pct + '%'))); }
@@ -291,7 +299,7 @@ $(function () {
     var $p = $('#dbx-pools').empty();
     $.each(r.pools || [], function (i, x) {
       var n = x.devices || 1;
-      $p.append(el('dbx-hd').append($('<span>').text('Pool \u00B7 ' + n + (n === 1 ? ' device' : ' devices'))));
+      $p.append(el('dbx-hd').append($('<span>').text(T('hd.pool') + ' \u00B7 ' + T('hd.devices', { n: n }))));
       $p.append(row(x, { cls: 'dbx-gx dbx-gp dbx-f', warn: r.array.warn, crit: r.array.crit }));
     });
   }
@@ -299,7 +307,7 @@ $(function () {
   function renderUnassigned(r) {
     var $u = $('#dbx-ua').empty(), L = r.unassigned || [];
     if (!L.length) { return; }
-    $u.append(el('dbx-hd').append($('<span>').text('Unassigned \u00B7 ' + L.length + (L.length === 1 ? ' device' : ' devices'))));
+    $u.append(el('dbx-hd').append($('<span>').text(T('hd.unassigned') + ' \u00B7 ' + T('hd.devices', { n: L.length }))));
     $.each(L, function (i, x) {
       $u.append(row(x, { cls: 'dbx-gx dbx-u-' + (x.lv || 'mu') + (i === 0 ? ' dbx-f' : '') }).attr('title', x.name));
     });
@@ -307,14 +315,14 @@ $(function () {
 
   function renderSummary(r) {
     var $s = $('#dbx-summary');
-    if (!r || !r.ok) { $s.text('Unavailable'); return; }
-    var S = r.summary, t = S.devices + (S.devices === 1 ? ' device' : ' devices');
-    if (!r.started) { t += ' · array stopped'; }
-    else { t += ' · ' + fmt(S.used) + ' of ' + fmt(S.size, true) + ' used'; }
-    if (S.hottest !== null && S.hottest !== undefined) { t += ' · hottest ' + S.hottest + '°C'; }
-    if (r.ua_running) { t += ' · ' + r.ua_running + ' SMART test' + (r.ua_running === 1 ? '' : 's') + ' running'; }
-    if (S.clearing) { t += ' · ' + S.clearing.disks.map(function (d) { return d.charAt(0) + d.slice(1).toLowerCase().replace(/(\d+)$/, ' $1'); }).join(', ') + ' clearing ' + S.clearing.pct + '%'; }
-    if (r.pc_running) { t += ' · ' + r.pc_running + ' preclear' + (r.pc_running === 1 ? '' : 's') + ' running'; }
+    if (!r || !r.ok) { $s.text(T('sum.unavailable')); return; }
+    var S = r.summary, t = T('hd.devices', { n: S.devices });
+    if (!r.started) { t += ' · ' + T('sum.stopped'); }
+    else { t += ' · ' + T('sum.used_of', { used: fmt(S.used), size: fmt(S.size, true) }); }
+    if (S.hottest !== null && S.hottest !== undefined) { t += ' · ' + T('sum.hottest', { t: S.hottest }); }
+    if (r.ua_running) { t += ' · ' + T('sum.tests', { n: r.ua_running }); }
+    if (S.clearing) { t += ' · ' + T('sum.clearing', { disks: S.clearing.disks.map(function (d) { return d.charAt(0) + d.slice(1).toLowerCase().replace(/(\d+)$/, ' $1'); }).join(', '), p: S.clearing.pct }); }
+    if (r.pc_running) { t += ' · ' + T('sum.preclears', { n: r.pc_running }); }
     $s.text(t);
   }
 
@@ -323,7 +331,7 @@ $(function () {
     renderSummary(r);
     if (!r || !r.ok) {
       $('#dbx-attn').empty(); $('#dbx-pools').empty(); $('#dbx-bal').empty(); $('#dbx-ua').empty();
-      $('#dbx-array').empty().append(el('dbx-note').text(r && r.error === 'nodata' ? 'No disk information from Unraid yet' : 'Disk data unavailable'));
+      $('#dbx-array').empty().append(el('dbx-note').text(r && r.error === 'nodata' ? T('err.nodata') : T('err.unavailable')));
       return;
     }
     renderAttn(r.attention);

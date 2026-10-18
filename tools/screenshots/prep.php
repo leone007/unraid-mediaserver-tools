@@ -10,6 +10,7 @@ $ids = ['sysbox' => 'sysbox', 'diskbox' => 'diskbox', 'streambox' => 'streambox'
 file_put_contents($tmp . '/boot/dynamix/dynamix.cfg', "[display]\nlocale=\"" . (getenv('MT_LOCALE') ?: '') . "\"\n");
 foreach ($ids as $id => $dir) {
     @mkdir("$tmp/plugins/$id/lang", 0777, true);
+    foreach (glob("$repo/$dir/*.php") ?: [] as $f) { copy($f, "$tmp/plugins/$id/" . basename($f)); }   // the page's own includes (lib.php ...)
     file_put_contents("$tmp/plugins/$id/lang.php", str_replace('/boot/config/plugins', "$tmp/boot", file_get_contents("$repo/common/lang.php")));
     copy("$repo/common/i18n.php", "$tmp/plugins/$id/i18n.php");
     file_put_contents("$tmp/plugins/$id/lang_block.php", str_replace("/boot/config/plugins", "$tmp/boot", file_get_contents("$repo/common/lang_block.php")));

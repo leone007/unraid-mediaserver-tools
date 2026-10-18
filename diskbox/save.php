@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/i18n.php';
+$dbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the settings page (lang/en.json)
 
 function db_out($ok, $extra = []) {
     echo json_encode(array_merge(['ok' => $ok], $extra), JSON_UNESCAPED_UNICODE);
@@ -28,14 +30,14 @@ $file = $dir . '/settings.cfg';
 function db_num($v, $min, $max, $name) {
     $v = trim((string)$v);
     if ($v === '') { return ''; }
-    if (!is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $name . ' must be between ' . $min . ' and ' . $max]); }
+    if (!is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $GLOBALS['dbx_T']('save.err_range', ['name' => $name, 'min' => $min, 'max' => $max])]); }
     return (string)(int)$v;
 }
 
 function db_bool($v) { return in_array(strtolower(trim((string)$v)), ['1', 'yes', 'true', 'on'], true) ? '1' : '0'; }
 function db_req($v, $min, $max, $name) {
     $v = trim((string)$v);
-    if ($v === '' || !is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $name . ' must be a number between ' . $min . ' and ' . $max]); }
+    if ($v === '' || !is_numeric($v) || $v < $min || $v > $max) { db_out(false, ['error' => $GLOBALS['dbx_T']('save.err_number', ['name' => $name, 'min' => $min, 'max' => $max])]); }
     return (string)(int)$v;
 }
 $hook = trim((string)($_POST['dc_hook'] ?? ''));
@@ -43,13 +45,13 @@ $hook = trim((string)($_POST['dc_hook'] ?? ''));
 if ($hook === '') { $oldc = is_file($file) ? @parse_ini_file($file, false, INI_SCANNER_RAW) : []; $hook = is_array($oldc) ? (string)($oldc['dc_hook'] ?? '') : ''; }
 elseif ($hook === '-') { $hook = ''; }
 if ($hook !== '' && !preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $hook)) {
-    db_out(false, ['error' => 'the webhook is not a valid Discord webhook URL']);
+    db_out(false, ['error' => $dbx_T('save.err_hook')]);
 }
 $ping = trim((string)($_POST['dc_ping'] ?? ''));
-if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { db_out(false, ['error' => 'the ping must be a Discord user ID, role:<role ID>, @here or @everyone']); }
+if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { db_out(false, ['error' => $dbx_T('save.err_ping')]); }
 $fw = db_req($_POST['n_fill_warn'] ?? '85', 1, 100, 'Fill warning');
 $fc = db_req($_POST['n_fill_crit'] ?? '95', 1, 100, 'Fill critical');
-if ((int)$fw > (int)$fc) { db_out(false, ['error' => 'the fill warning cannot be higher than the critical value']); }
+if ((int)$fw > (int)$fc) { db_out(false, ['error' => $dbx_T('save.err_fill')]); }
 
 $new = [
     'warn_use' => db_num($_POST['warn_use'] ?? '', 0, 100, 'Warning utilization'),
@@ -71,7 +73,7 @@ foreach ($new as $k => $v) { $text .= $k . '="' . str_replace('"', '', (string)$
 
 if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
 $tmp = $file . '.tmp';
-if (@file_put_contents($tmp, $text) === false) { db_out(false, ['error' => 'could not write the settings file']); }
+if (@file_put_contents($tmp, $text) === false) { db_out(false, ['error' => $dbx_T('save.err_write')]); }
 if (!@rename($tmp, $file)) { @file_put_contents($file, $text); @unlink($tmp); }
 @chmod($file, 0600);
 @unlink('/tmp/diskbox_zpool.json');

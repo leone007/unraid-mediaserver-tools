@@ -3,6 +3,8 @@
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/discord.php';
 require_once __DIR__ . '/alerts.php';
+require_once __DIR__ . '/i18n.php';
+$dbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the settings page (lang/en.json)
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
@@ -20,13 +22,13 @@ if ($sent !== '') {
 
 $cfg = db_cfg();
 $hook = (string)$cfg['dc_hook'];
-if (!dbn_hook_ok($hook)) { dbt_out(false, ['error' => 'No valid Discord webhook is saved yet. Enter it, press Apply, then try again.']); }
+if (!dbn_hook_ok($hook)) { dbt_out(false, ['error' => $dbx_T('test.no_hook')]); }
 $lang = dbn_lang($cfg);
 $op = (string)($_POST['op'] ?? 'test');
 
 if ($op === 'weekly') {
     $e = dbn_weekly_now($cfg);
-    if ($e === null) { dbt_out(false, ['error' => 'No disk data available right now.']); }
+    if ($e === null) { dbt_out(false, ['error' => $dbx_T('test.no_data')]); }
     $r = dbn_post($hook, [$e]);
     dbt_out($r[0] === 'ok', $r[0] === 'ok' ? [] : ['error' => $r[1]]);
 }

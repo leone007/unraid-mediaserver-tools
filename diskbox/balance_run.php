@@ -53,7 +53,7 @@ foreach ((array)($job['items'] ?? []) as $it) {
     $S['items'][] = ['id' => $u['id'], 'title' => $u['title'], 'pair' => $u['pair'], 'src' => $u['src'], 'dst' => $it['dst'], 'size' => (float)$u['size'], 'state' => 'wait', 'msg' => ''];
     $S['total'] += (float)$u['size'];
 }
-if (!$S['items']) { $S['state'] = 'error'; $S['msg'] = 'Nothing to move.'; $S['finished'] = time(); bl_s_write(true); exit(0); }
+if (!$S['items']) { $S['state'] = 'error'; $S['msg'] = bl_tr('run.nothing'); $S['finished'] = time(); bl_s_write(true); exit(0); }
 
 function bl_say($level, $title, $desc, $fields = []) {
     global $hook;
@@ -108,18 +108,18 @@ foreach ($S['items'] as $i => &$item) {
     $paths = []; $groups = []; $meta = []; $size = 0.0; $bad = '';
     foreach ($files as $f) {
         $st = @stat($sroot . '/' . $f[0]);
-        if ($st === false) { $bad = 'a file is gone from the source'; break; }
-        if (file_exists($droot . '/' . $f[0])) { $bad = 'a file already exists on the target'; break; }
-        if ($st['mtime'] > time() - 7200) { $bad = 'a file changed in the last 2 hours'; break; }
+        if ($st === false) { $bad = bl_tr('run.gone'); break; }
+        if (file_exists($droot . '/' . $f[0])) { $bad = bl_tr('run.exists'); break; }
+        if ($st['mtime'] > time() - 7200) { $bad = bl_tr('run.changed'); break; }
         $paths[] = $f[0];
         $groups[$st['ino']][] = $f[0];
         if (!isset($meta[$st['ino']])) { $meta[$st['ino']] = $st['nlink']; $size += $st['size']; }
     }
     if ($bad === '') {
-        foreach ($groups as $ino => $g) { if ($meta[$ino] != count($g)) { $bad = 'the hardlinks changed since the scan'; break; } }
+        foreach ($groups as $ino => $g) { if ($meta[$ino] != count($g)) { $bad = bl_tr('run.links'); break; } }
     }
     $reserve = max(5e9, 0.01 * $disks[$dst]['size']);
-    if ($bad === '' && (float)@disk_free_space($droot) < $size + $reserve) { $bad = 'not enough free space on ' . strtoupper($dst); }
+    if ($bad === '' && (float)@disk_free_space($droot) < $size + $reserve) { $bad = bl_tr('run.space', ['d' => strtoupper($dst)]); }
     if ($bad !== '') { $item['state'] = 'skip'; $item['msg'] = $bad; $skipN++; bl_s_log('skipped: ' . $bad); continue; }
 
     // copy: one rsync run for the whole unit, so the hardlinks are recreated on the target
@@ -157,20 +157,20 @@ foreach ($S['items'] as $i => &$item) {
             $ino0 = null;
             foreach ($g as $p) {
                 $a = @stat($sroot . '/' . $p); $b = @stat($droot . '/' . $p);
-                if ($b === false || $a === false || $a['size'] !== $b['size']) { $vbad = 'verification failed: ' . $p; break 2; }
-                if ($ino0 === null) { $ino0 = $b['ino']; } elseif ($b['ino'] !== $ino0) { $vbad = 'verification failed: the hardlink was not kept (' . $p . ')'; break 2; }
-                if ($b['nlink'] != count($g)) { $vbad = 'verification failed: link count (' . $p . ')'; break 2; }
+                if ($b === false || $a === false || $a['size'] !== $b['size']) { $vbad = bl_tr('run.verify', ['p' => $p]); break 2; }
+                if ($ino0 === null) { $ino0 = $b['ino']; } elseif ($b['ino'] !== $ino0) { $vbad = bl_tr('run.verify_link', ['p' => $p]); break 2; }
+                if ($b['nlink'] != count($g)) { $vbad = bl_tr('run.verify_count', ['p' => $p]); break 2; }
             }
         }
     }
     if ($vbad !== '') {
         bl_remove_files($dst, $paths, $stopDirs);   // the source is untouched; undo the copy
-        if ($aborted) { $item['state'] = 'skip'; $item['msg'] = 'stopped, the copy was removed'; bl_s_log('stopped, copy removed'); break; }
+        if ($aborted) { $item['state'] = 'skip'; $item['msg'] = bl_tr('run.stopped_copy'); bl_s_log('stopped, copy removed'); break; }
         $item['state'] = 'fail'; $item['msg'] = $vbad; $failN++; bl_s_log('FAILED: ' . $vbad);
         $fatal = $vbad; break;
     }
     if (!bl_remove_files($src, $paths, $stopDirs)) {
-        $item['state'] = 'fail'; $item['msg'] = 'could not remove the source files'; $failN++; $fatal = 'could not remove the source files of ' . $item['title']; bl_s_log('FAILED: ' . $fatal); break;
+        $item['state'] = 'fail'; $item['msg'] = bl_tr('run.rm_fail'); $failN++; $fatal = bl_tr('run.rm_fail_t', ['t' => $item['title']]); bl_s_log('FAILED: ' . $fatal); break;
     }
     $item['state'] = 'ok'; $okN++; $movedBytes += $item['size']; $S['done'] += $item['size']; $S['curBytes'] = 0.0;
     bl_s_log('moved ' . dbn_fmt_bytes($item['size']));

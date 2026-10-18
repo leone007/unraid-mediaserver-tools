@@ -2,6 +2,9 @@
 // Diskbox Balance: plan and move whole titles (a downloads folder and its hardlinked media files)
 // between array disks, keeping the hardlinks. Used by balance.php (web) and balance_run.php (background).
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/i18n.php';
+// texts the Balance page and the tile show (lang/en.json); the run log stays in English
+function bl_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 
 // DBX_BL_DIR (tests only): keep the settings and the /tmp files in that folder instead
 $bl_t = getenv('DBX_BL_DIR'); $bl_t = ($bl_t !== false && $bl_t !== '') ? rtrim($bl_t, '/') : '';
@@ -80,13 +83,13 @@ function bl_disks() {
 function bl_busy_reason($plan = false) {
     $v = db_var();
     if (getenv('DBX_DISKS') === false || getenv('DBX_DISKS') === '') {
-        if (($v['mdState'] ?? '') !== 'STARTED') { return 'the array is not started'; }
+        if (($v['mdState'] ?? '') !== 'STARTED') { return bl_tr('why.not_started'); }
         if (!$plan && (float)($v['mdResync'] ?? 0) > 0) {
             $pos = (float)($v['mdResyncPos'] ?? 0); $size = (float)($v['mdResyncSize'] ?? 0);
-            return 'a parity check or rebuild is running' . ($size > 0 ? ' (' . round($pos / $size * 100) . ' %)' : '');
+            return bl_tr('why.resync') . ($size > 0 ? ' (' . round($pos / $size * 100) . ' %)' : '');
         }
         $m = trim((string)@shell_exec('pgrep -x mover 2>/dev/null'));
-        if ($m !== '') { return 'the mover is running'; }
+        if ($m !== '') { return bl_tr('why.mover'); }
     }
     return '';
 }
@@ -209,11 +212,11 @@ function bl_scan_disk($disk, $pairs, $drain = false) {
         $size = 0.0; $why = '';
         foreach ($u['inodes'] as $ino => $v) {
             $size += $v[1];
-            if (count($inodeUnits[$ino]) > 1) { $why = 'shares files with another title'; }
-            elseif ($v[0] != ($found[$ino] ?? 0) && $why === '') { $why = 'has hardlinks outside the configured folders'; }
+            if (count($inodeUnits[$ino]) > 1) { $why = bl_tr('skip.shares'); }
+            elseif ($v[0] != ($found[$ino] ?? 0) && $why === '') { $why = bl_tr('skip.outside'); }
         }
-        if ($why === '' && $u['partial']) { $why = 'looks unfinished (partial download)'; }
-        if ($why === '' && $u['mtime'] > time() - 7200) { $why = 'changed in the last 2 hours'; }
+        if ($why === '' && $u['partial']) { $why = bl_tr('skip.partial'); }
+        if ($why === '' && $u['mtime'] > time() - 7200) { $why = bl_tr('skip.recent'); }
         $row = ['title' => $u['title'], 'pair' => $u['pair'], 'src' => $disk, 'size' => $size, 'nfiles' => count($u['files']), 'mtime' => (int)$u['mtime']];
         // what kind of files the title holds (extension => count), shown on the page instead of a guess
         $ext = []; foreach ($u['files'] as $x) { $e = strtolower(pathinfo((string)$x[0], PATHINFO_EXTENSION)); $e = $e === '' ? '(none)' : substr($e, 0, 8); $ext[$e] = ($ext[$e] ?? 0) + 1; }
@@ -270,13 +273,13 @@ function bl_make_plan() {
     $all = bl_disks();
     $want = array_filter((array)$cfg['disks'], 'is_string');
     $disks = $want ? array_intersect_key($all, array_flip($want)) : $all;
-    if (count($disks) < 2) { bl_plan_status('error', 'At least two array data disks must be included.'); return; }
+    if (count($disks) < 2) { bl_plan_status('error', bl_tr('plan.two_disks')); return; }
     $pairs = [];
     foreach ((array)$cfg['pairs'] as $p) {
         $dl = bl_path_ok($p['dl'] ?? ''); $md = trim((string)($p['media'] ?? '')) === '' ? '' : bl_path_ok($p['media']);
         if ($dl !== false && $md !== false) { $pairs[] = ['dl' => $dl, 'media' => $md]; }
     }
-    if (!$pairs) { bl_plan_status('error', 'No valid folder pair is configured.'); return; }
+    if (!$pairs) { bl_plan_status('error', bl_tr('plan.no_pair')); return; }
     if (in_array($cfg['mode'] ?? '', ['drain', 'remove'], true)) { bl_plan_drain($cfg, $disks, $pairs); return; }
 
     $sumSize = 0; $sumUsed = 0;
@@ -286,7 +289,7 @@ function bl_make_plan() {
     $note = '';
     if ($req === null || $req < $avg) {
         $T = $avg;
-        if ($req !== null) { $note = 'The array as a whole is ' . number_format($avg, 1) . '% full, so ' . number_format($req, 0) . '% is not reachable; balancing to ' . number_format($avg, 1) . '% instead.'; }
+        if ($req !== null) { $note = bl_tr('plan.target_raised', ['avg' => number_format($avg, 1), 'req' => number_format($req, 0)]); }
     } else { $T = $req; }
     $need = []; $excess = [];
     foreach ($disks as $n => $d) {
@@ -295,9 +298,9 @@ function bl_make_plan() {
         $need[$n] = max(0, $tb - $d['used']);
     }
     $totalExcess = array_sum($excess);
-    if ($totalExcess < 0.005 * $sumSize) { bl_plan_status('ready', 'The disks are already balanced.', ['target' => $T, 'avg' => $avg, 'note' => $note, 'disks' => array_values($disks), 'units' => [], 'skipped' => []]); bl_json_write(BL_PLANF, []); return; }
+    if ($totalExcess < 0.005 * $sumSize) { bl_plan_status('ready', bl_tr('plan.balanced'), ['target' => $T, 'avg' => $avg, 'note' => $note, 'disks' => array_values($disks), 'units' => [], 'skipped' => []]); bl_json_write(BL_PLANF, []); return; }
 
-    bl_plan_status('running', 'Scanning the disks...');
+    bl_plan_status('running', bl_tr('bal.scanning_long'));
     $donors = array_keys(array_filter($excess, function ($x, $n) use ($disks) { return $x >= 0.005 * $disks[$n]['size']; }, ARRAY_FILTER_USE_BOTH));
     usort($donors, function ($a, $b) use ($excess) { return $excess[$b] <=> $excess[$a]; });
     $units = []; $skipped = [];
@@ -350,9 +353,9 @@ function bl_plan_publish($units, $skipped, $disks, $extra) {
 // full gets the next title, largest titles first). What cannot be moved is listed (skipped titles and leftovers).
 function bl_plan_drain($cfg, $disks, $pairs) {
     $drain = array_values(array_intersect(array_filter((array)$cfg['drain'], 'is_string'), array_keys($disks)));
-    if (!$drain) { bl_plan_status('error', 'Tick at least one disk to empty.'); return; }
+    if (!$drain) { bl_plan_status('error', bl_tr('plan.tick_drain')); return; }
     $targets = array_values(array_diff(array_keys($disks), $drain));
-    if (!$targets) { bl_plan_status('error', 'At least one included disk must stay to receive the data.'); return; }
+    if (!$targets) { bl_plan_status('error', bl_tr('plan.one_stays')); return; }
     $used = []; $room = []; $sumSize = 0; $sumUsed = 0;
     foreach ($disks as $n => $d) { $sumUsed += $d['used']; }
     foreach ($targets as $n) { $used[$n] = $disks[$n]['used']; $room[$n] = $disks[$n]['free'] - max(5e9, 0.01 * $disks[$n]['size']); $sumSize += $disks[$n]['size']; }

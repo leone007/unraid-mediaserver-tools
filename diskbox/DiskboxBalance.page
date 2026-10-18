@@ -5,6 +5,11 @@ Icon="diskbox.png"
 Markdown="false"
 ---
 <?PHP
+// texts from the dictionary (lang/en.json, see i18n.php); $dbb_t escapes, $dbb_T is raw (texts with HTML)
+require_once '/usr/local/emhttp/plugins/diskbox/i18n.php';
+$dbb_lang = '/usr/local/emhttp/plugins/diskbox/lang';
+$dbb_T = mt_i18n_t($dbb_lang);
+$dbb_t = function ($k, $v = []) use ($dbb_T) { return htmlspecialchars($dbb_T($k, $v), ENT_QUOTES); };
 $dbb_var = @parse_ini_file('/var/local/emhttp/var.ini');
 $dbb_tok = is_array($dbb_var) ? (string)($dbb_var['csrf_token'] ?? '') : '';
 ?>
@@ -80,78 +85,80 @@ $dbb_tok = is_array($dbb_var) ? (string)($dbb_var['csrf_token'] ?? '') : '';
 }
 </style>
 <div id="dbb">
-<p class="dbb-sub">Whole titles (a downloads folder together with its hardlinked media files) are moved between the array disks, and the hardlinks are kept. Nothing moves until you press Move. The paths in <code>/mnt/user</code> do not change, so qBittorrent, Sonarr, Radarr and Jellyfin keep working.</p>
+<p class="dbb-sub"><?=$dbb_T('bal.intro')?></p>
 
-<div class="mt-band"><span>Activity</span><b id="dbb-aband"></b></div>
+<div class="mt-band"><span><?=$dbb_t('bal.h.activity')?></span><b id="dbb-aband"></b></div>
 <div class="mt-box" id="dbb-act">
 <div id="dbb-runbox" style="display:none">
-<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="Stop after the current file set" style="display:none"></div>
+<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop')?>" style="display:none"></div>
 <div id="dbb-rtab"></div>
-<div class="dbb-gbar s-grey" data-g="rlog"><span class="pm">+</span><span></span><span>Log of this run</span><span class="c"></span></div>
+<div class="dbb-gbar s-grey" data-g="rlog"><span class="pm">+</span><span></span><span><?=$dbb_t('bal.log_run')?></span><span class="c"></span></div>
 <div class="dbb-grp" data-g="rlog" hidden><div class="dbb-log" id="dbb-rlog"></div></div>
 </div>
 <div id="dbb-rmact"></div>
 <div id="dbb-hist"></div>
 </div>
 
-<div class="mt-band"><span>Setup</span><b id="dbb-sband"></b></div>
+<div class="mt-band"><span><?=$dbb_t('bal.h.setup')?></span><b id="dbb-sband"></b></div>
 <form id="dbb-form" onsubmit="return false;" class="mt-box">
 <dl>
-<dt>Folders on the disk (one pair per line):</dt>
+<dt><?=$dbb_t('bal.f.pairs')?></dt>
 <dd><textarea id="dbb-pairs" rows="2" placeholder="data/downloads/FILM = data/media/film"></textarea>
-<span class="dbb-hint">downloads folder = media folder with the hardlinks, relative to the disk root (for example the share <code>data</code>, folder <code>downloads/FILM</code>). Every folder directly inside the downloads folder is one title. The media part can be left out.</span></dd>
-<dt>What to do:</dt>
-<dd><select id="dbb-mode"><option value="balance">Spread the data evenly</option><option value="drain">Empty disks (move everything off them)</option><option value="remove">Remove disks (empty, check, clear, take out)</option></select></dd>
-<dt class="dbb-bal">Target fill (%):</dt>
-<dd class="dbb-bal"><input type="number" id="dbb-target" min="5" max="95" class="narrow" placeholder="average"> <span class="dbb-hint">empty = equal fill on all included disks (the array average); a target below the average is not reachable and is raised to it</span></dd>
-<dt class="dbb-bal">Which titles first:</dt>
-<dd class="dbb-bal"><select id="dbb-strategy"><option value="old">Oldest first</option><option value="big">Largest first</option></select></dd>
-<dt>Disks included:</dt>
+<span class="dbb-hint"><?=$dbb_T('bal.f.pairs_hint')?></span></dd>
+<dt><?=$dbb_t('bal.f.mode')?></dt>
+<dd><select id="dbb-mode"><option value="balance"><?=$dbb_t('bal.mode.balance')?></option><option value="drain"><?=$dbb_t('bal.mode.drain')?></option><option value="remove"><?=$dbb_t('bal.mode.remove')?></option></select></dd>
+<dt class="dbb-bal"><?=$dbb_t('bal.f.target')?></dt>
+<dd class="dbb-bal"><input type="number" id="dbb-target" min="5" max="95" class="narrow" placeholder="<?=$dbb_t('bal.f.target_ph')?>"> <span class="dbb-hint"><?=$dbb_t('bal.f.target_hint')?></span></dd>
+<dt class="dbb-bal"><?=$dbb_t('bal.f.strategy')?></dt>
+<dd class="dbb-bal"><select id="dbb-strategy"><option value="old"><?=$dbb_t('bal.strat.old')?></option><option value="big"><?=$dbb_t('bal.strat.big')?></option></select></dd>
+<dt><?=$dbb_t('bal.f.disks')?></dt>
 <dd id="dbb-disks"></dd>
-<dt class="dbb-drn" id="dbb-drnlbl">Disks to empty:</dt>
-<dd class="dbb-drn"><span id="dbb-drain"></span><span class="dbb-hint">Everything in the folders above is moved to the other included disks: the titles with their hardlinks, the media files without a download (also .nfo, pictures, subtitles) and the items in the Seedbox trash (.seedbox_trash). The plan lists what would still stay on the disk, so you can see whether it can be removed from the array.</span></dd>
+<dt class="dbb-drn" id="dbb-drnlbl"><?=$dbb_t('bal.f.drain')?></dt>
+<dd class="dbb-drn"><span id="dbb-drain"></span><span class="dbb-hint"><?=$dbb_t('bal.f.drain_hint')?></span></dd>
 <dt>&nbsp;</dt>
-<dd><input type="button" id="dbb-plan" value="Make a plan"> <span id="dbb-pmsg"></span></dd>
+<dd><input type="button" id="dbb-plan" value="<?=$dbb_t('bal.btn.plan')?>"> <span id="dbb-pmsg"></span></dd>
 </dl>
 </form>
 
 <div id="dbb-rm" style="display:none">
-<div class="mt-band"><span>2 &middot; Keep new files off them</span><b id="dbb-rb2"></b></div>
-<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px">Change every share listed here in <a href="/Shares">Shares</a>: put the disks in <b>Excluded disk(s)</b> (or take them out of Included disk(s)). Diskbox only checks; it changes no share.</span> <input type="button" id="dbb-rm2" class="dbb-ghost" value="Check again"></div><div id="dbb-rs2"></div></div>
-<div class="mt-band"><span>3 &middot; Empty them</span><b id="dbb-rb3"></b></div>
-<div class="mt-box"><div class="dbb-status"><span>Make a plan in the Setup above: the plan (below) moves everything in the folders of the Setup to the other disks, then press Move. What it does not watch (for example appdata) is listed under the plan; move it yourself.</span></div><div id="dbb-rs3"></div></div>
-<div class="mt-band"><span>4 &middot; Check they are empty</span><b id="dbb-rb4"></b></div>
-<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px">Lists every file still on the disks, hidden ones too (empty folders do not count). Clearing is possible only when nothing is left.</span> <input type="button" id="dbb-rm4" value="Check the disks"></div><div id="dbb-rs4"></div></div>
-<div class="mt-band"><span>5 &middot; Clear them</span><b id="dbb-rb5"></b></div>
-<div class="mt-box"><div class="dbb-status"><span>Each disk is unmounted and filled with zeros through parity (side by side), so parity stays valid without it: about 7 hours per TB. <b>This erases everything on the disk.</b> If the server stops meanwhile, Unraid shows the disk as Unmountable after the restart: do <b>not</b> format it, start the clearing again here.</span></div><div id="dbb-rs5"></div></div>
-<div class="mt-band"><span>6 &middot; Take them out of the array</span><b id="dbb-rb6"></b></div>
+<div class="mt-band"><span>2 &middot; <?=$dbb_t('rm.h2')?></span><b id="dbb-rb2"></b></div>
+<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px"><?=$dbb_T('rm.s2')?></span> <input type="button" id="dbb-rm2" class="dbb-ghost" value="<?=$dbb_t('rm.btn.check_again')?>"></div><div id="dbb-rs2"></div></div>
+<div class="mt-band"><span>3 &middot; <?=$dbb_t('rm.h3')?></span><b id="dbb-rb3"></b></div>
+<div class="mt-box"><div class="dbb-status"><span><?=$dbb_t('rm.s3')?></span></div><div id="dbb-rs3"></div></div>
+<div class="mt-band"><span>4 &middot; <?=$dbb_t('rm.h4')?></span><b id="dbb-rb4"></b></div>
+<div class="mt-box"><div class="dbb-status"><span style="flex:1 1 400px"><?=$dbb_t('rm.s4')?></span> <input type="button" id="dbb-rm4" value="<?=$dbb_t('rm.btn.check')?>"></div><div id="dbb-rs4"></div></div>
+<div class="mt-band"><span>5 &middot; <?=$dbb_t('rm.h5')?></span><b id="dbb-rb5"></b></div>
+<div class="mt-box"><div class="dbb-status"><span><?=$dbb_T('rm.s5')?></span></div><div id="dbb-rs5"></div></div>
+<div class="mt-band"><span>6 &middot; <?=$dbb_t('rm.h6')?></span><b id="dbb-rb6"></b></div>
 <div class="mt-box"><div id="dbb-rs6"></div></div>
 </div>
 
 <div id="dbb-planbox" style="display:none">
-<div class="mt-band"><span>Plan</span><b id="dbb-pband"></b></div>
+<div class="mt-band"><span><?=$dbb_t('bal.h.plan')?></span><b id="dbb-pband"></b></div>
 <div class="mt-box">
 <div id="dbb-note" class="dbb-status dbb-am" style="display:none"></div>
 <div id="dbb-dtab"></div>
-<div class="dbb-status dbb-mut" style="font-size:12px">blue = fill now &middot; green = after the ticked moves (amber: it grows, red: nearly full) &middot; striped grey = the file system's own space on a disk to empty (metadata, not data; it goes with the disk) &middot; the orange mark is the target</div>
+<div class="dbb-status dbb-mut" style="font-size:12px"><?=$dbb_t('bal.legend')?></div>
 </div>
 <div class="mt-box">
-<div class="dbb-status"><label><input type="checkbox" id="dbb-all" title="Select / deselect all"> all titles</label><span class="dbb-mut">the suggestion is ticked; change the ticks or the target disk as you like</span></div>
+<div class="dbb-status"><label><input type="checkbox" id="dbb-all" title="<?=$dbb_t('bal.selall')?>"> <?=$dbb_t('bal.all_titles')?></label><span class="dbb-mut"><?=$dbb_t('bal.tick_hint')?></span></div>
 <div id="dbb-units"></div>
 <div id="dbb-leftbox" style="display:none"><div class="dbb-gbar s-amber" data-g="left"><span class="pm">+</span><span></span><span id="dbb-lefttg"></span><span class="c" id="dbb-leftc"></span></div><div class="dbb-grp" data-g="left" hidden id="dbb-leftlist"></div></div>
-<div id="dbb-skipbox" style="display:none"><div class="dbb-gbar s-grey" data-g="skip"><span class="pm">+</span><span></span><span>Titles that are left out</span><span class="c" id="dbb-skipc"></span></div><div class="dbb-grp" data-g="skip" hidden id="dbb-skiplist"></div></div>
-<div class="dbb-status"><input type="button" id="dbb-go" value="Move the selected titles"> <span id="dbb-gomsg"></span></div>
+<div id="dbb-skipbox" style="display:none"><div class="dbb-gbar s-grey" data-g="skip"><span class="pm">+</span><span></span><span><?=$dbb_t('bal.skipped_bar')?></span><span class="c" id="dbb-skipc"></span></div><div class="dbb-grp" data-g="skip" hidden id="dbb-skiplist"></div></div>
+<div class="dbb-status"><input type="button" id="dbb-go" value="<?=$dbb_t('bal.btn.go')?>"> <span id="dbb-gomsg"></span></div>
 </div>
-<p class="dbb-foot">Each title is copied, checked (sizes and hardlinks), and only then removed from the old disk. If a check fails the copy is removed and the old files stay. Moving runs in the background at idle disk priority; it needs the array started and no parity check, rebuild or mover running. Closing this page does not stop it.</p>
+<p class="dbb-foot"><?=$dbb_t('bal.foot')?></p>
 </div>
 </div>
 
+<?=mt_i18n_js($dbb_lang, 'dbb')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('dbb', k, v); };
   var URL = '/plugins/diskbox/balance.php', P = null, disks = {}, pollT = null, planPoll = null, GOPEN = {}, BUSY = '', busyT = null, LIM = {};
   function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return (b / 1e3).toFixed(0) + ' KB'; }
-  function dur(s) { s = Math.max(0, Math.round(s)); var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + ' h ' + m + ' m' : m + ' m ' + (s % 60) + ' s'; }
+  function dur(s) { s = Math.max(0, Math.round(s)); var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? T('dur.hm', { h: h, m: m }) : T('dur.ms', { m: m, s: s % 60 }); }
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function up(s) { return esc(String(s).toUpperCase()); }
@@ -170,20 +177,20 @@ $(function () {
       var on = !c.disks.length || c.disks.indexOf(d.name) >= 0;
       h += '<label><input type="checkbox" class="dbb-dsel" value="' + esc(d.name) + '"' + (on ? ' checked' : '') + '> ' + esc(d.label) + ' <span class="dbb-chip">' + d.pct.toFixed(0) + '%</span></label>';
     });
-    $('#dbb-disks').html(h || '<span class="dbb-mut">No array data disks found (is the array started?)</span>');
+    $('#dbb-disks').html(h || '<span class="dbb-mut">' + esc(T('bal.no_disks')) + '</span>');
     h = '';
     $.each(r.disks, function (i, d) {
-      h += '<label><input type="checkbox" class="dbb-drsel" value="' + esc(d.name) + '"' + ((c.drain || []).indexOf(d.name) >= 0 ? ' checked' : '') + '> ' + esc(d.label) + ' <span class="dbb-chip">' + fb(d.used) + ' used</span></label>';
+      h += '<label><input type="checkbox" class="dbb-drsel" value="' + esc(d.name) + '"' + ((c.drain || []).indexOf(d.name) >= 0 ? ' checked' : '') + '> ' + esc(d.label) + ' <span class="dbb-chip">' + esc(T('bal.used', { s: fb(d.used) })) + '</span></label>';
     });
     $('#dbb-drain').html(h);
     $('#dbb-mode').val(c.mode === 'drain' || c.mode === 'remove' ? c.mode : 'balance'); SAVEDMODE = $('#dbb-mode').val();
-    $('#dbb-sband').text(r.disks.length + ' array disk' + (r.disks.length === 1 ? '' : 's'));
+    $('#dbb-sband').text(T('bal.n_disks', { n: r.disks.length }));
     modeUi();
   }
   function modeUi() {
     var m = $('#dbb-mode').val(), dr = m !== 'balance';
     $('.dbb-bal').toggle(!dr); $('.dbb-drn').toggle(dr);
-    $('#dbb-drnlbl').text(m === 'remove' ? 'Disks to remove:' : 'Disks to empty:');
+    $('#dbb-drnlbl').text(m === 'remove' ? T('bal.f.remove') : T('bal.f.drain'));
     $('#dbb-rm').toggle(m === 'remove' && SAVEDMODE === 'remove');
     if (m === 'remove') { rmLoad(); }
   }
@@ -203,62 +210,62 @@ $(function () {
     if (!sel.length) { $('#dbb-rmact').empty(); return; }
     var st = m.step, h, act = '', running = false;
     // 2 shares
-    h = m.shares.length ? $.map(m.shares, function (x) { return rowH('amber', esc(x[0]), 'can still write new files to ' + esc(x[1].join(', ').toUpperCase()), '<a href="/Shares/Share?name=' + encodeURIComponent(x[0]) + '">change it</a>'); }).join('')
-      : rowH('green', 'No share writes to ' + esc(names), 'every share excludes them or uses only a pool', '<span class="dbb-ok">done</span>');
-    $('#dbb-rs2').html(h); $('#dbb-rb2').text(m.shares.length ? m.shares.length + ' share' + (m.shares.length === 1 ? '' : 's') + ' to change' : 'done');
+    h = m.shares.length ? $.map(m.shares, function (x) { return rowH('amber', esc(x[0]), esc(T('rm.can_write', { d: x[1].join(', ').toUpperCase() })), '<a href="/Shares/Share?name=' + encodeURIComponent(x[0]) + '">' + esc(T('rm.change_it')) + '</a>'); }).join('')
+      : rowH('green', esc(T('rm.no_share', { d: names })), esc(T('rm.no_share_sub')), '<span class="dbb-ok">' + esc(T('rm.done')) + '</span>');
+    $('#dbb-rs2').html(h); $('#dbb-rb2').text(m.shares.length ? T('rm.n_shares', { n: m.shares.length }) : T('rm.done'));
     // 3 empty
     h = '';
-    $.each(sel, function (i, d) { var x = m.disks[d]; h += rowH(st > 3 ? 'green' : (st < 3 ? 'grey' : 'blue'), d.toUpperCase(), x.used == null ? 'not mounted' : fb(x.used) + ' used (with the file system\'s own space)', st > 3 ? '<span class="dbb-ok">emptied</span>' : ''); });
-    $('#dbb-rs3').html(h); $('#dbb-rb3').text(st < 3 ? 'after step 2' : (st > 3 ? 'done' : (m.balance ? 'moving' : 'to do')));
+    $.each(sel, function (i, d) { var x = m.disks[d]; h += rowH(st > 3 ? 'green' : (st < 3 ? 'grey' : 'blue'), d.toUpperCase(), esc(x.used == null ? T('rm.not_mounted') : T('rm.used_fs', { s: fb(x.used) })), st > 3 ? '<span class="dbb-ok">' + esc(T('rm.emptied')) + '</span>' : ''); });
+    $('#dbb-rs3').html(h); $('#dbb-rb3').text(st < 3 ? T('rm.after', { n: 2 }) : (st > 3 ? T('rm.done') : (m.balance ? T('rm.moving') : T('rm.todo'))));
     // 4 check
     h = ''; var c = m.check;
     if (c) {
       $.each(sel, function (i, d) {
         var x = c.res[d]; if (!x) { return; }
-        h += x.n === 0 ? rowH('green', d.toUpperCase() + ': empty', '0 files', '<span class="dbb-ok">empty</span>')
-          : rowH('amber', d.toUpperCase() + ': ' + (x.n < 0 ? 'could not be read' : x.n + ' file' + (x.n === 1 ? '' : 's') + ' left, ' + fb(x.bytes)), $.map(x.sample, esc).join('<br>') + (x.n > x.sample.length ? '<br>...' : ''), '<span class="dbb-am">not empty</span>');
+        h += x.n === 0 ? rowH('green', d.toUpperCase() + ': ' + esc(T('rm.empty')), esc(T('rm.files', { n: 0 })), '<span class="dbb-ok">' + esc(T('rm.empty')) + '</span>')
+          : rowH('amber', d.toUpperCase() + ': ' + esc(x.n < 0 ? T('rm.unreadable') : T('rm.files_left', { n: x.n, s: fb(x.bytes) })), $.map(x.sample, esc).join('<br>') + (x.n > x.sample.length ? '<br>...' : ''), '<span class="dbb-am">' + esc(T('rm.not_empty')) + '</span>');
       });
-      h += '<div class="dbb-status dbb-mut" style="font-size:12px">checked ' + when(c.t) + '</div>';
+      h += '<div class="dbb-status dbb-mut" style="font-size:12px">' + esc(T('rm.checked_at', { t: when(c.t) })) + '</div>';
     }
-    $('#dbb-rs4').html(h); $('#dbb-rm4').prop('disabled', st < 3 || m.balance || st > 4); $('#dbb-rb4').text(st < 3 ? 'after step 2' : (c ? (c.ok ? 'empty' : 'not empty') : 'to do'));
+    $('#dbb-rs4').html(h); $('#dbb-rm4').prop('disabled', st < 3 || m.balance || st > 4); $('#dbb-rb4').text(st < 3 ? T('rm.after', { n: 2 }) : (c ? (c.ok ? T('rm.empty') : T('rm.not_empty')) : T('rm.todo')));
     // 5 clear
     h = '';
     $.each(sel, function (i, d) {
       var x = m.disks[d], z = x.zero;
       if (z && z.run) {
         running = true; var pc = z.size > 0 ? z.pos / z.size * 100 : 0, left = z.rate > 0 ? (z.size - z.pos) / z.rate : 0;
-        var line = pc.toFixed(1) + ' %' + (z.rate > 0 ? ' &middot; ' + fb(z.rate) + '/s &middot; ' + dur(left) + ' left' : '');
-        h += rowH('blue', d.toUpperCase(), 'writing zeros through parity &middot; ' + line, '<span>clearing</span>');
-        act += rowH('blue', 'Clearing ' + d.toUpperCase(), 'writing zeros through parity &middot; ' + line, '') + '<div class="dbb-status"><span class="dbb-prog"><i style="width:' + pc.toFixed(1) + '%"></i></span></div>';
+        var line = pc.toFixed(1) + ' %' + (z.rate > 0 ? ' &middot; ' + fb(z.rate) + '/s &middot; ' + esc(T('rm.left', { t: dur(left) })) : '');
+        h += rowH('blue', d.toUpperCase(), esc(T('rm.zeros')) + ' &middot; ' + line, '<span>' + esc(T('rm.clearing')) + '</span>');
+        act += rowH('blue', esc(T('rm.clearing_d', { d: d.toUpperCase() })), esc(T('rm.zeros')) + ' &middot; ' + line, '') + '<div class="dbb-status"><span class="dbb-prog"><i style="width:' + pc.toFixed(1) + '%"></i></span></div>';
       } else if (z && z.done) {
-        h += rowH('green', d.toUpperCase() + ' zeroed', 'checked: the end of the disk reads zero', '<span class="dbb-ok">ready to remove</span>');
+        h += rowH('green', esc(T('rm.zeroed', { d: d.toUpperCase() })), esc(T('rm.zeroed_sub')), '<span class="dbb-ok">' + esc(T('rm.ready')) + '</span>');
       } else if (z) {
-        h += rowH('red', d.toUpperCase() + ': clearing stopped at ' + (z.size > 0 ? (z.pos / z.size * 100).toFixed(1) : 0) + ' %', 'see the log; start it again when the reason is fixed', '');
+        h += rowH('red', esc(T('rm.stopped_at', { d: d.toUpperCase(), p: z.size > 0 ? (z.pos / z.size * 100).toFixed(1) : 0 })), esc(T('rm.see_log_again')), '');
       } else if (m.clear) {
-        h += rowH('amber', d.toUpperCase() + ': the clearing did not start', 'see the log', '');
+        h += rowH('amber', esc(T('rm.not_started', { d: d.toUpperCase() })), esc(T('rm.see_log')), '');
       }
     });
     if (st === 5 && !running && !m.cleared) {
-      h += '<div class="dbb-status"><span>Type <b>' + esc(sel.join(' ')) + '</b> to confirm:</span> <input type="text" id="dbb-rmtype" autocomplete="off" style="width:200px;margin:0"> <input type="button" id="dbb-rm5" value="Clear ' + esc(names) + '" disabled>' + (m.parity || m.busy ? ' <span class="dbb-am">' + esc(m.parity || m.busy) + '</span>' : '') + '</div>';
+      h += '<div class="dbb-status"><span>' + T('rm.type_confirm', { names: '<b>' + esc(sel.join(' ')) + '</b>' }) + '</span> <input type="text" id="dbb-rmtype" autocomplete="off" style="width:200px;margin:0"> <input type="button" id="dbb-rm5" value="' + esc(T('rm.btn.clear', { d: names })) + '" disabled>' + (m.parity || m.busy ? ' <span class="dbb-am">' + esc(m.parity || m.busy) + '</span>' : '') + '</div>';
     }
-    if (m.clear) { h += '<div class="dbb-gbar s-grey" data-g="rmlog"><span class="pm">' + (GOPEN.rmlog ? '&minus;' : '+') + '</span><span></span><span>Log of the clearing</span><span class="c"></span></div><div class="dbb-grp" data-g="rmlog"' + (GOPEN.rmlog ? '' : ' hidden') + '><div class="dbb-log" id="dbb-rmlog"></div></div>'; }
-    $('#dbb-rs5').html(h); $('#dbb-rb5').text(st < 5 ? 'after step 4' : (running ? 'running' : (m.cleared ? 'done' : 'to do')));
-    if (m.clear && GOPEN.rmlog) { api('rm_log').done(function (r) { $('#dbb-rmlog').text($.map(sel, function (d) { return '== ' + d + '\n' + (r.log[d] || '(empty)'); }).join('\n')); }); }
+    if (m.clear) { h += '<div class="dbb-gbar s-grey" data-g="rmlog"><span class="pm">' + (GOPEN.rmlog ? '&minus;' : '+') + '</span><span></span><span>' + esc(T('rm.log')) + '</span><span class="c"></span></div><div class="dbb-grp" data-g="rmlog"' + (GOPEN.rmlog ? '' : ' hidden') + '><div class="dbb-log" id="dbb-rmlog"></div></div>'; }
+    $('#dbb-rs5').html(h); $('#dbb-rb5').text(st < 5 ? T('rm.after', { n: 4 }) : (running ? T('rm.running') : (m.cleared ? T('rm.done') : T('rm.todo'))));
+    if (m.clear && GOPEN.rmlog) { api('rm_log').done(function (r) { $('#dbb-rmlog').text($.map(sel, function (d) { return '== ' + d + '\n' + (r.log[d] || '(' + T('rm.log_empty') + ')'); }).join('\n')); }); }
     // 6 New Config (the owner does it in Unraid)
     var ids = $.map(sel, function (d) { return d.toUpperCase() + (m.disks[d].id ? ' (' + esc(m.disks[d].id) + ')' : ''); }).join(', ');
-    h = m.gone ? rowH('green', esc(names) + ' are out of the array', '', '<input type="button" id="dbb-rmend" class="dbb-ghost" value="Finish">')
-      : '<ol style="margin:0;padding:10px 12px 10px 32px;line-height:1.7"><li>Main &rarr; <b>Stop</b> the array.</li><li>Tools &rarr; <b>New Config</b> &rarr; Preserve current assignments: <b>All</b> &rarr; Apply.</li><li>Main &rarr; set ' + esc(names) + ' to <b>no device</b>; leave the other slots as they are.</li><li>Tick <b>Parity is already valid</b> &rarr; <b>Start</b>.</li><li>Shut down and take out: ' + ids + '.</li></ol>' + rowH(st === 6 ? 'green' : 'grey', st === 6 ? 'Ready: your turn' : 'after step 5', '', '');
-    $('#dbb-rs6').html(h); $('#dbb-rb6').text(m.gone ? 'done' : (st === 6 ? 'your turn' : 'after step 5'));
+    h = m.gone ? rowH('green', esc(T('rm.out', { d: names })), '', '<input type="button" id="dbb-rmend" class="dbb-ghost" value="' + esc(T('rm.btn.finish')) + '">')
+      : '<ol style="margin:0;padding:10px 12px 10px 32px;line-height:1.7"><li>' + T('rm.nc1') + '</li><li>' + T('rm.nc2') + '</li><li>' + T('rm.nc3', { d: esc(names) }) + '</li><li>' + T('rm.nc4') + '</li><li>' + T('rm.nc5', { ids: ids }) + '</li></ol>' + rowH(st === 6 ? 'green' : 'grey', esc(st === 6 ? T('rm.ready_turn') : T('rm.after', { n: 5 })), '', '');
+    $('#dbb-rs6').html(h); $('#dbb-rb6').text(m.gone ? T('rm.done') : (st === 6 ? T('rm.your_turn') : T('rm.after', { n: 5 })));
     $('#dbb-rmact').html(act);
-    if (running) { $('#dbb-aband').text('clearing ' + names); }
+    if (running) { $('#dbb-aband').text(T('rm.aband', { d: names })); }
     if (running || m.balance) { RMT = setTimeout(rmLoad, 15000); }
   }
   $(document).on('input', '#dbb-rmtype', function () { $('#dbb-rm5').prop('disabled', $.trim($(this).val()).replace(/\s+/g, ' ') !== (RM ? RM.sel.join(' ') : '-')); });
   $(document).on('click', '#dbb-rm2', rmLoad);
-  $(document).on('click', '#dbb-rm4', function () { var $b = $(this).prop('disabled', true).val('Checking...'); api('rm_check').always(function () { $b.val('Check the disks'); }).done(rmLoad).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); }); });
+  $(document).on('click', '#dbb-rm4', function () { var $b = $(this).prop('disabled', true).val(T('rm.checking')); api('rm_check').always(function () { $b.val(T('rm.btn.check')); }).done(rmLoad).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); }); });
   $(document).on('click', '#dbb-rm5', function () {
     var names = RM.sel.join(', ').toUpperCase();
-    if (!window.confirm('Clear ' + names + '?\n\nEach disk is unmounted and every byte on it is overwritten with zeros (through parity, so parity stays valid). This cannot be undone.')) { return; }
+    if (!window.confirm(T('rm.confirm', { d: names }))) { return; }
     var $b = $(this).prop('disabled', true);
     api('rm_clear', {confirm: $('#dbb-rmtype').val()}).done(function () { setTimeout(rmLoad, 3000); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
@@ -297,24 +304,24 @@ $(function () {
       // a disk to empty: what is still used after the move but is neither a kept folder nor an unticked title is the file system's own space (XFS metadata), not data
       var res = d.drain ? Math.max(0, used[d.name] - (keep[d.name] || 0)) : 0, dataAfter = after - res / d.size * 100, chg;
       if (d.drain && res > 0) {
-        chg = now.toFixed(1) + '% &rarr; ' + ((keep[d.name] || 0) < 1e9 ? 'empty' : dataAfter.toFixed(1) + '%') + '<small>+ ' + fb(res) + ' file system</small>';
+        chg = now.toFixed(1) + '% &rarr; ' + ((keep[d.name] || 0) < 1e9 ? esc(T('rm.empty')) : dataAfter.toFixed(1) + '%') + '<small>' + esc(T('bal.plus_fs', { s: fb(res) })) + '</small>';
       } else { chg = now.toFixed(1) + '% &rarr; ' + after.toFixed(1) + '%'; }
-      h += '<div class="dbb-row dbb-disk ' + (d.drain ? 's-red' : over ? 's-red' : 's-grey') + '"><span><b>' + esc(d.label) + '</b>' + (d.drain ? '<span class="dbb-chip rd">empty</span>' : '') + '</span><span class="dbb-r">' + fb(d.size) + '</span>' +
-           '<span class="dbb-bars" title="now ' + now.toFixed(1) + '%, after ' + after.toFixed(1) + '%' + (res > 0 ? ', of which ' + fb(res) + ' is the file system\'s own space (metadata), not data' : '') + '">' + barHtml(now, P.target) + barHtml(dataAfter, P.target, col, res / d.size * 100) + '</span><span class="dbb-chg">' + chg + '</span></div>';
+      h += '<div class="dbb-row dbb-disk ' + (d.drain ? 's-red' : over ? 's-red' : 's-grey') + '"><span><b>' + esc(d.label) + '</b>' + (d.drain ? '<span class="dbb-chip rd">' + esc(T('bal.chip_empty')) + '</span>' : '') + '</span><span class="dbb-r">' + fb(d.size) + '</span>' +
+           '<span class="dbb-bars" title="' + esc(T('bal.bars_tip', { now: now.toFixed(1), after: after.toFixed(1) }) + (res > 0 ? T('bal.bars_tip_fs', { s: fb(res) }) : '')) + '">' + barHtml(now, P.target) + barHtml(dataAfter, P.target, col, res / d.size * 100) + '</span><span class="dbb-chg">' + chg + '</span></div>';
     });
     $('#dbb-dtab').html(h);
     $.each(grp, function (src, g) {
       var to = $.map(Object.keys(g.to), function (k) { var d = $.grep(P.disks, function (x) { return x.name === k; })[0]; return (d ? d.label : k) + ' (' + g.to[k] + ')'; }).join(', ');
-      var what = (g.t ? g.t + ' title' + (g.t === 1 ? '' : 's') : '') + (g.t && g.m ? ' + ' : '') + (g.m ? g.m + ' media-only item' + (g.m === 1 ? '' : 's') : '');
-      $('#dbb-units .dbb-gbar[data-g="src-' + src + '"] .c').text(what + (g.sel < g.n ? ' · ' + g.sel + ' of ' + g.n + ' ticked' : '') + ' · ' + fb(g.bytes) + (to ? ' · to ' + to : ''));
+      var what = (g.t ? T('bal.n_titles', { n: g.t }) : '') + (g.t && g.m ? ' + ' : '') + (g.m ? T('bal.n_media', { n: g.m }) : '');
+      $('#dbb-units .dbb-gbar[data-g="src-' + src + '"] .c').text(what + (g.sel < g.n ? ' · ' + T('bal.ticked', { sel: g.sel, n: g.n }) : '') + ' · ' + fb(g.bytes) + (to ? ' · ' + T('bal.to', { d: to }) : ''));
       $('#dbb-units .dbb-gall[data-src="' + src + '"]').prop('checked', g.sel === g.n && g.n > 0).prop('indeterminate', g.sel > 0 && g.sel < g.n);
     });
     var tot = $('.dbb-chk').length; $('#dbb-all').prop('checked', tot > 0 && sel === tot).prop('indeterminate', sel > 0 && sel < tot);
-    $('#dbb-go').val(sel ? 'Move ' + sel + ' title' + (sel > 1 ? 's' : '') + ' (' + fb(bytes) + ')' : 'Move the selected titles').prop('disabled', !sel || !!BUSY);
+    $('#dbb-go').val(sel ? T('bal.btn.go_n', { n: sel, s: fb(bytes) }) : T('bal.btn.go')).prop('disabled', !sel || !!BUSY);
     // a plan can be made during a parity check, the move waits for its end: look again every minute
-    $('#dbb-gomsg').toggleClass('dbb-am', !!BUSY).text(BUSY ? 'Moving waits: ' + BUSY + '.' : ($('#dbb-gomsg').hasClass('dbb-am') ? '' : $('#dbb-gomsg').text()));
+    $('#dbb-gomsg').toggleClass('dbb-am', !!BUSY).text(BUSY ? T('bal.waits', { why: BUSY }) : ($('#dbb-gomsg').hasClass('dbb-am') ? '' : $('#dbb-gomsg').text()));
     clearTimeout(busyT); if (BUSY) { busyT = setTimeout(function () { api('state').done(function (r) { BUSY = r.busy || ''; recalc(); }); }, 60000); }
-    $('#dbb-pband').text((P.mode === 'drain' ? 'empty ' + $.map($.grep(P.disks, function (d) { return d.drain; }), function (d) { return d.label; }).join(', ') : 'spread evenly' + (P.target ? ' to ' + (+P.target).toFixed(0) + '%' : '')) + ' · ' + sel + ' title' + (sel === 1 ? '' : 's') + ' · ' + fb(bytes));
+    $('#dbb-pband').text((P.mode === 'drain' ? T('bal.pb_empty', { d: $.map($.grep(P.disks, function (d) { return d.drain; }), function (d) { return d.label; }).join(', ') }) : (P.target ? T('bal.pb_spread_to', { p: (+P.target).toFixed(0) }) : T('bal.pb_spread'))) + ' · ' + T('bal.n_titles', { n: sel }) + ' · ' + fb(bytes));
   }
   function drawPlan(p) {
     P = p; $('#dbb-planbox').show();
@@ -330,15 +337,15 @@ $(function () {
     var h = '';
     $.each(order, function (k, src) {
       var g = 'src-' + src, d = $.grep(p.disks, function (x) { return x.name === src; })[0];
-      h += '<div class="dbb-gbar s-blue" data-g="' + g + '"><span class="pm">' + (GOPEN[g] ? '&minus;' : '+') + '</span><input type="checkbox" class="dbb-gall" data-src="' + esc(src) + '" title="Select / deselect all from this disk"><span>From ' + esc(d ? d.label : up(src)) + '</span><span class="c"></span></div>';
+      h += '<div class="dbb-gbar s-blue" data-g="' + g + '"><span class="pm">' + (GOPEN[g] ? '&minus;' : '+') + '</span><input type="checkbox" class="dbb-gall" data-src="' + esc(src) + '" title="' + esc(T('bal.selall_disk')) + '"><span>' + esc(T('bal.from', { d: d ? d.label : String(src).toUpperCase() })) + '</span><span class="c"></span></div>';
       h += '<div class="dbb-grp" data-g="' + g + '"' + (GOPEN[g] ? '' : ' hidden') + '>';
       // the titles first; the media files without a download (.nfo, pictures, subtitles of a title whose download is gone) in their own folded bar
       // every row is in the page (the move takes the hidden ones too); a long list shows 25 rows, then 50 more per click
       var VID = {mkv: 1, mp4: 1, avi: 1, m4v: 1, ts: 1, iso: 1, mov: 1, wmv: 1, m2ts: 1};
       var nVid = function (e) { var n = 0; $.each(e || {}, function (k, v) { if (VID[k]) { n += v; } }); return n; };
       var extTxt = function (e) { return $.map(Object.keys(e || {}), function (k) { return k + (e[k] > 1 ? ' ' + e[k] : ''); }).join(', '); };
-      var row = function (i, n, lk) { var u = p.units[i]; return '<div class="dbb-row dbb-mv" data-i="' + i + '"' + (n >= (LIM[lk] || 25) ? ' data-more="' + lk + '" hidden' : '') + '><input type="checkbox" class="dbb-chk"' + (u.sel ? ' checked' : '') + '><span><b>' + esc(u.title) + '</b><small>' + esc(u.pair) + ' &middot; ' + u.nfiles + ' file' + (u.nfiles === 1 ? '' : 's') + (u.exts ? ' &middot; ' + esc(extTxt(u.exts)) : '') + (u.media && u.also ? (u.also.length ? ' &middot; the folder is also on ' + up(u.also.join(', ')) : ' &middot; on no other disk') : '') + (u.media && nVid(u.exts) ? ' <span class="dbb-chip am">video without a download</span>' : '') + '</small></span><span class="dbb-r">' + fb(u.size) + '</span><span><select class="dbb-dst">' + opts(u.src, u.dst) + '</select></span></div>'; };
-      var more = function (lk, n) { var lim = LIM[lk] || 25; return n > lim ? '<div class="dbb-status"><input type="button" class="dbb-more dbb-ghost" data-k="' + lk + '" value="Show ' + Math.min(50, n - lim) + ' more (' + (n - lim) + ' left)"></div>' : ''; };
+      var row = function (i, n, lk) { var u = p.units[i]; return '<div class="dbb-row dbb-mv" data-i="' + i + '"' + (n >= (LIM[lk] || 25) ? ' data-more="' + lk + '" hidden' : '') + '><input type="checkbox" class="dbb-chk"' + (u.sel ? ' checked' : '') + '><span><b>' + esc(u.title) + '</b><small>' + esc(u.pair) + ' &middot; ' + esc(T('rm.files', { n: u.nfiles })) + (u.exts ? ' &middot; ' + esc(extTxt(u.exts)) : '') + (u.media && u.also ? ' &middot; ' + esc(u.also.length ? T('bal.also_on', { d: u.also.join(', ').toUpperCase() }) : T('bal.no_other')) : '') + (u.media && nVid(u.exts) ? ' <span class="dbb-chip am">' + esc(T('bal.vid_nodl')) + '</span>' : '') + '</small></span><span class="dbb-r">' + fb(u.size) + '</span><span><select class="dbb-dst">' + opts(u.src, u.dst) + '</select></span></div>'; };
+      var more = function (lk, n) { var lim = LIM[lk] || 25; return n > lim ? '<div class="dbb-status"><input type="button" class="dbb-more dbb-ghost" data-k="' + lk + '" value="' + esc(T('bal.more', { m: Math.min(50, n - lim), n: n - lim })) + '"></div>' : ''; };
       var ti = $.grep(by[src], function (i) { return !p.units[i].media; }), mi = $.grep(by[src], function (i) { return !!p.units[i].media; });
       $.each(ti, function (j, i) { h += row(i, j, 't-' + src); });
       h += more('t-' + src, ti.length);
@@ -348,23 +355,23 @@ $(function () {
         $.each(mi, function (j, i) { var u = p.units[i]; msz += u.size; $.each(u.exts || {}, function (k, v) { mex[k] = (mex[k] || 0) + v; }); if (u.also) { if (u.also.length) { nEl++; } else { nNo++; } } });
         var mv = 0; $.each(mi, function (j, i) { mv += nVid(p.units[i].exts); });
         var mtop = {}; $.each(Object.keys(mex).sort(function (a, b) { return mex[b] - mex[a]; }).slice(0, 5), function (j, k) { mtop[k] = mex[k]; });
-        h += '<div class="dbb-gbar s-grey" data-g="' + mg + '" style="padding-left:34px" title="Files in the media folders of this disk that have no hardlink (a hardlink cannot cross disks, so they have none anywhere). Mostly pictures and .nfo that Radarr, Sonarr or Jellyfin wrote next to a film whose video and download are on another disk. A video file here has lost its download: nothing seeds it."><span class="pm">' + (GOPEN[mg] ? '&minus;' : '+') + '</span><span></span><span>Library files without a hardlink</span><span class="c">' + mi.length + ' folder' + (mi.length === 1 ? '' : 's') + ' &middot; ' + fb(msz) + (Object.keys(mtop).length ? ' &middot; ' + esc(extTxt(mtop)) : '') + (nEl || nNo ? ' &middot; ' + nEl + ' also on another disk' + (nNo ? ', ' + nNo + ' only here' : '') : '') + (mv ? ' &middot; <span class="dbb-am">' + mv + ' video file' + (mv === 1 ? '' : 's') + ' without a download</span>' : '') + '</span></div>';
+        h += '<div class="dbb-gbar s-grey" data-g="' + mg + '" style="padding-left:34px" title="' + esc(T('bal.lib_tip')) + '"><span class="pm">' + (GOPEN[mg] ? '&minus;' : '+') + '</span><span></span><span>' + esc(T('bal.lib_bar')) + '</span><span class="c">' + esc(T('bal.n_folders', { n: mi.length })) + ' &middot; ' + fb(msz) + (Object.keys(mtop).length ? ' &middot; ' + esc(extTxt(mtop)) : '') + (nEl || nNo ? ' &middot; ' + esc(T('bal.n_also', { n: nEl })) + (nNo ? ', ' + esc(T('bal.n_only', { n: nNo })) : '') : '') + (mv ? ' &middot; <span class="dbb-am">' + esc(T('bal.n_vid', { n: mv })) + '</span>' : '') + '</span></div>';
         h += '<div class="dbb-grp" data-g="' + mg + '"' + (GOPEN[mg] ? '' : ' hidden') + '>';
         $.each(mi, function (j, i) { h += row(i, j, 'm-' + src); });
         h += more('m-' + src, mi.length) + '</div>';
       }
       h += '</div>';
     });
-    $('#dbb-units').html(h || '<div class="dbb-status dbb-mut">Nothing to move: the disks are balanced or no title can be moved.</div>');
+    $('#dbb-units').html(h || '<div class="dbb-status dbb-mut">' + esc(T('bal.nothing')) + '</div>');
     var sk = '';
     $.each(p.skipped || [], function (i, u) { sk += '<div class="dbb-row dbb-left"><span></span><span><b>' + esc(u.title) + '</b><small>' + esc(u.pair) + ' &middot; ' + esc(u.why) + '</small></span><span></span><span class="dbb-r">' + fb(u.size) + '</span></div>'; });
-    $('#dbb-skiplist').html(sk); $('#dbb-skipc').text((p.skipped || []).length + ' title' + ((p.skipped || []).length === 1 ? '' : 's')); $('#dbb-skipbox').toggle(!!sk);
+    $('#dbb-skiplist').html(sk); $('#dbb-skipc').text(T('bal.n_titles', { n: (p.skipped || []).length })); $('#dbb-skipbox').toggle(!!sk);
     var lh = '';
-    $.each(p.left || [], function (i, x) { lh += '<div class="dbb-row dbb-left"><span>' + up(x.disk) + '</span><span><b>' + esc(x.path) + '</b></span><span class="dbb-r">' + x.n + ' files</span><span class="dbb-r">' + fb(x.size) + '</span></div>'; });
+    $.each(p.left || [], function (i, x) { lh += '<div class="dbb-row dbb-left"><span>' + up(x.disk) + '</span><span><b>' + esc(x.path) + '</b></span><span class="dbb-r">' + esc(T('rm.files', { n: x.n })) + '</span><span class="dbb-r">' + fb(x.size) + '</span></div>'; });
     $('#dbb-leftlist').html(lh);
     var nl = (p.left || []).length;
-    $('#dbb-lefttg').text(nl ? 'Stays on the disk to empty (outside the folders above, or left out; move or delete it yourself)' : 'Nothing else stays on the disk to empty once the ticked titles are moved');
-    $('#dbb-leftc').text(nl ? nl + ' folder' + (nl === 1 ? '' : 's') + ' · ' + fb(p.leftSize || 0) : '');
+    $('#dbb-lefttg').text(nl ? T('bal.stays') : T('bal.nothing_stays'));
+    $('#dbb-leftc').text(nl ? T('bal.n_folders', { n: nl }) + ' · ' + fb(p.leftSize || 0) : '');
     $('#dbb-leftbox').toggle(p.mode === 'drain');
     $('#dbb-leftbox .dbb-gbar').toggleClass('s-amber', !!nl).toggleClass('s-green', !nl);
     recalc();
@@ -373,7 +380,7 @@ $(function () {
   $(document).on('click', '.dbb-more', function () {
     var k = String($(this).data('k')), $h = $('#dbb-units .dbb-mv[data-more="' + k + '"]').filter('[hidden]'), n = $h.length;
     $h.slice(0, 50).prop('hidden', false).removeAttr('data-more'); LIM[k] = (LIM[k] || 25) + 50;
-    if (n <= 50) { $(this).closest('.dbb-status').remove(); } else { $(this).val('Show ' + Math.min(50, n - 50) + ' more (' + (n - 50) + ' left)'); }
+    if (n <= 50) { $(this).closest('.dbb-status').remove(); } else { $(this).val(T('bal.more', { m: Math.min(50, n - 50), n: n - 50 })); }
   });
   $(document).on('change', '.dbb-gall', function () { var src = String($(this).data('src')), on = $(this).prop('checked'); $('#dbb-units .dbb-mv').each(function () { if (P.units[$(this).data('i')].src === src) { $(this).find('.dbb-chk').prop('checked', on); } }); recalc(); });
   $('#dbb-all').on('change', function () { $('.dbb-chk').prop('checked', $(this).prop('checked')); recalc(); });
@@ -381,7 +388,7 @@ $(function () {
   function pollPlan() {
     api('getplan').done(function (r) {
       var p = r.plan;
-      if (p.state === 'running') { $('#dbb-pmsg').css('color', '').text(p.msg || 'Scanning...'); planPoll = setTimeout(pollPlan, 1500); return; }
+      if (p.state === 'running') { $('#dbb-pmsg').css('color', '').text(p.msg || T('bal.scanning')); planPoll = setTimeout(pollPlan, 1500); return; }
       $('#dbb-plan').prop('disabled', false);
       if (p.state === 'ready') { $('#dbb-pmsg').text(''); BUSY = r.busy || ''; drawPlan(p); }
       else if (p.state === 'error') { $('#dbb-pmsg').css('color', '#e5534b').text(p.msg); }
@@ -389,12 +396,12 @@ $(function () {
   }
   $('#dbb-plan').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $('#dbb-pmsg').css('color', '').text('Saving...');
+    $('#dbb-pmsg').css('color', '').text(T('bal.saving'));
     api('saveconfig', cfgData()).done(function (r) {
       if (!r.ok) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(r.error); return; }
       api('plan').done(function (r2) {
         if (!r2.ok) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(r2.error); return; }
-        $('#dbb-planbox').hide(); $('#dbb-pmsg').text('Scanning the disks, this can take a minute...'); setTimeout(pollPlan, 1200);
+        $('#dbb-planbox').hide(); $('#dbb-pmsg').text(T('bal.scanning_long')); setTimeout(pollPlan, 1200);
       }).fail(function (x) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(err(x)); });
     }).fail(function (x) { $b.prop('disabled', false); $('#dbb-pmsg').css('color', '#e5534b').text(err(x)); });
   });
@@ -406,7 +413,7 @@ $(function () {
       if ($r.find('.dbb-chk').prop('checked')) { sel[u.id] = $r.find('.dbb-dst').val(); n++; bytes += u.size; }
     });
     if (!n) return;
-    if (!window.confirm('Move ' + n + ' title(s), ' + fb(bytes) + ', between disks?\n\nThe files are copied, checked and only then removed from the old disk. This can take hours. Pause or stop the torrents of these titles first if you can.')) return;
+    if (!window.confirm(T('bal.confirm', { n: n, s: fb(bytes) }))) return;
     var $b = $(this).prop('disabled', true);
     api('start', {sel: JSON.stringify(sel)}).done(function (r) {
       if (!r.ok) { $b.prop('disabled', false); $('#dbb-gomsg').css('color', '#e5534b').text(r.error); return; }
@@ -420,17 +427,17 @@ $(function () {
     $('#dbb-runbox').show();
     var pct = s.total > 0 ? Math.min(100, (s.done + (s.curBytes || 0)) / s.total * 100) : 0;
     $('#dbb-rbar').css('width', pct + '%');
-    var t = {running: 'Moving', done: 'Finished', aborted: 'Stopped', error: 'Stopped with an error'}[s.state] || s.state;
+    var t = {running: T('run.moving'), done: T('run.finished'), aborted: T('run.stopped'), error: T('run.error')}[s.state] || s.state;
     var cls = {done: 'dbb-ok', error: 'dbb-er', aborted: 'dbb-am'}[s.state] || '';
     var el = ((s.finished || Math.floor(Date.now() / 1000)) - s.started), nok = 0, nall = (s.items || []).length;
     $.each(s.items || [], function (i, it) { if (it.state === 'ok') { nok++; } });
-    $('#dbb-rstat').html('<b class="' + cls + '">' + t + '</b> ' + nok + ' / ' + nall + ' titles &middot; ' + fb(s.done + (s.curBytes || 0)) + ' of ' + fb(s.total) + ' (' + pct.toFixed(0) + '%) &middot; ' + dur(el) + (s.msg ? ' &middot; <span class="' + cls + '">' + esc(s.msg) + '</span>' : ''));
-    $('#dbb-aband').text(s.state === 'running' ? 'moving now · ' + pct.toFixed(0) + '%' : t.toLowerCase() + ' · ' + nok + ' of ' + nall + ' titles');
+    $('#dbb-rstat').html('<b class="' + cls + '">' + esc(t) + '</b> ' + esc(T('run.line', { ok: nok, n: nall, done: fb(s.done + (s.curBytes || 0)), total: fb(s.total), p: pct.toFixed(0) })) + ' &middot; ' + dur(el) + (s.msg ? ' &middot; <span class="' + cls + '">' + esc(s.msg) + '</span>' : ''));
+    $('#dbb-aband').text(s.state === 'running' ? T('run.aband', { p: pct.toFixed(0) }) : t.toLowerCase() + ' · ' + T('run.of_titles', { ok: nok, n: nall }));
     // short list: failed and moving titles and the next 5 waiting ones are shown, the rest is folded (waiting, skipped, done)
     var rowH = function (it) {
-      var st = {wait: 'waiting', run: 'moving', ok: 'done', skip: 'skipped', fail: 'FAILED'}[it.state] || it.state;
+      var st = {wait: T('it.wait'), run: T('it.run'), ok: T('it.ok'), skip: T('it.skip'), fail: T('it.fail')}[it.state] || it.state;
       var c = {ok: 'dbb-ok', fail: 'dbb-er', skip: 'dbb-am'}[it.state] || '', sc = {ok: 's-green', fail: 's-red', skip: 's-amber', run: 's-blue'}[it.state] || 's-grey';
-      return '<div class="dbb-row dbb-run ' + sc + '"><span><b>' + esc(it.title) + '</b><small>' + esc(it.pair) + '</small></span><span class="dbb-r">' + fb(it.size) + '</span><span>' + up(it.src) + ' &rarr; ' + up(it.dst) + '</span><span class="' + c + '">' + st + (it.msg ? ': ' + esc(it.msg) : '') + '</span></div>';
+      return '<div class="dbb-row dbb-run ' + sc + '"><span><b>' + esc(it.title) + '</b><small>' + esc(it.pair) + '</small></span><span class="dbb-r">' + fb(it.size) + '</span><span>' + up(it.src) + ' &rarr; ' + up(it.dst) + '</span><span class="' + c + '">' + esc(st) + (it.msg ? ': ' + esc(it.msg) : '') + '</span></div>';
     };
     var top = '', grp = {wait: [], skip: [], ok: []}, gsz = {wait: 0, skip: 0, ok: 0}, nw = 0;
     $.each(s.items || [], function (i, it) {
@@ -441,20 +448,20 @@ $(function () {
       var g = 'r' + k, n = grp[k].length; if (!n) { return ''; }
       return '<div class="dbb-gbar ' + cls + '" data-g="' + g + '"><span class="pm">' + (GOPEN[g] ? '&minus;' : '+') + '</span><span></span><span>' + label(n) + '</span><span class="c">' + fb(gsz[k]) + '</span></div><div class="dbb-grp" data-g="' + g + '"' + (GOPEN[g] ? '' : ' hidden') + '>' + grp[k].join('') + '</div>';
     };
-    $('#dbb-rtab').html(top + bar('wait', 's-grey', function (n) { return n + (s.state === 'running' ? ' more waiting' : ' not moved'); })
-      + bar('skip', 's-amber', function (n) { return n + ' skipped'; }) + bar('ok', 's-green', function (n) { return n + ' done'; }));
+    $('#dbb-rtab').html(top + bar('wait', 's-grey', function (n) { return esc(T(s.state === 'running' ? 'run.more_waiting' : 'run.not_moved', { n: n })); })
+      + bar('skip', 's-amber', function (n) { return esc(T('run.n_skipped', { n: n })); }) + bar('ok', 's-green', function (n) { return esc(T('run.n_done', { n: n })); }));
     var $l = $('#dbb-rlog'), atEnd = $l[0].scrollTop + $l[0].clientHeight >= $l[0].scrollHeight - 5;
     $l.text((s.log || []).join('\n')); if (atEnd) { $l[0].scrollTop = $l[0].scrollHeight; }
-    $('#dbb-runbox .dbb-gbar[data-g="rlog"] .c').text((s.log || []).length + ' lines');
+    $('#dbb-runbox .dbb-gbar[data-g="rlog"] .c').text(T('run.lines', { n: (s.log || []).length }));
     $('#dbb-stop').toggle(!!running).prop('disabled', false);
   }
   // the finished runs, folded under one bar
   function drawHist(r) {
     var hh = (r.history || []).filter(function (x) { return x; }), runs = 0, ab = 0, last = '';
     $.each(hh, function (i, l) { if (/ start /.test(l)) { runs++; } if (/ aborted /.test(l)) { ab++; } last = l.slice(0, 10); });
-    $('#dbb-hist').html(hh.length ? '<div class="dbb-gbar s-grey" data-g="hist"><span class="pm">' + (GOPEN.hist ? '&minus;' : '+') + '</span><span></span><span>Recent moves &middot; ' + runs + ' run' + (runs === 1 ? '' : 's') + '</span><span class="c">' + (ab ? ab + ' stopped &middot; ' : '') + 'last on ' + esc(last) + '</span></div><div class="dbb-grp" data-g="hist"' + (GOPEN.hist ? '' : ' hidden') + '><div class="dbb-log">' + esc(hh.join('\n')) + '</div></div>'
-      : '<div class="dbb-status dbb-mut">Nothing moved yet.</div>');
-    if ((!r.run || r.run.state === 'idle') && !$('#dbb-rmact').children().length) { $('#dbb-aband').text(hh.length ? 'nothing running · last move on ' + last : 'nothing running'); }
+    $('#dbb-hist').html(hh.length ? '<div class="dbb-gbar s-grey" data-g="hist"><span class="pm">' + (GOPEN.hist ? '&minus;' : '+') + '</span><span></span><span>' + esc(T('hist.title') + ' · ' + T('hist.runs', { n: runs })) + '</span><span class="c">' + (ab ? esc(T('hist.stopped', { n: ab })) + ' &middot; ' : '') + esc(T('hist.last', { d: last })) + '</span></div><div class="dbb-grp" data-g="hist"' + (GOPEN.hist ? '' : ' hidden') + '><div class="dbb-log">' + esc(hh.join('\n')) + '</div></div>'
+      : '<div class="dbb-status dbb-mut">' + esc(T('hist.none')) + '</div>');
+    if ((!r.run || r.run.state === 'idle') && !$('#dbb-rmact').children().length) { $('#dbb-aband').text(hh.length ? T('hist.idle_last', { d: last }) : T('hist.idle')); }
   }
   function poll() {
     clearTimeout(pollT);

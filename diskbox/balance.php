@@ -27,7 +27,7 @@ if ($op === 'state') {
     unset($plan['units'], $plan['skipped']);
     $st = bl_json_read(BL_STATUS, ['state' => 'idle']);
     $running = bl_running();
-    if (!$running && ($st['state'] ?? '') === 'running' && time() - (int)($st['started'] ?? 0) > 20) { $st['state'] = 'error'; $st['msg'] = 'The worker stopped unexpectedly.'; }
+    if (!$running && ($st['state'] ?? '') === 'running' && time() - (int)($st['started'] ?? 0) > 20) { $st['state'] = 'error'; $st['msg'] = bl_tr('run.died'); }
     bl_out(true, ['cfg' => bl_cfg(), 'disks' => array_values(bl_disks()), 'plan' => $plan, 'run' => $st, 'running' => $running, 'busy' => bl_busy_reason(),
                   'history' => is_file(BL_LOG) ? array_slice(preg_split('/\r?\n/', trim((string)@file_get_contents(BL_LOG))), -8) : []]);
 }
@@ -39,29 +39,29 @@ if ($op === 'saveconfig') {
         if ($line === '') { continue; }
         $x = array_map('trim', explode('=', $line, 2));
         $dl = bl_path_ok($x[0]); $md = (($x[1] ?? '') === '') ? '' : bl_path_ok($x[1]);
-        if ($dl === false || $md === false) { bl_out(false, ['error' => 'Invalid folder line: ' . $line . ' (use paths relative to the disk root, for example data/downloads/FILM = data/media/film)']); }
+        if ($dl === false || $md === false) { bl_out(false, ['error' => bl_tr('err.bad_line', ['line' => $line])]); }
         $pairs[] = ['dl' => $dl, 'media' => $md];
     }
-    if (!$pairs) { bl_out(false, ['error' => 'Enter at least one downloads folder.']); }
+    if (!$pairs) { bl_out(false, ['error' => bl_tr('err.no_folder')]); }
     $t = trim((string)($_POST['target'] ?? ''));
-    if ($t !== '' && (!is_numeric($t) || $t < 5 || $t > 95)) { bl_out(false, ['error' => 'The target fill must be between 5 and 95 percent.']); }
+    if ($t !== '' && (!is_numeric($t) || $t < 5 || $t > 95)) { bl_out(false, ['error' => bl_tr('err.target')]); }
     $all = bl_disks();
     $dis = [];
     foreach ((array)($_POST['disks'] ?? []) as $d) { if (is_string($d) && isset($all[$d])) { $dis[] = $d; } }
     $mode = in_array($_POST['mode'] ?? '', ['drain', 'remove'], true) ? (string)$_POST['mode'] : 'balance';
     $drn = [];
     foreach ((array)($_POST['drain'] ?? []) as $d) { if (is_string($d) && isset($all[$d]) && (!$dis || in_array($d, $dis, true))) { $drn[] = $d; } }
-    if ($mode !== 'balance' && !$drn) { bl_out(false, ['error' => $mode === 'remove' ? 'Tick the disk(s) to remove.' : 'Tick the disk(s) to empty.']); }
-    if ($mode !== 'balance' && count($drn) >= count($dis ?: $all)) { bl_out(false, ['error' => 'At least one included disk must stay to receive the data.']); }
+    if ($mode !== 'balance' && !$drn) { bl_out(false, ['error' => $mode === 'remove' ? bl_tr('err.tick_remove') : bl_tr('err.tick_drain')]); }
+    if ($mode !== 'balance' && count($drn) >= count($dis ?: $all)) { bl_out(false, ['error' => bl_tr('plan.one_stays')]); }
     $c = ['pairs' => $pairs, 'target' => $t === '' ? '' : (string)(int)$t, 'strategy' => (($_POST['strategy'] ?? '') === 'big') ? 'big' : 'old', 'disks' => $dis, 'mode' => $mode, 'drain' => $drn];
-    if (!bl_json_write(BL_CFG, $c, 0600)) { bl_out(false, ['error' => 'could not write the settings']); }
+    if (!bl_json_write(BL_CFG, $c, 0600)) { bl_out(false, ['error' => bl_tr('err.write')]); }
     bl_out(true);
 }
 
 if ($op === 'plan') {
-    if (bl_running()) { bl_out(false, ['error' => 'A move is running.']); }
+    if (bl_running()) { bl_out(false, ['error' => bl_tr('err.running')]); }
     $why = bl_busy_reason(true);
-    if ($why !== '') { bl_out(false, ['error' => 'Cannot plan now: ' . $why . '.']); }
+    if ($why !== '') { bl_out(false, ['error' => bl_tr('err.cannot_plan', ['why' => $why])]); }
     $p = bl_json_read(BL_PLAN, []);
     if (($p['state'] ?? '') === 'running' && time() - (int)($p['t'] ?? 0) < 120) { bl_out(true); }
     if ((bl_cfg()['mode'] ?? '') === 'remove') { // Remove disks: emptying (step 3) only after the shares keep new files off them (step 2)
@@ -80,19 +80,19 @@ if ($op === 'getplan') {
 }
 
 if ($op === 'start') {
-    if (bl_running()) { bl_out(false, ['error' => 'A move is already running.']); }
+    if (bl_running()) { bl_out(false, ['error' => bl_tr('err.already')]); }
     $why = bl_busy_reason();
-    if ($why !== '') { bl_out(false, ['error' => 'Cannot start: ' . $why . '.']); }
+    if ($why !== '') { bl_out(false, ['error' => bl_tr('err.cannot_start', ['why' => $why])]); }
     $plan = bl_json_read(BL_PLAN, []);
-    if (($plan['state'] ?? '') !== 'ready' || empty($plan['units'])) { bl_out(false, ['error' => 'Make a plan first.']); }
+    if (($plan['state'] ?? '') !== 'ready' || empty($plan['units'])) { bl_out(false, ['error' => bl_tr('err.no_plan')]); }
     $sel = json_decode((string)($_POST['sel'] ?? ''), true);
-    if (!is_array($sel) || !$sel) { bl_out(false, ['error' => 'Nothing is selected.']); }
+    if (!is_array($sel) || !$sel) { bl_out(false, ['error' => bl_tr('err.nothing')]); }
     $disks = bl_disks();
     $byId = [];
     foreach ($plan['units'] as $u) { $byId[$u['id']] = $u; }
     $items = []; $perDst = [];
     foreach ($sel as $id => $dst) {
-        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)) { bl_out(false, ['error' => 'Invalid selection.']); }
+        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)) { bl_out(false, ['error' => bl_tr('err.bad_sel')]); }
         $items[] = ['id' => (string)$id, 'dst' => $dst];
         $perDst[$dst] = ($perDst[$dst] ?? 0) + $byId[$id]['size'];
     }
