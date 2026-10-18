@@ -6,7 +6,10 @@
 # Usage: python3 tools/i18n_check.py [plugin ...]    exit code 1 on an error; missing translations are only counted
 import json, os, re, sys
 R = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-USE = re.compile(r"T\(\s*'([a-z][a-z0-9_]*\.[a-z0-9_.]+)'")
+# a translate call: T('key'), $x_T('key'), $x_t('key'), $x_h('key'), x_t('key'); every quoted 'group.key' counts as used,
+# and a quoted prefix ('date.dow.', 'ntest.ch_') marks every key that starts with it (keys put together in the code)
+CALL = re.compile(r"(?:T|_t|_h)\(\s*'([a-z][a-z0-9_]*\.[a-z0-9_.]*)'")
+LIT = re.compile(r"'([a-z][a-z0-9_]*\.[a-z0-9_.]*)'")
 PH = re.compile(r'\{([a-z0-9_]+)\}')
 FORMS = ('text', 'one', 'other')
 
@@ -26,15 +29,22 @@ def check(plugin):
             err.append('%s: %s: needs text, or one and other' % (plugin, k))
         if not str(v.get('note', '')).strip():
             err.append('%s: %s: no note for the translator' % (plugin, k))
-    used = set()
+    called, lits = set(), set()
     for base, _, files in os.walk(os.path.join(R, plugin)):
         if '/lang' in base:
             continue
         for fn in files:
             if fn.endswith(('.page', '.php', '.js')):
-                used |= set(USE.findall(open(os.path.join(base, fn), encoding='utf-8').read()))
-    for k in sorted(used - set(keys)):
-        err.append('%s: %s: used in the code but not in en.json' % (plugin, k))
+                t = open(os.path.join(base, fn), encoding='utf-8').read()
+                called |= set(CALL.findall(t)); lits |= set(LIT.findall(t))
+    prefixes = [x for x in lits | called if x.endswith(('.', '_'))]
+    for k in sorted(called - set(keys)):
+        if k.endswith(('.', '_')):
+            if not any(x.startswith(k) for x in keys):
+                err.append('%s: %s*: no key starts with this' % (plugin, k))
+        else:
+            err.append('%s: %s: used in the code but not in en.json' % (plugin, k))
+    used = {k for k in keys if k in lits or k in called or any(k.startswith(p) for p in prefixes)}
     for k in sorted(set(keys) - used):
         err.append('%s: %s: in en.json but not used' % (plugin, k))
     for fn in sorted(os.listdir(d)):

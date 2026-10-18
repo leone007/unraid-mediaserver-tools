@@ -5,6 +5,11 @@ Icon="streambox.png"
 Markdown="false"
 ---
 <?PHP
+// texts from the dictionary (lang/en.json and its translations, see i18n.php); $sbs_t escapes, $sbs_T is raw (texts with HTML)
+require_once '/usr/local/emhttp/plugins/streambox/i18n.php';
+$sbs_lang = '/usr/local/emhttp/plugins/streambox/lang';
+$sbs_T = mt_i18n_t($sbs_lang);
+$sbs_t = function ($k, $v = []) use ($sbs_T) { return htmlspecialchars($sbs_T($k, $v), ENT_QUOTES); };
 $sb_file = '/boot/config/plugins/streambox/settings.cfg';
 $sb = [
   'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
@@ -95,135 +100,135 @@ if (!function_exists('sb_auto')) {
 </style>
 <form id="sb-form" class="uset" method="POST" action="/plugins/streambox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=sb_h($sb_tok)?>">
-<h3>Jellyfin and the tile</h3>
+<h3><?=$sbs_t('set.h.jellyfin')?></h3>
 <dl>
-<dt>Jellyfin host (as seen from Unraid):</dt>
+<dt><?=$sbs_t('set.jf_host')?></dt>
 <dd><input type="text" name="jf_host" class="narrow" value="<?=sb_h($sb['jf_host'])?>"></dd>
 
-<dt>Jellyfin port:</dt>
+<dt><?=$sbs_t('set.jf_port')?></dt>
 <dd><input type="number" name="jf_port" min="1" max="65535" class="narrow" value="<?=sb_h($sb['jf_port'])?>"></dd>
 
-<dt>Jellyfin API key:</dt>
-<dd><input type="password" name="jf_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['jf_key'] !== '' ? '(saved, leave empty to keep)' : ''?>"> <span style="opacity:.6">saved keys and webhooks are not sent to the page; type - to remove one</span></dd>
+<dt><?=$sbs_t('set.jf_key')?></dt>
+<dd><input type="password" name="jf_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['jf_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <span style="opacity:.6"><?=$sbs_t('set.key_hint')?></span></dd>
 
-<dt>Jellyfin link URL (also used in the Discord cards):</dt>
+<dt><?=$sbs_t('set.jf_url')?></dt>
 <dd><input type="text" name="jf_url" placeholder="https://media.example.com" value="<?=sb_h($sb['jf_url'])?>"></dd>
 
-<dt>Maximum rows in Now playing:</dt>
+<dt><?=$sbs_t('set.streams_max')?></dt>
 <dd><input type="number" name="streams_max" min="1" max="30" class="narrow" value="<?=sb_h($sb['streams_max'])?>"></dd>
 
-<dt>Rows in Recently added (0 = hide):</dt>
+<dt><?=$sbs_t('set.added_rows')?></dt>
 <dd><input type="number" name="added_rows" min="0" max="20" class="narrow" value="<?=sb_h($sb['added_rows'])?>"></dd>
 
-<dt>Show server load (GPU, CPU, smart socket):</dt>
-<dd><input type="hidden" name="show_load" value="0"><input type="checkbox" name="show_load" value="1" <?=sb_chk($sb['show_load'])?>> switch off when the Sysbox tile shows these</dd>
+<dt><?=$sbs_t('set.show_load')?></dt>
+<dd><input type="hidden" name="show_load" value="0"><input type="checkbox" name="show_load" value="1" <?=sb_chk($sb['show_load'])?>> <?=$sbs_t('set.show_load_hint')?></dd>
 
-<dt>Smart socket (Shelly) address:</dt>
+<dt><?=$sbs_t('set.socket_host')?></dt>
 <dd><input type="text" name="socket_host" class="narrow" placeholder="192.168.1.50" value="<?=sb_h($sb['socket_host'])?>"></dd>
 
-<dt>Smart socket channel:</dt>
+<dt><?=$sbs_t('set.socket_id')?></dt>
 <dd><input type="number" name="socket_id" min="0" max="3" class="narrow" value="<?=sb_h($sb['socket_id'])?>"></dd>
 </dl>
 
-<h3>This week's episodes <small>Monday to Sunday, from Sonarr; read-only</small></h3>
+<h3><?=$sbs_t('week.title')?> <small><?=$sbs_t('set.h.week_sub')?></small></h3>
 <dl>
-<dt>Show on the Dashboard:</dt>
+<dt><?=$sbs_t('set.wk_show')?></dt>
 <dd><select name="wk_show">
-<?php foreach (['2' => 'always', '1' => 'only when an episode airs this week', '0' => 'never'] as $sb_k => $sb_l): ?>
-  <option value="<?=$sb_k?>" <?=((string)$sb['wk_show'] === (string)$sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php foreach (['2' => $sbs_T('set.wk_show.always'), '1' => $sbs_T('set.wk_show.airs'), '0' => $sbs_T('set.wk_show.never')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_show'] === (string)$sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
 <?php endforeach; ?>
 </select>
-<span class="uset-hint">The monitored episodes airing this week, by day: air time, when the torrent usually shows up, and where each one is now. A new week starts at midnight on Sunday.</span></dd>
+<span class="uset-hint"><?=$sbs_t('set.wk_show_hint')?></span></dd>
 
-<dt>Sonarr connection:</dt>
-<dd><label><input type="radio" name="wk_src" value="seedbox" <?=(string)$sb['wk_src'] !== 'own' ? 'checked' : ''?>> use Seedbox's Sonarr settings</label>
-<label><input type="radio" name="wk_src" value="own" <?=(string)$sb['wk_src'] === 'own' ? 'checked' : ''?>> own</label>
-<input type="button" id="sb-wtest" value="Test Sonarr"> <span id="sb-wmsg"></span>
-<span class="uset-hint">Seedbox already has the Sonarr address and API key (Seedbox Tools, Connections). The fields below are used only with "own".</span></dd>
+<dt><?=$sbs_t('set.wk_src')?></dt>
+<dd><label><input type="radio" name="wk_src" value="seedbox" <?=(string)$sb['wk_src'] !== 'own' ? 'checked' : ''?>> <?=$sbs_t('set.wk_src.seedbox')?></label>
+<label><input type="radio" name="wk_src" value="own" <?=(string)$sb['wk_src'] === 'own' ? 'checked' : ''?>> <?=$sbs_t('set.wk_src.own')?></label>
+<input type="button" id="sb-wtest" value="<?=$sbs_t('set.btn.test_sonarr')?>"> <span id="sb-wmsg"></span>
+<span class="uset-hint"><?=$sbs_t('set.wk_src_hint')?></span></dd>
 
-<dt>Sonarr address (own):</dt>
+<dt><?=$sbs_t('set.son_url')?></dt>
 <dd><input type="text" name="son_url" placeholder="http://192.168.1.10:8989" value="<?=sb_h($sb['son_url'])?>"></dd>
 
-<dt>Sonarr API key (own):</dt>
-<dd><input type="password" name="son_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['son_key'] !== '' ? '(saved, leave empty to keep)' : ''?>"></dd>
+<dt><?=$sbs_t('set.son_key')?></dt>
+<dd><input type="password" name="son_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['son_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"></dd>
 
-<dt>Usual delay:</dt>
+<dt><?=$sbs_t('set.wk_delay')?></dt>
 <dd><select name="wk_delay">
-<?php foreach (['series' => 'per series', 'idx' => 'per series and indexer', 'all' => 'one value for all series'] as $sb_k => $sb_l): ?>
-  <option value="<?=$sb_k?>" <?=((string)$sb['wk_delay'] === $sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php foreach (['series' => $sbs_T('set.wk_delay.series'), 'idx' => $sbs_T('set.wk_delay.idx'), 'all' => $sbs_T('set.wk_delay.all')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_delay'] === $sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
 <?php endforeach; ?>
 </select>
-<span class="uset-hint">Median time from airing to the first grab, from the last 60 days of Sonarr history (grabs more than 3 days after airing are left out). Under 3 episodes of a series the median of all series is used. Per indexer: the earliest indexer decides, the others are listed under the title.</span></dd>
+<span class="uset-hint"><?=$sbs_t('set.wk_delay_hint')?></span></dd>
 
-<dt>Late after (hours past the usual time):</dt>
+<dt><?=$sbs_t('set.wk_late')?></dt>
 <dd><input type="number" name="wk_late" min="1" max="48" class="narrow" value="<?=sb_h($sb['wk_late'])?>"></dd>
 
-<dt>Post late episodes to Discord:</dt>
-<dd><input type="hidden" name="wk_dc" value="0"><input type="checkbox" name="wk_dc" value="1" <?=sb_chk($sb['wk_dc'])?>> once per episode, to the series webhook (below)</dd>
+<dt><?=$sbs_t('set.wk_dc')?></dt>
+<dd><input type="hidden" name="wk_dc" value="0"><input type="checkbox" name="wk_dc" value="1" <?=sb_chk($sb['wk_dc'])?>> <?=$sbs_t('set.wk_dc_hint')?></dd>
 
-<dt>Row on Jellyfin's home page:</dt>
-<dd><input type="hidden" name="wk_web" value="0"><input type="checkbox" name="wk_web" value="1" <?=sb_chk($sb['wk_web'])?>> "Ezen a héten", web client and Jellyfin Desktop only
-<span class="uset-hint">Every 2 minutes Streambox writes week.json (series, episode codes, times; no keys) and week.js into the folder below. Map it read-only into the Jellyfin container as /usr/share/jellyfin/web/streambox, then add this script in Jellyfin (Dashboard, JS Injector, enabled): <code>var s=document.createElement('script');s.src='streambox/week.js?v='+Date.now();document.head.appendChild(s);</code> Anyone who can open the Jellyfin address can read week.json.</span></dd>
+<dt><?=$sbs_t('set.wk_web')?></dt>
+<dd><input type="hidden" name="wk_web" value="0"><input type="checkbox" name="wk_web" value="1" <?=sb_chk($sb['wk_web'])?>> <?=$sbs_t('set.wk_web_hint')?>
+<span class="uset-hint"><?=$sbs_T('set.wk_web_long')?></span></dd>
 
-<dt>Default view in Jellyfin:</dt>
+<dt><?=$sbs_t('set.wk_web_view')?></dt>
 <dd><select name="wk_web_view">
-<?php foreach (['grid' => 'calendar (seven day cards)', 'row' => 'posters (one row)'] as $sb_k => $sb_l): ?>
-  <option value="<?=$sb_k?>" <?=((string)$sb['wk_web_view'] === $sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php foreach (['grid' => $sbs_T('set.wk_view.grid'), 'row' => $sbs_T('set.wk_view.row')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_web_view'] === $sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
 <?php endforeach; ?>
 </select>
-<span class="uset-hint">Each viewer can switch with the two icons next to the title; the choice is remembered in that browser.</span></dd>
+<span class="uset-hint"><?=$sbs_t('set.wk_view_hint')?></span></dd>
 
-<dt>Folder for Jellyfin:</dt>
+<dt><?=$sbs_t('set.wk_web_dir')?></dt>
 <dd><input type="text" name="wk_web_dir" value="<?=sb_h($sb['wk_web_dir'])?>" placeholder="/mnt/cache/docker/streambox/web"></dd>
 </dl>
 
-<h3>Discord notifications</h3>
+<h3><?=$sbs_t('set.h.discord')?></h3>
 <dl>
-<dt>Announce new movies and seasons:</dt>
+<dt><?=$sbs_t('set.notify')?></dt>
 <dd><input type="hidden" name="notify" value="0"><input type="checkbox" name="notify" value="1" <?=sb_chk($sb['notify'])?>></dd>
 
-<dt>Webhook for movies (#filmek):</dt>
-<dd><input type="password" name="dc_movies" autocomplete="new-password" placeholder="<?=$sb['dc_movies'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+<dt><?=$sbs_t('set.dc_movies')?></dt>
+<dd><input type="password" name="dc_movies" autocomplete="new-password" placeholder="<?=$sb['dc_movies'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
 
-<dt>Webhook for series (#sorozatok):</dt>
-<dd><input type="password" name="dc_series" autocomplete="new-password" placeholder="<?=$sb['dc_series'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+<dt><?=$sbs_t('set.dc_series')?></dt>
+<dd><input type="password" name="dc_series" autocomplete="new-password" placeholder="<?=$sb['dc_series'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
 
-<dt>Weekly summary of new movies and series:</dt>
+<dt><?=$sbs_t('set.weekly')?></dt>
 <dd><input type="hidden" name="weekly" value="0"><input type="checkbox" name="weekly" value="1" <?=sb_chk($sb['weekly'])?>></dd>
 
-<dt>Webhook for the weekly summary:</dt>
-<dd><input type="password" name="dc_weekly" autocomplete="new-password" placeholder="<?=$sb['dc_weekly'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+<dt><?=$sbs_t('set.dc_weekly')?></dt>
+<dd><input type="password" name="dc_weekly" autocomplete="new-password" placeholder="<?=$sb['dc_weekly'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
 
-<dt>Weekly summary day and hour:</dt>
+<dt><?=$sbs_t('set.weekly_when')?></dt>
 <dd>
   <select name="weekly_day" style="width:auto">
-<?php foreach ([1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 0 => 'Sunday'] as $sb_dv => $sb_dn): ?>
-    <option value="<?=$sb_dv?>" <?=((string)$sb['weekly_day'] === (string)$sb_dv) ? 'selected' : ''?>><?=$sb_dn?></option>
+<?php foreach ([1 => $sbs_T('date.long.mon'), 2 => $sbs_T('date.long.tue'), 3 => $sbs_T('date.long.wed'), 4 => $sbs_T('date.long.thu'), 5 => $sbs_T('date.long.fri'), 6 => $sbs_T('date.long.sat'), 0 => $sbs_T('date.long.sun')] as $sb_dv => $sb_dn): ?>
+    <option value="<?=$sb_dv?>" <?=((string)$sb['weekly_day'] === (string)$sb_dv) ? 'selected' : ''?>><?=sb_h($sb_dn)?></option>
 <?php endforeach; ?>
   </select>
   <input type="number" name="weekly_hour" min="0" max="23" class="narrow" value="<?=sb_h($sb['weekly_hour'])?>"> :00
 </dd>
 
-<dt>Wait for more episodes (minutes):</dt>
+<dt><?=$sbs_t('set.notify_settle')?></dt>
 <dd><input type="number" name="notify_settle" min="1" max="60" class="narrow" value="<?=sb_h($sb['notify_settle'])?>"></dd>
 
-<dt>Wait for metadata and poster (minutes):</dt>
+<dt><?=$sbs_t('set.notify_wait')?></dt>
 <dd><input type="number" name="notify_wait" min="1" max="240" class="narrow" value="<?=sb_h($sb['notify_wait'])?>"></dd>
 
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="sb-ntest" value="Send test message">
-  <input type="button" id="sb-nprev" value="Send preview (newest movie and season)">
-  <input type="button" id="sb-nweek" value="Send weekly summary now">
+  <input type="button" id="sb-ntest" value="<?=$sbs_t('set.btn.ntest')?>">
+  <input type="button" id="sb-nprev" value="<?=$sbs_t('set.btn.nprev')?>">
+  <input type="button" id="sb-nweek" value="<?=$sbs_t('set.btn.nweek')?>">
   <span id="sb-nmsg" style="margin-left:12px"></span>
 </dd>
 </dl>
 
-<h3>User nicknames</h3>
+<h3><?=$sbs_t('set.h.nicks')?></h3>
 <?php if ($sb_users === null): ?>
-<p>The user list could not be loaded. Enter the Jellyfin host, port and API key above, press Apply, then reload this page.</p>
+<p><?=$sbs_t('set.nicks_none')?></p>
 <?php else: ?>
-<p>Nicknames are shown instead of the long user names on the dashboard tile. Leave a field empty to use the automatic short name (shown as a hint).</p>
+<p><?=$sbs_t('set.nicks_hint')?></p>
 <dl>
 <?php foreach ($sb_users as $sb_u): ?>
 <dt><?=sb_h($sb_u['name'])?>:</dt>
@@ -235,8 +240,8 @@ if (!function_exists('sb_auto')) {
 <dl class="uset-save">
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="sb-save" value="Apply">
-  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <input type="button" id="sb-save" value="<?=$sbs_t('set.btn.apply')?>">
+  <input type="button" value="<?=$sbs_t('set.btn.done')?>" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
   <span id="sb-msg" style="margin-left:12px"></span>
 </dd>
 </dl>
@@ -244,38 +249,40 @@ if (!function_exists('sb_auto')) {
 <?php $mt_lang_post = '/plugins/streambox/lang_save.php'; include '/usr/local/emhttp/plugins/streambox/lang_block.php'; ?>
 
 <?php if ($sb_log !== ''): ?>
-<p style="opacity:.6;font-size:12px;max-width:130ch">Notifier log (latest entries):</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sbs_t('set.log')?></p>
 <pre><?=sb_h($sb_log)?></pre>
 <?php endif; ?>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Discord cards: Unraid checks Jellyfin every minute. A movie is announced once its description (in Jellyfin's metadata language) and poster exist; episodes are grouped per season and announced when no new episode has arrived for the "wait for more episodes" time. The first time the notifier is switched on, only items added from then on are announced. The weekly summary lists everything added in the last 7 days at the chosen day and hour (server time zone); if the server was off at that hour it is sent when it is next up the same day. The buttons use the saved settings, so press Apply first. The Jellyfin link in the cards is left out when the Jellyfin link URL is empty. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sbs_t('set.help_discord')?></p>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">The Jellyfin API key is created in Jellyfin under Dashboard, Advanced, API Keys. Streams that are idle (nothing playing) are not shown. GPU load is read with intel_gpu_top, CPU load from the system statistics. Leave the Jellyfin link URL empty to use this server's address with the Jellyfin port. Leave the smart socket address empty to hide the Socket reading. The monthly consumption is taken from the socket's own energy counter, which Unraid samples every 10 minutes, so the first month counts from the day the socket is set up.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sbs_t('set.help_general')?></p>
 
+<?=mt_i18n_js($sbs_lang, 'sb')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('sb', k, v); };
   var $msg = $('#sb-msg');
   $('#sb-save').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $msg.css('color', '').text('Saving...');
+    $msg.css('color', '').text(T('set.saving'));
     $.post('/plugins/streambox/save.php', $('#sb-form').serialize(), null, 'json')
       .done(function (r) {
         if (r && r.ok) {
-          $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.');
+          $msg.css('color', '#3fa24a').text(T('set.saved'));
         } else {
-          $msg.css('color', '#e5534b').text('Not saved: ' + ((r && r.error) ? r.error : 'unknown error'));
+          $msg.css('color', '#e5534b').text(T('set.not_saved', { e: (r && r.error) ? r.error : T('set.unknown_error') }));
         }
       })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
-        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+        $msg.css('color', '#e5534b').text(T('set.not_saved', { e: e }));
       })
       .always(function () { $b.prop('disabled', false); });
   });
   $('#sb-wtest').on('click', function () {
-    var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text('Asking Sonarr... (Apply first if you changed the connection)');
+    var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text(T('set.asking_sonarr'));
     $.getJSON('/plugins/streambox/week.php', { test: 1, _: Date.now() })
-      .done(function (r) { $m.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : 'unknown answer'); })
+      .done(function (r) { $m.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : T('set.unknown_answer')); })
       .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
       .always(function () { $b.prop('disabled', false); });
   });
@@ -283,9 +290,9 @@ $(function () {
   $('#sb-ntest, #sb-nprev, #sb-nweek').on('click', function () {
     var mode = (this.id === 'sb-nprev') ? 'preview' : ((this.id === 'sb-nweek') ? 'weekly' : 'test');
     var $b = $('#sb-ntest, #sb-nprev, #sb-nweek').prop('disabled', true);
-    $nm.css('color', '').text('Sending...');
+    $nm.css('color', '').text(T('set.sending'));
     $.post('/plugins/streambox/notify_test.php', { mode: mode }, null, 'json')
-      .done(function (r) { $nm.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : 'unknown answer'); })
+      .done(function (r) { $nm.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : T('set.unknown_answer')); })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.message) ? x.responseJSON.message : 'HTTP ' + x.status;
         $nm.css('color', '#e5534b').text(e);

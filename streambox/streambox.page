@@ -4,6 +4,12 @@ Markdown="false"
 ---
 <?PHP
 $pluginname = "streambox";
+// texts from the dictionary (lang/en.json and its translations, see i18n.php)
+require_once '/usr/local/emhttp/plugins/streambox/i18n.php';
+$sbx_lang = '/usr/local/emhttp/plugins/streambox/lang';
+$sbx_T = mt_i18n_t($sbx_lang);
+$sbx_h = function ($k) use ($sbx_T) { return htmlspecialchars($sbx_T($k), ENT_QUOTES); };
+$sbx_t = ['conn' => $sbx_h('tile.connecting'), 'load' => $sbx_h('tile.loading'), 'open' => $sbx_h('tile.open_jellyfin'), 'set' => $sbx_h('tile.settings')];
 
 $mytiles[$pluginname]['column2'] =
 <<<EOT
@@ -14,13 +20,13 @@ $mytiles[$pluginname]['column2'] =
       <i class="f32 sb-ic"></i>
       <div class="section">
         <h3 class="tile-header-main sb-ttl">Streambox</h3>
-        <span id="sb-summary" class="sb-sum">Connecting&hellip;</span>
+        <span id="sb-summary" class="sb-sum">{$sbx_t['conn']}</span>
       </div>
     </span>
     <span class="tile-header-right">
       <span class="tile-header-right-controls">
-        <a id="sb-home" href="#" target="_blank" rel="noopener" title="_(Open Jellyfin)_"><i class="fa fa-fw fa-home control"></i></a>
-        <a href="/Settings/StreamboxSettings" title="_(Streambox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+        <a id="sb-home" href="#" target="_blank" rel="noopener" title="{$sbx_t['open']}"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/StreamboxSettings" title="{$sbx_t['set']}"><i class="fa fa-fw fa-cog control"></i></a>
       </span>
     </span>
   </span>
@@ -28,7 +34,7 @@ $mytiles[$pluginname]['column2'] =
 <tr><td>
   <div class="sb-tile">
     <div id="sb-status"></div>
-    <div id="sb-now"><div class="sb-note">Loading&hellip;</div></div>
+    <div id="sb-now"><div class="sb-note">{$sbx_t['load']}</div></div>
     <div id="sb-week"></div>
     <div id="sb-load"></div>
     <div id="sb-added"></div>
@@ -36,6 +42,7 @@ $mytiles[$pluginname]['column2'] =
 </td></tr>
 </tbody>
 EOT;
+echo mt_i18n_js($sbx_lang, 'sb');
 ?>
 <style>
 i.f32.sb-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/streambox/icon.png) center/contain no-repeat!important}
@@ -85,6 +92,7 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 </style>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('sb', k, v); };
   var API = '/plugins/streambox/api_fetch.php';
   var LOAD = '/plugins/streambox/load.php';
   var busy = false, loadBusy = false, loadTimer = null, themed = false;
@@ -93,9 +101,9 @@ $(function () {
   var TYPE_ICON = { Movie: 'fa-film', Episode: 'fa-television', Season: 'fa-television', Audio: 'fa-music',
     TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
   var MODE = {
-    DirectPlay:   ['sb-play', 'Direct play'],
-    DirectStream: ['sb-stream', 'Direct stream'],
-    Transcode:    ['sb-trans', 'Transcode']
+    DirectPlay:   ['sb-play', T('mode.direct_play')],
+    DirectStream: ['sb-stream', T('mode.direct_stream')],
+    Transcode:    ['sb-trans', T('mode.transcode')]
   };
 
   // The embedded icon is light; invert it when the page background is light
@@ -120,16 +128,16 @@ $(function () {
   function leftTxt(s) {
     s = Math.max(0, Math.floor(s));
     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-    if (h > 0) { return h + 'h ' + (m < 10 ? '0' : '') + m + 'm left'; }
-    if (m > 0) { return m + 'm left'; }
-    return s + 's left';
+    if (h > 0) { return T('time.left_hm', { h: h, m: (m < 10 ? '0' : '') + m }); }
+    if (m > 0) { return T('time.left_m', { m: m }); }
+    return T('time.left_s', { s: s });
   }
   function agoTxt(ts) {
     var d = Math.max(0, Math.floor(Date.now() / 1000) - ts);
-    if (d < 60) { return 'just now'; }
-    if (d < 3600) { return Math.floor(d / 60) + 'm ago'; }
-    if (d < 86400) { return Math.floor(d / 3600) + 'h ago'; }
-    return Math.floor(d / 86400) + 'd ago';
+    if (d < 60) { return T('time.just_now'); }
+    if (d < 3600) { return T('time.ago_m', { m: Math.floor(d / 60) }); }
+    if (d < 86400) { return T('time.ago_h', { h: Math.floor(d / 3600) }); }
+    return T('time.ago_d', { d: Math.floor(d / 86400) });
   }
   function band(text, meta, first) {
     var $b = $('<div class="mt-band">').toggleClass('mt-first', !!first).append($('<span>').text(text));
@@ -147,17 +155,17 @@ $(function () {
   function renderPill(r) {
     var $p = $('<div class="sb-pill">');
     var ok = r && r.ok;
-    var st = ok ? [COLOR.green, 'fa-server', 'Online']
-         : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', 'API key']
-         : [COLOR.red, 'fa-chain-broken', 'Offline'];
+    var st = ok ? [COLOR.green, 'fa-server', T('pill.online')]
+         : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', T('pill.api_key')]
+         : [COLOR.red, 'fa-chain-broken', T('pill.offline')];
     $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
     if (ok) {
       var n = r.streams_total || 0;
       if (n > 0) {
-        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-play">')).append(document.createTextNode(' ' + n + ' streaming')));
+        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-play">')).append(document.createTextNode(' ' + T('pill.streaming', { n: n }))));
       }
       if (r.transcoding > 0) {
-        $p.append($('<span>').css('color', COLOR.amber).append($('<i class="fa fa-bolt">')).append(document.createTextNode(' ' + r.transcoding + ' transcoding')));
+        $p.append($('<span>').css('color', COLOR.amber).append($('<i class="fa fa-bolt">')).append(document.createTextNode(' ' + T('pill.transcoding', { n: r.transcoding }))));
       }
     }
     $('#sb-status').empty().append($p);
@@ -165,28 +173,28 @@ $(function () {
 
   function renderSummary(r) {
     var $s = $('#sb-summary');
-    if (!r || !r.ok) { $s.text('Unavailable'); return; }
-    if (!r.streams_total) { $s.text('No active streams'); return; }
-    $s.text(r.streams_total + (r.streams_total === 1 ? ' stream' : ' streams') + ' \u00B7 ' + r.users + (r.users === 1 ? ' user' : ' users')
+    if (!r || !r.ok) { $s.text(T('sum.unavailable')); return; }
+    if (!r.streams_total) { $s.text(T('sum.no_streams')); return; }
+    $s.text(T('sum.streams', { n: r.streams_total }) + ' \u00B7 ' + T('sum.users', { n: r.users })
       + (r.mbps > 0 ? ' \u00B7 ' + r.mbps.toFixed(1) + ' Mbps' : ''));
   }
 
   function renderNow(r) {
     var $n = $('#sb-now').empty();
     if (!r || !r.ok) {
-      var msg = (r && r.error === 'auth') ? 'Jellyfin rejected the API key (check Streambox settings)'
-              : (r && r.error === 'nokey') ? 'Enter the Jellyfin API key in the Streambox settings'
-              : 'Jellyfin unreachable';
+      var msg = (r && r.error === 'auth') ? T('now.err_auth')
+              : (r && r.error === 'nokey') ? T('now.err_nokey')
+              : T('now.err_down');
       $n.append(note(msg));
       return;
     }
     var t = '18px minmax(0,1fr) 64px 84px 120px';
-    $n.append(band('Now playing \u00B7 ' + r.streams_total, '', true));
+    $n.append(band(T('now.title') + ' \u00B7 ' + r.streams_total, '', true));
     var $box = $('<div class="mt-box">').appendTo($n);
-    if (!r.streams.length) { $box.append(mnote('No active streams')); return; }
+    if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); return; }
     $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
-      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('User')).append($('<div>').text('Device'))
-      .append($('<div>').css('color', COLOR.orange).text('Mode')));
+      .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.user'))).append($('<div>').text(T('col.device')))
+      .append($('<div>').css('color', COLOR.orange).text(T('col.mode'))));
 
     $.each(r.streams, function (i, x) {
       var m = MODE[x.mode] || MODE.DirectPlay;
@@ -199,7 +207,7 @@ $(function () {
       if (x.live) {
         // live TV has no length: a label instead of a progress bar
         $pl = $('<div class="sb-pl">').append($('<span>').css('color', x.paused ? COLOR.grey : COLOR.red)
-          .text(x.paused ? 'Paused' : '\u25CF LIVE'));
+          .text(x.paused ? T('now.paused') : '\u25CF ' + T('now.live')));
         if (x.epg) {
           $pl.append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })));
           if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
@@ -207,7 +215,7 @@ $(function () {
       } else {
         $pl = $('<div class="sb-pl">')
           .append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })))
-          .append($('<span>').css('color', col).text(x.paused ? 'Paused' : Math.round(pct) + '%'));
+          .append($('<span>').css('color', col).text(x.paused ? T('now.paused') : Math.round(pct) + '%'));
         if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
         else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
       }
@@ -225,21 +233,21 @@ $(function () {
     var $a = $('#sb-added').empty();
     if (!r || !r.ok || !r.added || !r.added.length) { return; }
     var t = '18px minmax(0,1fr) 74px 52px 62px';
-    $a.append(band('Recently added \u00B7 ' + r.added.length, 'latest from Jellyfin'));
+    $a.append(band(T('added.title') + ' \u00B7 ' + r.added.length, T('added.meta')));
     var $box = $('<div class="mt-box">').appendTo($a);
     $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
-      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('Type')).append($('<div>').text('Quality'))
-      .append($('<div class="sb-num">').text('Added')));
+      .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.type'))).append($('<div>').text(T('col.quality')))
+      .append($('<div class="sb-num">').text(T('col.added'))));
     $.each(r.added, function (i, x) {
       var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.type === 'Movie' ? 'mt-s-blue' : 'mt-s-purple');
       $row.append(icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
       $row.append($('<div class="sb-nm">').attr('title', x.title).text(x.title));
-      $row.append($('<div>').append($('<span class="sb-bd">').addClass(x.type === 'Movie' ? 'sb-t-blue' : 'sb-t-purple').text(x.type)));
+      $row.append($('<div>').append($('<span class="sb-bd">').addClass(x.type === 'Movie' ? 'sb-t-blue' : 'sb-t-purple').text(x.type === 'Movie' ? T('type.movie') : (x.type === 'Episode' ? T('type.episode') : x.type))));
       $row.append($('<div class="sb-num">').css('text-align', 'left').text(x.quality || '\u2014'));
       $row.append($('<div class="sb-num sb-u">').text(x.added ? agoTxt(x.added) : '\u2014'));
       $box.append($row);
     });
-    $a.append(moreLink(href, 'Open Jellyfin'));
+    $a.append(moreLink(href, T('tile.open_jellyfin')));
   }
 
   function card(label, pct, sub) {
@@ -258,22 +266,22 @@ $(function () {
     if (!d || !d.ok) { return; }
     var cards = [];
     if (d.gpu) {
-      cards.push(card('GPU \u00B7 Video', d.gpu.video, 'Quick Sync'));
-      cards.push(card('GPU \u00B7 Render', d.gpu.render, d.gpu.freq > 0 ? Math.round(d.gpu.freq) + ' MHz' : 'idle'));
+      cards.push(card('GPU \u00B7 ' + T('load.video'), d.gpu.video, 'Quick Sync'));
+      cards.push(card('GPU \u00B7 ' + T('load.render'), d.gpu.render, d.gpu.freq > 0 ? Math.round(d.gpu.freq) + ' MHz' : T('load.idle')));
     }
-    if (d.cpu !== null && d.cpu !== undefined) { cards.push(card('CPU', d.cpu, 'all cores')); }
+    if (d.cpu !== null && d.cpu !== undefined) { cards.push(card('CPU', d.cpu, T('load.all_cores'))); }
     var sock = d.socket;
     if (!cards.length && !sock && !d.socket_note) { return; }
 
     var watts = (d.gpu && d.gpu.power > 0) ? d.gpu.power : 0;
-    var $sec = band(cards.length ? 'Server load' + (watts > 0 ? ' \u00B7 ' + watts.toFixed(1) + ' W' : '') : 'Socket', '');
-    if (cards.length) { $sec.find('span').attr('title', watts > 0 ? 'CPU package power (includes the integrated GPU); not the power drawn at the wall' : ''); }
+    var $sec = band(cards.length ? T('load.title') + (watts > 0 ? ' \u00B7 ' + watts.toFixed(1) + ' W' : '') : T('load.socket'), '');
+    if (cards.length) { $sec.find('span').attr('title', watts > 0 ? T('load.power_tip') : ''); }
     if (sock) {
-      var month = (sock.month_kwh !== null && sock.month_kwh !== undefined) ? ' \u00B7 ' + sock.month_kwh.toFixed(1) + ' kWh/mo' : '';
-      $sec.append($('<b>').text('Socket \u00B7 ' + fmtW(sock.power) + month)
-        .attr('title', "Smart socket: power drawn at the wall. The monthly figure is the socket's own energy counter since the 1st of the month."));
+      var month = (sock.month_kwh !== null && sock.month_kwh !== undefined) ? ' \u00B7 ' + T('load.kwh_month', { kwh: sock.month_kwh.toFixed(1) }) : '';
+      $sec.append($('<b>').text(T('load.socket') + ' \u00B7 ' + fmtW(sock.power) + month)
+        .attr('title', T('load.socket_tip')));
     } else if (d.socket_note) {
-      $sec.append($('<b>').css('color', COLOR.amber).text('Socket \u00B7 n/a').attr('title', d.socket_note));
+      $sec.append($('<b>').css('color', COLOR.amber).text(T('load.socket') + ' \u00B7 ' + T('load.na')).attr('title', d.socket_note));
     }
     $l.append($sec);
 
@@ -336,59 +344,60 @@ $(function () {
     o.push((o.length && m < 10 ? '0' : '') + m + 'm');
     return o.join(' ');
   }
-  function dhm(ts) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(ts * 1000).getDay()] + ' ' + hm(ts); }
+  var DOW = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'], MON = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  function dhm(ts) { return T('date.dow.' + DOW[new Date(ts * 1000).getDay()]) + ' ' + hm(ts); }
+  function dayLabel(ts) { var d = new Date(ts * 1000); return T('date.day', { dow: T('date.dow.' + DOW[d.getDay()]), d: d.getDate(), mon: T('date.mon.' + MON[d.getMonth()]) }); }
   var WST = {
-    jf:    ['mt-s-green', 'sb-t-green', 'In Jellyfin'],
-    file:  ['mt-s-green', 'sb-t-green', 'Downloaded'],
-    imp:   ['mt-s-blue', 'sb-t-blue', 'Importing'],
-    scan:  ['mt-s-blue', 'sb-t-blue', 'Imported'],
-    dl:    ['mt-s-blue', 'sb-t-blue', 'Downloading'],
-    grab:  ['mt-s-blue', 'sb-t-blue', 'Grabbed'],
-    pause: ['mt-s-grey', 'sb-t-grey', 'Paused'],
-    fail:  ['mt-s-red', 'sb-t-red', 'Failed'],
-    late:  ['mt-s-amber', 'sb-t-amber', 'No release'],
-    aired: ['mt-s-grey', 'sb-t-grey', 'Aired'],
-    wait:  ['mt-s-grey', 'sb-t-grey', 'Waiting']
+    jf:    ['mt-s-green', 'sb-t-green', T('week.st.jf')],
+    file:  ['mt-s-green', 'sb-t-green', T('week.st.file')],
+    imp:   ['mt-s-blue', 'sb-t-blue', T('week.st.imp')],
+    scan:  ['mt-s-blue', 'sb-t-blue', T('week.st.scan')],
+    dl:    ['mt-s-blue', 'sb-t-blue', T('week.st.dl')],
+    grab:  ['mt-s-blue', 'sb-t-blue', T('week.st.grab')],
+    pause: ['mt-s-grey', 'sb-t-grey', T('week.st.pause')],
+    fail:  ['mt-s-red', 'sb-t-red', T('week.st.fail')],
+    late:  ['mt-s-amber', 'sb-t-amber', T('week.st.late')],
+    aired: ['mt-s-grey', 'sb-t-grey', T('week.st.aired')],
+    wait:  ['mt-s-grey', 'sb-t-grey', T('week.st.wait')]
   };
   function renderWeek(w) {
     var $w = $('#sb-week').empty();
     if (!w || !w.show) { return; }
     var f = new Date(w.from * 1000), t = new Date((w.to - 1) * 1000);
-    var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var range = 'Mon ' + f.getDate() + (f.getMonth() !== t.getMonth() ? ' ' + M[f.getMonth()] : '') + ' \u2013 Sun ' + t.getDate() + ' ' + M[t.getMonth()];
+    var range = T('date.range', { from: f.getMonth() !== t.getMonth() ? dayLabel(w.from) : T('date.day_short', { dow: T('date.dow.' + DOW[f.getDay()]), d: f.getDate() }), to: dayLabel(w.to - 1) });
     if (!w.ok) {
       if (w.show < 2) { return; }
-      $w.append(band("This week's episodes", range));
-      var why = w.error === 'nosonarr' ? 'Sonarr is not set (Streambox settings)' : (w.error === 'auth' ? 'Sonarr rejected the API key' : 'Sonarr unreachable');
+      $w.append(band(T('week.title'), range));
+      var why = w.error === 'nosonarr' ? T('week.err_nosonarr') : (w.error === 'auth' ? T('week.err_auth') : T('week.err_down'));
       $w.append($('<div class="mt-box">').append(mnote(why)));
       return;
     }
     if (!w.counts.all && w.show < 2) { return; }
     var meta = [range];
-    if (w.counts.jf) { meta.push(w.counts.jf + ' in Jellyfin'); }
-    if (w.counts.dl) { meta.push(w.counts.dl + ' downloading'); }
-    if (w.counts.late) { meta.push(w.counts.late + ' late'); }
-    var $b = band("This week's episodes \u00B7 " + w.counts.all, meta.join(' \u00B7 '));
+    if (w.counts.jf) { meta.push(T('week.n_jf', { n: w.counts.jf })); }
+    if (w.counts.dl) { meta.push(T('week.n_dl', { n: w.counts.dl })); }
+    if (w.counts.late) { meta.push(T('week.n_late', { n: w.counts.late })); }
+    var $b = band(T('week.title') + ' \u00B7 ' + w.counts.all, meta.join(' \u00B7 '));
     if (w.counts.late) { $b.find('b').css({ color: COLOR.amber, opacity: 1 }); }
     $w.append($b);
     var $box = $('<div class="mt-box">').appendTo($w);
-    if (!w.counts.all) { $box.append(mnote('No monitored episode airs this week')); return; }
+    if (!w.counts.all) { $box.append(mnote(T('week.none'))); return; }
     var t3 = '18px minmax(0,1fr) 108px 104px';
     $.each(w.days, function (i, d) {
       var ready = 0;
       $.each(d.rows, function (j, r) { if (r.st === 'jf' || r.st === 'file') { ready++; } });
       $box.append($('<div class="sb-day">').toggleClass('sb-today', !!d.today)
-        .append($('<span>').text((d.today ? 'Today \u00B7 ' : '') + d.label))
-        .append($('<span>').text(ready ? ready + ' in Jellyfin' : '')));
+        .append($('<span>').text((d.today ? T('week.today') + ' \u00B7 ' : '') + (d.ts ? dayLabel(d.ts) : d.label)))
+        .append($('<span>').text(ready ? T('week.n_jf', { n: ready }) : '')));
       $.each(d.rows, function (j, r) {
         var s = WST[r.st] || WST.wait;
         var $row = $('<div class="mt-r mt-n">').addClass(s[0]).css('grid-template-columns', t3);
         $row.append(icon('fa-television', '#9fb4c8'));
         var $t = $('<div class="sb-nm">').attr('title', r.title ? r.code + ' \u00B7 ' + r.title : r.code).text(r.series + ' \u00B7 ' + r.code);
-        if (r['new']) { $t.append(' ').append($('<span class="sb-new">').attr('title', 'New series: its first episode airs this week').text('New')); }
+        if (r['new']) { $t.append(' ').append($('<span class="sb-new">').attr('title', T('week.new_tip')).text(T('week.new'))); }
         var $nm = $('<div>').append($t);
         var sub = '';
-        if (r.st === 'late') { sub = (r.delay !== null ? 'usually ' + durTxt(r.delay) + ' after airing, now ' : 'aired ') + durTxt(w.now - r.air) + (r.delay !== null ? '' : ' ago'); }
+        if (r.st === 'late') { sub = r.delay !== null ? T('week.late_usual', { usual: durTxt(r.delay), now: durTxt(w.now - r.air) }) : T('week.late_ago', { t: durTxt(w.now - r.air) }); }
         else if (r.idx && r.idx.length > 1 && (r.st === 'wait' || r.st === 'aired')) { sub = $.map(r.idx, function (x) { return x[0] + ' ~' + hm(x[1]); }).join(' \u00B7 '); }
         if (sub) { $nm.append($('<div class="sb-wsub">').text(sub)); }
         if (r.st === 'dl' && r.pct !== null) { $nm.append($('<div class="sb-pb">').css('margin-top', '5px').append($('<i>').css({ width: r.pct + '%', background: COLOR.blue }))); }
@@ -396,16 +405,16 @@ $(function () {
         // countdown to the expected time (to the air time when the delay is unknown); after it: overdue
         var nowS = Math.floor(Date.now() / 1000), target = r.exp !== null ? r.exp : r.air, when;
         if (r.st === 'wait' || r.st === 'aired' || r.st === 'late') {
-          when = target > nowS ? (r.exp === null ? 'airs in ' : 'in ') + cdTxt(target - nowS) : (nowS - target < 60 ? 'due now' : 'overdue ' + cdTxt(nowS - target));
-        } else { when = 'aired ' + hm(r.air); }
-        var tip = 'Airs ' + dhm(r.air) + (r.exp !== null ? ' \u00b7 expected ~' + dhm(r.exp) : '') + '\n'
-          + (r.exp === null ? 'No grab history yet: the usual delay after airing is unknown'
-            : 'Usual delay after airing: ' + durTxt(r.delay) + ' (median of ' + r.n + ' episode' + (r.n === 1 ? '' : 's') + (r.basis === 'series' ? ' of this series' : ' of all series') + ')');
+          when = target > nowS ? T(r.exp === null ? 'week.airs_in' : 'week.in', { t: cdTxt(target - nowS) }) : (nowS - target < 60 ? T('week.due_now') : T('week.overdue', { t: cdTxt(nowS - target) }));
+        } else { when = T('week.aired_at', { t: hm(r.air) }); }
+        var tip = T('week.tip_airs', { t: dhm(r.air) }) + (r.exp !== null ? ' \u00b7 ' + T('week.tip_expected', { t: dhm(r.exp) }) : '') + '\n'
+          + (r.exp === null ? T('week.tip_nohist')
+            : T(r.basis === 'series' ? 'week.tip_delay_series' : 'week.tip_delay_all', { t: durTxt(r.delay), n: r.n }));
         $row.append($('<div class="sb-num sb-u">').css('text-align', 'left').attr('title', tip).text(when));
         var lab = s[2];
         if (r.st === 'dl' && r.pct !== null) { lab = r.pct + '%' + (r.left ? ' \u00B7 ' + durTxt(r.left) : ''); }
         $row.append($('<div>').append($('<span class="sb-bd">').addClass(s[1]).text(lab)
-          .attr('title', r.st === 'scan' ? 'Sonarr imported it; Jellyfin has not listed it yet' : '')));
+          .attr('title', r.st === 'scan' ? T('week.scan_tip') : '')));
         $box.append($row);
       });
     });

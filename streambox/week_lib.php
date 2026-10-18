@@ -254,7 +254,7 @@ function wk_build($cfg, $now) {
 
     foreach ($rows as $r) {
         $k = date('Y-m-d', $r['air']);
-        if (!isset($out['days'][$k])) { $out['days'][$k] = ['label' => date('D j M', $r['air']), 'today' => $k === date('Y-m-d', $now), 'past' => $k < date('Y-m-d', $now), 'rows' => []]; }
+        if (!isset($out['days'][$k])) { $out['days'][$k] = ['label' => date('D j M', $r['air']), 'ts' => strtotime($k . ' 12:00'), 'today' => $k === date('Y-m-d', $now), 'past' => $k < date('Y-m-d', $now), 'rows' => []]; }
         $out['days'][$k]['rows'][] = $r;
         $out['counts']['all']++;
         if ($r['st'] === 'jf' || $r['st'] === 'file') { $out['counts']['jf']++; }

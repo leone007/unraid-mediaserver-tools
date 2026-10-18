@@ -3,6 +3,8 @@
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 require_once __DIR__ . '/week_lib.php';
+require_once __DIR__ . '/i18n.php';
+$sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 wk_tz();
 $cfg = wk_cfg();
@@ -12,14 +14,14 @@ $show = (int)$cfg['wk_show'];
 if (!empty($_GET['test'])) {
     $son = wk_sonarr($cfg);
     if ($son[0] === '' || $son[1] === '') {
-        echo json_encode(['ok' => false, 'message' => (string)$cfg['wk_src'] === 'own' ? 'Enter the Sonarr address and API key, then Apply.' : 'Seedbox has no Sonarr address and key (Seedbox Tools, Connections).']);
+        echo json_encode(['ok' => false, 'message' => (string)$cfg['wk_src'] === 'own' ? $sbx_T('wtest.own_missing') : $sbx_T('wtest.seedbox_missing')]);
         exit;
     }
     [$st, $e] = wk_son($son, '/system/status');
-    if (!is_array($st)) { echo json_encode(['ok' => false, 'message' => 'Sonarr: ' . ($e === 'auth' ? 'the API key was rejected' : $e)]); exit; }
+    if (!is_array($st)) { echo json_encode(['ok' => false, 'message' => 'Sonarr: ' . ($e === 'auth' ? $sbx_T('wtest.auth') : $e)]); exit; }
     @unlink(WK_DELAY);
     $n = count(wk_samples($son, $now));
-    echo json_encode(['ok' => true, 'message' => 'Sonarr ' . (string)($st['version'] ?? '?') . ' answers; the usual delay is learned from ' . $n . ' grab' . ($n === 1 ? '' : 's') . ' of the last 60 days.']);
+    echo json_encode(['ok' => true, 'message' => $sbx_T('wtest.ok', ['v' => (string)($st['version'] ?? '?'), 'n' => $n])]);
     exit;
 }
 

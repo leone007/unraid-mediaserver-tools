@@ -2,7 +2,7 @@
 
 The texts of the pages and tiles live in dictionaries, one per plugin: `<plugin>/lang/en.json` is the English source, and a translation is a file next to it named by the two-letter language code (`de.json`, `hu.json`, ...). The plugins show the language chosen in the Language block of any settings page (by default Unraid's own language, Settings, Display Settings). Any text that is missing from a translation shows in English, so a partial translation is fine.
 
-Dictionaries so far: `monitor/lang/en.json` (the others follow plugin by plugin).
+Dictionaries so far: `monitor/lang/en.json` (11 texts) and `streambox/lang/en.json` (241 texts); the others follow plugin by plugin. Not in the dictionaries: the Discord messages (their own language setting, English or Hungarian) and short technical diagnostics (an HTTP code, a CSRF error, the raw output of a tool).
 
 ## The format
 
@@ -29,6 +29,8 @@ Dictionaries so far: `monitor/lang/en.json` (the others follow plugin by plugin)
   "tile.count": { "one": "{n} Torrent", "other": "{n} Torrents" }
 }
 ```
+
+To see a translation without a server: `MT_LOCALE=de_DE php tools/screenshots/prep.php streambox/streambox.page` renders the page with it (then `node tools/screenshots/shot.js ...`, see `tools/screenshots/shoot_all.sh`).
 
 Then check it: `python3 tools/i18n_check.py` (valid JSON, only known keys, the same placeholders as English; it also counts what is still missing).
 

@@ -1,0 +1,976 @@
+{
+ "_meta": {
+  "plugin": "Streambox",
+  "language": "English",
+  "about": "Texts of the Streambox dashboard tile (Jellyfin: now playing, this week's episodes from Sonarr, server load, recently added) and its settings page (Settings, Utilities, Streambox). The Discord messages are not here (they have their own language setting). Product names (Streambox, Jellyfin, Sonarr, Seedbox, Sysbox, Unraid, Discord, Shelly, Quick Sync) are not translated."
+ },
+ "tile.connecting": {
+  "text": "Connecting…",
+  "note": "grey line under the tile title while the tile asks Jellyfin for the first time."
+ },
+ "tile.loading": {
+  "text": "Loading…",
+  "note": "grey placeholder in the tile body before the first answer."
+ },
+ "tile.open_jellyfin": {
+  "text": "Open Jellyfin",
+  "note": "tooltip of the home icon in the tile header, and the link at the bottom of the tile."
+ },
+ "tile.settings": {
+  "text": "Streambox settings",
+  "note": "tooltip of the gear icon in the tile header."
+ },
+ "mode.direct_play": {
+  "text": "Direct play",
+  "note": "badge in the Mode column of Now playing (Jellyfin plays the file as it is). Short, upper case on screen."
+ },
+ "mode.direct_stream": {
+  "text": "Direct stream",
+  "note": "badge in the Mode column of Now playing (the video is sent as it is, the container or audio is changed). Short, upper case on screen."
+ },
+ "mode.transcode": {
+  "text": "Transcode",
+  "note": "badge in the Mode column of Now playing (Jellyfin converts the video). Short, upper case on screen."
+ },
+ "time.left_hm": {
+  "text": "{h}h {m}m left",
+  "note": "time left of a playing stream, hours and minutes (minutes always two digits). Short."
+ },
+ "time.left_m": {
+  "text": "{m}m left",
+  "note": "time left of a playing stream, minutes only. Short."
+ },
+ "time.left_s": {
+  "text": "{s}s left",
+  "note": "time left of a playing stream, seconds only. Short."
+ },
+ "time.just_now": {
+  "text": "just now",
+  "note": "Added column of Recently added: added less than a minute ago. Very short."
+ },
+ "time.ago_m": {
+  "text": "{m}m ago",
+  "note": "Added column: minutes ago. Very short (the column is narrow)."
+ },
+ "time.ago_h": {
+  "text": "{h}h ago",
+  "note": "Added column: hours ago. Very short."
+ },
+ "time.ago_d": {
+  "text": "{d}d ago",
+  "note": "Added column: days ago. Very short."
+ },
+ "pill.online": {
+  "text": "Online",
+  "note": "status pill at the top of the tile: Jellyfin answers."
+ },
+ "pill.api_key": {
+  "text": "API key",
+  "note": "status pill: Jellyfin rejected the API key."
+ },
+ "pill.offline": {
+  "text": "Offline",
+  "note": "status pill: Jellyfin does not answer."
+ },
+ "pill.streaming": {
+  "text": "{n} streaming",
+  "note": "status pill: how many streams play now."
+ },
+ "pill.transcoding": {
+  "text": "{n} transcoding",
+  "note": "status pill: how many of the streams are transcoded."
+ },
+ "sum.unavailable": {
+  "text": "Unavailable",
+  "note": "line under the tile title when Jellyfin cannot be read."
+ },
+ "sum.no_streams": {
+  "text": "No active streams",
+  "note": "line under the tile title, and the Now playing box, when nothing plays."
+ },
+ "sum.streams": {
+  "one": "{n} stream",
+  "other": "{n} streams",
+  "note": "line under the tile title: number of streams."
+ },
+ "sum.users": {
+  "one": "{n} user",
+  "other": "{n} users",
+  "note": "line under the tile title: number of users watching."
+ },
+ "now.err_auth": {
+  "text": "Jellyfin rejected the API key (check Streambox settings)",
+  "note": "message in the tile when the Jellyfin API key is wrong."
+ },
+ "now.err_nokey": {
+  "text": "Enter the Jellyfin API key in the Streambox settings",
+  "note": "message in the tile before an API key is set."
+ },
+ "now.err_down": {
+  "text": "Jellyfin unreachable",
+  "note": "message in the tile when Jellyfin does not answer."
+ },
+ "now.title": {
+  "text": "Now playing",
+  "note": "band title of the streams part of the tile (upper case on screen), followed by the count."
+ },
+ "col.title": {
+  "text": "Title",
+  "note": "column header (Now playing, Recently added). Short, upper case on screen."
+ },
+ "col.user": {
+  "text": "User",
+  "note": "column header in Now playing. Short (column 64 px)."
+ },
+ "col.device": {
+  "text": "Device",
+  "note": "column header in Now playing. Short (column 84 px)."
+ },
+ "col.mode": {
+  "text": "Mode",
+  "note": "column header in Now playing: how the stream is played. Short."
+ },
+ "now.paused": {
+  "text": "Paused",
+  "note": "label instead of the progress of a paused stream."
+ },
+ "now.live": {
+  "text": "LIVE",
+  "note": "label of a live TV stream (after a red dot). Very short, upper case."
+ },
+ "added.title": {
+  "text": "Recently added",
+  "note": "band title of the newest movies and episodes (upper case on screen), followed by the count."
+ },
+ "added.meta": {
+  "text": "latest from Jellyfin",
+  "note": "grey text on the right of the Recently added band."
+ },
+ "col.type": {
+  "text": "Type",
+  "note": "column header in Recently added: movie or episode. Short (column 74 px)."
+ },
+ "col.quality": {
+  "text": "Quality",
+  "note": "column header in Recently added: 2160p, 1080p. Short (column 52 px)."
+ },
+ "col.added": {
+  "text": "Added",
+  "note": "column header in Recently added: how long ago. Short (column 62 px)."
+ },
+ "type.movie": {
+  "text": "Movie",
+  "note": "badge in the Type column of Recently added. Short, upper case on screen."
+ },
+ "type.episode": {
+  "text": "Episode",
+  "note": "badge in the Type column of Recently added. Short, upper case on screen."
+ },
+ "load.video": {
+  "text": "Video",
+  "note": "label of the GPU video engine card (GPU · Video). Short, upper case on screen."
+ },
+ "load.render": {
+  "text": "Render",
+  "note": "label of the GPU render engine card (GPU · Render). Short, upper case on screen."
+ },
+ "load.idle": {
+  "text": "idle",
+  "note": "small text under the GPU render card when the GPU clock is 0."
+ },
+ "load.all_cores": {
+  "text": "all cores",
+  "note": "small text under the CPU card."
+ },
+ "load.title": {
+  "text": "Server load",
+  "note": "band title of the GPU and CPU cards (upper case on screen)."
+ },
+ "load.socket": {
+  "text": "Socket",
+  "note": "the smart socket (Shelly) reading on the load band. Short."
+ },
+ "load.power_tip": {
+  "text": "CPU package power (includes the integrated GPU); not the power drawn at the wall",
+  "note": "tooltip of the watts on the Server load band."
+ },
+ "load.kwh_month": {
+  "text": "{kwh} kWh/mo",
+  "note": "energy used this month at the smart socket. Short."
+ },
+ "load.socket_tip": {
+  "text": "Smart socket: power drawn at the wall. The monthly figure is the socket's own energy counter since the 1st of the month.",
+  "note": "tooltip of the smart socket reading."
+ },
+ "load.na": {
+  "text": "n/a",
+  "note": "the smart socket gives no reading (the tooltip says why). Very short."
+ },
+ "date.dow.sun": {
+  "text": "Sun",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.mon": {
+  "text": "Mon",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.tue": {
+  "text": "Tue",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.wed": {
+  "text": "Wed",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.thu": {
+  "text": "Thu",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.fri": {
+  "text": "Fri",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.sat": {
+  "text": "Sat",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.mon.jan": {
+  "text": "Jan",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.feb": {
+  "text": "Feb",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.mar": {
+  "text": "Mar",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.apr": {
+  "text": "Apr",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.may": {
+  "text": "May",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.jun": {
+  "text": "Jun",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.jul": {
+  "text": "Jul",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.aug": {
+  "text": "Aug",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.sep": {
+  "text": "Sep",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.oct": {
+  "text": "Oct",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.nov": {
+  "text": "Nov",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.dec": {
+  "text": "Dec",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.day": {
+  "text": "{dow} {d} {mon}",
+  "note": "a day in This week's episodes, for example Wed 14 Oct: {dow} short day name, {d} day of the month, {mon} short month name. Put them in your language's order."
+ },
+ "date.range": {
+  "text": "{from} – {to}",
+  "note": "the week shown on the This week's episodes band, for example Mon 12 – Sun 18 Oct."
+ },
+ "week.st.jf": {
+  "text": "In Jellyfin",
+  "note": "state badge of an episode in This week's episodes: the episode is in Jellyfin. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.file": {
+  "text": "Downloaded",
+  "note": "state badge of an episode in This week's episodes: Sonarr has the file. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.imp": {
+  "text": "Importing",
+  "note": "state badge of an episode in This week's episodes: Sonarr is importing it. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.scan": {
+  "text": "Imported",
+  "note": "state badge of an episode in This week's episodes: Sonarr imported it, Jellyfin has not listed it yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.dl": {
+  "text": "Downloading",
+  "note": "state badge of an episode in This week's episodes: being downloaded. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.grab": {
+  "text": "Grabbed",
+  "note": "state badge of an episode in This week's episodes: Sonarr sent it to the download client. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.pause": {
+  "text": "Paused",
+  "note": "state badge of an episode in This week's episodes: the download is paused. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.fail": {
+  "text": "Failed",
+  "note": "state badge of an episode in This week's episodes: the download failed. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.late": {
+  "text": "No release",
+  "note": "state badge of an episode in This week's episodes: later than usual and no release yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.aired": {
+  "text": "Aired",
+  "note": "state badge of an episode in This week's episodes: it aired, nothing found yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.wait": {
+  "text": "Waiting",
+  "note": "state badge of an episode in This week's episodes: it has not aired yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.title": {
+  "text": "This week's episodes",
+  "note": "band title of the part that lists the monitored episodes airing this week (upper case on screen)."
+ },
+ "week.err_nosonarr": {
+  "text": "Sonarr is not set (Streambox settings)",
+  "note": "message in This week's episodes when no Sonarr connection is set."
+ },
+ "week.err_auth": {
+  "text": "Sonarr rejected the API key",
+  "note": "message in This week's episodes."
+ },
+ "week.err_down": {
+  "text": "Sonarr unreachable",
+  "note": "message in This week's episodes."
+ },
+ "week.n_jf": {
+  "text": "{n} in Jellyfin",
+  "note": "count on the right of the This week's episodes band and on a day row: episodes already in Jellyfin."
+ },
+ "week.n_dl": {
+  "text": "{n} downloading",
+  "note": "count on the right of the band: episodes being downloaded."
+ },
+ "week.n_late": {
+  "text": "{n} late",
+  "note": "count on the right of the band: episodes later than usual."
+ },
+ "week.none": {
+  "text": "No monitored episode airs this week",
+  "note": "message in This week's episodes when the week is empty."
+ },
+ "week.today": {
+  "text": "Today",
+  "note": "in front of today's date on the day row (upper case on screen)."
+ },
+ "week.new": {
+  "text": "New",
+  "note": "small badge after a series whose first episode airs this week. Very short, upper case on screen."
+ },
+ "week.new_tip": {
+  "text": "New series: its first episode airs this week",
+  "note": "tooltip of the New badge."
+ },
+ "week.late_usual": {
+  "text": "usually {usual} after airing, now {now}",
+  "note": "grey line under a late episode: the usual delay and the time since it aired (both like 1h 30m)."
+ },
+ "week.late_ago": {
+  "text": "aired {t} ago",
+  "note": "grey line under a late episode when the usual delay is unknown."
+ },
+ "week.airs_in": {
+  "text": "airs in {t}",
+  "note": "countdown of an episode to its air time ({t} like 1d 12h 46m). Short (column 108 px)."
+ },
+ "week.in": {
+  "text": "in {t}",
+  "note": "countdown to the time the episode usually shows up. Very short."
+ },
+ "week.due_now": {
+  "text": "due now",
+  "note": "the expected time is now. Short."
+ },
+ "week.overdue": {
+  "text": "overdue {t}",
+  "note": "time past the expected time. Short."
+ },
+ "week.aired_at": {
+  "text": "aired {t}",
+  "note": "air time of an episode that is already here ({t} like 21:30). Short."
+ },
+ "week.tip_airs": {
+  "text": "Airs {t}",
+  "note": "tooltip of the time column: when the episode airs ({t} like Wed 21:30)."
+ },
+ "week.tip_expected": {
+  "text": "expected ~{t}",
+  "note": "tooltip: when the torrent usually shows up ({t} like Wed 22:30)."
+ },
+ "week.tip_nohist": {
+  "text": "No grab history yet: the usual delay after airing is unknown",
+  "note": "tooltip when Sonarr has no history for the delay."
+ },
+ "week.tip_delay_series": {
+  "one": "Usual delay after airing: {t} (median of {n} episode of this series)",
+  "other": "Usual delay after airing: {t} (median of {n} episodes of this series)",
+  "note": "tooltip: the usual delay between airing and the first download, {t} like 1h 30m."
+ },
+ "week.tip_delay_all": {
+  "one": "Usual delay after airing: {t} (median of {n} episode of all series)",
+  "other": "Usual delay after airing: {t} (median of {n} episodes of all series)",
+  "note": "tooltip: the same, counted over every series."
+ },
+ "week.scan_tip": {
+  "text": "Sonarr imported it; Jellyfin has not listed it yet",
+  "note": "tooltip of the Imported badge."
+ },
+ "why.container": {
+  "text": "Container",
+  "note": "why Jellyfin does not play a stream directly (its reason ContainerNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_codec": {
+  "text": "Video codec",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoCodecNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.audio_codec": {
+  "text": "Audio codec",
+  "note": "why Jellyfin does not play a stream directly (its reason AudioCodecNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.subtitles": {
+  "text": "Subtitles",
+  "note": "why Jellyfin does not play a stream directly (its reason SubtitleCodecNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.audio_channels": {
+  "text": "Audio channels",
+  "note": "why Jellyfin does not play a stream directly (its reason AudioChannelsNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.bitrate_limit": {
+  "text": "Bitrate limit",
+  "note": "why Jellyfin does not play a stream directly (its reason ContainerBitrateExceedsLimit): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_bitrate": {
+  "text": "Video bitrate",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoBitrateNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.audio_bitrate": {
+  "text": "Audio bitrate",
+  "note": "why Jellyfin does not play a stream directly (its reason AudioBitrateNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.interlaced": {
+  "text": "Interlaced",
+  "note": "why Jellyfin does not play a stream directly (its reason InterlacedVideoNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.resolution": {
+  "text": "Resolution",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoResolutionNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_profile": {
+  "text": "Video profile",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoProfileNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_level": {
+  "text": "Video level",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoLevelNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.hdr_format": {
+  "text": "HDR format",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoRangeTypeNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "det.audio": {
+  "text": "Audio",
+  "note": "under the Transcode badge: only the audio is converted, like \"Audio → AAC\". Short."
+ },
+ "det.deinterlace": {
+  "text": "Deinterlace",
+  "note": "under the Transcode badge: an interlaced video is converted, like \"Deinterlace → 1080p\". Short."
+ },
+ "det.video": {
+  "text": "Video",
+  "note": "under the Transcode badge, like \"Video → 1080p\". Short."
+ },
+ "det.video_transcode": {
+  "text": "Video transcode",
+  "note": "under the Transcode badge when nothing more is known. Short."
+ },
+ "info.method": {
+  "text": "Method: {m}",
+  "note": "first line of the tooltip of a stream's Mode: Direct play, Direct stream or Transcode."
+ },
+ "info.source": {
+  "text": "Source: {s}",
+  "note": "tooltip line: what the file is made of, like \"MKV · HEVC 2160p · EAC3 6ch\"."
+ },
+ "info.reasons": {
+  "text": "Reasons: {r}",
+  "note": "tooltip line: the reasons Jellyfin gives for not playing directly."
+ },
+ "info.none_reported": {
+  "text": "none reported",
+  "note": "tooltip: Jellyfin gave no reason."
+ },
+ "info.no_details": {
+  "text": "Jellyfin reported no transcoding details for this stream",
+  "note": "tooltip line."
+ },
+ "info.client": {
+  "text": "Client: {c}",
+  "note": "tooltip line: the Jellyfin app and its version."
+ },
+ "sock.invalid": {
+  "text": "invalid socket address",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.down": {
+  "text": "socket unreachable",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.password": {
+  "text": "the socket asks for a password (not supported)",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.bad": {
+  "text": "unexpected answer from the socket",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.http": {
+  "text": "socket answered HTTP {code}",
+  "note": "tooltip of Socket · n/a: the socket answered with an HTTP error code."
+ },
+ "wtest.own_missing": {
+  "text": "Enter the Sonarr address and API key, then Apply.",
+  "note": "answer of the Test Sonarr button in the settings."
+ },
+ "wtest.seedbox_missing": {
+  "text": "Seedbox has no Sonarr address and key (Seedbox Tools, Connections).",
+  "note": "answer of the Test Sonarr button."
+ },
+ "wtest.auth": {
+  "text": "the API key was rejected",
+  "note": "answer of the Test Sonarr button, after \"Sonarr: \"."
+ },
+ "wtest.ok": {
+  "one": "Sonarr {v} answers; the usual delay is learned from {n} grab of the last 60 days.",
+  "other": "Sonarr {v} answers; the usual delay is learned from {n} grabs of the last 60 days.",
+  "note": "answer of the Test Sonarr button when it works ({v} the Sonarr version, {n} how many downloads were found)."
+ },
+ "save.err_key": {
+  "text": "the API key contains invalid characters",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_url": {
+  "text": "invalid Jellyfin link URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_socket": {
+  "text": "invalid smart socket address",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_hook_movies": {
+  "text": "the movies webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_hook_series": {
+  "text": "the series webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_hook_weekly": {
+  "text": "the weekly summary webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_son_key": {
+  "text": "the Sonarr API key contains invalid characters",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_son_url": {
+  "text": "invalid Sonarr address",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_write": {
+  "text": "could not write the settings file",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_nick": {
+  "text": "could not write the nickname file",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_dir": {
+  "text": "the folder for Jellyfin must be a path under /mnt (letters, digits, . _ - only)",
+  "note": "error after \"Not saved:\" when the folder for Jellyfin is not valid."
+ },
+ "ntest.no_hook": {
+  "text": "No valid Discord webhook is saved yet. Enter the webhook(s), press Apply, then try again.",
+  "note": "answer of the Discord test buttons in the settings."
+ },
+ "ntest.ch_movies": {
+  "text": "movies",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.ch_series": {
+  "text": "series",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.ch_weekly": {
+  "text": "weekly",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.sent": {
+  "text": "sent",
+  "note": "answer of a Discord test button: the message went out."
+ },
+ "ntest.failed": {
+  "text": "failed ({e})",
+  "note": "answer of a Discord test button: it did not go out, {e} is the technical reason."
+ },
+ "ntest.no_jf": {
+  "text": "The Jellyfin host and API key must be saved first.",
+  "note": "answer of the preview buttons."
+ },
+ "ntest.no_weekly": {
+  "text": "No valid weekly summary webhook is saved yet.",
+  "note": "answer of Send weekly summary now."
+ },
+ "ntest.jf_down": {
+  "text": "Jellyfin could not be read.",
+  "note": "answer of Send weekly summary now."
+ },
+ "ntest.nothing": {
+  "text": "Nothing was added in the last 7 days, so there is nothing to send.",
+  "note": "answer of Send weekly summary now."
+ },
+ "ntest.weekly": {
+  "text": "weekly summary",
+  "note": "answer of Send weekly summary now, like \"weekly summary: sent\"."
+ },
+ "ntest.movie": {
+  "text": "movie \"{t}\"",
+  "note": "answer of Send preview: the newest movie, like movie \"Sintel\": sent."
+ },
+ "ntest.no_movie": {
+  "text": "no movie found",
+  "note": "answer of Send preview."
+ },
+ "ntest.season": {
+  "text": "season \"{t}\"",
+  "note": "answer of Send preview: the newest season."
+ },
+ "ntest.no_episode": {
+  "text": "no episode found",
+  "note": "answer of Send preview."
+ },
+ "set.saved_keep": {
+  "text": "(saved, leave empty to keep)",
+  "note": "grey text inside an empty password field: a value is saved; leaving the field empty keeps it."
+ },
+ "set.h.jellyfin": {
+  "text": "Jellyfin and the tile",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.week_sub": {
+  "text": "Monday to Sunday, from Sonarr; read-only",
+  "note": "small grey text next to the This week's episodes heading."
+ },
+ "set.h.discord": {
+  "text": "Discord notifications",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.nicks": {
+  "text": "User nicknames",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.jf_host": {
+  "text": "Jellyfin host (as seen from Unraid):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jf_port": {
+  "text": "Jellyfin port:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jf_key": {
+  "text": "Jellyfin API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jf_url": {
+  "text": "Jellyfin link URL (also used in the Discord cards):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.streams_max": {
+  "text": "Maximum rows in Now playing:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.added_rows": {
+  "text": "Rows in Recently added (0 = hide):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.show_load": {
+  "text": "Show server load (GPU, CPU, smart socket):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.socket_host": {
+  "text": "Smart socket (Shelly) address:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.socket_id": {
+  "text": "Smart socket channel:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_show": {
+  "text": "Show on the Dashboard:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_src": {
+  "text": "Sonarr connection:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.son_url": {
+  "text": "Sonarr address (own):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.son_key": {
+  "text": "Sonarr API key (own):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_delay": {
+  "text": "Usual delay:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_late": {
+  "text": "Late after (hours past the usual time):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_dc": {
+  "text": "Post late episodes to Discord:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_web": {
+  "text": "Row on Jellyfin's home page:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_web_view": {
+  "text": "Default view in Jellyfin:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_web_dir": {
+  "text": "Folder for Jellyfin:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.notify": {
+  "text": "Announce new movies and seasons:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_movies": {
+  "text": "Webhook for movies (#filmek):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_series": {
+  "text": "Webhook for series (#sorozatok):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.weekly": {
+  "text": "Weekly summary of new movies and series:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_weekly": {
+  "text": "Webhook for the weekly summary:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.weekly_when": {
+  "text": "Weekly summary day and hour:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.notify_settle": {
+  "text": "Wait for more episodes (minutes):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.notify_wait": {
+  "text": "Wait for metadata and poster (minutes):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.key_hint": {
+  "text": "saved keys and webhooks are not sent to the page; type - to remove one",
+  "note": "grey hint next to the API key field: saved secrets are never shown; typing a single - removes one."
+ },
+ "set.show_load_hint": {
+  "text": "switch off when the Sysbox tile shows these",
+  "note": "text next to the Show server load checkbox."
+ },
+ "set.wk_show.always": {
+  "text": "always",
+  "note": "choice in the Show on the Dashboard dropdown."
+ },
+ "set.wk_show.airs": {
+  "text": "only when an episode airs this week",
+  "note": "choice in the Show on the Dashboard dropdown."
+ },
+ "set.wk_show.never": {
+  "text": "never",
+  "note": "choice in the Show on the Dashboard dropdown."
+ },
+ "set.wk_show_hint": {
+  "text": "The monitored episodes airing this week, by day: air time, when the torrent usually shows up, and where each one is now. A new week starts at midnight on Sunday.",
+  "note": "hint under the Show on the Dashboard setting."
+ },
+ "set.wk_src.seedbox": {
+  "text": "use Seedbox's Sonarr settings",
+  "note": "radio button: take the Sonarr address and key from Seedbox."
+ },
+ "set.wk_src.own": {
+  "text": "own",
+  "note": "radio button: use the address and key entered below. Very short."
+ },
+ "set.btn.test_sonarr": {
+  "text": "Test Sonarr",
+  "note": "button: checks the Sonarr connection. Short."
+ },
+ "set.wk_src_hint": {
+  "text": "Seedbox already has the Sonarr address and API key (Seedbox Tools, Connections). The fields below are used only with \"own\".",
+  "note": "hint under the Sonarr connection setting; \"own\" is the radio button above."
+ },
+ "set.wk_delay.series": {
+  "text": "per series",
+  "note": "choice: the usual delay is counted per series."
+ },
+ "set.wk_delay.idx": {
+  "text": "per series and indexer",
+  "note": "choice: counted per series and per indexer (tracker)."
+ },
+ "set.wk_delay.all": {
+  "text": "one value for all series",
+  "note": "choice: one delay for every series."
+ },
+ "set.wk_delay_hint": {
+  "text": "Median time from airing to the first grab, from the last 60 days of Sonarr history (grabs more than 3 days after airing are left out). Under 3 episodes of a series the median of all series is used. Per indexer: the earliest indexer decides, the others are listed under the title.",
+  "note": "hint under the Usual delay setting (\"grab\" = Sonarr sent the episode to the download client)."
+ },
+ "set.wk_dc_hint": {
+  "text": "once per episode, to the series webhook (below)",
+  "note": "text next to the Post late episodes to Discord checkbox."
+ },
+ "set.wk_web_hint": {
+  "text": "\"Ezen a héten\", web client and Jellyfin Desktop only",
+  "note": "text next to the checkbox. \"Ezen a héten\" is the (Hungarian) title of the row on Jellyfin's home page: keep it as it is."
+ },
+ "set.wk_web_long": {
+  "text": "Every 2 minutes Streambox writes week.json (series, episode codes, times; no keys) and week.js into the folder below. Map it read-only into the Jellyfin container as /usr/share/jellyfin/web/streambox, then add this script in Jellyfin (Dashboard, JS Injector, enabled): <code>var s=document.createElement('script');s.src='streambox/week.js?v='+Date.now();document.head.appendChild(s);</code> Anyone who can open the Jellyfin address can read week.json.",
+  "note": "hint under the Jellyfin home page row setting. Keep the script in the code tags exactly as it is. May contain simple HTML tags: keep them."
+ },
+ "set.wk_view.grid": {
+  "text": "calendar (seven day cards)",
+  "note": "choice of the default view of the Jellyfin home page row."
+ },
+ "set.wk_view.row": {
+  "text": "posters (one row)",
+  "note": "choice of the default view."
+ },
+ "set.wk_view_hint": {
+  "text": "Each viewer can switch with the two icons next to the title; the choice is remembered in that browser.",
+  "note": "hint under the Default view setting."
+ },
+ "date.long.mon": {
+  "text": "Monday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.tue": {
+  "text": "Tuesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.wed": {
+  "text": "Wednesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.thu": {
+  "text": "Thursday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.fri": {
+  "text": "Friday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sat": {
+  "text": "Saturday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sun": {
+  "text": "Sunday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "set.btn.ntest": {
+  "text": "Send test message",
+  "note": "button: sends a short test message to every saved Discord webhook."
+ },
+ "set.btn.nprev": {
+  "text": "Send preview (newest movie and season)",
+  "note": "button: sends the cards of the newest movie and season, marked as a preview."
+ },
+ "set.btn.nweek": {
+  "text": "Send weekly summary now",
+  "note": "button: sends the weekly summary of the last 7 days now."
+ },
+ "set.nicks_none": {
+  "text": "The user list could not be loaded. Enter the Jellyfin host, port and API key above, press Apply, then reload this page.",
+  "note": "text in the User nicknames part when Jellyfin cannot be read."
+ },
+ "set.nicks_hint": {
+  "text": "Nicknames are shown instead of the long user names on the dashboard tile. Leave a field empty to use the automatic short name (shown as a hint).",
+  "note": "text above the nickname fields (one per Jellyfin user)."
+ },
+ "set.btn.apply": {
+  "text": "Apply",
+  "note": "button: saves the settings (Unraid's usual word). Short."
+ },
+ "set.btn.done": {
+  "text": "Done",
+  "note": "button: leaves the settings page (Unraid's usual word). Short."
+ },
+ "set.log": {
+  "text": "Notifier log (latest entries):",
+  "note": "small grey title above the last lines of the Discord notifier log."
+ },
+ "set.help_discord": {
+  "text": "Discord cards: Unraid checks Jellyfin every minute. A movie is announced once its description (in Jellyfin's metadata language) and poster exist; episodes are grouped per season and announced when no new episode has arrived for the \"wait for more episodes\" time. The first time the notifier is switched on, only items added from then on are announced. The weekly summary lists everything added in the last 7 days at the chosen day and hour (server time zone); if the server was off at that hour it is sent when it is next up the same day. The buttons use the saved settings, so press Apply first. The Jellyfin link in the cards is left out when the Jellyfin link URL is empty. Create a webhook in Discord under channel settings, Integrations, Webhooks.",
+  "note": "grey paragraph at the bottom of the page about the Discord cards. \"wait for more episodes\" names the setting above."
+ },
+ "set.help_general": {
+  "text": "The Jellyfin API key is created in Jellyfin under Dashboard, Advanced, API Keys. Streams that are idle (nothing playing) are not shown. GPU load is read with intel_gpu_top, CPU load from the system statistics. Leave the Jellyfin link URL empty to use this server's address with the Jellyfin port. Leave the smart socket address empty to hide the Socket reading. The monthly consumption is taken from the socket's own energy counter, which Unraid samples every 10 minutes, so the first month counts from the day the socket is set up.",
+  "note": "grey paragraph at the bottom of the page. Menu names of Jellyfin (Dashboard, Advanced, API Keys) should match Jellyfin's own words in your language."
+ },
+ "set.saving": {
+  "text": "Saving...",
+  "note": "message next to Apply while saving."
+ },
+ "set.saved": {
+  "text": "Saved. The dashboard picks it up within a few seconds.",
+  "note": "message next to Apply after saving."
+ },
+ "set.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message next to Apply when saving failed; {e} is the reason."
+ },
+ "set.unknown_error": {
+  "text": "unknown error",
+  "note": "reason when none is known."
+ },
+ "set.asking_sonarr": {
+  "text": "Asking Sonarr... (Apply first if you changed the connection)",
+  "note": "message next to Test Sonarr while it runs."
+ },
+ "set.unknown_answer": {
+  "text": "unknown answer",
+  "note": "message when a test gets an answer it cannot read."
+ },
+ "set.sending": {
+  "text": "Sending...",
+  "note": "message next to the Discord test buttons while sending."
+ },
+ "date.day_short": {
+  "text": "{dow} {d}",
+  "note": "the first day of the week on the This week's episodes band when both days are in the same month, for example the \"Mon 12\" of \"Mon 12 – Sun 18 Oct\". Same order as date.day, without the month."
+ }
+}

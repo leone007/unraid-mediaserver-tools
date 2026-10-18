@@ -1,20 +1,23 @@
 <?php
+require_once __DIR__ . '/i18n.php';
+// the socket notes are shown as the tooltip of Socket · n/a on the tile (dictionary lang/en.json)
+function sb_energy_t($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 // Smart socket (Shelly Gen2 and newer) helpers: wall power and a monthly energy total.
 
 // Returns [array|null, error text]
 function sb_socket_fetch($host, $id) {
-    if (!preg_match('/^[A-Za-z0-9.\-]+$/', (string)$host)) { return [null, 'invalid socket address']; }
+    if (!preg_match('/^[A-Za-z0-9.\-]+$/', (string)$host)) { return [null, sb_energy_t('sock.invalid')]; }
     $ch = curl_init('http://' . $host . '/rpc/Switch.GetStatus?id=' . (int)$id);
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 2, CURLOPT_TIMEOUT => 3]);
     $body = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $err  = curl_errno($ch);
     curl_close($ch);
-    if ($err) { return [null, 'socket unreachable']; }
-    if ($code === 401 || $code === 403) { return [null, 'the socket asks for a password (not supported)']; }
-    if ($code !== 200) { return [null, 'socket answered HTTP ' . $code]; }
+    if ($err) { return [null, sb_energy_t('sock.down')]; }
+    if ($code === 401 || $code === 403) { return [null, sb_energy_t('sock.password')]; }
+    if ($code !== 200) { return [null, sb_energy_t('sock.http', ['code' => $code])]; }
     $d = json_decode((string)$body, true);
-    if (!is_array($d) || !isset($d['apower'])) { return [null, 'unexpected answer from the socket']; }
+    if (!is_array($d) || !isset($d['apower'])) { return [null, sb_energy_t('sock.bad')]; }
     $total = isset($d['aenergy']['total']) ? (float)$d['aenergy']['total'] : null;
     return [['power' => (float)$d['apower'], 'total_wh' => $total, 'output' => !empty($d['output'])], ''];
 }

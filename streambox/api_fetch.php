@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/i18n.php';
+$sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 $cfg = [
     'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
@@ -81,20 +83,21 @@ function sb_reason($r) {
 
 // Short human wording for a Jellyfin transcode reason
 function sb_why($r) {
+    global $sbx_T;
     $map = [
-        'ContainerNotSupported'        => 'Container',
-        'VideoCodecNotSupported'       => 'Video codec',
-        'AudioCodecNotSupported'       => 'Audio codec',
-        'SubtitleCodecNotSupported'    => 'Subtitles',
-        'AudioChannelsNotSupported'    => 'Audio channels',
-        'ContainerBitrateExceedsLimit' => 'Bitrate limit',
-        'VideoBitrateNotSupported'     => 'Video bitrate',
-        'AudioBitrateNotSupported'     => 'Audio bitrate',
-        'InterlacedVideoNotSupported'  => 'Interlaced',
-        'VideoResolutionNotSupported'  => 'Resolution',
-        'VideoProfileNotSupported'     => 'Video profile',
-        'VideoLevelNotSupported'       => 'Video level',
-        'VideoRangeTypeNotSupported'   => 'HDR format',
+        'ContainerNotSupported'        => $sbx_T('why.container'),
+        'VideoCodecNotSupported'       => $sbx_T('why.video_codec'),
+        'AudioCodecNotSupported'       => $sbx_T('why.audio_codec'),
+        'SubtitleCodecNotSupported'    => $sbx_T('why.subtitles'),
+        'AudioChannelsNotSupported'    => $sbx_T('why.audio_channels'),
+        'ContainerBitrateExceedsLimit' => $sbx_T('why.bitrate_limit'),
+        'VideoBitrateNotSupported'     => $sbx_T('why.video_bitrate'),
+        'AudioBitrateNotSupported'     => $sbx_T('why.audio_bitrate'),
+        'InterlacedVideoNotSupported'  => $sbx_T('why.interlaced'),
+        'VideoResolutionNotSupported'  => $sbx_T('why.resolution'),
+        'VideoProfileNotSupported'     => $sbx_T('why.video_profile'),
+        'VideoLevelNotSupported'       => $sbx_T('why.video_level'),
+        'VideoRangeTypeNotSupported'   => $sbx_T('why.hdr_format'),
     ];
     $r = (string)$r;
     return isset($map[$r]) ? $map[$r] : sb_reason($r);
@@ -216,7 +219,7 @@ foreach ($sessions as $s) {
         $trans++;
         $audioCodec = strtoupper((string)($ti['AudioCodec'] ?? '?'));
         if (!empty($ti['IsVideoDirect'])) {
-            $detail = 'Audio' . $arrow . $audioCodec;
+            $detail = $sbx_T('det.audio') . $arrow . $audioCodec;
         } else {
             $dstRes = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
             $dstCodec = strtoupper((string)($ti['VideoCodec'] ?? ''));
@@ -224,10 +227,10 @@ foreach ($sessions as $s) {
             $interlaced = in_array('InterlacedVideoNotSupported', $rs, true) || ($vs && !empty($vs['IsInterlaced']));
             if ($dstRes !== '' && $srcRes !== '' && $dstRes !== $srcRes) { $detail = $srcRes . $arrow . $dstRes; }
             elseif ($srcCodec !== '' && $dstCodec !== '' && $srcCodec !== $dstCodec) { $detail = $srcCodec . $arrow . $dstCodec; }
-            elseif ($interlaced && $dstRes !== '') { $detail = 'Deinterlace' . $arrow . $dstRes; }
-            elseif ($dstRes !== '') { $detail = 'Video' . $arrow . $dstRes; }
+            elseif ($interlaced && $dstRes !== '') { $detail = $sbx_T('det.deinterlace') . $arrow . $dstRes; }
+            elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
             elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
-            else { $detail = 'Video transcode'; }
+            else { $detail = $sbx_T('det.video_transcode'); }
             $detail .= ((string)($ti['HardwareAccelerationType'] ?? '') !== '') ? " \u{00b7} HW" : " \u{00b7} SW";
         }
         if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
@@ -244,7 +247,7 @@ foreach ($sessions as $s) {
             if ($dstCont !== '' && $srcCont !== '' && $dstCont !== $srcCont) { $conv = $srcCont . $arrow . $dstCont; }
         }
         if ($ti !== null && empty($ti['IsAudioDirect']) && !empty($ti['AudioCodec'])) {
-            $line1 = ($srcAudio !== '' ? $srcAudio : 'Audio') . $arrow . strtoupper((string)$ti['AudioCodec']);
+            $line1 = ($srcAudio !== '' ? $srcAudio : $sbx_T('det.audio')) . $arrow . strtoupper((string)$ti['AudioCodec']);
         } elseif ($why || $conv) {
             $line1 = implode(" \u{00b7} ", array_filter([implode(', ', $why), $conv]));
         } else {
@@ -258,22 +261,22 @@ foreach ($sessions as $s) {
     }
 
     // Hover text: everything Jellyfin tells us about this stream
-    $methodName = ['DirectPlay' => 'Direct play', 'DirectStream' => 'Direct stream', 'Transcode' => 'Transcode'][$mode];
-    $info   = ['Method: ' . $methodName];
+    $methodName = ['DirectPlay' => $sbx_T('mode.direct_play'), 'DirectStream' => $sbx_T('mode.direct_stream'), 'Transcode' => $sbx_T('mode.transcode')][$mode];
+    $info   = [$sbx_T('info.method', ['m' => $methodName])];
     $srcBits = array_filter([
         $srcCont,
         trim($srcCodec . ($srcRes !== '' ? ' ' . $srcRes : '')),
         trim($srcAudio . ($srcCh > 0 ? ' ' . $srcCh . 'ch' : '')),
     ]);
-    if ($srcBits) { $info[] = 'Source: ' . implode(" \u{00b7} ", $srcBits); }
+    if ($srcBits) { $info[] = $sbx_T('info.source', ['s' => implode(" \u{00b7} ", $srcBits)]); }
     if ($ti !== null) {
         $names = [];
         foreach ($rs as $r) { $names[] = sb_why($r); }
-        $info[] = 'Reasons: ' . ($names ? implode(', ', $names) : 'none reported');
+        $info[] = $sbx_T('info.reasons', ['r' => $names ? implode(', ', $names) : $sbx_T('info.none_reported')]);
     } else {
-        $info[] = 'Jellyfin reported no transcoding details for this stream';
+        $info[] = $sbx_T('info.no_details');
     }
-    $info[] = 'Client: ' . trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''));
+    $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
     $mbps += $bps / 1000000;
 
     $pos = (int)($ps['PositionTicks'] ?? 0);

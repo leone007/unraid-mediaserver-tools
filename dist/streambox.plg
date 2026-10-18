@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14l">
+<!ENTITY version   "2026.10.14m">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- The texts of the tile and the settings page come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet; the dates of This week's episodes are made on the page now
+###2026.10.14l
 - Language block: saving failed with csrf token mismatch (Unraid checks the token itself and then removes it from the request); fixed
 ###2026.10.14k
 - Language block: the save button (now Save language) was greyed out, because Unraid disables Apply buttons outside a changed form; it works now
@@ -198,6 +200,12 @@ Markdown="false"
 ---
 <?PHP
 $pluginname = "streambox";
+// texts from the dictionary (lang/en.json and its translations, see i18n.php)
+require_once '/usr/local/emhttp/plugins/streambox/i18n.php';
+$sbx_lang = '/usr/local/emhttp/plugins/streambox/lang';
+$sbx_T = mt_i18n_t($sbx_lang);
+$sbx_h = function ($k) use ($sbx_T) { return htmlspecialchars($sbx_T($k), ENT_QUOTES); };
+$sbx_t = ['conn' => $sbx_h('tile.connecting'), 'load' => $sbx_h('tile.loading'), 'open' => $sbx_h('tile.open_jellyfin'), 'set' => $sbx_h('tile.settings')];
 
 $mytiles[$pluginname]['column2'] =
 <<<EOT
@@ -208,13 +216,13 @@ $mytiles[$pluginname]['column2'] =
       <i class="f32 sb-ic"></i>
       <div class="section">
         <h3 class="tile-header-main sb-ttl">Streambox</h3>
-        <span id="sb-summary" class="sb-sum">Connecting&hellip;</span>
+        <span id="sb-summary" class="sb-sum">{$sbx_t['conn']}</span>
       </div>
     </span>
     <span class="tile-header-right">
       <span class="tile-header-right-controls">
-        <a id="sb-home" href="#" target="_blank" rel="noopener" title="_(Open Jellyfin)_"><i class="fa fa-fw fa-home control"></i></a>
-        <a href="/Settings/StreamboxSettings" title="_(Streambox settings)_"><i class="fa fa-fw fa-cog control"></i></a>
+        <a id="sb-home" href="#" target="_blank" rel="noopener" title="{$sbx_t['open']}"><i class="fa fa-fw fa-home control"></i></a>
+        <a href="/Settings/StreamboxSettings" title="{$sbx_t['set']}"><i class="fa fa-fw fa-cog control"></i></a>
       </span>
     </span>
   </span>
@@ -222,7 +230,7 @@ $mytiles[$pluginname]['column2'] =
 <tr><td>
   <div class="sb-tile">
     <div id="sb-status"></div>
-    <div id="sb-now"><div class="sb-note">Loading&hellip;</div></div>
+    <div id="sb-now"><div class="sb-note">{$sbx_t['load']}</div></div>
     <div id="sb-week"></div>
     <div id="sb-load"></div>
     <div id="sb-added"></div>
@@ -230,6 +238,7 @@ $mytiles[$pluginname]['column2'] =
 </td></tr>
 </tbody>
 EOT;
+echo mt_i18n_js($sbx_lang, 'sb');
 ?>
 <style>
 i.f32.sb-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/streambox/icon.png) center/contain no-repeat!important}
@@ -299,6 +308,7 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 </style>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('sb', k, v); };
   var API = '/plugins/streambox/api_fetch.php';
   var LOAD = '/plugins/streambox/load.php';
   var busy = false, loadBusy = false, loadTimer = null, themed = false;
@@ -307,9 +317,9 @@ $(function () {
   var TYPE_ICON = { Movie: 'fa-film', Episode: 'fa-television', Season: 'fa-television', Audio: 'fa-music',
     TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
   var MODE = {
-    DirectPlay:   ['sb-play', 'Direct play'],
-    DirectStream: ['sb-stream', 'Direct stream'],
-    Transcode:    ['sb-trans', 'Transcode']
+    DirectPlay:   ['sb-play', T('mode.direct_play')],
+    DirectStream: ['sb-stream', T('mode.direct_stream')],
+    Transcode:    ['sb-trans', T('mode.transcode')]
   };
 
   // The embedded icon is light; invert it when the page background is light
@@ -334,16 +344,16 @@ $(function () {
   function leftTxt(s) {
     s = Math.max(0, Math.floor(s));
     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-    if (h > 0) { return h + 'h ' + (m < 10 ? '0' : '') + m + 'm left'; }
-    if (m > 0) { return m + 'm left'; }
-    return s + 's left';
+    if (h > 0) { return T('time.left_hm', { h: h, m: (m < 10 ? '0' : '') + m }); }
+    if (m > 0) { return T('time.left_m', { m: m }); }
+    return T('time.left_s', { s: s });
   }
   function agoTxt(ts) {
     var d = Math.max(0, Math.floor(Date.now() / 1000) - ts);
-    if (d < 60) { return 'just now'; }
-    if (d < 3600) { return Math.floor(d / 60) + 'm ago'; }
-    if (d < 86400) { return Math.floor(d / 3600) + 'h ago'; }
-    return Math.floor(d / 86400) + 'd ago';
+    if (d < 60) { return T('time.just_now'); }
+    if (d < 3600) { return T('time.ago_m', { m: Math.floor(d / 60) }); }
+    if (d < 86400) { return T('time.ago_h', { h: Math.floor(d / 3600) }); }
+    return T('time.ago_d', { d: Math.floor(d / 86400) });
   }
   function band(text, meta, first) {
     var $b = $('<div class="mt-band">').toggleClass('mt-first', !!first).append($('<span>').text(text));
@@ -361,17 +371,17 @@ $(function () {
   function renderPill(r) {
     var $p = $('<div class="sb-pill">');
     var ok = r && r.ok;
-    var st = ok ? [COLOR.green, 'fa-server', 'Online']
-         : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', 'API key']
-         : [COLOR.red, 'fa-chain-broken', 'Offline'];
+    var st = ok ? [COLOR.green, 'fa-server', T('pill.online')]
+         : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', T('pill.api_key')]
+         : [COLOR.red, 'fa-chain-broken', T('pill.offline')];
     $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
     if (ok) {
       var n = r.streams_total || 0;
       if (n > 0) {
-        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-play">')).append(document.createTextNode(' ' + n + ' streaming')));
+        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-play">')).append(document.createTextNode(' ' + T('pill.streaming', { n: n }))));
       }
       if (r.transcoding > 0) {
-        $p.append($('<span>').css('color', COLOR.amber).append($('<i class="fa fa-bolt">')).append(document.createTextNode(' ' + r.transcoding + ' transcoding')));
+        $p.append($('<span>').css('color', COLOR.amber).append($('<i class="fa fa-bolt">')).append(document.createTextNode(' ' + T('pill.transcoding', { n: r.transcoding }))));
       }
     }
     $('#sb-status').empty().append($p);
@@ -379,28 +389,28 @@ $(function () {
 
   function renderSummary(r) {
     var $s = $('#sb-summary');
-    if (!r || !r.ok) { $s.text('Unavailable'); return; }
-    if (!r.streams_total) { $s.text('No active streams'); return; }
-    $s.text(r.streams_total + (r.streams_total === 1 ? ' stream' : ' streams') + ' \u00B7 ' + r.users + (r.users === 1 ? ' user' : ' users')
+    if (!r || !r.ok) { $s.text(T('sum.unavailable')); return; }
+    if (!r.streams_total) { $s.text(T('sum.no_streams')); return; }
+    $s.text(T('sum.streams', { n: r.streams_total }) + ' \u00B7 ' + T('sum.users', { n: r.users })
       + (r.mbps > 0 ? ' \u00B7 ' + r.mbps.toFixed(1) + ' Mbps' : ''));
   }
 
   function renderNow(r) {
     var $n = $('#sb-now').empty();
     if (!r || !r.ok) {
-      var msg = (r && r.error === 'auth') ? 'Jellyfin rejected the API key (check Streambox settings)'
-              : (r && r.error === 'nokey') ? 'Enter the Jellyfin API key in the Streambox settings'
-              : 'Jellyfin unreachable';
+      var msg = (r && r.error === 'auth') ? T('now.err_auth')
+              : (r && r.error === 'nokey') ? T('now.err_nokey')
+              : T('now.err_down');
       $n.append(note(msg));
       return;
     }
     var t = '18px minmax(0,1fr) 64px 84px 120px';
-    $n.append(band('Now playing \u00B7 ' + r.streams_total, '', true));
+    $n.append(band(T('now.title') + ' \u00B7 ' + r.streams_total, '', true));
     var $box = $('<div class="mt-box">').appendTo($n);
-    if (!r.streams.length) { $box.append(mnote('No active streams')); return; }
+    if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); return; }
     $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
-      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('User')).append($('<div>').text('Device'))
-      .append($('<div>').css('color', COLOR.orange).text('Mode')));
+      .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.user'))).append($('<div>').text(T('col.device')))
+      .append($('<div>').css('color', COLOR.orange).text(T('col.mode'))));
 
     $.each(r.streams, function (i, x) {
       var m = MODE[x.mode] || MODE.DirectPlay;
@@ -413,7 +423,7 @@ $(function () {
       if (x.live) {
         // live TV has no length: a label instead of a progress bar
         $pl = $('<div class="sb-pl">').append($('<span>').css('color', x.paused ? COLOR.grey : COLOR.red)
-          .text(x.paused ? 'Paused' : '\u25CF LIVE'));
+          .text(x.paused ? T('now.paused') : '\u25CF ' + T('now.live')));
         if (x.epg) {
           $pl.append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })));
           if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
@@ -421,7 +431,7 @@ $(function () {
       } else {
         $pl = $('<div class="sb-pl">')
           .append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })))
-          .append($('<span>').css('color', col).text(x.paused ? 'Paused' : Math.round(pct) + '%'));
+          .append($('<span>').css('color', col).text(x.paused ? T('now.paused') : Math.round(pct) + '%'));
         if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
         else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
       }
@@ -439,21 +449,21 @@ $(function () {
     var $a = $('#sb-added').empty();
     if (!r || !r.ok || !r.added || !r.added.length) { return; }
     var t = '18px minmax(0,1fr) 74px 52px 62px';
-    $a.append(band('Recently added \u00B7 ' + r.added.length, 'latest from Jellyfin'));
+    $a.append(band(T('added.title') + ' \u00B7 ' + r.added.length, T('added.meta')));
     var $box = $('<div class="mt-box">').appendTo($a);
     $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
-      .append($('<div>')).append($('<div>').text('Title')).append($('<div>').text('Type')).append($('<div>').text('Quality'))
-      .append($('<div class="sb-num">').text('Added')));
+      .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.type'))).append($('<div>').text(T('col.quality')))
+      .append($('<div class="sb-num">').text(T('col.added'))));
     $.each(r.added, function (i, x) {
       var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.type === 'Movie' ? 'mt-s-blue' : 'mt-s-purple');
       $row.append(icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
       $row.append($('<div class="sb-nm">').attr('title', x.title).text(x.title));
-      $row.append($('<div>').append($('<span class="sb-bd">').addClass(x.type === 'Movie' ? 'sb-t-blue' : 'sb-t-purple').text(x.type)));
+      $row.append($('<div>').append($('<span class="sb-bd">').addClass(x.type === 'Movie' ? 'sb-t-blue' : 'sb-t-purple').text(x.type === 'Movie' ? T('type.movie') : (x.type === 'Episode' ? T('type.episode') : x.type))));
       $row.append($('<div class="sb-num">').css('text-align', 'left').text(x.quality || '\u2014'));
       $row.append($('<div class="sb-num sb-u">').text(x.added ? agoTxt(x.added) : '\u2014'));
       $box.append($row);
     });
-    $a.append(moreLink(href, 'Open Jellyfin'));
+    $a.append(moreLink(href, T('tile.open_jellyfin')));
   }
 
   function card(label, pct, sub) {
@@ -472,22 +482,22 @@ $(function () {
     if (!d || !d.ok) { return; }
     var cards = [];
     if (d.gpu) {
-      cards.push(card('GPU \u00B7 Video', d.gpu.video, 'Quick Sync'));
-      cards.push(card('GPU \u00B7 Render', d.gpu.render, d.gpu.freq > 0 ? Math.round(d.gpu.freq) + ' MHz' : 'idle'));
+      cards.push(card('GPU \u00B7 ' + T('load.video'), d.gpu.video, 'Quick Sync'));
+      cards.push(card('GPU \u00B7 ' + T('load.render'), d.gpu.render, d.gpu.freq > 0 ? Math.round(d.gpu.freq) + ' MHz' : T('load.idle')));
     }
-    if (d.cpu !== null && d.cpu !== undefined) { cards.push(card('CPU', d.cpu, 'all cores')); }
+    if (d.cpu !== null && d.cpu !== undefined) { cards.push(card('CPU', d.cpu, T('load.all_cores'))); }
     var sock = d.socket;
     if (!cards.length && !sock && !d.socket_note) { return; }
 
     var watts = (d.gpu && d.gpu.power > 0) ? d.gpu.power : 0;
-    var $sec = band(cards.length ? 'Server load' + (watts > 0 ? ' \u00B7 ' + watts.toFixed(1) + ' W' : '') : 'Socket', '');
-    if (cards.length) { $sec.find('span').attr('title', watts > 0 ? 'CPU package power (includes the integrated GPU); not the power drawn at the wall' : ''); }
+    var $sec = band(cards.length ? T('load.title') + (watts > 0 ? ' \u00B7 ' + watts.toFixed(1) + ' W' : '') : T('load.socket'), '');
+    if (cards.length) { $sec.find('span').attr('title', watts > 0 ? T('load.power_tip') : ''); }
     if (sock) {
-      var month = (sock.month_kwh !== null && sock.month_kwh !== undefined) ? ' \u00B7 ' + sock.month_kwh.toFixed(1) + ' kWh/mo' : '';
-      $sec.append($('<b>').text('Socket \u00B7 ' + fmtW(sock.power) + month)
-        .attr('title', "Smart socket: power drawn at the wall. The monthly figure is the socket's own energy counter since the 1st of the month."));
+      var month = (sock.month_kwh !== null && sock.month_kwh !== undefined) ? ' \u00B7 ' + T('load.kwh_month', { kwh: sock.month_kwh.toFixed(1) }) : '';
+      $sec.append($('<b>').text(T('load.socket') + ' \u00B7 ' + fmtW(sock.power) + month)
+        .attr('title', T('load.socket_tip')));
     } else if (d.socket_note) {
-      $sec.append($('<b>').css('color', COLOR.amber).text('Socket \u00B7 n/a').attr('title', d.socket_note));
+      $sec.append($('<b>').css('color', COLOR.amber).text(T('load.socket') + ' \u00B7 ' + T('load.na')).attr('title', d.socket_note));
     }
     $l.append($sec);
 
@@ -550,59 +560,60 @@ $(function () {
     o.push((o.length && m < 10 ? '0' : '') + m + 'm');
     return o.join(' ');
   }
-  function dhm(ts) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(ts * 1000).getDay()] + ' ' + hm(ts); }
+  var DOW = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'], MON = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  function dhm(ts) { return T('date.dow.' + DOW[new Date(ts * 1000).getDay()]) + ' ' + hm(ts); }
+  function dayLabel(ts) { var d = new Date(ts * 1000); return T('date.day', { dow: T('date.dow.' + DOW[d.getDay()]), d: d.getDate(), mon: T('date.mon.' + MON[d.getMonth()]) }); }
   var WST = {
-    jf:    ['mt-s-green', 'sb-t-green', 'In Jellyfin'],
-    file:  ['mt-s-green', 'sb-t-green', 'Downloaded'],
-    imp:   ['mt-s-blue', 'sb-t-blue', 'Importing'],
-    scan:  ['mt-s-blue', 'sb-t-blue', 'Imported'],
-    dl:    ['mt-s-blue', 'sb-t-blue', 'Downloading'],
-    grab:  ['mt-s-blue', 'sb-t-blue', 'Grabbed'],
-    pause: ['mt-s-grey', 'sb-t-grey', 'Paused'],
-    fail:  ['mt-s-red', 'sb-t-red', 'Failed'],
-    late:  ['mt-s-amber', 'sb-t-amber', 'No release'],
-    aired: ['mt-s-grey', 'sb-t-grey', 'Aired'],
-    wait:  ['mt-s-grey', 'sb-t-grey', 'Waiting']
+    jf:    ['mt-s-green', 'sb-t-green', T('week.st.jf')],
+    file:  ['mt-s-green', 'sb-t-green', T('week.st.file')],
+    imp:   ['mt-s-blue', 'sb-t-blue', T('week.st.imp')],
+    scan:  ['mt-s-blue', 'sb-t-blue', T('week.st.scan')],
+    dl:    ['mt-s-blue', 'sb-t-blue', T('week.st.dl')],
+    grab:  ['mt-s-blue', 'sb-t-blue', T('week.st.grab')],
+    pause: ['mt-s-grey', 'sb-t-grey', T('week.st.pause')],
+    fail:  ['mt-s-red', 'sb-t-red', T('week.st.fail')],
+    late:  ['mt-s-amber', 'sb-t-amber', T('week.st.late')],
+    aired: ['mt-s-grey', 'sb-t-grey', T('week.st.aired')],
+    wait:  ['mt-s-grey', 'sb-t-grey', T('week.st.wait')]
   };
   function renderWeek(w) {
     var $w = $('#sb-week').empty();
     if (!w || !w.show) { return; }
     var f = new Date(w.from * 1000), t = new Date((w.to - 1) * 1000);
-    var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var range = 'Mon ' + f.getDate() + (f.getMonth() !== t.getMonth() ? ' ' + M[f.getMonth()] : '') + ' \u2013 Sun ' + t.getDate() + ' ' + M[t.getMonth()];
+    var range = T('date.range', { from: f.getMonth() !== t.getMonth() ? dayLabel(w.from) : T('date.day_short', { dow: T('date.dow.' + DOW[f.getDay()]), d: f.getDate() }), to: dayLabel(w.to - 1) });
     if (!w.ok) {
       if (w.show < 2) { return; }
-      $w.append(band("This week's episodes", range));
-      var why = w.error === 'nosonarr' ? 'Sonarr is not set (Streambox settings)' : (w.error === 'auth' ? 'Sonarr rejected the API key' : 'Sonarr unreachable');
+      $w.append(band(T('week.title'), range));
+      var why = w.error === 'nosonarr' ? T('week.err_nosonarr') : (w.error === 'auth' ? T('week.err_auth') : T('week.err_down'));
       $w.append($('<div class="mt-box">').append(mnote(why)));
       return;
     }
     if (!w.counts.all && w.show < 2) { return; }
     var meta = [range];
-    if (w.counts.jf) { meta.push(w.counts.jf + ' in Jellyfin'); }
-    if (w.counts.dl) { meta.push(w.counts.dl + ' downloading'); }
-    if (w.counts.late) { meta.push(w.counts.late + ' late'); }
-    var $b = band("This week's episodes \u00B7 " + w.counts.all, meta.join(' \u00B7 '));
+    if (w.counts.jf) { meta.push(T('week.n_jf', { n: w.counts.jf })); }
+    if (w.counts.dl) { meta.push(T('week.n_dl', { n: w.counts.dl })); }
+    if (w.counts.late) { meta.push(T('week.n_late', { n: w.counts.late })); }
+    var $b = band(T('week.title') + ' \u00B7 ' + w.counts.all, meta.join(' \u00B7 '));
     if (w.counts.late) { $b.find('b').css({ color: COLOR.amber, opacity: 1 }); }
     $w.append($b);
     var $box = $('<div class="mt-box">').appendTo($w);
-    if (!w.counts.all) { $box.append(mnote('No monitored episode airs this week')); return; }
+    if (!w.counts.all) { $box.append(mnote(T('week.none'))); return; }
     var t3 = '18px minmax(0,1fr) 108px 104px';
     $.each(w.days, function (i, d) {
       var ready = 0;
       $.each(d.rows, function (j, r) { if (r.st === 'jf' || r.st === 'file') { ready++; } });
       $box.append($('<div class="sb-day">').toggleClass('sb-today', !!d.today)
-        .append($('<span>').text((d.today ? 'Today \u00B7 ' : '') + d.label))
-        .append($('<span>').text(ready ? ready + ' in Jellyfin' : '')));
+        .append($('<span>').text((d.today ? T('week.today') + ' \u00B7 ' : '') + (d.ts ? dayLabel(d.ts) : d.label)))
+        .append($('<span>').text(ready ? T('week.n_jf', { n: ready }) : '')));
       $.each(d.rows, function (j, r) {
         var s = WST[r.st] || WST.wait;
         var $row = $('<div class="mt-r mt-n">').addClass(s[0]).css('grid-template-columns', t3);
         $row.append(icon('fa-television', '#9fb4c8'));
         var $t = $('<div class="sb-nm">').attr('title', r.title ? r.code + ' \u00B7 ' + r.title : r.code).text(r.series + ' \u00B7 ' + r.code);
-        if (r['new']) { $t.append(' ').append($('<span class="sb-new">').attr('title', 'New series: its first episode airs this week').text('New')); }
+        if (r['new']) { $t.append(' ').append($('<span class="sb-new">').attr('title', T('week.new_tip')).text(T('week.new'))); }
         var $nm = $('<div>').append($t);
         var sub = '';
-        if (r.st === 'late') { sub = (r.delay !== null ? 'usually ' + durTxt(r.delay) + ' after airing, now ' : 'aired ') + durTxt(w.now - r.air) + (r.delay !== null ? '' : ' ago'); }
+        if (r.st === 'late') { sub = r.delay !== null ? T('week.late_usual', { usual: durTxt(r.delay), now: durTxt(w.now - r.air) }) : T('week.late_ago', { t: durTxt(w.now - r.air) }); }
         else if (r.idx && r.idx.length > 1 && (r.st === 'wait' || r.st === 'aired')) { sub = $.map(r.idx, function (x) { return x[0] + ' ~' + hm(x[1]); }).join(' \u00B7 '); }
         if (sub) { $nm.append($('<div class="sb-wsub">').text(sub)); }
         if (r.st === 'dl' && r.pct !== null) { $nm.append($('<div class="sb-pb">').css('margin-top', '5px').append($('<i>').css({ width: r.pct + '%', background: COLOR.blue }))); }
@@ -610,16 +621,16 @@ $(function () {
         // countdown to the expected time (to the air time when the delay is unknown); after it: overdue
         var nowS = Math.floor(Date.now() / 1000), target = r.exp !== null ? r.exp : r.air, when;
         if (r.st === 'wait' || r.st === 'aired' || r.st === 'late') {
-          when = target > nowS ? (r.exp === null ? 'airs in ' : 'in ') + cdTxt(target - nowS) : (nowS - target < 60 ? 'due now' : 'overdue ' + cdTxt(nowS - target));
-        } else { when = 'aired ' + hm(r.air); }
-        var tip = 'Airs ' + dhm(r.air) + (r.exp !== null ? ' \u00b7 expected ~' + dhm(r.exp) : '') + '\n'
-          + (r.exp === null ? 'No grab history yet: the usual delay after airing is unknown'
-            : 'Usual delay after airing: ' + durTxt(r.delay) + ' (median of ' + r.n + ' episode' + (r.n === 1 ? '' : 's') + (r.basis === 'series' ? ' of this series' : ' of all series') + ')');
+          when = target > nowS ? T(r.exp === null ? 'week.airs_in' : 'week.in', { t: cdTxt(target - nowS) }) : (nowS - target < 60 ? T('week.due_now') : T('week.overdue', { t: cdTxt(nowS - target) }));
+        } else { when = T('week.aired_at', { t: hm(r.air) }); }
+        var tip = T('week.tip_airs', { t: dhm(r.air) }) + (r.exp !== null ? ' \u00b7 ' + T('week.tip_expected', { t: dhm(r.exp) }) : '') + '\n'
+          + (r.exp === null ? T('week.tip_nohist')
+            : T(r.basis === 'series' ? 'week.tip_delay_series' : 'week.tip_delay_all', { t: durTxt(r.delay), n: r.n }));
         $row.append($('<div class="sb-num sb-u">').css('text-align', 'left').attr('title', tip).text(when));
         var lab = s[2];
         if (r.st === 'dl' && r.pct !== null) { lab = r.pct + '%' + (r.left ? ' \u00B7 ' + durTxt(r.left) : ''); }
         $row.append($('<div>').append($('<span class="sb-bd">').addClass(s[1]).text(lab)
-          .attr('title', r.st === 'scan' ? 'Sonarr imported it; Jellyfin has not listed it yet' : '')));
+          .attr('title', r.st === 'scan' ? T('week.scan_tip') : '')));
         $box.append($row);
       });
     });
@@ -647,6 +658,11 @@ Icon="streambox.png"
 Markdown="false"
 ---
 <?PHP
+// texts from the dictionary (lang/en.json and its translations, see i18n.php); $sbs_t escapes, $sbs_T is raw (texts with HTML)
+require_once '/usr/local/emhttp/plugins/streambox/i18n.php';
+$sbs_lang = '/usr/local/emhttp/plugins/streambox/lang';
+$sbs_T = mt_i18n_t($sbs_lang);
+$sbs_t = function ($k, $v = []) use ($sbs_T) { return htmlspecialchars($sbs_T($k, $v), ENT_QUOTES); };
 $sb_file = '/boot/config/plugins/streambox/settings.cfg';
 $sb = [
   'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
@@ -737,135 +753,135 @@ if (!function_exists('sb_auto')) {
 </style>
 <form id="sb-form" class="uset" method="POST" action="/plugins/streambox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=sb_h($sb_tok)?>">
-<h3>Jellyfin and the tile</h3>
+<h3><?=$sbs_t('set.h.jellyfin')?></h3>
 <dl>
-<dt>Jellyfin host (as seen from Unraid):</dt>
+<dt><?=$sbs_t('set.jf_host')?></dt>
 <dd><input type="text" name="jf_host" class="narrow" value="<?=sb_h($sb['jf_host'])?>"></dd>
 
-<dt>Jellyfin port:</dt>
+<dt><?=$sbs_t('set.jf_port')?></dt>
 <dd><input type="number" name="jf_port" min="1" max="65535" class="narrow" value="<?=sb_h($sb['jf_port'])?>"></dd>
 
-<dt>Jellyfin API key:</dt>
-<dd><input type="password" name="jf_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['jf_key'] !== '' ? '(saved, leave empty to keep)' : ''?>"> <span style="opacity:.6">saved keys and webhooks are not sent to the page; type - to remove one</span></dd>
+<dt><?=$sbs_t('set.jf_key')?></dt>
+<dd><input type="password" name="jf_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['jf_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <span style="opacity:.6"><?=$sbs_t('set.key_hint')?></span></dd>
 
-<dt>Jellyfin link URL (also used in the Discord cards):</dt>
+<dt><?=$sbs_t('set.jf_url')?></dt>
 <dd><input type="text" name="jf_url" placeholder="https://media.example.com" value="<?=sb_h($sb['jf_url'])?>"></dd>
 
-<dt>Maximum rows in Now playing:</dt>
+<dt><?=$sbs_t('set.streams_max')?></dt>
 <dd><input type="number" name="streams_max" min="1" max="30" class="narrow" value="<?=sb_h($sb['streams_max'])?>"></dd>
 
-<dt>Rows in Recently added (0 = hide):</dt>
+<dt><?=$sbs_t('set.added_rows')?></dt>
 <dd><input type="number" name="added_rows" min="0" max="20" class="narrow" value="<?=sb_h($sb['added_rows'])?>"></dd>
 
-<dt>Show server load (GPU, CPU, smart socket):</dt>
-<dd><input type="hidden" name="show_load" value="0"><input type="checkbox" name="show_load" value="1" <?=sb_chk($sb['show_load'])?>> switch off when the Sysbox tile shows these</dd>
+<dt><?=$sbs_t('set.show_load')?></dt>
+<dd><input type="hidden" name="show_load" value="0"><input type="checkbox" name="show_load" value="1" <?=sb_chk($sb['show_load'])?>> <?=$sbs_t('set.show_load_hint')?></dd>
 
-<dt>Smart socket (Shelly) address:</dt>
+<dt><?=$sbs_t('set.socket_host')?></dt>
 <dd><input type="text" name="socket_host" class="narrow" placeholder="192.168.1.50" value="<?=sb_h($sb['socket_host'])?>"></dd>
 
-<dt>Smart socket channel:</dt>
+<dt><?=$sbs_t('set.socket_id')?></dt>
 <dd><input type="number" name="socket_id" min="0" max="3" class="narrow" value="<?=sb_h($sb['socket_id'])?>"></dd>
 </dl>
 
-<h3>This week's episodes <small>Monday to Sunday, from Sonarr; read-only</small></h3>
+<h3><?=$sbs_t('week.title')?> <small><?=$sbs_t('set.h.week_sub')?></small></h3>
 <dl>
-<dt>Show on the Dashboard:</dt>
+<dt><?=$sbs_t('set.wk_show')?></dt>
 <dd><select name="wk_show">
-<?php foreach (['2' => 'always', '1' => 'only when an episode airs this week', '0' => 'never'] as $sb_k => $sb_l): ?>
-  <option value="<?=$sb_k?>" <?=((string)$sb['wk_show'] === (string)$sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php foreach (['2' => $sbs_T('set.wk_show.always'), '1' => $sbs_T('set.wk_show.airs'), '0' => $sbs_T('set.wk_show.never')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_show'] === (string)$sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
 <?php endforeach; ?>
 </select>
-<span class="uset-hint">The monitored episodes airing this week, by day: air time, when the torrent usually shows up, and where each one is now. A new week starts at midnight on Sunday.</span></dd>
+<span class="uset-hint"><?=$sbs_t('set.wk_show_hint')?></span></dd>
 
-<dt>Sonarr connection:</dt>
-<dd><label><input type="radio" name="wk_src" value="seedbox" <?=(string)$sb['wk_src'] !== 'own' ? 'checked' : ''?>> use Seedbox's Sonarr settings</label>
-<label><input type="radio" name="wk_src" value="own" <?=(string)$sb['wk_src'] === 'own' ? 'checked' : ''?>> own</label>
-<input type="button" id="sb-wtest" value="Test Sonarr"> <span id="sb-wmsg"></span>
-<span class="uset-hint">Seedbox already has the Sonarr address and API key (Seedbox Tools, Connections). The fields below are used only with "own".</span></dd>
+<dt><?=$sbs_t('set.wk_src')?></dt>
+<dd><label><input type="radio" name="wk_src" value="seedbox" <?=(string)$sb['wk_src'] !== 'own' ? 'checked' : ''?>> <?=$sbs_t('set.wk_src.seedbox')?></label>
+<label><input type="radio" name="wk_src" value="own" <?=(string)$sb['wk_src'] === 'own' ? 'checked' : ''?>> <?=$sbs_t('set.wk_src.own')?></label>
+<input type="button" id="sb-wtest" value="<?=$sbs_t('set.btn.test_sonarr')?>"> <span id="sb-wmsg"></span>
+<span class="uset-hint"><?=$sbs_t('set.wk_src_hint')?></span></dd>
 
-<dt>Sonarr address (own):</dt>
+<dt><?=$sbs_t('set.son_url')?></dt>
 <dd><input type="text" name="son_url" placeholder="http://192.168.1.10:8989" value="<?=sb_h($sb['son_url'])?>"></dd>
 
-<dt>Sonarr API key (own):</dt>
-<dd><input type="password" name="son_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['son_key'] !== '' ? '(saved, leave empty to keep)' : ''?>"></dd>
+<dt><?=$sbs_t('set.son_key')?></dt>
+<dd><input type="password" name="son_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['son_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"></dd>
 
-<dt>Usual delay:</dt>
+<dt><?=$sbs_t('set.wk_delay')?></dt>
 <dd><select name="wk_delay">
-<?php foreach (['series' => 'per series', 'idx' => 'per series and indexer', 'all' => 'one value for all series'] as $sb_k => $sb_l): ?>
-  <option value="<?=$sb_k?>" <?=((string)$sb['wk_delay'] === $sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php foreach (['series' => $sbs_T('set.wk_delay.series'), 'idx' => $sbs_T('set.wk_delay.idx'), 'all' => $sbs_T('set.wk_delay.all')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_delay'] === $sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
 <?php endforeach; ?>
 </select>
-<span class="uset-hint">Median time from airing to the first grab, from the last 60 days of Sonarr history (grabs more than 3 days after airing are left out). Under 3 episodes of a series the median of all series is used. Per indexer: the earliest indexer decides, the others are listed under the title.</span></dd>
+<span class="uset-hint"><?=$sbs_t('set.wk_delay_hint')?></span></dd>
 
-<dt>Late after (hours past the usual time):</dt>
+<dt><?=$sbs_t('set.wk_late')?></dt>
 <dd><input type="number" name="wk_late" min="1" max="48" class="narrow" value="<?=sb_h($sb['wk_late'])?>"></dd>
 
-<dt>Post late episodes to Discord:</dt>
-<dd><input type="hidden" name="wk_dc" value="0"><input type="checkbox" name="wk_dc" value="1" <?=sb_chk($sb['wk_dc'])?>> once per episode, to the series webhook (below)</dd>
+<dt><?=$sbs_t('set.wk_dc')?></dt>
+<dd><input type="hidden" name="wk_dc" value="0"><input type="checkbox" name="wk_dc" value="1" <?=sb_chk($sb['wk_dc'])?>> <?=$sbs_t('set.wk_dc_hint')?></dd>
 
-<dt>Row on Jellyfin's home page:</dt>
-<dd><input type="hidden" name="wk_web" value="0"><input type="checkbox" name="wk_web" value="1" <?=sb_chk($sb['wk_web'])?>> "Ezen a héten", web client and Jellyfin Desktop only
-<span class="uset-hint">Every 2 minutes Streambox writes week.json (series, episode codes, times; no keys) and week.js into the folder below. Map it read-only into the Jellyfin container as /usr/share/jellyfin/web/streambox, then add this script in Jellyfin (Dashboard, JS Injector, enabled): <code>var s=document.createElement('script');s.src='streambox/week.js?v='+Date.now();document.head.appendChild(s);</code> Anyone who can open the Jellyfin address can read week.json.</span></dd>
+<dt><?=$sbs_t('set.wk_web')?></dt>
+<dd><input type="hidden" name="wk_web" value="0"><input type="checkbox" name="wk_web" value="1" <?=sb_chk($sb['wk_web'])?>> <?=$sbs_t('set.wk_web_hint')?>
+<span class="uset-hint"><?=$sbs_T('set.wk_web_long')?></span></dd>
 
-<dt>Default view in Jellyfin:</dt>
+<dt><?=$sbs_t('set.wk_web_view')?></dt>
 <dd><select name="wk_web_view">
-<?php foreach (['grid' => 'calendar (seven day cards)', 'row' => 'posters (one row)'] as $sb_k => $sb_l): ?>
-  <option value="<?=$sb_k?>" <?=((string)$sb['wk_web_view'] === $sb_k) ? 'selected' : ''?>><?=$sb_l?></option>
+<?php foreach (['grid' => $sbs_T('set.wk_view.grid'), 'row' => $sbs_T('set.wk_view.row')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['wk_web_view'] === $sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
 <?php endforeach; ?>
 </select>
-<span class="uset-hint">Each viewer can switch with the two icons next to the title; the choice is remembered in that browser.</span></dd>
+<span class="uset-hint"><?=$sbs_t('set.wk_view_hint')?></span></dd>
 
-<dt>Folder for Jellyfin:</dt>
+<dt><?=$sbs_t('set.wk_web_dir')?></dt>
 <dd><input type="text" name="wk_web_dir" value="<?=sb_h($sb['wk_web_dir'])?>" placeholder="/mnt/cache/docker/streambox/web"></dd>
 </dl>
 
-<h3>Discord notifications</h3>
+<h3><?=$sbs_t('set.h.discord')?></h3>
 <dl>
-<dt>Announce new movies and seasons:</dt>
+<dt><?=$sbs_t('set.notify')?></dt>
 <dd><input type="hidden" name="notify" value="0"><input type="checkbox" name="notify" value="1" <?=sb_chk($sb['notify'])?>></dd>
 
-<dt>Webhook for movies (#filmek):</dt>
-<dd><input type="password" name="dc_movies" autocomplete="new-password" placeholder="<?=$sb['dc_movies'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+<dt><?=$sbs_t('set.dc_movies')?></dt>
+<dd><input type="password" name="dc_movies" autocomplete="new-password" placeholder="<?=$sb['dc_movies'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
 
-<dt>Webhook for series (#sorozatok):</dt>
-<dd><input type="password" name="dc_series" autocomplete="new-password" placeholder="<?=$sb['dc_series'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+<dt><?=$sbs_t('set.dc_series')?></dt>
+<dd><input type="password" name="dc_series" autocomplete="new-password" placeholder="<?=$sb['dc_series'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
 
-<dt>Weekly summary of new movies and series:</dt>
+<dt><?=$sbs_t('set.weekly')?></dt>
 <dd><input type="hidden" name="weekly" value="0"><input type="checkbox" name="weekly" value="1" <?=sb_chk($sb['weekly'])?>></dd>
 
-<dt>Webhook for the weekly summary:</dt>
-<dd><input type="password" name="dc_weekly" autocomplete="new-password" placeholder="<?=$sb['dc_weekly'] !== '' ? '(saved, leave empty to keep)' : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+<dt><?=$sbs_t('set.dc_weekly')?></dt>
+<dd><input type="password" name="dc_weekly" autocomplete="new-password" placeholder="<?=$sb['dc_weekly'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
 
-<dt>Weekly summary day and hour:</dt>
+<dt><?=$sbs_t('set.weekly_when')?></dt>
 <dd>
   <select name="weekly_day" style="width:auto">
-<?php foreach ([1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 0 => 'Sunday'] as $sb_dv => $sb_dn): ?>
-    <option value="<?=$sb_dv?>" <?=((string)$sb['weekly_day'] === (string)$sb_dv) ? 'selected' : ''?>><?=$sb_dn?></option>
+<?php foreach ([1 => $sbs_T('date.long.mon'), 2 => $sbs_T('date.long.tue'), 3 => $sbs_T('date.long.wed'), 4 => $sbs_T('date.long.thu'), 5 => $sbs_T('date.long.fri'), 6 => $sbs_T('date.long.sat'), 0 => $sbs_T('date.long.sun')] as $sb_dv => $sb_dn): ?>
+    <option value="<?=$sb_dv?>" <?=((string)$sb['weekly_day'] === (string)$sb_dv) ? 'selected' : ''?>><?=sb_h($sb_dn)?></option>
 <?php endforeach; ?>
   </select>
   <input type="number" name="weekly_hour" min="0" max="23" class="narrow" value="<?=sb_h($sb['weekly_hour'])?>"> :00
 </dd>
 
-<dt>Wait for more episodes (minutes):</dt>
+<dt><?=$sbs_t('set.notify_settle')?></dt>
 <dd><input type="number" name="notify_settle" min="1" max="60" class="narrow" value="<?=sb_h($sb['notify_settle'])?>"></dd>
 
-<dt>Wait for metadata and poster (minutes):</dt>
+<dt><?=$sbs_t('set.notify_wait')?></dt>
 <dd><input type="number" name="notify_wait" min="1" max="240" class="narrow" value="<?=sb_h($sb['notify_wait'])?>"></dd>
 
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="sb-ntest" value="Send test message">
-  <input type="button" id="sb-nprev" value="Send preview (newest movie and season)">
-  <input type="button" id="sb-nweek" value="Send weekly summary now">
+  <input type="button" id="sb-ntest" value="<?=$sbs_t('set.btn.ntest')?>">
+  <input type="button" id="sb-nprev" value="<?=$sbs_t('set.btn.nprev')?>">
+  <input type="button" id="sb-nweek" value="<?=$sbs_t('set.btn.nweek')?>">
   <span id="sb-nmsg" style="margin-left:12px"></span>
 </dd>
 </dl>
 
-<h3>User nicknames</h3>
+<h3><?=$sbs_t('set.h.nicks')?></h3>
 <?php if ($sb_users === null): ?>
-<p>The user list could not be loaded. Enter the Jellyfin host, port and API key above, press Apply, then reload this page.</p>
+<p><?=$sbs_t('set.nicks_none')?></p>
 <?php else: ?>
-<p>Nicknames are shown instead of the long user names on the dashboard tile. Leave a field empty to use the automatic short name (shown as a hint).</p>
+<p><?=$sbs_t('set.nicks_hint')?></p>
 <dl>
 <?php foreach ($sb_users as $sb_u): ?>
 <dt><?=sb_h($sb_u['name'])?>:</dt>
@@ -877,8 +893,8 @@ if (!function_exists('sb_auto')) {
 <dl class="uset-save">
 <dt>&nbsp;</dt>
 <dd>
-  <input type="button" id="sb-save" value="Apply">
-  <input type="button" value="Done" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
+  <input type="button" id="sb-save" value="<?=$sbs_t('set.btn.apply')?>">
+  <input type="button" value="<?=$sbs_t('set.btn.done')?>" onclick="if (typeof done === 'function') { done(); } else { history.back(); }">
   <span id="sb-msg" style="margin-left:12px"></span>
 </dd>
 </dl>
@@ -886,38 +902,40 @@ if (!function_exists('sb_auto')) {
 <?php $mt_lang_post = '/plugins/streambox/lang_save.php'; include '/usr/local/emhttp/plugins/streambox/lang_block.php'; ?>
 
 <?php if ($sb_log !== ''): ?>
-<p style="opacity:.6;font-size:12px;max-width:130ch">Notifier log (latest entries):</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sbs_t('set.log')?></p>
 <pre><?=sb_h($sb_log)?></pre>
 <?php endif; ?>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">Discord cards: Unraid checks Jellyfin every minute. A movie is announced once its description (in Jellyfin's metadata language) and poster exist; episodes are grouped per season and announced when no new episode has arrived for the "wait for more episodes" time. The first time the notifier is switched on, only items added from then on are announced. The weekly summary lists everything added in the last 7 days at the chosen day and hour (server time zone); if the server was off at that hour it is sent when it is next up the same day. The buttons use the saved settings, so press Apply first. The Jellyfin link in the cards is left out when the Jellyfin link URL is empty. Create a webhook in Discord under channel settings, Integrations, Webhooks.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sbs_t('set.help_discord')?></p>
 
-<p style="opacity:.6;font-size:12px;max-width:130ch">The Jellyfin API key is created in Jellyfin under Dashboard, Advanced, API Keys. Streams that are idle (nothing playing) are not shown. GPU load is read with intel_gpu_top, CPU load from the system statistics. Leave the Jellyfin link URL empty to use this server's address with the Jellyfin port. Leave the smart socket address empty to hide the Socket reading. The monthly consumption is taken from the socket's own energy counter, which Unraid samples every 10 minutes, so the first month counts from the day the socket is set up.</p>
+<p style="opacity:.6;font-size:12px;max-width:130ch"><?=$sbs_t('set.help_general')?></p>
 
+<?=mt_i18n_js($sbs_lang, 'sb')?>
 <script>
 $(function () {
+  var T = function (k, v) { return MTL.t('sb', k, v); };
   var $msg = $('#sb-msg');
   $('#sb-save').on('click', function () {
     var $b = $(this).prop('disabled', true);
-    $msg.css('color', '').text('Saving...');
+    $msg.css('color', '').text(T('set.saving'));
     $.post('/plugins/streambox/save.php', $('#sb-form').serialize(), null, 'json')
       .done(function (r) {
         if (r && r.ok) {
-          $msg.css('color', '#3fa24a').text('Saved. The dashboard picks it up within a few seconds.');
+          $msg.css('color', '#3fa24a').text(T('set.saved'));
         } else {
-          $msg.css('color', '#e5534b').text('Not saved: ' + ((r && r.error) ? r.error : 'unknown error'));
+          $msg.css('color', '#e5534b').text(T('set.not_saved', { e: (r && r.error) ? r.error : T('set.unknown_error') }));
         }
       })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
-        $msg.css('color', '#e5534b').text('Not saved: ' + e);
+        $msg.css('color', '#e5534b').text(T('set.not_saved', { e: e }));
       })
       .always(function () { $b.prop('disabled', false); });
   });
   $('#sb-wtest').on('click', function () {
-    var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text('Asking Sonarr... (Apply first if you changed the connection)');
+    var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text(T('set.asking_sonarr'));
     $.getJSON('/plugins/streambox/week.php', { test: 1, _: Date.now() })
-      .done(function (r) { $m.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : 'unknown answer'); })
+      .done(function (r) { $m.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : T('set.unknown_answer')); })
       .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
       .always(function () { $b.prop('disabled', false); });
   });
@@ -925,9 +943,9 @@ $(function () {
   $('#sb-ntest, #sb-nprev, #sb-nweek').on('click', function () {
     var mode = (this.id === 'sb-nprev') ? 'preview' : ((this.id === 'sb-nweek') ? 'weekly' : 'test');
     var $b = $('#sb-ntest, #sb-nprev, #sb-nweek').prop('disabled', true);
-    $nm.css('color', '').text('Sending...');
+    $nm.css('color', '').text(T('set.sending'));
     $.post('/plugins/streambox/notify_test.php', { mode: mode }, null, 'json')
-      .done(function (r) { $nm.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : 'unknown answer'); })
+      .done(function (r) { $nm.css('color', r && r.ok ? '#3fa24a' : '#e5534b').text((r && r.message) ? r.message : T('set.unknown_answer')); })
       .fail(function (x) {
         var e = (x.responseJSON && x.responseJSON.message) ? x.responseJSON.message : 'HTTP ' + x.status;
         $nm.css('color', '#e5534b').text(e);
@@ -946,6 +964,8 @@ $(function () {
 <INLINE><![CDATA[<?php
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/i18n.php';
+$sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 $cfg = [
     'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
@@ -1026,20 +1046,21 @@ function sb_reason($r) {
 
 // Short human wording for a Jellyfin transcode reason
 function sb_why($r) {
+    global $sbx_T;
     $map = [
-        'ContainerNotSupported'        => 'Container',
-        'VideoCodecNotSupported'       => 'Video codec',
-        'AudioCodecNotSupported'       => 'Audio codec',
-        'SubtitleCodecNotSupported'    => 'Subtitles',
-        'AudioChannelsNotSupported'    => 'Audio channels',
-        'ContainerBitrateExceedsLimit' => 'Bitrate limit',
-        'VideoBitrateNotSupported'     => 'Video bitrate',
-        'AudioBitrateNotSupported'     => 'Audio bitrate',
-        'InterlacedVideoNotSupported'  => 'Interlaced',
-        'VideoResolutionNotSupported'  => 'Resolution',
-        'VideoProfileNotSupported'     => 'Video profile',
-        'VideoLevelNotSupported'       => 'Video level',
-        'VideoRangeTypeNotSupported'   => 'HDR format',
+        'ContainerNotSupported'        => $sbx_T('why.container'),
+        'VideoCodecNotSupported'       => $sbx_T('why.video_codec'),
+        'AudioCodecNotSupported'       => $sbx_T('why.audio_codec'),
+        'SubtitleCodecNotSupported'    => $sbx_T('why.subtitles'),
+        'AudioChannelsNotSupported'    => $sbx_T('why.audio_channels'),
+        'ContainerBitrateExceedsLimit' => $sbx_T('why.bitrate_limit'),
+        'VideoBitrateNotSupported'     => $sbx_T('why.video_bitrate'),
+        'AudioBitrateNotSupported'     => $sbx_T('why.audio_bitrate'),
+        'InterlacedVideoNotSupported'  => $sbx_T('why.interlaced'),
+        'VideoResolutionNotSupported'  => $sbx_T('why.resolution'),
+        'VideoProfileNotSupported'     => $sbx_T('why.video_profile'),
+        'VideoLevelNotSupported'       => $sbx_T('why.video_level'),
+        'VideoRangeTypeNotSupported'   => $sbx_T('why.hdr_format'),
     ];
     $r = (string)$r;
     return isset($map[$r]) ? $map[$r] : sb_reason($r);
@@ -1161,7 +1182,7 @@ foreach ($sessions as $s) {
         $trans++;
         $audioCodec = strtoupper((string)($ti['AudioCodec'] ?? '?'));
         if (!empty($ti['IsVideoDirect'])) {
-            $detail = 'Audio' . $arrow . $audioCodec;
+            $detail = $sbx_T('det.audio') . $arrow . $audioCodec;
         } else {
             $dstRes = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
             $dstCodec = strtoupper((string)($ti['VideoCodec'] ?? ''));
@@ -1169,10 +1190,10 @@ foreach ($sessions as $s) {
             $interlaced = in_array('InterlacedVideoNotSupported', $rs, true) || ($vs && !empty($vs['IsInterlaced']));
             if ($dstRes !== '' && $srcRes !== '' && $dstRes !== $srcRes) { $detail = $srcRes . $arrow . $dstRes; }
             elseif ($srcCodec !== '' && $dstCodec !== '' && $srcCodec !== $dstCodec) { $detail = $srcCodec . $arrow . $dstCodec; }
-            elseif ($interlaced && $dstRes !== '') { $detail = 'Deinterlace' . $arrow . $dstRes; }
-            elseif ($dstRes !== '') { $detail = 'Video' . $arrow . $dstRes; }
+            elseif ($interlaced && $dstRes !== '') { $detail = $sbx_T('det.deinterlace') . $arrow . $dstRes; }
+            elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
             elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
-            else { $detail = 'Video transcode'; }
+            else { $detail = $sbx_T('det.video_transcode'); }
             $detail .= ((string)($ti['HardwareAccelerationType'] ?? '') !== '') ? " \u{00b7} HW" : " \u{00b7} SW";
         }
         if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
@@ -1189,7 +1210,7 @@ foreach ($sessions as $s) {
             if ($dstCont !== '' && $srcCont !== '' && $dstCont !== $srcCont) { $conv = $srcCont . $arrow . $dstCont; }
         }
         if ($ti !== null && empty($ti['IsAudioDirect']) && !empty($ti['AudioCodec'])) {
-            $line1 = ($srcAudio !== '' ? $srcAudio : 'Audio') . $arrow . strtoupper((string)$ti['AudioCodec']);
+            $line1 = ($srcAudio !== '' ? $srcAudio : $sbx_T('det.audio')) . $arrow . strtoupper((string)$ti['AudioCodec']);
         } elseif ($why || $conv) {
             $line1 = implode(" \u{00b7} ", array_filter([implode(', ', $why), $conv]));
         } else {
@@ -1203,22 +1224,22 @@ foreach ($sessions as $s) {
     }
 
     // Hover text: everything Jellyfin tells us about this stream
-    $methodName = ['DirectPlay' => 'Direct play', 'DirectStream' => 'Direct stream', 'Transcode' => 'Transcode'][$mode];
-    $info   = ['Method: ' . $methodName];
+    $methodName = ['DirectPlay' => $sbx_T('mode.direct_play'), 'DirectStream' => $sbx_T('mode.direct_stream'), 'Transcode' => $sbx_T('mode.transcode')][$mode];
+    $info   = [$sbx_T('info.method', ['m' => $methodName])];
     $srcBits = array_filter([
         $srcCont,
         trim($srcCodec . ($srcRes !== '' ? ' ' . $srcRes : '')),
         trim($srcAudio . ($srcCh > 0 ? ' ' . $srcCh . 'ch' : '')),
     ]);
-    if ($srcBits) { $info[] = 'Source: ' . implode(" \u{00b7} ", $srcBits); }
+    if ($srcBits) { $info[] = $sbx_T('info.source', ['s' => implode(" \u{00b7} ", $srcBits)]); }
     if ($ti !== null) {
         $names = [];
         foreach ($rs as $r) { $names[] = sb_why($r); }
-        $info[] = 'Reasons: ' . ($names ? implode(', ', $names) : 'none reported');
+        $info[] = $sbx_T('info.reasons', ['r' => $names ? implode(', ', $names) : $sbx_T('info.none_reported')]);
     } else {
-        $info[] = 'Jellyfin reported no transcoding details for this stream';
+        $info[] = $sbx_T('info.no_details');
     }
-    $info[] = 'Client: ' . trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''));
+    $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
     $mbps += $bps / 1000000;
 
     $pos = (int)($ps['PositionTicks'] ?? 0);
@@ -1443,6 +1464,8 @@ echo json_encode(['ok' => true, 'gpu' => $gpu, 'cpu' => $cpu, 'gpu_note' => $gpu
 <INLINE><![CDATA[<?php
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/i18n.php';
+$sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 function sb_out($ok, $extra = []) {
     echo json_encode(array_merge(['ok' => $ok], $extra), JSON_UNESCAPED_UNICODE);
@@ -1478,29 +1501,29 @@ $old = is_file($file) ? @parse_ini_file($file, false, INI_SCANNER_RAW) : [];
 if (!is_array($old)) { $old = []; }
 function sb_keep($name, $old) { $v = trim((string)($_POST[$name] ?? '')); return $v === '' ? (string)($old[$name] ?? '') : ($v === '-' ? '' : $v); }
 $key = sb_keep('jf_key', $old);
-if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $key)) { sb_out(false, ['error' => 'the API key contains invalid characters']); }
+if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $key)) { sb_out(false, ['error' => $sbx_T('save.err_key')]); }
 
 $url = trim(str_replace(["\r", "\n", "\0"], '', (string)($_POST['jf_url'] ?? '')));
-if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => 'invalid Jellyfin link URL']); }
+if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => $sbx_T('save.err_url')]); }
 
 $sockHost = trim((string)($_POST['socket_host'] ?? ''));
-if ($sockHost !== '' && !preg_match('/^[A-Za-z0-9.\-]+$/', $sockHost)) { sb_out(false, ['error' => 'invalid smart socket address']); }
+if ($sockHost !== '' && !preg_match('/^[A-Za-z0-9.\-]+$/', $sockHost)) { sb_out(false, ['error' => $sbx_T('save.err_socket')]); }
 
 $hookRe = '#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#';
 $dcm = sb_keep('dc_movies', $old);
 $dcs = sb_keep('dc_series', $old);
-if ($dcm !== '' && !preg_match($hookRe, $dcm)) { sb_out(false, ['error' => 'the movies webhook is not a valid Discord webhook URL']); }
-if ($dcs !== '' && !preg_match($hookRe, $dcs)) { sb_out(false, ['error' => 'the series webhook is not a valid Discord webhook URL']); }
+if ($dcm !== '' && !preg_match($hookRe, $dcm)) { sb_out(false, ['error' => $sbx_T('save.err_hook_movies')]); }
+if ($dcs !== '' && !preg_match($hookRe, $dcs)) { sb_out(false, ['error' => $sbx_T('save.err_hook_series')]); }
 
 $dcw = sb_keep('dc_weekly', $old);
-if ($dcw !== '' && !preg_match($hookRe, $dcw)) { sb_out(false, ['error' => 'the weekly summary webhook is not a valid Discord webhook URL']); }
+if ($dcw !== '' && !preg_match($hookRe, $dcw)) { sb_out(false, ['error' => $sbx_T('save.err_hook_weekly')]); }
 
 $sonKey = sb_keep('son_key', $old);
-if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => 'the Sonarr API key contains invalid characters']); }
+if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $sbx_T('save.err_son_key')]); }
 $sonUrl = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['son_url'] ?? ''))), '/');
-if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => 'invalid Sonarr address']); }
+if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => $sbx_T('save.err_son_url')]); }
 $wkWebDir = rtrim(trim((string)($_POST['wk_web_dir'] ?? '/mnt/cache/docker/streambox/web')), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir)) { sb_out(false, ['error' => 'the folder for Jellyfin must be a path under /mnt (letters, digits, . _ - only)']); }
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
 $wkDelay = (string)($_POST['wk_delay'] ?? 'series');
 if (!in_array($wkDelay, ['series', 'idx', 'all'], true)) { $wkDelay = 'series'; }
 
@@ -1570,10 +1593,10 @@ function sb_write($path, $data) {
     return true;
 }
 
-if (!sb_write($file, $text)) { sb_out(false, ['error' => 'could not write the settings file']); }
+if (!sb_write($file, $text)) { sb_out(false, ['error' => $sbx_T('save.err_write')]); }
 // only touch the nickname list when the nickname fields were part of the form
 if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
-    sb_out(false, ['error' => 'could not write the nickname file']);
+    sb_out(false, ['error' => $sbx_T('save.err_nick')]);
 }
 @unlink('/tmp/streambox_added.json');
 @unlink('/tmp/streambox_week.json');
@@ -1592,22 +1615,25 @@ sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/energy.php">
 <INLINE><![CDATA[<?php
+require_once __DIR__ . '/i18n.php';
+// the socket notes are shown as the tooltip of Socket · n/a on the tile (dictionary lang/en.json)
+function sb_energy_t($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 // Smart socket (Shelly Gen2 and newer) helpers: wall power and a monthly energy total.
 
 // Returns [array|null, error text]
 function sb_socket_fetch($host, $id) {
-    if (!preg_match('/^[A-Za-z0-9.\-]+$/', (string)$host)) { return [null, 'invalid socket address']; }
+    if (!preg_match('/^[A-Za-z0-9.\-]+$/', (string)$host)) { return [null, sb_energy_t('sock.invalid')]; }
     $ch = curl_init('http://' . $host . '/rpc/Switch.GetStatus?id=' . (int)$id);
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 2, CURLOPT_TIMEOUT => 3]);
     $body = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $err  = curl_errno($ch);
     curl_close($ch);
-    if ($err) { return [null, 'socket unreachable']; }
-    if ($code === 401 || $code === 403) { return [null, 'the socket asks for a password (not supported)']; }
-    if ($code !== 200) { return [null, 'socket answered HTTP ' . $code]; }
+    if ($err) { return [null, sb_energy_t('sock.down')]; }
+    if ($code === 401 || $code === 403) { return [null, sb_energy_t('sock.password')]; }
+    if ($code !== 200) { return [null, sb_energy_t('sock.http', ['code' => $code])]; }
     $d = json_decode((string)$body, true);
-    if (!is_array($d) || !isset($d['apower'])) { return [null, 'unexpected answer from the socket']; }
+    if (!is_array($d) || !isset($d['apower'])) { return [null, sb_energy_t('sock.bad')]; }
     $total = isset($d['aenergy']['total']) ? (float)$d['aenergy']['total'] : null;
     return [['power' => (float)$d['apower'], 'total_wh' => $total, 'output' => !empty($d['output'])], ''];
 }
@@ -1929,7 +1955,7 @@ function wk_build($cfg, $now) {
 
     foreach ($rows as $r) {
         $k = date('Y-m-d', $r['air']);
-        if (!isset($out['days'][$k])) { $out['days'][$k] = ['label' => date('D j M', $r['air']), 'today' => $k === date('Y-m-d', $now), 'past' => $k < date('Y-m-d', $now), 'rows' => []]; }
+        if (!isset($out['days'][$k])) { $out['days'][$k] = ['label' => date('D j M', $r['air']), 'ts' => strtotime($k . ' 12:00'), 'today' => $k === date('Y-m-d', $now), 'past' => $k < date('Y-m-d', $now), 'rows' => []]; }
         $out['days'][$k]['rows'][] = $r;
         $out['counts']['all']++;
         if ($r['st'] === 'jf' || $r['st'] === 'file') { $out['counts']['jf']++; }
@@ -1950,6 +1976,8 @@ function wk_build($cfg, $now) {
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 require_once __DIR__ . '/week_lib.php';
+require_once __DIR__ . '/i18n.php';
+$sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 wk_tz();
 $cfg = wk_cfg();
@@ -1959,14 +1987,14 @@ $show = (int)$cfg['wk_show'];
 if (!empty($_GET['test'])) {
     $son = wk_sonarr($cfg);
     if ($son[0] === '' || $son[1] === '') {
-        echo json_encode(['ok' => false, 'message' => (string)$cfg['wk_src'] === 'own' ? 'Enter the Sonarr address and API key, then Apply.' : 'Seedbox has no Sonarr address and key (Seedbox Tools, Connections).']);
+        echo json_encode(['ok' => false, 'message' => (string)$cfg['wk_src'] === 'own' ? $sbx_T('wtest.own_missing') : $sbx_T('wtest.seedbox_missing')]);
         exit;
     }
     [$st, $e] = wk_son($son, '/system/status');
-    if (!is_array($st)) { echo json_encode(['ok' => false, 'message' => 'Sonarr: ' . ($e === 'auth' ? 'the API key was rejected' : $e)]); exit; }
+    if (!is_array($st)) { echo json_encode(['ok' => false, 'message' => 'Sonarr: ' . ($e === 'auth' ? $sbx_T('wtest.auth') : $e)]); exit; }
     @unlink(WK_DELAY);
     $n = count(wk_samples($son, $now));
-    echo json_encode(['ok' => true, 'message' => 'Sonarr ' . (string)($st['version'] ?? '?') . ' answers; the usual delay is learned from ' . $n . ' grab' . ($n === 1 ? '' : 's') . ' of the last 60 days.']);
+    echo json_encode(['ok' => true, 'message' => $sbx_T('wtest.ok', ['v' => (string)($st['version'] ?? '?'), 'n' => $n])]);
     exit;
 }
 
@@ -2507,13 +2535,18 @@ function mt_lang_cfg() {
     $c = ['ui' => 'auto', 'discord' => ''];
     $f = is_file(MT_LANG_FILE) ? @parse_ini_file(MT_LANG_FILE) : false;
     if (is_array($f)) {
-        if (in_array($f['ui'] ?? '', ['auto', 'en'], true)) { $c['ui'] = $f['ui']; }
+        if (($f['ui'] ?? '') === 'auto' || in_array($f['ui'] ?? '', mt_lang_have('ui'), true)) { $c['ui'] = $f['ui']; }
         if (in_array($f['discord'] ?? '', ['auto', 'en', 'hu'], true)) { $c['discord'] = $f['discord']; }
     }
     if ($c['discord'] === '') { $c['discord'] = mt_lang_legacy(); }
     return $c;
 }
 
+// The language the pages and tiles ask for (the dictionaries of i18n.php fall back to English per text)
+function mt_lang_ui_want() {
+    $c = mt_lang_cfg();
+    return $c['ui'] === 'auto' ? mt_lang_code(mt_lang_unraid()) : $c['ui'];
+}
 // The language the pages and tiles use, and the one Discord messages use (always one that exists)
 function mt_lang_ui() {
     $c = mt_lang_cfg();
@@ -2529,7 +2562,7 @@ function mt_lang_discord() {
 }
 
 function mt_lang_save($ui, $discord) {
-    if (!in_array($ui, ['auto', 'en'], true) || !in_array($discord, ['auto', 'en', 'hu'], true)) { return false; }
+    if (($ui !== 'auto' && !in_array($ui, mt_lang_have('ui'), true)) || !in_array($discord, ['auto', 'en', 'hu'], true)) { return false; }
     @mkdir(dirname(MT_LANG_FILE), 0777, true);
     $tmp = MT_LANG_FILE . '.tmp';
     if (@file_put_contents($tmp, 'ui="' . $ui . "\"\ndiscord=\"" . $discord . "\"\n") === false) { return false; }
@@ -2636,6 +2669,1046 @@ if ($sent !== '') {
 if (!mt_lang_save((string)($_POST['ui'] ?? ''), (string)($_POST['discord'] ?? ''))) { mt_out(false, ['error' => 'could not save the language setting']); }
 mt_out(true);
 ]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/i18n.php">
+<INLINE><![CDATA[<?php
+// Dictionaries of the pages and tiles. Each plugin keeps its texts in <plugdir>/lang/<code>.json:
+// en.json is the source (every key, with a note for the translator), <code>.json a translation of it.
+// The language is the shared setting of lang.php (Follow Unraid or a chosen one); a missing file, key or
+// form falls back to English, so a partial translation never breaks a page.
+//   entry:        "key": {"text": "Hide", "note": "button ..."}
+//   plural entry: "key": {"one": "{n} torrent", "other": "{n} torrents", "note": "..."}
+//   placeholders: {name} in the text, filled from $vars / vars
+// PHP: $T = mt_i18n_t('/usr/local/emhttp/plugins/<id>/lang'); echo $T('key', ['n' => 3]);
+// JS:  echo mt_i18n_js($dir, 'mon'); then MTL.t('mon', 'key', {n: 3}) (pages wrap it as T('key'))
+if (!function_exists('mt_i18n')) {
+
+require_once __DIR__ . '/lang.php';
+
+function mt_i18n($dir) {
+    static $cache = [];
+    if (isset($cache[$dir])) { return $cache[$dir]; }
+    $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+    $en = $read($dir . '/en.json');
+    $code = function_exists('mt_lang_ui_want') ? mt_lang_ui_want() : mt_lang_ui();   // an older lang.php of another plugin may have been loaded first
+    $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : [];
+    $out = [];
+    foreach ($en as $k => $v) {
+        if ($k === '' || $k[0] === '_' || !is_array($v)) { continue; }
+        $e = [];
+        foreach (['text', 'one', 'other'] as $f) {
+            if (!isset($v[$f])) { continue; }
+            $t = $tr[$k][$f] ?? null;
+            $e[$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$v[$f];
+        }
+        $out[$k] = $e;
+    }
+    return $cache[$dir] = $out;
+}
+
+function mt_i18n_fmt($e, $vars) {
+    if ($e === null) { return null; }
+    if (isset($e['other'])) { $n = (float)($vars['n'] ?? 0); $s = (abs($n) == 1 && isset($e['one'])) ? $e['one'] : $e['other']; }
+    else { $s = $e['text'] ?? ''; }
+    return preg_replace_callback('/\{([a-z0-9_]+)\}/', function ($m) use ($vars) { return array_key_exists($m[1], $vars) ? (string)$vars[$m[1]] : $m[0]; }, $s);
+}
+
+// a translate function for one plugin's dictionary; an unknown key shows as itself (easy to spot)
+function mt_i18n_t($dir) {
+    $tab = mt_i18n($dir);
+    return function ($key, $vars = []) use ($tab) { $s = mt_i18n_fmt($tab[$key] ?? null, (array)$vars); return $s === null ? $key : $s; };
+}
+
+// the same dictionary for the page's JavaScript: MTL.t(name, key, vars)
+function mt_i18n_js($dir, $name) {
+    return '<script>window.MTL=window.MTL||{d:{},t:function(n,k,v){var e=(this.d[n]||{})[k],s;if(!e){return k;}v=v||{};'
+        . 'if(e.other!==undefined){var c=Math.abs(+v.n||0);s=(c===1&&e.one!==undefined)?e.one:e.other;}else{s=e.text||"";}'
+        . 'return s.replace(/\{([a-z0-9_]+)\}/g,function(a,b){return v.hasOwnProperty(b)?String(v[b]):a;});}};'
+        . 'MTL.d[' . json_encode((string)$name) . ']=' . json_encode(mt_i18n($dir), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+}
+
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/lang/en.json">
+<INLINE><![CDATA[{
+ "_meta": {
+  "plugin": "Streambox",
+  "language": "English",
+  "about": "Texts of the Streambox dashboard tile (Jellyfin: now playing, this week's episodes from Sonarr, server load, recently added) and its settings page (Settings, Utilities, Streambox). The Discord messages are not here (they have their own language setting). Product names (Streambox, Jellyfin, Sonarr, Seedbox, Sysbox, Unraid, Discord, Shelly, Quick Sync) are not translated."
+ },
+ "tile.connecting": {
+  "text": "Connecting…",
+  "note": "grey line under the tile title while the tile asks Jellyfin for the first time."
+ },
+ "tile.loading": {
+  "text": "Loading…",
+  "note": "grey placeholder in the tile body before the first answer."
+ },
+ "tile.open_jellyfin": {
+  "text": "Open Jellyfin",
+  "note": "tooltip of the home icon in the tile header, and the link at the bottom of the tile."
+ },
+ "tile.settings": {
+  "text": "Streambox settings",
+  "note": "tooltip of the gear icon in the tile header."
+ },
+ "mode.direct_play": {
+  "text": "Direct play",
+  "note": "badge in the Mode column of Now playing (Jellyfin plays the file as it is). Short, upper case on screen."
+ },
+ "mode.direct_stream": {
+  "text": "Direct stream",
+  "note": "badge in the Mode column of Now playing (the video is sent as it is, the container or audio is changed). Short, upper case on screen."
+ },
+ "mode.transcode": {
+  "text": "Transcode",
+  "note": "badge in the Mode column of Now playing (Jellyfin converts the video). Short, upper case on screen."
+ },
+ "time.left_hm": {
+  "text": "{h}h {m}m left",
+  "note": "time left of a playing stream, hours and minutes (minutes always two digits). Short."
+ },
+ "time.left_m": {
+  "text": "{m}m left",
+  "note": "time left of a playing stream, minutes only. Short."
+ },
+ "time.left_s": {
+  "text": "{s}s left",
+  "note": "time left of a playing stream, seconds only. Short."
+ },
+ "time.just_now": {
+  "text": "just now",
+  "note": "Added column of Recently added: added less than a minute ago. Very short."
+ },
+ "time.ago_m": {
+  "text": "{m}m ago",
+  "note": "Added column: minutes ago. Very short (the column is narrow)."
+ },
+ "time.ago_h": {
+  "text": "{h}h ago",
+  "note": "Added column: hours ago. Very short."
+ },
+ "time.ago_d": {
+  "text": "{d}d ago",
+  "note": "Added column: days ago. Very short."
+ },
+ "pill.online": {
+  "text": "Online",
+  "note": "status pill at the top of the tile: Jellyfin answers."
+ },
+ "pill.api_key": {
+  "text": "API key",
+  "note": "status pill: Jellyfin rejected the API key."
+ },
+ "pill.offline": {
+  "text": "Offline",
+  "note": "status pill: Jellyfin does not answer."
+ },
+ "pill.streaming": {
+  "text": "{n} streaming",
+  "note": "status pill: how many streams play now."
+ },
+ "pill.transcoding": {
+  "text": "{n} transcoding",
+  "note": "status pill: how many of the streams are transcoded."
+ },
+ "sum.unavailable": {
+  "text": "Unavailable",
+  "note": "line under the tile title when Jellyfin cannot be read."
+ },
+ "sum.no_streams": {
+  "text": "No active streams",
+  "note": "line under the tile title, and the Now playing box, when nothing plays."
+ },
+ "sum.streams": {
+  "one": "{n} stream",
+  "other": "{n} streams",
+  "note": "line under the tile title: number of streams."
+ },
+ "sum.users": {
+  "one": "{n} user",
+  "other": "{n} users",
+  "note": "line under the tile title: number of users watching."
+ },
+ "now.err_auth": {
+  "text": "Jellyfin rejected the API key (check Streambox settings)",
+  "note": "message in the tile when the Jellyfin API key is wrong."
+ },
+ "now.err_nokey": {
+  "text": "Enter the Jellyfin API key in the Streambox settings",
+  "note": "message in the tile before an API key is set."
+ },
+ "now.err_down": {
+  "text": "Jellyfin unreachable",
+  "note": "message in the tile when Jellyfin does not answer."
+ },
+ "now.title": {
+  "text": "Now playing",
+  "note": "band title of the streams part of the tile (upper case on screen), followed by the count."
+ },
+ "col.title": {
+  "text": "Title",
+  "note": "column header (Now playing, Recently added). Short, upper case on screen."
+ },
+ "col.user": {
+  "text": "User",
+  "note": "column header in Now playing. Short (column 64 px)."
+ },
+ "col.device": {
+  "text": "Device",
+  "note": "column header in Now playing. Short (column 84 px)."
+ },
+ "col.mode": {
+  "text": "Mode",
+  "note": "column header in Now playing: how the stream is played. Short."
+ },
+ "now.paused": {
+  "text": "Paused",
+  "note": "label instead of the progress of a paused stream."
+ },
+ "now.live": {
+  "text": "LIVE",
+  "note": "label of a live TV stream (after a red dot). Very short, upper case."
+ },
+ "added.title": {
+  "text": "Recently added",
+  "note": "band title of the newest movies and episodes (upper case on screen), followed by the count."
+ },
+ "added.meta": {
+  "text": "latest from Jellyfin",
+  "note": "grey text on the right of the Recently added band."
+ },
+ "col.type": {
+  "text": "Type",
+  "note": "column header in Recently added: movie or episode. Short (column 74 px)."
+ },
+ "col.quality": {
+  "text": "Quality",
+  "note": "column header in Recently added: 2160p, 1080p. Short (column 52 px)."
+ },
+ "col.added": {
+  "text": "Added",
+  "note": "column header in Recently added: how long ago. Short (column 62 px)."
+ },
+ "type.movie": {
+  "text": "Movie",
+  "note": "badge in the Type column of Recently added. Short, upper case on screen."
+ },
+ "type.episode": {
+  "text": "Episode",
+  "note": "badge in the Type column of Recently added. Short, upper case on screen."
+ },
+ "load.video": {
+  "text": "Video",
+  "note": "label of the GPU video engine card (GPU · Video). Short, upper case on screen."
+ },
+ "load.render": {
+  "text": "Render",
+  "note": "label of the GPU render engine card (GPU · Render). Short, upper case on screen."
+ },
+ "load.idle": {
+  "text": "idle",
+  "note": "small text under the GPU render card when the GPU clock is 0."
+ },
+ "load.all_cores": {
+  "text": "all cores",
+  "note": "small text under the CPU card."
+ },
+ "load.title": {
+  "text": "Server load",
+  "note": "band title of the GPU and CPU cards (upper case on screen)."
+ },
+ "load.socket": {
+  "text": "Socket",
+  "note": "the smart socket (Shelly) reading on the load band. Short."
+ },
+ "load.power_tip": {
+  "text": "CPU package power (includes the integrated GPU); not the power drawn at the wall",
+  "note": "tooltip of the watts on the Server load band."
+ },
+ "load.kwh_month": {
+  "text": "{kwh} kWh/mo",
+  "note": "energy used this month at the smart socket. Short."
+ },
+ "load.socket_tip": {
+  "text": "Smart socket: power drawn at the wall. The monthly figure is the socket's own energy counter since the 1st of the month.",
+  "note": "tooltip of the smart socket reading."
+ },
+ "load.na": {
+  "text": "n/a",
+  "note": "the smart socket gives no reading (the tooltip says why). Very short."
+ },
+ "date.dow.sun": {
+  "text": "Sun",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.mon": {
+  "text": "Mon",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.tue": {
+  "text": "Tue",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.wed": {
+  "text": "Wed",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.thu": {
+  "text": "Thu",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.fri": {
+  "text": "Fri",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.dow.sat": {
+  "text": "Sat",
+  "note": "short day name (3 letters in English) in dates like \"Wed 14 Oct\" and \"Wed 21:30\"."
+ },
+ "date.mon.jan": {
+  "text": "Jan",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.feb": {
+  "text": "Feb",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.mar": {
+  "text": "Mar",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.apr": {
+  "text": "Apr",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.may": {
+  "text": "May",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.jun": {
+  "text": "Jun",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.jul": {
+  "text": "Jul",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.aug": {
+  "text": "Aug",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.sep": {
+  "text": "Sep",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.oct": {
+  "text": "Oct",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.nov": {
+  "text": "Nov",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.mon.dec": {
+  "text": "Dec",
+  "note": "short month name (3 letters in English) in dates like \"Wed 14 Oct\"."
+ },
+ "date.day": {
+  "text": "{dow} {d} {mon}",
+  "note": "a day in This week's episodes, for example Wed 14 Oct: {dow} short day name, {d} day of the month, {mon} short month name. Put them in your language's order."
+ },
+ "date.range": {
+  "text": "{from} – {to}",
+  "note": "the week shown on the This week's episodes band, for example Mon 12 – Sun 18 Oct."
+ },
+ "week.st.jf": {
+  "text": "In Jellyfin",
+  "note": "state badge of an episode in This week's episodes: the episode is in Jellyfin. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.file": {
+  "text": "Downloaded",
+  "note": "state badge of an episode in This week's episodes: Sonarr has the file. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.imp": {
+  "text": "Importing",
+  "note": "state badge of an episode in This week's episodes: Sonarr is importing it. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.scan": {
+  "text": "Imported",
+  "note": "state badge of an episode in This week's episodes: Sonarr imported it, Jellyfin has not listed it yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.dl": {
+  "text": "Downloading",
+  "note": "state badge of an episode in This week's episodes: being downloaded. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.grab": {
+  "text": "Grabbed",
+  "note": "state badge of an episode in This week's episodes: Sonarr sent it to the download client. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.pause": {
+  "text": "Paused",
+  "note": "state badge of an episode in This week's episodes: the download is paused. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.fail": {
+  "text": "Failed",
+  "note": "state badge of an episode in This week's episodes: the download failed. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.late": {
+  "text": "No release",
+  "note": "state badge of an episode in This week's episodes: later than usual and no release yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.aired": {
+  "text": "Aired",
+  "note": "state badge of an episode in This week's episodes: it aired, nothing found yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.st.wait": {
+  "text": "Waiting",
+  "note": "state badge of an episode in This week's episodes: it has not aired yet. Short, upper case on screen (column 104 px)."
+ },
+ "week.title": {
+  "text": "This week's episodes",
+  "note": "band title of the part that lists the monitored episodes airing this week (upper case on screen)."
+ },
+ "week.err_nosonarr": {
+  "text": "Sonarr is not set (Streambox settings)",
+  "note": "message in This week's episodes when no Sonarr connection is set."
+ },
+ "week.err_auth": {
+  "text": "Sonarr rejected the API key",
+  "note": "message in This week's episodes."
+ },
+ "week.err_down": {
+  "text": "Sonarr unreachable",
+  "note": "message in This week's episodes."
+ },
+ "week.n_jf": {
+  "text": "{n} in Jellyfin",
+  "note": "count on the right of the This week's episodes band and on a day row: episodes already in Jellyfin."
+ },
+ "week.n_dl": {
+  "text": "{n} downloading",
+  "note": "count on the right of the band: episodes being downloaded."
+ },
+ "week.n_late": {
+  "text": "{n} late",
+  "note": "count on the right of the band: episodes later than usual."
+ },
+ "week.none": {
+  "text": "No monitored episode airs this week",
+  "note": "message in This week's episodes when the week is empty."
+ },
+ "week.today": {
+  "text": "Today",
+  "note": "in front of today's date on the day row (upper case on screen)."
+ },
+ "week.new": {
+  "text": "New",
+  "note": "small badge after a series whose first episode airs this week. Very short, upper case on screen."
+ },
+ "week.new_tip": {
+  "text": "New series: its first episode airs this week",
+  "note": "tooltip of the New badge."
+ },
+ "week.late_usual": {
+  "text": "usually {usual} after airing, now {now}",
+  "note": "grey line under a late episode: the usual delay and the time since it aired (both like 1h 30m)."
+ },
+ "week.late_ago": {
+  "text": "aired {t} ago",
+  "note": "grey line under a late episode when the usual delay is unknown."
+ },
+ "week.airs_in": {
+  "text": "airs in {t}",
+  "note": "countdown of an episode to its air time ({t} like 1d 12h 46m). Short (column 108 px)."
+ },
+ "week.in": {
+  "text": "in {t}",
+  "note": "countdown to the time the episode usually shows up. Very short."
+ },
+ "week.due_now": {
+  "text": "due now",
+  "note": "the expected time is now. Short."
+ },
+ "week.overdue": {
+  "text": "overdue {t}",
+  "note": "time past the expected time. Short."
+ },
+ "week.aired_at": {
+  "text": "aired {t}",
+  "note": "air time of an episode that is already here ({t} like 21:30). Short."
+ },
+ "week.tip_airs": {
+  "text": "Airs {t}",
+  "note": "tooltip of the time column: when the episode airs ({t} like Wed 21:30)."
+ },
+ "week.tip_expected": {
+  "text": "expected ~{t}",
+  "note": "tooltip: when the torrent usually shows up ({t} like Wed 22:30)."
+ },
+ "week.tip_nohist": {
+  "text": "No grab history yet: the usual delay after airing is unknown",
+  "note": "tooltip when Sonarr has no history for the delay."
+ },
+ "week.tip_delay_series": {
+  "one": "Usual delay after airing: {t} (median of {n} episode of this series)",
+  "other": "Usual delay after airing: {t} (median of {n} episodes of this series)",
+  "note": "tooltip: the usual delay between airing and the first download, {t} like 1h 30m."
+ },
+ "week.tip_delay_all": {
+  "one": "Usual delay after airing: {t} (median of {n} episode of all series)",
+  "other": "Usual delay after airing: {t} (median of {n} episodes of all series)",
+  "note": "tooltip: the same, counted over every series."
+ },
+ "week.scan_tip": {
+  "text": "Sonarr imported it; Jellyfin has not listed it yet",
+  "note": "tooltip of the Imported badge."
+ },
+ "why.container": {
+  "text": "Container",
+  "note": "why Jellyfin does not play a stream directly (its reason ContainerNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_codec": {
+  "text": "Video codec",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoCodecNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.audio_codec": {
+  "text": "Audio codec",
+  "note": "why Jellyfin does not play a stream directly (its reason AudioCodecNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.subtitles": {
+  "text": "Subtitles",
+  "note": "why Jellyfin does not play a stream directly (its reason SubtitleCodecNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.audio_channels": {
+  "text": "Audio channels",
+  "note": "why Jellyfin does not play a stream directly (its reason AudioChannelsNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.bitrate_limit": {
+  "text": "Bitrate limit",
+  "note": "why Jellyfin does not play a stream directly (its reason ContainerBitrateExceedsLimit): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_bitrate": {
+  "text": "Video bitrate",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoBitrateNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.audio_bitrate": {
+  "text": "Audio bitrate",
+  "note": "why Jellyfin does not play a stream directly (its reason AudioBitrateNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.interlaced": {
+  "text": "Interlaced",
+  "note": "why Jellyfin does not play a stream directly (its reason InterlacedVideoNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.resolution": {
+  "text": "Resolution",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoResolutionNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_profile": {
+  "text": "Video profile",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoProfileNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.video_level": {
+  "text": "Video level",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoLevelNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "why.hdr_format": {
+  "text": "HDR format",
+  "note": "why Jellyfin does not play a stream directly (its reason VideoRangeTypeNotSupported): shown under the Mode badge and in its tooltip. Short."
+ },
+ "det.audio": {
+  "text": "Audio",
+  "note": "under the Transcode badge: only the audio is converted, like \"Audio → AAC\". Short."
+ },
+ "det.deinterlace": {
+  "text": "Deinterlace",
+  "note": "under the Transcode badge: an interlaced video is converted, like \"Deinterlace → 1080p\". Short."
+ },
+ "det.video": {
+  "text": "Video",
+  "note": "under the Transcode badge, like \"Video → 1080p\". Short."
+ },
+ "det.video_transcode": {
+  "text": "Video transcode",
+  "note": "under the Transcode badge when nothing more is known. Short."
+ },
+ "info.method": {
+  "text": "Method: {m}",
+  "note": "first line of the tooltip of a stream's Mode: Direct play, Direct stream or Transcode."
+ },
+ "info.source": {
+  "text": "Source: {s}",
+  "note": "tooltip line: what the file is made of, like \"MKV · HEVC 2160p · EAC3 6ch\"."
+ },
+ "info.reasons": {
+  "text": "Reasons: {r}",
+  "note": "tooltip line: the reasons Jellyfin gives for not playing directly."
+ },
+ "info.none_reported": {
+  "text": "none reported",
+  "note": "tooltip: Jellyfin gave no reason."
+ },
+ "info.no_details": {
+  "text": "Jellyfin reported no transcoding details for this stream",
+  "note": "tooltip line."
+ },
+ "info.client": {
+  "text": "Client: {c}",
+  "note": "tooltip line: the Jellyfin app and its version."
+ },
+ "sock.invalid": {
+  "text": "invalid socket address",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.down": {
+  "text": "socket unreachable",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.password": {
+  "text": "the socket asks for a password (not supported)",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.bad": {
+  "text": "unexpected answer from the socket",
+  "note": "tooltip of the smart socket reading (Socket · n/a) when the Shelly socket gives no reading."
+ },
+ "sock.http": {
+  "text": "socket answered HTTP {code}",
+  "note": "tooltip of Socket · n/a: the socket answered with an HTTP error code."
+ },
+ "wtest.own_missing": {
+  "text": "Enter the Sonarr address and API key, then Apply.",
+  "note": "answer of the Test Sonarr button in the settings."
+ },
+ "wtest.seedbox_missing": {
+  "text": "Seedbox has no Sonarr address and key (Seedbox Tools, Connections).",
+  "note": "answer of the Test Sonarr button."
+ },
+ "wtest.auth": {
+  "text": "the API key was rejected",
+  "note": "answer of the Test Sonarr button, after \"Sonarr: \"."
+ },
+ "wtest.ok": {
+  "one": "Sonarr {v} answers; the usual delay is learned from {n} grab of the last 60 days.",
+  "other": "Sonarr {v} answers; the usual delay is learned from {n} grabs of the last 60 days.",
+  "note": "answer of the Test Sonarr button when it works ({v} the Sonarr version, {n} how many downloads were found)."
+ },
+ "save.err_key": {
+  "text": "the API key contains invalid characters",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_url": {
+  "text": "invalid Jellyfin link URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_socket": {
+  "text": "invalid smart socket address",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_hook_movies": {
+  "text": "the movies webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_hook_series": {
+  "text": "the series webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_hook_weekly": {
+  "text": "the weekly summary webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_son_key": {
+  "text": "the Sonarr API key contains invalid characters",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_son_url": {
+  "text": "invalid Sonarr address",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_write": {
+  "text": "could not write the settings file",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_nick": {
+  "text": "could not write the nickname file",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
+ "save.err_dir": {
+  "text": "the folder for Jellyfin must be a path under /mnt (letters, digits, . _ - only)",
+  "note": "error after \"Not saved:\" when the folder for Jellyfin is not valid."
+ },
+ "ntest.no_hook": {
+  "text": "No valid Discord webhook is saved yet. Enter the webhook(s), press Apply, then try again.",
+  "note": "answer of the Discord test buttons in the settings."
+ },
+ "ntest.ch_movies": {
+  "text": "movies",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.ch_series": {
+  "text": "series",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.ch_weekly": {
+  "text": "weekly",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.sent": {
+  "text": "sent",
+  "note": "answer of a Discord test button: the message went out."
+ },
+ "ntest.failed": {
+  "text": "failed ({e})",
+  "note": "answer of a Discord test button: it did not go out, {e} is the technical reason."
+ },
+ "ntest.no_jf": {
+  "text": "The Jellyfin host and API key must be saved first.",
+  "note": "answer of the preview buttons."
+ },
+ "ntest.no_weekly": {
+  "text": "No valid weekly summary webhook is saved yet.",
+  "note": "answer of Send weekly summary now."
+ },
+ "ntest.jf_down": {
+  "text": "Jellyfin could not be read.",
+  "note": "answer of Send weekly summary now."
+ },
+ "ntest.nothing": {
+  "text": "Nothing was added in the last 7 days, so there is nothing to send.",
+  "note": "answer of Send weekly summary now."
+ },
+ "ntest.weekly": {
+  "text": "weekly summary",
+  "note": "answer of Send weekly summary now, like \"weekly summary: sent\"."
+ },
+ "ntest.movie": {
+  "text": "movie \"{t}\"",
+  "note": "answer of Send preview: the newest movie, like movie \"Sintel\": sent."
+ },
+ "ntest.no_movie": {
+  "text": "no movie found",
+  "note": "answer of Send preview."
+ },
+ "ntest.season": {
+  "text": "season \"{t}\"",
+  "note": "answer of Send preview: the newest season."
+ },
+ "ntest.no_episode": {
+  "text": "no episode found",
+  "note": "answer of Send preview."
+ },
+ "set.saved_keep": {
+  "text": "(saved, leave empty to keep)",
+  "note": "grey text inside an empty password field: a value is saved; leaving the field empty keeps it."
+ },
+ "set.h.jellyfin": {
+  "text": "Jellyfin and the tile",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.week_sub": {
+  "text": "Monday to Sunday, from Sonarr; read-only",
+  "note": "small grey text next to the This week's episodes heading."
+ },
+ "set.h.discord": {
+  "text": "Discord notifications",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.h.nicks": {
+  "text": "User nicknames",
+  "note": "section heading (upper case on screen)."
+ },
+ "set.jf_host": {
+  "text": "Jellyfin host (as seen from Unraid):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jf_port": {
+  "text": "Jellyfin port:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jf_key": {
+  "text": "Jellyfin API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jf_url": {
+  "text": "Jellyfin link URL (also used in the Discord cards):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.streams_max": {
+  "text": "Maximum rows in Now playing:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.added_rows": {
+  "text": "Rows in Recently added (0 = hide):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.show_load": {
+  "text": "Show server load (GPU, CPU, smart socket):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.socket_host": {
+  "text": "Smart socket (Shelly) address:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.socket_id": {
+  "text": "Smart socket channel:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_show": {
+  "text": "Show on the Dashboard:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_src": {
+  "text": "Sonarr connection:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.son_url": {
+  "text": "Sonarr address (own):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.son_key": {
+  "text": "Sonarr API key (own):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_delay": {
+  "text": "Usual delay:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_late": {
+  "text": "Late after (hours past the usual time):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_dc": {
+  "text": "Post late episodes to Discord:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_web": {
+  "text": "Row on Jellyfin's home page:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_web_view": {
+  "text": "Default view in Jellyfin:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.wk_web_dir": {
+  "text": "Folder for Jellyfin:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.notify": {
+  "text": "Announce new movies and seasons:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_movies": {
+  "text": "Webhook for movies (#filmek):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_series": {
+  "text": "Webhook for series (#sorozatok):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.weekly": {
+  "text": "Weekly summary of new movies and series:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_weekly": {
+  "text": "Webhook for the weekly summary:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.weekly_when": {
+  "text": "Weekly summary day and hour:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.notify_settle": {
+  "text": "Wait for more episodes (minutes):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.notify_wait": {
+  "text": "Wait for metadata and poster (minutes):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.key_hint": {
+  "text": "saved keys and webhooks are not sent to the page; type - to remove one",
+  "note": "grey hint next to the API key field: saved secrets are never shown; typing a single - removes one."
+ },
+ "set.show_load_hint": {
+  "text": "switch off when the Sysbox tile shows these",
+  "note": "text next to the Show server load checkbox."
+ },
+ "set.wk_show.always": {
+  "text": "always",
+  "note": "choice in the Show on the Dashboard dropdown."
+ },
+ "set.wk_show.airs": {
+  "text": "only when an episode airs this week",
+  "note": "choice in the Show on the Dashboard dropdown."
+ },
+ "set.wk_show.never": {
+  "text": "never",
+  "note": "choice in the Show on the Dashboard dropdown."
+ },
+ "set.wk_show_hint": {
+  "text": "The monitored episodes airing this week, by day: air time, when the torrent usually shows up, and where each one is now. A new week starts at midnight on Sunday.",
+  "note": "hint under the Show on the Dashboard setting."
+ },
+ "set.wk_src.seedbox": {
+  "text": "use Seedbox's Sonarr settings",
+  "note": "radio button: take the Sonarr address and key from Seedbox."
+ },
+ "set.wk_src.own": {
+  "text": "own",
+  "note": "radio button: use the address and key entered below. Very short."
+ },
+ "set.btn.test_sonarr": {
+  "text": "Test Sonarr",
+  "note": "button: checks the Sonarr connection. Short."
+ },
+ "set.wk_src_hint": {
+  "text": "Seedbox already has the Sonarr address and API key (Seedbox Tools, Connections). The fields below are used only with \"own\".",
+  "note": "hint under the Sonarr connection setting; \"own\" is the radio button above."
+ },
+ "set.wk_delay.series": {
+  "text": "per series",
+  "note": "choice: the usual delay is counted per series."
+ },
+ "set.wk_delay.idx": {
+  "text": "per series and indexer",
+  "note": "choice: counted per series and per indexer (tracker)."
+ },
+ "set.wk_delay.all": {
+  "text": "one value for all series",
+  "note": "choice: one delay for every series."
+ },
+ "set.wk_delay_hint": {
+  "text": "Median time from airing to the first grab, from the last 60 days of Sonarr history (grabs more than 3 days after airing are left out). Under 3 episodes of a series the median of all series is used. Per indexer: the earliest indexer decides, the others are listed under the title.",
+  "note": "hint under the Usual delay setting (\"grab\" = Sonarr sent the episode to the download client)."
+ },
+ "set.wk_dc_hint": {
+  "text": "once per episode, to the series webhook (below)",
+  "note": "text next to the Post late episodes to Discord checkbox."
+ },
+ "set.wk_web_hint": {
+  "text": "\"Ezen a héten\", web client and Jellyfin Desktop only",
+  "note": "text next to the checkbox. \"Ezen a héten\" is the (Hungarian) title of the row on Jellyfin's home page: keep it as it is."
+ },
+ "set.wk_web_long": {
+  "text": "Every 2 minutes Streambox writes week.json (series, episode codes, times; no keys) and week.js into the folder below. Map it read-only into the Jellyfin container as /usr/share/jellyfin/web/streambox, then add this script in Jellyfin (Dashboard, JS Injector, enabled): <code>var s=document.createElement('script');s.src='streambox/week.js?v='+Date.now();document.head.appendChild(s);</code> Anyone who can open the Jellyfin address can read week.json.",
+  "note": "hint under the Jellyfin home page row setting. Keep the script in the code tags exactly as it is. May contain simple HTML tags: keep them."
+ },
+ "set.wk_view.grid": {
+  "text": "calendar (seven day cards)",
+  "note": "choice of the default view of the Jellyfin home page row."
+ },
+ "set.wk_view.row": {
+  "text": "posters (one row)",
+  "note": "choice of the default view."
+ },
+ "set.wk_view_hint": {
+  "text": "Each viewer can switch with the two icons next to the title; the choice is remembered in that browser.",
+  "note": "hint under the Default view setting."
+ },
+ "date.long.mon": {
+  "text": "Monday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.tue": {
+  "text": "Tuesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.wed": {
+  "text": "Wednesday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.thu": {
+  "text": "Thursday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.fri": {
+  "text": "Friday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sat": {
+  "text": "Saturday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "date.long.sun": {
+  "text": "Sunday",
+  "note": "full day name, a choice of the weekly summary day."
+ },
+ "set.btn.ntest": {
+  "text": "Send test message",
+  "note": "button: sends a short test message to every saved Discord webhook."
+ },
+ "set.btn.nprev": {
+  "text": "Send preview (newest movie and season)",
+  "note": "button: sends the cards of the newest movie and season, marked as a preview."
+ },
+ "set.btn.nweek": {
+  "text": "Send weekly summary now",
+  "note": "button: sends the weekly summary of the last 7 days now."
+ },
+ "set.nicks_none": {
+  "text": "The user list could not be loaded. Enter the Jellyfin host, port and API key above, press Apply, then reload this page.",
+  "note": "text in the User nicknames part when Jellyfin cannot be read."
+ },
+ "set.nicks_hint": {
+  "text": "Nicknames are shown instead of the long user names on the dashboard tile. Leave a field empty to use the automatic short name (shown as a hint).",
+  "note": "text above the nickname fields (one per Jellyfin user)."
+ },
+ "set.btn.apply": {
+  "text": "Apply",
+  "note": "button: saves the settings (Unraid's usual word). Short."
+ },
+ "set.btn.done": {
+  "text": "Done",
+  "note": "button: leaves the settings page (Unraid's usual word). Short."
+ },
+ "set.log": {
+  "text": "Notifier log (latest entries):",
+  "note": "small grey title above the last lines of the Discord notifier log."
+ },
+ "set.help_discord": {
+  "text": "Discord cards: Unraid checks Jellyfin every minute. A movie is announced once its description (in Jellyfin's metadata language) and poster exist; episodes are grouped per season and announced when no new episode has arrived for the \"wait for more episodes\" time. The first time the notifier is switched on, only items added from then on are announced. The weekly summary lists everything added in the last 7 days at the chosen day and hour (server time zone); if the server was off at that hour it is sent when it is next up the same day. The buttons use the saved settings, so press Apply first. The Jellyfin link in the cards is left out when the Jellyfin link URL is empty. Create a webhook in Discord under channel settings, Integrations, Webhooks.",
+  "note": "grey paragraph at the bottom of the page about the Discord cards. \"wait for more episodes\" names the setting above."
+ },
+ "set.help_general": {
+  "text": "The Jellyfin API key is created in Jellyfin under Dashboard, Advanced, API Keys. Streams that are idle (nothing playing) are not shown. GPU load is read with intel_gpu_top, CPU load from the system statistics. Leave the Jellyfin link URL empty to use this server's address with the Jellyfin port. Leave the smart socket address empty to hide the Socket reading. The monthly consumption is taken from the socket's own energy counter, which Unraid samples every 10 minutes, so the first month counts from the day the socket is set up.",
+  "note": "grey paragraph at the bottom of the page. Menu names of Jellyfin (Dashboard, Advanced, API Keys) should match Jellyfin's own words in your language."
+ },
+ "set.saving": {
+  "text": "Saving...",
+  "note": "message next to Apply while saving."
+ },
+ "set.saved": {
+  "text": "Saved. The dashboard picks it up within a few seconds.",
+  "note": "message next to Apply after saving."
+ },
+ "set.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message next to Apply when saving failed; {e} is the reason."
+ },
+ "set.unknown_error": {
+  "text": "unknown error",
+  "note": "reason when none is known."
+ },
+ "set.asking_sonarr": {
+  "text": "Asking Sonarr... (Apply first if you changed the connection)",
+  "note": "message next to Test Sonarr while it runs."
+ },
+ "set.unknown_answer": {
+  "text": "unknown answer",
+  "note": "message when a test gets an answer it cannot read."
+ },
+ "set.sending": {
+  "text": "Sending...",
+  "note": "message next to the Discord test buttons while sending."
+ },
+ "date.day_short": {
+  "text": "{dow} {d}",
+  "note": "the first day of the week on the This week's episodes band when both days are in the same month, for example the \"Mon 12\" of \"Mon 12 – Sun 18 Oct\". Same order as date.day, without the month."
+ }
+}]]></INLINE>
 </FILE>
 
 <FILE Name="&plugdir;/notify_lib.php">
@@ -3323,6 +4396,8 @@ if ($changed) {
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 require_once __DIR__ . '/notify_lib.php';
+require_once __DIR__ . '/i18n.php';
+$sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 function nt_out($ok, $msg) { echo json_encode(['ok' => $ok, 'message' => $msg], JSON_UNESCAPED_UNICODE); exit; }
 
@@ -3341,28 +4416,28 @@ $hm   = nf_hook($cfg['dc_movies']);
 $hs   = nf_hook($cfg['dc_series']);
 $hw   = nf_hook($cfg['dc_weekly']);
 $mode = (string)($_POST['mode'] ?? 'test');
-if ($hm === '' && $hs === '' && $hw === '') { nt_out(false, 'No valid Discord webhook is saved yet. Enter the webhook(s), press Apply, then try again.'); }
+if ($hm === '' && $hs === '' && $hw === '') { nt_out(false, $sbx_T('ntest.no_hook')); }
 
 $report = [];
 if ($mode === 'test') {
     foreach (['movies' => $hm, 'series' => $hs, 'weekly' => $hw] as $label => $h) {
         if ($h === '') { continue; }
         list($r, $m) = nf_send($h, ['username' => 'Streambox', 'content' => nf_t('✅ Streambox: tesztüzenet (' . $label . ' csatorna)', '✅ Streambox: test message (' . $label . ' channel)')]);
-        $report[] = $label . ': ' . ($r === 'ok' ? 'sent' : 'failed (' . $m . ')');
+        $report[] = $sbx_T('ntest.ch_' . $label) . ': ' . ($r === 'ok' ? $sbx_T('ntest.sent') : $sbx_T('ntest.failed', ['e' => $m]));
     }
     nt_out(true, implode('; ', $report));
 }
 
-if ((string)$cfg['jf_key'] === '' || !preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { nt_out(false, 'The Jellyfin host and API key must be saved first.'); }
+if ((string)$cfg['jf_key'] === '' || !preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { nt_out(false, $sbx_T('ntest.no_jf')); }
 
 if ($mode === 'weekly') {
-    if ($hw === '') { nt_out(false, 'No valid weekly summary webhook is saved yet.'); }
+    if ($hw === '') { nt_out(false, $sbx_T('ntest.no_weekly')); }
     nf_tz();
     $p = nf_weekly($cfg, time() - 7 * 86400, time(), true);
-    if ($p === false) { nt_out(false, 'Jellyfin could not be read.'); }
-    if ($p === null) { nt_out(true, 'Nothing was added in the last 7 days, so there is nothing to send.'); }
+    if ($p === false) { nt_out(false, $sbx_T('ntest.jf_down')); }
+    if ($p === null) { nt_out(true, $sbx_T('ntest.nothing')); }
     list($r, $msg) = nf_send($hw, $p);
-    nt_out($r === 'ok', 'weekly summary: ' . ($r === 'ok' ? 'sent' : 'failed (' . $msg . ')'));
+    nt_out($r === 'ok', $sbx_T('ntest.weekly') . ': ' . ($r === 'ok' ? $sbx_T('ntest.sent') : $sbx_T('ntest.failed', ['e' => $msg])));
 }
 
 if ($hm !== '') {
@@ -3371,8 +4446,8 @@ if ($hm !== '') {
     if ($m) {
         $c = nf_card_movie($cfg, $m, true);
         list($r, $msg) = nf_send($hm, $c['payload'], $c['poster'], $c['backdrop']);
-        $report[] = 'movie "' . ($m['Name'] ?? '?') . '": ' . ($r === 'ok' ? 'sent' : 'failed (' . $msg . ')');
-    } else { $report[] = 'no movie found'; }
+        $report[] = $sbx_T('ntest.movie', ['t' => ($m['Name'] ?? '?')]) . ': ' . ($r === 'ok' ? $sbx_T('ntest.sent') : $sbx_T('ntest.failed', ['e' => $msg]));
+    } else { $report[] = $sbx_T('ntest.no_movie'); }
 }
 if ($hs !== '') {
     $d = nf_json($cfg, '/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=1&Fields=' . NF_FIELDS);
@@ -3385,8 +4460,8 @@ if ($hs !== '') {
         $season = nf_item($cfg, (string)$e['SeasonId']);
         $c = nf_card_season($cfg, $series ?: [], $season ?: [], $eps, true);
         list($r, $msg) = nf_send($hs, $c['payload'], $c['poster'], $c['backdrop']);
-        $report[] = 'season "' . ($e['SeriesName'] ?? '?') . '": ' . ($r === 'ok' ? 'sent' : 'failed (' . $msg . ')');
-    } else { $report[] = 'no episode found'; }
+        $report[] = $sbx_T('ntest.season', ['t' => ($e['SeriesName'] ?? '?')]) . ': ' . ($r === 'ok' ? $sbx_T('ntest.sent') : $sbx_T('ntest.failed', ['e' => $msg]));
+    } else { $report[] = $sbx_T('ntest.no_episode'); }
 }
 nt_out(true, implode('; ', $report));
 ]]></INLINE>

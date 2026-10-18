@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/i18n.php';
+$sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 function sb_out($ok, $extra = []) {
     echo json_encode(array_merge(['ok' => $ok], $extra), JSON_UNESCAPED_UNICODE);
@@ -36,29 +38,29 @@ $old = is_file($file) ? @parse_ini_file($file, false, INI_SCANNER_RAW) : [];
 if (!is_array($old)) { $old = []; }
 function sb_keep($name, $old) { $v = trim((string)($_POST[$name] ?? '')); return $v === '' ? (string)($old[$name] ?? '') : ($v === '-' ? '' : $v); }
 $key = sb_keep('jf_key', $old);
-if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $key)) { sb_out(false, ['error' => 'the API key contains invalid characters']); }
+if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $key)) { sb_out(false, ['error' => $sbx_T('save.err_key')]); }
 
 $url = trim(str_replace(["\r", "\n", "\0"], '', (string)($_POST['jf_url'] ?? '')));
-if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => 'invalid Jellyfin link URL']); }
+if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => $sbx_T('save.err_url')]); }
 
 $sockHost = trim((string)($_POST['socket_host'] ?? ''));
-if ($sockHost !== '' && !preg_match('/^[A-Za-z0-9.\-]+$/', $sockHost)) { sb_out(false, ['error' => 'invalid smart socket address']); }
+if ($sockHost !== '' && !preg_match('/^[A-Za-z0-9.\-]+$/', $sockHost)) { sb_out(false, ['error' => $sbx_T('save.err_socket')]); }
 
 $hookRe = '#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#';
 $dcm = sb_keep('dc_movies', $old);
 $dcs = sb_keep('dc_series', $old);
-if ($dcm !== '' && !preg_match($hookRe, $dcm)) { sb_out(false, ['error' => 'the movies webhook is not a valid Discord webhook URL']); }
-if ($dcs !== '' && !preg_match($hookRe, $dcs)) { sb_out(false, ['error' => 'the series webhook is not a valid Discord webhook URL']); }
+if ($dcm !== '' && !preg_match($hookRe, $dcm)) { sb_out(false, ['error' => $sbx_T('save.err_hook_movies')]); }
+if ($dcs !== '' && !preg_match($hookRe, $dcs)) { sb_out(false, ['error' => $sbx_T('save.err_hook_series')]); }
 
 $dcw = sb_keep('dc_weekly', $old);
-if ($dcw !== '' && !preg_match($hookRe, $dcw)) { sb_out(false, ['error' => 'the weekly summary webhook is not a valid Discord webhook URL']); }
+if ($dcw !== '' && !preg_match($hookRe, $dcw)) { sb_out(false, ['error' => $sbx_T('save.err_hook_weekly')]); }
 
 $sonKey = sb_keep('son_key', $old);
-if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => 'the Sonarr API key contains invalid characters']); }
+if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $sbx_T('save.err_son_key')]); }
 $sonUrl = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['son_url'] ?? ''))), '/');
-if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => 'invalid Sonarr address']); }
+if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => $sbx_T('save.err_son_url')]); }
 $wkWebDir = rtrim(trim((string)($_POST['wk_web_dir'] ?? '/mnt/cache/docker/streambox/web')), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir)) { sb_out(false, ['error' => 'the folder for Jellyfin must be a path under /mnt (letters, digits, . _ - only)']); }
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
 $wkDelay = (string)($_POST['wk_delay'] ?? 'series');
 if (!in_array($wkDelay, ['series', 'idx', 'all'], true)) { $wkDelay = 'series'; }
 
@@ -128,10 +130,10 @@ function sb_write($path, $data) {
     return true;
 }
 
-if (!sb_write($file, $text)) { sb_out(false, ['error' => 'could not write the settings file']); }
+if (!sb_write($file, $text)) { sb_out(false, ['error' => $sbx_T('save.err_write')]); }
 // only touch the nickname list when the nickname fields were part of the form
 if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
-    sb_out(false, ['error' => 'could not write the nickname file']);
+    sb_out(false, ['error' => $sbx_T('save.err_nick')]);
 }
 @unlink('/tmp/streambox_added.json');
 @unlink('/tmp/streambox_week.json');
