@@ -90,7 +90,7 @@ $dbb_tok = is_array($dbb_var) ? (string)($dbb_var['csrf_token'] ?? '') : '';
 <div class="mt-band"><span><?=$dbb_t('bal.h.activity')?></span><b id="dbb-aband"></b></div>
 <div class="mt-box" id="dbb-act">
 <div id="dbb-runbox" style="display:none">
-<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop')?>" style="display:none"></div>
+<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop')?>" style="display:none"> <input type="button" id="dbb-stopnow" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop_now')?>" style="display:none"></div>
 <div id="dbb-rtab"></div>
 <div class="dbb-gbar s-grey" data-g="rlog"><span class="pm">+</span><span></span><span><?=$dbb_t('bal.log_run')?></span><span class="c"></span></div>
 <div class="dbb-grp" data-g="rlog" hidden><div class="dbb-log" id="dbb-rlog"></div></div>
@@ -420,7 +420,12 @@ $(function () {
       $('#dbb-gomsg').text(''); $('#dbb-planbox').hide(); poll();
     }).fail(function (x) { $b.prop('disabled', false); $('#dbb-gomsg').css('color', '#e5534b').text(err(x)); });
   });
-  $('#dbb-stop').on('click', function () { $(this).prop('disabled', true); api('stop'); });
+  var STOPREQ = '';   // 'after' or 'now' once a stop was asked for (the page shows it until the run ends)
+  $('#dbb-stop').on('click', function () { STOPREQ = 'after'; $(this).prop('disabled', true).val(T('bal.stopping_after')); api('stop', {mode: 'after'}); });
+  $('#dbb-stopnow').on('click', function () {
+    if (!window.confirm(T('bal.stop_now_confirm'))) { return; }
+    STOPREQ = 'now'; $('#dbb-stop, #dbb-stopnow').prop('disabled', true); api('stop', {mode: 'now'});
+  });
 
   function drawRun(s, running) {
     if (!s || s.state === 'idle') { $('#dbb-runbox').hide(); return; }
@@ -453,7 +458,9 @@ $(function () {
     var $l = $('#dbb-rlog'), atEnd = $l[0].scrollTop + $l[0].clientHeight >= $l[0].scrollHeight - 5;
     $l.text((s.log || []).join('\n')); if (atEnd) { $l[0].scrollTop = $l[0].scrollHeight; }
     $('#dbb-runbox .dbb-gbar[data-g="rlog"] .c').text(T('run.lines', { n: (s.log || []).length }));
-    $('#dbb-stop').toggle(!!running).prop('disabled', false);
+    if (!running) { STOPREQ = ''; }
+    $('#dbb-stop').toggle(!!running).prop('disabled', !!STOPREQ).val(STOPREQ === 'after' ? T('bal.stopping_after') : T('bal.btn.stop'));
+    $('#dbb-stopnow').toggle(!!running).prop('disabled', STOPREQ === 'now');
   }
   // the finished runs, folded under one bar
   function drawHist(r) {

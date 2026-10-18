@@ -49,7 +49,7 @@ function bl_s_log($m) {
 
 foreach ((array)($job['items'] ?? []) as $it) {
     $u = $byId[$it['id']] ?? null;
-    if (!$u || !isset($planf[$it['id']]) || !isset($disks[$it['dst']]) || $it['dst'] === $u['src']) { continue; }
+    if (!$u || !isset($planf[$it['id']]) || !isset($disks[$it['dst']]) || $it['dst'] === $u['src']) { $S['log'][] = date('H:i:s') . ' left out, not in the plan files: ' . ($u['title'] ?? $it['id']); continue; }
     $S['items'][] = ['id' => $u['id'], 'title' => $u['title'], 'pair' => $u['pair'], 'src' => $u['src'], 'dst' => $it['dst'], 'size' => (float)$u['size'], 'state' => 'wait', 'msg' => ''];
     $S['total'] += (float)$u['size'];
 }
@@ -97,7 +97,7 @@ $okN = 0; $skipN = 0; $failN = 0; $movedBytes = 0.0; $aborted = false; $fatal = 
 foreach ($S['items'] as $i => &$item) {
     $S['cur'] = $i; $S['curBytes'] = 0.0;
     $why = bl_busy_reason();
-    if ($why !== '') { $fatal = 'Stopped: ' . $why . '.'; break; }
+    if ($why !== '') { $fatal = bl_tr('run.fatal_why', ['why' => $why]); break; }
     if (is_file(BL_STOP)) { $aborted = true; break; }
     $files = $planf[$item['id']];
     $src = $item['src']; $dst = $item['dst'];
@@ -136,7 +136,7 @@ foreach ($S['items'] as $i => &$item) {
             $o = stream_get_contents($pipes[1]); $e = stream_get_contents($pipes[2]);
             if ($o !== false && $o !== '') { $buf = substr($buf . $o, -400); if (preg_match_all('/([\d,]+)\s+\d+%/', $buf, $m)) { $S['curBytes'] = (float)str_replace(',', '', end($m[1])); } }
             if ($e !== false && $e !== '') { $err = substr($err . $e, -600); }
-            if (is_file(BL_STOP)) { proc_terminate($proc); $aborted = true; }
+            if (is_file(BL_STOP) && trim((string)@file_get_contents(BL_STOP)) === 'now') { proc_terminate($proc); $aborted = true; }
             $st = proc_get_status($proc);
             if (!$st['running']) { $exit = $st['exitcode']; break; }
             bl_s_write();
@@ -179,7 +179,7 @@ unset($item);
 
 $S['cur'] = -1; $S['curBytes'] = 0.0; $S['finished'] = time();
 if ($fatal !== '') { $S['state'] = 'error'; $S['msg'] = $fatal; }
-elseif ($aborted) { $S['state'] = 'aborted'; $S['msg'] = 'Stopped.'; }
+elseif ($aborted) { $S['state'] = 'aborted'; $S['msg'] = bl_tr('run.stopped_msg'); }
 else { $S['state'] = 'done'; }
 bl_s_write(true);
 @unlink(BL_STOP);

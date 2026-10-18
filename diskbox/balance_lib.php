@@ -33,7 +33,7 @@ function bl_json_write($f, $data, $mode = 0644) {
     $dir = dirname($f);
     if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
     $tmp = $f . '.tmp' . getmypid();
-    if (@file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false) { return false; }
+    if (@file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE)) === false) { return false; }
     if (!@rename($tmp, $f)) { @unlink($tmp); return false; }
     @chmod($f, $mode);
     return true;

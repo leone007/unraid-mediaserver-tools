@@ -721,8 +721,8 @@
   "note": "band title (upper case on screen)."
  },
  "bal.btn.stop": {
-  "text": "Stop after the current file set",
-  "note": "button while a move runs: stops after the title being copied now."
+  "text": "Stop after this title",
+  "note": "button while a move runs: the title being copied is finished (copied, checked, removed from the old disk), then the move stops."
  },
  "bal.log_run": {
   "text": "Log of this run",
@@ -1512,5 +1512,25 @@
  "rm.err.step2_shares": {
   "text": "Step 2 first: {l} can still write to the disks to remove.",
   "note": "error next to Make a plan in the Remove disks mode ({l} share names)."
+ },
+ "run.fatal_why": {
+  "text": "Stopped: {why}.",
+  "note": "red text in Activity: the move stopped because Unraid became busy ({why} like \"a parity check or rebuild is running\")."
+ },
+ "run.stopped_msg": {
+  "text": "Stopped.",
+  "note": "amber text in Activity after a stop."
+ },
+ "bal.btn.stop_now": {
+  "text": "Stop now",
+  "note": "button while a move runs: stops at once; the title being copied is rolled back."
+ },
+ "bal.stopping_after": {
+  "text": "Stops after this title...",
+  "note": "the Stop after this title button after it was pressed."
+ },
+ "bal.stop_now_confirm": {
+  "text": "Stop now?\n\nThe title being copied is rolled back: its copy is removed from the target disk and the original stays where it is. The copying done on it so far is lost. Stop after this title keeps it instead.",
+  "note": "confirmation box of Stop now. Keep the line breaks (\\n\\n)."
  }
 }

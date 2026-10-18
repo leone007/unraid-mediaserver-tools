@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22l">
+<!ENTITY version   "2026.10.22m">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -28,6 +28,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Diskbox Balance: two ways to stop a move. Stop after this title lets the title being copied finish (copied, checked, removed from the old disk) and then stops; Stop now (with a confirmation) stops at once and rolls that title back. The old button said after the current file set but rolled the title back at once
+- Balance: a selected title that is missing from the plan files is written to the log instead of being left out silently; a file name that is not valid UTF-8 no longer stops the plan files from being written
+###2026.10.22l
 - Diskbox Balance works again: since 2026.10.22 the background worker (balance_run.php) was missing from the plugin, so Make a plan stayed at Starting and nothing could be moved. The build now checks that every file gets into the plugin
 ###2026.10.22k
 - The dashboard tile gets only the texts it shows from the dictionary (a smaller page); nothing changes on the screen

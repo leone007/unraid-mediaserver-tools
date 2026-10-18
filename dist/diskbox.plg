@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22l">
+<!ENTITY version   "2026.10.22m">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,9 @@
 
 <CHANGES>
 ###&version;
+- Diskbox Balance: two ways to stop a move. Stop after this title lets the title being copied finish (copied, checked, removed from the old disk) and then stops; Stop now (with a confirmation) stops at once and rolls that title back. The old button said after the current file set but rolled the title back at once
+- Balance: a selected title that is missing from the plan files is written to the log instead of being left out silently; a file name that is not valid UTF-8 no longer stops the plan files from being written
+###2026.10.22l
 - Diskbox Balance works again: since 2026.10.22 the background worker (balance_run.php) was missing from the plugin, so Make a plan stayed at Starting and nothing could be moved. The build now checks that every file gets into the plugin
 ###2026.10.22k
 - The dashboard tile gets only the texts it shows from the dictionary (a smaller page); nothing changes on the screen
@@ -3477,8 +3480,8 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "band title (upper case on screen)."
  },
  "bal.btn.stop": {
-  "text": "Stop after the current file set",
-  "note": "button while a move runs: stops after the title being copied now."
+  "text": "Stop after this title",
+  "note": "button while a move runs: the title being copied is finished (copied, checked, removed from the old disk), then the move stops."
  },
  "bal.log_run": {
   "text": "Log of this run",
@@ -4268,6 +4271,26 @@ function mt_i18n_js($dir, $name, $only = null) {
  "rm.err.step2_shares": {
   "text": "Step 2 first: {l} can still write to the disks to remove.",
   "note": "error next to Make a plan in the Remove disks mode ({l} share names)."
+ },
+ "run.fatal_why": {
+  "text": "Stopped: {why}.",
+  "note": "red text in Activity: the move stopped because Unraid became busy ({why} like \"a parity check or rebuild is running\")."
+ },
+ "run.stopped_msg": {
+  "text": "Stopped.",
+  "note": "amber text in Activity after a stop."
+ },
+ "bal.btn.stop_now": {
+  "text": "Stop now",
+  "note": "button while a move runs: stops at once; the title being copied is rolled back."
+ },
+ "bal.stopping_after": {
+  "text": "Stops after this title...",
+  "note": "the Stop after this title button after it was pressed."
+ },
+ "bal.stop_now_confirm": {
+  "text": "Stop now?\n\nThe title being copied is rolled back: its copy is removed from the target disk and the original stays where it is. The copying done on it so far is lost. Stop after this title keeps it instead.",
+  "note": "confirmation box of Stop now. Keep the line breaks (\\n\\n)."
  }
 }]]></INLINE>
 </FILE>
@@ -4388,7 +4411,7 @@ $dbb_tok = is_array($dbb_var) ? (string)($dbb_var['csrf_token'] ?? '') : '';
 <div class="mt-band"><span><?=$dbb_t('bal.h.activity')?></span><b id="dbb-aband"></b></div>
 <div class="mt-box" id="dbb-act">
 <div id="dbb-runbox" style="display:none">
-<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop')?>" style="display:none"></div>
+<div class="dbb-status"><span id="dbb-rstat"></span><span class="dbb-prog"><i id="dbb-rbar" style="width:0%"></i></span><input type="button" id="dbb-stop" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop')?>" style="display:none"> <input type="button" id="dbb-stopnow" class="dbb-ghost" value="<?=$dbb_t('bal.btn.stop_now')?>" style="display:none"></div>
 <div id="dbb-rtab"></div>
 <div class="dbb-gbar s-grey" data-g="rlog"><span class="pm">+</span><span></span><span><?=$dbb_t('bal.log_run')?></span><span class="c"></span></div>
 <div class="dbb-grp" data-g="rlog" hidden><div class="dbb-log" id="dbb-rlog"></div></div>
@@ -4718,7 +4741,12 @@ $(function () {
       $('#dbb-gomsg').text(''); $('#dbb-planbox').hide(); poll();
     }).fail(function (x) { $b.prop('disabled', false); $('#dbb-gomsg').css('color', '#e5534b').text(err(x)); });
   });
-  $('#dbb-stop').on('click', function () { $(this).prop('disabled', true); api('stop'); });
+  var STOPREQ = '';   // 'after' or 'now' once a stop was asked for (the page shows it until the run ends)
+  $('#dbb-stop').on('click', function () { STOPREQ = 'after'; $(this).prop('disabled', true).val(T('bal.stopping_after')); api('stop', {mode: 'after'}); });
+  $('#dbb-stopnow').on('click', function () {
+    if (!window.confirm(T('bal.stop_now_confirm'))) { return; }
+    STOPREQ = 'now'; $('#dbb-stop, #dbb-stopnow').prop('disabled', true); api('stop', {mode: 'now'});
+  });
 
   function drawRun(s, running) {
     if (!s || s.state === 'idle') { $('#dbb-runbox').hide(); return; }
@@ -4751,7 +4779,9 @@ $(function () {
     var $l = $('#dbb-rlog'), atEnd = $l[0].scrollTop + $l[0].clientHeight >= $l[0].scrollHeight - 5;
     $l.text((s.log || []).join('\n')); if (atEnd) { $l[0].scrollTop = $l[0].scrollHeight; }
     $('#dbb-runbox .dbb-gbar[data-g="rlog"] .c').text(T('run.lines', { n: (s.log || []).length }));
-    $('#dbb-stop').toggle(!!running).prop('disabled', false);
+    if (!running) { STOPREQ = ''; }
+    $('#dbb-stop').toggle(!!running).prop('disabled', !!STOPREQ).val(STOPREQ === 'after' ? T('bal.stopping_after') : T('bal.btn.stop'));
+    $('#dbb-stopnow').toggle(!!running).prop('disabled', STOPREQ === 'now');
   }
   // the finished runs, folded under one bar
   function drawHist(r) {
@@ -4821,7 +4851,7 @@ function bl_json_write($f, $data, $mode = 0644) {
     $dir = dirname($f);
     if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
     $tmp = $f . '.tmp' . getmypid();
-    if (@file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false) { return false; }
+    if (@file_put_contents($tmp, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE)) === false) { return false; }
     if (!@rename($tmp, $f)) { @unlink($tmp); return false; }
     @chmod($f, $mode);
     return true;
@@ -5289,7 +5319,8 @@ if ($op === 'start') {
 
 if ($op === 'stop') {
     if (!bl_running()) { bl_out(true); }
-    @file_put_contents(BL_STOP, '1');
+    // after: the title being copied is finished (copied, checked, removed from the old disk), then it stops; now: it is rolled back
+    @file_put_contents(BL_STOP, ($_POST['mode'] ?? '') === 'now' ? 'now' : 'after');
     bl_out(true);
 }
 
@@ -5523,7 +5554,7 @@ function bl_s_log($m) {
 
 foreach ((array)($job['items'] ?? []) as $it) {
     $u = $byId[$it['id']] ?? null;
-    if (!$u || !isset($planf[$it['id']]) || !isset($disks[$it['dst']]) || $it['dst'] === $u['src']) { continue; }
+    if (!$u || !isset($planf[$it['id']]) || !isset($disks[$it['dst']]) || $it['dst'] === $u['src']) { $S['log'][] = date('H:i:s') . ' left out, not in the plan files: ' . ($u['title'] ?? $it['id']); continue; }
     $S['items'][] = ['id' => $u['id'], 'title' => $u['title'], 'pair' => $u['pair'], 'src' => $u['src'], 'dst' => $it['dst'], 'size' => (float)$u['size'], 'state' => 'wait', 'msg' => ''];
     $S['total'] += (float)$u['size'];
 }
@@ -5571,7 +5602,7 @@ $okN = 0; $skipN = 0; $failN = 0; $movedBytes = 0.0; $aborted = false; $fatal = 
 foreach ($S['items'] as $i => &$item) {
     $S['cur'] = $i; $S['curBytes'] = 0.0;
     $why = bl_busy_reason();
-    if ($why !== '') { $fatal = 'Stopped: ' . $why . '.'; break; }
+    if ($why !== '') { $fatal = bl_tr('run.fatal_why', ['why' => $why]); break; }
     if (is_file(BL_STOP)) { $aborted = true; break; }
     $files = $planf[$item['id']];
     $src = $item['src']; $dst = $item['dst'];
@@ -5610,7 +5641,7 @@ foreach ($S['items'] as $i => &$item) {
             $o = stream_get_contents($pipes[1]); $e = stream_get_contents($pipes[2]);
             if ($o !== false && $o !== '') { $buf = substr($buf . $o, -400); if (preg_match_all('/([\d,]+)\s+\d+%/', $buf, $m)) { $S['curBytes'] = (float)str_replace(',', '', end($m[1])); } }
             if ($e !== false && $e !== '') { $err = substr($err . $e, -600); }
-            if (is_file(BL_STOP)) { proc_terminate($proc); $aborted = true; }
+            if (is_file(BL_STOP) && trim((string)@file_get_contents(BL_STOP)) === 'now') { proc_terminate($proc); $aborted = true; }
             $st = proc_get_status($proc);
             if (!$st['running']) { $exit = $st['exitcode']; break; }
             bl_s_write();
@@ -5653,7 +5684,7 @@ unset($item);
 
 $S['cur'] = -1; $S['curBytes'] = 0.0; $S['finished'] = time();
 if ($fatal !== '') { $S['state'] = 'error'; $S['msg'] = $fatal; }
-elseif ($aborted) { $S['state'] = 'aborted'; $S['msg'] = 'Stopped.'; }
+elseif ($aborted) { $S['state'] = 'aborted'; $S['msg'] = bl_tr('run.stopped_msg'); }
 else { $S['state'] = 'done'; }
 bl_s_write(true);
 @unlink(BL_STOP);

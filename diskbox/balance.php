@@ -108,7 +108,8 @@ if ($op === 'start') {
 
 if ($op === 'stop') {
     if (!bl_running()) { bl_out(true); }
-    @file_put_contents(BL_STOP, '1');
+    // after: the title being copied is finished (copied, checked, removed from the old disk), then it stops; now: it is rolled back
+    @file_put_contents(BL_STOP, ($_POST['mode'] ?? '') === 'now' ? 'now' : 'after');
     bl_out(true);
 }
 
