@@ -4,7 +4,7 @@ Dashboard plugins for **Unraid 7.x** that help you run a media server (Jellyfin,
 
 **The rule of every tool here: nothing is added, replaced or deleted without your click.** The tools scan and report by themselves; every step that changes something is a button with a confirmation.
 
-> The screenshots below are **mockups with made-up data**, drawn to show the layout.
+> The screenshots below are the real tiles and pages rendered with **made-up data** (no real titles, disks or users).
 
 | Plugin | Replaces / adds | Highlights |
 |---|---|---|
@@ -16,7 +16,7 @@ Dashboard plugins for **Unraid 7.x** that help you run a media server (Jellyfin,
 
 ## Sysbox
 
-![Sysbox](screenshots/sysbox.png)
+<img src="screenshots/sysbox.png" alt="Sysbox" width="520">
 
 One tile instead of the System and Processor tiles: memory as one bar (system, ZFS cache, Docker, free), boot, log and Docker vdisk usage, CPU load with a 10 minute history, temperature and power, a per-thread heat map, the Intel GPU engines (Quick Sync), wall power from a Shelly smart socket with the monthly kWh, and the busiest or selected containers with start, stop, restart and log buttons. Anything that needs attention is listed at the top; Discord alerts with warning and critical limits you set.
 
@@ -27,7 +27,7 @@ Pages under *Settings, Utilities*:
 
 ## Diskbox
 
-![Diskbox](screenshots/balance_tile_mockup.png)
+<img src="screenshots/diskbox.png" alt="Diskbox" width="600">
 
 A tile instead of Disk Viewer: the array as one card with its protection state, parity rows (amber during a check or rebuild, red when protection is lost), every data disk and pool with usage, temperature and SMART health, and the unassigned disks with their SMART self-test. A running UD Preclear and Unraid's clearing of a new data disk show step, speed and time left. A *Needs attention* list for full, hot or failing disks, and Discord alerts (also when a preclear or a SMART test ends).
 
@@ -39,13 +39,13 @@ A tile instead of Disk Viewer: the array as one card with its protection state, 
 
 ## Streambox
 
-![Streambox](screenshots/streambox.png)
+<img src="screenshots/streambox.png" alt="Streambox" width="600">
 
 Jellyfin at a glance: who is watching right now (direct play, direct stream or transcode, with progress), GPU and CPU load with the power draw, **this week's episodes** from the Sonarr calendar (air time, the usual delay until the release shows up, countdowns), and what was added recently. It can announce new movies and seasons in Discord, send a weekly summary, and put the week's episodes on Jellyfin's home page.
 
 ## Seedbox
 
-![Seedbox](screenshots/seedbox.png)
+<img src="screenshots/seedbox.png" alt="Seedbox" width="600">
 
 A qBittorrent tile: connection state, torrents that need attention, what is in transfer right now with speeds, ETA and progress, and one row per Seedbox tool with its state. Idle seeds are never listed, so the tile stays short even with hundreds of torrents.
 
@@ -53,7 +53,7 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 
 *Settings, Utilities, Seedbox Tools.* Helpers that work with qBittorrent, Prowlarr, Radarr, Sonarr and autobrr.
 
-![Seedbox Tools](screenshots/seedbox_tools.png)
+<img src="screenshots/seedbox_tools.png" alt="Seedbox Tools" width="1000">
 
 - **Find my torrent** scans your downloads folders for content that nothing is seeding and searches for it through Prowlarr. Results are sorted into categories: *same name and size* (add the torrent: qBittorrent checks it against your files and seeds it), *removed from the tracker*, *different release*, *only the name is similar* and *no torrent found* (replace the content through Radarr or Sonarr, or delete it).
 - **Shape up** looks at your big, old seeded torrents for a release that is smaller, has a better HDR format or a higher resolution. *Must do* lists the no-brainers (smaller and better at the same time); the other offers are grouped by kind.
