@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22e">
+<!ENTITY version   "2026.10.22f">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -11,12 +11,14 @@
 <PLUGIN name="&title;"
         author="&author;"
         version="&version;"
-        min="6.12.0"
+        min="7.0.0"
         icon="diskbox.png"
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
 ###&version;
+- Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
+###2026.10.22e
 - Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed
 ###2026.10.22d
 - Dashboard tile: while Unraid clears a newly added data disk, its row shows clearing with speed and time left and a blue cleared progress bar, like a disk being built

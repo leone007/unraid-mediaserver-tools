@@ -74,7 +74,7 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 |---|---|
 | **Tested on** | **Unraid 7.3.2**, every plugin, in daily use on one server (Intel i5-12500T with Quick Sync, XFS array with two parity slots, one ZFS cache pool) |
 | **Should work** | other Unraid 7 releases; the dashboard tiles use the Unraid 7 dashboard layout |
-| **Not tested** | Unraid 6.x (the `.plg` files still say `min="6.12.0"`, but nothing was tried there) |
+| **Not supported** | Unraid 6.x: never tried there, so the `.plg` files ask for 7.0.0 or newer (`min="7.0.0"`) and the Plugins page refuses them on 6.x |
 
 Optional parts depend on what you have: Intel GPU engines (Sysbox, Streambox), a Shelly smart socket for wall power, Unassigned Devices and UD Preclear for the unassigned disks and the preclear progress (Diskbox), Radarr, Sonarr, Prowlarr and autobrr for the Seedbox Tools. If you run it on another release, an issue with the version and what you saw is welcome.
 
