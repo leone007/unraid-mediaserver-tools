@@ -47,13 +47,18 @@ function mt_lang_cfg() {
     $c = ['ui' => 'auto', 'discord' => ''];
     $f = is_file(MT_LANG_FILE) ? @parse_ini_file(MT_LANG_FILE) : false;
     if (is_array($f)) {
-        if (in_array($f['ui'] ?? '', ['auto', 'en'], true)) { $c['ui'] = $f['ui']; }
+        if (($f['ui'] ?? '') === 'auto' || in_array($f['ui'] ?? '', mt_lang_have('ui'), true)) { $c['ui'] = $f['ui']; }
         if (in_array($f['discord'] ?? '', ['auto', 'en', 'hu'], true)) { $c['discord'] = $f['discord']; }
     }
     if ($c['discord'] === '') { $c['discord'] = mt_lang_legacy(); }
     return $c;
 }
 
+// The language the pages and tiles ask for (the dictionaries of i18n.php fall back to English per text)
+function mt_lang_ui_want() {
+    $c = mt_lang_cfg();
+    return $c['ui'] === 'auto' ? mt_lang_code(mt_lang_unraid()) : $c['ui'];
+}
 // The language the pages and tiles use, and the one Discord messages use (always one that exists)
 function mt_lang_ui() {
     $c = mt_lang_cfg();
@@ -69,7 +74,7 @@ function mt_lang_discord() {
 }
 
 function mt_lang_save($ui, $discord) {
-    if (!in_array($ui, ['auto', 'en'], true) || !in_array($discord, ['auto', 'en', 'hu'], true)) { return false; }
+    if (($ui !== 'auto' && !in_array($ui, mt_lang_have('ui'), true)) || !in_array($discord, ['auto', 'en', 'hu'], true)) { return false; }
     @mkdir(dirname(MT_LANG_FILE), 0777, true);
     $tmp = MT_LANG_FILE . '.tmp';
     if (@file_put_contents($tmp, 'ui="' . $ui . "\"\ndiscord=\"" . $discord . "\"\n") === false) { return false; }

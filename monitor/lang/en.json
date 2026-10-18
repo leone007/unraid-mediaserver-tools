@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "plugin": "Monitor",
+    "language": "English",
+    "about": "Texts of the Monitor page (Settings, Utilities, Monitor): the Sysbox, Diskbox, Streambox and Seedbox dashboard tiles in one column, made for a phone. Product names (Monitor, Sysbox, Diskbox, Streambox, Seedbox, Unraid) are not translated."
+  },
+  "btn.full_screen": {"text": "Full screen", "note": "button at the top of the page: hides the Unraid header and menu so only the tiles show. Short, it sits next to two other buttons on a phone screen."},
+  "btn.unraid_menu": {"text": "Unraid menu", "note": "the same button while full screen is on: shows the Unraid header and menu again. Short."},
+  "btn.reorder": {"text": "Reorder", "note": "button: starts editing the order of the tiles (up, down, hide). Short."},
+  "btn.done": {"text": "Done", "note": "the Reorder button while editing: ends editing. Short."},
+  "btn.reset": {"text": "Reset", "note": "button shown while editing: puts the tiles back in the default order and shows the hidden ones. Short."},
+  "btn.hide": {"text": "Hide", "note": "button next to a tile's name while editing: hides that tile on this page. Short."},
+  "btn.show": {"text": "Show", "note": "the same button for a hidden tile: shows it again. Short."},
+  "btn.up": {"text": "Move up", "note": "tooltip of the up arrow button next to a tile's name while editing."},
+  "btn.down": {"text": "Move down", "note": "tooltip of the down arrow button next to a tile's name while editing."},
+  "note.no_tiles": {"text": "No tiles found. Install Sysbox, Diskbox, Streambox or Seedbox first.", "note": "small centred line when none of the four plugins is installed."},
+  "note.saved_here": {"text": "The order is saved on this device only.", "note": "small centred line under the tiles: the order and the hidden tiles are kept in this browser, not on the server."}
+}

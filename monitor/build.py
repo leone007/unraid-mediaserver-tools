@@ -3,14 +3,14 @@ import os
 D=os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..'))+'/'
 def rd(p): return open(D+p,encoding='utf-8').read()
 def b64(p): return base64.encodebytes(open(D+p,'rb').read()).decode().strip()
-files=[('&plugdir;/Monitor.page','monitor/Monitor.page','MONITOR PAGE')]
+files=[('&plugdir;/Monitor.page','monitor/Monitor.page','MONITOR PAGE'),('&plugdir;/lang.php','common/lang.php','SHARED LANGUAGE SETTING'),('&plugdir;/i18n.php','common/i18n.php','DICTIONARIES'),('&plugdir;/lang/en.json','monitor/lang/en.json','ENGLISH DICTIONARY (the source of translations)')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "mediaserver_monitor">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Monitor">
-<!ENTITY version   "2026.10.07g">
+<!ENTITY version   "2026.10.07h">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 ]>
 
@@ -23,6 +23,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- The page texts come from a dictionary (lang/en.json) that can be translated; the page follows the shared language setting and shows English where a translation is missing. Nothing changes on the page yet
+###2026.10.07g
 - Needs Unraid 7.0.0 or newer (tested on 7.3.2): the Plugins page no longer installs it on Unraid 6, where it was never tried
 ###2026.10.07f
 - Updates now come from GitHub: the Plugins page checks the raw .plg on github.com/leone007/unraid-mediaserver-tools; the local update server (php -S on 127.0.0.1) and repo.php are removed

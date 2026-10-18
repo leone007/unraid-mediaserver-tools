@@ -15,6 +15,10 @@ $mon_tiles = [
   ['qbittorrent_widget', 'Seedbox'],
 ];
 $mon_root = '/usr/local/emhttp/plugins/';
+// texts from the dictionary (lang/en.json and its translations, see i18n.php)
+require_once $mon_root . 'mediaserver_monitor/i18n.php';
+$mon_lang = $mon_root . 'mediaserver_monitor/lang';
+$mon_T = mt_i18n_t($mon_lang);   // own name: the tile pages below run in this same scope
 $mon_out = [];
 foreach ($mon_tiles as $mon_t) {
   $mon_f = $mon_root . $mon_t[0] . '/' . $mon_t[0] . '.page';
@@ -78,25 +82,27 @@ a.mon-btn{text-decoration:none;display:inline-block}
 <div class="mon-wrap" id="mon-wrap"><div class="mon-in">
   <div class="mon-top">
     <h2>Monitor</h2>
-    <span class="mon-b"><button type="button" class="mon-btn" id="mon-full">Full screen</button><button type="button" class="mon-btn" id="mon-edit">Reorder</button><button type="button" class="mon-btn" id="mon-reset" style="display:none">Reset</button></span>
+    <span class="mon-b"><button type="button" class="mon-btn" id="mon-full"><?=htmlspecialchars($mon_T('btn.full_screen'))?></button><button type="button" class="mon-btn" id="mon-edit"><?=htmlspecialchars($mon_T('btn.reorder'))?></button><button type="button" class="mon-btn" id="mon-reset" style="display:none"><?=htmlspecialchars($mon_T('btn.reset'))?></button></span>
   </div>
   <div id="mon-list">
 <?PHP foreach ($mon_out as $mon_o) { ?>
     <section class="mon-sec" data-id="<?=htmlspecialchars($mon_o[0])?>">
-      <div class="mon-ed"><span class="mon-nm"><?=htmlspecialchars($mon_o[1])?></span><span class="mon-bt"><button type="button" class="mon-btn mon-eye" data-a="eye">Hide</button><button type="button" class="mon-btn" data-a="up">&#9650;</button><button type="button" class="mon-btn" data-a="down">&#9660;</button></span></div>
+      <div class="mon-ed"><span class="mon-nm"><?=htmlspecialchars($mon_o[1])?></span><span class="mon-bt"><button type="button" class="mon-btn mon-eye" data-a="eye"><?=htmlspecialchars($mon_T('btn.hide'))?></button><button type="button" class="mon-btn" data-a="up" title="<?=htmlspecialchars($mon_T('btn.up'))?>">&#9650;</button><button type="button" class="mon-btn" data-a="down" title="<?=htmlspecialchars($mon_T('btn.down'))?>">&#9660;</button></span></div>
       <table class="mon-t dashboard"><?=$mon_o[2]?></table>
       <div class="mon-x"><?=$mon_o[3]?></div>
     </section>
 <?PHP } ?>
   </div>
 <?PHP if (!$mon_out) { ?>
-  <p class="mon-note">No tiles found. Install Sysbox, Diskbox, Streambox or Seedbox first.</p>
+  <p class="mon-note"><?=htmlspecialchars($mon_T('note.no_tiles'))?></p>
 <?PHP } else { ?>
-  <p class="mon-note">The order is saved on this device only.</p>
+  <p class="mon-note"><?=htmlspecialchars($mon_T('note.saved_here'))?></p>
 <?PHP } ?>
 </div></div>
+<?=mt_i18n_js($mon_lang, 'mon')?>
 <script>
 (function () {
+  var T = function (k, v) { return MTL.t('mon', k, v); };
   var DEF = ['sysbox', 'diskbox', 'streambox', 'qbittorrent_widget'], KO = 'mon_order', KH = 'mon_hide';
   function ld(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v instanceof Array ? v : d; } catch (e) { return d; } }
   function sv(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
@@ -111,7 +117,7 @@ a.mon-btn{text-decoration:none;display:inline-block}
     secs().forEach(function (s) {
       var off = hid.indexOf(s.getAttribute('data-id')) >= 0;
       s.classList.toggle('mon-off', off);
-      s.querySelector('.mon-eye').textContent = off ? 'Show' : 'Hide';
+      s.querySelector('.mon-eye').textContent = off ? T('btn.show') : T('btn.hide');
     });
   }
   function save() { sv(KO, secs().map(function (s) { return s.getAttribute('data-id'); })); }
@@ -131,7 +137,7 @@ a.mon-btn{text-decoration:none;display:inline-block}
   eb.addEventListener('click', function () {
     var on = !wrap.classList.contains('mon-edit');
     wrap.classList.toggle('mon-edit', on); eb.classList.toggle('on', on);
-    eb.textContent = on ? 'Done' : 'Reorder'; rb.style.display = on ? '' : 'none';
+    eb.textContent = on ? T('btn.done') : T('btn.reorder'); rb.style.display = on ? '' : 'none';
   });
   rb.addEventListener('click', function () { sv(KO, []); sv(KH, []); apply(); });
   // full screen: covers the Unraid header and menu (automatic when opened from the home screen)
@@ -145,7 +151,7 @@ a.mon-btn{text-decoration:none;display:inline-block}
   function full(on, keep) {
     root.classList.toggle('mon-full', on);
     wrap.style.background = on ? bg() : '';
-    fb.textContent = on ? 'Unraid menu' : 'Full screen';
+    fb.textContent = on ? T('btn.unraid_menu') : T('btn.full_screen');
     if (keep) { try { localStorage.setItem('mon_full', on ? '1' : '0'); } catch (e) { } }
   }
   fb.addEventListener('click', function () {
