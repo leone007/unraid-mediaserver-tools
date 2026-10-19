@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.23b">
+<!ENTITY version   "2026.10.23c">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Claude Guard: a finding that is already an open task in your notes is marked with its item number instead of shown as new; a known state is reported again only when the condition written next to it in the notes is met
+###2026.10.23b
 - Claude Guard: Claude first reads your notes about the server (auto: ATADAS.md of this repository in the claude container, or a path you set) and does not report again what they call intended or known; the report language is a setting (default: Unraid's language); the snapshot has the disk device names so commands need no placeholders
 ###2026.10.23a
 - Claude Guard: Run a report now ignores the weekly Claude limit (only the scheduled and alert reports are skipped above it)
@@ -10293,7 +10295,7 @@ function gd_prompt($kind, $now, $prev, $events, $c = null) {
         "You may not suggest anything that changes the server as a command: commands you give must only read (smartctl -a, df, docker logs --tail, cat, grep, tail). " .
         "Describe changes (a setting, an update, a restart) in words only. A command must run exactly as written: no placeholders, no comments; use the device names from the snapshot.\n\n";
     if ($ctx !== '') { $p .= "Before you judge anything, read the owner's notes about this server with the Read tool: {$ctx} (it can be long; read it all, at least the parts on hardware, decisions and known states). " .
-        "What the notes describe as intended, decided or already known is not a finding: do not report it again (for example a parity slot left empty on purpose). Mention it only if it changed since the notes were written.\n\n"; }
+        "What the notes describe as intended, decided or already known is not a finding: do not report it again (for example a parity slot left empty on purpose). Mention it only if it changed since the notes were written or its own condition there is met. A finding that is already an open task in the notes stays a finding at its level, but say its item number and do not present it as new.\n\n"; }
     if ($kind === 'event') { $p .= "This report is about an alert that just fired. Explain its likely cause from the snapshot and say what to do. Alert(s):\n" . json_encode($events, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"; }
     elseif ($events) { $p .= "Alerts that fired during the night (quiet hours) or beyond the daily limit; cover them in this report:\n" . json_encode($events, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"; }
     $p .= "<snapshot_now>\n" . json_encode($now, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_now>\n";
