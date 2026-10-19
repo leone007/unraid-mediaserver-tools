@@ -6,6 +6,8 @@ Dashboard plugins for **Unraid 7** (tested on **7.3.3**, see [Compatibility](#co
 
 > The screenshots below are the real tiles and pages rendered with **made-up data** (no real titles, disks or users).
 
+> **Before you try it.** This is a hobby project, written with Claude Code (AI-assisted) and tested by me on my own server, which runs it every day. It has not been tried on many other setups yet, see [Requirements and known limitations](#requirements-and-known-limitations). Seedbox Tools and Diskbox Balance move and delete files: keep backups, read the confirmation before you click, and start with one small item. Support is best effort through GitHub issues.
+
 | Plugin | Replaces / adds | Highlights |
 |---|---|---|
 | [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, containers; Update manager, Snapshots, Safe shutdown pages |
@@ -79,6 +81,21 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 **Language.** Pages, tiles and Discord messages are in English or Hungarian (Magyar). One setting for all plugins, the Language block at the bottom of each settings page; by default it follows Unraid's language (Settings, Display Settings). Every text comes from a dictionary that can be translated into other languages (see [TRANSLATING.md](TRANSLATING.md)).
 
 Optional parts depend on what you have: Intel GPU engines (Sysbox, Streambox), a Shelly smart socket for wall power, Unassigned Devices and UD Preclear for the unassigned disks and the preclear progress (Diskbox), Radarr, Sonarr, Prowlarr and autobrr for the Seedbox Tools. If you run it on another release, an issue with the version and what you saw is welcome.
+
+## Requirements and known limitations
+
+What each part builds on, and what has **not** been tried yet. Reports from other setups are very welcome.
+
+| Part | Needs | Not tried yet / known limits |
+|---|---|---|
+| All plugins | Unraid 7, the stock dashboard | Unraid 6; used every day only with the black (dark) theme |
+| Sysbox, Streambox GPU rows | Intel iGPU (`intel_gpu_top`) | NVIDIA and AMD GPUs are not read |
+| Sysbox wall power | Shelly plug with the Gen2+ RPC API (`/rpc/Switch.GetStatus`), no password on the plug | Shelly Gen1 devices, other smart plugs |
+| Sysbox Update manager | Docker; release notes from GitHub without a token (GitHub allows about 60 requests an hour) | Images built locally or kept in a private registry show *Not checkable*; release notes are found for linuxserver images and apps that publish GitHub releases |
+| Diskbox Balance | downloads and media in folders you set, hardlinked on the same disk (`rsync -aH` keeps the links); tested on XFS array disks | Btrfs or ZFS array disks, arrays with a single parity disk; files hardlinked outside the set folders are left in place |
+| Seedbox Tools | qBittorrent WebUI, Radarr and Sonarr (API v3), Prowlarr; tested with the downloads hardlinked into the library | Other download clients; torrents are matched to Radarr/Sonarr by exact video file sizes, so re-encoded or remuxed library files are not matched; music (Lidarr) is not matched |
+| Streambox | Jellyfin API key; Sonarr for this week's episodes | Plex and Emby |
+| Discord | a webhook per plugin; for Seedbox reactions a bot token | |
 
 ## Install
 
