@@ -96,7 +96,8 @@ gd_job($id, [], sx_tr('gd.l_snap'));
 $snap = gd_snapshot($c, $since);
 if ($dir !== '') { gd_snap_save($dir, $snap); }
 $u = gd_usage(); $rep['usage'] = $u ? $u['week'] : null;
-if (empty($rep['error']) && $u && $u['week'] >= (float)$c['limit']) { $rep['skipped'] = sx_tr('gd.skip_limit', ['p' => round($u['week']), 'l' => (int)$c['limit']]); }
+// a report started by hand ignores the limit (owner, 2026-10-19)
+if (empty($rep['error']) && $kind !== 'manual' && $u && $u['week'] >= (float)$c['limit']) { $rep['skipped'] = sx_tr('gd.skip_limit', ['p' => round($u['week']), 'l' => (int)$c['limit']]); }
 
 if (empty($rep['error']) && empty($rep['skipped'])) {
     gd_job($id, [], sx_tr('gd.l_ask'));

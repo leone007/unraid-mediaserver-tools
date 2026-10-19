@@ -20,7 +20,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.23">
+<!ENTITY version   "2026.10.23a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +34,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Claude Guard: Run a report now ignores the weekly Claude limit (only the scheduled and alert reports are skipped above it)
+###2026.10.23
 - New page Claude Guard (Settings, Utilities): Claude Code in the claude container reads a snapshot of the server every day and after Sysbox, Diskbox and Seedbox alerts, and reports what needs a look (page, Discord, and amber or red findings as a to-do for Claude Code). It only reads; quiet hours, a daily limit of alert reports and a weekly Claude limit are settings. Off until switched on
 - The Claude button in the header shows only when a container named claude exists
 ###2026.10.22o

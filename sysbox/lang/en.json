@@ -2390,7 +2390,7 @@
   "note": "settings label."
  },
  "gds.limit_hint": {
-  "text": "A skipped report is noted here and in Discord; the snapshot is still saved.",
+  "text": "A skipped report is noted here and in Discord; the snapshot is still saved. Run a report now ignores the limit.",
   "note": "settings hint."
  },
  "gds.now": {

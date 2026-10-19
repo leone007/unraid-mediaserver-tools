@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.23">
+<!ENTITY version   "2026.10.23a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Claude Guard: Run a report now ignores the weekly Claude limit (only the scheduled and alert reports are skipped above it)
+###2026.10.23
 - New page Claude Guard (Settings, Utilities): Claude Code in the claude container reads a snapshot of the server every day and after Sysbox, Diskbox and Seedbox alerts, and reports what needs a look (page, Discord, and amber or red findings as a to-do for Claude Code). It only reads; quiet hours, a daily limit of alert reports and a weekly Claude limit are settings. Off until switched on
 - The Claude button in the header shows only when a container named claude exists
 ###2026.10.22o
@@ -5295,7 +5297,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "settings label."
  },
  "gds.limit_hint": {
-  "text": "A skipped report is noted here and in Discord; the snapshot is still saved.",
+  "text": "A skipped report is noted here and in Discord; the snapshot is still saved. Run a report now ignores the limit.",
   "note": "settings hint."
  },
  "gds.now": {
@@ -7255,7 +7257,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Heti keret"
  },
  "gds.limit_hint": {
-  "text": "A kimaradt jelentés itt és Discordon is látszik; az állapotkép ilyenkor is elmentődik."
+  "text": "A kimaradt jelentés itt és Discordon is látszik; az állapotkép ilyenkor is elmentődik. A „Jelentés most” gomb nem nézi a keretet."
  },
  "gds.now": {
   "text": "most {p} %"
@@ -10464,7 +10466,8 @@ gd_job($id, [], sx_tr('gd.l_snap'));
 $snap = gd_snapshot($c, $since);
 if ($dir !== '') { gd_snap_save($dir, $snap); }
 $u = gd_usage(); $rep['usage'] = $u ? $u['week'] : null;
-if (empty($rep['error']) && $u && $u['week'] >= (float)$c['limit']) { $rep['skipped'] = sx_tr('gd.skip_limit', ['p' => round($u['week']), 'l' => (int)$c['limit']]); }
+// a report started by hand ignores the limit (owner, 2026-10-19)
+if (empty($rep['error']) && $kind !== 'manual' && $u && $u['week'] >= (float)$c['limit']) { $rep['skipped'] = sx_tr('gd.skip_limit', ['p' => round($u['week']), 'l' => (int)$c['limit']]); }
 
 if (empty($rep['error']) && empty($rep['skipped'])) {
     gd_job($id, [], sx_tr('gd.l_ask'));

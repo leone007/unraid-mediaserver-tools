@@ -1799,7 +1799,7 @@
   "text": "Heti keret"
  },
  "gds.limit_hint": {
-  "text": "A kimaradt jelentés itt és Discordon is látszik; az állapotkép ilyenkor is elmentődik."
+  "text": "A kimaradt jelentés itt és Discordon is látszik; az állapotkép ilyenkor is elmentődik. A „Jelentés most” gomb nem nézi a keretet."
  },
  "gds.now": {
   "text": "most {p} %"
