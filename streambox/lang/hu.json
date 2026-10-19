@@ -108,7 +108,7 @@
   "text": "Nemrég hozzáadva"
  },
  "added.meta": {
-  "text": "a legújabbak a Jellyfinből"
+  "text": "nemrég hozzáadott"
  },
  "col.type": {
   "text": "Típus"
@@ -243,13 +243,13 @@
   "text": "Hiba"
  },
  "week.st.late": {
-  "text": "Nincs release"
+  "text": "Késik"
  },
  "week.st.aired": {
   "text": "Leadták"
  },
  "week.st.wait": {
-  "text": "Várakozik"
+  "text": "Vár"
  },
  "week.title": {
   "text": "Heti epizódok"

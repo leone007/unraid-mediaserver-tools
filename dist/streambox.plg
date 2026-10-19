@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14p">
+<!ENTITY version   "2026.10.14q">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- This week's episodes: countdowns over a day show days and hours only and never run into the state badge; Hungarian badges Vár and Késik are shorter, Recently added note is nemrég hozzáadott
+###2026.10.14p
 - Hungarian: the Now playing part is called Aktivitás
 ###2026.10.14o
 - Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
@@ -558,12 +560,12 @@ $(function () {
     var h = Math.floor(s / 60), m = s % 60;
     return h > 0 ? h + 'h' + (m ? ' ' + (m < 10 ? '0' : '') + m + 'm' : '') : m + 'm';
   }
-  function cdTxt(s) {   // 1d 12h 46m
+  function cdTxt(s) {   // 1d 12h (minutes only under a day: 12h 46m)
     s = Math.max(0, Math.floor(s / 60));
     var d = Math.floor(s / 1440), h = Math.floor((s % 1440) / 60), m = s % 60, o = [];
     if (d) { o.push(d + 'd'); }
     if (d || h) { o.push(h + 'h'); }
-    o.push((o.length && m < 10 ? '0' : '') + m + 'm');
+    if (!d) { o.push((o.length && m < 10 ? '0' : '') + m + 'm'); }
     return o.join(' ');
   }
   var DOW = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'], MON = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -632,7 +634,7 @@ $(function () {
         var tip = T('week.tip_airs', { t: dhm(r.air) }) + (r.exp !== null ? ' \u00b7 ' + T('week.tip_expected', { t: dhm(r.exp) }) : '') + '\n'
           + (r.exp === null ? T('week.tip_nohist')
             : T(r.basis === 'series' ? 'week.tip_delay_series' : 'week.tip_delay_all', { t: durTxt(r.delay), n: r.n }));
-        $row.append($('<div class="sb-num sb-u">').css('text-align', 'left').attr('title', tip).text(when));
+        $row.append($('<div class="sb-num sb-u">').css({ 'text-align': 'left', overflow: 'hidden', 'text-overflow': 'ellipsis' }).attr('title', when + '\n' + tip).text(when));
         var lab = s[2];
         if (r.st === 'dl' && r.pct !== null) { lab = r.pct + '%' + (r.left ? ' \u00B7 ' + durTxt(r.left) : ''); }
         $row.append($('<div>').append($('<span class="sb-bd">').addClass(s[1]).text(lab)
@@ -3838,7 +3840,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Nemrég hozzáadva"
  },
  "added.meta": {
-  "text": "a legújabbak a Jellyfinből"
+  "text": "nemrég hozzáadott"
  },
  "col.type": {
   "text": "Típus"
@@ -3973,13 +3975,13 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Hiba"
  },
  "week.st.late": {
-  "text": "Nincs release"
+  "text": "Késik"
  },
  "week.st.aired": {
   "text": "Leadták"
  },
  "week.st.wait": {
-  "text": "Várakozik"
+  "text": "Vár"
  },
  "week.title": {
   "text": "Heti epizódok"
