@@ -1980,5 +1980,17 @@
  },
  "uj.all_done": {
   "text": "Mind frissítése: {n} konténer frissítve"
+ },
+ "con.upd_n": {
+  "text": "{n} frissítés vár"
+ },
+ "con.upd_safe": {
+  "text": "{n} safe"
+ },
+ "con.upd_look": {
+  "text": "{n} look first"
+ },
+ "con.upd_wait": {
+  "text": "{n} wait"
  }
 }

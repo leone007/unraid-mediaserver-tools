@@ -20,7 +20,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.24">
+<!ENTITY version   "2026.10.24a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +34,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- The tile shows the waiting container updates (a purple row under the containers, it opens the Update manager)
+- Update manager: the daily check runs again when its result is gone after a reboot or a Sysbox install (it waited until the next morning)
+###2026.10.24
 - Update manager: Update all safe (the green ones, at once) and Update all (green and amber, after a list to confirm); one container after the other with a snapshot before and the self-test after each; stops at the first failure and tells Discord only then. Red updates and the claude container never go in a bulk update
 ###2026.10.23e
 - Claude Guard: your notes and the findings waiting for Claude Code go into the request as text (Claude Code may not open files outside its folder when it runs unattended, so it could not read them); a long notes file is cut to the known states, decisions, hardware and open tasks

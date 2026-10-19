@@ -177,6 +177,11 @@ if ($cont['enabled']) {
     $cont['mode'] = $mode; $cont['n'] = $n; $cont['rows'] = $pick;
 }
 
+// waiting updates from the Update manager's last check (a purple row under the containers, link to the page)
+$updScan = json_decode((string)@file_get_contents('/tmp/sysbox_upd_scan.json'), true); $updN = ['green' => 0, 'amber' => 0, 'red' => 0];
+foreach ((array)($updScan['rows'] ?? []) as $r) { if (($r['state'] ?? '') === 'update' && isset($updN[$r['risk'] ?? ''])) { $updN[$r['risk']]++; } }
+$updOut = is_array($updScan) ? ['n' => $updN, 'os' => (string)($updScan['os']['new'] ?? ''), 't' => (int)($updScan['t'] ?? 0)] : null;
+
 // Claude Guard: its latest report with something to look at stays in the list for 36 hours
 $gdl = json_decode((string)@file_get_contents('/tmp/sysbox_guard_last.json'), true);
 if (is_array($gdl) && !empty($gdl['n']) && time() - (int)($gdl['t'] ?? 0) < 36 * 3600) {
@@ -197,7 +202,7 @@ foreach (['ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', '
 sx_json([
     'ok' => true, 'ts' => time(),
     'summary' => ['ram' => $memPct, 'cpu' => $load, 'temp' => $tPkg, 'uptime' => ($d > 0 ? $d . ' d ' . $h . ' h' : ($h > 0 ? $h . ' h ' . $m . ' m' : $m . ' m'))],
-    'attention' => $attOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'containers' => $cont,
+    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'containers' => $cont,
     'limits' => ['temp_warn' => (float)$cfg['temp_warn'], 'temp_crit' => (float)$cfg['temp_crit']],
     'ui' => ['hist_min' => max(1, min(60, (int)$cfg['hist_min'])), 'cpu_sec' => (int)$cfg['cpu_sec'], 'clk_sec' => (int)$cfg['clk_sec'], 'show_clock' => sx_on($cfg['show_clock']),
              'order' => sx_order($cfg), 'show' => ['ram' => sx_on($cfg['show_ram']), 'sto' => sx_on($cfg['show_sto']), 'cpu' => sx_on($cfg['show_cpu']),

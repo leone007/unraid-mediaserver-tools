@@ -2632,5 +2632,21 @@
  "uj.all_done": {
   "text": "Update all: {n} containers updated",
   "note": "Activity text at the end."
+ },
+ "con.upd_n": {
+  "text": "{n} updates wait",
+  "note": "tile row under the containers: number of waiting container updates."
+ },
+ "con.upd_safe": {
+  "text": "{n} safe",
+  "note": "tile: waiting updates in the Safe group (keep the group name of the Update manager)."
+ },
+ "con.upd_look": {
+  "text": "{n} look first",
+  "note": "tile: waiting updates in the Look first group (keep the group name)."
+ },
+ "con.upd_wait": {
+  "text": "{n} wait",
+  "note": "tile: waiting updates in the Wait group (keep the group name)."
  }
 }

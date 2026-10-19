@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.24">
+<!ENTITY version   "2026.10.24a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,9 @@
 
 <CHANGES>
 ###&version;
+- The tile shows the waiting container updates (a purple row under the containers, it opens the Update manager)
+- Update manager: the daily check runs again when its result is gone after a reboot or a Sysbox install (it waited until the next morning)
+###2026.10.24
 - Update manager: Update all safe (the green ones, at once) and Update all (green and amber, after a list to confirm); one container after the other with a snapshot before and the self-test after each; stops at the first failure and tells Discord only then. Red updates and the claude container never go in a bulk update
 ###2026.10.23e
 - Claude Guard: your notes and the findings waiting for Claude Code go into the request as text (Claude Code may not open files outside its folder when it runs unattended, so it could not read them); a long notes file is cut to the known states, decisions, hardware and open tasks
@@ -703,6 +706,17 @@ $(function () {
   var PILL = { exited: ['mu', T('con.stopped')], created: ['mu', T('con.created')], restarting: ['am', T('con.restarting')], paused: ['am', T('con.paused')], dead: ['rd', T('con.dead')], removing: ['am', T('con.removing')] };
   var BUSYTXT = { start: T('con.starting'), stop: T('con.stopping'), restart: T('con.restarting') };
 
+  // waiting updates (Update manager): one purple row with a link, only when something waits
+  function renderUpd($d) {
+    var U = last && last.updates; if (!U) { return; }
+    var n = U.n, tot = n.green + n.amber + n.red; if (!tot && !U.os) { return; }
+    var parts = []; if (n.green) { parts.push(T('con.upd_safe', { n: n.green })); } if (n.amber) { parts.push(T('con.upd_look', { n: n.amber })); } if (n.red) { parts.push(T('con.upd_wait', { n: n.red })); }
+    if (U.os) { parts.push('Unraid ' + U.os); }
+    var $a = $('<a>').attr('href', '/Settings/SysboxUpdates').css({ color: 'inherit', textDecoration: 'none', display: 'block' })
+      .append(el('mt-r mt-s-purple').css({ 'grid-template-columns': '18px minmax(0,1fr)', 'margin-top': '6px' })
+        .append(icon('fa-arrow-circle-up', ''), txt('span', '', (tot ? T('con.upd_n', { n: tot }) + ': ' : '') + parts.join(' · '))));
+    $d.append($a);
+  }
   function renderCon() {
     var $d = $('#sx-con').empty();
     var C = last && last.containers;
@@ -713,6 +727,7 @@ $(function () {
     if (S.err) { $d.append(el('sx-warn sx-rd').append(icon('fa-exclamation-triangle', 'sx-rd'), txt('span', '', S.err))); }
     if (!C.rows.length) { $d.append(el('sx-note').text(C.pending ? 'Reading containers…' : (C.mode === 'selected' ? 'No containers selected (see the Sysbox settings)' : 'No running containers'))); return; }
     var $box = el('mt-box').appendTo($d);
+    renderUpd($d);
     $.each(C.rows, function (i, c) {
       var running = c.state === 'running', bz = S.busy[c.name];
       var stripe = c.unhealthy || c.state === 'dead' ? 'red' : (bz || c.state === 'restarting' || c.state === 'paused' || c.state === 'removing' ? 'amber' : (running ? 'green' : 'grey'));
@@ -1551,6 +1566,11 @@ if ($cont['enabled']) {
     $cont['mode'] = $mode; $cont['n'] = $n; $cont['rows'] = $pick;
 }
 
+// waiting updates from the Update manager's last check (a purple row under the containers, link to the page)
+$updScan = json_decode((string)@file_get_contents('/tmp/sysbox_upd_scan.json'), true); $updN = ['green' => 0, 'amber' => 0, 'red' => 0];
+foreach ((array)($updScan['rows'] ?? []) as $r) { if (($r['state'] ?? '') === 'update' && isset($updN[$r['risk'] ?? ''])) { $updN[$r['risk']]++; } }
+$updOut = is_array($updScan) ? ['n' => $updN, 'os' => (string)($updScan['os']['new'] ?? ''), 't' => (int)($updScan['t'] ?? 0)] : null;
+
 // Claude Guard: its latest report with something to look at stays in the list for 36 hours
 $gdl = json_decode((string)@file_get_contents('/tmp/sysbox_guard_last.json'), true);
 if (is_array($gdl) && !empty($gdl['n']) && time() - (int)($gdl['t'] ?? 0) < 36 * 3600) {
@@ -1571,7 +1591,7 @@ foreach (['ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', '
 sx_json([
     'ok' => true, 'ts' => time(),
     'summary' => ['ram' => $memPct, 'cpu' => $load, 'temp' => $tPkg, 'uptime' => ($d > 0 ? $d . ' d ' . $h . ' h' : ($h > 0 ? $h . ' h ' . $m . ' m' : $m . ' m'))],
-    'attention' => $attOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'containers' => $cont,
+    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'containers' => $cont,
     'limits' => ['temp_warn' => (float)$cfg['temp_warn'], 'temp_crit' => (float)$cfg['temp_crit']],
     'ui' => ['hist_min' => max(1, min(60, (int)$cfg['hist_min'])), 'cpu_sec' => (int)$cfg['cpu_sec'], 'clk_sec' => (int)$cfg['clk_sec'], 'show_clock' => sx_on($cfg['show_clock']),
              'order' => sx_order($cfg), 'show' => ['ram' => sx_on($cfg['show_ram']), 'sto' => sx_on($cfg['show_sto']), 'cpu' => sx_on($cfg['show_cpu']),
@@ -5549,6 +5569,22 @@ function mt_i18n_js($dir, $name, $only = null) {
  "uj.all_done": {
   "text": "Update all: {n} containers updated",
   "note": "Activity text at the end."
+ },
+ "con.upd_n": {
+  "text": "{n} updates wait",
+  "note": "tile row under the containers: number of waiting container updates."
+ },
+ "con.upd_safe": {
+  "text": "{n} safe",
+  "note": "tile: waiting updates in the Safe group (keep the group name of the Update manager)."
+ },
+ "con.upd_look": {
+  "text": "{n} look first",
+  "note": "tile: waiting updates in the Look first group (keep the group name)."
+ },
+ "con.upd_wait": {
+  "text": "{n} wait",
+  "note": "tile: waiting updates in the Wait group (keep the group name)."
  }
 }
 ]]></INLINE>
@@ -7540,6 +7576,18 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "uj.all_done": {
   "text": "Mind frissítése: {n} konténer frissítve"
+ },
+ "con.upd_n": {
+  "text": "{n} frissítés vár"
+ },
+ "con.upd_safe": {
+  "text": "{n} safe"
+ },
+ "con.upd_look": {
+  "text": "{n} look first"
+ },
+ "con.upd_wait": {
+  "text": "{n} wait"
  }
 }
 ]]></INLINE>
@@ -9808,8 +9856,10 @@ if ($mode === 'daily') {
     $c = upd_cfg();
     if (empty($c['on'])) { exit(0); }
     $st = upd_json(upd_state_file(), []); $today = date('Y-m-d');
-    if (($st['day'] ?? '') === $today) { exit(0); }
-    if ((int)date('G') * 60 + (int)date('i') < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
+    // the result lives in /tmp: after a reboot or a Sysbox install it is gone, and the day's check runs again (seen 2026-10-19)
+    $gone = ($st['day'] ?? '') === $today && !is_file(upd_scan_file());
+    if (($st['day'] ?? '') === $today && !$gone) { exit(0); }
+    if (!$gone && (int)date('G') * 60 + (int)date('i') < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
     $st['day'] = $today; upd_write(upd_state_file(), $st);
     $mode = 'scan'; $daily = true;
 }

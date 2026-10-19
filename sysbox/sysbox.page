@@ -433,6 +433,17 @@ $(function () {
   var PILL = { exited: ['mu', T('con.stopped')], created: ['mu', T('con.created')], restarting: ['am', T('con.restarting')], paused: ['am', T('con.paused')], dead: ['rd', T('con.dead')], removing: ['am', T('con.removing')] };
   var BUSYTXT = { start: T('con.starting'), stop: T('con.stopping'), restart: T('con.restarting') };
 
+  // waiting updates (Update manager): one purple row with a link, only when something waits
+  function renderUpd($d) {
+    var U = last && last.updates; if (!U) { return; }
+    var n = U.n, tot = n.green + n.amber + n.red; if (!tot && !U.os) { return; }
+    var parts = []; if (n.green) { parts.push(T('con.upd_safe', { n: n.green })); } if (n.amber) { parts.push(T('con.upd_look', { n: n.amber })); } if (n.red) { parts.push(T('con.upd_wait', { n: n.red })); }
+    if (U.os) { parts.push('Unraid ' + U.os); }
+    var $a = $('<a>').attr('href', '/Settings/SysboxUpdates').css({ color: 'inherit', textDecoration: 'none', display: 'block' })
+      .append(el('mt-r mt-s-purple').css({ 'grid-template-columns': '18px minmax(0,1fr)', 'margin-top': '6px' })
+        .append(icon('fa-arrow-circle-up', ''), txt('span', '', (tot ? T('con.upd_n', { n: tot }) + ': ' : '') + parts.join(' · '))));
+    $d.append($a);
+  }
   function renderCon() {
     var $d = $('#sx-con').empty();
     var C = last && last.containers;
@@ -443,6 +454,7 @@ $(function () {
     if (S.err) { $d.append(el('sx-warn sx-rd').append(icon('fa-exclamation-triangle', 'sx-rd'), txt('span', '', S.err))); }
     if (!C.rows.length) { $d.append(el('sx-note').text(C.pending ? 'Reading containers…' : (C.mode === 'selected' ? 'No containers selected (see the Sysbox settings)' : 'No running containers'))); return; }
     var $box = el('mt-box').appendTo($d);
+    renderUpd($d);
     $.each(C.rows, function (i, c) {
       var running = c.state === 'running', bz = S.busy[c.name];
       var stripe = c.unhealthy || c.state === 'dead' ? 'red' : (bz || c.state === 'restarting' || c.state === 'paused' || c.state === 'removing' ? 'amber' : (running ? 'green' : 'grey'));

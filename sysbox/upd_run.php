@@ -51,8 +51,10 @@ if ($mode === 'daily') {
     $c = upd_cfg();
     if (empty($c['on'])) { exit(0); }
     $st = upd_json(upd_state_file(), []); $today = date('Y-m-d');
-    if (($st['day'] ?? '') === $today) { exit(0); }
-    if ((int)date('G') * 60 + (int)date('i') < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
+    // the result lives in /tmp: after a reboot or a Sysbox install it is gone, and the day's check runs again (seen 2026-10-19)
+    $gone = ($st['day'] ?? '') === $today && !is_file(upd_scan_file());
+    if (($st['day'] ?? '') === $today && !$gone) { exit(0); }
+    if (!$gone && (int)date('G') * 60 + (int)date('i') < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
     $st['day'] = $today; upd_write(upd_state_file(), $st);
     $mode = 'scan'; $daily = true;
 }
