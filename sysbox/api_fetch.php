@@ -177,6 +177,12 @@ if ($cont['enabled']) {
     $cont['mode'] = $mode; $cont['n'] = $n; $cont['rows'] = $pick;
 }
 
+// Claude Guard: its latest report with something to look at stays in the list for 36 hours
+$gdl = json_decode((string)@file_get_contents('/tmp/sysbox_guard_last.json'), true);
+if (is_array($gdl) && !empty($gdl['n']) && time() - (int)($gdl['t'] ?? 0) < 36 * 3600) {
+    $attn[] = [($gdl['verdict'] ?? '') === 'red' ? 'rd' : 'a', 'Claude Guard', $sxx_T('gd.n_look', ['n' => (int)$gdl['n']]), (string)($gdl['first'] ?? '')];
+}
+
 // ---- summary and attention -----------------------------------------------------------------------
 $up = (int)((float)@file_get_contents('/proc/uptime'));
 $d = intdiv($up, 86400); $h = intdiv($up % 86400, 3600); $m = intdiv($up % 3600, 60);

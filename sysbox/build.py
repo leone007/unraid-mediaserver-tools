@@ -12,14 +12,15 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/SysboxShutdown.page','sysbox/SysboxShutdown.page','SAFE SHUTDOWN PAGE'),('&plugdir;/shutdown_lib.php','sysbox/shutdown_lib.php','SAFE SHUTDOWN LIBRARY'),('&plugdir;/shutdown.php','sysbox/shutdown.php','SAFE SHUTDOWN ENDPOINT'),('&plugdir;/shutdown_run.php','sysbox/shutdown_run.php','SAFE SHUTDOWN WORKER'),
  ('&plugdir;/ClaudeButton.page','sysbox/ClaudeButton.page','CLAUDE HEADER BUTTON'),('&plugdir;/claude.php','sysbox/claude.php','CLAUDE BUTTON ENDPOINT'),
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
- ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER')]
+ ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
+ ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.22o">
+<!ENTITY version   "2026.10.23">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -33,6 +34,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- New page Claude Guard (Settings, Utilities): Claude Code in the claude container reads a snapshot of the server every day and after Sysbox, Diskbox and Seedbox alerts, and reports what needs a look (page, Discord, and amber or red findings as a to-do for Claude Code). It only reads; quiet hours, a daily limit of alert reports and a weekly Claude limit are settings. Off until switched on
+- The Claude button in the header shows only when a container named claude exists
+###2026.10.22o
 - Update manager: an image named after a git commit (e.g. tvheadend a87be591 to 8837853a) is no longer called a major version; it shows new build (commit) and lists the program commits between the two builds
 - The CPU graph recorder no longer leaves an exit status 1 line in the syslog every minute while it is running
 ###2026.10.22n
@@ -231,6 +235,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 */5 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/snap_run.php daily >/dev/null 2>&1
 # Sysbox: Update manager daily check, checked every 5 minutes (runs once a day after the set time; only reads)
 */5 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/upd_run.php daily >/dev/null 2>&1
+# Sysbox: Claude Guard, checked every 2 minutes (alerts, the daily report once after the set time; only reads; off until switched on)
+*/2 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/guard_run.php tick >/dev/null 2>&1
 CRON
 # update_cron reads the plugin link in /var/log/plugins, which appears only after the install scripts
 # have finished, so wait for it in the background.
@@ -239,6 +245,9 @@ nohup bash -c 'for i in $(seq 1 60); do [ -e /var/log/plugins/sysbox.plg ] && br
 # start the CPU recorder right away (cron keeps it alive afterwards)
 pkill -f "plugins/sysbox/cpuhist.php" 2>/dev/null
 setsid nohup flock -n /tmp/sysbox_hist.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1 </dev/null &
+
+# the claude container flag for the header button (Claude Guard tick; cron repeats it every 2 minutes)
+setsid nohup "$PHPBIN" /usr/local/emhttp/plugins/sysbox/guard_run.php tick >/dev/null 2>&1 </dev/null &
 
 # Updates come from GitHub (pluginURL): stop the local update server of earlier versions
 pkill -f "php -S 127.0.0.1:18184" 2>/dev/null

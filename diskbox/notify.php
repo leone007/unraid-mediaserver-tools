@@ -145,8 +145,9 @@ if (db_on($cfg['n_parity'])) {
         if ($r[0] !== 'retry') { $st['misc']['resync'] = $act; }
     } elseif (!$now && $was !== '') {
         $pcr = dbn_resync_result($v);
-        $r = dbn_post($hook, [dbn_e_resync_end($lang, $was, $pcr)], ($pcr['errors'] !== null && $pcr['errors'] > 0) ? dbn_ping_set() : '');
-        if ($r[0] !== 'retry') { unset($st['misc']['resync']); dbn_log($st, 'parity', 'i'); }
+        $emb = dbn_e_resync_end($lang, $was, $pcr); $bad = $pcr['errors'] !== null && $pcr['errors'] > 0;
+        $r = dbn_post($hook, [$emb], $bad ? dbn_ping_set() : '');
+        if ($r[0] !== 'retry') { unset($st['misc']['resync']); dbn_log($st, 'parity', 'i'); if ($bad) { dbn_guard_event('parity_end', 'rd', $emb); } }
     }
 }
 

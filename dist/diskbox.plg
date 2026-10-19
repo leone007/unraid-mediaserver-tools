@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22n">
+<!ENTITY version   "2026.10.22o">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Alerts (and a parity check that ends with errors) are also handed to the Sysbox Claude Guard, which can explain them when it is switched on; nothing changes when it is not installed
+###2026.10.22n
 - Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
 ###2026.10.22m
 - Diskbox Balance: two ways to stop a move. Stop after this title lets the title being copied finish (copied, checked, removed from the old disk) and then stops; Stop now (with a confirmation) stops at once and rolls that title back. The old button said after the current file set but rolled the title back at once
@@ -1899,7 +1901,9 @@ function dbn_track(&$st, &$tm, $key, $level, $sig, $mk, $hook, $o = []) {
         elseif ((string)$sig !== (string)$cur['s']) { $send = true; }
         elseif ($level === 'rd' && $remind > 0 && time() - (int)$cur['t'] >= $remind * 3600) { $send = true; }
         if ($send) {
-            $r = dbn_post($hook, [$mk('alert')], $level === 'rd' ? dbn_ping_set() : '');
+            $emb = $mk('alert');
+            $r = dbn_post($hook, [$emb], $level === 'rd' ? dbn_ping_set() : '');
+            dbn_guard_event($key, $level, $emb);
             if ($r[0] === 'retry') { $tm['x']['err'] = $r[1]; return; }
             if ($r[0] === 'fail') { $tm['x']['err'] = $r[1]; }
             $st['k'][$key] = ['l' => $level, 's' => (string)$sig, 't' => time()];
@@ -1920,6 +1924,15 @@ function dbn_track(&$st, &$tm, $key, $level, $sig, $mk, $hook, $o = []) {
     }
 }
 
+// Claude Guard (Sysbox) reads its alerts from this queue and may explain them; one JSON line per alert, never secrets
+// (the embed text only). The queue is emptied by the Guard; it stops growing at 256 KB when the Guard is not installed.
+function dbn_guard_event($key, $level, $emb) {
+    $f = '/tmp/mt_guard_events.jsonl';
+    if (@filesize($f) > 262144) { return; }
+    $txt = trim(($emb['title'] ?? '') . ' ' . ($emb['description'] ?? ''));
+    foreach ((array)($emb['fields'] ?? []) as $x) { $txt .= ' · ' . ($x['name'] ?? '') . ': ' . ($x['value'] ?? ''); }
+    @file_put_contents($f, json_encode(['src' => 'diskbox', 'key' => 'diskbox:' . $key, 'level' => $level, 'text' => mb_substr($txt, 0, 1500), 't' => time()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n", FILE_APPEND | LOCK_EX);
+}
 function dbn_cur_level($st, $key) { return $st['k'][$key]['l'] ?? ''; }
 
 function dbn_fmt_bytes($b) {
@@ -2324,8 +2337,9 @@ if (db_on($cfg['n_parity'])) {
         if ($r[0] !== 'retry') { $st['misc']['resync'] = $act; }
     } elseif (!$now && $was !== '') {
         $pcr = dbn_resync_result($v);
-        $r = dbn_post($hook, [dbn_e_resync_end($lang, $was, $pcr)], ($pcr['errors'] !== null && $pcr['errors'] > 0) ? dbn_ping_set() : '');
-        if ($r[0] !== 'retry') { unset($st['misc']['resync']); dbn_log($st, 'parity', 'i'); }
+        $emb = dbn_e_resync_end($lang, $was, $pcr); $bad = $pcr['errors'] !== null && $pcr['errors'] > 0;
+        $r = dbn_post($hook, [$emb], $bad ? dbn_ping_set() : '');
+        if ($r[0] !== 'retry') { unset($st['misc']['resync']); dbn_log($st, 'parity', 'i'); if ($bad) { dbn_guard_event('parity_end', 'rd', $emb); } }
     }
 }
 

@@ -112,7 +112,9 @@ function sxn_track(&$st, &$tm, $key, $level, $sig, $mk, $hook, $o = []) {
         elseif ((string)$sig !== (string)$cur['s']) { $send = true; }
         elseif ($level === 'rd' && $remind > 0 && time() - (int)$cur['t'] >= $remind * 3600) { $send = true; }
         if ($send) {
-            $r = sxn_post($hook, [$mk('alert')], $level === 'rd' ? sxn_ping_set() : '');
+            $emb = $mk('alert');
+            $r = sxn_post($hook, [$emb], $level === 'rd' ? sxn_ping_set() : '');
+            sxn_guard_event($key, $level, $emb);
             if ($r[0] === 'retry') { $tm['x']['err'] = $r[1]; return; }
             if ($r[0] === 'fail') { $tm['x']['err'] = $r[1]; }
             $st['k'][$key] = ['l' => $level, 's' => (string)$sig, 't' => time()];
@@ -133,6 +135,15 @@ function sxn_track(&$st, &$tm, $key, $level, $sig, $mk, $hook, $o = []) {
     }
 }
 
+// Claude Guard (Sysbox) reads its alerts from this queue and may explain them; one JSON line per alert, never secrets
+// (the embed text only). The queue is emptied by the Guard; it stops growing at 256 KB when the Guard is not installed.
+function sxn_guard_event($key, $level, $emb) {
+    $f = '/tmp/mt_guard_events.jsonl';
+    if (@filesize($f) > 262144) { return; }
+    $txt = trim(($emb['title'] ?? '') . ' ' . ($emb['description'] ?? ''));
+    foreach ((array)($emb['fields'] ?? []) as $x) { $txt .= ' · ' . ($x['name'] ?? '') . ': ' . ($x['value'] ?? ''); }
+    @file_put_contents($f, json_encode(['src' => 'sysbox', 'key' => 'sysbox:' . $key, 'level' => $level, 'text' => mb_substr($txt, 0, 1500), 't' => time()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n", FILE_APPEND | LOCK_EX);
+}
 function sxn_cur_level($st, $key) { return $st['k'][$key]['l'] ?? ''; }
 
 function sxn_fmt_bytes($b) {

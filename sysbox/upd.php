@@ -21,7 +21,7 @@ if ($op === 'state') {
     $log = is_file(upd_log_file()) ? array_slice(file(upd_log_file(), FILE_IGNORE_NEW_LINES), -40) : [];
     sx_json(['ok' => true, 'cfg' => upd_cfg(), 'scan' => $scan ?: null, 'jobs' => array_values($run['jobs']), 'test' => upd_json(upd_test_file(), []) ?: null,
              'log' => $log, 'busy' => ['scan' => !empty($autoscan) || upd_running('scan'), 'ask' => upd_running('ask'), 'update' => upd_running('update'), 'selftest' => upd_running('selftest')],
-             'claude' => is_dir('/mnt/cache/docker/claude-code') || trim(upd_sh(escapeshellarg(sx_docker()) . ' inspect -f {{.Name}} claude', 10)) !== '']);
+             'claude' => is_file('/tmp/sysbox_claude_ct') || trim(upd_sh(escapeshellarg(sx_docker()) . ' inspect -f {{.Name}} claude', 10)) !== '']);
 }
 if ($op === 'detail') {
     $n = upd_name_arg(); $scan = upd_json(upd_scan_file(), []); $cache = upd_json(upd_cache_file(), []);

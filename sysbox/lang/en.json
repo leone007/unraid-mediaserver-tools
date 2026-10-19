@@ -2068,5 +2068,477 @@
  "ut.ab_last": {
   "text": "last announce {t} ago ({ch})",
   "note": "added to it ({t} like 12 min, {ch} the IRC channel)."
+ },
+ "gd.dc_more": {
+  "text": "Full report: Settings → Utilities → Claude Guard",
+  "note": "last line of the Claude Guard Discord message."
+ },
+ "gd.dc_title_err": {
+  "text": "🟡 Claude Guard: the report failed",
+  "note": "Discord title when Claude did not answer."
+ },
+ "gd.dc_title_event": {
+  "text": "Claude Guard on an alert",
+  "note": "Discord title of a report about an alert."
+ },
+ "gd.dc_title_skip": {
+  "text": "🟡 Claude Guard: report skipped",
+  "note": "Discord title when the weekly limit stopped the report."
+ },
+ "gd.e_busy": {
+  "text": "Claude is already writing a report",
+  "note": "error on the Claude Guard page."
+ },
+ "gd.e_noct": {
+  "text": "The claude container was not found (Claude Code in Docker is needed)",
+  "note": "error and report text when the container is missing."
+ },
+ "gd.j_err": {
+  "text": "failed: {e}",
+  "note": "Activity text of a failed report."
+ },
+ "gd.j_fine": {
+  "text": "everything fine",
+  "note": "Activity text of a report with no finding."
+ },
+ "gd.j_look": {
+  "text": "{n} to look at",
+  "note": "Activity text: number of amber and red findings."
+ },
+ "gd.j_todo": {
+  "text": "{n} saved as a to-do for Claude Code",
+  "note": "Activity text: findings written to guard_todo.md."
+ },
+ "gd.job_daily": {
+  "text": "Daily report",
+  "note": "Activity row title."
+ },
+ "gd.job_event": {
+  "text": "Report on an alert: {t}",
+  "note": "Activity row title; {t} is the start of the alert text."
+ },
+ "gd.job_manual": {
+  "text": "Report started by hand",
+  "note": "Activity row title."
+ },
+ "gd.l_ask": {
+  "text": "Claude is reading the snapshot",
+  "note": "Activity row: step."
+ },
+ "gd.l_snap": {
+  "text": "collecting the snapshot",
+  "note": "Activity row: step."
+ },
+ "gd.n_look": {
+  "text": "{n} to look at",
+  "note": "Discord title part: number of amber and red findings."
+ },
+ "gd.skip_limit": {
+  "text": "Skipped: the weekly Claude limit is at {p} % (the setting is {l} %). The snapshot was saved.",
+  "note": "report text when the weekly limit stopped it."
+ },
+ "gdm.copied": {
+  "text": "Copied",
+  "note": "button text after copying."
+ },
+ "gdm.copy": {
+  "text": "Copy",
+  "note": "button that copies a command."
+ },
+ "gdm.details": {
+  "text": "Details",
+  "note": "foldable bar under a report."
+ },
+ "gdm.ev_band": {
+  "text": "last 7 days · {n} · today {d} of {m}",
+  "note": "right side of the Event reports band."
+ },
+ "gdm.failed": {
+  "text": "The report failed",
+  "note": "row title."
+ },
+ "gdm.fin_today": {
+  "text": "Finished",
+  "note": "foldable bar in Activity."
+ },
+ "gdm.h.activity": {
+  "text": "Activity",
+  "note": "band title."
+ },
+ "gdm.h.earlier": {
+  "text": "Earlier reports",
+  "note": "band title."
+ },
+ "gdm.h.events": {
+  "text": "Event reports",
+  "note": "band title: reports about alerts."
+ },
+ "gdm.h.latest": {
+  "text": "Latest report",
+  "note": "band title."
+ },
+ "gdm.h.latest_n": {
+  "text": "Latest report · {n} to look at",
+  "note": "band title with the number of findings."
+ },
+ "gdm.h.settings": {
+  "text": "Settings",
+  "note": "band title."
+ },
+ "gdm.h.settings_sub": {
+  "text": "Claude only reads; it cannot run commands or change anything",
+  "note": "right side of the Settings band."
+ },
+ "gdm.intro": {
+  "text": "Claude Code (in the claude container) reads a snapshot of the server every day and after alerts, and tells you what needs a look. It only reads: what to do stays your click.",
+  "note": "first line of the page."
+ },
+ "gdm.k_daily": {
+  "text": "Daily report",
+  "note": "kind of a report."
+ },
+ "gdm.k_event": {
+  "text": "On an alert",
+  "note": "kind of a report."
+ },
+ "gdm.k_manual": {
+  "text": "Started by hand",
+  "note": "kind of a report."
+ },
+ "gdm.kept": {
+  "text": "kept 30 days",
+  "note": "right side of the Earlier reports band."
+ },
+ "gdm.lines": {
+  "text": "{n} lines",
+  "note": "count of log lines."
+ },
+ "gdm.loading": {
+  "text": "Loading…",
+  "note": "while the page loads."
+ },
+ "gdm.log": {
+  "text": "Log",
+  "note": "foldable bar in Activity."
+ },
+ "gdm.n_fin": {
+  "text": "{n} finished",
+  "note": "right side of the Activity band."
+ },
+ "gdm.n_look": {
+  "text": "{n} to look at",
+  "note": "chip on a report row."
+ },
+ "gdm.n_running": {
+  "text": "{n} running",
+  "note": "right side of the Activity band."
+ },
+ "gdm.night": {
+  "text": "{n} alert(s) wait for the next daily report (quiet hours or the daily limit)",
+  "note": "Activity row."
+ },
+ "gdm.no_ct": {
+  "text": "Claude Guard needs Claude Code running in a Docker container named claude (see docker/claude-code in the repository). Without it nothing runs here.",
+  "note": "shown instead of the report when the container is missing."
+ },
+ "gdm.no_events": {
+  "text": "No alert reports in the last 7 days.",
+  "note": "empty state."
+ },
+ "gdm.no_old": {
+  "text": "No earlier reports yet.",
+  "note": "empty state."
+ },
+ "gdm.no_report": {
+  "text": "No report yet. The first daily report comes at {t}, or start one now.",
+  "note": "empty state of the latest report."
+ },
+ "gdm.noise": {
+  "text": "Harmless log lines",
+  "note": "foldable bar: log lines Claude found harmless."
+ },
+ "gdm.nothing_run": {
+  "text": "Nothing has run in the last day.",
+  "note": "empty Activity."
+ },
+ "gdm.off": {
+  "text": "Claude Guard is off. Switch it on in the settings below.",
+  "note": "shown when the Guard is off."
+ },
+ "gdm.run_now": {
+  "text": "Run a report now",
+  "note": "main button."
+ },
+ "gdm.running": {
+  "text": "Claude is writing…",
+  "note": "main button while a report runs."
+ },
+ "gdm.saved": {
+  "text": "Saved",
+  "note": "after saving the settings."
+ },
+ "gdm.saving": {
+  "text": "Saving…",
+  "note": "while saving."
+ },
+ "gdm.select": {
+  "text": "Select the text",
+  "note": "when copying is not allowed by the browser."
+ },
+ "gdm.skipped": {
+  "text": "The report was skipped",
+  "note": "row title."
+ },
+ "gdm.started": {
+  "text": "started {t}",
+  "note": "Activity row."
+ },
+ "gdm.this_week": {
+  "text": "This week",
+  "note": "foldable bar of earlier reports."
+ },
+ "gdm.todo": {
+  "text": "What to do: {t}",
+  "note": "line under a finding."
+ },
+ "gdm.took": {
+  "text": "took {t}",
+  "note": "status strip: how long the report took."
+ },
+ "gdm.usage": {
+  "text": "weekly Claude use {p} % (skips above {l} %)",
+  "note": "status strip."
+ },
+ "gdm.week_count": {
+  "text": "{n} reports · {b} with findings · {s} skipped",
+  "note": "right side of a week bar."
+ },
+ "gdm.weeks_ago": {
+  "text": "{n} week(s) ago",
+  "note": "foldable bar of earlier reports."
+ },
+ "gds.a_day": {
+  "text": "a day",
+  "note": "settings: after the number of event reports."
+ },
+ "gds.at": {
+  "text": "at",
+  "note": "settings: before the hour."
+ },
+ "gds.at_most": {
+  "text": "at most",
+  "note": "settings: before the number of event reports."
+ },
+ "gds.daily": {
+  "text": "Daily report",
+  "note": "settings label."
+ },
+ "gds.daily_hint": {
+  "text": "A snapshot is taken at this time every day and compared with the previous one.",
+  "note": "settings hint."
+ },
+ "gds.dc_full": {
+  "text": "Full report",
+  "note": "Discord option."
+ },
+ "gds.dc_hint": {
+  "text": "Sent to the Sysbox webhook. Nothing is sent in quiet hours.",
+  "note": "settings hint."
+ },
+ "gds.dc_issues": {
+  "text": "Only when something is amber or red",
+  "note": "Discord option (default)."
+ },
+ "gds.dc_off": {
+  "text": "Off",
+  "note": "Discord option."
+ },
+ "gds.dc_short": {
+  "text": "Short summary",
+  "note": "Discord option."
+ },
+ "gds.ev_dsk": {
+  "text": "Diskbox alerts",
+  "note": "settings checkbox."
+ },
+ "gds.ev_sbx": {
+  "text": "Seedbox failed jobs",
+  "note": "settings checkbox."
+ },
+ "gds.ev_sys": {
+  "text": "Sysbox alerts",
+  "note": "settings checkbox."
+ },
+ "gds.events": {
+  "text": "Reports on alerts",
+  "note": "settings label."
+ },
+ "gds.events_hint": {
+  "text": "Amber and red alerts start a report. In quiet hours, or above the daily limit, they go into the next daily report.",
+  "note": "settings hint."
+ },
+ "gds.from": {
+  "text": "from",
+  "note": "settings: before the start hour of the quiet hours (may be empty in other languages)."
+ },
+ "gds.hours": {
+  "text": "o'clock",
+  "note": "settings: after the end hour of the quiet hours."
+ },
+ "gds.limit": {
+  "text": "Weekly limit",
+  "note": "settings label."
+ },
+ "gds.limit_hint": {
+  "text": "A skipped report is noted here and in Discord; the snapshot is still saved.",
+  "note": "settings hint."
+ },
+ "gds.now": {
+  "text": "now {p} %",
+  "note": "chip: the weekly use now."
+ },
+ "gds.on": {
+  "text": "On",
+  "note": "settings checkbox."
+ },
+ "gds.on_hint": {
+  "text": "Needs Claude Code in the claude container, signed in.",
+  "note": "settings hint."
+ },
+ "gds.on_lb": {
+  "text": "Claude Guard",
+  "note": "settings label."
+ },
+ "gds.quiet": {
+  "text": "Quiet hours",
+  "note": "settings label."
+ },
+ "gds.quiet_hint": {
+  "text": "Nothing runs and nothing is sent between these hours; alerts wait for the morning report.",
+  "note": "settings hint."
+ },
+ "gds.ro": {
+  "text": "read only",
+  "note": "chip next to the switch."
+ },
+ "gds.save": {
+  "text": "Apply",
+  "note": "settings button."
+ },
+ "gds.skip_above": {
+  "text": "skip when above",
+  "note": "settings: before the percent."
+ },
+ "gds.to": {
+  "text": "to",
+  "note": "settings: between the two hours of the quiet hours."
+ },
+ "gds.todo": {
+  "text": "Save amber and red findings for Claude Code",
+  "note": "settings checkbox."
+ },
+ "gds.todo_hint": {
+  "text": "They are appended to guard_todo.md in the repository; the next Claude Code session moves them into its task list.",
+  "note": "settings hint."
+ },
+ "gds.todo_lb": {
+  "text": "To-do for Claude Code",
+  "note": "settings label."
+ },
+ "gds.topics": {
+  "text": "What Claude looks at",
+  "note": "settings label."
+ },
+ "gds.topics_hint": {
+  "text": "API keys, passwords and webhook addresses never go into the snapshot. Titles and file names do.",
+  "note": "settings hint."
+ },
+ "link.diskbox": {
+  "text": "Open the Dashboard",
+  "note": "link under a finding."
+ },
+ "link.docker": {
+  "text": "Open Docker",
+  "note": "link under a finding."
+ },
+ "link.seedbox": {
+  "text": "Open Seedbox Tools",
+  "note": "link under a finding."
+ },
+ "link.syslog": {
+  "text": "Open the system log",
+  "note": "link under a finding."
+ },
+ "link.updates": {
+  "text": "Open the Update manager",
+  "note": "link under a finding."
+ },
+ "lv.amber": {
+  "text": "Watch",
+  "note": "chip of an amber finding."
+ },
+ "lv.green": {
+  "text": "Fine",
+  "note": "chip of a green finding."
+ },
+ "lv.red": {
+  "text": "Act",
+  "note": "chip of a red finding."
+ },
+ "topic.containers": {
+  "text": "Containers, updates",
+  "note": "topic of a finding; also a settings checkbox."
+ },
+ "topic.disks": {
+  "text": "Disks, SMART, parity",
+  "note": "topic of a finding; also a settings checkbox."
+ },
+ "topic.logs": {
+  "text": "Logs",
+  "note": "topic of a finding; also a settings checkbox."
+ },
+ "topic.services": {
+  "text": "Seedbox, *arr, Jellyfin",
+  "note": "topic of a finding; also a settings checkbox."
+ },
+ "verdict.amber": {
+  "text": "Something to look at.",
+  "note": "start of the report summary."
+ },
+ "verdict.green": {
+  "text": "Everything fine.",
+  "note": "start of the report summary."
+ },
+ "verdict.red": {
+  "text": "Act today.",
+  "note": "start of the report summary."
+ },
+ "dow.sun": {
+  "text": "Sun",
+  "note": "short weekday."
+ },
+ "dow.mon": {
+  "text": "Mon",
+  "note": "short weekday."
+ },
+ "dow.tue": {
+  "text": "Tue",
+  "note": "short weekday."
+ },
+ "dow.wed": {
+  "text": "Wed",
+  "note": "short weekday."
+ },
+ "dow.thu": {
+  "text": "Thu",
+  "note": "short weekday."
+ },
+ "dow.fri": {
+  "text": "Fri",
+  "note": "short weekday."
+ },
+ "dow.sat": {
+  "text": "Sat",
+  "note": "short weekday."
  }
 }

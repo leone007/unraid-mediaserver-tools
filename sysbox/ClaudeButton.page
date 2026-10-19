@@ -1,4 +1,5 @@
 Menu="Buttons:3b"
+Cond="is_file('/tmp/sysbox_claude_ct')"
 Title="Claude"
 Icon="fa-comments"
 ---

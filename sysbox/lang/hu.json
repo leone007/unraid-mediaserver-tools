@@ -1557,5 +1557,359 @@
  },
  "ut.ab_last": {
   "text": "utolsó bejelentés {t} ezelőtt ({ch})"
+ },
+ "gd.dc_more": {
+  "text": "Teljes jelentés: Settings → Utilities → Claude Guard"
+ },
+ "gd.dc_title_err": {
+  "text": "🟡 Claude Guard: a jelentés nem készült el"
+ },
+ "gd.dc_title_event": {
+  "text": "Claude Guard egy riasztásról"
+ },
+ "gd.dc_title_skip": {
+  "text": "🟡 Claude Guard: a jelentés kimaradt"
+ },
+ "gd.e_busy": {
+  "text": "Claude már ír egy jelentést"
+ },
+ "gd.e_noct": {
+  "text": "Nem található a claude konténer (Dockerben futó Claude Code kell)"
+ },
+ "gd.j_err": {
+  "text": "nem sikerült: {e}"
+ },
+ "gd.j_fine": {
+  "text": "minden rendben"
+ },
+ "gd.j_look": {
+  "text": "{n} megnézendő"
+ },
+ "gd.j_todo": {
+  "text": "{n} teendőként mentve a Claude Code-nak"
+ },
+ "gd.job_daily": {
+  "text": "Napi jelentés"
+ },
+ "gd.job_event": {
+  "text": "Jelentés egy riasztásról: {t}"
+ },
+ "gd.job_manual": {
+  "text": "Kézzel indított jelentés"
+ },
+ "gd.l_ask": {
+  "text": "Claude olvassa az állapotképet"
+ },
+ "gd.l_snap": {
+  "text": "állapotkép gyűjtése"
+ },
+ "gd.n_look": {
+  "text": "{n} megnézendő"
+ },
+ "gd.skip_limit": {
+  "text": "Kimaradt: a heti Claude-keret {p} %-on áll (a beállítás {l} %). Az állapotkép elmentve."
+ },
+ "gdm.copied": {
+  "text": "Másolva"
+ },
+ "gdm.copy": {
+  "text": "Másolás"
+ },
+ "gdm.details": {
+  "text": "Részletek"
+ },
+ "gdm.ev_band": {
+  "text": "az utolsó 7 nap · {n} · ma {d} / {m}"
+ },
+ "gdm.failed": {
+  "text": "A jelentés nem készült el"
+ },
+ "gdm.fin_today": {
+  "text": "Kész"
+ },
+ "gdm.h.activity": {
+  "text": "Tevékenység"
+ },
+ "gdm.h.earlier": {
+  "text": "Korábbi jelentések"
+ },
+ "gdm.h.events": {
+  "text": "Eseményjelentések"
+ },
+ "gdm.h.latest": {
+  "text": "Legutóbbi jelentés"
+ },
+ "gdm.h.latest_n": {
+  "text": "Legutóbbi jelentés · {n} megnézendő"
+ },
+ "gdm.h.settings": {
+  "text": "Beállítások"
+ },
+ "gdm.h.settings_sub": {
+  "text": "Claude csak olvas; nem futtathat parancsot és nem módosíthat semmit"
+ },
+ "gdm.intro": {
+  "text": "A claude konténerben futó Claude Code naponta és riasztások után átnézi a szerver állapotképét, és megírja, mit érdemes megnézni. Csak olvas: a teendő mindig a te kattintásod."
+ },
+ "gdm.k_daily": {
+  "text": "Napi jelentés"
+ },
+ "gdm.k_event": {
+  "text": "Riasztásról"
+ },
+ "gdm.k_manual": {
+  "text": "Kézzel indítva"
+ },
+ "gdm.kept": {
+  "text": "30 napig megőrizve"
+ },
+ "gdm.lines": {
+  "text": "{n} sor"
+ },
+ "gdm.loading": {
+  "text": "Betöltés…"
+ },
+ "gdm.log": {
+  "text": "Napló"
+ },
+ "gdm.n_fin": {
+  "text": "{n} kész"
+ },
+ "gdm.n_look": {
+  "text": "{n} megnézendő"
+ },
+ "gdm.n_running": {
+  "text": "{n} fut"
+ },
+ "gdm.night": {
+  "text": "{n} riasztás a következő napi jelentésre vár (csendes órák vagy a napi limit)"
+ },
+ "gdm.no_ct": {
+  "text": "A Claude Guardhoz Dockerben, claude nevű konténerben futó Claude Code kell (lásd a repó docker/claude-code mappáját). Enélkül itt semmi nem fut."
+ },
+ "gdm.no_events": {
+  "text": "Az utolsó 7 napban nem volt riasztásról szóló jelentés."
+ },
+ "gdm.no_old": {
+  "text": "Még nincs korábbi jelentés."
+ },
+ "gdm.no_report": {
+  "text": "Még nincs jelentés. Az első napi jelentés {t}-kor jön, vagy indíts egyet most."
+ },
+ "gdm.noise": {
+  "text": "Ártalmatlan logsorok"
+ },
+ "gdm.nothing_run": {
+  "text": "Az elmúlt napban nem futott semmi."
+ },
+ "gdm.off": {
+  "text": "A Claude Guard ki van kapcsolva. Lent a beállításoknál kapcsold be."
+ },
+ "gdm.run_now": {
+  "text": "Jelentés most"
+ },
+ "gdm.running": {
+  "text": "Claude ír…"
+ },
+ "gdm.saved": {
+  "text": "Mentve"
+ },
+ "gdm.saving": {
+  "text": "Mentés…"
+ },
+ "gdm.select": {
+  "text": "Jelöld ki a szöveget"
+ },
+ "gdm.skipped": {
+  "text": "A jelentés kimaradt"
+ },
+ "gdm.started": {
+  "text": "indult {t}"
+ },
+ "gdm.this_week": {
+  "text": "Ezen a héten"
+ },
+ "gdm.todo": {
+  "text": "Teendő: {t}"
+ },
+ "gdm.took": {
+  "text": "{t} alatt"
+ },
+ "gdm.usage": {
+  "text": "heti Claude-használat {p} % ({l} % felett kihagy)"
+ },
+ "gdm.week_count": {
+  "text": "{n} jelentés · {b} találattal · {s} kimaradt"
+ },
+ "gdm.weeks_ago": {
+  "text": "{n} hete"
+ },
+ "gds.a_day": {
+  "text": "naponta"
+ },
+ "gds.at": {
+  "text": "időpont:"
+ },
+ "gds.at_most": {
+  "text": "legfeljebb"
+ },
+ "gds.daily": {
+  "text": "Napi jelentés"
+ },
+ "gds.daily_hint": {
+  "text": "Minden nap ekkor készül állapotkép, és Claude összeveti az előzővel."
+ },
+ "gds.dc_full": {
+  "text": "Teljes jelentés"
+ },
+ "gds.dc_hint": {
+  "text": "A Sysbox webhookjára megy. Csendes órákban semmi nem megy ki."
+ },
+ "gds.dc_issues": {
+  "text": "Csak ha valami sárga vagy piros"
+ },
+ "gds.dc_off": {
+  "text": "Ki"
+ },
+ "gds.dc_short": {
+  "text": "Rövid összefoglaló"
+ },
+ "gds.ev_dsk": {
+  "text": "Diskbox-riasztások"
+ },
+ "gds.ev_sbx": {
+  "text": "Seedbox hibás feladatai"
+ },
+ "gds.ev_sys": {
+  "text": "Sysbox-riasztások"
+ },
+ "gds.events": {
+  "text": "Jelentés riasztásról"
+ },
+ "gds.events_hint": {
+  "text": "A sárga és piros riasztás indít jelentést. Csendes órákban vagy a napi limit felett a következő napi jelentésbe kerülnek."
+ },
+ "gds.from": {
+  "text": ""
+ },
+ "gds.hours": {
+  "text": "óráig"
+ },
+ "gds.limit": {
+  "text": "Heti keret"
+ },
+ "gds.limit_hint": {
+  "text": "A kimaradt jelentés itt és Discordon is látszik; az állapotkép ilyenkor is elmentődik."
+ },
+ "gds.now": {
+  "text": "most {p} %"
+ },
+ "gds.on": {
+  "text": "Bekapcsolva"
+ },
+ "gds.on_hint": {
+  "text": "A claude konténerben bejelentkezett Claude Code kell hozzá."
+ },
+ "gds.on_lb": {
+  "text": "Claude Guard"
+ },
+ "gds.quiet": {
+  "text": "Csendes órák"
+ },
+ "gds.quiet_hint": {
+  "text": "Ebben az időben semmi nem fut és semmi nem megy ki; a riasztások a reggeli jelentésre várnak."
+ },
+ "gds.ro": {
+  "text": "csak olvas"
+ },
+ "gds.save": {
+  "text": "Mentés"
+ },
+ "gds.skip_above": {
+  "text": "kihagyás e fölött:"
+ },
+ "gds.to": {
+  "text": "és"
+ },
+ "gds.todo": {
+  "text": "A sárga és piros találatok mentése a Claude Code-nak"
+ },
+ "gds.todo_hint": {
+  "text": "A repó guard_todo.md fájljába kerülnek; a következő Claude Code munkamenet átvezeti őket a feladatlistába."
+ },
+ "gds.todo_lb": {
+  "text": "Teendő a Claude Code-nak"
+ },
+ "gds.topics": {
+  "text": "Mit néz meg Claude"
+ },
+ "gds.topics_hint": {
+  "text": "API-kulcs, jelszó és webhook-cím soha nem kerül az állapotképbe. Címek és fájlnevek igen."
+ },
+ "link.diskbox": {
+  "text": "Dashboard megnyitása"
+ },
+ "link.docker": {
+  "text": "Docker megnyitása"
+ },
+ "link.seedbox": {
+  "text": "Seedbox Tools megnyitása"
+ },
+ "link.syslog": {
+  "text": "Rendszernapló megnyitása"
+ },
+ "link.updates": {
+  "text": "Update manager megnyitása"
+ },
+ "lv.amber": {
+  "text": "Figyelni"
+ },
+ "lv.green": {
+  "text": "Rendben"
+ },
+ "lv.red": {
+  "text": "Teendő"
+ },
+ "topic.containers": {
+  "text": "Konténerek, frissítések"
+ },
+ "topic.disks": {
+  "text": "Lemezek, SMART, paritás"
+ },
+ "topic.logs": {
+  "text": "Logok"
+ },
+ "topic.services": {
+  "text": "Seedbox, *arr, Jellyfin"
+ },
+ "verdict.amber": {
+  "text": "Van mit megnézni."
+ },
+ "verdict.green": {
+  "text": "Minden rendben."
+ },
+ "verdict.red": {
+  "text": "Ma teendő van."
+ },
+ "dow.sun": {
+  "text": "V"
+ },
+ "dow.mon": {
+  "text": "H"
+ },
+ "dow.tue": {
+  "text": "K"
+ },
+ "dow.wed": {
+  "text": "Sze"
+ },
+ "dow.thu": {
+  "text": "Cs"
+ },
+ "dow.fri": {
+  "text": "P"
+ },
+ "dow.sat": {
+  "text": "Szo"
  }
 }

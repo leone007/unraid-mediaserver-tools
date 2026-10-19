@@ -25,6 +25,7 @@ One tile instead of the System and Processor tiles: memory as one bar (system, Z
 Pages under *Settings, Utilities*:
 - **Update manager**: every container with a waiting update, sorted *Wait*, *Look first* and *Safe* (rebuild, patch, feature or major change, from the image labels and the release notes), with a self-test of the services after an update.
 - **Snapshots**: daily ZFS snapshots of the dataset that holds the containers' data, taken before the container updates and kept for a number of days.
+- **Claude Guard** (optional, off by default): if you run Claude Code in a Docker container named `claude` (see `docker/claude-code`), it reads a snapshot of the server every day and after Sysbox, Diskbox and Seedbox alerts (disks, SMART, parity, containers, updates, logs, the *arr health lists, Jellyfin) and writes a short report on the page and to Discord. It only reads; API keys, passwords and webhook addresses never go into the snapshot. Quiet hours, a daily limit of alert reports and a weekly Claude limit are settings. Without the container the page only says what it needs, and the Claude button in the header is hidden.
 - **Safe shutdown**: shows what could hang a shutdown (parity check, mover, Diskbox Balance, containers, VMs, processes with files open on the array) and stops the containers in a safe order with one button.
 
 ## Diskbox
@@ -95,6 +96,7 @@ What each part builds on, and what has **not** been tried yet. Reports from othe
 | Diskbox Balance | downloads and media in folders you set, hardlinked on the same disk (`rsync -aH` keeps the links); tested on XFS array disks | Btrfs or ZFS array disks, arrays with a single parity disk; files hardlinked outside the set folders are left in place |
 | Seedbox Tools | qBittorrent WebUI, Radarr and Sonarr (API v3), Prowlarr; tested with the downloads hardlinked into the library | Other download clients; torrents are matched to Radarr/Sonarr by exact video file sizes, so re-encoded or remuxed library files are not matched; music (Lidarr) is not matched |
 | Streambox | Jellyfin API key; Sonarr for this week's episodes | Plex and Emby |
+| Sysbox Claude Guard, Ask Claude, header button | Claude Code signed in, in a container named `claude` (`docker/claude-code`); uses your Claude plan | Other ways of running Claude |
 | Discord | a webhook per plugin; for Seedbox reactions a bot token | |
 
 ## Install
