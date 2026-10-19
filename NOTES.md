@@ -1,6 +1,6 @@
 # NOTES: design decisions and gotchas
 
-For whoever (human or Claude) continues this project. Author: leone007. Server: Unraid 7.3.2 ("JELLYNAS"), web UI on port 180. Language of the owner: Hungarian; the UI of the plugins is English, the Discord messages are Hungarian or English (setting).
+For whoever (human or Claude) continues this project. Author: leone007. Server: Unraid 7.3.3 ("JELLYNAS"), web UI on port 180. Language of the owner: Hungarian; the UI of the plugins is English, the Discord messages are Hungarian or English (setting).
 
 ## Layout and build
 - `diskbox/` and `sysbox/` have real sources and a `build.py` that writes `dist/<name>.plg` (everything is embedded in the `.plg`, as CDATA). `seedbox/` is built from `seedbox/template.plg` (placeholders `@@SRC:path@@`) by `seedbox/build.py`; `streambox/` exists only as `.plg` (the files in its folder are unpacked copies, `tools/extract_plg.py`).

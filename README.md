@@ -1,6 +1,6 @@
 # unraid-mediaserver-tools
 
-Dashboard plugins for **Unraid 7** (tested on **7.3.2**, see [Compatibility](#compatibility)) that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
+Dashboard plugins for **Unraid 7** (tested on **7.3.3**, see [Compatibility](#compatibility)) that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
 
 **The rule of every tool here: nothing is added, replaced or deleted without your click.** The tools scan and report by themselves; every step that changes something is a button with a confirmation.
 
@@ -72,11 +72,11 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 
 | | |
 |---|---|
-| **Tested on** | **Unraid 7.3.2**, every plugin, in daily use on one server (Intel i5-12500T with Quick Sync, XFS array with two parity slots, one ZFS cache pool) |
+| **Tested on** | **Unraid 7.3.3** (2026-10-19: every page, tile, background job, connection test and scan checked after the update; PHP 8.4.26, nginx 1.30.4) and before that 7.3.2, every plugin, in daily use on one server (Intel i5-12500T with Quick Sync, XFS array with two parity slots, one ZFS cache pool) |
 | **Should work** | other Unraid 7 releases; the dashboard tiles use the Unraid 7 dashboard layout |
 | **Not supported** | Unraid 6.x: never tried there, so the `.plg` files ask for 7.0.0 or newer (`min="7.0.0"`) and the Plugins page refuses them on 6.x |
 
-**Language.** The pages and tiles are in English. Discord messages can be English or Hungarian (Magyar). One setting for all plugins, the Language block at the bottom of each settings page; by default it follows Unraid's language (Settings, Display Settings). The page texts are being moved into dictionaries that can be translated (see [TRANSLATING.md](TRANSLATING.md)); Monitor is done.
+**Language.** Pages, tiles and Discord messages are in English or Hungarian (Magyar). One setting for all plugins, the Language block at the bottom of each settings page; by default it follows Unraid's language (Settings, Display Settings). Every text comes from a dictionary that can be translated into other languages (see [TRANSLATING.md](TRANSLATING.md)).
 
 Optional parts depend on what you have: Intel GPU engines (Sysbox, Streambox), a Shelly smart socket for wall power, Unassigned Devices and UD Preclear for the unassigned disks and the preclear progress (Diskbox), Radarr, Sonarr, Prowlarr and autobrr for the Seedbox Tools. If you run it on another release, an issue with the version and what you saw is welcome.
 

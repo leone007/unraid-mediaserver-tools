@@ -84,7 +84,7 @@
   "text": "A Jellyfin nem érhető el"
  },
  "now.title": {
-  "text": "Most megy"
+  "text": "Aktivitás"
  },
  "col.title": {
   "text": "Cím"
@@ -528,7 +528,7 @@
   "text": "Jellyfin link URL (a Discord-kártyákban is):"
  },
  "set.streams_max": {
-  "text": "Legfeljebb ennyi sor a Most megy részben:"
+  "text": "Legfeljebb ennyi sor az Aktivitás részben:"
  },
  "set.added_rows": {
   "text": "Sorok a Nemrég hozzáadva részben (0 = elrejt):"
