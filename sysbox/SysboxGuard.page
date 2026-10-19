@@ -213,6 +213,10 @@ $(function () {
       row(esc(T('gds.events')), ck('gdm-es', c.ev_sys, esc(T('gds.ev_sys'))) + ck('gdm-ed', c.ev_dsk, esc(T('gds.ev_dsk'))) + ck('gdm-eb', c.ev_sbx, esc(T('gds.ev_sbx'))) + esc(T('gds.at_most')) + ' ' + num('gdm-em', c.ev_max, 0, 10) + ' ' + esc(T('gds.a_day')), esc(T('gds.events_hint'))) +
       row(esc(T('gds.topics')), ck('gdm-td', c.t_disk, esc(T('topic.disks'))) + ck('gdm-tc', c.t_ct, esc(T('topic.containers'))) + ck('gdm-tl', c.t_log, esc(T('topic.logs'))) + ck('gdm-ta', c.t_arr, esc(T('topic.services'))), esc(T('gds.topics_hint'))) +
       row(esc(T('gds.limit')), esc(T('gds.skip_above')) + ' ' + num('gdm-lim', c.limit, 10, 100) + ' %' + (r.usage ? ' <span class="gdm-chip ' + (r.usage.week >= c.limit ? 'a' : 'g') + '">' + esc(T('gds.now', { p: Math.round(r.usage.week) })) + '</span>' : ''), esc(T('gds.limit_hint'))) +
+      row(esc(T('gds.lang')), '<select id="gdm-lang">' + $.map(['auto', 'hu', 'en'], function (k) { return '<option value="' + k + '"' + (c.lang === k ? ' selected' : '') + '>' + esc(T('gds.lang_' + k)) + '</option>'; }).join('') + '</select>' +
+        (c.lang === 'auto' ? ' <span class="gdm-chip g">' + esc(T('gds.lang_now', { l: T('gds.lang_' + r.lang_now) })) + '</span>' : ''), esc(T('gds.lang_hint'))) +
+      row(esc(T('gds.ctx')), '<input type="text" id="gdm-ctx" style="width:340px;max-width:100%" value="' + esc(c.ctx) + '">' +
+        ' <span class="gdm-chip ' + (r.ctx_path ? 'g' : 'a') + '">' + esc(r.ctx_path ? T('gds.ctx_reads', { p: r.ctx_path }) : T('gds.ctx_none')) + '</span>', esc(T('gds.ctx_hint'))) +
       row('Discord', '<select id="gdm-dc">' + dc + '</select>', esc(T('gds.dc_hint'))) +
       row(esc(T('gds.todo_lb')), ck('gdm-todo', c.todo, esc(T('gds.todo'))), esc(T('gds.todo_hint'))) +
       '<div class="gdm-row gdm-set"><span></span><div class="gdm-ctl"><input type="button" id="gdm-save" value="' + esc(T('gds.save')) + '"><span id="gdm-smsg"></span></div></div>');
@@ -222,7 +226,7 @@ $(function () {
     function b(id) { return $('#' + id).prop('checked') ? 1 : 0; }
     api('save', {on: b('gdm-on'), hour: $('#gdm-h').val(), min: $('#gdm-m').val(), q_from: $('#gdm-qf').val(), q_to: $('#gdm-qt').val(),
       ev_sys: b('gdm-es'), ev_dsk: b('gdm-ed'), ev_sbx: b('gdm-eb'), ev_max: $('#gdm-em').val(), t_disk: b('gdm-td'), t_ct: b('gdm-tc'), t_log: b('gdm-tl'), t_arr: b('gdm-ta'),
-      limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo')})
+      limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val()})
       .done(function (r) { if (r.ok) { $m.attr('class', 'gdm-ok').text(T('gdm.saved')); load(); } else { $m.attr('class', 'gdm-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'gdm-er').text(err(x)); });
   });
 

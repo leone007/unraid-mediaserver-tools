@@ -1911,5 +1911,38 @@
  },
  "dow.sat": {
   "text": "Szo"
+ },
+ "gd.e_ctx": {
+  "text": "A jegyzetfájl a claude konténeren belüli teljes útvonal legyen, pl. /work/notes.md"
+ },
+ "gds.lang": {
+  "text": "A jelentés nyelve"
+ },
+ "gds.lang_auto": {
+  "text": "Az Unraid nyelvét követi"
+ },
+ "gds.lang_en": {
+  "text": "English"
+ },
+ "gds.lang_hu": {
+  "text": "Magyar"
+ },
+ "gds.lang_now": {
+  "text": "most: {l}"
+ },
+ "gds.lang_hint": {
+  "text": "Ezen a nyelven írja Claude a jelentést (az Unraid nyelvét a Settings, Display Settings állítja)."
+ },
+ "gds.ctx": {
+  "text": "Jegyzet, amit Claude először elolvas"
+ },
+ "gds.ctx_reads": {
+  "text": "olvassa: {p}"
+ },
+ "gds.ctx_none": {
+  "text": "nincs jegyzetfájl"
+ },
+ "gds.ctx_hint": {
+  "text": "auto: a repó ATADAS.md-je, ha a claude konténerben megvan; vagy egy konténeren belüli útvonal; üres: nincs. Amit a jegyzet szándékosnak vagy ismertnek ír, azt nem jelzi újra (pl. tudatosan üresen hagyott paritáshely)."
  }
 }

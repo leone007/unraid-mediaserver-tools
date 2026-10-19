@@ -101,7 +101,7 @@ if (empty($rep['error']) && $kind !== 'manual' && $u && $u['week'] >= (float)$c[
 
 if (empty($rep['error']) && empty($rep['skipped'])) {
     gd_job($id, [], sx_tr('gd.l_ask'));
-    [$ans, $e] = gd_ask(gd_prompt($kind, $snap, $prev, $events));
+    [$ans, $e] = gd_ask(gd_prompt($kind, $snap, $prev, $events, $c));
     if ($ans) { $rep = $ans + $rep; } else { $rep['error'] = $e; }
 }
 $rep['took'] = time() - $t0;

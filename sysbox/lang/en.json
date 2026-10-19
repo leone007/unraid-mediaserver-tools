@@ -2540,5 +2540,49 @@
  "dow.sat": {
   "text": "Sat",
   "note": "short weekday."
+ },
+ "gd.e_ctx": {
+  "text": "The notes file must be a full path inside the claude container, e.g. /work/notes.md",
+  "note": "error on saving the Claude Guard settings."
+ },
+ "gds.lang": {
+  "text": "Report language",
+  "note": "settings label."
+ },
+ "gds.lang_auto": {
+  "text": "Follow Unraid",
+  "note": "option (default)."
+ },
+ "gds.lang_en": {
+  "text": "English",
+  "note": "option; keep the language's own name."
+ },
+ "gds.lang_hu": {
+  "text": "Magyar",
+  "note": "option; keep the language's own name."
+ },
+ "gds.lang_now": {
+  "text": "now {l}",
+  "note": "chip: the language used now."
+ },
+ "gds.lang_hint": {
+  "text": "The language Claude writes the reports in (Settings, Display Settings sets Unraid's).",
+  "note": "settings hint."
+ },
+ "gds.ctx": {
+  "text": "Notes Claude reads first",
+  "note": "settings label."
+ },
+ "gds.ctx_reads": {
+  "text": "reads {p}",
+  "note": "chip: the notes file in use."
+ },
+ "gds.ctx_none": {
+  "text": "no notes file",
+  "note": "chip."
+ },
+ "gds.ctx_hint": {
+  "text": "auto: ATADAS.md of this repository when the claude container has it; or a path inside the container; empty: none. What the notes call intended or known is not reported again (e.g. a parity slot left empty on purpose).",
+  "note": "settings hint."
  }
 }
