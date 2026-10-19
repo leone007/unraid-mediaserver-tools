@@ -123,7 +123,13 @@ $(function () {
     $.each(r.jobs || [], function (i, j) { (j.state === 'running' ? run : fin).push(j); });
     fin.sort(function (a, b) { return (b.finished || 0) - (a.finished || 0); });
     var h = '';
-    $.each(run, function (i, j) { h += '<div class="upm-row upm-job ' + (j.kind === 'ask' ? 's-purple' : 's-blue') + '"><span class="upm-ico">&#8635;</span><span><b>' + esc(j.text) + '</b><small>' + esc((j.log || []).slice(-2).join(' · ') || T('upm.started_at', { t: hm(j.started) })) + '</small></span><span class="upm-num">' + esc(ago(j.started)) + '</span></div>'; });
+    function allExtra(j) {
+      if (j.kind !== 'updall' || !j.queue) { return ''; }
+      var ok = (j.ok || []).length, wait = $.grep(j.queue, function (n) { return $.inArray(n, j.ok || []) < 0 && n !== j.now; });
+      return '<div style="height:5px;background:rgba(128,128,128,.25);margin-top:6px"><i style="display:block;height:100%;background:#4a90e2;width:' + Math.round(100 * ok / j.queue.length) + '%"></i></div>' +
+        (wait.length ? '<small>' + esc(T('upm.all_wait', { l: wait.join(', ') })) + '</small>' : '');
+    }
+    $.each(run, function (i, j) { h += '<div class="upm-row upm-job ' + (j.kind === 'ask' ? 's-purple' : 's-blue') + '"><span class="upm-ico">&#8635;</span><span><b>' + esc(j.text) + '</b><small>' + esc((j.log || []).slice(-2).join(' · ') || T('upm.started_at', { t: hm(j.started) })) + '</small>' + allExtra(j) + '</span><span class="upm-num">' + esc(ago(j.started)) + '</span></div>'; });
     var f = '';
     $.each(fin, function (i, j) { var ok = j.state === 'done'; f += '<div class="upm-row upm-job ' + (ok ? 's-green' : 's-red') + '"><span class="upm-ico ' + (ok ? 'upm-ok">&#10003;' : 'upm-er">!') + '</span><span>' + esc(j.text) + (j.log && j.log.length ? '<small>' + esc(j.log.join(' · ')) + '</small>' : '') + '</span><span class="upm-num">' + hm(j.finished || j.started) + '</span></div>'; });
     if (fin.length) { h += gbar('fin', 's-grey', esc(T('upm.fin_today')), fin.length) + grp('fin', f); }
@@ -139,11 +145,32 @@ $(function () {
     if (!s) { $('#upm-sum').html('<div class="upm-lead"><p>' + esc(T('upm.no_check')) + '</p><input type="button" class="upm-scan" value="' + esc(busy ? T('upm.checking') : T('upm.check_now')) + '"' + (busy ? ' disabled' : '') + '></div>'); $('#upm-sband').text(''); return; }
     var n = counts(s), tot = n.red + n.amber + n.green;
     var lead = tot ? '<b>' + esc(T('upm.waiting', { n: tot })) + '</b> ' + esc([n.green ? T('upm.n_safe', { n: n.green }) : '', n.amber ? T('upm.n_look', { n: n.amber }) : '', n.red ? T('upm.n_wait', { n: n.red }) : ''].filter(Boolean).join(', ') + '. ' + T('upm.own_button')) : '<b>' + esc(T('upm.all_current')) + '</b>';
-    $('#upm-sum').html('<div class="upm-lead"><p>' + lead + '</p><input type="button" class="upm-scan" value="' + esc(busy ? T('upm.checking') : T('upm.check_now')) + '"' + (busy ? ' disabled' : '') + '></div>' +
+    var bulk = allList(s), safeN = $.grep(bulk, function (x) { return x.risk === 'green'; }).length, ub = r.busy.update ? ' disabled' : '';
+    var btns = (safeN ? '<input type="button" class="upm-all-safe" value="' + esc(T('upm.all_safe', { n: safeN })) + '"' + ub + '>' : '') +
+      (bulk.length > safeN ? '<input type="button" class="upm-all upm-ghost" value="' + esc(T('upm.all', { n: bulk.length })) + '"' + ub + '>' : '');
+    $('#upm-sum').html('<div class="upm-lead"><p>' + lead + '</p><span class="upm-acts">' + btns + '<input type="button" class="upm-scan' + (btns ? ' upm-ghost' : '') + '" value="' + esc(busy ? T('upm.checking') : T('upm.check_now')) + '"' + (busy ? ' disabled' : '') + '></span></div>' +
       '<div class="upm-status"><span><b class="upm-ok">' + n.green + '</b> ' + esc(T('upm.green')) + '</span><span><b class="upm-am">' + n.amber + '</b> ' + esc(T('upm.amber')) + '</span><span><b class="upm-er">' + n.red + '</b> ' + esc(T('upm.red')) + '</span>' +
       '<span>Unraid OS: <b>' + esc(s.os.cur) + '</b>' + (s.os.new ? ' &rarr; ' + esc(T('upm.available', { v: s.os.new })) : '') + '</span><span class="upm-mut">' + esc(T('upm.checked_ago', { t: ago(s.t) })) + '</span></div>');
     $('#upm-sband').text(T('upm.last_check', { t: ago(s.t) }));
   }
+  // Update all (item 83): green first, then amber; never red, never the claude container (the worker uses the same rule)
+  function allList(s) {
+    var L = $.grep((s && s.rows) || [], function (x) { return x.state === 'update' && (x.risk === 'green' || x.risk === 'amber') && x.name !== 'claude'; });
+    L.sort(function (a, b) { var ra = a.risk === 'green' ? 0 : 1, rb = b.risk === 'green' ? 0 : 1; return ra - rb || a.name.toLowerCase().localeCompare(b.name.toLowerCase()); });
+    return L;
+  }
+  function startAll(set) { api('updall', {set: set}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); }
+  $(document).on('click', '#upm .upm-all-safe', function () { $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe'); });   // owner: no confirmation for the safe ones
+  $(document).on('click', '#upm .upm-all', function () {
+    if ($('#upm-sum .upm-conf').length) { return; }
+    var L = allList(D.scan), out = $.map($.grep(D.scan.rows || [], function (x) { return x.state === 'update' && (x.risk === 'red' || x.name === 'claude'); }), function (x) { return x.name; });
+    var li = $.map(L, function (x) { var k = KIND[x.kind] || KIND.unknown; return '<li><b>' + esc(x.name) + '</b> <span class="upm-ver">' + esc(x.ver || '?') + '<i>&rarr;</i>' + esc(x.rver || '?') + '</span> <span class="upm-chip ' + k[0] + '">' + esc(k[1]) + '</span>' + (/qbittorrent/i.test(x.image) ? ' <small class="upm-mut">' + esc(T('upm.c.s2_qb')) + '</small>' : '') + '</li>'; }).join('');
+    $('#upm-sum').append('<div class="upm-conf" style="margin:0 12px 12px;flex-direction:column;align-items:flex-start"><b>' + esc(T('upm.all_conf', { n: L.length })) + '</b><ol style="margin:0;padding-left:20px">' + li + '</ol>' +
+      '<span class="upm-mut">' + esc((out.length ? T('upm.all_left', { l: out.join(', ') }) + ' ' : '') + T('upm.all_stop')) + '</span>' +
+      '<span class="upm-acts" style="justify-content:flex-start"><input type="button" class="upm-all-go upm-sm" value="' + esc(T('upm.all_yes', { n: L.length })) + '"><input type="button" class="upm-all-no upm-ghost upm-sm" value="' + esc(T('upm.c.cancel')) + '"></span></div>');
+  });
+  $(document).on('click', '#upm .upm-all-no', function () { $(this).closest('.upm-conf').remove(); });
+  $(document).on('click', '#upm .upm-all-go', function () { $(this).prop('disabled', true); $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('all'); });
   $(document).on('click', '#upm .upm-scan', function () { $(this).prop('disabled', true).val(T('upm.checking')); api('scan').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); });
 
   // ---- containers

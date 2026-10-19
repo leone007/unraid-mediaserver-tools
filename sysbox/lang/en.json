@@ -2584,5 +2584,53 @@
  "gds.ctx_hint": {
   "text": "auto: ATADAS.md of this repository when the claude container has it; or a path inside the container; empty: none. What the notes call intended or known is not reported again (e.g. a parity slot left empty on purpose).",
   "note": "settings hint."
+ },
+ "upm.all_safe": {
+  "text": "Update all safe ({n})",
+  "note": "button: updates every green (safe) container at once, without a confirmation."
+ },
+ "upm.all": {
+  "text": "Update all ({n})",
+  "note": "button: updates the green and amber ones after a confirmation; never the red ones."
+ },
+ "upm.all_conf": {
+  "text": "Update these {n} containers, one after the other?",
+  "note": "title of the Update all confirmation."
+ },
+ "upm.all_left": {
+  "text": "Left out: {l} (a red update goes from its own row; claude is built here).",
+  "note": "confirmation: the containers that are not in the bulk update."
+ },
+ "upm.all_stop": {
+  "text": "If one fails, the rest is not updated; its data snapshot stays for a restore on the Snapshots page.",
+  "note": "confirmation: what happens on a failure."
+ },
+ "upm.all_yes": {
+  "text": "Update these {n}",
+  "note": "confirm button."
+ },
+ "upm.all_wait": {
+  "text": "waiting: {l}",
+  "note": "Activity: containers of Update all not started yet."
+ },
+ "uj.all_start": {
+  "text": "Update all: {n} containers",
+  "note": "Activity row title."
+ },
+ "uj.all_none": {
+  "text": "Update all: nothing to update",
+  "note": "Activity text."
+ },
+ "uj.all_now": {
+  "text": "Updating {n} containers · {i} of {n} · now {c}",
+  "note": "Activity row title while Update all runs."
+ },
+ "uj.all_stopped": {
+  "text": "Update all stopped at {c} ({i} of {n}): {ok} updated, {left} not started.",
+  "note": "Activity and Discord text when Update all stops on a failure."
+ },
+ "uj.all_done": {
+  "text": "Update all: {n} containers updated",
+  "note": "Activity text at the end."
  }
 }

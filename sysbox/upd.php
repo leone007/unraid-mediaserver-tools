@@ -1,5 +1,5 @@
 <?php
-// Web endpoint of the Update manager page (Sysbox, item 61). POST op=state|detail|scan|ask|todo|update|selftest|save
+// Web endpoint of the Update manager page (Sysbox, item 61). POST op=state|detail|scan|ask|todo|update|updall|selftest|save
 // Reading ops only read files; the others start upd_run.php in the background after a click.
 require_once __DIR__ . '/upd_lib.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
@@ -52,6 +52,11 @@ if ($op === 'update') {
     if ($n === 'claude') { sx_json(['ok' => false, 'error' => sx_tr('ue.claude_ct')]); }
     if (upd_running('update')) { sx_json(['ok' => false, 'error' => sx_tr('ue.upd_busy')]); }
     upd_spawn(['update', $n]); sx_json(['ok' => true]);
+}
+if ($op === 'updall') {
+    $set = (string)($_POST['set'] ?? ''); if (!in_array($set, ['safe', 'all'], true)) { sx_json(['ok' => false, 'error' => 'set']); }
+    if (upd_running('update')) { sx_json(['ok' => false, 'error' => sx_tr('ue.upd_busy')]); }
+    upd_spawn(['updall', $set]); sx_json(['ok' => true]);
 }
 if ($op === 'todo') {
     $n = upd_name_arg(); $e = upd_todo($n);

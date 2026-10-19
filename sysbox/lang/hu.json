@@ -1944,5 +1944,41 @@
  },
  "gds.ctx_hint": {
   "text": "auto: a repó ATADAS.md-je, ha a claude konténerben megvan; vagy egy konténeren belüli útvonal; üres: nincs. Amit a jegyzet szándékosnak vagy ismertnek ír, azt nem jelzi újra (pl. tudatosan üresen hagyott paritáshely)."
+ },
+ "upm.all_safe": {
+  "text": "Minden Safe frissítése ({n})"
+ },
+ "upm.all": {
+  "text": "Mind frissítése ({n})"
+ },
+ "upm.all_conf": {
+  "text": "Frissíted ezt a(z) {n} konténert egymás után?"
+ },
+ "upm.all_left": {
+  "text": "Kimarad: {l} (a piros frissítés a saját sorából indul; a claude itt épül)."
+ },
+ "upm.all_stop": {
+  "text": "Ha egy nem sikerül, a többit nem frissíti; az adatainak snapshotja megmarad a visszaállításhoz (Snapshots oldal)."
+ },
+ "upm.all_yes": {
+  "text": "Ezt a {n} frissítése"
+ },
+ "upm.all_wait": {
+  "text": "várakozik: {l}"
+ },
+ "uj.all_start": {
+  "text": "Mind frissítése: {n} konténer"
+ },
+ "uj.all_none": {
+  "text": "Mind frissítése: nincs mit frissíteni"
+ },
+ "uj.all_now": {
+  "text": "{n} konténer frissítése · {i} / {n} · most: {c}"
+ },
+ "uj.all_stopped": {
+  "text": "A Mind frissítése megállt itt: {c} ({i} / {n}): {ok} frissítve, {left} nem indult el."
+ },
+ "uj.all_done": {
+  "text": "Mind frissítése: {n} konténer frissítve"
  }
 }
