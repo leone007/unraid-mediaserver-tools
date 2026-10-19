@@ -20,7 +20,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.23d">
+<!ENTITY version   "2026.10.23e">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +34,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Claude Guard: your notes and the findings waiting for Claude Code go into the request as text (Claude Code may not open files outside its folder when it runs unattended, so it could not read them); a long notes file is cut to the known states, decisions, hardware and open tasks
+###2026.10.23d
 - Claude Guard and Claude Code know about each other: every report is also written to the claude container (~/guard/latest.md and report files next to the snapshots), and the Guard reads which findings are still waiting in guard_todo.md
 ###2026.10.23c
 - Claude Guard: a finding that is already an open task in your notes is marked with its item number instead of shown as new; a known state is reported again only when the condition written next to it in the notes is met
