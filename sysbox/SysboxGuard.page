@@ -64,6 +64,10 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-ctl label{display:inline-flex;align-items:center;gap:6px}
 #gdm .gdm-ctl input[type=checkbox]{margin:0}
 #gdm .gdm-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+#gdm .gdm-dis{opacity:.55}
+#gdm .gdm-form{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;border:1px solid rgba(154,125,230,.5);background:rgba(154,125,230,.08);padding:8px 10px}
+#gdm .gdm-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;opacity:.85;flex:1 1 240px;min-width:0}
+#gdm .gdm-form input[type=text]{margin:0;width:100%}
 @media (max-width:860px){#gdm .gdm-it{grid-template-columns:1fr}#gdm .gdm-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap}#gdm .gdm-set{grid-template-columns:1fr}}
 </style>
 <div id="gdm">
@@ -80,6 +84,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.earlier')?></span><b><?=$gdm_t('gdm.kept')?></b></div>
 <div class="mt-box" id="gdm-old"></div>
+
+<div class="mt-band"><span><?=$gdm_t('gdm.h.known')?></span><b id="gdm-kband"></b></div>
+<div class="mt-box" id="gdm-known"></div>
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.settings')?></span><b><?=$gdm_t('gdm.h.settings_sub')?></b></div>
 <div class="mt-box" id="gdm-set"></div>
@@ -122,10 +129,17 @@ $(function () {
   }
 
   // ---- one finding
-  function item(x) {
+  function item(x, r, i) {
     var l = LV[x.level] || LV.amber, acts = '<span class="gdm-chip ' + l[0] + '">' + esc(l[2]) + '</span>';
+    if (x.known) { acts = '<span class="gdm-chip p">' + esc(T('gdm.known')) + '</span>'; }
+    else if (x.dismissed) { acts = '<span class="gdm-chip">' + esc(T('gdm.dismissed', { t: hm(x.dismissed) })) + '</span>'; }
     if (x.link && LINK[x.link]) { acts += '<a class="gdm-link" href="' + LINK[x.link] + '">' + esc(T('link.' + x.link)) + '</a>'; }
-    return '<div class="gdm-row gdm-it ' + l[1] + '"><span><b class="k">' + esc(x.area) + '</b><small>' + esc(T('topic.' + x.topic)) + '</small></span><span>' +
+    if (x.level !== 'green' && r && !x.known) {   // the owner's answers (item 84)
+      acts += '<input type="button" class="gdm-kn gdm-ghost gdm-sm" value="' + esc(T('gdm.b_known')) + '">' +
+        '<input type="button" class="gdm-nt gdm-ghost gdm-sm" value="' + esc(x.noted ? T('gdm.b_noted') : T('gdm.b_note')) + '">' +
+        '<input type="button" class="gdm-ds gdm-ghost gdm-sm" value="' + esc(x.dismissed ? T('gdm.b_undismiss') : T('gdm.b_dismiss')) + '">';
+    }
+    return '<div class="gdm-row gdm-it ' + l[1] + (x.dismissed || x.known ? ' gdm-dis' : '') + '"' + (r ? ' data-rid="' + esc(r.id) + '" data-idx="' + i + '"' : '') + '><span><b class="k">' + esc(x.area) + '</b><small>' + esc(T('topic.' + x.topic)) + '</small></span><span>' +
       '<p><b>' + esc(x.title) + '</b> ' + esc(x.text) + '</p>' + (x.todo ? '<p class="why">' + esc(T('gdm.todo', { t: x.todo })) + '</p>' : '') +
       (x.cmd ? '<div class="gdm-cmd"><span>' + esc(x.cmd) + '</span><input type="button" class="gdm-copy gdm-ghost gdm-sm" value="' + esc(T('gdm.copy')) + '"></div>' : '') +
       '</span><span class="gdm-acts">' + acts + '</span></div>';
@@ -138,11 +152,49 @@ $(function () {
     if (r.error) { return '<div class="gdm-row gdm-it s-red"><span><b class="k">' + esc(T('gdm.failed')) + '</b></span><span><p>' + esc(r.error) + '</p></span><span></span></div>'; }
     if (r.skipped) { return '<div class="gdm-row gdm-it s-grey"><span><b class="k">' + esc(T('gdm.skipped')) + '</b></span><span><p>' + esc(r.skipped) + '</p></span><span></span></div>'; }
     var h = '';
-    $.each(r.items || [], function (i, x) { h += item(x); });
+    $.each(r.items || [], function (i, x) { h += item(x, r, i); });
     if (r.noise) { var g = 'noise' + r.id; h += gbar(g, 's-grey', esc(T('gdm.noise')), '') + grp(g, '<div class="gdm-row gdm-it s-grey"><span><b class="k">syslog</b></span><span><p>' + esc(r.noise) + '</p></span><span></span></div>'); }
     return h;
   }
   function kindTxt(r) { return r.kind === 'event' ? T('gdm.k_event') : r.kind === 'manual' ? T('gdm.k_manual') : T('gdm.k_daily'); }
+
+  // ---- answers to a finding: Known (with why and an optional condition), a note for Claude Code, Dismiss from the tile
+  function itemRef(el) { var $r = $(el).closest('[data-rid]'); return {$r: $r, rid: String($r.data('rid')), idx: +$r.data('idx')}; }
+  function act(op, data, $b) { $b.prop('disabled', true); api(op, data).done(function (r) { if (!r.ok) { window.alert(r.error); $b.prop('disabled', false); } else { FORM = null; load(); } }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); }
+  var FORM = null;   // an open form survives the 3-second refresh: {rid, idx, kind}
+  function formHtml(kind) {
+    return kind === 'known' ?
+      '<div class="gdm-form"><label>' + esc(T('gdm.f_why')) + '<input type="text" class="gdm-f1" maxlength="300"></label><label>' + esc(T('gdm.f_again')) + '<input type="text" class="gdm-f2" maxlength="200"></label>' +
+      '<input type="button" class="gdm-f-ok" value="' + esc(T('gdm.b_mark')) + '"><input type="button" class="gdm-f-no gdm-ghost gdm-sm" value="' + esc(T('gdm.cancel')) + '"></div>' :
+      '<div class="gdm-form"><label>' + esc(T('gdm.f_note')) + '<input type="text" class="gdm-f1" maxlength="600"></label>' +
+      '<input type="button" class="gdm-f-ok" value="' + esc(T('gdm.b_send')) + '"><input type="button" class="gdm-f-no gdm-ghost gdm-sm" value="' + esc(T('gdm.cancel')) + '"></div>';
+  }
+  function openForm(el, kind) { var o = itemRef(el); o.$r.find('.gdm-form').remove(); o.$r.append(formHtml(kind)); o.$r.find('.gdm-f1').focus(); FORM = {rid: o.rid, idx: o.idx, kind: kind}; }
+  $(document).on('click', '#gdm .gdm-kn', function () { openForm(this, 'known'); });
+  $(document).on('click', '#gdm .gdm-nt', function () { openForm(this, 'note'); });
+  $(document).on('click', '#gdm .gdm-f-no', function () { $(this).closest('.gdm-form').remove(); FORM = null; });
+  $(document).on('click', '#gdm .gdm-f-ok', function () {
+    var o = itemRef(this), $f = $(this).closest('.gdm-form');
+    if (FORM && FORM.kind === 'known') { act('known', {rid: o.rid, idx: o.idx, why: $f.find('.gdm-f1').val(), again: $f.find('.gdm-f2').val()}, $(this)); }
+    else { act('note', {rid: o.rid, idx: o.idx, text: $f.find('.gdm-f1').val()}, $(this)); }
+  });
+  $(document).on('click', '#gdm .gdm-ds', function () { var o = itemRef(this), on = !$(this).closest('.gdm-it').hasClass('gdm-dis'); act('dismiss', {rid: o.rid, idx: o.idx, on: on ? 1 : 0}, $(this)); });
+  $(document).on('click', '#gdm .gdm-kdel', function () { act('unknown', {kid: String($(this).data('kid'))}, $(this)); });
+  function drawKnown(r) {
+    var K = r.known || [], h = '';
+    $.each(K, function (i, k) {
+      h += '<div class="gdm-row gdm-it s-purple"><span><b class="k">' + esc(k.area) + '</b><small>' + esc(day(k.t)) + '</small></span><span><p>' + esc(k.title) + '</p><p class="why">' + esc(T('gdm.k_why', { t: k.why })) +
+        (k.again ? ' · ' + esc(T('gdm.k_again', { t: k.again })) : '') + '</p></span><span class="gdm-acts"><input type="button" class="gdm-kdel gdm-ghost gdm-sm" data-kid="' + esc(k.id) + '" value="' + esc(T('gdm.b_remove')) + '"></span></div>';
+    });
+    $('#gdm-known').html(h || '<div class="gdm-status gdm-mut">' + esc(T('gdm.no_known')) + '</div>');
+    $('#gdm-kband').text(T('gdm.known_band', { n: K.length }));
+  }
+  function restoreForm() {   // the refresh redraws the rows: put an open form back with what was typed
+    if (!FORM) { return; }
+    var $r = $('#gdm [data-rid="' + FORM.rid + '"][data-idx="' + FORM.idx + '"]').first(); if (!$r.length || $r.find('.gdm-form').length) { return; }
+    $r.append(formHtml(FORM.kind)); if (FORM.v1) { $r.find('.gdm-f1').val(FORM.v1); } if (FORM.v2) { $r.find('.gdm-f2').val(FORM.v2); }
+  }
+  $(document).on('input', '#gdm .gdm-form input[type=text]', function () { if (FORM) { var $f = $(this).closest('.gdm-form'); FORM.v1 = $f.find('.gdm-f1').val(); FORM.v2 = $f.find('.gdm-f2').val(); } });
 
   // ---- the latest report
   function drawRep(r) {
@@ -231,7 +283,7 @@ $(function () {
   });
 
   function draw(r) {
-    D = r; drawAct(r); drawRep(r); drawOld(r);
+    D = r; drawAct(r); drawRep(r); drawOld(r); drawKnown(r); restoreForm();
     if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); }
   }
   function load() {

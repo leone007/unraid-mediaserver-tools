@@ -1992,5 +1992,74 @@
  },
  "con.upd_wait": {
   "text": "{n} wait"
+ },
+ "gd.e_gone": {
+  "text": "Ez a találat már nincs a jelentések között (30 napnál régebbi)"
+ },
+ "gd.e_why": {
+  "text": "Írd be, miért ismert"
+ },
+ "gd.e_note": {
+  "text": "Írd be a megjegyzést"
+ },
+ "gd.e_todo": {
+  "text": "Nem található a claude konténer repó-mappája, a megjegyzés nem mentődött"
+ },
+ "gdm.h.known": {
+  "text": "Ismertnek jelölve"
+ },
+ "gdm.known_band": {
+  "text": "Ezeket Claude nem jelzi újra · {n}"
+ },
+ "gdm.no_known": {
+  "text": "Még nincs ismertnek jelölt tétel. Egy találatnál a Known gombbal jelölhetsz."
+ },
+ "gdm.known": {
+  "text": "Ismert"
+ },
+ "gdm.dismissed": {
+  "text": "Elrejtve {t}"
+ },
+ "gdm.b_known": {
+  "text": "Ismert…"
+ },
+ "gdm.b_note": {
+  "text": "Megjegyzés a Claude Code-nak…"
+ },
+ "gdm.b_noted": {
+  "text": "Megjegyzés elküldve · újabb…"
+ },
+ "gdm.b_dismiss": {
+  "text": "Elrejtés"
+ },
+ "gdm.b_undismiss": {
+  "text": "Újra a csempére"
+ },
+ "gdm.b_mark": {
+  "text": "Ismertnek jelöl"
+ },
+ "gdm.b_send": {
+  "text": "Küldés"
+ },
+ "gdm.b_remove": {
+  "text": "Törlés"
+ },
+ "gdm.cancel": {
+  "text": "Mégse"
+ },
+ "gdm.f_why": {
+  "text": "Miért ismert (Claude minden jelentés előtt elolvassa)"
+ },
+ "gdm.f_again": {
+  "text": "Csak akkor jelezze újra, ha (nem kötelező)"
+ },
+ "gdm.f_note": {
+  "text": "Megjegyzés vagy kérdés a következő Claude Code munkamenetnek"
+ },
+ "gdm.k_why": {
+  "text": "Miért: {t}"
+ },
+ "gdm.k_again": {
+  "text": "csak akkor jelezze újra, ha: {t}"
  }
 }

@@ -2648,5 +2648,97 @@
  "con.upd_wait": {
   "text": "{n} wait",
   "note": "tile: waiting updates in the Wait group (keep the group name)."
+ },
+ "gd.e_gone": {
+  "text": "This finding is no longer in the reports (older than 30 days)",
+  "note": "error on the Claude Guard page."
+ },
+ "gd.e_why": {
+  "text": "Write why it is known",
+  "note": "error: the Known form needs a reason."
+ },
+ "gd.e_note": {
+  "text": "Write the note",
+  "note": "error: the note is empty."
+ },
+ "gd.e_todo": {
+  "text": "The repository folder of the claude container was not found, the note was not saved",
+  "note": "error."
+ },
+ "gdm.h.known": {
+  "text": "Marked as known",
+  "note": "band title."
+ },
+ "gdm.known_band": {
+  "text": "Claude does not report these again · {n}",
+  "note": "right side of the band."
+ },
+ "gdm.no_known": {
+  "text": "Nothing marked as known yet. Use Known on a finding.",
+  "note": "empty state."
+ },
+ "gdm.known": {
+  "text": "Known",
+  "note": "chip of a finding marked as known."
+ },
+ "gdm.dismissed": {
+  "text": "Dismissed {t}",
+  "note": "chip: the finding is hidden from the tile at this time."
+ },
+ "gdm.b_known": {
+  "text": "Known…",
+  "note": "button: mark a finding as known."
+ },
+ "gdm.b_note": {
+  "text": "Note for Claude Code…",
+  "note": "button: send a note about a finding to the next Claude Code session."
+ },
+ "gdm.b_noted": {
+  "text": "Note sent · add another…",
+  "note": "button after a note was sent."
+ },
+ "gdm.b_dismiss": {
+  "text": "Dismiss",
+  "note": "button: hide the finding from the dashboard tile only."
+ },
+ "gdm.b_undismiss": {
+  "text": "Show on the tile again",
+  "note": "button: undo Dismiss."
+ },
+ "gdm.b_mark": {
+  "text": "Mark as known",
+  "note": "form button."
+ },
+ "gdm.b_send": {
+  "text": "Send",
+  "note": "form button."
+ },
+ "gdm.b_remove": {
+  "text": "Remove",
+  "note": "button: remove a known entry, so it is reported again."
+ },
+ "gdm.cancel": {
+  "text": "Cancel",
+  "note": "form button."
+ },
+ "gdm.f_why": {
+  "text": "Why it is known (Claude reads this before every report)",
+  "note": "form label."
+ },
+ "gdm.f_again": {
+  "text": "Report again only if (optional)",
+  "note": "form label."
+ },
+ "gdm.f_note": {
+  "text": "Note or question for the next Claude Code session",
+  "note": "form label."
+ },
+ "gdm.k_why": {
+  "text": "Why: {t}",
+  "note": "line of a known entry."
+ },
+ "gdm.k_again": {
+  "text": "report again only if: {t}",
+  "note": "line of a known entry."
  }
 }

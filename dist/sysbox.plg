@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.24a">
+<!ENTITY version   "2026.10.25">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Claude Guard: answer a finding on the page. Known (why, and optionally when to report it again) stops it at once from the next report and goes to Claude Code for the notes; Note for Claude Code sends a remark to the next session; Dismiss hides it from the tile only and it stays on the page. A Marked as known list with Remove
+###2026.10.24a
 - The tile shows the waiting container updates (a purple row under the containers, it opens the Update manager)
 - Update manager: the daily check runs again when its result is gone after a reboot or a Sysbox install (it waited until the next morning)
 ###2026.10.24
@@ -5585,6 +5587,98 @@ function mt_i18n_js($dir, $name, $only = null) {
  "con.upd_wait": {
   "text": "{n} wait",
   "note": "tile: waiting updates in the Wait group (keep the group name)."
+ },
+ "gd.e_gone": {
+  "text": "This finding is no longer in the reports (older than 30 days)",
+  "note": "error on the Claude Guard page."
+ },
+ "gd.e_why": {
+  "text": "Write why it is known",
+  "note": "error: the Known form needs a reason."
+ },
+ "gd.e_note": {
+  "text": "Write the note",
+  "note": "error: the note is empty."
+ },
+ "gd.e_todo": {
+  "text": "The repository folder of the claude container was not found, the note was not saved",
+  "note": "error."
+ },
+ "gdm.h.known": {
+  "text": "Marked as known",
+  "note": "band title."
+ },
+ "gdm.known_band": {
+  "text": "Claude does not report these again · {n}",
+  "note": "right side of the band."
+ },
+ "gdm.no_known": {
+  "text": "Nothing marked as known yet. Use Known on a finding.",
+  "note": "empty state."
+ },
+ "gdm.known": {
+  "text": "Known",
+  "note": "chip of a finding marked as known."
+ },
+ "gdm.dismissed": {
+  "text": "Dismissed {t}",
+  "note": "chip: the finding is hidden from the tile at this time."
+ },
+ "gdm.b_known": {
+  "text": "Known…",
+  "note": "button: mark a finding as known."
+ },
+ "gdm.b_note": {
+  "text": "Note for Claude Code…",
+  "note": "button: send a note about a finding to the next Claude Code session."
+ },
+ "gdm.b_noted": {
+  "text": "Note sent · add another…",
+  "note": "button after a note was sent."
+ },
+ "gdm.b_dismiss": {
+  "text": "Dismiss",
+  "note": "button: hide the finding from the dashboard tile only."
+ },
+ "gdm.b_undismiss": {
+  "text": "Show on the tile again",
+  "note": "button: undo Dismiss."
+ },
+ "gdm.b_mark": {
+  "text": "Mark as known",
+  "note": "form button."
+ },
+ "gdm.b_send": {
+  "text": "Send",
+  "note": "form button."
+ },
+ "gdm.b_remove": {
+  "text": "Remove",
+  "note": "button: remove a known entry, so it is reported again."
+ },
+ "gdm.cancel": {
+  "text": "Cancel",
+  "note": "form button."
+ },
+ "gdm.f_why": {
+  "text": "Why it is known (Claude reads this before every report)",
+  "note": "form label."
+ },
+ "gdm.f_again": {
+  "text": "Report again only if (optional)",
+  "note": "form label."
+ },
+ "gdm.f_note": {
+  "text": "Note or question for the next Claude Code session",
+  "note": "form label."
+ },
+ "gdm.k_why": {
+  "text": "Why: {t}",
+  "note": "line of a known entry."
+ },
+ "gdm.k_again": {
+  "text": "report again only if: {t}",
+  "note": "line of a known entry."
  }
 }
 ]]></INLINE>
@@ -7588,6 +7682,75 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "con.upd_wait": {
   "text": "{n} wait"
+ },
+ "gd.e_gone": {
+  "text": "Ez a találat már nincs a jelentések között (30 napnál régebbi)"
+ },
+ "gd.e_why": {
+  "text": "Írd be, miért ismert"
+ },
+ "gd.e_note": {
+  "text": "Írd be a megjegyzést"
+ },
+ "gd.e_todo": {
+  "text": "Nem található a claude konténer repó-mappája, a megjegyzés nem mentődött"
+ },
+ "gdm.h.known": {
+  "text": "Ismertnek jelölve"
+ },
+ "gdm.known_band": {
+  "text": "Ezeket Claude nem jelzi újra · {n}"
+ },
+ "gdm.no_known": {
+  "text": "Még nincs ismertnek jelölt tétel. Egy találatnál a Known gombbal jelölhetsz."
+ },
+ "gdm.known": {
+  "text": "Ismert"
+ },
+ "gdm.dismissed": {
+  "text": "Elrejtve {t}"
+ },
+ "gdm.b_known": {
+  "text": "Ismert…"
+ },
+ "gdm.b_note": {
+  "text": "Megjegyzés a Claude Code-nak…"
+ },
+ "gdm.b_noted": {
+  "text": "Megjegyzés elküldve · újabb…"
+ },
+ "gdm.b_dismiss": {
+  "text": "Elrejtés"
+ },
+ "gdm.b_undismiss": {
+  "text": "Újra a csempére"
+ },
+ "gdm.b_mark": {
+  "text": "Ismertnek jelöl"
+ },
+ "gdm.b_send": {
+  "text": "Küldés"
+ },
+ "gdm.b_remove": {
+  "text": "Törlés"
+ },
+ "gdm.cancel": {
+  "text": "Mégse"
+ },
+ "gdm.f_why": {
+  "text": "Miért ismert (Claude minden jelentés előtt elolvassa)"
+ },
+ "gdm.f_again": {
+  "text": "Csak akkor jelezze újra, ha (nem kötelező)"
+ },
+ "gdm.f_note": {
+  "text": "Megjegyzés vagy kérdés a következő Claude Code munkamenetnek"
+ },
+ "gdm.k_why": {
+  "text": "Miért: {t}"
+ },
+ "gdm.k_again": {
+  "text": "csak akkor jelezze újra, ha: {t}"
  }
 }
 ]]></INLINE>
@@ -10099,6 +10262,10 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-ctl label{display:inline-flex;align-items:center;gap:6px}
 #gdm .gdm-ctl input[type=checkbox]{margin:0}
 #gdm .gdm-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+#gdm .gdm-dis{opacity:.55}
+#gdm .gdm-form{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;border:1px solid rgba(154,125,230,.5);background:rgba(154,125,230,.08);padding:8px 10px}
+#gdm .gdm-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;opacity:.85;flex:1 1 240px;min-width:0}
+#gdm .gdm-form input[type=text]{margin:0;width:100%}
 @media (max-width:860px){#gdm .gdm-it{grid-template-columns:1fr}#gdm .gdm-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap}#gdm .gdm-set{grid-template-columns:1fr}}
 </style>
 <div id="gdm">
@@ -10115,6 +10282,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.earlier')?></span><b><?=$gdm_t('gdm.kept')?></b></div>
 <div class="mt-box" id="gdm-old"></div>
+
+<div class="mt-band"><span><?=$gdm_t('gdm.h.known')?></span><b id="gdm-kband"></b></div>
+<div class="mt-box" id="gdm-known"></div>
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.settings')?></span><b><?=$gdm_t('gdm.h.settings_sub')?></b></div>
 <div class="mt-box" id="gdm-set"></div>
@@ -10157,10 +10327,17 @@ $(function () {
   }
 
   // ---- one finding
-  function item(x) {
+  function item(x, r, i) {
     var l = LV[x.level] || LV.amber, acts = '<span class="gdm-chip ' + l[0] + '">' + esc(l[2]) + '</span>';
+    if (x.known) { acts = '<span class="gdm-chip p">' + esc(T('gdm.known')) + '</span>'; }
+    else if (x.dismissed) { acts = '<span class="gdm-chip">' + esc(T('gdm.dismissed', { t: hm(x.dismissed) })) + '</span>'; }
     if (x.link && LINK[x.link]) { acts += '<a class="gdm-link" href="' + LINK[x.link] + '">' + esc(T('link.' + x.link)) + '</a>'; }
-    return '<div class="gdm-row gdm-it ' + l[1] + '"><span><b class="k">' + esc(x.area) + '</b><small>' + esc(T('topic.' + x.topic)) + '</small></span><span>' +
+    if (x.level !== 'green' && r && !x.known) {   // the owner's answers (item 84)
+      acts += '<input type="button" class="gdm-kn gdm-ghost gdm-sm" value="' + esc(T('gdm.b_known')) + '">' +
+        '<input type="button" class="gdm-nt gdm-ghost gdm-sm" value="' + esc(x.noted ? T('gdm.b_noted') : T('gdm.b_note')) + '">' +
+        '<input type="button" class="gdm-ds gdm-ghost gdm-sm" value="' + esc(x.dismissed ? T('gdm.b_undismiss') : T('gdm.b_dismiss')) + '">';
+    }
+    return '<div class="gdm-row gdm-it ' + l[1] + (x.dismissed || x.known ? ' gdm-dis' : '') + '"' + (r ? ' data-rid="' + esc(r.id) + '" data-idx="' + i + '"' : '') + '><span><b class="k">' + esc(x.area) + '</b><small>' + esc(T('topic.' + x.topic)) + '</small></span><span>' +
       '<p><b>' + esc(x.title) + '</b> ' + esc(x.text) + '</p>' + (x.todo ? '<p class="why">' + esc(T('gdm.todo', { t: x.todo })) + '</p>' : '') +
       (x.cmd ? '<div class="gdm-cmd"><span>' + esc(x.cmd) + '</span><input type="button" class="gdm-copy gdm-ghost gdm-sm" value="' + esc(T('gdm.copy')) + '"></div>' : '') +
       '</span><span class="gdm-acts">' + acts + '</span></div>';
@@ -10173,11 +10350,49 @@ $(function () {
     if (r.error) { return '<div class="gdm-row gdm-it s-red"><span><b class="k">' + esc(T('gdm.failed')) + '</b></span><span><p>' + esc(r.error) + '</p></span><span></span></div>'; }
     if (r.skipped) { return '<div class="gdm-row gdm-it s-grey"><span><b class="k">' + esc(T('gdm.skipped')) + '</b></span><span><p>' + esc(r.skipped) + '</p></span><span></span></div>'; }
     var h = '';
-    $.each(r.items || [], function (i, x) { h += item(x); });
+    $.each(r.items || [], function (i, x) { h += item(x, r, i); });
     if (r.noise) { var g = 'noise' + r.id; h += gbar(g, 's-grey', esc(T('gdm.noise')), '') + grp(g, '<div class="gdm-row gdm-it s-grey"><span><b class="k">syslog</b></span><span><p>' + esc(r.noise) + '</p></span><span></span></div>'); }
     return h;
   }
   function kindTxt(r) { return r.kind === 'event' ? T('gdm.k_event') : r.kind === 'manual' ? T('gdm.k_manual') : T('gdm.k_daily'); }
+
+  // ---- answers to a finding: Known (with why and an optional condition), a note for Claude Code, Dismiss from the tile
+  function itemRef(el) { var $r = $(el).closest('[data-rid]'); return {$r: $r, rid: String($r.data('rid')), idx: +$r.data('idx')}; }
+  function act(op, data, $b) { $b.prop('disabled', true); api(op, data).done(function (r) { if (!r.ok) { window.alert(r.error); $b.prop('disabled', false); } else { FORM = null; load(); } }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); }
+  var FORM = null;   // an open form survives the 3-second refresh: {rid, idx, kind}
+  function formHtml(kind) {
+    return kind === 'known' ?
+      '<div class="gdm-form"><label>' + esc(T('gdm.f_why')) + '<input type="text" class="gdm-f1" maxlength="300"></label><label>' + esc(T('gdm.f_again')) + '<input type="text" class="gdm-f2" maxlength="200"></label>' +
+      '<input type="button" class="gdm-f-ok" value="' + esc(T('gdm.b_mark')) + '"><input type="button" class="gdm-f-no gdm-ghost gdm-sm" value="' + esc(T('gdm.cancel')) + '"></div>' :
+      '<div class="gdm-form"><label>' + esc(T('gdm.f_note')) + '<input type="text" class="gdm-f1" maxlength="600"></label>' +
+      '<input type="button" class="gdm-f-ok" value="' + esc(T('gdm.b_send')) + '"><input type="button" class="gdm-f-no gdm-ghost gdm-sm" value="' + esc(T('gdm.cancel')) + '"></div>';
+  }
+  function openForm(el, kind) { var o = itemRef(el); o.$r.find('.gdm-form').remove(); o.$r.append(formHtml(kind)); o.$r.find('.gdm-f1').focus(); FORM = {rid: o.rid, idx: o.idx, kind: kind}; }
+  $(document).on('click', '#gdm .gdm-kn', function () { openForm(this, 'known'); });
+  $(document).on('click', '#gdm .gdm-nt', function () { openForm(this, 'note'); });
+  $(document).on('click', '#gdm .gdm-f-no', function () { $(this).closest('.gdm-form').remove(); FORM = null; });
+  $(document).on('click', '#gdm .gdm-f-ok', function () {
+    var o = itemRef(this), $f = $(this).closest('.gdm-form');
+    if (FORM && FORM.kind === 'known') { act('known', {rid: o.rid, idx: o.idx, why: $f.find('.gdm-f1').val(), again: $f.find('.gdm-f2').val()}, $(this)); }
+    else { act('note', {rid: o.rid, idx: o.idx, text: $f.find('.gdm-f1').val()}, $(this)); }
+  });
+  $(document).on('click', '#gdm .gdm-ds', function () { var o = itemRef(this), on = !$(this).closest('.gdm-it').hasClass('gdm-dis'); act('dismiss', {rid: o.rid, idx: o.idx, on: on ? 1 : 0}, $(this)); });
+  $(document).on('click', '#gdm .gdm-kdel', function () { act('unknown', {kid: String($(this).data('kid'))}, $(this)); });
+  function drawKnown(r) {
+    var K = r.known || [], h = '';
+    $.each(K, function (i, k) {
+      h += '<div class="gdm-row gdm-it s-purple"><span><b class="k">' + esc(k.area) + '</b><small>' + esc(day(k.t)) + '</small></span><span><p>' + esc(k.title) + '</p><p class="why">' + esc(T('gdm.k_why', { t: k.why })) +
+        (k.again ? ' · ' + esc(T('gdm.k_again', { t: k.again })) : '') + '</p></span><span class="gdm-acts"><input type="button" class="gdm-kdel gdm-ghost gdm-sm" data-kid="' + esc(k.id) + '" value="' + esc(T('gdm.b_remove')) + '"></span></div>';
+    });
+    $('#gdm-known').html(h || '<div class="gdm-status gdm-mut">' + esc(T('gdm.no_known')) + '</div>');
+    $('#gdm-kband').text(T('gdm.known_band', { n: K.length }));
+  }
+  function restoreForm() {   // the refresh redraws the rows: put an open form back with what was typed
+    if (!FORM) { return; }
+    var $r = $('#gdm [data-rid="' + FORM.rid + '"][data-idx="' + FORM.idx + '"]').first(); if (!$r.length || $r.find('.gdm-form').length) { return; }
+    $r.append(formHtml(FORM.kind)); if (FORM.v1) { $r.find('.gdm-f1').val(FORM.v1); } if (FORM.v2) { $r.find('.gdm-f2').val(FORM.v2); }
+  }
+  $(document).on('input', '#gdm .gdm-form input[type=text]', function () { if (FORM) { var $f = $(this).closest('.gdm-form'); FORM.v1 = $f.find('.gdm-f1').val(); FORM.v2 = $f.find('.gdm-f2').val(); } });
 
   // ---- the latest report
   function drawRep(r) {
@@ -10266,7 +10481,7 @@ $(function () {
   });
 
   function draw(r) {
-    D = r; drawAct(r); drawRep(r); drawOld(r);
+    D = r; drawAct(r); drawRep(r); drawOld(r); drawKnown(r); restoreForm();
     if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); }
   }
   function load() {
@@ -10530,6 +10745,9 @@ function gd_prompt($kind, $now, $prev, $events, $c = null) {
     if ($notes !== '') { $p .= "The owner's notes about this server ({$ctx}) are below. What they describe as intended, decided or already known is not a finding: do not report it again " .
         "(for example a parity slot left empty on purpose, or a SMART value that is known and has not grown). Report it only if it changed since or the condition written next to it is met. " .
         "A finding that is already an open task in the notes stays a finding at its level, but give its item number and do not present it as new.\n<owner_notes>\n" . $notes . "\n</owner_notes>\n\n"; }
+    $kn = gd_known();
+    if ($kn) { $p .= "The owner marked these findings as known. Do not report them again unless their condition is met; then report it and say which condition:\n<owner_marked_known>\n" .
+        implode("\n", array_map(function ($k) { return '- ' . $k['area'] . ': ' . $k['title'] . ' | why: ' . $k['why'] . ($k['again'] !== '' ? ' | report again only if: ' . $k['again'] : ''); }, $kn)) . "\n</owner_marked_known>\n\n"; }
     $pf = gd_todo_file(); $pend = ($pf !== '' && @filesize($pf) > 0) ? mb_substr((string)@file_get_contents($pf), 0, 12000) : '';
     $p .= "You work together with Claude Code sessions that the owner runs in the same container: they read your reports (~/guard/latest.md), take your amber and red findings into the notes as tasks, and answer them there (fixed, asked the owner, or recorded as intended or known). " .
         ($pend !== '' ? "These findings you handed over earlier have not been taken by a session yet; a finding listed here is not new, say it is waiting for Claude Code:\n<waiting_for_claude_code>\n" . $pend . "\n</waiting_for_claude_code>" : '') . "\n\n";
@@ -10630,6 +10848,50 @@ function gd_report_add($r) {
     $all = array_values(array_filter($all, function ($x) { return time() - (int)($x['t'] ?? 0) < GD_KEEP_DAYS * 86400; }));
     upd_write(gd_reports_file(), $all);
     if ($l) { flock($l, LOCK_UN); fclose($l); }
+    gd_tile_write($all);
+}
+// changes one finding of a report ($fn gets the item by reference); false when the report or the item is not there
+function gd_item_edit($rid, $idx, $fn) {
+    $l = @fopen(gd_lock_file('reports'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $all = gd_reports(); $ok = false; $item = null;
+    foreach ($all as $i => $r) { if (($r['id'] ?? '') === $rid && isset($r['items'][$idx])) { $fn($all[$i]['items'][$idx]); $item = $all[$i]['items'][$idx]; $ok = true; } }
+    if ($ok) { upd_write(gd_reports_file(), $all); }
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    if ($ok) { gd_tile_write($all); }
+    return $ok ? $item : false;
+}
+// the tile's summary: the latest report that ran, its amber and red findings that are not dismissed (item 84)
+function gd_tile_write($all) {
+    $last = null; foreach ($all as $r) { if (empty($r['error']) && empty($r['skipped']) && ($last === null || $r['t'] > $last['t'])) { $last = $r; } }
+    $f = gd_tmp() . '/sysbox_guard_last.json';
+    if (!$last) { @unlink($f); return; }
+    $open = array_values(array_filter($last['items'] ?? [], function ($x) { return $x['level'] !== 'green' && empty($x['dismissed']); }));
+    $red = count(array_filter($open, function ($x) { return $x['level'] === 'red'; }));
+    upd_write($f, ['t' => $last['t'], 'verdict' => $red ? 'red' : ($open ? 'amber' : 'green'), 'n' => count($open), 'first' => $open ? $open[0]['area'] . ': ' . $open[0]['title'] : '']);
+}
+
+// ---- what the owner marked as known (item 84): not reported again unless its own condition is met ----------------
+function gd_known_file() { return gd_dir() . '/guard_known.json'; }
+function gd_known() { return upd_json(gd_known_file(), []); }
+function gd_known_add($k) {
+    $l = @fopen(gd_lock_file('known'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $all = gd_known(); $all[] = $k; $ok = upd_write(gd_known_file(), $all);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $ok;
+}
+function gd_known_del($id) {
+    $l = @fopen(gd_lock_file('known'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $all = array_values(array_filter(gd_known(), function ($k) use ($id) { return ($k['id'] ?? '') !== $id; })); $ok = upd_write(gd_known_file(), $all);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $ok;
+}
+// one entry for Claude Code in guard_todo.md (the owner's answer to a finding)
+function gd_todo_append($md) {
+    $f = gd_todo_file(); if ($f === '') { return false; }
+    if (!is_file($f) || @filesize($f) === 0) { $md = "# Teendők a Claude Guardból\n\nA Sysbox Claude Guard írja (sárga és piros találatok, a tulajdonos válaszai). Claude a munkamenet elején átvezeti az ATADAS.md-be, utána kiüríti.\n" . $md; }
+    if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return false; }
+    @chown($f, 'nobody'); @chgrp($f, 'users'); @chmod($f, 0664);
+    return true;
 }
 
 // ---- outputs: Discord and the to-do file -------------------------------------------------------------------------
@@ -10681,7 +10943,7 @@ function gd_todo($c, $r, &$st) {
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/guard.php">
 <INLINE><![CDATA[<?php
-// Web endpoint of the Claude Guard page (Sysbox, item 44). POST op=state|run|save
+// Web endpoint of the Claude Guard page (Sysbox, items 44 and 84). POST op=state|run|save|dismiss|known|unknown|note
 // state only reads files; run starts guard_run.php in the background after a click; save writes guard.json.
 require_once __DIR__ . '/guard_lib.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
@@ -10696,12 +10958,47 @@ if ($op === 'state') {
     $reps = gd_reports(); usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });
     sx_json(['ok' => true, 'cfg' => gd_cfg(), 'ct' => is_file(gd_flag_file()), 'usage' => gd_usage(), 'reports' => $reps, 'jobs' => array_values($run['jobs']),
              'night' => count($st['night'] ?? []), 'ev_today' => ($st['ev_day']['d'] ?? '') === date('Y-m-d') ? (int)$st['ev_day']['n'] : 0,
-             'quiet' => gd_quiet(gd_cfg()), 'ctx_path' => gd_ctx_path(gd_cfg()), 'lang_now' => gd_lang_code(gd_cfg()), 'busy' => gd_running('claude'), 'log' => $log]);
+             'quiet' => gd_quiet(gd_cfg()), 'ctx_path' => gd_ctx_path(gd_cfg()), 'lang_now' => gd_lang_code(gd_cfg()), 'busy' => gd_running('claude'), 'log' => $log, 'known' => gd_known()]);
 }
 if ($op === 'run') {
     if (!is_file(gd_flag_file()) && !gd_ct_exists()) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_noct')]); }
     if (gd_running('claude')) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_busy')]); }
     gd_spawn(['run', 'manual']); sx_json(['ok' => true, 'now' => time()]);
+}
+// the owner's answers to a finding (item 84): a report id, the item's index, and short texts without control characters
+function gd_arg_item() {
+    $rid = (string)($_POST['rid'] ?? ''); $idx = (int)($_POST['idx'] ?? -1);
+    if (!preg_match('/^[a-f0-9]{10}$/', $rid) || $idx < 0 || $idx > 50) { sx_json(['ok' => false, 'error' => 'item']); }
+    foreach (gd_reports() as $r) { if ($r['id'] === $rid && isset($r['items'][$idx])) { return [$rid, $idx, $r, $r['items'][$idx]]; } }
+    sx_json(['ok' => false, 'error' => sx_tr('gd.e_gone')]);
+}
+function gd_arg_text($k, $max) { return trim(mb_substr(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', (string)($_POST[$k] ?? '')), 0, $max)); }
+if ($op === 'dismiss') {   // only from the tile; it stays on the page
+    [$rid, $idx] = gd_arg_item(); $on = !empty($_POST['on']) && $_POST['on'] !== '0';
+    $it = gd_item_edit($rid, $idx, function (&$x) use ($on) { if ($on) { $x['dismissed'] = time(); } else { unset($x['dismissed']); } });
+    sx_json(['ok' => $it !== false]);
+}
+if ($op === 'known') {
+    [$rid, $idx, $r, $it] = gd_arg_item(); $why = gd_arg_text('why', 300); $again = gd_arg_text('again', 200);
+    if ($why === '') { sx_json(['ok' => false, 'error' => sx_tr('gd.e_why')]); }
+    $k = ['id' => substr(md5($rid . $idx . microtime()), 0, 10), 'area' => $it['area'], 'title' => $it['title'], 'why' => $why, 'again' => $again, 't' => time()];
+    if (!gd_known_add($k)) { sx_json(['ok' => false, 'error' => 'write']); }
+    gd_item_edit($rid, $idx, function (&$x) use ($k) { $x['known'] = $k['id']; if (empty($x['dismissed'])) { $x['dismissed'] = time(); } });   // known: off the tile too
+    gd_todo_append("\n## " . date('Y-m-d H:i') . ' · Claude Guard · ' . $it['area'] . " · ISMERT (a tulajdonos jelölte az oldalon)\n\n" . $it['title'] . "\n\nIndoklás: " . $why . "\n" .
+        ($again !== '' ? "\nCsak akkor jelezze újra, ha: " . $again . "\n" : '') . "\nTeendő: vezesd be az ATADAS.md „Tudatos döntések és ismert állapotok” szakaszába.\n");
+    sx_json(['ok' => true]);
+}
+if ($op === 'unknown') {
+    $id = (string)($_POST['kid'] ?? ''); if (!preg_match('/^[a-f0-9]{10}$/', $id)) { sx_json(['ok' => false, 'error' => 'id']); }
+    sx_json(['ok' => gd_known_del($id)]);
+}
+if ($op === 'note') {
+    [$rid, $idx, $r, $it] = gd_arg_item(); $txt = gd_arg_text('text', 600);
+    if ($txt === '') { sx_json(['ok' => false, 'error' => sx_tr('gd.e_note')]); }
+    $ok = gd_todo_append("\n## " . date('Y-m-d H:i') . ' · Claude Guard · ' . $it['area'] . ' (' . ($it['level'] === 'red' ? 'PIROS' : 'SÁRGA') . ") · MEGJEGYZÉS A TULAJDONOSTÓL\n\n" . $it['title'] . ' ' . $it['text'] . "\n\nA tulajdonos: " . $txt . "\n" .
+        ($it['cmd'] !== '' ? "\nEllenőrzés (csak olvas): `" . $it['cmd'] . "`\n" : ''));
+    if ($ok) { gd_item_edit($rid, $idx, function (&$x) { $x['noted'] = time(); }); }
+    sx_json($ok ? ['ok' => true] : ['ok' => false, 'error' => sx_tr('gd.e_todo')]);
 }
 if ($op === 'save') {
     $c = gd_cfg();
@@ -10833,12 +11130,6 @@ $rep['took'] = time() - $t0;
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
 gd_report_add($rep);
 gd_handover($dir, $rep);
-// the tile's attention list reads this small summary (not the reports on the flash drive) at every refresh
-if (empty($rep['error']) && empty($rep['skipped'])) {
-    $first = null; foreach ($rep['items'] as $x) { if ($x['level'] !== 'green') { $first = $x; break; } }
-    upd_write(gd_tmp() . '/sysbox_guard_last.json', ['t' => $rep['t'], 'verdict' => $rep['verdict'], 'n' => count(array_filter($rep['items'], function ($x) { return $x['level'] !== 'green'; })),
-        'first' => $first ? $first['area'] . ': ' . $first['title'] : '']);
-}
 gd_discord($c, $rep);
 $n = 0; if (empty($rep['error']) && empty($rep['skipped'])) { $n = gd_state_edit(function (&$S) use ($c, $rep) { return gd_todo($c, $rep, $S); }); }
 $bad = count(array_filter($rep['items'], function ($x) { return $x['level'] !== 'green'; }));

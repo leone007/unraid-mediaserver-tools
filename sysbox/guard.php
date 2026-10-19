@@ -1,5 +1,5 @@
 <?php
-// Web endpoint of the Claude Guard page (Sysbox, item 44). POST op=state|run|save
+// Web endpoint of the Claude Guard page (Sysbox, items 44 and 84). POST op=state|run|save|dismiss|known|unknown|note
 // state only reads files; run starts guard_run.php in the background after a click; save writes guard.json.
 require_once __DIR__ . '/guard_lib.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
@@ -14,12 +14,47 @@ if ($op === 'state') {
     $reps = gd_reports(); usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });
     sx_json(['ok' => true, 'cfg' => gd_cfg(), 'ct' => is_file(gd_flag_file()), 'usage' => gd_usage(), 'reports' => $reps, 'jobs' => array_values($run['jobs']),
              'night' => count($st['night'] ?? []), 'ev_today' => ($st['ev_day']['d'] ?? '') === date('Y-m-d') ? (int)$st['ev_day']['n'] : 0,
-             'quiet' => gd_quiet(gd_cfg()), 'ctx_path' => gd_ctx_path(gd_cfg()), 'lang_now' => gd_lang_code(gd_cfg()), 'busy' => gd_running('claude'), 'log' => $log]);
+             'quiet' => gd_quiet(gd_cfg()), 'ctx_path' => gd_ctx_path(gd_cfg()), 'lang_now' => gd_lang_code(gd_cfg()), 'busy' => gd_running('claude'), 'log' => $log, 'known' => gd_known()]);
 }
 if ($op === 'run') {
     if (!is_file(gd_flag_file()) && !gd_ct_exists()) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_noct')]); }
     if (gd_running('claude')) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_busy')]); }
     gd_spawn(['run', 'manual']); sx_json(['ok' => true, 'now' => time()]);
+}
+// the owner's answers to a finding (item 84): a report id, the item's index, and short texts without control characters
+function gd_arg_item() {
+    $rid = (string)($_POST['rid'] ?? ''); $idx = (int)($_POST['idx'] ?? -1);
+    if (!preg_match('/^[a-f0-9]{10}$/', $rid) || $idx < 0 || $idx > 50) { sx_json(['ok' => false, 'error' => 'item']); }
+    foreach (gd_reports() as $r) { if ($r['id'] === $rid && isset($r['items'][$idx])) { return [$rid, $idx, $r, $r['items'][$idx]]; } }
+    sx_json(['ok' => false, 'error' => sx_tr('gd.e_gone')]);
+}
+function gd_arg_text($k, $max) { return trim(mb_substr(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', (string)($_POST[$k] ?? '')), 0, $max)); }
+if ($op === 'dismiss') {   // only from the tile; it stays on the page
+    [$rid, $idx] = gd_arg_item(); $on = !empty($_POST['on']) && $_POST['on'] !== '0';
+    $it = gd_item_edit($rid, $idx, function (&$x) use ($on) { if ($on) { $x['dismissed'] = time(); } else { unset($x['dismissed']); } });
+    sx_json(['ok' => $it !== false]);
+}
+if ($op === 'known') {
+    [$rid, $idx, $r, $it] = gd_arg_item(); $why = gd_arg_text('why', 300); $again = gd_arg_text('again', 200);
+    if ($why === '') { sx_json(['ok' => false, 'error' => sx_tr('gd.e_why')]); }
+    $k = ['id' => substr(md5($rid . $idx . microtime()), 0, 10), 'area' => $it['area'], 'title' => $it['title'], 'why' => $why, 'again' => $again, 't' => time()];
+    if (!gd_known_add($k)) { sx_json(['ok' => false, 'error' => 'write']); }
+    gd_item_edit($rid, $idx, function (&$x) use ($k) { $x['known'] = $k['id']; if (empty($x['dismissed'])) { $x['dismissed'] = time(); } });   // known: off the tile too
+    gd_todo_append("\n## " . date('Y-m-d H:i') . ' · Claude Guard · ' . $it['area'] . " · ISMERT (a tulajdonos jelölte az oldalon)\n\n" . $it['title'] . "\n\nIndoklás: " . $why . "\n" .
+        ($again !== '' ? "\nCsak akkor jelezze újra, ha: " . $again . "\n" : '') . "\nTeendő: vezesd be az ATADAS.md „Tudatos döntések és ismert állapotok” szakaszába.\n");
+    sx_json(['ok' => true]);
+}
+if ($op === 'unknown') {
+    $id = (string)($_POST['kid'] ?? ''); if (!preg_match('/^[a-f0-9]{10}$/', $id)) { sx_json(['ok' => false, 'error' => 'id']); }
+    sx_json(['ok' => gd_known_del($id)]);
+}
+if ($op === 'note') {
+    [$rid, $idx, $r, $it] = gd_arg_item(); $txt = gd_arg_text('text', 600);
+    if ($txt === '') { sx_json(['ok' => false, 'error' => sx_tr('gd.e_note')]); }
+    $ok = gd_todo_append("\n## " . date('Y-m-d H:i') . ' · Claude Guard · ' . $it['area'] . ' (' . ($it['level'] === 'red' ? 'PIROS' : 'SÁRGA') . ") · MEGJEGYZÉS A TULAJDONOSTÓL\n\n" . $it['title'] . ' ' . $it['text'] . "\n\nA tulajdonos: " . $txt . "\n" .
+        ($it['cmd'] !== '' ? "\nEllenőrzés (csak olvas): `" . $it['cmd'] . "`\n" : ''));
+    if ($ok) { gd_item_edit($rid, $idx, function (&$x) { $x['noted'] = time(); }); }
+    sx_json($ok ? ['ok' => true] : ['ok' => false, 'error' => sx_tr('gd.e_todo')]);
 }
 if ($op === 'save') {
     $c = gd_cfg();

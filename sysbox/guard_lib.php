@@ -241,6 +241,9 @@ function gd_prompt($kind, $now, $prev, $events, $c = null) {
     if ($notes !== '') { $p .= "The owner's notes about this server ({$ctx}) are below. What they describe as intended, decided or already known is not a finding: do not report it again " .
         "(for example a parity slot left empty on purpose, or a SMART value that is known and has not grown). Report it only if it changed since or the condition written next to it is met. " .
         "A finding that is already an open task in the notes stays a finding at its level, but give its item number and do not present it as new.\n<owner_notes>\n" . $notes . "\n</owner_notes>\n\n"; }
+    $kn = gd_known();
+    if ($kn) { $p .= "The owner marked these findings as known. Do not report them again unless their condition is met; then report it and say which condition:\n<owner_marked_known>\n" .
+        implode("\n", array_map(function ($k) { return '- ' . $k['area'] . ': ' . $k['title'] . ' | why: ' . $k['why'] . ($k['again'] !== '' ? ' | report again only if: ' . $k['again'] : ''); }, $kn)) . "\n</owner_marked_known>\n\n"; }
     $pf = gd_todo_file(); $pend = ($pf !== '' && @filesize($pf) > 0) ? mb_substr((string)@file_get_contents($pf), 0, 12000) : '';
     $p .= "You work together with Claude Code sessions that the owner runs in the same container: they read your reports (~/guard/latest.md), take your amber and red findings into the notes as tasks, and answer them there (fixed, asked the owner, or recorded as intended or known). " .
         ($pend !== '' ? "These findings you handed over earlier have not been taken by a session yet; a finding listed here is not new, say it is waiting for Claude Code:\n<waiting_for_claude_code>\n" . $pend . "\n</waiting_for_claude_code>" : '') . "\n\n";
@@ -341,6 +344,50 @@ function gd_report_add($r) {
     $all = array_values(array_filter($all, function ($x) { return time() - (int)($x['t'] ?? 0) < GD_KEEP_DAYS * 86400; }));
     upd_write(gd_reports_file(), $all);
     if ($l) { flock($l, LOCK_UN); fclose($l); }
+    gd_tile_write($all);
+}
+// changes one finding of a report ($fn gets the item by reference); false when the report or the item is not there
+function gd_item_edit($rid, $idx, $fn) {
+    $l = @fopen(gd_lock_file('reports'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $all = gd_reports(); $ok = false; $item = null;
+    foreach ($all as $i => $r) { if (($r['id'] ?? '') === $rid && isset($r['items'][$idx])) { $fn($all[$i]['items'][$idx]); $item = $all[$i]['items'][$idx]; $ok = true; } }
+    if ($ok) { upd_write(gd_reports_file(), $all); }
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    if ($ok) { gd_tile_write($all); }
+    return $ok ? $item : false;
+}
+// the tile's summary: the latest report that ran, its amber and red findings that are not dismissed (item 84)
+function gd_tile_write($all) {
+    $last = null; foreach ($all as $r) { if (empty($r['error']) && empty($r['skipped']) && ($last === null || $r['t'] > $last['t'])) { $last = $r; } }
+    $f = gd_tmp() . '/sysbox_guard_last.json';
+    if (!$last) { @unlink($f); return; }
+    $open = array_values(array_filter($last['items'] ?? [], function ($x) { return $x['level'] !== 'green' && empty($x['dismissed']); }));
+    $red = count(array_filter($open, function ($x) { return $x['level'] === 'red'; }));
+    upd_write($f, ['t' => $last['t'], 'verdict' => $red ? 'red' : ($open ? 'amber' : 'green'), 'n' => count($open), 'first' => $open ? $open[0]['area'] . ': ' . $open[0]['title'] : '']);
+}
+
+// ---- what the owner marked as known (item 84): not reported again unless its own condition is met ----------------
+function gd_known_file() { return gd_dir() . '/guard_known.json'; }
+function gd_known() { return upd_json(gd_known_file(), []); }
+function gd_known_add($k) {
+    $l = @fopen(gd_lock_file('known'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $all = gd_known(); $all[] = $k; $ok = upd_write(gd_known_file(), $all);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $ok;
+}
+function gd_known_del($id) {
+    $l = @fopen(gd_lock_file('known'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $all = array_values(array_filter(gd_known(), function ($k) use ($id) { return ($k['id'] ?? '') !== $id; })); $ok = upd_write(gd_known_file(), $all);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $ok;
+}
+// one entry for Claude Code in guard_todo.md (the owner's answer to a finding)
+function gd_todo_append($md) {
+    $f = gd_todo_file(); if ($f === '') { return false; }
+    if (!is_file($f) || @filesize($f) === 0) { $md = "# Teendők a Claude Guardból\n\nA Sysbox Claude Guard írja (sárga és piros találatok, a tulajdonos válaszai). Claude a munkamenet elején átvezeti az ATADAS.md-be, utána kiüríti.\n" . $md; }
+    if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return false; }
+    @chown($f, 'nobody'); @chgrp($f, 'users'); @chmod($f, 0664);
+    return true;
 }
 
 // ---- outputs: Discord and the to-do file -------------------------------------------------------------------------

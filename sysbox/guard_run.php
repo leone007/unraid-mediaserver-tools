@@ -109,12 +109,6 @@ $rep['took'] = time() - $t0;
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
 gd_report_add($rep);
 gd_handover($dir, $rep);
-// the tile's attention list reads this small summary (not the reports on the flash drive) at every refresh
-if (empty($rep['error']) && empty($rep['skipped'])) {
-    $first = null; foreach ($rep['items'] as $x) { if ($x['level'] !== 'green') { $first = $x; break; } }
-    upd_write(gd_tmp() . '/sysbox_guard_last.json', ['t' => $rep['t'], 'verdict' => $rep['verdict'], 'n' => count(array_filter($rep['items'], function ($x) { return $x['level'] !== 'green'; })),
-        'first' => $first ? $first['area'] . ': ' . $first['title'] : '']);
-}
 gd_discord($c, $rep);
 $n = 0; if (empty($rep['error']) && empty($rep['skipped'])) { $n = gd_state_edit(function (&$S) use ($c, $rep) { return gd_todo($c, $rep, $S); }); }
 $bad = count(array_filter($rep['items'], function ($x) { return $x['level'] !== 'green'; }));
