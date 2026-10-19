@@ -20,7 +20,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.23c">
+<!ENTITY version   "2026.10.23d">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +34,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Claude Guard and Claude Code know about each other: every report is also written to the claude container (~/guard/latest.md and report files next to the snapshots), and the Guard reads which findings are still waiting in guard_todo.md
+###2026.10.23c
 - Claude Guard: a finding that is already an open task in your notes is marked with its item number instead of shown as new; a known state is reported again only when the condition written next to it in the notes is met
 ###2026.10.23b
 - Claude Guard: Claude first reads your notes about the server (auto: ATADAS.md of this repository in the claude container, or a path you set) and does not report again what they call intended or known; the report language is a setting (default: Unraid's language); the snapshot has the disk device names so commands need no placeholders

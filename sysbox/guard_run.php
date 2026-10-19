@@ -108,6 +108,7 @@ $rep['took'] = time() - $t0;
 // a skipped or failed run keeps its alerts for the next daily report
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
 gd_report_add($rep);
+gd_handover($dir, $rep);
 // the tile's attention list reads this small summary (not the reports on the flash drive) at every refresh
 if (empty($rep['error']) && empty($rep['skipped'])) {
     $first = null; foreach ($rep['items'] as $x) { if ($x['level'] !== 'green') { $first = $x; break; } }

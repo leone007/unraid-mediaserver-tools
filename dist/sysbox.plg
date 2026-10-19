@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.23c">
+<!ENTITY version   "2026.10.23d">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Claude Guard and Claude Code know about each other: every report is also written to the claude container (~/guard/latest.md and report files next to the snapshots), and the Guard reads which findings are still waiting in guard_todo.md
+###2026.10.23c
 - Claude Guard: a finding that is already an open task in your notes is marked with its item number instead of shown as new; a known state is reported again only when the condition written next to it in the notes is met
 ###2026.10.23b
 - Claude Guard: Claude first reads your notes about the server (auto: ATADAS.md of this repository in the claude container, or a path you set) and does not report again what they call intended or known; the report language is a setting (default: Unraid's language); the snapshot has the disk device names so commands need no placeholders
@@ -10296,6 +10298,9 @@ function gd_prompt($kind, $now, $prev, $events, $c = null) {
         "Describe changes (a setting, an update, a restart) in words only. A command must run exactly as written: no placeholders, no comments; use the device names from the snapshot.\n\n";
     if ($ctx !== '') { $p .= "Before you judge anything, read the owner's notes about this server with the Read tool: {$ctx} (it can be long; read it all, at least the parts on hardware, decisions and known states). " .
         "What the notes describe as intended, decided or already known is not a finding: do not report it again (for example a parity slot left empty on purpose). Mention it only if it changed since the notes were written or its own condition there is met. A finding that is already an open task in the notes stays a finding at its level, but say its item number and do not present it as new.\n\n"; }
+    $pend = gd_todo_pending();
+    $p .= "You work together with Claude Code sessions that the owner runs in the same container: they read your reports (~/guard/latest.md), take your amber and red findings into the notes as tasks, and answer them there (fixed, asked the owner, or recorded as intended or known). " .
+        ($pend !== '' ? "Findings you handed over earlier that no session has taken yet are in {$pend}: read it; a finding still listed there is not new, say it is waiting for Claude Code. " : '') . "\n\n";
     if ($kind === 'event') { $p .= "This report is about an alert that just fired. Explain its likely cause from the snapshot and say what to do. Alert(s):\n" . json_encode($events, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"; }
     elseif ($events) { $p .= "Alerts that fired during the night (quiet hours) or beyond the daily limit; cover them in this report:\n" . json_encode($events, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n"; }
     $p .= "<snapshot_now>\n" . json_encode($now, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_now>\n";
@@ -10368,6 +10373,25 @@ function gd_snap_prev($dir, $before) {
     foreach (glob($dir . '/snap_*.json') ?: [] as $x) { if (filemtime($x) < $before - 60 && ($best === null || filemtime($x) > filemtime($best))) { $best = $x; } }
     return $best ? upd_json($best, []) : null;
 }
+// the report is also written next to the snapshots (the container's ~/guard), so a Claude Code session can read the whole
+// report, not only the to-do lines: report_*.json for 7 days and latest.md (owner: the two should know about each other)
+function gd_handover($dir, $r) {
+    if ($dir === '' || !is_dir($dir)) { return; }
+    $f = $dir . '/report_' . date('Ymd_Hi', $r['t']) . '.json'; upd_write($f, $r); @chmod($f, 0664);
+    foreach (glob($dir . '/report_*.json') ?: [] as $x) { if (filemtime($x) < time() - GD_SNAP_DAYS * 86400) { @unlink($x); } }
+    $md = '# Claude Guard: latest report (' . date('Y-m-d H:i', $r['t']) . ', ' . $r['kind'] . ")\n\nWritten by the Sysbox Claude Guard. The snapshot it read is snap_" . date('Ymd_Hi', $r['t']) . ".json in this folder.\n\n";
+    if (!empty($r['error'])) { $md .= "Failed: " . $r['error'] . "\n"; }
+    elseif (!empty($r['skipped'])) { $md .= $r['skipped'] . "\n"; }
+    else {
+        $md .= '**' . strtoupper($r['verdict']) . '**: ' . $r['summary'] . "\n\n";
+        foreach ($r['items'] as $x) { $md .= '- [' . $x['level'] . '] **' . $x['area'] . '**: ' . $x['title'] . ' ' . $x['text'] . ($x['todo'] !== '' ? ' To do: ' . $x['todo'] : '') . ($x['cmd'] !== '' ? ' Check: `' . $x['cmd'] . '`' : '') . "\n"; }
+        if ($r['noise'] !== '') { $md .= "\nLogs: " . $r['noise'] . "\n"; }
+    }
+    if (!empty($r['events'])) { $md .= "\nAlerts it covered:\n"; foreach ($r['events'] as $e) { $md .= '- ' . date('m-d H:i', (int)($e['t'] ?? 0)) . ' ' . ($e['text'] ?? '') . "\n"; } }
+    @file_put_contents($dir . '/latest.md', $md); @chmod($dir . '/latest.md', 0664);
+}
+// the findings already handed to Claude Code but not yet taken into ATADAS.md (a path inside the container)
+function gd_todo_pending() { $f = gd_todo_file(); return ($f !== '' && @filesize($f) > 0) ? '/work/' . basename(dirname($f)) . '/guard_todo.md' : ''; }
 function gd_reports() { return upd_json(gd_reports_file(), []); }
 function gd_report_add($r) {
     $l = @fopen(gd_lock_file('reports'), 'c'); if ($l) { flock($l, LOCK_EX); }
@@ -10577,6 +10601,7 @@ $rep['took'] = time() - $t0;
 // a skipped or failed run keeps its alerts for the next daily report
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
 gd_report_add($rep);
+gd_handover($dir, $rep);
 // the tile's attention list reads this small summary (not the reports on the flash drive) at every refresh
 if (empty($rep['error']) && empty($rep['skipped'])) {
     $first = null; foreach ($rep['items'] as $x) { if ($x['level'] !== 'green') { $first = $x; break; } }
