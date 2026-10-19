@@ -107,7 +107,7 @@ $(function () {
   var T = function (k, v) { return MTL.t('upm', k, v); };
   var URL = '/plugins/sysbox/upd.php', D = null, OPEN = {}, DET = {}, CONF = null, pollT = null;
   var RISK = {red: ['r', 's-red', T('risk.red')], amber: ['a', 's-amber', T('risk.amber')], green: ['g', 's-green', T('risk.green')]};
-  var KIND = {rebuild: ['g', T('kind.rebuild')], patch: ['g', T('kind.patch')], feature: ['a', T('kind.feature')], major: ['r', T('kind.major')], unknown: ['a', T('kind.unknown')]};
+  var KIND = {rebuild: ['g', T('kind.rebuild')], patch: ['g', T('kind.patch')], feature: ['a', T('kind.feature')], major: ['r', T('kind.major')], commit: ['a', T('kind.commit')], unknown: ['a', T('kind.unknown')]};
   function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }

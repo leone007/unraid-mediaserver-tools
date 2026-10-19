@@ -1401,6 +1401,10 @@
   "text": "major version",
   "note": "chip: a major new version."
  },
+ "kind.commit": {
+  "text": "new build (commit)",
+  "note": "chip: the image is named after a git commit of the program instead of a version number, so the size of the change is unknown."
+ },
  "kind.unknown": {
   "text": "version not labelled",
   "note": "chip: the image does not say its version."

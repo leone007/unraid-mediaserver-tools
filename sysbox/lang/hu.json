@@ -1055,6 +1055,9 @@
  "kind.major": {
   "text": "főverzió"
  },
+ "kind.commit": {
+  "text": "új build (commit)"
+ },
  "kind.unknown": {
   "text": "nincs verziócímke"
  },

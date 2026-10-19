@@ -19,7 +19,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.22n">
+<!ENTITY version   "2026.10.22o">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -33,6 +33,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Update manager: an image named after a git commit (e.g. tvheadend a87be591 to 8837853a) is no longer called a major version; it shows new build (commit) and lists the program commits between the two builds
+- The CPU graph recorder no longer leaves an exit status 1 line in the syslog every minute while it is running
+###2026.10.22n
 - Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
 ###2026.10.22m
 - The texts of the tile, the settings page, the Snapshots, Safe shutdown and Update manager pages and the Claude button come from a dictionary (lang/en.json) that can be translated (see TRANSLATING.md in the repository); they follow the shared language setting and show English where a translation is missing. Nothing changes on the screen yet
@@ -219,7 +222,7 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 # Sysbox: remember the smart socket energy counter every 10 minutes (monthly consumption)
 */10 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/sample.php >/dev/null 2>&1
 # Sysbox: records the CPU load in RAM for the dashboard graph (one long-running process, restarted if it stops)
-* * * * * flock -n /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
+* * * * * flock -n -E 0 /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
 * * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/notify.php >/dev/null 2>&1
 # Sysbox: weekly summary, checked hourly (day and hour are settings)

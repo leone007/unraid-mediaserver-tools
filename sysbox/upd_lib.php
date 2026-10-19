@@ -154,10 +154,13 @@ function upd_containers() {
 function upd_app_ver($v) { return preg_replace('/-ls\d+$/', '', (string)$v); }   // linuxserver: 12.2ubu2604-ls54 -> 12.2ubu2604
 function upd_nums($v) { return preg_match('/(\d+(?:\.\d+)*)/', (string)$v, $m) ? array_map('intval', explode('.', $m[1])) : []; }
 function upd_cmp($a, $b) { $x = upd_nums($a); $y = upd_nums($b); for ($i = 0; $i < max(count($x), count($y)); $i++) { $d = ($x[$i] ?? 0) <=> ($y[$i] ?? 0); if ($d) { return $d; } } return 0; }
-// rebuild (same program version), patch, feature (minor), major, or unknown
+// a git commit id instead of a version number (linuxserver/tvheadend: a87be591-ls287)
+function upd_is_commit($v) { return (bool)preg_match('/^v?(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}$/i', upd_app_ver($v)); }
+// rebuild (same program version), commit (new program build without a version number), patch, feature (minor), major, or unknown
 function upd_kind($from, $to) {
     if ($from === '' || $to === '') { return 'unknown'; }
     if (upd_app_ver($from) === upd_app_ver($to)) { return 'rebuild'; }
+    if (upd_is_commit($from) || upd_is_commit($to)) { return 'commit'; }
     $x = upd_nums(upd_app_ver($from)); $y = upd_nums(upd_app_ver($to));
     if (!$x || !$y) { return 'unknown'; }
     if (($x[0] ?? 0) !== ($y[0] ?? 0)) { return 'major'; }
@@ -188,6 +191,12 @@ function upd_notes($c, $kind) {
     }
     $repo = upd_app_repo($c['image'], $c['rsrc'] ?: $c['src']);
     if ($repo === '') { return ['', 0, '']; }
+    if ($kind === 'commit') {   // the program's own commits between the two builds
+        $a = ltrim(upd_app_ver($from), 'v'); $b = ltrim(upd_app_ver($to), 'v');
+        $j = upd_gh('repos/' . $repo . '/compare/' . rawurlencode($a) . '...' . rawurlencode($b));
+        $lines = []; foreach (array_slice((array)($j['commits'] ?? []), -60) as $x) { $lines[] = '- ' . strtok((string)($x['commit']['message'] ?? ''), "\n"); }
+        return [$lines ? implode("\n", $lines) : '', 0, 'https://github.com/' . $repo . '/compare/' . rawurlencode($a) . '...' . rawurlencode($b)];
+    }
     $rel = upd_gh('repos/' . $repo . '/releases?per_page=40');
     $text = ''; $pub = 0; $af = upd_app_ver($from); $at = upd_app_ver($to);
     foreach ((array)$rel as $r) {
@@ -204,7 +213,7 @@ function upd_risk($kind, $deps, $flags, $ageDays, $soak) {
     $hot = !empty($flags['breaking']) || !empty($flags['removed']) || (!empty($flags['API']) && $deps);
     if ($kind === 'rebuild') { return 'green'; }
     if ($kind === 'major') { return $deps ? 'red' : 'amber'; }
-    if ($kind === 'unknown') { return 'amber'; }
+    if ($kind === 'unknown' || $kind === 'commit') { return 'amber'; }
     if ($kind === 'patch') { return $hot && $deps ? 'amber' : 'green'; }
     return ($deps || $hot || ($ageDays !== null && $ageDays < $soak)) ? 'amber' : 'green';   // feature
 }
@@ -272,9 +281,9 @@ function upd_scan($only = null) {
         $row['state'] = 'update';
         $row['kind'] = upd_kind($c['ver'], $r['ver']);
         $key = $c['name'] . '|' . $r['id'];
-        if (!isset($cache[$key]['notes'])) {
+        if (!isset($cache[$key]['notes']) || ($cache[$key]['kind'] ?? '') !== $row['kind']) {   // kind changed (e.g. a commit id first read as a major version): fetch the notes again
             [$t, $pub, $url] = upd_notes($row, $row['kind']);
-            $cache[$key] = ($cache[$key] ?? []) + ['notes' => $t, 'pub' => $pub, 'url' => $url, 'from' => $c['ver'], 'to' => $r['ver'], 't' => time()];
+            $cache[$key] = ['notes' => $t, 'pub' => $pub, 'url' => $url, 'kind' => $row['kind'], 'from' => $c['ver'], 'to' => $r['ver'], 't' => time()] + ($cache[$key] ?? []);
         }
         $n = $cache[$key];
         $pub = $n['pub'] ?: (int)strtotime($r['created']);
