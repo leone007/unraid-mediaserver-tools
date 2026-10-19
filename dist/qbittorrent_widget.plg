@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zza">
+<!ENTITY version   "2026.10.99zzb">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzb
+- Hungarian texts: the Discord setup steps now use the menu and bot permission names exactly as the Hungarian Discord app shows them
+
 ###2026.10.99zza
 - Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
 
@@ -9918,7 +9921,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "nem kötelező, csak a Season repacker évadcsomag-üzeneteihez (autobrr, Settings, API keys)"
  },
  "tp.hint.optional_the_seedbox_message": {
-  "text": "nem kötelező. A Seedbox-üzenet 1️⃣ 2️⃣ 3️⃣ 👎 reakciókat kap a botodtól; egy szám elindítja azt a cserét (ugyanazokkal az ellenőrzésekkel, mint az itteni gomb), a 👎 elveti. Csak a te reakcióid számítanak, 24 óráig; a bot percenként egyszer néz rá. Token: Discord Developer Portal, az alkalmazásod, Bot, Reset Token (üresen hagyva megmarad, - törli). Felhasználói ID: Discord, Beállítások, Speciális, Fejlesztői mód, majd jobb klikk a nevedre, Felhasználói azonosító másolása. A botnak a webhook csatornájában kell a View Channel, az Add Reactions és a Read Message History jog"
+  "text": "nem kötelező. A Seedbox-üzenet 1️⃣ 2️⃣ 3️⃣ 👎 reakciókat kap a botodtól; egy szám elindítja azt a cserét (ugyanazokkal az ellenőrzésekkel, mint az itteni gomb), a 👎 elveti. Csak a te reakcióid számítanak, 24 óráig; a bot percenként egyszer néz rá. Token: Discord Developer Portal, az alkalmazásod, Bot, Reset Token (üresen hagyva megmarad, - törli). Felhasználói ID: Discord, Felhasználói beállítások, Fejlesztő, Fejlesztői mód, majd jobb klikk a nevedre, Felhasználói azonosító másolása. A botnak a webhook csatornájában kell a Csatornák megtekintése, a Reakciók hozzáadása és az Üzenetelőzmények visszaolvasása jog"
  },
  "tp.hint.relevant_a_season_that": {
   "text": "Releváns: csomagolható évad, futó csomagolás vagy keresés, még sosem volt keresés. A hibás vagy elakadt sor minden módban látszik, kivéve a sosem módot. Ha nem marad sor, a csempe eszközrésze elrejtődik."
