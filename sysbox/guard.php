@@ -8,7 +8,7 @@ $op = (string)($_POST['op'] ?? 'state');
 
 if ($op === 'state') {
     $run = upd_json(gd_run_file(), ['jobs' => []]);
-    foreach ($run['jobs'] as $k => $j) { if ($j['state'] === 'running' && time() - (int)$j['started'] > 3600) { $run['jobs'][$k]['state'] = 'error'; $run['jobs'][$k]['text'] .= ' (stopped answering)'; } }
+    foreach ($run['jobs'] as $k => $j) { if ($j['state'] === 'running' && time() - (int)$j['started'] > 3600) { $run['jobs'][$k]['state'] = 'error'; $run['jobs'][$k]['text'] .= ' (' . sx_tr('gd.e_stuck') . ')'; } }
     $st = upd_json(gd_state_file(), []);
     $log = is_file(gd_log_file()) ? array_slice(file(gd_log_file(), FILE_IGNORE_NEW_LINES), -40) : [];
     $reps = gd_reports(); usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });

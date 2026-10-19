@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.25">
+<!ENTITY version   "2026.10.25a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Claude Guard and Update all: the remaining error and Discord texts come from the dictionary too (Hungarian translation)
+###2026.10.25
 - Claude Guard: answer a finding on the page. Known (why, and optionally when to report it again) stops it at once from the next report and goes to Claude Code for the notes; Note for Claude Code sends a remark to the next session; Dismiss hides it from the tile only and it stays on the page. A Marked as known list with Remove
 ###2026.10.24a
 - The tile shows the waiting container updates (a purple row under the containers, it opens the Update manager)
@@ -5679,6 +5681,38 @@ function mt_i18n_js($dir, $name, $only = null) {
  "gdm.k_again": {
   "text": "report again only if: {t}",
   "note": "line of a known entry."
+ },
+ "gd.e_docker": {
+  "text": "Docker is not running",
+  "note": "report error."
+ },
+ "gd.e_ctstop": {
+  "text": "the claude container is not running",
+  "note": "report error."
+ },
+ "gd.e_timeout": {
+  "text": "Claude did not answer in 15 minutes",
+  "note": "report error."
+ },
+ "gd.e_noanswer": {
+  "text": "Claude did not answer (exit {rc})",
+  "note": "report error."
+ },
+ "gd.e_json": {
+  "text": "The answer was not in the expected form:",
+  "note": "report error, followed by the start of the answer."
+ },
+ "gd.e_stuck": {
+  "text": "stopped answering",
+  "note": "added to an Activity row whose job stopped."
+ },
+ "uj.all_dc_title": {
+  "text": "Update manager: Update all stopped at {c}",
+  "note": "Discord title."
+ },
+ "uj.all_dc_left": {
+  "text": "Not started: {l}",
+  "note": "Discord line: containers Update all did not start."
  }
 }
 ]]></INLINE>
@@ -7751,6 +7785,30 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "gdm.k_again": {
   "text": "csak akkor jelezze újra, ha: {t}"
+ },
+ "gd.e_docker": {
+  "text": "A Docker nem fut"
+ },
+ "gd.e_ctstop": {
+  "text": "a claude konténer nem fut"
+ },
+ "gd.e_timeout": {
+  "text": "Claude 15 perc alatt nem válaszolt"
+ },
+ "gd.e_noanswer": {
+  "text": "Claude nem válaszolt (kilépési kód: {rc})"
+ },
+ "gd.e_json": {
+  "text": "A válasz nem a várt formában jött:"
+ },
+ "gd.e_stuck": {
+  "text": "nem válaszol"
+ },
+ "uj.all_dc_title": {
+  "text": "Update manager: a Mind frissítése megállt itt: {c}"
+ },
+ "uj.all_dc_left": {
+  "text": "Nem indult el: {l}"
  }
 }
 ]]></INLINE>
@@ -10160,7 +10218,7 @@ if ($mode === 'updall') {
             $left = array_slice($names, $k + 1);
             $txt = sx_tr('uj.all_stopped', ['c' => $name, 'i' => $k + 1, 'n' => $n, 'ok' => count($done), 'left' => count($left)]) . ' ' . $msg;
             upd_job($id, ['state' => 'error', 'text' => $txt, 'now' => '', 'ok' => $done, 'failed' => $name, 'left' => $left], $txt); upd_log($txt);
-            upd_discord('rd', 'Update manager: Update all stopped at ' . $name, $txt . ($left ? "\nNot started: " . implode(', ', $left) : ''));
+            upd_discord('rd', sx_tr('uj.all_dc_title', ['c' => $name]), $txt . ($left ? "\n" . sx_tr('uj.all_dc_left', ['l' => implode(', ', $left)]) : ''));
             exit(0);
         }
         $done[] = $name;
@@ -10797,16 +10855,16 @@ function gd_parse($text) {
 // runs Claude Code in the container (read-only tools, no saved session); [answer array or null, error text]
 function gd_ask($prompt) {
     $fake = getenv('SX_GD_FAKE'); if ($fake !== false && $fake !== '') { return [gd_parse((string)@file_get_contents($fake)), '']; }   // tests
-    $d = sx_docker(); if ($d === '') { return [null, 'Docker is not running']; }
-    if (!gd_ct_running()) { return [null, 'the claude container is not running']; }
+    $d = sx_docker(); if ($d === '') { return [null, sx_tr('gd.e_docker')]; }
+    if (!gd_ct_running()) { return [null, sx_tr('gd.e_ctstop')]; }
     $pf = tempnam(gd_tmp(), 'sxg'); file_put_contents($pf, $prompt);
     $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w /home/claude/guard ' . GD_CT .
            ' claude -p --tools Read,Grep --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
     $o = []; @exec($cmd, $o, $rc); @unlink($pf);
     $text = trim(implode("\n", $o));
-    if ($rc !== 0 || $text === '') { return [null, 'Claude did not answer' . ($rc === 124 ? ' in 15 minutes' : ' (exit ' . $rc . ')') . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : '')]; }
+    if ($rc !== 0 || $text === '') { return [null, ($rc === 124 ? sx_tr('gd.e_timeout') : sx_tr('gd.e_noanswer', ['rc' => $rc])) . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : '')]; }
     $j = gd_parse($text);
-    return $j ? [$j, ''] : [null, 'the answer was not the expected JSON: ' . mb_substr($text, 0, 200)];
+    return $j ? [$j, ''] : [null, sx_tr('gd.e_json') . ' ' . mb_substr($text, 0, 200)];
 }
 
 // ---- snapshots on disk (7 days) and reports (30 days) --------------------------------------------------------------
@@ -10952,7 +11010,7 @@ $op = (string)($_POST['op'] ?? 'state');
 
 if ($op === 'state') {
     $run = upd_json(gd_run_file(), ['jobs' => []]);
-    foreach ($run['jobs'] as $k => $j) { if ($j['state'] === 'running' && time() - (int)$j['started'] > 3600) { $run['jobs'][$k]['state'] = 'error'; $run['jobs'][$k]['text'] .= ' (stopped answering)'; } }
+    foreach ($run['jobs'] as $k => $j) { if ($j['state'] === 'running' && time() - (int)$j['started'] > 3600) { $run['jobs'][$k]['state'] = 'error'; $run['jobs'][$k]['text'] .= ' (' . sx_tr('gd.e_stuck') . ')'; } }
     $st = upd_json(gd_state_file(), []);
     $log = is_file(gd_log_file()) ? array_slice(file(gd_log_file(), FILE_IGNORE_NEW_LINES), -40) : [];
     $reps = gd_reports(); usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });

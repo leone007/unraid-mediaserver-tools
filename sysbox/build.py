@@ -20,7 +20,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.25">
+<!ENTITY version   "2026.10.25a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +34,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Claude Guard and Update all: the remaining error and Discord texts come from the dictionary too (Hungarian translation)
+###2026.10.25
 - Claude Guard: answer a finding on the page. Known (why, and optionally when to report it again) stops it at once from the next report and goes to Claude Code for the notes; Note for Claude Code sends a remark to the next session; Dismiss hides it from the tile only and it stays on the page. A Marked as known list with Remove
 ###2026.10.24a
 - The tile shows the waiting container updates (a purple row under the containers, it opens the Update manager)

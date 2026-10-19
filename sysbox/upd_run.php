@@ -192,7 +192,7 @@ if ($mode === 'updall') {
             $left = array_slice($names, $k + 1);
             $txt = sx_tr('uj.all_stopped', ['c' => $name, 'i' => $k + 1, 'n' => $n, 'ok' => count($done), 'left' => count($left)]) . ' ' . $msg;
             upd_job($id, ['state' => 'error', 'text' => $txt, 'now' => '', 'ok' => $done, 'failed' => $name, 'left' => $left], $txt); upd_log($txt);
-            upd_discord('rd', 'Update manager: Update all stopped at ' . $name, $txt . ($left ? "\nNot started: " . implode(', ', $left) : ''));
+            upd_discord('rd', sx_tr('uj.all_dc_title', ['c' => $name]), $txt . ($left ? "\n" . sx_tr('uj.all_dc_left', ['l' => implode(', ', $left)]) : ''));
             exit(0);
         }
         $done[] = $name;

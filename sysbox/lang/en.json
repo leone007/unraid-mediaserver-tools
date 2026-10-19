@@ -2740,5 +2740,37 @@
  "gdm.k_again": {
   "text": "report again only if: {t}",
   "note": "line of a known entry."
+ },
+ "gd.e_docker": {
+  "text": "Docker is not running",
+  "note": "report error."
+ },
+ "gd.e_ctstop": {
+  "text": "the claude container is not running",
+  "note": "report error."
+ },
+ "gd.e_timeout": {
+  "text": "Claude did not answer in 15 minutes",
+  "note": "report error."
+ },
+ "gd.e_noanswer": {
+  "text": "Claude did not answer (exit {rc})",
+  "note": "report error."
+ },
+ "gd.e_json": {
+  "text": "The answer was not in the expected form:",
+  "note": "report error, followed by the start of the answer."
+ },
+ "gd.e_stuck": {
+  "text": "stopped answering",
+  "note": "added to an Activity row whose job stopped."
+ },
+ "uj.all_dc_title": {
+  "text": "Update manager: Update all stopped at {c}",
+  "note": "Discord title."
+ },
+ "uj.all_dc_left": {
+  "text": "Not started: {l}",
+  "note": "Discord line: containers Update all did not start."
  }
 }

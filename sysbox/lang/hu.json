@@ -2061,5 +2061,29 @@
  },
  "gdm.k_again": {
   "text": "csak akkor jelezze újra, ha: {t}"
+ },
+ "gd.e_docker": {
+  "text": "A Docker nem fut"
+ },
+ "gd.e_ctstop": {
+  "text": "a claude konténer nem fut"
+ },
+ "gd.e_timeout": {
+  "text": "Claude 15 perc alatt nem válaszolt"
+ },
+ "gd.e_noanswer": {
+  "text": "Claude nem válaszolt (kilépési kód: {rc})"
+ },
+ "gd.e_json": {
+  "text": "A válasz nem a várt formában jött:"
+ },
+ "gd.e_stuck": {
+  "text": "nem válaszol"
+ },
+ "uj.all_dc_title": {
+  "text": "Update manager: a Mind frissítése megállt itt: {c}"
+ },
+ "uj.all_dc_left": {
+  "text": "Nem indult el: {l}"
  }
 }

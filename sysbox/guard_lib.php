@@ -293,16 +293,16 @@ function gd_parse($text) {
 // runs Claude Code in the container (read-only tools, no saved session); [answer array or null, error text]
 function gd_ask($prompt) {
     $fake = getenv('SX_GD_FAKE'); if ($fake !== false && $fake !== '') { return [gd_parse((string)@file_get_contents($fake)), '']; }   // tests
-    $d = sx_docker(); if ($d === '') { return [null, 'Docker is not running']; }
-    if (!gd_ct_running()) { return [null, 'the claude container is not running']; }
+    $d = sx_docker(); if ($d === '') { return [null, sx_tr('gd.e_docker')]; }
+    if (!gd_ct_running()) { return [null, sx_tr('gd.e_ctstop')]; }
     $pf = tempnam(gd_tmp(), 'sxg'); file_put_contents($pf, $prompt);
     $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w /home/claude/guard ' . GD_CT .
            ' claude -p --tools Read,Grep --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
     $o = []; @exec($cmd, $o, $rc); @unlink($pf);
     $text = trim(implode("\n", $o));
-    if ($rc !== 0 || $text === '') { return [null, 'Claude did not answer' . ($rc === 124 ? ' in 15 minutes' : ' (exit ' . $rc . ')') . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : '')]; }
+    if ($rc !== 0 || $text === '') { return [null, ($rc === 124 ? sx_tr('gd.e_timeout') : sx_tr('gd.e_noanswer', ['rc' => $rc])) . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : '')]; }
     $j = gd_parse($text);
-    return $j ? [$j, ''] : [null, 'the answer was not the expected JSON: ' . mb_substr($text, 0, 200)];
+    return $j ? [$j, ''] : [null, sx_tr('gd.e_json') . ' ' . mb_substr($text, 0, 200)];
 }
 
 // ---- snapshots on disk (7 days) and reports (30 days) --------------------------------------------------------------
