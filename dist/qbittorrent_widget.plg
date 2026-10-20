@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzd">
+<!ENTITY version   "2026.10.99zze">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zze
+- BoxBot: the state line of a replacement (progress, done, failed) is written in the Discord language, not in the language of the pages
+
 ###2026.10.99zzd
 - A single-episode torrent is named with its episode (MobLand S02E05, not MobLand S02) in the result lists, Activity and Discord
 
@@ -2524,6 +2527,18 @@ const ST_JAR   = '/tmp/qbt_tools_cookie.txt';
 require_once __DIR__ . '/moveprog.php';
 require_once __DIR__ . '/i18n.php';
 // the texts the pages show, in the page language (lang/en.json); Discord texts use st_l()
+// the same dictionary in the Discord language (Settings, Language: Discord messages), for texts that go to both the page
+// and Discord, e.g. a job's message shown in the BoxBot message (seen 2026-10-20: the page language reached Discord)
+function st_trd($k, $v = []) {
+    static $tab = null;
+    if ($tab === null) {
+        $dir = __DIR__ . '/lang'; $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $read($dir . '/en.json'); $code = function_exists('mt_lang_discord') ? mt_lang_discord() : 'en';
+        $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : []; $tab = [];
+        foreach ($en as $kk => $vv) { if (!is_array($vv)) { continue; } foreach (['text', 'one', 'other'] as $f) { if (isset($vv[$f])) { $t = $tr[$kk][$f] ?? null; $tab[$kk][$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$vv[$f]; } } }
+    }
+    $s = mt_i18n_fmt($tab[$k] ?? null, (array)$v); return $s === null ? $k : $s;
+}
 function st_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 function st_dir() { $d = getenv('DBX_ST_DIR'); return ($d !== false && $d !== '') ? $d : ST_DIR; }
 
@@ -3749,11 +3764,12 @@ function st_bot_poll() {
             foreach ((array)($m['kind'] === 'sp' ? ($st['packjobs'] ?? []) : ($st['jobs'] ?? [])) as $j) { if (($j['key'] ?? '') === $m['key'] && (int)($j['gt'] ?? $j['t'] ?? 0) >= (int)($m['rt'] ?? 0) - 120) { $job = $j; } }
             if (!$job) { continue; }
             $done = $m['kind'] === 'sp' ? $job['stage'] === 'done' : in_array($job['stage'], ['cleaned', 'removed'], true);
-            if ($done) { $ch = ['state' => 'done', 'status' => '✅ ' . st_l('Kész: ', 'Done: ') . (string)$job['msg'], 'color' => 0x3FA24A]; }
-            elseif (in_array($job['stage'], ['failed', 'blocked'], true)) { $ch = ['state' => 'fail', 'status' => '⛔ ' . (string)$job['msg'], 'color' => 0xE5534B]; }
-            elseif ((string)$job['msg'] !== (string)($m['last'] ?? '') && time() - (int)($m['et'] ?? 0) > 600) {
+            $jm = (string)($job['msgd'] ?? $job['msg']);   // the Discord language (msgd), not the page's
+            if ($done) { $ch = ['state' => 'done', 'status' => '✅ ' . st_l('Kész: ', 'Done: ') . $jm, 'color' => 0x3FA24A]; }
+            elseif (in_array($job['stage'], ['failed', 'blocked'], true)) { $ch = ['state' => 'fail', 'status' => '⛔ ' . $jm, 'color' => 0xE5534B]; }
+            elseif ($jm !== (string)($m['last'] ?? '') && time() - (int)($m['et'] ?? 0) > 600) {
                 // progress, at most every 10 minutes (Discord edits are cheap but the message should not flicker)
-                $ch = ['state' => 'run', 'status' => '▶ ' . (string)$job['msg'], 'color' => 0x4A90E2, 'last' => (string)$job['msg']];
+                $ch = ['state' => 'run', 'status' => '▶ ' . $jm, 'color' => 0x4A90E2, 'last' => $jm];
             }
         }
         if (!$ch) { continue; }
@@ -4251,11 +4267,11 @@ function st_tick() {
         $new = st_job_status($j);
         if ($new !== null && ($new['stage'] !== $j['stage'] || $new['msg'] !== $j['msg'])) {
             $prev = $j['stage'];
-            $j['stage'] = $new['stage']; $j['msg'] = $new['msg']; $changed = true;
+            $j['stage'] = $new['stage']; $j['msg'] = $new['msg']; $j['msgd'] = $new['msgd'] ?? $new['msg']; $changed = true;
             // content nobody seeded: once the replacement is imported the old files go (to the trash, see trash_days)
             if ($j['stage'] === 'imported' && ($j['mode'] ?? '') === 'repl') {
                 [$ok, $m, $mL] = st_cleanup_old($j); $mL = $mL ?? $m;
-                if ($ok) { $j['stage'] = 'cleaned'; $j['msg'] = $m; $j['t'] = time(); } else { $j['msg'] .= '; ' . st_tr('job.old_kept', ['m' => $m]); }
+                if ($ok) { $j['stage'] = 'cleaned'; $j['msg'] = $m; $j['msgd'] = $mL; $j['t'] = time(); } else { $j['msg'] .= '; ' . st_tr('job.old_kept', ['m' => $m]); $j['msgd'] = ($j['msgd'] ?? '') . '; ' . st_trd('job.old_kept', ['m' => $m]); }
                 st_notify($ok ? 'g' : 'a', $ok ? st_l('Seedbox: csere kész, régi fájlok eltávolítva', 'Seedbox: replacement done, old files removed') : st_l('Seedbox: a csere kész, de a régi fájlokat nem tudtam eltávolítani', 'Seedbox: replaced, but the old files could not be removed'),
                     st_l('A ' . ucfirst($j['kind']) . ' beimportálta az új kiadást.', ucfirst($j['kind']) . ' imported the new release.') . ' ' . $mL,
                     [[st_l('Cím', 'Title'), $j['title']], [st_l('Új', 'New'), $j['new']], [st_l('Régi', 'Old'), $j['old_name']]], false, st_ntool($j));
@@ -4785,7 +4801,7 @@ function st_job_status($j) {
         [$c, $m] = st_arr('radarr', '/movie/' . (int)$j['arr_id']);
         if (!is_array($m)) { return null; }
         $fid = (int)($m['movieFile']['id'] ?? 0);
-        if ($fid > 0 && !in_array($fid, $j['file_ids'], true)) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_radarr')]; }
+        if ($fid > 0 && !in_array($fid, $j['file_ids'], true)) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_radarr'), 'msgd' => st_trd('job.imp_radarr')]; }
         $key = 'movieId';
     } else {
         $cur = [];
@@ -4798,7 +4814,7 @@ function st_job_status($j) {
             if (!is_array($files)) { return null; }
             foreach ($files as $f) { if ((int)$f['seasonNumber'] === (int)$j['season']) { $cur[] = (int)$f['id']; } }
         }
-        if ($cur && !array_intersect($cur, $j['file_ids'])) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_sonarr')]; }
+        if ($cur && !array_intersect($cur, $j['file_ids'])) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_sonarr'), 'msgd' => st_trd('job.imp_sonarr')]; }
         $key = 'seriesId';
     }
     [$c, $q] = st_arr($kind, '/queue?page=1&pageSize=200');
@@ -4810,13 +4826,14 @@ function st_job_status($j) {
         if ($tds === 'importBlocked' || $tdst === 'error' || $tdst === 'warning') {
             $msgs = [];
             foreach ((array)($r['statusMessages'] ?? []) as $sm) { foreach ((array)($sm['messages'] ?? []) as $mm) { $msgs[] = (string)$mm; } if (!empty($sm['title']) && !$msgs) { $msgs[] = (string)$sm['title']; } }
-            return ['stage' => 'blocked', 'msg' => st_tr('job.waiting', ['m' => $msgs ? implode(' / ', array_slice($msgs, 0, 2)) : ($tds ?: $tdst)])];
+            $wv = ['m' => $msgs ? implode(' / ', array_slice($msgs, 0, 2)) : ($tds ?: $tdst)]; return ['stage' => 'blocked', 'msg' => st_tr('job.waiting', $wv), 'msgd' => st_trd('job.waiting', $wv)];
         }
         $left = (float)($r['sizeleft'] ?? 0); $size = (float)($r['size'] ?? 0);
         $p = $size > 0 ? ($left > 0 ? min(99, (int)floor((1 - $left / $size) * 100)) : 100) : 0;
-        return ['stage' => 'downloading', 'msg' => st_tr('job.dl', ['p' => $p]) . (!empty($r['timeleft']) ? ', ' . st_tr('job.left', ['t' => st_fmt_left((string)$r['timeleft'])]) : '')];
+        $lt = !empty($r['timeleft']) ? ['t' => st_fmt_left((string)$r['timeleft'])] : null;
+        return ['stage' => 'downloading', 'msg' => st_tr('job.dl', ['p' => $p]) . ($lt ? ', ' . st_tr('job.left', $lt) : ''), 'msgd' => st_trd('job.dl', ['p' => $p]) . ($lt ? ', ' . st_trd('job.left', $lt) : '')];
     }
-    if (time() - (int)$j['t'] > 1800) { return ['stage' => 'blocked', 'msg' => st_tr('job.lost', ['k' => ucfirst($kind)])]; }
+    if (time() - (int)$j['t'] > 1800) { return ['stage' => 'blocked', 'msg' => st_tr('job.lost', ['k' => ucfirst($kind)]), 'msgd' => st_trd('job.lost', ['k' => ucfirst($kind)])]; }
     return null;
 }
 
@@ -4978,10 +4995,10 @@ function st_job_remove_old_do($id) {
     if (!$j) { return [false, st_tr('e.unknown_job')]; }
     if (in_array($j['stage'], ['removed', 'cleaned'], true)) { return [false, st_tr('e.already_rm')]; }
     if ($j['stage'] !== 'imported') { return [false, st_tr('e.notimp')]; }
-    $set = function ($stage, $msg) use ($id) { st_state_update(function (&$s) use ($id, $stage, $msg) { foreach ($s['jobs'] as &$x) { if ($x['id'] === $id) { $x['stage'] = $stage; $x['msg'] = $msg; $x['t'] = time(); } } unset($x); }); };
+    $set = function ($stage, $msg, $msgd = null) use ($id) { st_state_update(function (&$s) use ($id, $stage, $msg, $msgd) { foreach ($s['jobs'] as &$x) { if ($x['id'] === $id) { $x['stage'] = $stage; $x['msg'] = $msg; $x['msgd'] = $msgd ?? $msg; $x['t'] = time(); } } unset($x); }); };
     if ($j['mode'] === 'repl') {
         [$ok, $m, $mL] = st_cleanup_old($j); if (!$ok) { return [false, $m]; }
-        $set('cleaned', $m);
+        $set('cleaned', $m, $mL);
         st_notify('g', st_l('Seedbox: régi fájlok eltávolítva', 'Seedbox: old files removed'), $mL, [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name']]], false, st_ntool($j));
         return [true, ''];
     }
@@ -4999,7 +5016,7 @@ function st_job_remove_old_do($id) {
         if (!$ok) { return [false, $m]; }
         $m = str_replace(st_tr('cl.torrent'), st_tr('cl.torrent_rm'), $m); $mL = str_replace(' (a fájlok megmaradtak)', '', $mL); // the folder went to the trash right after
         st_upd_drop((string)$j['hash']);
-        $set('removed', $m);
+        $set('removed', $m, $mL);
         st_notify('g', st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted'), $mL,
             [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
         return [true, ''];
@@ -5007,7 +5024,7 @@ function st_job_remove_old_do($id) {
     [$c, $b, $e] = st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => $share === '' ? 'true' : 'false']);
     if ($c !== 200) { return [false, st_tr('e.qb_refused', ['e' => $e ?: 'HTTP ' . $c])]; }
     st_upd_drop((string)$j['hash']);
-    $set('removed', $share === '' ? st_tr('job.rm_all') : st_tr('job.rm_kept', ['t' => $share]));
+    $set('removed', $share === '' ? st_tr('job.rm_all') : st_tr('job.rm_kept', ['t' => $share]), $share === '' ? st_trd('job.rm_all') : st_trd('job.rm_kept', ['t' => $share]));
     st_notify('g', $share === '' ? st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted') : st_l('Seedbox: a régi torrent törölve, a fájlok maradtak', 'Seedbox: the old torrent was deleted, the files stay'), st_l('A jóváhagyásod után, mert az új kiadás már importálva van.', 'After your approval, because the new release is already imported.') . ($share === '' ? '' : ' ' . st_l('A fájlokat egy másik torrent is seedeli: ' . $share, 'Another torrent seeds the same files: ' . $share)),
         [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
     return [true, ''];

@@ -467,11 +467,11 @@ function st_tick() {
         $new = st_job_status($j);
         if ($new !== null && ($new['stage'] !== $j['stage'] || $new['msg'] !== $j['msg'])) {
             $prev = $j['stage'];
-            $j['stage'] = $new['stage']; $j['msg'] = $new['msg']; $changed = true;
+            $j['stage'] = $new['stage']; $j['msg'] = $new['msg']; $j['msgd'] = $new['msgd'] ?? $new['msg']; $changed = true;
             // content nobody seeded: once the replacement is imported the old files go (to the trash, see trash_days)
             if ($j['stage'] === 'imported' && ($j['mode'] ?? '') === 'repl') {
                 [$ok, $m, $mL] = st_cleanup_old($j); $mL = $mL ?? $m;
-                if ($ok) { $j['stage'] = 'cleaned'; $j['msg'] = $m; $j['t'] = time(); } else { $j['msg'] .= '; ' . st_tr('job.old_kept', ['m' => $m]); }
+                if ($ok) { $j['stage'] = 'cleaned'; $j['msg'] = $m; $j['msgd'] = $mL; $j['t'] = time(); } else { $j['msg'] .= '; ' . st_tr('job.old_kept', ['m' => $m]); $j['msgd'] = ($j['msgd'] ?? '') . '; ' . st_trd('job.old_kept', ['m' => $m]); }
                 st_notify($ok ? 'g' : 'a', $ok ? st_l('Seedbox: csere kész, régi fájlok eltávolítva', 'Seedbox: replacement done, old files removed') : st_l('Seedbox: a csere kész, de a régi fájlokat nem tudtam eltávolítani', 'Seedbox: replaced, but the old files could not be removed'),
                     st_l('A ' . ucfirst($j['kind']) . ' beimportálta az új kiadást.', ucfirst($j['kind']) . ' imported the new release.') . ' ' . $mL,
                     [[st_l('Cím', 'Title'), $j['title']], [st_l('Új', 'New'), $j['new']], [st_l('Régi', 'Old'), $j['old_name']]], false, st_ntool($j));
@@ -1001,7 +1001,7 @@ function st_job_status($j) {
         [$c, $m] = st_arr('radarr', '/movie/' . (int)$j['arr_id']);
         if (!is_array($m)) { return null; }
         $fid = (int)($m['movieFile']['id'] ?? 0);
-        if ($fid > 0 && !in_array($fid, $j['file_ids'], true)) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_radarr')]; }
+        if ($fid > 0 && !in_array($fid, $j['file_ids'], true)) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_radarr'), 'msgd' => st_trd('job.imp_radarr')]; }
         $key = 'movieId';
     } else {
         $cur = [];
@@ -1014,7 +1014,7 @@ function st_job_status($j) {
             if (!is_array($files)) { return null; }
             foreach ($files as $f) { if ((int)$f['seasonNumber'] === (int)$j['season']) { $cur[] = (int)$f['id']; } }
         }
-        if ($cur && !array_intersect($cur, $j['file_ids'])) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_sonarr')]; }
+        if ($cur && !array_intersect($cur, $j['file_ids'])) { return ['stage' => 'imported', 'msg' => st_tr('job.imp_sonarr'), 'msgd' => st_trd('job.imp_sonarr')]; }
         $key = 'seriesId';
     }
     [$c, $q] = st_arr($kind, '/queue?page=1&pageSize=200');
@@ -1026,13 +1026,14 @@ function st_job_status($j) {
         if ($tds === 'importBlocked' || $tdst === 'error' || $tdst === 'warning') {
             $msgs = [];
             foreach ((array)($r['statusMessages'] ?? []) as $sm) { foreach ((array)($sm['messages'] ?? []) as $mm) { $msgs[] = (string)$mm; } if (!empty($sm['title']) && !$msgs) { $msgs[] = (string)$sm['title']; } }
-            return ['stage' => 'blocked', 'msg' => st_tr('job.waiting', ['m' => $msgs ? implode(' / ', array_slice($msgs, 0, 2)) : ($tds ?: $tdst)])];
+            $wv = ['m' => $msgs ? implode(' / ', array_slice($msgs, 0, 2)) : ($tds ?: $tdst)]; return ['stage' => 'blocked', 'msg' => st_tr('job.waiting', $wv), 'msgd' => st_trd('job.waiting', $wv)];
         }
         $left = (float)($r['sizeleft'] ?? 0); $size = (float)($r['size'] ?? 0);
         $p = $size > 0 ? ($left > 0 ? min(99, (int)floor((1 - $left / $size) * 100)) : 100) : 0;
-        return ['stage' => 'downloading', 'msg' => st_tr('job.dl', ['p' => $p]) . (!empty($r['timeleft']) ? ', ' . st_tr('job.left', ['t' => st_fmt_left((string)$r['timeleft'])]) : '')];
+        $lt = !empty($r['timeleft']) ? ['t' => st_fmt_left((string)$r['timeleft'])] : null;
+        return ['stage' => 'downloading', 'msg' => st_tr('job.dl', ['p' => $p]) . ($lt ? ', ' . st_tr('job.left', $lt) : ''), 'msgd' => st_trd('job.dl', ['p' => $p]) . ($lt ? ', ' . st_trd('job.left', $lt) : '')];
     }
-    if (time() - (int)$j['t'] > 1800) { return ['stage' => 'blocked', 'msg' => st_tr('job.lost', ['k' => ucfirst($kind)])]; }
+    if (time() - (int)$j['t'] > 1800) { return ['stage' => 'blocked', 'msg' => st_tr('job.lost', ['k' => ucfirst($kind)]), 'msgd' => st_trd('job.lost', ['k' => ucfirst($kind)])]; }
     return null;
 }
 
@@ -1194,10 +1195,10 @@ function st_job_remove_old_do($id) {
     if (!$j) { return [false, st_tr('e.unknown_job')]; }
     if (in_array($j['stage'], ['removed', 'cleaned'], true)) { return [false, st_tr('e.already_rm')]; }
     if ($j['stage'] !== 'imported') { return [false, st_tr('e.notimp')]; }
-    $set = function ($stage, $msg) use ($id) { st_state_update(function (&$s) use ($id, $stage, $msg) { foreach ($s['jobs'] as &$x) { if ($x['id'] === $id) { $x['stage'] = $stage; $x['msg'] = $msg; $x['t'] = time(); } } unset($x); }); };
+    $set = function ($stage, $msg, $msgd = null) use ($id) { st_state_update(function (&$s) use ($id, $stage, $msg, $msgd) { foreach ($s['jobs'] as &$x) { if ($x['id'] === $id) { $x['stage'] = $stage; $x['msg'] = $msg; $x['msgd'] = $msgd ?? $msg; $x['t'] = time(); } } unset($x); }); };
     if ($j['mode'] === 'repl') {
         [$ok, $m, $mL] = st_cleanup_old($j); if (!$ok) { return [false, $m]; }
-        $set('cleaned', $m);
+        $set('cleaned', $m, $mL);
         st_notify('g', st_l('Seedbox: régi fájlok eltávolítva', 'Seedbox: old files removed'), $mL, [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name']]], false, st_ntool($j));
         return [true, ''];
     }
@@ -1215,7 +1216,7 @@ function st_job_remove_old_do($id) {
         if (!$ok) { return [false, $m]; }
         $m = str_replace(st_tr('cl.torrent'), st_tr('cl.torrent_rm'), $m); $mL = str_replace(' (a fájlok megmaradtak)', '', $mL); // the folder went to the trash right after
         st_upd_drop((string)$j['hash']);
-        $set('removed', $m);
+        $set('removed', $m, $mL);
         st_notify('g', st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted'), $mL,
             [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
         return [true, ''];
@@ -1223,7 +1224,7 @@ function st_job_remove_old_do($id) {
     [$c, $b, $e] = st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => $share === '' ? 'true' : 'false']);
     if ($c !== 200) { return [false, st_tr('e.qb_refused', ['e' => $e ?: 'HTTP ' . $c])]; }
     st_upd_drop((string)$j['hash']);
-    $set('removed', $share === '' ? st_tr('job.rm_all') : st_tr('job.rm_kept', ['t' => $share]));
+    $set('removed', $share === '' ? st_tr('job.rm_all') : st_tr('job.rm_kept', ['t' => $share]), $share === '' ? st_trd('job.rm_all') : st_trd('job.rm_kept', ['t' => $share]));
     st_notify('g', $share === '' ? st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted') : st_l('Seedbox: a régi torrent törölve, a fájlok maradtak', 'Seedbox: the old torrent was deleted, the files stay'), st_l('A jóváhagyásod után, mert az új kiadás már importálva van.', 'After your approval, because the new release is already imported.') . ($share === '' ? '' : ' ' . st_l('A fájlokat egy másik torrent is seedeli: ' . $share, 'Another torrent seeds the same files: ' . $share)),
         [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
     return [true, ''];

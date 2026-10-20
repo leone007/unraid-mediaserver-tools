@@ -12,6 +12,18 @@ const ST_JAR   = '/tmp/qbt_tools_cookie.txt';
 require_once __DIR__ . '/moveprog.php';
 require_once __DIR__ . '/i18n.php';
 // the texts the pages show, in the page language (lang/en.json); Discord texts use st_l()
+// the same dictionary in the Discord language (Settings, Language: Discord messages), for texts that go to both the page
+// and Discord, e.g. a job's message shown in the BoxBot message (seen 2026-10-20: the page language reached Discord)
+function st_trd($k, $v = []) {
+    static $tab = null;
+    if ($tab === null) {
+        $dir = __DIR__ . '/lang'; $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $read($dir . '/en.json'); $code = function_exists('mt_lang_discord') ? mt_lang_discord() : 'en';
+        $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : []; $tab = [];
+        foreach ($en as $kk => $vv) { if (!is_array($vv)) { continue; } foreach (['text', 'one', 'other'] as $f) { if (isset($vv[$f])) { $t = $tr[$kk][$f] ?? null; $tab[$kk][$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$vv[$f]; } } }
+    }
+    $s = mt_i18n_fmt($tab[$k] ?? null, (array)$v); return $s === null ? $k : $s;
+}
 function st_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
 function st_dir() { $d = getenv('DBX_ST_DIR'); return ($d !== false && $d !== '') ? $d : ST_DIR; }
 

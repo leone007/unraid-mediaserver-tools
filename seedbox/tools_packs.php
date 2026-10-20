@@ -721,11 +721,12 @@ function st_bot_poll() {
             foreach ((array)($m['kind'] === 'sp' ? ($st['packjobs'] ?? []) : ($st['jobs'] ?? [])) as $j) { if (($j['key'] ?? '') === $m['key'] && (int)($j['gt'] ?? $j['t'] ?? 0) >= (int)($m['rt'] ?? 0) - 120) { $job = $j; } }
             if (!$job) { continue; }
             $done = $m['kind'] === 'sp' ? $job['stage'] === 'done' : in_array($job['stage'], ['cleaned', 'removed'], true);
-            if ($done) { $ch = ['state' => 'done', 'status' => '✅ ' . st_l('Kész: ', 'Done: ') . (string)$job['msg'], 'color' => 0x3FA24A]; }
-            elseif (in_array($job['stage'], ['failed', 'blocked'], true)) { $ch = ['state' => 'fail', 'status' => '⛔ ' . (string)$job['msg'], 'color' => 0xE5534B]; }
-            elseif ((string)$job['msg'] !== (string)($m['last'] ?? '') && time() - (int)($m['et'] ?? 0) > 600) {
+            $jm = (string)($job['msgd'] ?? $job['msg']);   // the Discord language (msgd), not the page's
+            if ($done) { $ch = ['state' => 'done', 'status' => '✅ ' . st_l('Kész: ', 'Done: ') . $jm, 'color' => 0x3FA24A]; }
+            elseif (in_array($job['stage'], ['failed', 'blocked'], true)) { $ch = ['state' => 'fail', 'status' => '⛔ ' . $jm, 'color' => 0xE5534B]; }
+            elseif ($jm !== (string)($m['last'] ?? '') && time() - (int)($m['et'] ?? 0) > 600) {
                 // progress, at most every 10 minutes (Discord edits are cheap but the message should not flicker)
-                $ch = ['state' => 'run', 'status' => '▶ ' . (string)$job['msg'], 'color' => 0x4A90E2, 'last' => (string)$job['msg']];
+                $ch = ['state' => 'run', 'status' => '▶ ' . $jm, 'color' => 0x4A90E2, 'last' => $jm];
             }
         }
         if (!$ch) { continue; }
