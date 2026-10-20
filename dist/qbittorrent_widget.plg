@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzc">
+<!ENTITY version   "2026.10.99zzd">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzd
+- A single-episode torrent is named with its episode (MobLand S02E05, not MobLand S02) in the result lists, Activity and Discord
+
 ###2026.10.99zzc
 - Hungarian Discord message about torrents removed by the tracker: correct singular and plural, clearer wording
 
@@ -3952,6 +3955,11 @@ function st_find_scan($auto = false) {
     }
 }
 
+// 'E05' when a torrent name holds exactly one episode (S02E05), so the title does not look like a whole season
+function st_ep_suffix($name) {
+    if (preg_match('/S\d{1,2}E\d{1,3}[-_.]?E\d{1,3}/i', (string)$name)) { return ''; }
+    return preg_match('/S\d{1,2}E(\d{1,3})(?!\d)/i', (string)$name, $m) ? 'E' . str_pad((string)(int)$m[1], 2, '0', STR_PAD_LEFT) : '';
+}
 // BoxBot (item 72): one message with choices per torrent the tracker removed, when the replacement search found releases;
 // at most 5 per scan, and a torrent is offered again only after 7 days
 function st_find_bot($items) {
@@ -4342,7 +4350,7 @@ function st_arr_match($vids, $name, $index) {
     if (count($seasons) === 1 && $hit >= max(1, (int)floor(count($vids) * 0.8))) {
         $list = reset($seasons); $f0 = $list[0];
         $tot = 0; foreach ($list as $h) { $tot += $h['size']; }
-        return ['kind' => 'sonarr', 'arr_id' => $f0['id'], 'title' => $f0['title'] . ' S' . str_pad((string)$f0['season'], 2, '0', STR_PAD_LEFT), 'season' => $f0['season'],
+        return ['kind' => 'sonarr', 'arr_id' => $f0['id'], 'title' => $f0['title'] . ' S' . str_pad((string)$f0['season'], 2, '0', STR_PAD_LEFT) . (count($list) === 1 ? st_ep_suffix($name) : ''), 'season' => $f0['season'],
                 'file_ids' => array_map(function ($h) { return $h['file']; }, $list), 'cur_size' => $tot, 'cur_res' => $f0['res'] ?: st_res_of($name),
                 'cur_hdr' => max($f0['hdr'], st_hdr_rank($name)), 'cur_quality' => $f0['q'], 'media_paths' => array_map(function ($h) { return $h['path']; }, $list)];
     }
@@ -4638,7 +4646,7 @@ function st_find_repl_unit($unit, $index, $quiet = false) {
             $sr = $cand[0]; $fid = 0;
             [$ce, $eps3] = st_arr('sonarr', '/episode?seriesId=' . (int)$sr['id'] . '&seasonNumber=' . (int)$ms[3]);
             foreach ((array)$eps3 as $e3) { if ((int)($e3['episodeNumber'] ?? -1) === (int)$ms[4]) { $fid = (int)($e3['episodeFileId'] ?? 0); } }
-            $m = ['kind' => 'sonarr', 'arr_id' => $sr['id'], 'title' => $sr['title'] . ' S' . str_pad((string)(int)$ms[3], 2, '0', STR_PAD_LEFT), 'season' => (int)$ms[3], 'file_ids' => $fid ? [$fid] : [],
+            $m = ['kind' => 'sonarr', 'arr_id' => $sr['id'], 'title' => $sr['title'] . ' S' . str_pad((string)(int)$ms[3], 2, '0', STR_PAD_LEFT) . st_ep_suffix((string)$unit['name']), 'season' => (int)$ms[3], 'file_ids' => $fid ? [$fid] : [],
                   'cur_size' => (float)$unit['size'], 'cur_res' => st_res_of($unit['name']), 'cur_hdr' => st_hdr_rank($unit['name']), 'cur_quality' => '', 'media_paths' => []];
         }
     }

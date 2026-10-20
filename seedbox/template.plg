@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzc">
+<!ENTITY version   "2026.10.99zzd">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzd
+- A single-episode torrent is named with its episode (MobLand S02E05, not MobLand S02) in the result lists, Activity and Discord
+
 ###2026.10.99zzc
 - Hungarian Discord message about torrents removed by the tracker: correct singular and plural, clearer wording
 
