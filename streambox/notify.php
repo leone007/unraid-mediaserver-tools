@@ -32,6 +32,10 @@ if (!is_array($st) || !isset($st['since'])) {
 
 $since  = (int)$st['since'];
 $done   = array_flip(array_map('strval', (array)($st['done'] ?? [])));
+// the movies and episodes already announced or older than the notifier: a replaced file (Seedbox Replace, a Radarr or Sonarr
+// upgrade) is a new Jellyfin item with the same key and is not announced again (owner, 2026-10-20)
+$ann    = array_flip(array_map('strval', (array)($st['ann'] ?? [])));
+$skipped = 0;
 $settle = max(1, (int)$cfg['notify_settle']) * 60;
 $wait   = max(1, (int)$cfg['notify_wait']) * 60;
 $posted = 0;
@@ -45,10 +49,10 @@ if ($hookMovies !== '') {
     $d = nf_json($cfg, '/Items?IncludeItemTypes=Movie&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=60&Fields=' . NF_FIELDS);
     $pending = [];
     foreach ((array)($d['Items'] ?? []) as $m) {
-        $id = (string)($m['Id'] ?? '');
-        if ($id === '' || isset($done[$id])) { continue; }
+        $id = (string)($m['Id'] ?? ''); $mk = nf_key_movie($m);
         $ts = nf_ts($m['DateCreated'] ?? '');
-        if ($ts <= $since) { continue; }
+        if ($id === '' || isset($done[$id]) || $ts <= $since) { if ($mk !== '' && !isset($ann[$mk])) { $ann[$mk] = 1; $changed = true; } continue; }
+        if ($mk !== '' && isset($ann[$mk])) { $done[$id] = 1; $changed = true; $skipped++; nf_log('movie "' . ($m['Name'] ?? $id) . '": already announced, a replaced file is not announced again'); continue; }
         $m['_ts'] = $ts;
         $pending[] = $m;
     }
@@ -66,7 +70,7 @@ if ($hookMovies !== '') {
         $card = nf_card_movie($cfg, $m);
         list($res, $msg) = nf_send($hookMovies, $card['payload'], $card['poster'], $card['backdrop']);
         if ($res === 'retry') { nf_log('movie "' . ($m['Name'] ?? $id) . '": ' . $msg . ', will retry'); $stop = true; break; }
-        $done[$id] = 1;
+        $done[$id] = 1; $mk = nf_key_movie($m); if ($mk !== '') { $ann[$mk] = 1; }
         $changed = true;
         $posted++;
         if ($res === 'fail') { nf_log('movie "' . ($m['Name'] ?? $id) . '" not sent: ' . $msg); }
@@ -79,10 +83,10 @@ if ($hookSeries !== '' && !$stop) {
     $d = nf_json($cfg, '/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=300&Fields=' . NF_FIELDS);
     $groups = [];
     foreach ((array)($d['Items'] ?? []) as $e) {
-        $id = (string)($e['Id'] ?? '');
-        if ($id === '' || isset($done[$id])) { continue; }
+        $id = (string)($e['Id'] ?? ''); $ek = nf_key_ep($e);
         $ts = nf_ts($e['DateCreated'] ?? '');
-        if ($ts <= $since) { continue; }
+        if ($id === '' || isset($done[$id]) || $ts <= $since) { if ($ek !== '' && !isset($ann[$ek])) { $ann[$ek] = 1; $changed = true; } continue; }
+        if ($ek !== '' && isset($ann[$ek])) { $done[$id] = 1; $changed = true; $skipped++; nf_log('episode "' . ($e['SeriesName'] ?? '?') . ' S' . sprintf('%02dE%02d', (int)($e['ParentIndexNumber'] ?? 0), (int)$e['IndexNumber']) . '": already announced, a replaced file is not announced again'); continue; }
         $e['_ts'] = $ts;
         $key = (string)($e['SeasonId'] ?? '') !== '' ? (string)$e['SeasonId'] : ((string)($e['SeriesId'] ?? '') . '-' . (int)($e['ParentIndexNumber'] ?? 0));
         $groups[$key][] = $e;
@@ -111,7 +115,7 @@ if ($hookSeries !== '' && !$stop) {
         list($res, $msg) = nf_send($hookSeries, $card['payload'], $card['poster'], $card['backdrop']);
         $label = (string)($eps[0]['SeriesName'] ?? '?') . ' S' . sprintf('%02d', (int)($eps[0]['ParentIndexNumber'] ?? 0));
         if ($res === 'retry') { nf_log('season "' . $label . '": ' . $msg . ', will retry'); $stop = true; break; }
-        foreach ($eps as $e) { $done[(string)$e['Id']] = 1; }
+        foreach ($eps as $e) { $done[(string)$e['Id']] = 1; $ek = nf_key_ep($e); if ($ek !== '') { $ann[$ek] = 1; } }
         $changed = true;
         $posted++;
         if ($res === 'fail') { nf_log('season "' . $label . '" not sent: ' . $msg); }
@@ -120,5 +124,5 @@ if ($hookSeries !== '' && !$stop) {
 }
 
 if ($changed) {
-    nf_save_state($sf, ['since' => $since, 'done' => array_slice(array_keys($done), -400)]);
+    nf_save_state($sf, ['since' => $since, 'done' => array_slice(array_keys($done), -400), 'ann' => array_slice(array_keys($ann), -5000)]);
 }

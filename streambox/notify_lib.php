@@ -5,7 +5,10 @@ require_once __DIR__ . '/lang.php';
 // Discord texts in the shared language (lang.php): Hungarian or English
 function nf_t($hu, $en) { return mt_lang_discord() === 'en' ? $en : $hu; }
 function nf_dec() { return mt_lang_discord() === 'en' ? '.' : ','; }
-const NF_FIELDS = 'Overview,Genres,People,MediaStreams,MediaSources,DateCreated,OriginalTitle,ProductionYear';
+const NF_FIELDS = 'Overview,Genres,People,MediaStreams,MediaSources,DateCreated,OriginalTitle,ProductionYear,ProviderIds';
+// what a movie or an episode is, independent of its file: a replaced file gets a new Jellyfin item, but the same key (2026-10-20)
+function nf_key_movie($m) { $p = (array)($m['ProviderIds'] ?? []); foreach (['Tmdb', 'Imdb', 'Tvdb'] as $k) { if (!empty($p[$k])) { return 'm:' . strtolower($k) . ':' . $p[$k]; } } $n = strtolower(trim((string)($m['Name'] ?? ''))); return $n !== '' ? 'm:' . $n . ':' . (int)($m['ProductionYear'] ?? 0) : ''; }
+function nf_key_ep($e) { if (!isset($e['IndexNumber']) || (string)($e['SeriesId'] ?? '') === '') { return ''; } return 'e:' . $e['SeriesId'] . ':' . (int)($e['ParentIndexNumber'] ?? 0) . ':' . (int)$e['IndexNumber'] . (isset($e['IndexNumberEnd']) ? '-' . (int)$e['IndexNumberEnd'] : ''); }
 
 function nf_cfg() {
     $c = [
