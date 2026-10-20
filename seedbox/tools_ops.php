@@ -149,9 +149,10 @@ function st_find_scan($auto = false) {
     if ($auto && $dead > 0) {
         $names = array_slice(array_map(function ($g) { return $g['name']; }, $gone), 0, 8);
         st_notify('a', st_l('Seedbox: a tracker törölt torrenteket', 'Seedbox: the tracker removed torrents'),
-            st_l('A heti ellenőrzés ' . $dead . ' torrentet talált, amelyet a tracker már nem ismer, ezek nem seedelnek. A Seedbox Tools oldalon (Beállítások, Eszközök) cserélheted őket.',
-                 'The weekly check found ' . $dead . ' torrent(s) that the tracker no longer knows, so they do not seed. You can replace them in Seedbox Tools (Settings, Utilities).'),
-            [[st_l('Példák', 'Examples'), implode("\n", $names) . ($dead > 8 ? "\n+" . ($dead - 8) : '')], [st_l('Seedeletlen összesen', 'Unseeded in total'), (string)$n, true]], true, 'find');
+            st_l($dead === 1 ? 'Az ellenőrzés 1 torrentet talált, amelyet a tracker már nem ismer, ezért nem seedel. Cserélni a Seedbox Tools oldalon tudod (Settings › Utilities).'
+                             : 'Az ellenőrzés ' . $dead . ' torrentet talált, amelyeket a tracker már nem ismer, ezért nem seedelnek. Cserélni a Seedbox Tools oldalon tudod (Settings › Utilities).',
+                 'The check found ' . $dead . ' torrent(s) that the tracker no longer knows, so they do not seed. You can replace them in Seedbox Tools (Settings › Utilities).'),
+            [[st_l('Példák', 'Examples'), implode("\n", $names) . ($dead > 8 ? "\n+" . ($dead - 8) : '')], [st_l('Nem seedelt tétel összesen', 'Unseeded in total'), (string)$n, true]], true, 'find');
         return;
     }
     if ($auto) {
