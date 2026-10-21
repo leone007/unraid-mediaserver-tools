@@ -256,7 +256,15 @@
         headers: { 'Authorization': 'MediaBrowser Token="' + a.accessToken() + '"', 'Content-Type': 'application/json' },
         body: JSON.stringify(c)
       }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } });
-    }).then(function () { location.reload(); })
+    }).then(function () {
+      // the web client keeps the signed-in user (with this setting) in localStorage ('user-<id>-<server>') and reads its
+      // rows from that copy after a reload, refreshing it only minutes later (seen 2026-10-21): drop the copy first
+      try {
+        var id = uid();
+        Object.keys(localStorage).forEach(function (k) { if (/^user-/.test(k) && k.indexOf(id) >= 0) { localStorage.removeItem(k); } });
+      } catch (x) { /* the reload still asks the server, only later */ }
+      location.reload();
+    })
       .catch(function () { tog.disabled = false; showWatched = !show; queue(); });
   }
   function homeSections() {
