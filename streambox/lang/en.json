@@ -990,7 +990,7 @@
   "note": "switch on Jellyfin's home page, in the header of the first poster row. On (default): rows also show what the user has already watched; off: those are hidden. Short."
  },
  "jx.watched_too_tip": {
-  "text": "Off: the home page rows hide the movies and series you have already watched. Saved for your Jellyfin account.",
+  "text": "Off: the Recently added rows leave out what you have already watched. It is Jellyfin's own setting of your account (Settings, Home), so it works in the Jellyfin apps too; the page reloads.",
   "note": "tooltip of the Watched too switch."
  },
  "jx.menu": {

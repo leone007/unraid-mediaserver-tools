@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14v">
+<!ENTITY version   "2026.10.14w">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Jellyfin extras: the Watched too switch now is Jellyfin's own home setting Hide watched content from latest media (reversed), so switching it on really brings watched titles back into the Recently added rows (Jellyfin left them out on the server) and it works in the apps too; the page reloads after a click
+###2026.10.14v
 - Jellyfin extras: smaller IMDb badges; new setting IMDb badge on the cards (next to the title or on the poster); the Watched page starts below the floating top bar, and any menu link closes it (the menu links work again while it is open)
 ###2026.10.14u
 - Jellyfin extras: the IMDb badge sits next to the card title (on the poster only when a card has no title); episode cards (Next up, Continue watching, a series shown with its newest episode) show the series rating
@@ -3773,7 +3775,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "switch on Jellyfin's home page, in the header of the first poster row. On (default): rows also show what the user has already watched; off: those are hidden. Short."
  },
  "jx.watched_too_tip": {
-  "text": "Off: the home page rows hide the movies and series you have already watched. Saved for your Jellyfin account.",
+  "text": "Off: the Recently added rows leave out what you have already watched. It is Jellyfin's own setting of your account (Settings, Home), so it works in the Jellyfin apps too; the page reloads.",
   "note": "tooltip of the Watched too switch."
  },
  "jx.menu": {
@@ -4609,7 +4611,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Megnézettek is"
  },
  "jx.watched_too_tip": {
-  "text": "Kikapcsolva a főoldal sorai elrejtik a már megnézett filmeket és sorozatokat. A Jellyfin-fiókodhoz mentjük."
+  "text": "Kikapcsolva a „Nemrég hozzáadott” sorok kihagyják, amit már megnéztél. Ez a fiókod saját Jellyfin-beállítása (Beállítások, Kezdőlap), így a Jellyfin-appokban is érvényes; az oldal újratöltődik."
  },
  "jx.menu": {
   "text": "Megnézett"
@@ -4801,10 +4803,10 @@ function jx_run($cfg, $dir, $now) {
 <INLINE><![CDATA[/* Streambox Jellyfin extras (item 86), loaded by week.js (web client and Jellyfin Desktop):
    - an IMDb badge on every movie, series and episode card and on the detail page (rating from imdb.json); a click opens
      the title's IMDb page in a new tab (rate it there)
-   - a "Watched too" switch on the home page: off hides what this user has already watched; saved in the user's Jellyfin
-     display preferences (so it follows the account), on by default
+   - a "Watched too" switch on the home page: Jellyfin's own user setting "Hide watched content from latest media",
+     reversed (so it follows the account and works in the apps too)
    - a "Watched" entry in the menu: this user's watched movies and series, last watched first
-   Reads only, apart from the user's own display preference for the switch. Texts: window.__sbxT (written by Streambox). */
+   Reads only, apart from the signed-in user's own home setting when the switch is clicked. Texts: window.__sbxT (written by Streambox). */
 (function () {
   'use strict';
   if (window.__sbExtras) { return; }
@@ -4814,8 +4816,7 @@ function jx_run($cfg, $dir, $now) {
   try { if (document.currentScript && document.currentScript.src) { BASE = new URL('.', document.currentScript.src).href; } } catch (e) { /* keep the default */ }
   var ROOT = new URL('../../', new URL(BASE, location.href)).href;
   var R = null, rLoaded = 0, rBusy = false;          // imdb.json: Jellyfin id -> [rating x 10, votes, tt]
-  var showWatched = true, prefLoaded = false;          // the switch
-  var played = {}, playedAt = 0, playedBusy = false;   // home page cards: id -> played
+  var showWatched = true, prefLoaded = false, prefKnown = false;   // the switch (Jellyfin's HidePlayedInLatest, reversed)
   var IMDB = 'https://www.imdb.com/title/';
   var CFG = window.__sbxCfg || {};                      // Streambox settings: badge = title | poster
 
@@ -5031,33 +5032,34 @@ function jx_run($cfg, $dir, $now) {
   }
 
   // ---- the "Watched too" switch on the home page ----
-  var PREF = 'streambox';
-  function lsKey() { return 'sbxWatched_' + uid(); }
+  // It is Jellyfin's own user setting "Hide watched content from latest media" (HidePlayedInLatest, on by default in
+  // Jellyfin): the server leaves watched titles out of the Recently added rows, so hiding them in the page could never bring
+  // them back (seen 2026-10-21). The switch shows and changes that setting of the signed-in user, so it works in the apps
+  // too; the page reloads to ask Jellyfin for the rows again.
   function loadPref() {
     if (prefLoaded || !uid()) { return; }
     prefLoaded = true;
-    try { var v = localStorage.getItem(lsKey()); if (v === '0' || v === '1') { showWatched = v === '1'; } } catch (x) { /* first paint only */ }
-    jget('DisplayPreferences/' + PREF, { userId: uid(), client: 'streambox' }).then(function (p) {
-      var v = p && p.CustomPrefs ? p.CustomPrefs.showWatched : null;
-      if (v === '0' || v === '1') { showWatched = v === '1'; try { localStorage.setItem(lsKey(), v); } catch (x) { /* ok */ } queue(); }
-    }).catch(function () { /* default: on */ });
+    jget('Users/' + uid()).then(function (u) {
+      showWatched = !(u && u.Configuration && u.Configuration.HidePlayedInLatest !== false);
+      prefKnown = true;
+      queue();
+    }).catch(function () { prefLoaded = false; });
   }
-  function savePref() {
-    var v = showWatched ? '1' : '0', a = api();
-    try { localStorage.setItem(lsKey(), v); } catch (x) { /* ok */ }
+  function savePref(show, tog) {
+    var a = api();
     if (!a || !uid()) { return; }
-    jget('DisplayPreferences/' + PREF, { userId: uid(), client: 'streambox' }).catch(function () { return {}; }).then(function (p) {
-      p = p || {};
-      p.Id = p.Id || PREF;
-      p.Client = 'streambox';
-      p.CustomPrefs = p.CustomPrefs || {};
-      p.CustomPrefs.showWatched = v;
-      return fetch(a.getUrl('DisplayPreferences/' + PREF, { userId: uid(), client: 'streambox' }), {
+    tog.disabled = true;
+    jget('Users/' + uid()).then(function (u) {
+      var c = u.Configuration || {};
+      c.HidePlayedInLatest = !show;
+      if (typeof a.updateUserConfiguration === 'function') { return a.updateUserConfiguration(uid(), c); }
+      return fetch(a.getUrl('Users/Configuration', { userId: uid() }), {
         method: 'POST',
         headers: { 'Authorization': 'MediaBrowser Token="' + a.accessToken() + '"', 'Content-Type': 'application/json' },
-        body: JSON.stringify(p)
-      });
-    }).catch(function () { /* kept in this browser */ });
+        body: JSON.stringify(c)
+      }).then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } });
+    }).then(function () { location.reload(); })
+      .catch(function () { tog.disabled = false; showWatched = !show; queue(); });
   }
   function homeSections() {
     var pages = document.querySelectorAll('[id="indexPage"]');
@@ -5070,35 +5072,12 @@ function jx_run($cfg, $dir, $now) {
     }
     return null;
   }
-  // played state of the home page cards (Jellyfin's own check mark may be hidden by a skin)
-  function loadPlayed(ids) {
-    if (playedBusy || !ids.length || !uid()) { return; }
-    playedBusy = true;
-    items({ Ids: ids.slice(0, 300).join(','), EnableImages: false, EnableUserData: true, Fields: '' }).then(function (j) {
-      (j.Items || []).forEach(function (it) {
-        var id = String(it.Id).replace(/-/g, '').toLowerCase();
-        played[id] = !!(it.UserData && it.UserData.Played);
-      });
-      ids.forEach(function (id) { if (played[id] === undefined) { played[id] = false; } });
-      playedAt = Date.now();
-      queue();
-    }).catch(function () { /* show everything */ }).then(function () { playedBusy = false; });
-  }
   function home() {
     var sec = homeSections();
     if (!sec) { return; }
     loadPref();
-    var cs = sec.querySelectorAll('.card[data-id]'), need = [], i;
-    if (Date.now() - playedAt > 60000) { played = {}; playedAt = Date.now(); }   // fresh state each minute on the home page
-    for (i = 0; i < cs.length; i++) {
-      var id = cs[i].getAttribute('data-id');
-      if (played[id] === undefined) { need.push(id); }
-    }
-    if (need.length) { loadPlayed(need); }
-    for (i = 0; i < cs.length; i++) {
-      var hide = !showWatched && played[cs[i].getAttribute('data-id')] === true;
-      if (cs[i].classList.contains('sbx-hidden') !== hide) { cs[i].classList.toggle('sbx-hidden', hide); }
-    }
+    if (!prefKnown) { return; }
+    var i;
     // the switch sits in the header of the first poster row (Recently added), else of the first row
     var tog = sec.querySelector('.sbx-tog');
     var host = null, vs = sec.querySelectorAll('.verticalSection');
@@ -5113,7 +5092,7 @@ function jx_run($cfg, $dir, $now) {
       tog.appendChild(el('span', 'sbx-sw'));
       tog.appendChild(el('span', '', T('jx.watched_too')));
       tog.title = T('jx.watched_too_tip');
-      tog.addEventListener('click', function () { showWatched = !showWatched; savePref(); queue(); });
+      tog.addEventListener('click', function () { showWatched = !showWatched; savePref(showWatched, tog); queue(); });
       if (getComputedStyle(head).display !== 'flex') { head.style.display = 'flex'; head.style.alignItems = 'center'; head.style.flexWrap = 'wrap'; }
       // right after the title: the row's < > scroll buttons sit at the right end
       head.insertBefore(tog, head.firstElementChild ? head.firstElementChild.nextSibling : null);

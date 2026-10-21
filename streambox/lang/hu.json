@@ -744,7 +744,7 @@
   "text": "Megnézettek is"
  },
  "jx.watched_too_tip": {
-  "text": "Kikapcsolva a főoldal sorai elrejtik a már megnézett filmeket és sorozatokat. A Jellyfin-fiókodhoz mentjük."
+  "text": "Kikapcsolva a „Nemrég hozzáadott” sorok kihagyják, amit már megnéztél. Ez a fiókod saját Jellyfin-beállítása (Beállítások, Kezdőlap), így a Jellyfin-appokban is érvényes; az oldal újratöltődik."
  },
  "jx.menu": {
   "text": "Megnézett"
