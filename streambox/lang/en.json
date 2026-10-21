@@ -1074,5 +1074,10 @@
  "set.jx_badge.poster": {
   "text": "on the poster (top left)",
   "note": "option of the IMDb badge setting: on the picture's top left corner."
+ },
+ "jx.season_avg": {
+  "one": "Average IMDb rating of the {n} rated episode of this season",
+  "other": "Average IMDb rating of the {n} rated episodes of this season",
+  "note": "tooltip of the IMDb average badge on a season's poster (IMDb rates episodes, not seasons); {n} = episodes with an IMDb rating."
  }
 }

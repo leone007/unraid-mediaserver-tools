@@ -807,5 +807,9 @@
  },
  "set.jx_badge.poster": {
   "text": "a poszteren (bal felül)"
+ },
+ "jx.season_avg": {
+  "one": "Az évad {n} IMDb-n pontozott részének átlaga",
+  "other": "Az évad {n} IMDb-n pontozott részének átlaga"
  }
 }

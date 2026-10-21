@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14y">
+<!ENTITY version   "2026.10.14z">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Jellyfin extras: a season page shows the average IMDb rating of its episodes on the poster (IMDb rates episodes, not seasons); a click opens the season's episode list on IMDb
+###2026.10.14y
 - Jellyfin extras: the episode list of a season page shows each episode's IMDb rating (a link) instead of Jellyfin's TMDb star; season cards get no IMDb badge (IMDb rates series and episodes, not seasons)
 ###2026.10.14x
 - Jellyfin extras: after the Watched too switch the web client's stored copy of the user is dropped before the reload, so the rows follow the switch at once (before it took a few minutes)
@@ -3863,6 +3865,11 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.jx_badge.poster": {
   "text": "on the poster (top left)",
   "note": "option of the IMDb badge setting: on the picture's top left corner."
+ },
+ "jx.season_avg": {
+  "one": "Average IMDb rating of the {n} rated episode of this season",
+  "other": "Average IMDb rating of the {n} rated episodes of this season",
+  "note": "tooltip of the IMDb average badge on a season's poster (IMDb rates episodes, not seasons); {n} = episodes with an IMDb rating."
  }
 }
 ]]></INLINE>
@@ -4678,6 +4685,10 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "set.jx_badge.poster": {
   "text": "a poszteren (bal felül)"
+ },
+ "jx.season_avg": {
+  "one": "Az évad {n} IMDb-n pontozott részének átlaga",
+  "other": "Az évad {n} IMDb-n pontozott részének átlaga"
  }
 }
 ]]></INLINE>
@@ -4862,6 +4873,7 @@ function jx_run($cfg, $dir, $now) {
     'font:800 .66em/1.2 system-ui,sans-serif;border-radius:4px;padding:.08em .28em;text-decoration:none!important;box-shadow:0 1px 4px rgba(0,0,0,.5)}' +
     '.sbx-imdb i{font-style:normal;font-weight:700;background:#121212;color:#f5c518;border-radius:2px;padding:0 .25em;margin-left:.3em}' +
     '.sbx-imdb:hover,.sbx-imdb:focus-visible{box-shadow:0 0 0 2px #fff;outline:none}' +
+    '.sbx-savg{top:.6em;left:.6em;font-size:.95em}' +
     '.sbx-tx{display:flex!important;align-items:center}' +
     '.sbx-tx>:not(.sbx-imdb){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
     '.sbx-txc{justify-content:center}' +
@@ -5061,6 +5073,43 @@ function jx_run($cfg, $dir, $now) {
       star.parentNode.insertBefore(a, star);
       star.classList.add('sbx-hidden');
     }
+  }
+
+  // a season page: the average IMDb rating of its episodes on the poster (IMDb rates episodes, not seasons), a link to the
+  // season's episode list on IMDb
+  var seasonCache = {};   // season id -> {avg, n, tt, sn} | null (not a season, or no rated episode)
+  function loadSeason(id) {
+    jget('Items/' + id, { userId: uid() }).then(function (it) {
+      if (!it || it.Type !== 'Season') { return; }
+      var sid = it.SeriesId ? nid(it.SeriesId) : '';
+      return items({ ParentId: id, IncludeItemTypes: 'Episode', Recursive: true, Fields: '', EnableImages: false, EnableUserData: false }).then(function (j) {
+        var sum = 0, n = 0;
+        (j.Items || []).forEach(function (e) { var r = R && R[nid(e.Id)]; if (r && r[0]) { sum += r[0]; n++; } });
+        if (!n) { return; }
+        seasonCache[id] = { avg: sum / n / 10, n: n, tt: R && R[sid] ? R[sid][2] : '', sn: it.IndexNumber };
+        queue();
+      });
+    }).catch(function () { /* no average */ });
+  }
+  function seasonAvg() {
+    if (!R || !uid()) { return; }
+    var p = detailPage(), id = hashId();
+    if (!p || !id) { return; }
+    var host = p.querySelector('.detailImageContainer .cardScalable') || p.querySelector('.detailImageContainer');
+    if (!host) { return; }
+    var cur = host.querySelector('.sbx-savg');
+    if (cur && cur.getAttribute('data-id') === id) { return; }
+    if (cur) { cur.remove(); }
+    if (seasonCache[id] === undefined) { seasonCache[id] = null; loadSeason(id); return; }
+    var d = seasonCache[id];
+    if (!d) { return; }
+    var a = el(d.tt ? 'a' : 'span', 'sbx-imdb sbx-savg', 'IMDb');
+    a.setAttribute('data-id', id);
+    if (d.tt) { a.href = IMDB + d.tt + '/episodes/' + (d.sn ? '?season=' + d.sn : ''); a.target = '_blank'; a.rel = 'noopener'; }
+    a.title = T('jx.season_avg', { n: d.n });
+    a.appendChild(el('i', '', '⌀ ' + d.avg.toFixed(1)));
+    if (getComputedStyle(host).position === 'static') { host.style.position = 'relative'; }
+    host.appendChild(a);
   }
 
   // ---- the "Watched too" switch on the home page ----
@@ -5348,6 +5397,7 @@ function jx_run($cfg, $dir, $now) {
     try { cards(); } catch (x) { /* no badges */ }
     try { detail(); } catch (x) { /* no detail link */ }
     try { epList(); } catch (x) { /* the stars stay */ }
+    try { seasonAvg(); } catch (x) { /* no average */ }
     try { home(); } catch (x) { /* no switch */ }
   }
   function queue() { if (!queued) { queued = true; requestAnimationFrame(tick); } }
