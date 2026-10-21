@@ -153,7 +153,9 @@
       var done = c.getAttribute('data-sbx') === id;
       if (done && (c.getAttribute('data-sbx-none') === '1' || c.querySelector('.sbx-imdb'))) { continue; }   // a re-drawn title loses its badge: put it back
       var key = id;
-      if (type === 'Episode' || type === 'Season') {
+      // IMDb rates series and episodes, not seasons: a season card gets no badge (the series' would look like the season's)
+      if (type === 'Season') { c.setAttribute('data-sbx', id); c.setAttribute('data-sbx-none', '1'); continue; }
+      if (type === 'Episode') {
         if (seriesOf[id] === undefined) { sWant[id] = 1; continue; }
         key = seriesOf[id] || id;
       }
@@ -227,6 +229,32 @@
       if (star && d.r && d.r[0]) { star.classList.add('sbx-hidden'); }
       if (star) { star.parentNode.insertBefore(a, star); } else { mi.appendChild(a); }
     });
+  }
+
+  // the episode list of a season page: the episode's IMDb rating (a link) instead of Jellyfin's star, which is TMDb's;
+  // an episode IMDb has not rated yet keeps the star
+  function epList() {
+    if (!R) { return; }
+    var p = detailPage();
+    if (!p) { return; }
+    var li = p.querySelectorAll('.listItem[data-id]');
+    for (var i = 0; i < li.length; i++) {
+      var it = li[i], id = it.getAttribute('data-id');
+      if (it.getAttribute('data-sbx') === id && (it.getAttribute('data-sbx-none') === '1' || it.querySelector('.sbx-mi'))) { continue; }
+      it.setAttribute('data-sbx', id);
+      var r = R[id], star = it.querySelector('.starRatingContainer');
+      if (!r || !r[0] || !star) { it.setAttribute('data-sbx-none', '1'); continue; }
+      it.removeAttribute('data-sbx-none');
+      var a = el('a', 'sbx-mi');
+      a.href = IMDB + r[2] + '/';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.title = badgeTip(r);
+      a.appendChild(el('b', '', 'IMDb'));
+      a.appendChild(document.createTextNode(score(r)));
+      star.parentNode.insertBefore(a, star);
+      star.classList.add('sbx-hidden');
+    }
   }
 
   // ---- the "Watched too" switch on the home page ----
@@ -513,6 +541,7 @@
     try { nav(); } catch (x) { /* the menu entry is optional */ }
     try { cards(); } catch (x) { /* no badges */ }
     try { detail(); } catch (x) { /* no detail link */ }
+    try { epList(); } catch (x) { /* the stars stay */ }
     try { home(); } catch (x) { /* no switch */ }
   }
   function queue() { if (!queued) { queued = true; requestAnimationFrame(tick); } }
