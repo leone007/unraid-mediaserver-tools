@@ -97,6 +97,7 @@ $new = [
     'wk_web_dir'    => $wkWebDir,
     'wk_web_view'   => ((string)($_POST['wk_web_view'] ?? '') === 'row') ? 'row' : 'grid',
     'jx_on'         => sb_bool($_POST['jx_on'] ?? '0'),
+    'jx_badge'      => ((string)($_POST['jx_badge'] ?? '') === 'poster') ? 'poster' : 'title',
 ];
 
 $text = '';

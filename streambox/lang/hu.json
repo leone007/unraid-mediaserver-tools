@@ -798,5 +798,14 @@
  "jx.eps": {
   "one": "{n} rész",
   "other": "{n} rész"
+ },
+ "set.jx_badge": {
+  "text": "IMDb-címke a kártyákon:"
+ },
+ "set.jx_badge.title": {
+  "text": "a cím mellett"
+ },
+ "set.jx_badge.poster": {
+  "text": "a poszteren (bal felül)"
  }
 }

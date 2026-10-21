@@ -17,6 +17,7 @@
   var showWatched = true, prefLoaded = false;          // the switch
   var played = {}, playedAt = 0, playedBusy = false;   // home page cards: id -> played
   var IMDB = 'https://www.imdb.com/title/';
+  var CFG = window.__sbxCfg || {};                      // Streambox settings: badge = title | poster
 
   // ---- texts ----
   function lang() {
@@ -53,13 +54,13 @@
 
   var css = '' +
     '.sbx-imdb{position:absolute;top:.45em;left:.45em;z-index:3;display:inline-flex;align-items:center;background:#f5c518;color:#121212!important;' +
-    'font:800 .72em/1.25 system-ui,sans-serif;border-radius:4px;padding:.1em .3em;text-decoration:none!important;box-shadow:0 1px 4px rgba(0,0,0,.5)}' +
+    'font:800 .66em/1.2 system-ui,sans-serif;border-radius:4px;padding:.08em .28em;text-decoration:none!important;box-shadow:0 1px 4px rgba(0,0,0,.5)}' +
     '.sbx-imdb i{font-style:normal;font-weight:700;background:#121212;color:#f5c518;border-radius:2px;padding:0 .25em;margin-left:.3em}' +
     '.sbx-imdb:hover,.sbx-imdb:focus-visible{box-shadow:0 0 0 2px #fff;outline:none}' +
     '.sbx-tx{display:flex!important;align-items:center}' +
     '.sbx-tx>:not(.sbx-imdb){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
     '.sbx-txc{justify-content:center}' +
-    '.sbx-imdb.sbx-in{position:static;flex:none;margin-left:.5em;font-size:.72em;box-shadow:none}' +
+    '.sbx-imdb.sbx-in{position:static;flex:none;margin-left:.45em;font-size:.62em;box-shadow:none;border-radius:3px}' +
     '.sbx-mi{display:inline-flex;align-items:center;color:inherit!important;text-decoration:none!important;font-weight:600;border-radius:6px;padding:.05em .35em;margin:0 .5em 0 -.35em;cursor:pointer}' +
     '.sbx-mi:hover,.sbx-mi:focus-visible{background:rgba(255,255,255,.12);outline:none}' +
     '.sbx-mi b{background:#f5c518;color:#121212;font-weight:800;font-size:.78em;border-radius:3px;padding:.05em .3em;margin-right:.35em}' +
@@ -163,7 +164,7 @@
       var r = R[key] || R[id];
       if (!r || !r[0]) { c.setAttribute('data-sbx-none', '1'); continue; }
       c.removeAttribute('data-sbx-none');
-      var tx = titleHost(c);
+      var tx = CFG.badge === 'poster' ? null : titleHost(c);
       if (tx) { badge(tx, r, true); continue; }
       var box = c.querySelector('.cardScalable') || c.querySelector('.cardImageContainer');
       if (box) { badge(box, r, false); }
@@ -432,8 +433,7 @@
   function drawW() {
     var w = document.getElementById('sbxW');
     if (!w) { return; }
-    var hd = document.querySelector('header.MuiAppBar-root, .skinHeader');
-    w.style.top = (hd ? Math.max(0, Math.round(hd.getBoundingClientRect().bottom)) : 0) + 'px';
+    w.style.top = headerBottom() + 'px';
     w.textContent = '';
     var top = el('div', 'sbxw-top');
     top.appendChild(el('h1', '', T('jx.menu')));
@@ -490,10 +490,23 @@
     });
     w.appendChild(g);
   }
+  // the lowest edge of the header's visible parts (the Abyss bar floats: the header box itself can be shorter than its links)
+  function headerBottom() {
+    var hd = document.querySelector('header.MuiAppBar-root, .skinHeader'), b = 0;
+    if (hd) {
+      [hd].concat(Array.prototype.slice.call(hd.querySelectorAll('a,button,div'))).forEach(function (e) {
+        var r = e.getBoundingClientRect();
+        if (r.height > 0 && r.bottom < 260) { b = Math.max(b, r.bottom); }
+      });
+    }
+    return Math.max(56, Math.round(b) + 8);
+  }
+  var openHref = '';
   function openW() {
     var w = document.getElementById('sbxW');
     if (!w) { w = el('div'); w.id = 'sbxW'; document.body.appendChild(w); }
     document.documentElement.style.overflow = 'hidden';
+    openHref = location.href;
     Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.add('sbx-nav-on'); });
     W.movies = null; W.series = null;
     drawW();
@@ -503,6 +516,7 @@
     var w = document.getElementById('sbxW');
     if (w) { w.remove(); }
     document.documentElement.style.overflow = '';
+    openHref = '';
     Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.remove('sbx-nav-on'); });
   }
 
@@ -510,6 +524,7 @@
   var queued = false;
   function tick() {
     queued = false;
+    if (openHref && location.href !== openHref && document.getElementById('sbxW')) { closeW(); }
     try { nav(); } catch (x) { /* the menu entry is optional */ }
     try { cards(); } catch (x) { /* no badges */ }
     try { detail(); } catch (x) { /* no detail link */ }
@@ -525,6 +540,13 @@
     window.addEventListener('mousedown', stopForBadge, true);
     window.addEventListener('pointerdown', stopForBadge, true);
     window.addEventListener('hashchange', function () { closeW(); queue(); });
+    window.addEventListener('popstate', function () { closeW(); queue(); });
+    // Jellyfin's router changes the address with pushState (no hashchange): any other menu link or button closes the page
+    document.addEventListener('click', function (e) {
+      if (!document.getElementById('sbxW')) { return; }
+      var t = e.target && e.target.closest ? e.target.closest('a,button') : null;
+      if (t && !t.closest('#sbxW') && !t.classList.contains('sbx-nav')) { closeW(); }
+    }, true);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.getElementById('sbxW')) { closeW(); } });
     new MutationObserver(function (ms) {
       for (var i = 0; i < ms.length; i++) { if (!ms[i].target.closest || !ms[i].target.closest('#sbxW')) { queue(); return; } }

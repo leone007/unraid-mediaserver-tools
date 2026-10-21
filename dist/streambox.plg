@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14u">
+<!ENTITY version   "2026.10.14v">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Jellyfin extras: smaller IMDb badges; new setting IMDb badge on the cards (next to the title or on the poster); the Watched page starts below the floating top bar, and any menu link closes it (the menu links work again while it is open)
+###2026.10.14u
 - Jellyfin extras: the IMDb badge sits next to the card title (on the poster only when a card has no title); episode cards (Next up, Continue watching, a series shown with its newest episode) show the series rating
 ###2026.10.14t
 - Jellyfin extras: the Watched entry goes into the top bar too (Jellyfin's new header, as the Abyss skin shows it), not only the hidden side menu; the Watched too switch sits next to the row title, away from the scroll buttons
@@ -686,7 +688,7 @@ $sb = [
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
   'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
-  'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1',
+  'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1', 'jx_badge' => 'title',
 ];
 $sb_log = is_file('/tmp/streambox_notify.log') ? implode("\n", array_slice((array)@file('/tmp/streambox_notify.log', FILE_IGNORE_NEW_LINES), -6)) : '';
 if (is_file($sb_file)) {
@@ -853,6 +855,13 @@ if (!function_exists('sb_auto')) {
 <dt><?=$sbs_t('set.jx_on')?></dt>
 <dd><input type="hidden" name="jx_on" value="0"><input type="checkbox" name="jx_on" value="1" <?=sb_chk($sb['jx_on'])?>> <?=$sbs_t('set.jx_on_hint')?>
 <span class="uset-hint"><?=$sbs_T('set.jx_on_long')?></span></dd>
+
+<dt><?=$sbs_t('set.jx_badge')?></dt>
+<dd><select name="jx_badge">
+<?php foreach (['title' => $sbs_T('set.jx_badge.title'), 'poster' => $sbs_T('set.jx_badge.poster')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['jx_badge'] === $sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
+<?php endforeach; ?>
+</select></dd>
 </dl>
 
 <h3><?=$sbs_t('set.h.discord')?></h3>
@@ -1580,6 +1589,7 @@ $new = [
     'wk_web_dir'    => $wkWebDir,
     'wk_web_view'   => ((string)($_POST['wk_web_view'] ?? '') === 'row') ? 'row' : 'grid',
     'jx_on'         => sb_bool($_POST['jx_on'] ?? '0'),
+    'jx_badge'      => ((string)($_POST['jx_badge'] ?? '') === 'poster') ? 'poster' : 'title',
 ];
 
 $text = '';
@@ -1733,7 +1743,7 @@ function wk_cfg() {
         'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '',
         'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '',
         'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'dc_series' => '',
-        'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1',
+        'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1', 'jx_badge' => 'title',
     ];
     $f = getenv('SB_CFG') ?: '/boot/config/plugins/streambox/settings.cfg';   // SB_CFG: tests only
     if (is_file($f)) {
@@ -3835,6 +3845,18 @@ function mt_i18n_js($dir, $name, $only = null) {
   "one": "{n} episode",
   "other": "{n} episodes",
   "note": "under a series poster on the Watched page: how many of its episodes the user has watched."
+ },
+ "set.jx_badge": {
+  "text": "IMDb badge on the cards:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jx_badge.title": {
+  "text": "next to the title",
+  "note": "option of the IMDb badge setting: under the poster, after the title."
+ },
+ "set.jx_badge.poster": {
+  "text": "on the poster (top left)",
+  "note": "option of the IMDb badge setting: on the picture's top left corner."
  }
 }
 ]]></INLINE>
@@ -4641,6 +4663,15 @@ function mt_i18n_js($dir, $name, $only = null) {
  "jx.eps": {
   "one": "{n} rész",
   "other": "{n} rész"
+ },
+ "set.jx_badge": {
+  "text": "IMDb-címke a kártyákon:"
+ },
+ "set.jx_badge.title": {
+  "text": "a cím mellett"
+ },
+ "set.jx_badge.poster": {
+  "text": "a poszteren (bal felül)"
  }
 }
 ]]></INLINE>
@@ -4674,7 +4705,9 @@ function jx_script($on) {
             foreach (['text', 'one', 'other'] as $x) { if (isset($v[$x]) && trim((string)$v[$x]) !== '') { $t[$c][$k][$x] = (string)$v[$x]; } }
         }
     }
-    return 'window.__sbxT=' . json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . ";\n" . $js;
+    $cfg = ['badge' => (string)($GLOBALS['jx_cfg']['jx_badge'] ?? 'title') === 'poster' ? 'poster' : 'title'];
+    return 'window.__sbxT=' . json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . ";\n"
+        . 'window.__sbxCfg=' . json_encode($cfg) . ";\n" . $js;
 }
 
 // IMDb ids of the library (movies, series, episodes), refreshed every 30 minutes: [jellyfin id => tt id]
@@ -4744,6 +4777,7 @@ function jx_ratings($want) {
 }
 
 function jx_run($cfg, $dir, $now) {
+    $GLOBALS['jx_cfg'] = $cfg;
     $on = (string)($cfg['jx_on'] ?? '1') === '1';
     $js = jx_script($on);
     if ($js !== '') { ww_put($dir . '/extras.js', $js); }
@@ -4783,6 +4817,7 @@ function jx_run($cfg, $dir, $now) {
   var showWatched = true, prefLoaded = false;          // the switch
   var played = {}, playedAt = 0, playedBusy = false;   // home page cards: id -> played
   var IMDB = 'https://www.imdb.com/title/';
+  var CFG = window.__sbxCfg || {};                      // Streambox settings: badge = title | poster
 
   // ---- texts ----
   function lang() {
@@ -4819,13 +4854,13 @@ function jx_run($cfg, $dir, $now) {
 
   var css = '' +
     '.sbx-imdb{position:absolute;top:.45em;left:.45em;z-index:3;display:inline-flex;align-items:center;background:#f5c518;color:#121212!important;' +
-    'font:800 .72em/1.25 system-ui,sans-serif;border-radius:4px;padding:.1em .3em;text-decoration:none!important;box-shadow:0 1px 4px rgba(0,0,0,.5)}' +
+    'font:800 .66em/1.2 system-ui,sans-serif;border-radius:4px;padding:.08em .28em;text-decoration:none!important;box-shadow:0 1px 4px rgba(0,0,0,.5)}' +
     '.sbx-imdb i{font-style:normal;font-weight:700;background:#121212;color:#f5c518;border-radius:2px;padding:0 .25em;margin-left:.3em}' +
     '.sbx-imdb:hover,.sbx-imdb:focus-visible{box-shadow:0 0 0 2px #fff;outline:none}' +
     '.sbx-tx{display:flex!important;align-items:center}' +
     '.sbx-tx>:not(.sbx-imdb){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
     '.sbx-txc{justify-content:center}' +
-    '.sbx-imdb.sbx-in{position:static;flex:none;margin-left:.5em;font-size:.72em;box-shadow:none}' +
+    '.sbx-imdb.sbx-in{position:static;flex:none;margin-left:.45em;font-size:.62em;box-shadow:none;border-radius:3px}' +
     '.sbx-mi{display:inline-flex;align-items:center;color:inherit!important;text-decoration:none!important;font-weight:600;border-radius:6px;padding:.05em .35em;margin:0 .5em 0 -.35em;cursor:pointer}' +
     '.sbx-mi:hover,.sbx-mi:focus-visible{background:rgba(255,255,255,.12);outline:none}' +
     '.sbx-mi b{background:#f5c518;color:#121212;font-weight:800;font-size:.78em;border-radius:3px;padding:.05em .3em;margin-right:.35em}' +
@@ -4929,7 +4964,7 @@ function jx_run($cfg, $dir, $now) {
       var r = R[key] || R[id];
       if (!r || !r[0]) { c.setAttribute('data-sbx-none', '1'); continue; }
       c.removeAttribute('data-sbx-none');
-      var tx = titleHost(c);
+      var tx = CFG.badge === 'poster' ? null : titleHost(c);
       if (tx) { badge(tx, r, true); continue; }
       var box = c.querySelector('.cardScalable') || c.querySelector('.cardImageContainer');
       if (box) { badge(box, r, false); }
@@ -5198,8 +5233,7 @@ function jx_run($cfg, $dir, $now) {
   function drawW() {
     var w = document.getElementById('sbxW');
     if (!w) { return; }
-    var hd = document.querySelector('header.MuiAppBar-root, .skinHeader');
-    w.style.top = (hd ? Math.max(0, Math.round(hd.getBoundingClientRect().bottom)) : 0) + 'px';
+    w.style.top = headerBottom() + 'px';
     w.textContent = '';
     var top = el('div', 'sbxw-top');
     top.appendChild(el('h1', '', T('jx.menu')));
@@ -5256,10 +5290,23 @@ function jx_run($cfg, $dir, $now) {
     });
     w.appendChild(g);
   }
+  // the lowest edge of the header's visible parts (the Abyss bar floats: the header box itself can be shorter than its links)
+  function headerBottom() {
+    var hd = document.querySelector('header.MuiAppBar-root, .skinHeader'), b = 0;
+    if (hd) {
+      [hd].concat(Array.prototype.slice.call(hd.querySelectorAll('a,button,div'))).forEach(function (e) {
+        var r = e.getBoundingClientRect();
+        if (r.height > 0 && r.bottom < 260) { b = Math.max(b, r.bottom); }
+      });
+    }
+    return Math.max(56, Math.round(b) + 8);
+  }
+  var openHref = '';
   function openW() {
     var w = document.getElementById('sbxW');
     if (!w) { w = el('div'); w.id = 'sbxW'; document.body.appendChild(w); }
     document.documentElement.style.overflow = 'hidden';
+    openHref = location.href;
     Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.add('sbx-nav-on'); });
     W.movies = null; W.series = null;
     drawW();
@@ -5269,6 +5316,7 @@ function jx_run($cfg, $dir, $now) {
     var w = document.getElementById('sbxW');
     if (w) { w.remove(); }
     document.documentElement.style.overflow = '';
+    openHref = '';
     Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.remove('sbx-nav-on'); });
   }
 
@@ -5276,6 +5324,7 @@ function jx_run($cfg, $dir, $now) {
   var queued = false;
   function tick() {
     queued = false;
+    if (openHref && location.href !== openHref && document.getElementById('sbxW')) { closeW(); }
     try { nav(); } catch (x) { /* the menu entry is optional */ }
     try { cards(); } catch (x) { /* no badges */ }
     try { detail(); } catch (x) { /* no detail link */ }
@@ -5291,6 +5340,13 @@ function jx_run($cfg, $dir, $now) {
     window.addEventListener('mousedown', stopForBadge, true);
     window.addEventListener('pointerdown', stopForBadge, true);
     window.addEventListener('hashchange', function () { closeW(); queue(); });
+    window.addEventListener('popstate', function () { closeW(); queue(); });
+    // Jellyfin's router changes the address with pushState (no hashchange): any other menu link or button closes the page
+    document.addEventListener('click', function (e) {
+      if (!document.getElementById('sbxW')) { return; }
+      var t = e.target && e.target.closest ? e.target.closest('a,button') : null;
+      if (t && !t.closest('#sbxW') && !t.classList.contains('sbx-nav')) { closeW(); }
+    }, true);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.getElementById('sbxW')) { closeW(); } });
     new MutationObserver(function (ms) {
       for (var i = 0; i < ms.length; i++) { if (!ms[i].target.closest || !ms[i].target.closest('#sbxW')) { queue(); return; } }

@@ -1062,5 +1062,17 @@
   "one": "{n} episode",
   "other": "{n} episodes",
   "note": "under a series poster on the Watched page: how many of its episodes the user has watched."
+ },
+ "set.jx_badge": {
+  "text": "IMDb badge on the cards:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jx_badge.title": {
+  "text": "next to the title",
+  "note": "option of the IMDb badge setting: under the poster, after the title."
+ },
+ "set.jx_badge.poster": {
+  "text": "on the poster (top left)",
+  "note": "option of the IMDb badge setting: on the picture's top left corner."
  }
 }

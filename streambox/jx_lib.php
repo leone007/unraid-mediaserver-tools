@@ -25,7 +25,9 @@ function jx_script($on) {
             foreach (['text', 'one', 'other'] as $x) { if (isset($v[$x]) && trim((string)$v[$x]) !== '') { $t[$c][$k][$x] = (string)$v[$x]; } }
         }
     }
-    return 'window.__sbxT=' . json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . ";\n" . $js;
+    $cfg = ['badge' => (string)($GLOBALS['jx_cfg']['jx_badge'] ?? 'title') === 'poster' ? 'poster' : 'title'];
+    return 'window.__sbxT=' . json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . ";\n"
+        . 'window.__sbxCfg=' . json_encode($cfg) . ";\n" . $js;
 }
 
 // IMDb ids of the library (movies, series, episodes), refreshed every 30 minutes: [jellyfin id => tt id]
@@ -95,6 +97,7 @@ function jx_ratings($want) {
 }
 
 function jx_run($cfg, $dir, $now) {
+    $GLOBALS['jx_cfg'] = $cfg;
     $on = (string)($cfg['jx_on'] ?? '1') === '1';
     $js = jx_script($on);
     if ($js !== '') { ww_put($dir . '/extras.js', $js); }

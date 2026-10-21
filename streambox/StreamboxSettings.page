@@ -17,7 +17,7 @@ $sb = [
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
   'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
-  'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1',
+  'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1', 'jx_badge' => 'title',
 ];
 $sb_log = is_file('/tmp/streambox_notify.log') ? implode("\n", array_slice((array)@file('/tmp/streambox_notify.log', FILE_IGNORE_NEW_LINES), -6)) : '';
 if (is_file($sb_file)) {
@@ -184,6 +184,13 @@ if (!function_exists('sb_auto')) {
 <dt><?=$sbs_t('set.jx_on')?></dt>
 <dd><input type="hidden" name="jx_on" value="0"><input type="checkbox" name="jx_on" value="1" <?=sb_chk($sb['jx_on'])?>> <?=$sbs_t('set.jx_on_hint')?>
 <span class="uset-hint"><?=$sbs_T('set.jx_on_long')?></span></dd>
+
+<dt><?=$sbs_t('set.jx_badge')?></dt>
+<dd><select name="jx_badge">
+<?php foreach (['title' => $sbs_T('set.jx_badge.title'), 'poster' => $sbs_T('set.jx_badge.poster')] as $sb_k => $sb_l): ?>
+  <option value="<?=$sb_k?>" <?=((string)$sb['jx_badge'] === $sb_k) ? 'selected' : ''?>><?=sb_h($sb_l)?></option>
+<?php endforeach; ?>
+</select></dd>
 </dl>
 
 <h3><?=$sbs_t('set.h.discord')?></h3>
