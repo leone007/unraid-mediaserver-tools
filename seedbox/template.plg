@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzg">
+<!ENTITY version   "2026.10.99zzh">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzh
+- Season repacker: a stuck season pack job has a Dismiss button (it leaves Processing and the STUCK badge of the tile; nothing is deleted), and a stuck job closes by itself when a later replacement of the same season finished
+
 ###2026.10.99zzg
 - Season repacker: a stuck season pack job (for example a pack stopped in Sonarr) no longer hides the autobrr row of that season, so a new pack of it can be started from the page or from Discord (before, it said unknown season)
 

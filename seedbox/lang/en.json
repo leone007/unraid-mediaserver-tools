@@ -2787,5 +2787,21 @@
  "e.sp_cx_over": {
   "text": "This replacement has already ended.",
   "note": "error of the Cancel button when the job is done, stuck or failed already."
+ },
+ "pk.dismissed": {
+  "text": "Dismissed: nothing was replaced.",
+  "note": "status of a stuck season pack job after Dismiss (Activity results)."
+ },
+ "pk.superseded": {
+  "text": "Closed: a later replacement of this season finished; nothing was replaced by this one.",
+  "note": "status of a stuck season pack job closed by itself because a later job of the same season is done."
+ },
+ "e.sp_nodismiss": {
+  "text": "Only a stuck season pack job can be dismissed.",
+  "note": "error of the Dismiss button of a season pack job."
+ },
+ "act.sp_dismiss_tip": {
+  "text": "Remove this stuck job from Processing and from the tile's STUCK badge. Nothing is deleted; the season can be started again.",
+  "note": "tooltip of the Dismiss button on a stuck season pack job."
  }
 }

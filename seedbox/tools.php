@@ -313,6 +313,7 @@ if ($op === 'sp_start') {
     st_out($ok, $ok ? [] : ['error' => $e]);
 }
 if ($op === 'sp_clear') { st_sp_clear(); st_out(true); }
+if ($op === 'sp_dismiss') { [$ok, $e] = st_sp_dismiss((string)($_POST['id'] ?? '')); st_out($ok, $ok ? [] : ['error' => $e]); }
 if ($op === 'sp_cancel') { [$ok, $e] = st_sp_cancel((string)($_POST['id'] ?? '')); st_out($ok, $ok ? [] : ['error' => $e]); }
 if ($op === 'job_force') { [$ok, $e] = st_force_import((string)($_POST['id'] ?? '')); st_out($ok, $ok ? [] : ['error' => $e]); }
 if ($op === 'job_dismiss') {

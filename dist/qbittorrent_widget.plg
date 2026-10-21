@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzg">
+<!ENTITY version   "2026.10.99zzh">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzh
+- Season repacker: a stuck season pack job has a Dismiss button (it leaves Processing and the STUCK badge of the tile; nothing is deleted), and a stuck job closes by itself when a later replacement of the same season finished
+
 ###2026.10.99zzg
 - Season repacker: a stuck season pack job (for example a pack stopped in Sonarr) no longer hides the autobrr row of that season, so a new pack of it can be started from the page or from Discord (before, it said unknown season)
 
@@ -2189,9 +2192,11 @@ $(function () {
     });
     // season pack replacements (Season repacker) in the same list
     $.each(SPJ || [], function (i, j) {
-      var done = {done: 1, failed: 1}[j.stage], c = j.cancelled ? 'stt-am' : ({done: 'stt-ok', blocked: 'stt-am', failed: 'stt-er'}[j.stage] || '');
+      var done = {done: 1, failed: 1}[j.stage], c = j.dismissed ? 'stt-mut' : j.cancelled ? 'stt-am' : ({done: 'stt-ok', blocked: 'stt-am', failed: 'stt-er'}[j.stage] || '');
       // Cancel (item 87): only while the pack downloads, before any old file is touched
       var cx = {grabbed: 1, downloading: 1}[j.stage] ? '<input type="button" class="stt-spcx stt-btn stt-sm stt-ghost" data-id="' + esc(j.id) + '" data-n="' + spName(j) + '" value="' + esc(T('act.cancel')) + '" title="' + esc(T('act.cancel_tip')) + '">' : '';
+      // a stuck one (nothing was replaced) can be dismissed: it leaves Processing and the tile's STUCK badge
+      if (j.stage === 'blocked') { cx = '<input type="button" class="stt-spdis stt-btn stt-sm stt-ghost" data-id="' + esc(j.id) + '" value="' + esc(T('act.dismiss')) + '" title="' + esc(T('act.sp_dismiss_tip')) + '">'; }
       (done ? R : P).push({t: j.t, s: !!stallTxt(j.id), h: actRow({badge: esc(T('act.b_pack')), bc: 'a', title: j.title + ' S' + ('0' + j.season).slice(-2), l1: '', l2: esc(j.pack) + ' (' + fb(j.pack_size) + ')', msg: j.msg, c: c, btn: cx, t: j.t, id: j.id, live: {grabbed: 1, downloading: 1}[j.stage]})});
     });
     function srt(a) { a.sort(function (x, y) { return (x.s ? 1 : 0) - (y.s ? 1 : 0) || y.t - x.t; }); } // stalled ones at the bottom, newest first
@@ -2418,6 +2423,10 @@ $(function () {
     api('upd_remove', {id: $b.data('id')}).done(function (r) { if (r.ok) { loadState(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
 
+  $(document).on('click', '.stt-spdis', function () {
+    var $b = $(this); $b.prop('disabled', true);
+    api('sp_dismiss', {id: $b.data('id')}).done(function (r) { if (r.ok) { loadState(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
+  });
   $(document).on('click', '.stt-spcx', function () {
     var $b = $(this);
     if (!window.confirm(T('sp.cancel_confirm', { n: $('<div>').html($b.data('n')).text() }))) { return; }
@@ -3460,9 +3469,32 @@ function st_sp_eplines($eps, $fby) {
     return $out;
 }
 
+// Dismiss (2026-10-21): a stuck job (nothing was replaced) leaves Processing and the tile's STUCK badge; it goes to the
+// results like a failed one (the season can be started again). Only the record changes.
+function st_sp_dismiss($id) {
+    $hit = st_state_update(function (&$s) use ($id) {
+        $hit = false;
+        foreach ($s['packjobs'] as &$j) {
+            if (($j['id'] ?? '') === $id && $j['stage'] === 'blocked') { $j['stage'] = 'failed'; $j['dismissed'] = 1; $j['msg'] = st_tr('pk.dismissed'); $j['msgd'] = st_trd('pk.dismissed'); $j['t'] = time(); $hit = true; }
+        }
+        unset($j);
+        return $hit ? true : false;
+    });
+    return $hit ? [true, ''] : [false, st_tr('e.sp_nodismiss')];
+}
+
 function st_sp_tick(&$state, $tor) {
     $ch = false;
     foreach ($state['packjobs'] as &$j) { if (st_sp_step($j, $tor)) { $ch = true; } }
+    unset($j);
+    // a stuck job whose season a later job replaced already is closed by itself (seen 2026-10-21: Slow Horses S06)
+    $doneAt = [];
+    foreach ($state['packjobs'] as $j) { if ($j['stage'] === 'done') { $doneAt[$j['key']] = max($doneAt[$j['key']] ?? 0, (int)($j['gt'] ?? $j['t'])); } }
+    foreach ($state['packjobs'] as &$j) {
+        if ($j['stage'] === 'blocked' && isset($doneAt[$j['key']]) && $doneAt[$j['key']] > (int)($j['gt'] ?? $j['t'])) {
+            $j['stage'] = 'failed'; $j['dismissed'] = 1; $j['msg'] = st_tr('pk.superseded'); $j['msgd'] = st_trd('pk.superseded'); $j['t'] = time(); $ch = true;
+        }
+    }
     unset($j);
     $keep = [];
     foreach ($state['packjobs'] as $j) { if (in_array($j['stage'], ['done', 'failed'], true) && time() - (int)$j['t'] > 7 * 86400) { $ch = true; continue; } $keep[] = $j; }
@@ -5498,6 +5530,7 @@ if ($op === 'sp_start') {
     st_out($ok, $ok ? [] : ['error' => $e]);
 }
 if ($op === 'sp_clear') { st_sp_clear(); st_out(true); }
+if ($op === 'sp_dismiss') { [$ok, $e] = st_sp_dismiss((string)($_POST['id'] ?? '')); st_out($ok, $ok ? [] : ['error' => $e]); }
 if ($op === 'sp_cancel') { [$ok, $e] = st_sp_cancel((string)($_POST['id'] ?? '')); st_out($ok, $ok ? [] : ['error' => $e]); }
 if ($op === 'job_force') { [$ok, $e] = st_force_import((string)($_POST['id'] ?? '')); st_out($ok, $ok ? [] : ['error' => $e]); }
 if ($op === 'job_dismiss') {
@@ -8574,6 +8607,22 @@ function mt_i18n_js($dir, $name, $only = null) {
  "e.sp_cx_over": {
   "text": "This replacement has already ended.",
   "note": "error of the Cancel button when the job is done, stuck or failed already."
+ },
+ "pk.dismissed": {
+  "text": "Dismissed: nothing was replaced.",
+  "note": "status of a stuck season pack job after Dismiss (Activity results)."
+ },
+ "pk.superseded": {
+  "text": "Closed: a later replacement of this season finished; nothing was replaced by this one.",
+  "note": "status of a stuck season pack job closed by itself because a later job of the same season is done."
+ },
+ "e.sp_nodismiss": {
+  "text": "Only a stuck season pack job can be dismissed.",
+  "note": "error of the Dismiss button of a season pack job."
+ },
+ "act.sp_dismiss_tip": {
+  "text": "Remove this stuck job from Processing and from the tile's STUCK badge. Nothing is deleted; the season can be started again.",
+  "note": "tooltip of the Dismiss button on a stuck season pack job."
  }
 }
 ]]></INLINE>
@@ -10678,6 +10727,18 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "e.sp_cx_over": {
   "text": "Ez a csere már véget ért."
+ },
+ "pk.dismissed": {
+  "text": "Elrejtve: semmi nem cserélődött."
+ },
+ "pk.superseded": {
+  "text": "Lezárva: az évad egy későbbi cseréje befejeződött; ez semmit nem cserélt."
+ },
+ "e.sp_nodismiss": {
+  "text": "Csak elakadt évadpakk-csere rejthető el."
+ },
+ "act.sp_dismiss_tip": {
+  "text": "Az elakadt feladat kikerül a Folyamatban részből és a csempe STUCK jelzéséből. Semmi nem törlődik; az évad újra indítható."
  }
 }
 ]]></INLINE>

@@ -401,9 +401,32 @@ function st_sp_eplines($eps, $fby) {
     return $out;
 }
 
+// Dismiss (2026-10-21): a stuck job (nothing was replaced) leaves Processing and the tile's STUCK badge; it goes to the
+// results like a failed one (the season can be started again). Only the record changes.
+function st_sp_dismiss($id) {
+    $hit = st_state_update(function (&$s) use ($id) {
+        $hit = false;
+        foreach ($s['packjobs'] as &$j) {
+            if (($j['id'] ?? '') === $id && $j['stage'] === 'blocked') { $j['stage'] = 'failed'; $j['dismissed'] = 1; $j['msg'] = st_tr('pk.dismissed'); $j['msgd'] = st_trd('pk.dismissed'); $j['t'] = time(); $hit = true; }
+        }
+        unset($j);
+        return $hit ? true : false;
+    });
+    return $hit ? [true, ''] : [false, st_tr('e.sp_nodismiss')];
+}
+
 function st_sp_tick(&$state, $tor) {
     $ch = false;
     foreach ($state['packjobs'] as &$j) { if (st_sp_step($j, $tor)) { $ch = true; } }
+    unset($j);
+    // a stuck job whose season a later job replaced already is closed by itself (seen 2026-10-21: Slow Horses S06)
+    $doneAt = [];
+    foreach ($state['packjobs'] as $j) { if ($j['stage'] === 'done') { $doneAt[$j['key']] = max($doneAt[$j['key']] ?? 0, (int)($j['gt'] ?? $j['t'])); } }
+    foreach ($state['packjobs'] as &$j) {
+        if ($j['stage'] === 'blocked' && isset($doneAt[$j['key']]) && $doneAt[$j['key']] > (int)($j['gt'] ?? $j['t'])) {
+            $j['stage'] = 'failed'; $j['dismissed'] = 1; $j['msg'] = st_tr('pk.superseded'); $j['msgd'] = st_trd('pk.superseded'); $j['t'] = time(); $ch = true;
+        }
+    }
     unset($j);
     $keep = [];
     foreach ($state['packjobs'] as $j) { if (in_array($j['stage'], ['done', 'failed'], true) && time() - (int)$j['t'] > 7 * 86400) { $ch = true; continue; } $keep[] = $j; }

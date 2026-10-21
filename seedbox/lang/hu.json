@@ -2096,5 +2096,17 @@
  },
  "e.sp_cx_over": {
   "text": "Ez a csere már véget ért."
+ },
+ "pk.dismissed": {
+  "text": "Elrejtve: semmi nem cserélődött."
+ },
+ "pk.superseded": {
+  "text": "Lezárva: az évad egy későbbi cseréje befejeződött; ez semmit nem cserélt."
+ },
+ "e.sp_nodismiss": {
+  "text": "Csak elakadt évadpakk-csere rejthető el."
+ },
+ "act.sp_dismiss_tip": {
+  "text": "Az elakadt feladat kikerül a Folyamatban részből és a csempe STUCK jelzéséből. Semmi nem törlődik; az évad újra indítható."
  }
 }
