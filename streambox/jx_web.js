@@ -62,7 +62,7 @@
     '.sbx-mi small{opacity:.6;font-weight:500;margin-left:.3em}' +
     '.sbx-mi span.sbx-arr{color:#f5c518;margin-left:.3em;font-size:.85em}' +
     '.sbx-hidden{display:none!important}' +
-    '.sbx-tog{display:inline-flex;align-items:center;margin-left:auto;background:rgba(255,255,255,.07);border:0;color:inherit;border-radius:999px;' +
+    '.sbx-tog{display:inline-flex;align-items:center;margin-left:1em;background:rgba(255,255,255,.07);border:0;color:inherit;border-radius:999px;' +
     'padding:.25em .7em .25em .3em;font:inherit;font-size:.85em;cursor:pointer}' +
     '.sbx-tog:hover,.sbx-tog:focus-visible{background:rgba(255,255,255,.14);outline:none}' +
     '.sbx-sw{position:relative;width:2.1em;height:1.2em;border-radius:999px;background:#555;margin-right:.5em;flex:none;transition:background .15s}' +
@@ -273,55 +273,70 @@
       tog.title = T('jx.watched_too_tip');
       tog.addEventListener('click', function () { showWatched = !showWatched; savePref(); queue(); });
       if (getComputedStyle(head).display !== 'flex') { head.style.display = 'flex'; head.style.alignItems = 'center'; head.style.flexWrap = 'wrap'; }
-      head.appendChild(tog);
+      // right after the title: the row's < > scroll buttons sit at the right end
+      head.insertBefore(tog, head.firstElementChild ? head.firstElementChild.nextSibling : null);
     }
     if (tog.classList.contains('on') !== showWatched) { tog.classList.toggle('on', showWatched); }
     tog.setAttribute('aria-pressed', showWatched ? 'true' : 'false');
   }
 
   // ---- the Watched menu entry ----
-  // The menu of the skin (Abyss: links across the top) or Jellyfin's side menu: copy one of its library links
-  function navHost() {
-    var links = document.querySelectorAll('.skinHeader a[href], .skinHeader button, .mainDrawer a.navMenuOption');
-    var lib = /#\/?(movies|tv|music|list|livetv|home)|topParentId=|parentId=/i;
+  // Every menu that lists the libraries gets one: the top bar (Jellyfin's MUI header, which the Abyss skin shows across the
+  // top: a.MuiButton links with an svg start icon) and the side menu (.mainDrawer, used on phones). A copy of the last
+  // library link keeps the skin's look.
+  var LIB = /#\/?(movies|tv|music|list|livetv|home)|topParentId=|parentId=/i;
+  function navHosts() {
+    var out = [], seen = [];
+    var links = document.querySelectorAll('header a[href], .skinHeader a[href], .mainDrawer a.navMenuOption');
     for (var i = 0; i < links.length; i++) {
-      var a = links[i], href = a.getAttribute('href') || a.getAttribute('data-href') || '';
-      if (!lib.test(href)) { continue; }
-      var par = a.parentNode, n = 0;
-      for (var j = 0; j < par.children.length; j++) {
-        var h = par.children[j].getAttribute('href') || par.children[j].getAttribute('data-href') || '';
-        if (lib.test(h)) { n++; }
-      }
-      if (n >= 2 || a.classList.contains('navMenuOption')) { return { par: par, model: a }; }
+      var a = links[i];
+      if (a.classList.contains('sbx-nav') || !LIB.test(a.getAttribute('href') || '')) { continue; }
+      var par = a.parentNode;
+      if (seen.indexOf(par) >= 0) { continue; }
+      var n = 0;
+      for (var j = 0; j < par.children.length; j++) { if (LIB.test(par.children[j].getAttribute('href') || '')) { n++; } }
+      if (n >= 2) { seen.push(par); out.push({ par: par, model: a }); }
     }
-    return null;
+    return out;
   }
-  function nav() {
-    var hs = navHost();
-    if (!hs || hs.par.querySelector('.sbx-nav')) { return; }
-    var last = hs.par.lastElementChild && hs.par.lastElementChild.tagName === hs.model.tagName ? hs.par.lastElementChild : hs.model;
-    var it = last.cloneNode(true);
+  var CHECK = 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z';
+  function navItem(hs) {
+    var last = null;
+    for (var k = hs.par.children.length - 1; k >= 0 && !last; k--) { var c = hs.par.children[k]; if (c.tagName === 'A' && LIB.test(c.getAttribute('href') || '')) { last = c; } }
+    var it = (last || hs.model).cloneNode(true);
     it.classList.add('sbx-nav');
     ['id', 'data-itemid', 'data-id', 'aria-current'].forEach(function (k) { it.removeAttribute(k); });
-    it.classList.remove('navMenuOption-selected', 'selected', 'active', 'is-active', 'emby-tab-button-active');
-    if (it.tagName === 'A') { it.setAttribute('href', '#'); }
-    // its label: the longest text node; its icon: a material icon or an svg
+    it.classList.remove('navMenuOption-selected', 'selected', 'active', 'is-active', 'Mui-selected', 'Mui-focusVisible');
+    it.setAttribute('href', '#');
     var tn = null, w = document.createTreeWalker(it, NodeFilter.SHOW_TEXT), t;
     while ((t = w.nextNode())) { if (t.nodeValue.trim() && (!tn || t.nodeValue.trim().length > tn.nodeValue.trim().length)) { tn = t; } }
     if (tn) { tn.nodeValue = T('jx.menu'); } else { it.appendChild(document.createTextNode(T('jx.menu'))); }
-    // its icon: Jellyfin's icon font takes the icon name as a class (material-design-icons-iconfont)
-    var ic = it.querySelector('.material-icons, .navMenuOptionIcon, svg');
-    if (ic) {
-      var keep = ic.tagName.toLowerCase() === 'span' ? Array.prototype.filter.call(ic.classList, function (k) { return /^(material-icons|navMenuOptionIcon)$|[A-Z-]/.test(k); }) : ['material-icons'];
-      if (keep.indexOf('material-icons') < 0) { keep.push('material-icons'); }
-      var ni = el('span', keep.join(' ') + ' check_circle');
-      ni.setAttribute('aria-hidden', 'true');
-      var hh = ic.getBoundingClientRect().height;
-      if (hh) { ni.style.fontSize = Math.round(hh) + 'px'; }
-      ic.parentNode.replaceChild(ni, ic);
+    // the icon: an svg keeps its classes (size, colour) and gets a check mark; Jellyfin's icon font takes the name as a class
+    var svg = it.querySelector('svg');
+    if (svg) {
+      svg.setAttribute('viewBox', '0 0 24 24');
+      while (svg.firstChild) { svg.removeChild(svg.firstChild); }
+      var pth = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pth.setAttribute('d', CHECK);
+      pth.setAttribute('fill', 'currentColor');
+      svg.appendChild(pth);
+    } else {
+      var ic = it.querySelector('.material-icons, .navMenuOptionIcon');
+      if (ic) {
+        var keep = Array.prototype.filter.call(ic.classList, function (k) { return /^(material-icons|navMenuOptionIcon)$|[A-Z-]/.test(k); });
+        if (keep.indexOf('material-icons') < 0) { keep.push('material-icons'); }
+        var ni = el('span', keep.join(' ') + ' check_circle');
+        ni.setAttribute('aria-hidden', 'true');
+        ic.parentNode.replaceChild(ni, ic);
+      }
     }
+    // drop React's leftovers of the copied link (ripple), keep ours away from React's click handling
+    Array.prototype.forEach.call(it.querySelectorAll('.MuiTouchRipple-root'), function (r) { r.textContent = ''; });
     it.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); openW(); }, true);
     hs.par.appendChild(it);
+  }
+  function nav() {
+    navHosts().forEach(function (hs) { if (!hs.par.querySelector('.sbx-nav')) { navItem(hs); } });
   }
 
   // ---- the Watched page ----
@@ -376,7 +391,7 @@
   function drawW() {
     var w = document.getElementById('sbxW');
     if (!w) { return; }
-    var hd = document.querySelector('.skinHeader');
+    var hd = document.querySelector('header.MuiAppBar-root, .skinHeader');
     w.style.top = (hd ? Math.max(0, Math.round(hd.getBoundingClientRect().bottom)) : 0) + 'px';
     w.textContent = '';
     var top = el('div', 'sbxw-top');
@@ -430,13 +445,11 @@
     });
     w.appendChild(g);
   }
-  var navOn = null;
   function openW() {
     var w = document.getElementById('sbxW');
     if (!w) { w = el('div'); w.id = 'sbxW'; document.body.appendChild(w); }
     document.documentElement.style.overflow = 'hidden';
-    navOn = document.querySelector('.sbx-nav');
-    if (navOn) { navOn.classList.add('sbx-nav-on'); }
+    Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.add('sbx-nav-on'); });
     W.movies = null; W.series = null;
     drawW();
     loadW();
@@ -445,8 +458,7 @@
     var w = document.getElementById('sbxW');
     if (w) { w.remove(); }
     document.documentElement.style.overflow = '';
-    var n = document.querySelector('.sbx-nav');
-    if (n) { n.classList.remove('sbx-nav-on'); }
+    Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.remove('sbx-nav-on'); });
   }
 
   // ---- run ----
