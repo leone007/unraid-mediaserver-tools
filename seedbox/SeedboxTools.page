@@ -638,8 +638,10 @@ $(function () {
     });
     // season pack replacements (Season repacker) in the same list
     $.each(SPJ || [], function (i, j) {
-      var done = {done: 1, failed: 1}[j.stage], c = {done: 'stt-ok', blocked: 'stt-am', failed: 'stt-er'}[j.stage] || '';
-      (done ? R : P).push({t: j.t, s: !!stallTxt(j.id), h: actRow({badge: esc(T('act.b_pack')), bc: 'a', title: j.title + ' S' + ('0' + j.season).slice(-2), l1: '', l2: esc(j.pack) + ' (' + fb(j.pack_size) + ')', msg: j.msg, c: c, t: j.t, id: j.id, live: {grabbed: 1, downloading: 1}[j.stage]})});
+      var done = {done: 1, failed: 1}[j.stage], c = j.cancelled ? 'stt-am' : ({done: 'stt-ok', blocked: 'stt-am', failed: 'stt-er'}[j.stage] || '');
+      // Cancel (item 87): only while the pack downloads, before any old file is touched
+      var cx = {grabbed: 1, downloading: 1}[j.stage] ? '<input type="button" class="stt-spcx stt-btn stt-sm stt-ghost" data-id="' + esc(j.id) + '" data-n="' + spName(j) + '" value="' + esc(T('act.cancel')) + '" title="' + esc(T('act.cancel_tip')) + '">' : '';
+      (done ? R : P).push({t: j.t, s: !!stallTxt(j.id), h: actRow({badge: esc(T('act.b_pack')), bc: 'a', title: j.title + ' S' + ('0' + j.season).slice(-2), l1: '', l2: esc(j.pack) + ' (' + fb(j.pack_size) + ')', msg: j.msg, c: c, btn: cx, t: j.t, id: j.id, live: {grabbed: 1, downloading: 1}[j.stage]})});
     });
     function srt(a) { a.sort(function (x, y) { return (x.s ? 1 : 0) - (y.s ? 1 : 0) || y.t - x.t; }); } // stalled ones at the bottom, newest first
     srt(P); srt(R);
@@ -863,6 +865,13 @@ $(function () {
     if (!window.confirm(T('act.rm_confirm'))) { return; }
     $b.prop('disabled', true);
     api('upd_remove', {id: $b.data('id')}).done(function (r) { if (r.ok) { loadState(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
+  });
+
+  $(document).on('click', '.stt-spcx', function () {
+    var $b = $(this);
+    if (!window.confirm(T('sp.cancel_confirm', { n: $('<div>').html($b.data('n')).text() }))) { return; }
+    $b.prop('disabled', true);
+    api('sp_cancel', {id: $b.data('id')}).done(function (r) { if (r.ok) { loadState(); } else { $b.prop('disabled', false); window.alert(r.error); } }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
   });
 
   // ---- season packs ----

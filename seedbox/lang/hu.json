@@ -2048,5 +2048,53 @@
  },
  "xfer.waiting": {
   "text": "vár"
+ },
+ "act.cancel": {
+  "text": "Mégse"
+ },
+ "act.cancel_tip": {
+  "text": "A csere leállítása: a pakk kikerül a Sonarr soraiból és a qBittorrentből, az epizódjaid maradnak."
+ },
+ "sp.cancel_confirm": {
+  "text": "Leállítod a(z) {n} évadpakk-cseréjét?\n\nA pakk kikerül a Sonarr letöltési sorából (tiltólistára kerül, nem jön újra) és a qBittorrentből a letöltött részével együtt. Az epizódjaid nem változnak."
+ },
+ "pk.cancelled": {
+  "text": "Megszakítva: a pakk törölve, az epizódjaid nem változtak."
+ },
+ "pk.cancelled_noq": {
+  "text": "Megszakítva: a pakk már nem volt a Sonarr sorában és a qBittorrentben; az epizódjaid nem változtak."
+ },
+ "e.sp_cx_busy": {
+  "text": "Épp fut a percenkénti ellenőrzés; próbáld újra egy perc múlva."
+ },
+ "e.sp_cx_gone": {
+  "text": "Ez a csere már nincs a listában."
+ },
+ "e.sp_cx_late": {
+  "text": "Már nem szakítható meg: a pakk letöltődött, és az epizódfájlok cseréje elkezdődött."
+ },
+ "e.sp_cx_sonarr": {
+  "text": "A Sonarr nem vette ki a pakkot: {e}. Semmi nem változott."
+ },
+ "dc.have": {
+  "text": "Nálad · {n}/{m} epizód · {s}"
+ },
+ "dc.eps_more": {
+  "text": "+{n} további"
+ },
+ "dc.sp_cx_title": {
+  "text": "Seedbox: évadpakk-csere megszakítva"
+ },
+ "dc.sp_cx_body": {
+  "text": "Leállítottad, mielőtt bármi cserélődött volna: a pakk kikerült a Sonarr sorából (tiltólistára) és a qBittorrentből a letöltött részével. Az epizódjaid nem változtak."
+ },
+ "dc.series": {
+  "text": "Sorozat"
+ },
+ "dc.pack": {
+  "text": "Pakk"
+ },
+ "e.sp_cx_over": {
+  "text": "Ez a csere már véget ért."
  }
 }

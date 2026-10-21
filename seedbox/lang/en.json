@@ -2723,5 +2723,69 @@
  "xfer.waiting": {
   "text": "waiting",
   "note": "next to the bar of a torrent waiting to be moved by qBittorrent (moves run one by one). Short."
+ },
+ "act.cancel": {
+  "text": "Cancel",
+  "note": "button on a running season pack replacement in Activity (only while the pack downloads). Short."
+ },
+ "act.cancel_tip": {
+  "text": "Stop this replacement: the pack leaves Sonarr's queue and qBittorrent, your episodes stay as they are.",
+  "note": "tooltip of the Cancel button."
+ },
+ "sp.cancel_confirm": {
+  "text": "Cancel the season pack replacement of {n}?\n\nThe pack is removed from Sonarr's queue (blocklisted, so it is not grabbed again) and from qBittorrent with what it downloaded. Your episodes do not change.",
+  "note": "confirm box of the Cancel button; {n} = series and season, e.g. Slow Horses S05. Keep the empty line."
+ },
+ "pk.cancelled": {
+  "text": "Cancelled: the pack is removed, your episodes did not change.",
+  "note": "status of a cancelled season pack replacement (Activity, and the BoxBot Discord message)."
+ },
+ "pk.cancelled_noq": {
+  "text": "Cancelled: the pack was not in Sonarr's queue or in qBittorrent any more; your episodes did not change.",
+  "note": "status of a cancelled season pack replacement when there was nothing to remove."
+ },
+ "e.sp_cx_busy": {
+  "text": "The minute check is running right now; try again in a minute.",
+  "note": "error of the Cancel button."
+ },
+ "e.sp_cx_gone": {
+  "text": "This replacement is not in the list any more.",
+  "note": "error of the Cancel button."
+ },
+ "e.sp_cx_late": {
+  "text": "Too late to cancel: the pack is downloaded and the episode files are being replaced.",
+  "note": "error of the Cancel button."
+ },
+ "e.sp_cx_sonarr": {
+  "text": "Sonarr did not remove the pack: {e}. Nothing changed.",
+  "note": "error of the Cancel button; {e} = Sonarr's error."
+ },
+ "dc.have": {
+  "text": "You have · {n}/{m} episodes · {s}",
+  "note": "Discord: title of the list of the episodes you have of the season, in the season pack message; {n} = episodes you have, {m} = aired, {s} = their size."
+ },
+ "dc.eps_more": {
+  "text": "+{n} more",
+  "note": "Discord: the last line when the episode list is cut; {n} = the episodes not listed."
+ },
+ "dc.sp_cx_title": {
+  "text": "Seedbox: season pack replacement cancelled",
+  "note": "Discord message title."
+ },
+ "dc.sp_cx_body": {
+  "text": "You cancelled it before anything was replaced: the pack left Sonarr's queue (blocklisted) and qBittorrent with what it downloaded. Your episodes did not change.",
+  "note": "Discord message text."
+ },
+ "dc.series": {
+  "text": "Series",
+  "note": "Discord field name."
+ },
+ "dc.pack": {
+  "text": "Pack",
+  "note": "Discord field name: the season pack release."
+ },
+ "e.sp_cx_over": {
+  "text": "This replacement has already ended.",
+  "note": "error of the Cancel button when the job is done, stuck or failed already."
  }
 }

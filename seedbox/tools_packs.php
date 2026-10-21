@@ -323,6 +323,84 @@ function st_sp_step(&$j, $tor) {
     return false;
 }
 
+// Cancel (item 87): only while the pack downloads or waits for its check, so before any old file is touched. It holds the
+// minute tick's lock, so the tick cannot move the job on meanwhile. Sonarr removes its queue entry with the torrent and its data
+// and blocklists the release (it is not grabbed again); without a queue entry qBittorrent removes the pack torrent itself.
+function st_sp_cancel($id) {
+    $tl = @fopen('/tmp/qbt_tools_tick.lock', 'c'); $got = false;
+    for ($i = 0; $tl && $i < 50; $i++) { if (flock($tl, LOCK_EX | LOCK_NB)) { $got = true; break; } usleep(200000); }
+    if (!$got) { if ($tl) { fclose($tl); } return [false, st_tr('e.sp_cx_busy')]; }
+    try {
+        $job = null; foreach ((array)(st_state()['packjobs'] ?? []) as $j) { if (($j['id'] ?? '') === $id) { $job = $j; } }
+        if (!$job) { return [false, st_tr('e.sp_cx_gone')]; }
+        if (!empty($job['cancelled'])) { return [true, '']; }   // a second click
+        if (in_array($job['stage'], ['done', 'failed', 'blocked'], true)) { return [false, st_tr('e.sp_cx_over')]; }
+        if (!in_array($job['stage'], ['grabbed', 'downloading'], true)) { return [false, st_tr('e.sp_cx_late')]; }
+        [$cq, $q, $eq] = st_arr('sonarr', '/queue?page=1&pageSize=500', 'GET', null, 60);
+        if ($eq !== '' || !is_array($q)) { return [false, st_tr('e.sp_cx_sonarr', ['e' => $eq !== '' ? $eq : st_tr('e.bad_resp')])]; }
+        $qid = 0; $hash = strtolower((string)($job['hash'] ?? ''));
+        foreach ((array)($q['records'] ?? []) as $r) {
+            $dl = strtolower((string)($r['downloadId'] ?? ''));
+            if (($hash !== '' && $dl === $hash) || ((int)($r['seriesId'] ?? 0) === (int)$job['series_id'] && st_norm($r['title'] ?? '') === st_norm($job['pack']))) { $qid = (int)$r['id']; if ($hash === '' && $dl !== '') { $hash = $dl; } break; }
+        }
+        if ($qid > 0) {
+            [$cd, $rd, $ed] = st_arr('sonarr', '/queue/' . $qid . '?removeFromClient=true&blocklist=true', 'DELETE', null, 60);
+            if ($ed !== '') { return [false, st_tr('e.sp_cx_sonarr', ['e' => $ed])]; }
+        }
+        // the pack torrent and what it downloaded (nothing of the library: the pack is not imported yet)
+        if ($hash !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $hash, 'deleteFiles' => 'true']); }
+        $k = $qid > 0 || $hash !== '' ? 'pk.cancelled' : 'pk.cancelled_noq';
+        st_state_update(function (&$s) use ($id, $k) {
+            foreach ($s['packjobs'] as &$j) { if (($j['id'] ?? '') === $id) { $j['stage'] = 'failed'; $j['cancelled'] = 1; $j['msg'] = st_tr($k); $j['msgd'] = st_trd($k); $j['t'] = time(); } }
+            unset($j);
+        });
+        st_notify('i', st_trd('dc.sp_cx_title'), st_trd('dc.sp_cx_body'),
+            [[st_trd('dc.series'), $job['title'] . ' S' . str_pad((string)$job['season'], 2, '0', STR_PAD_LEFT)], [st_trd('dc.pack'), $job['pack']]], false, 'rep');
+        return [true, ''];
+    } finally {
+        flock($tl, LOCK_UN); fclose($tl);
+    }
+}
+
+// Badges for Discord (item 87): what a file really is, from Sonarr's media info, not from its name
+function st_dc_badges($b) { return implode(' ', array_map(function ($x) { return '`' . $x . '`'; }, $b)); }
+function st_sp_file_badges($f) {
+    $b = []; $mi = (array)($f['mediaInfo'] ?? []);
+    $res = (int)($f['quality']['quality']['resolution'] ?? 0);
+    if ($res <= 0 && preg_match('/x(\d{3,4})$/', (string)($mi['resolution'] ?? ''), $m)) { $res = (int)$m[1] >= 2000 ? 2160 : ((int)$m[1] >= 1000 ? 1080 : (int)$m[1]); }
+    if ($res > 0) { $b[] = $res . 'p'; }
+    $dr = str_ireplace('HDR10Plus', 'HDR10+', trim((string)($mi['videoDynamicRangeType'] ?? '')));
+    foreach (preg_split('/\s+/', $dr) as $w) { if ($w === '' || strtoupper($w) === 'SDR') { continue; } $b[] = strtoupper($w) === 'PQ' ? 'HDR' : $w; }
+    if (count($b) < 2 && strtoupper((string)($mi['videoDynamicRange'] ?? '')) === 'HDR') { $b[] = 'HDR'; }
+    $langs = []; foreach ((array)($f['languages'] ?? []) as $l) { $langs[] = (string)($l['name'] ?? ''); }
+    if (preg_match('/(^|[^a-z])(hun|hungarian)([^a-z]|$)/i', (string)($mi['audioLanguages'] ?? '')) || preg_grep('/hungar/i', $langs)) { $b[] = 'HUN'; }
+    return $b;
+}
+// the pack's badges, from its name (it is not downloaded yet)
+function st_sp_pack_badges($title, $res, $hun) {
+    $b = []; if ((int)$res > 0) { $b[] = (int)$res . 'p'; }
+    $b = array_merge($b, ['sdr' => ['SDR'], 'hdr' => ['HDR'], 'dv' => ['DV'], 'dvhdr' => ['DV', 'HDR']][st_hdr_kind($title)] ?? ['SDR']);
+    if ($hun) { $b[] = 'HUN'; }
+    return $b;
+}
+// the episodes of the season you have, one line each: "1. Circle of Life `2160p` `DV` `HDR10`" (at most about 950 characters: a Discord field holds 1024)
+function st_sp_eplines($eps, $fby) {
+    $rows = [];
+    foreach ((array)$eps as $x) {
+        $f = $fby[(int)($x['episodeFileId'] ?? 0)] ?? null;
+        if (empty($x['hasFile']) || !$f) { continue; }
+        $t = trim((string)($x['title'] ?? '')); if (mb_strlen($t) > 38) { $t = rtrim(mb_substr($t, 0, 37)) . '…'; }
+        $rows[(int)$x['episodeNumber']] = (int)$x['episodeNumber'] . '. ' . ($t !== '' ? $t . ' ' : '') . st_dc_badges(st_sp_file_badges($f));
+    }
+    ksort($rows); $rows = array_values($rows); $out = ''; $n = 0;
+    foreach ($rows as $i => $l) {
+        $more = count($rows) - $i;
+        if ($n >= 15 || mb_strlen($out) + mb_strlen($l) > 930) { $out .= "\n" . st_trd('dc.eps_more', ['n' => $more]); break; }
+        $out .= ($out !== '' ? "\n" : '') . $l; $n++;
+    }
+    return $out;
+}
+
 function st_sp_tick(&$state, $tor) {
     $ch = false;
     foreach ($state['packjobs'] as &$j) { if (st_sp_step($j, $tor)) { $ch = true; } }
@@ -451,20 +529,22 @@ function st_ab_eval($rel, &$tor) {
     $tor = st_lib_in($tor, st_cfg()); // a ratio torrent (downloads/TL) is not the library's pack
     if (count($have) >= 2 && st_sp_seeded_pack($title, $sn, $nums, $tor) !== '') { return ['go' => false, 'why' => st_tr('abw.seeded', ['s' => $tag])]; }
     $cur_size = 0; foreach ($have as $x) { $cur_size += (float)($fby[(int)$x['episodeFileId']]['size'] ?? 0); }
-    return ['go' => true, 'why' => st_tr('abw.new', ['s' => $tag]), 'series_id' => $sid, 'title' => $title, 'season' => $sn, 'tag' => $tag, 'res' => $res, 'hun' => $hun,
+    return ['go' => true, 'why' => st_tr('abw.new', ['s' => $tag]), 'eplines' => st_sp_eplines($have, $fby), 'series_id' => $sid, 'title' => $title, 'season' => $sn, 'tag' => $tag, 'res' => $res, 'hun' => $hun,
             'cur_res' => $cur_res, 'cur_quality' => (string)($first['quality']['quality']['name'] ?? ''), 'cur_size' => $cur_size, 'have' => count($have), 'aired' => $aired, 'missing' => $missing];
 }
 
 function st_ab_message($rel, $v) {
     $free = st_ab_free();
     $miss = $v['missing'] ? implode(', ', array_map(function ($n) { return 'E' . str_pad((string)$n, 2, '0', STR_PAD_LEFT); }, array_slice($v['missing'], 0, 15))) . (count($v['missing']) > 15 ? ' ...' : '') : '';
-    $packTxt = $rel['name'] . "\n" . ($rel['size'] > 0 ? st_gb($rel['size']) . ', ' : '') . ($v['res'] > 0 ? $v['res'] . 'p' : '?') . ($v['hun'] ? ', HUN' : '') . ($rel['indexer'] !== '' ? ', ' . $rel['indexer'] : '');
-    $haveTxt = $v['have'] . '/' . max($v['have'], $v['aired']) . st_l(' epizód', ' episodes') . ', ' . ($v['cur_quality'] !== '' ? $v['cur_quality'] : ($v['cur_res'] . 'p')) . ', ' . st_gb($v['cur_size']);
+    // the pack and your episodes with the same badges (2160p, DV, HDR10, HUN), so they can be compared at a glance (item 87)
+    $packTxt = implode(' · ', array_filter([st_dc_badges(st_sp_pack_badges($rel['name'], $v['res'], $v['hun'])), $rel['size'] > 0 ? st_gb($rel['size']) : '', $rel['indexer']])) . "\n" . $rel['name'];
+    $haveName = st_trd('dc.have', ['n' => $v['have'], 'm' => max($v['have'], $v['aired']), 's' => st_gb($v['cur_size'])]);
+    $haveTxt = (string)($v['eplines'] ?? '') !== '' ? (string)$v['eplines'] : $v['have'] . '/' . max($v['have'], $v['aired']) . ', ' . ($v['cur_quality'] !== '' ? $v['cur_quality'] : ($v['cur_res'] . 'p'));
     $desc = st_l('Az autobrr új évadpakkot látott egy figyelt évadhoz. Nem indítottam semmit.', 'autobrr saw a new season pack of a monitored season. Nothing was started.') . "\n"
           . st_l('Csere: Seedbox Tools, Season repacker, From autobrr, Replace with pack (a sor pár perc múlva ott van).', 'To replace: Seedbox Tools, Season repacker, From autobrr, Replace with pack (the row is there in a few minutes).')
           . ($v['missing'] ? "\n" . st_l('Az évad hiányos nálad: a hiányzó részeket (gyakran az évadzárót) a pakkból hozza.', 'The season is incomplete here: the missing episodes (often the finale) come from the pack.') : '');
     return st_notify('i', st_l('Seedbox: évadpakk érkezett', 'Seedbox: a season pack arrived') . ' · ' . $v['tag'], $desc,
-        [[st_l('Pakk', 'Pack'), $packTxt], [st_l('Nálad', 'You have'), $haveTxt], [st_l('Hiányzik', 'Missing'), $miss],
+        [[st_l('Pakk', 'Pack'), $packTxt], [$haveName, $haveTxt], [st_l('Hiányzik', 'Missing'), $miss],
          [st_l('Szabad hely', 'Free space'), $free >= 0 ? st_gb($free) . ($rel['size'] > 0 && $free < $rel['size'] * 1.1 ? st_l(' (KEVÉS)', ' (NOT ENOUGH)') : '') : '']], true, 'rep');
 }
 
@@ -553,7 +633,8 @@ function st_sp_ab_bot($it, $q) {
     $have = count($it['files']) . '/' . (count($it['files']) + count($miss)) . st_l(' epizód', ' episodes') . ', ' . ($it['cur_quality'] !== '' ? $it['cur_quality'] : $it['cur_res'] . 'p') . ', ' . st_gb($it['cur_size']) . ', ' . count($it['old']) . ' torrent';
     $cands = array_map(function ($p) use ($it) { return $p + ['note' => !empty($it['ab_match']) && st_norm($p['title']) === st_norm($it['ab_name']) ? st_l('ezt látta az autobrr', 'the one autobrr saw') : '']; }, $it['packs']);
     $free = st_ab_free();
-    $info = [[st_l('Nálad', 'You have'), $have, true]];
+    $haveName = st_trd('dc.have', ['n' => count($it['files']), 'm' => count($it['files']) + count($miss), 's' => st_gb($it['cur_size'])]);
+    $info = [(string)($it['eplines'] ?? '') !== '' ? [$haveName, (string)$it['eplines']] : [st_l('Nálad', 'You have'), $have, true]];
     if ($miss) { $info[] = [st_l('A pakkból jön', 'Comes from the pack'), implode(', ', array_map(function ($n) { return 'E' . str_pad((string)$n, 2, '0', STR_PAD_LEFT); }, array_slice($miss, 0, 15))), true]; }
     $info[] = [st_l('Szabad hely', 'Free space'), $free >= 0 ? st_gb($free) : '?', true];
     return st_bot_post('sp', $it['key'], st_l('📦 Évadpakk érkezett · ', '📦 Season pack arrived · ') . $it['title'] . ' S' . str_pad((string)$it['season'], 2, '0', STR_PAD_LEFT),
@@ -584,7 +665,7 @@ function st_sp_ab_run() {
             $n = st_norm($q['name']); $hit = null;
             foreach ($it['packs'] as $i => $p) { if (st_norm($p['title']) === $n) { $hit = $i; } }
             if ($hit !== null) { $p = $it['packs'][$hit]; array_splice($it['packs'], $hit, 1); array_unshift($it['packs'], $p); }
-            $it += ['src' => 'ab', 't' => (int)$q['t'], 'ab_name' => (string)$q['name'], 'ab_match' => $hit !== null, 'ab_indexer' => (string)$q['indexer']];
+            $it += ['src' => 'ab', 't' => (int)$q['t'], 'ab_name' => (string)$q['name'], 'ab_match' => $hit !== null, 'ab_indexer' => (string)$q['indexer'], 'eplines' => st_sp_eplines($list, $fby)];
         }
         $retry = !$it && in_array($why, ['no pack', 'search failed', 'Sonarr did not answer'], true) && (int)$q['tries'] < 4;
         if (!empty($q['rel'])) {
@@ -654,7 +735,11 @@ function st_bot_edit($m, $status, $color) {
     st_http('PATCH', $hook . '/messages/' . $m['mid'], ['headers' => ['Content-Type: application/json'], 'post' => json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE), 'timeout' => 15]);
 }
 function st_bot_cand_line($c) {
-    return implode(' · ', array_filter([(float)$c['size'] > 0 ? st_gb((float)$c['size']) : '', trim(((int)$c['res'] > 0 ? $c['res'] . 'p ' : '') . (string)($c['hdr'] ?? '')), !empty($c['hun']) ? 'HUN' : '',
+    // resolution, HDR and HUN as badges (`2160p` `DV` `HDR`), like the episode lines (item 87)
+    $b = []; if ((int)$c['res'] > 0) { $b[] = (int)$c['res'] . 'p'; }
+    foreach (preg_split('/[+ ]+/', str_replace('DV only', 'DV', (string)($c['hdr'] ?? ''))) as $h) { if ($h !== '') { $b[] = $h; } }
+    if (!empty($c['hun'])) { $b[] = 'HUN'; }
+    return implode(' · ', array_filter([st_dc_badges($b), (float)$c['size'] > 0 ? st_gb((float)$c['size']) : '',
         (int)$c['seeders'] > 0 ? (int)$c['seeders'] . ' seeder' : '', (string)($c['indexer'] ?? ''), (string)($c['note'] ?? '')])) ?: '-';
 }
 // sends a message with candidates and the reactions. $kind: sp | find | test; $cands: [[guid, title, size, res, hdr, hun, seeders, indexer, note], ...]
@@ -723,6 +808,7 @@ function st_bot_poll() {
             $done = $m['kind'] === 'sp' ? $job['stage'] === 'done' : in_array($job['stage'], ['cleaned', 'removed'], true);
             $jm = (string)($job['msgd'] ?? $job['msg']);   // the Discord language (msgd), not the page's
             if ($done) { $ch = ['state' => 'done', 'status' => '✅ ' . st_l('Kész: ', 'Done: ') . $jm, 'color' => 0x3FA24A]; }
+            elseif (!empty($job['cancelled'])) { $ch = ['state' => 'fail', 'status' => '✋ ' . $jm, 'color' => 0x8A8A8A]; }
             elseif (in_array($job['stage'], ['failed', 'blocked'], true)) { $ch = ['state' => 'fail', 'status' => '⛔ ' . $jm, 'color' => 0xE5534B]; }
             elseif ($jm !== (string)($m['last'] ?? '') && time() - (int)($m['et'] ?? 0) > 600) {
                 // progress, at most every 10 minutes (Discord edits are cheap but the message should not flicker)
