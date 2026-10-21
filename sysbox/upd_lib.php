@@ -39,6 +39,10 @@ function upd_running($m) { $f = @fopen(upd_lock_file($m), 'c'); if (!$f) { retur
 function upd_sh($cmd, $secs = 15) { [$rc, $o] = sx_run($cmd, $secs); return $rc === 0 ? $o : ''; }
 function upd_spawn($args) {
     @exec('setsid nohup ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/upd_run.php') . ' ' . implode(' ', array_map('escapeshellarg', $args)) . ' >/dev/null 2>&1 &');
+    // wait (max 5 s) until the worker holds its lock: the page reloads the state right after the click, and a worker
+    // that has not started yet looked like "nothing runs", so the page stopped polling and the button stayed live (seen 2026-10-21)
+    $m = $args[0] === 'updall' ? 'update' : $args[0];
+    for ($i = 0; $i < 50 && !upd_running($m); $i++) { usleep(100000); }
 }
 
 // ---- what of ours uses a container (matched on the image's last path part) --------------------------------------

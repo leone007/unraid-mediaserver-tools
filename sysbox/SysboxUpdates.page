@@ -159,7 +159,7 @@ $(function () {
     L.sort(function (a, b) { var ra = a.risk === 'green' ? 0 : 1, rb = b.risk === 'green' ? 0 : 1; return ra - rb || a.name.toLowerCase().localeCompare(b.name.toLowerCase()); });
     return L;
   }
-  function startAll(set) { api('updall', {set: set}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); }
+  function startAll(set) { api('updall', {set: set}).done(function (r) { if (!r.ok) { window.alert(r.error); } else { KICK = Date.now() + 15000; } load(); }).fail(function (x) { window.alert(err(x)); }); }
   $(document).on('click', '#upm .upm-all-safe', function () { $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe'); });   // owner: no confirmation for the safe ones
   $(document).on('click', '#upm .upm-all', function () {
     if ($('#upm-sum .upm-conf').length) { return; }
@@ -171,7 +171,7 @@ $(function () {
   });
   $(document).on('click', '#upm .upm-all-no', function () { $(this).closest('.upm-conf').remove(); });
   $(document).on('click', '#upm .upm-all-go', function () { $(this).prop('disabled', true); $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('all'); });
-  $(document).on('click', '#upm .upm-scan', function () { $(this).prop('disabled', true).val(T('upm.checking')); api('scan').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); });
+  $(document).on('click', '#upm .upm-scan', function () { $(this).prop('disabled', true).val(T('upm.checking')); api('scan').done(function (r) { if (!r.ok) { window.alert(r.error); } else { KICK = Date.now() + 15000; } load(); }).fail(function (x) { window.alert(err(x)); }); });
 
   // ---- containers
   function updating(r) { var u = {}; $.each(r.jobs || [], function (i, j) { if (j.kind === 'update' && j.state === 'running') { u[j.name] = 1; } }); return u; }
@@ -245,6 +245,7 @@ $(function () {
     var name = String($(this).closest('[data-name]').data('name')); $(this).prop('disabled', true).val(T('upm.claude_reading'));
     api('ask', {name: name}).done(function (r) { if (!r.ok) { window.alert(r.error); } else { WATCH[name] = r.now || Math.floor(Date.now() / 1000) - 5; } load(); }).fail(function (x) { window.alert(err(x)); });
   });
+  var KICK = 0;    // after a started job the page polls at least 15 s, even if the worker shows up late
   var WATCH = {};   // name => server time of the click: polling goes on until that answer (or the job's error) arrives
   $(document).on('click', '#upm .upm-upd', function () {
     var $row = $(this).closest('[data-name]'), name = String($row.data('name')), c = null;
@@ -262,7 +263,7 @@ $(function () {
   $(document).on('click', '#upm .upm-no', function () { $(this).closest('.upm-conf').remove(); });
   $(document).on('click', '#upm .upm-go', function () {
     var name = String($(this).closest('[data-name]').data('name')); $(this).prop('disabled', true);
-    api('update', {name: name}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
+    api('update', {name: name}).done(function (r) { if (!r.ok) { window.alert(r.error); } else { KICK = Date.now() + 15000; } load(); }).fail(function (x) { window.alert(err(x)); });
   });
 
   // ---- Unraid OS and plugins
@@ -296,7 +297,7 @@ $(function () {
     $('#upm-test').html(h);
     $('#upm-tband').text(t ? T('test.band', { t: ago(t.t), ok: $.grep(t.tests, function (x) { return x.ok; }).length, n: t.tests.length }) : T('test.not_run'));
   }
-  $(document).on('click', '#upm .upm-test-b', function () { $(this).prop('disabled', true).val(T('test.testing')); api('selftest').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }); });
+  $(document).on('click', '#upm .upm-test-b', function () { $(this).prop('disabled', true).val(T('test.testing')); api('selftest').done(function (r) { if (!r.ok) { window.alert(r.error); } else { KICK = Date.now() + 15000; } load(); }); });
 
   // ---- settings
   function drawSet(r) {
@@ -334,7 +335,7 @@ $(function () {
         if (!ask[n] && (got || ended || !row || Date.now() / 1000 - w > 900)) { delete WATCH[n]; if (got && row.risk && n !== 'unraid-os') { OPEN['ct|' + row.risk] = true; } }
       });
       draw(r);
-      clearTimeout(pollT); var b = r.busy; if (b.scan || b.ask || b.update || b.selftest || !$.isEmptyObject(WATCH)) { pollT = setTimeout(load, 3000); }
+      clearTimeout(pollT); var b = r.busy; if (b.scan || b.ask || b.update || b.selftest || !$.isEmptyObject(WATCH) || Date.now() < KICK) { pollT = setTimeout(load, 3000); }
     }).fail(function (x) { $('#upm-act').html('<div class="upm-status upm-er">' + esc(err(x)) + '</div>'); });
   }
   load();
