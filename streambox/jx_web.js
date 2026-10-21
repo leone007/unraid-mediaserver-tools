@@ -56,6 +56,10 @@
     'font:800 .72em/1.25 system-ui,sans-serif;border-radius:4px;padding:.1em .3em;text-decoration:none!important;box-shadow:0 1px 4px rgba(0,0,0,.5)}' +
     '.sbx-imdb i{font-style:normal;font-weight:700;background:#121212;color:#f5c518;border-radius:2px;padding:0 .25em;margin-left:.3em}' +
     '.sbx-imdb:hover,.sbx-imdb:focus-visible{box-shadow:0 0 0 2px #fff;outline:none}' +
+    '.sbx-tx{display:flex!important;align-items:center}' +
+    '.sbx-tx>:not(.sbx-imdb){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+    '.sbx-txc{justify-content:center}' +
+    '.sbx-imdb.sbx-in{position:static;flex:none;margin-left:.5em;font-size:.72em;box-shadow:none}' +
     '.sbx-mi{display:inline-flex;align-items:center;color:inherit!important;text-decoration:none!important;font-weight:600;border-radius:6px;padding:.05em .35em;margin:0 .5em 0 -.35em;cursor:pointer}' +
     '.sbx-mi:hover,.sbx-mi:focus-visible{background:rgba(255,255,255,.12);outline:none}' +
     '.sbx-mi b{background:#f5c518;color:#121212;font-weight:800;font-size:.78em;border-radius:3px;padding:.05em .3em;margin-right:.35em}' +
@@ -82,7 +86,7 @@
     '#sbxW .sbxw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(9.5em,1fr));grid-gap:1.2em 1em}' +
     '#sbxW .sbxw-c{position:relative;min-width:0}' +
     '#sbxW .sbxw-c>a{color:inherit;text-decoration:none;display:block;outline:none}' +
-    '#sbxW .sbxw-b{position:absolute;top:0;left:0}' +
+    '#sbxW .sbxw-t a{color:inherit;text-decoration:none}' +
     '#sbxW .sbxw-p{position:relative;padding-top:150%;border-radius:8px;background:rgba(255,255,255,.07) center/cover no-repeat}' +
     '#sbxW .sbxw-c>a:hover .sbxw-p,#sbxW .sbxw-c>a:focus-visible .sbxw-p{box-shadow:0 0 0 2px rgba(255,255,255,.85)}' +
     '#sbxW .sbxw-ok{position:absolute;top:.45em;right:.45em;width:1.5em;height:1.5em;border-radius:50%;background:rgba(255,255,255,.92);color:#111;display:grid;place-items:center;font-size:.8em;font-weight:700}' +
@@ -104,30 +108,67 @@
   function score(r) { return (r[0] / 10).toFixed(1); }
   function badgeTip(r) { return T('jx.imdb_open') + (r[1] ? ' · ' + T('jx.votes', { n: r[1], v: num(r[1]) }) : ''); }
 
-  function badge(box, r) {
-    var a = el('a', 'sbx-imdb', 'IMDb');
+  // the badge: next to the card's title (owner's wish, 14u); on the poster's corner when the card shows no title
+  function badge(box, r, inline) {
+    var a = el('a', 'sbx-imdb' + (inline ? ' sbx-in' : ''), 'IMDb');
     a.href = IMDB + r[2] + '/';
     a.target = '_blank';
     a.rel = 'noopener';
     a.title = badgeTip(r);
     a.appendChild(el('i', '', score(r)));
-    if (getComputedStyle(box).position === 'static') { box.style.position = 'relative'; }
+    if (!inline && getComputedStyle(box).position === 'static') { box.style.position = 'relative'; }
     box.appendChild(a);
   }
-  // a badge on each card that has an IMDb rating (cards are reused by Jellyfin's lists: follow their data-id)
+  // the title line of a card becomes a row: the title (it keeps its ellipsis) and the badge after it
+  function titleHost(c) {
+    var tx = c.querySelector('.cardText-first') || c.querySelector('.cardText');
+    if (!tx || !tx.textContent.trim()) { return null; }
+    if (!tx.classList.contains('sbx-tx')) {
+      Array.prototype.forEach.call(tx.childNodes, function (n) {
+        if (n.nodeType === 3 && n.nodeValue.trim()) { var sp = el('span', '', n.nodeValue); tx.replaceChild(sp, n); }
+      });
+      if (getComputedStyle(tx).textAlign === 'center') { tx.classList.add('sbx-txc'); }
+      tx.classList.add('sbx-tx');
+    }
+    return tx;
+  }
+  // episodes (Next up, Continue watching, a series in Recently added that shows its newest episode): the series' rating,
+  // as the card's title is the series; the episode's own rating is on its detail page
+  var seriesOf = {}, sBusy = false, sWant = {};
+  function loadSeries() {
+    var ids = Object.keys(sWant);
+    if (sBusy || !ids.length || !uid()) { return; }
+    sBusy = true; sWant = {};
+    items({ Ids: ids.slice(0, 200).join(','), EnableImages: false, EnableUserData: false, Fields: '' }).then(function (j) {
+      (j.Items || []).forEach(function (it) { seriesOf[nid(it.Id)] = it.SeriesId ? nid(it.SeriesId) : ''; });
+      ids.forEach(function (id) { if (seriesOf[id] === undefined) { seriesOf[id] = ''; } });
+      queue();
+    }).catch(function () { ids.forEach(function (id) { seriesOf[id] = ''; }); }).then(function () { sBusy = false; });
+  }
   function cards() {
     if (!R) { return; }
     var cs = document.querySelectorAll('.card[data-id]');
     for (var i = 0; i < cs.length; i++) {
-      var c = cs[i], id = c.getAttribute('data-id');
-      if (c.getAttribute('data-sbx') === id) { continue; }
+      var c = cs[i], id = c.getAttribute('data-id'), type = c.getAttribute('data-type') || '';
+      var done = c.getAttribute('data-sbx') === id;
+      if (done && (c.getAttribute('data-sbx-none') === '1' || c.querySelector('.sbx-imdb'))) { continue; }   // a re-drawn title loses its badge: put it back
+      var key = id;
+      if (type === 'Episode' || type === 'Season') {
+        if (seriesOf[id] === undefined) { sWant[id] = 1; continue; }
+        key = seriesOf[id] || id;
+      }
       c.setAttribute('data-sbx', id);
-      var old = c.querySelector('.sbx-imdb');
-      if (old) { old.remove(); }
-      var r = R[id];
+      var old = c.querySelectorAll('.sbx-imdb');
+      for (var k = 0; k < old.length; k++) { old[k].remove(); }
+      var r = R[key] || R[id];
+      if (!r || !r[0]) { c.setAttribute('data-sbx-none', '1'); continue; }
+      c.removeAttribute('data-sbx-none');
+      var tx = titleHost(c);
+      if (tx) { badge(tx, r, true); continue; }
       var box = c.querySelector('.cardScalable') || c.querySelector('.cardImageContainer');
-      if (r && r[0] && box) { badge(box, r); }
+      if (box) { badge(box, r, false); }
     }
+    loadSeries();
   }
   // the badge opens IMDb: keep the click away from Jellyfin's card handler (and other scripts' capture listeners)
   function stopForBadge(e) {
@@ -434,13 +475,17 @@
       p.style.backgroundImage = 'url("' + poster(it.id, 360) + '")';
       if (it.done) { var ok = el('span', 'sbxw-ok', '✓'); ok.title = T('jx.done'); p.appendChild(ok); }
       a.appendChild(p);
-      a.appendChild(el('div', 'sbxw-t', it.name));
+      c.appendChild(a);
+      // the title with the IMDb badge after it (a link may not hold another link: the title is a link of its own)
+      var tl = el('div', 'sbxw-t sbx-tx'), ta = el('a', '', it.name);
+      ta.href = a.href;
+      tl.appendChild(ta);
+      if (R && R[it.id] && R[it.id][0]) { badge(tl, R[it.id], true); }
+      c.appendChild(tl);
+      a = c;
       var d = it.at ? T('jx.when', { date: dateTxt(it.at) }) : '';
       if (W.tab === 'series') { d = T('jx.eps', { n: it.eps }) + (d ? ' · ' + d : ''); }
       a.appendChild(el('div', 'sbxw-d', d));
-      c.appendChild(a);
-      // the IMDb badge beside the link (a link may not hold another link)
-      if (R && R[it.id] && R[it.id][0]) { var bx = el('div', 'sbxw-b'); c.appendChild(bx); badge(bx, R[it.id]); }
       g.appendChild(c);
     });
     w.appendChild(g);
