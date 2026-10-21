@@ -417,7 +417,7 @@
     var last = null, any = null;
     for (var k = hs.par.children.length - 1; k >= 0 && !last; k--) {
       var c = hs.par.children[k];
-      if (c.tagName !== 'A' || c.classList.contains('sbx-nav') || !LIB.test(c.getAttribute('href') || '')) { continue; }
+      if (c.tagName !== 'A' || c.classList.contains('sbx-nav') || c.classList.contains('sbx-dim') || !LIB.test(c.getAttribute('href') || '')) { continue; }
       if (!any) { any = c; }
       if (bgOff(c) && !c.matches(':hover')) { last = c; }
     }
@@ -458,6 +458,25 @@
     Array.prototype.forEach.call(it.querySelectorAll('.MuiTouchRipple-root'), function (r) { r.textContent = ''; });
     it.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); openW(); }, true);
     hs.par.appendChild(it);
+  }
+  // while the Watched page is open the skin still marks the page under it (two pills, seen 2026-10-21): that link gets the
+  // idle look until the page closes
+  function dimActive() {
+    navHosts().forEach(function (hs) {
+      var m = idleModel(hs), cs = getComputedStyle(m), bg = cs.backgroundColor, fg = cs.color;
+      for (var k = 0; k < hs.par.children.length; k++) {
+        var c = hs.par.children[k];
+        if (c.tagName !== 'A' || c.classList.contains('sbx-nav') || c.classList.contains('sbx-dim') || bgOff(c)) { continue; }
+        c.classList.add('sbx-dim');
+        c.style.setProperty('background-color', bg, 'important');
+        c.style.setProperty('color', fg, 'important');
+      }
+    });
+  }
+  function undim() {
+    Array.prototype.forEach.call(document.querySelectorAll('.sbx-dim'), function (c) {
+      c.classList.remove('sbx-dim'); c.style.removeProperty('background-color'); c.style.removeProperty('color');
+    });
   }
   function nav() {
     navHosts().forEach(function (hs) {
@@ -598,6 +617,7 @@
     document.documentElement.style.overflow = 'hidden';
     openHref = location.href;
     Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.add('sbx-nav-on'); });
+    try { dimActive(); } catch (x) { /* only the look */ }
     W.movies = null; W.series = null;
     drawW();
     loadW();
@@ -608,6 +628,7 @@
     document.documentElement.style.overflow = '';
     openHref = '';
     Array.prototype.forEach.call(document.querySelectorAll('.sbx-nav'), function (n) { n.classList.remove('sbx-nav-on'); });
+    undim();
   }
 
   // ---- run ----
@@ -615,7 +636,7 @@
   function tick() {
     queued = false;
     if (openHref && location.href !== openHref && document.getElementById('sbxW')) { closeW(); }
-    try { nav(); } catch (x) { /* the menu entry is optional */ }
+    try { nav(); if (document.getElementById('sbxW')) { dimActive(); } } catch (x) { /* the menu entry is optional */ }
     try { cards(); } catch (x) { /* no badges */ }
     try { detail(); } catch (x) { /* no detail link */ }
     try { epList(); } catch (x) { /* the stars stay */ }
