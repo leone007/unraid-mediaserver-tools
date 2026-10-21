@@ -613,7 +613,9 @@ function st_sp_ab_update($fn) {
 // the rows to show: not dismissed, younger than 7 days, not being replaced right now
 function st_sp_ab_list() {
     $d = st_json_read(st_sp_ab_file(), []); $busy = [];
-    foreach ((array)(st_state()['packjobs'] ?? []) as $j) { if (($j['stage'] ?? '') !== 'failed') { $busy[$j['key']] = 1; } }
+    // a stuck job (blocked: e.g. the pack was stopped in Sonarr, nothing was replaced) gives the row back like a failed one,
+    // else a new reaction or click on it said 'unknown season' (seen 2026-10-21, Slow Horses S06)
+    foreach ((array)(st_state()['packjobs'] ?? []) as $j) { if (!in_array($j['stage'] ?? '', ['failed', 'blocked'], true)) { $busy[$j['key']] = 1; } }
     return array_values(array_filter((array)($d['items'] ?? []), function ($x) use ($busy) {
         return empty($x['dismissed']) && time() - (int)($x['t'] ?? 0) < 7 * 86400 && !isset($busy[$x['key']]);
     }));

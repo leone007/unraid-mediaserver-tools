@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzf">
+<!ENTITY version   "2026.10.99zzg">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzg
+- Season repacker: a stuck season pack job (for example a pack stopped in Sonarr) no longer hides the autobrr row of that season, so a new pack of it can be started from the page or from Discord (before, it said unknown season)
+
 ###2026.10.99zzf
 - Season repacker: Cancel button on a running season pack replacement while the pack downloads (Sonarr removes it from its queue with the torrent and its data and blocklists it; your episodes are not touched); a Discord note follows
 - Season pack Discord messages (autobrr and BoxBot): every episode you have on its own line with its title and badges from the file itself (2160p, DV, HDR10, HDR10+, HUN), and the pack with the same badges, so you can compare before you choose
@@ -3669,7 +3672,9 @@ function st_sp_ab_update($fn) {
 // the rows to show: not dismissed, younger than 7 days, not being replaced right now
 function st_sp_ab_list() {
     $d = st_json_read(st_sp_ab_file(), []); $busy = [];
-    foreach ((array)(st_state()['packjobs'] ?? []) as $j) { if (($j['stage'] ?? '') !== 'failed') { $busy[$j['key']] = 1; } }
+    // a stuck job (blocked: e.g. the pack was stopped in Sonarr, nothing was replaced) gives the row back like a failed one,
+    // else a new reaction or click on it said 'unknown season' (seen 2026-10-21, Slow Horses S06)
+    foreach ((array)(st_state()['packjobs'] ?? []) as $j) { if (!in_array($j['stage'] ?? '', ['failed', 'blocked'], true)) { $busy[$j['key']] = 1; } }
     return array_values(array_filter((array)($d['items'] ?? []), function ($x) use ($busy) {
         return empty($x['dismissed']) && time() - (int)($x['t'] ?? 0) < 7 * 86400 && !isset($busy[$x['key']]);
     }));

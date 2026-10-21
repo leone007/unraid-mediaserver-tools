@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzf">
+<!ENTITY version   "2026.10.99zzg">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzg
+- Season repacker: a stuck season pack job (for example a pack stopped in Sonarr) no longer hides the autobrr row of that season, so a new pack of it can be started from the page or from Discord (before, it said unknown season)
+
 ###2026.10.99zzf
 - Season repacker: Cancel button on a running season pack replacement while the pack downloads (Sonarr removes it from its queue with the torrent and its data and blocklists it; your episodes are not touched); a Discord note follows
 - Season pack Discord messages (autobrr and BoxBot): every episode you have on its own line with its title and badges from the file itself (2160p, DV, HDR10, HDR10+, HUN), and the pack with the same badges, so you can compare before you choose
