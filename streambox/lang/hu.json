@@ -730,5 +730,73 @@
  },
  "date.day_short": {
   "text": "{d}. {dow}"
+ },
+ "set.jx_on": {
+  "text": "IMDb és Megnézett a Jellyfinben:"
+ },
+ "set.jx_on_hint": {
+  "text": "IMDb-pontszám minden filmen, sorozaton és epizódon, Megnézett menü és „Megnézettek is” kapcsoló a főoldalon"
+ },
+ "set.jx_on_long": {
+  "text": "A fenti sor mappáját és JS Injector-szkriptjét használja (a week.js tölti be az extras.js-t), így a sor beállítása ki is lehet kapcsolva. A Streambox naponta egyszer letölti az IMDb nyilvános pontszámfájlját (title.ratings.tsv.gz, kb. 9 MB, személyes, nem kereskedelmi célra), és csak ennek a Jellyfin-könyvtárnak a címeit tartja meg az imdb.json-ban. Az imdb.json-t bárki olvashatja, aki eléri a Jellyfin címét (Jellyfin-azonosítók, IMDb-azonosítók és pontszámok)."
+ },
+ "jx.watched_too": {
+  "text": "Megnézettek is"
+ },
+ "jx.watched_too_tip": {
+  "text": "Kikapcsolva a főoldal sorai elrejtik a már megnézett filmeket és sorozatokat. A Jellyfin-fiókodhoz mentjük."
+ },
+ "jx.menu": {
+  "text": "Megnézett"
+ },
+ "jx.tab.movies": {
+  "text": "Filmek · {n}"
+ },
+ "jx.tab.series": {
+  "text": "Sorozatok · {n}"
+ },
+ "jx.sort": {
+  "text": "Rendezés:"
+ },
+ "jx.sort.date": {
+  "text": "Utoljára nézett"
+ },
+ "jx.sort.name": {
+  "text": "Cím"
+ },
+ "jx.sort.imdb": {
+  "text": "IMDb-pontszám"
+ },
+ "jx.when": {
+  "text": "megnézve {date}"
+ },
+ "jx.done": {
+  "text": "Végignézve"
+ },
+ "jx.empty_movies": {
+  "text": "Még nincs megnézett film."
+ },
+ "jx.empty_series": {
+  "text": "Még nincs megnézett sorozat."
+ },
+ "jx.loading": {
+  "text": "Betöltés…"
+ },
+ "jx.error": {
+  "text": "A Jellyfin nem küldte el a listát. Zárd be ezt az oldalt, és nyisd meg újra."
+ },
+ "jx.close": {
+  "text": "Bezárás"
+ },
+ "jx.imdb_open": {
+  "text": "Megnyitás az IMDb-n (ott értékelheted)"
+ },
+ "jx.votes": {
+  "one": "{v} szavazat",
+  "other": "{v} szavazat"
+ },
+ "jx.eps": {
+  "one": "{n} rész",
+  "other": "{n} rész"
  }
 }

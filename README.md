@@ -50,7 +50,7 @@ A title is a downloads folder together with its hardlinked media files; they are
 
 <img src="screenshots/streambox.png" alt="Streambox" width="600">
 
-Jellyfin at a glance: who is watching right now (direct play, direct stream or transcode, with progress), GPU and CPU load with the power draw, **this week's episodes** from the Sonarr calendar (air time, the usual delay until the release shows up, countdowns), and what was added recently. It can announce new movies and seasons in Discord, send a weekly summary, and put the week's episodes on Jellyfin's home page.
+Jellyfin at a glance: who is watching right now (direct play, direct stream or transcode, with progress), GPU and CPU load with the power draw, **this week's episodes** from the Sonarr calendar (air time, the usual delay until the release shows up, countdowns), and what was added recently. It can announce new movies and seasons in Discord, send a weekly summary, and put the week's episodes on Jellyfin's home page. In Jellyfin's web client it also adds IMDb ratings that link to IMDb (from IMDb's public daily ratings file, no API key), a Watched page per user and a "Watched too" switch on the home page.
 
 ## Seedbox
 

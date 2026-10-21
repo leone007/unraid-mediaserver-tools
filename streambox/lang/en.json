@@ -972,5 +972,95 @@
  "date.day_short": {
   "text": "{dow} {d}",
   "note": "the first day of the week on the This week's episodes band when both days are in the same month, for example the \"Mon 12\" of \"Mon 12 – Sun 18 Oct\". Same order as date.day, without the month."
+ },
+ "set.jx_on": {
+  "text": "IMDb and Watched in Jellyfin:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.jx_on_hint": {
+  "text": "IMDb rating on every movie, series and episode, a Watched menu and a \"Watched too\" switch on the home page",
+  "note": "text next to the checkbox (web client and Jellyfin Desktop). \"Watched too\" is the name of the switch: use the same words as jx.watched_too."
+ },
+ "set.jx_on_long": {
+  "text": "Uses the folder and the JS Injector script of the row above (week.js loads extras.js), so the row setting may be off. Once a day Streambox downloads IMDb's public ratings file (title.ratings.tsv.gz, about 9 MB, for personal and non-commercial use) and keeps only the titles of this Jellyfin library in imdb.json. Anyone who can open the Jellyfin address can read imdb.json (Jellyfin item ids, IMDb ids and ratings).",
+  "note": "hint under the IMDb and Watched setting. May contain simple HTML tags: keep them."
+ },
+ "jx.watched_too": {
+  "text": "Watched too",
+  "note": "switch on Jellyfin's home page, in the header of the first poster row. On (default): rows also show what the user has already watched; off: those are hidden. Short."
+ },
+ "jx.watched_too_tip": {
+  "text": "Off: the home page rows hide the movies and series you have already watched. Saved for your Jellyfin account.",
+  "note": "tooltip of the Watched too switch."
+ },
+ "jx.menu": {
+  "text": "Watched",
+  "note": "menu entry in Jellyfin (next to Movies, Shows...) and the title of its page: the movies and series the user has watched. One short word."
+ },
+ "jx.tab.movies": {
+  "text": "Movies · {n}",
+  "note": "tab on the Watched page; {n} = number of watched movies."
+ },
+ "jx.tab.series": {
+  "text": "Shows · {n}",
+  "note": "tab on the Watched page; {n} = number of series with at least one watched episode."
+ },
+ "jx.sort": {
+  "text": "Sort:",
+  "note": "label before the sort list on the Watched page."
+ },
+ "jx.sort.date": {
+  "text": "Last watched",
+  "note": "sort option on the Watched page (newest first)."
+ },
+ "jx.sort.name": {
+  "text": "Title",
+  "note": "sort option on the Watched page (A to Z)."
+ },
+ "jx.sort.imdb": {
+  "text": "IMDb rating",
+  "note": "sort option on the Watched page (best first)."
+ },
+ "jx.when": {
+  "text": "watched {date}",
+  "note": "green line under a poster on the Watched page; {date} = day and month in the browser's format, e.g. 'Oct 18'."
+ },
+ "jx.done": {
+  "text": "Finished",
+  "note": "tooltip of the check mark on a series poster on the Watched page: every episode watched."
+ },
+ "jx.empty_movies": {
+  "text": "No watched movies yet.",
+  "note": "Watched page, Movies tab, when the list is empty."
+ },
+ "jx.empty_series": {
+  "text": "No watched shows yet.",
+  "note": "Watched page, Shows tab, when the list is empty."
+ },
+ "jx.loading": {
+  "text": "Loading…",
+  "note": "Watched page while the list comes from Jellyfin."
+ },
+ "jx.error": {
+  "text": "Jellyfin did not send the list. Close this page and open it again.",
+  "note": "Watched page when the request to Jellyfin failed."
+ },
+ "jx.close": {
+  "text": "Close",
+  "note": "tooltip of the × button on the Watched page."
+ },
+ "jx.imdb_open": {
+  "text": "Open on IMDb (rate it there)",
+  "note": "tooltip of the yellow IMDb badge (cards and detail page); the click opens the title's IMDb page in a new tab."
+ },
+ "jx.votes": {
+  "one": "{v} vote",
+  "other": "{v} votes",
+  "note": "IMDb vote count, in the IMDb badge tooltip and next to the rating on the detail page; {v} = the number with thousands separators, {n} = the plain number for the plural form."
+ },
+ "jx.eps": {
+  "one": "{n} episode",
+  "other": "{n} episodes",
+  "note": "under a series poster on the Watched page: how many of its episodes the user has watched."
  }
 }

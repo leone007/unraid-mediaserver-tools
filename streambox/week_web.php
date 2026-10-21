@@ -3,11 +3,14 @@
 // Writes week.json (series, episode codes, times and states; no keys, no addresses) and the renderer week.js into a folder
 // that the Jellyfin container serves read-only under /web/streambox/ (a path mapping). The JavaScript Injector plugin loads
 // week.js. Read-only towards Sonarr and Jellyfin; writes only into that folder.
+// week.js also loads extras.js (IMDb ratings, Watched menu: jx_lib.php), so the folder and the loader serve both.
 if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
 require_once __DIR__ . '/week_lib.php';
+require_once __DIR__ . '/jx_lib.php';
 
 $cfg = wk_cfg();
-if ((string)$cfg['wk_web'] !== '1') { exit(0); }
+$jxOn = (string)($cfg['jx_on'] ?? '1') === '1';
+if ((string)$cfg['wk_web'] !== '1' && !$jxOn) { exit(0); }
 $dir = rtrim(trim((string)$cfg['wk_web_dir']), '/');
 if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir)) { exit(0); }
 // The pool or share is mounted only while the array runs: never create its top folder (/mnt/cache) ourselves
@@ -31,6 +34,8 @@ if ($js !== '') { ww_put($dir . '/week.js', $js); }
 
 wk_tz();
 $now = time();
+jx_run($cfg, $dir, $now);
+if ((string)$cfg['wk_web'] !== '1') { ww_put($dir . '/week.json', json_encode(['ok' => false, 'gen' => $now, 'off' => true])); exit(0); }
 $w = wk_build($cfg, $now);
 $jf = $dir . '/week.json';
 if (!$w['ok']) {

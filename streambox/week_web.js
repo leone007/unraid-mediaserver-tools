@@ -11,6 +11,8 @@
   var BASE = 'streambox/';
   try { if (document.currentScript && document.currentScript.src) { BASE = new URL('.', document.currentScript.src).href; } } catch (e) { /* keep the default */ }
   var ROOT = new URL('../../', new URL(BASE, location.href)).href;   // the Jellyfin server root (/web/streambox/ -> /)
+  // IMDb ratings and the Watched menu (extras.js, written by Streambox; a stub when they are switched off)
+  (function () { var x = document.createElement('script'); x.src = BASE + 'extras.js?v=' + Date.now(); document.head.appendChild(x); })();
   var DAYS = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
   var MON = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.'];
   var KEY = 'streamboxWeekView';

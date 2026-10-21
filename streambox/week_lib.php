@@ -11,7 +11,7 @@ function wk_cfg() {
         'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '',
         'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '',
         'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'dc_series' => '',
-        'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid',
+        'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1',
     ];
     $f = getenv('SB_CFG') ?: '/boot/config/plugins/streambox/settings.cfg';   // SB_CFG: tests only
     if (is_file($f)) {
