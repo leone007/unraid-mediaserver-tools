@@ -154,8 +154,22 @@
       var done = c.getAttribute('data-sbx') === id;
       if (done && (c.getAttribute('data-sbx-none') === '1' || c.querySelector('.sbx-imdb'))) { continue; }   // a re-drawn title loses its badge: put it back
       var key = id;
-      // IMDb rates series and episodes, not seasons: a season card gets no badge (the series' would look like the season's)
-      if (type === 'Season') { c.setAttribute('data-sbx', id); c.setAttribute('data-sbx-none', '1'); continue; }
+      // IMDb rates series and episodes, not seasons: a season card shows the average of its episodes (never the series')
+      if (type === 'Season') {
+        if (seasonCache[id] === undefined) { seasonCache[id] = false; loadSeason(id); continue; }
+        if (seasonCache[id] === false) { continue; }   // still loading
+        c.setAttribute('data-sbx', id);
+        var so = c.querySelectorAll('.sbx-imdb');
+        for (var q = 0; q < so.length; q++) { so[q].remove(); }
+        if (!seasonCache[id]) { c.setAttribute('data-sbx-none', '1'); continue; }
+        c.removeAttribute('data-sbx-none');
+        var stx = CFG.badge === 'poster' ? null : titleHost(c);
+        var sb = avgBadge(seasonCache[id], id, stx ? 'sbx-in' : '');
+        if (stx) { stx.appendChild(sb); continue; }
+        var sbox = c.querySelector('.cardScalable') || c.querySelector('.cardImageContainer');
+        if (sbox) { if (getComputedStyle(sbox).position === 'static') { sbox.style.position = 'relative'; } sbox.appendChild(sb); }
+        continue;
+      }
       if (type === 'Episode') {
         if (seriesOf[id] === undefined) { sWant[id] = 1; continue; }
         key = seriesOf[id] || id;
@@ -260,19 +274,27 @@
 
   // a season page: the average IMDb rating of its episodes on the poster (IMDb rates episodes, not seasons), a link to the
   // season's episode list on IMDb
-  var seasonCache = {};   // season id -> {avg, n, tt, sn} | null (not a season, or no rated episode)
+  var seasonCache = {};   // season id -> {avg, n, tt, sn} | null (not a season, or no rated episode) | false (loading)
   function loadSeason(id) {
     jget('Items/' + id, { userId: uid() }).then(function (it) {
-      if (!it || it.Type !== 'Season') { return; }
+      if (!it || it.Type !== 'Season') { seasonCache[id] = null; return; }
       var sid = it.SeriesId ? nid(it.SeriesId) : '';
       return items({ ParentId: id, IncludeItemTypes: 'Episode', Recursive: true, Fields: '', EnableImages: false, EnableUserData: false }).then(function (j) {
         var sum = 0, n = 0;
         (j.Items || []).forEach(function (e) { var r = R && R[nid(e.Id)]; if (r && r[0]) { sum += r[0]; n++; } });
-        if (!n) { return; }
-        seasonCache[id] = { avg: sum / n / 10, n: n, tt: R && R[sid] ? R[sid][2] : '', sn: it.IndexNumber };
+        seasonCache[id] = n ? { avg: sum / n / 10, n: n, tt: R && R[sid] ? R[sid][2] : '', sn: it.IndexNumber } : null;
         queue();
       });
-    }).catch(function () { /* no average */ });
+    }).catch(function () { seasonCache[id] = null; });
+  }
+  // the average badge (season poster, season cards): 'IMDb ⌀ 6.0', a link to the season's episodes on IMDb
+  function avgBadge(d, id, cls) {
+    var a = el(d.tt ? 'a' : 'span', 'sbx-imdb ' + cls, 'IMDb');
+    a.setAttribute('data-id', id);
+    if (d.tt) { a.href = IMDB + d.tt + '/episodes/' + (d.sn ? '?season=' + d.sn : ''); a.target = '_blank'; a.rel = 'noopener'; }
+    a.title = T('jx.season_avg', { n: d.n });
+    a.appendChild(el('i', '', '⌀ ' + d.avg.toFixed(1)));
+    return a;
   }
   function seasonAvg() {
     if (!R || !uid()) { return; }
@@ -283,16 +305,11 @@
     var cur = host.querySelector('.sbx-savg');
     if (cur && cur.getAttribute('data-id') === id) { return; }
     if (cur) { cur.remove(); }
-    if (seasonCache[id] === undefined) { seasonCache[id] = null; loadSeason(id); return; }
+    if (seasonCache[id] === undefined) { seasonCache[id] = false; loadSeason(id); return; }
     var d = seasonCache[id];
     if (!d) { return; }
-    var a = el(d.tt ? 'a' : 'span', 'sbx-imdb sbx-savg', 'IMDb');
-    a.setAttribute('data-id', id);
-    if (d.tt) { a.href = IMDB + d.tt + '/episodes/' + (d.sn ? '?season=' + d.sn : ''); a.target = '_blank'; a.rel = 'noopener'; }
-    a.title = T('jx.season_avg', { n: d.n });
-    a.appendChild(el('i', '', '⌀ ' + d.avg.toFixed(1)));
     if (getComputedStyle(host).position === 'static') { host.style.position = 'relative'; }
-    host.appendChild(a);
+    host.appendChild(avgBadge(d, id, 'sbx-savg'));
   }
 
   // ---- the "Watched too" switch on the home page ----
