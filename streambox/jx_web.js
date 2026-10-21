@@ -410,10 +410,24 @@
     return out;
   }
   var CHECK = 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z';
+  // the copy must come from a link that is NOT the current page: the skin marks the active one (a white pill in Abyss) with
+  // its own classes, and a copy of it looked selected for ever (seen 2026-10-21). An idle link has no background.
+  function bgOff(a) { var b = getComputedStyle(a).backgroundColor; return b === 'transparent' || /rgba\(.*,\s*0\)$/.test(b); }
+  function idleModel(hs) {
+    var last = null, any = null;
+    for (var k = hs.par.children.length - 1; k >= 0 && !last; k--) {
+      var c = hs.par.children[k];
+      if (c.tagName !== 'A' || c.classList.contains('sbx-nav') || !LIB.test(c.getAttribute('href') || '')) { continue; }
+      if (!any) { any = c; }
+      if (bgOff(c) && !c.matches(':hover')) { last = c; }
+    }
+    return last || any || hs.model;
+  }
   function navItem(hs) {
-    var last = null;
-    for (var k = hs.par.children.length - 1; k >= 0 && !last; k--) { var c = hs.par.children[k]; if (c.tagName === 'A' && LIB.test(c.getAttribute('href') || '')) { last = c; } }
-    var it = (last || hs.model).cloneNode(true);
+    var m = idleModel(hs), it = m.cloneNode(true);
+    it.setAttribute('data-sbx-cls', m.getAttribute('class') || '');
+    it.style.backgroundColor = getComputedStyle(m).backgroundColor;
+    it.style.color = getComputedStyle(m).color;
     it.classList.add('sbx-nav');
     ['id', 'data-itemid', 'data-id', 'aria-current'].forEach(function (k) { it.removeAttribute(k); });
     it.classList.remove('navMenuOption-selected', 'selected', 'active', 'is-active', 'Mui-selected', 'Mui-focusVisible');
@@ -446,7 +460,15 @@
     hs.par.appendChild(it);
   }
   function nav() {
-    navHosts().forEach(function (hs) { if (!hs.par.querySelector('.sbx-nav')) { navItem(hs); } });
+    navHosts().forEach(function (hs) {
+      var it = hs.par.querySelector('.sbx-nav');
+      // a copy made from the then active link (or after the skin changed its classes) is made again from an idle one
+      if (it && !it.classList.contains('sbx-nav-on')) {
+        var m = idleModel(hs);
+        if (bgOff(m) && (m.getAttribute('class') || '') !== it.getAttribute('data-sbx-cls')) { it.remove(); it = null; }
+      }
+      if (!it) { navItem(hs); }
+    });
   }
 
   // ---- the Watched page ----
