@@ -1,6 +1,6 @@
 # unraid-mediaserver-tools
 
-Dashboard plugins for **Unraid 7** (tested on **7.3.3**, see [Compatibility](#compatibility)) that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
+Dashboard plugins for **Unraid 7** (tested on **7.3.4**, see [Compatibility](#compatibility)) that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
 
 **The rule of every tool here: nothing is added, replaced or deleted without your click.** The tools scan and report by themselves; every step that changes something is a button with a confirmation.
 
@@ -76,7 +76,7 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 
 | | |
 |---|---|
-| **Tested on** | **Unraid 7.3.3** (2026-10-19: every page, tile, background job, connection test and scan checked after the update; PHP 8.4.26, nginx 1.30.4) and before that 7.3.2, every plugin, in daily use on one server (Intel i5-12500T with Quick Sync, XFS array with two parity slots, one ZFS cache pool) |
+| **Tested on** | **Unraid 7.3.4** (2026-10-23: every plugin updated and in daily use after the update, the Sysbox Update all and its self-test ran on it; PHP 8.4.27 with the PHP2Shell fix, nginx 1.30.6), before that 7.3.3 (2026-10-19: every page, tile, background job, connection test and scan checked) and 7.3.2, every plugin, in daily use on one server (Intel i5-12500T with Quick Sync, XFS array with two parity slots, one ZFS cache pool) |
 | **Should work** | other Unraid 7 releases; the dashboard tiles use the Unraid 7 dashboard layout |
 | **Not supported** | Unraid 6.x: never tried there, so the `.plg` files ask for 7.0.0 or newer (`min="7.0.0"`) and the Plugins page refuses them on 6.x |
 
