@@ -13,14 +13,15 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/ClaudeButton.page','sysbox/ClaudeButton.page','CLAUDE HEADER BUTTON'),('&plugdir;/claude.php','sysbox/claude.php','CLAUDE BUTTON ENDPOINT'),
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
  ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
- ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER')]
+ ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),
+ ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.25d">
+<!ENTITY version   "2026.10.26">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +35,10 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- New Network part on the tile (item 94): download and upload speed, traffic today, a 30-minute graph, an internet check (router and two outside addresses: amber when slow, red when down) and the three busiest containers; each piece can be switched off in the Sysbox settings, like the other parts
+- New page Settings, Utilities, Network: 1 hour, 24 hour and 7 day graph, daily bars, today, this month and last month, traffic per container, internet outages, and its settings (interface, router, outside addresses, slow limit, unit MB/s or Mbit/s, Discord); only reads counters and sends pings
+- Discord: one message after an internet outage, with its start and end
+###2026.10.25d
 - Update manager: when the self-test after an update fails because the program is still starting (e.g. Jellyfin with a Docker mod or a database migration), it tries again every 15 seconds for up to 3 minutes before it calls the update failed
 ###2026.10.25c
 - Update manager: the Update all confirmation has normal sized buttons (they were stretched into tall columns)
@@ -252,6 +257,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 */10 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/sample.php >/dev/null 2>&1
 # Sysbox: records the CPU load in RAM for the dashboard graph (one long-running process, restarted if it stops)
 * * * * * flock -n -E 0 /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
+# Sysbox: network meter (traffic counters every 5 s, internet ping every 30 s; one long-running process, restarted if it stops)
+* * * * * flock -n -E 0 /tmp/sysbox_net.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
 * * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/notify.php >/dev/null 2>&1
 # Sysbox: weekly summary, checked hourly (day and hour are settings)
@@ -270,6 +277,10 @@ nohup bash -c 'for i in $(seq 1 60); do [ -e /var/log/plugins/sysbox.plg ] && br
 # start the CPU recorder right away (cron keeps it alive afterwards)
 pkill -f "plugins/sysbox/cpuhist.php" 2>/dev/null
 setsid nohup flock -n /tmp/sysbox_hist.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1 </dev/null &
+
+# start the network meter right away (it exits by itself when the Network part is switched off)
+pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
+setsid nohup flock -n /tmp/sysbox_net.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1 </dev/null &
 
 # the claude container flag for the header button (Claude Guard tick; cron repeats it every 2 minutes)
 setsid nohup "$PHPBIN" /usr/local/emhttp/plugins/sysbox/guard_run.php tick >/dev/null 2>&1 </dev/null &
@@ -298,6 +309,7 @@ rm -rf /usr/local/emhttp/plugins/sysbox
 rm -rf /usr/local/emhttp/plugins/Sysbox
 pkill -f "php -S 127.0.0.1:18184" 2>/dev/null
 pkill -f "plugins/sysbox/cpuhist.php" 2>/dev/null
+pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
 rm -f /tmp/sysbox_*
 rm -f /boot/config/plugins/sysbox/sysbox.cron
 /usr/local/sbin/update_cron 2>/dev/null

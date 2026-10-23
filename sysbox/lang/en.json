@@ -2776,5 +2776,454 @@
  "uj.all_dc_left": {
   "text": "Not started: {l}",
   "note": "Discord line: containers Update all did not start."
+ },
+ "net.title": {
+  "text": "Network",
+  "note": "tile band title of the network part (item 94); also its name on the settings page."
+ },
+ "net.starting": {
+  "text": "Starting the network meter… the first numbers come in a few seconds.",
+  "note": "tile: the background sampler has not written data yet."
+ },
+ "net.down": {
+  "text": "Down",
+  "note": "tile figure label: download speed now."
+ },
+ "net.up": {
+  "text": "Up",
+  "note": "tile figure label: upload speed now."
+ },
+ "net.today": {
+  "text": "Today",
+  "note": "tile figure label: traffic today (down + up)."
+ },
+ "net.last30": {
+  "text": "last 30 min · top {v}",
+  "note": "under the tile graph; {v} = the highest speed in the graph with its unit."
+ },
+ "net.down_s": {
+  "text": "down",
+  "note": "graph legend: the download line."
+ },
+ "net.up_s": {
+  "text": "up",
+  "note": "graph legend: the upload line."
+ },
+ "net.router_ms": {
+  "text": "router {v}",
+  "note": "internet row: ping time to the router; {v} = \"0.4 ms\" or \"no answer\"."
+ },
+ "net.no_answer": {
+  "text": "no answer",
+  "note": "a ping got no answer."
+ },
+ "net.outside_none": {
+  "text": "outside: no answer",
+  "note": "internet row: none of the outside addresses answered."
+ },
+ "net.since": {
+  "text": "since {t} ({m} min)",
+  "note": "internet row: when the problem started; {t} = time, {m} = minutes."
+ },
+ "net.inet_ok": {
+  "text": "Internet OK",
+  "note": "internet state: fine."
+ },
+ "net.inet_slow": {
+  "text": "Internet slow",
+  "note": "internet state: outside pings slower than the set limit."
+ },
+ "net.inet_down": {
+  "text": "No internet",
+  "note": "internet state: the router answers, the outside does not."
+ },
+ "net.inet_norouter": {
+  "text": "Router not reachable",
+  "note": "internet state: not even the router answers."
+ },
+ "net.inet_wait": {
+  "text": "Checking the internet…",
+  "note": "internet state before the first check."
+ },
+ "net.details": {
+  "text": "details ›",
+  "note": "link from the tile to the Network page."
+ },
+ "attn.no_inet": {
+  "text": "no internet: the router answers, the outside does not",
+  "note": "Needs attention row of the tile (name: Internet)."
+ },
+ "attn.no_router": {
+  "text": "the router does not answer",
+  "note": "Needs attention row of the tile (name: Internet)."
+ },
+ "blk.net_speed": {
+  "text": "Speed now",
+  "note": "settings chip of the Network part: down and up speed."
+ },
+ "blk.net_today": {
+  "text": "Today",
+  "note": "settings chip of the Network part: traffic today."
+ },
+ "blk.net_hist": {
+  "text": "Graph (30 min)",
+  "note": "settings chip of the Network part: the small graph."
+ },
+ "blk.net_inet": {
+  "text": "Internet check",
+  "note": "settings chip of the Network part: the internet row."
+ },
+ "blk.net_top": {
+  "text": "Busiest 3 containers",
+  "note": "settings chip of the Network part: the container rows."
+ },
+ "blk.net_hint": {
+  "text": "interface, internet check, unit and Discord: Settings, Utilities, Network",
+  "note": "hint of the Network part."
+ },
+ "netp.intro": {
+  "text": "Traffic of the server and its containers, and whether the internet works. The page only reads counters and sends pings; nothing on the server is changed. The server sees only its own traffic, not the other devices at home.",
+  "note": "intro line of the Network page."
+ },
+ "netp.h.now": {
+  "text": "Now",
+  "note": "band title: the current state."
+ },
+ "netp.loading": {
+  "text": "Loading…",
+  "note": "before the first answer."
+ },
+ "netp.h.traffic": {
+  "text": "Traffic",
+  "note": "band title: the traffic graph."
+ },
+ "netp.h.totals": {
+  "text": "Totals",
+  "note": "band title: daily and monthly totals."
+ },
+ "netp.h.totals_sub": {
+  "text": "down + up, months from the 1st",
+  "note": "right side of the Totals band."
+ },
+ "netp.h.containers": {
+  "text": "Containers",
+  "note": "band title: traffic per container."
+ },
+ "netp.h.containers_sub": {
+  "text": "now and today, the busiest first",
+  "note": "right side of the Containers band."
+ },
+ "netp.h.outages": {
+  "text": "Internet outages",
+  "note": "band title: the list of outages."
+ },
+ "netp.h.settings": {
+  "text": "Settings",
+  "note": "band title."
+ },
+ "netp.h.settings_sub": {
+  "text": "one check every 30 s",
+  "note": "right side of the Settings band: how often the internet is checked."
+ },
+ "netp.dow.0": {
+  "text": "Sun",
+  "note": "short day name (Sunday), under the daily bars and the 7-day graph."
+ },
+ "netp.dow.1": {
+  "text": "Mon",
+  "note": "short day name (Monday)."
+ },
+ "netp.dow.2": {
+  "text": "Tue",
+  "note": "short day name (Tuesday)."
+ },
+ "netp.dow.3": {
+  "text": "Wed",
+  "note": "short day name (Wednesday)."
+ },
+ "netp.dow.4": {
+  "text": "Thu",
+  "note": "short day name (Thursday)."
+ },
+ "netp.dow.5": {
+  "text": "Fri",
+  "note": "short day name (Friday)."
+ },
+ "netp.dow.6": {
+  "text": "Sat",
+  "note": "short day name (Saturday)."
+ },
+ "netp.off": {
+  "text": "The Network part is switched off in the Sysbox settings, so nothing is measured.",
+  "note": "Now box when the part is off; a link follows."
+ },
+ "netp.off_link": {
+  "text": "Sysbox settings",
+  "note": "link to the Sysbox settings page."
+ },
+ "netp.starting": {
+  "text": "The network meter is starting; the first numbers come in a few seconds.",
+  "note": "Now box before the sampler has written data."
+ },
+ "netp.lead": {
+  "text": "{d} {unit} down, {u} up.",
+  "note": "lead line of the Now box; {d}/{u} = numbers, {unit} = MB/s or Mbit/s."
+ },
+ "netp.lead_top": {
+  "text": "{c} moves {p} % of it.",
+  "note": "lead line: the busiest container and its share."
+ },
+ "netp.check_now": {
+  "text": "Check internet now",
+  "note": "button: one ping round now."
+ },
+ "netp.show_ip": {
+  "text": "Show public IP",
+  "note": "button: asks api.ipify.org for the public address, only on this click."
+ },
+ "netp.errors": {
+  "text": "errors",
+  "note": "status strip: interface errors since boot."
+ },
+ "netp.dropped": {
+  "text": "dropped",
+  "note": "status strip: dropped packets since boot."
+ },
+ "netp.ts_today": {
+  "text": "Tailscale today",
+  "note": "status strip: Tailscale traffic today (already part of the interface total)."
+ },
+ "netp.router": {
+  "text": "router",
+  "note": "status strip label: the router and its ping."
+ },
+ "netp.public_ip": {
+  "text": "public IP",
+  "note": "status strip label."
+ },
+ "netp.checked": {
+  "text": "check now",
+  "note": "status strip label: result of the Check internet now button."
+ },
+ "netp.checked_ago": {
+  "text": "checked {s} s ago",
+  "note": "right side of the Now band."
+ },
+ "netp.no_data": {
+  "text": "No data yet.",
+  "note": "graph: nothing recorded."
+ },
+ "netp.collecting": {
+  "text": "Collecting data for this range…",
+  "note": "graph: not enough points yet for the chosen range."
+ },
+ "netp.avg_5s": {
+  "text": "5-second values",
+  "note": "graph legend for 1 h."
+ },
+ "netp.avg_5m": {
+  "text": "5-minute averages",
+  "note": "graph legend for 24 h."
+ },
+ "netp.avg_30m": {
+  "text": "30-minute averages",
+  "note": "graph legend for 7 days."
+ },
+ "netp.peak": {
+  "text": "peak down {v} at {t}",
+  "note": "graph legend: the highest download point."
+ },
+ "netp.today": {
+  "text": "Today",
+  "note": "total label."
+ },
+ "netp.this_month": {
+  "text": "This month",
+  "note": "total label."
+ },
+ "netp.last_month": {
+  "text": "Last month",
+  "note": "total label."
+ },
+ "netp.no_ct": {
+  "text": "No running container with its own network.",
+  "note": "Containers box: nothing to list."
+ },
+ "netp.c_name": {
+  "text": "Container",
+  "note": "column title."
+ },
+ "netp.c_now": {
+  "text": "Now down / up {unit}",
+  "note": "column title; {unit} = MB/s or Mbit/s."
+ },
+ "netp.c_rx": {
+  "text": "Today down",
+  "note": "column title."
+ },
+ "netp.c_tx": {
+  "text": "Today up",
+  "note": "column title."
+ },
+ "netp.ct_note": {
+  "text": "Counted inside each container, so traffic on the home network is in it too. Containers on the host network share the server's counters and are not listed.",
+  "note": "small note under the container table."
+ },
+ "netp.ongoing": {
+  "text": "now",
+  "note": "outage row: still going on."
+ },
+ "netp.ev_down": {
+  "text": "No internet for {m} min",
+  "note": "outage row title."
+ },
+ "netp.ev_router": {
+  "text": "Router not reachable for {m} min",
+  "note": "outage row title."
+ },
+ "netp.ev_down_d": {
+  "text": "the router answered, the outside addresses did not",
+  "note": "outage row detail."
+ },
+ "netp.ev_router_d": {
+  "text": "not even the router answered",
+  "note": "outage row detail."
+ },
+ "netp.n_outages": {
+  "one": "{n} in the last 7 days",
+  "other": "{n} in the last 7 days",
+  "note": "right side of the Outages band."
+ },
+ "netp.no_outages": {
+  "text": "none in the last 7 days",
+  "note": "right side of the Outages band."
+ },
+ "netp.no_outages_long": {
+  "text": "No internet outage in the last 7 days.",
+  "note": "Outages box when empty."
+ },
+ "netp.older": {
+  "text": "Earlier outages",
+  "note": "foldable bar title."
+ },
+ "netp.s_auto": {
+  "text": "automatic ({v})",
+  "note": "option: found by itself; {v} = what was found."
+ },
+ "netp.s_if": {
+  "text": "Interface",
+  "note": "settings label."
+ },
+ "netp.s_if_hint": {
+  "text": "the one that carries the internet traffic; automatic takes the port under the default route",
+  "note": "settings hint."
+ },
+ "netp.s_router": {
+  "text": "Router",
+  "note": "settings label."
+ },
+ "netp.s_router_hint": {
+  "text": "empty = the default gateway",
+  "note": "settings hint."
+ },
+ "netp.s_out": {
+  "text": "Outside addresses",
+  "note": "settings label."
+ },
+ "netp.s_out_hint": {
+  "text": "one to three, comma separated; the internet is down when none of them answers twice in a row",
+  "note": "settings hint."
+ },
+ "netp.s_slow": {
+  "text": "Slow above",
+  "note": "settings label (and the field name in a range error)."
+ },
+ "netp.s_slow_hint": {
+  "text": "three checks in a row over this make the internet row amber",
+  "note": "settings hint."
+ },
+ "netp.s_unit": {
+  "text": "Unit",
+  "note": "settings label."
+ },
+ "netp.u_mb": {
+  "text": "MB/s (like qBittorrent)",
+  "note": "unit option."
+ },
+ "netp.u_mbit": {
+  "text": "Mbit/s (like your provider)",
+  "note": "unit option."
+ },
+ "netp.s_dc": {
+  "text": " a message after an internet outage",
+  "note": "Discord checkbox label (after the checkbox)."
+ },
+ "netp.s_dc_hint": {
+  "text": "sent when the outage is over (while it lasts Discord cannot be reached), with its start and end; the Sysbox webhook",
+  "note": "settings hint."
+ },
+ "netp.save": {
+  "text": "Save",
+  "note": "button."
+ },
+ "netp.saving": {
+  "text": "Saving…",
+  "note": "message."
+ },
+ "netp.saved": {
+  "text": "Saved",
+  "note": "message."
+ },
+ "netp.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message; {e} = the reason."
+ },
+ "netp.checking": {
+  "text": "Checking…",
+  "note": "button text while checking."
+ },
+ "netp.asking": {
+  "text": "Asking…",
+  "note": "button text while the public IP is asked."
+ },
+ "netp.err_if": {
+  "text": "Unknown interface name",
+  "note": "save error."
+ },
+ "netp.err_host": {
+  "text": "Not an address: {h}",
+  "note": "save error; {h} = what was typed."
+ },
+ "netp.err_out": {
+  "text": "Give one to three outside addresses",
+  "note": "save error."
+ },
+ "netp.ip_fail": {
+  "text": "The public address could not be read (api.ipify.org)",
+  "note": "error of the Show public IP button."
+ },
+ "netd.down_t": {
+  "text": "The internet was down for {d}",
+  "note": "Discord title after an outage; {d} = duration like \"6 m\" or \"1 h 5 m\"."
+ },
+ "netd.down_d": {
+  "text": "The router answered, the outside addresses did not: the problem was past the router (provider).",
+  "note": "Discord text."
+ },
+ "netd.router_t": {
+  "text": "The router was not reachable for {d}",
+  "note": "Discord title after an outage."
+ },
+ "netd.router_d": {
+  "text": "Not even the router answered: the cable, the switch or the router itself.",
+  "note": "Discord text."
+ },
+ "netd.from": {
+  "text": "From",
+  "note": "Discord field: start of the outage."
+ },
+ "netd.to": {
+  "text": "Until",
+  "note": "Discord field: end of the outage."
  }
 }

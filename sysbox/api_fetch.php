@@ -137,6 +137,41 @@ if (trim((string)$cfg['socket_host']) !== '') {
     ];
 }
 
+// ---- network (item 94): netmon.php samples in the background ------------------------------------
+$net = null;
+if (sx_on($cfg['show_net'] ?? '1')) {
+    require_once __DIR__ . '/net_lib.php';
+    $NL = sxnet_live(); $fresh = $NL && time() - (int)$NL['t'] < 30;
+    if (!$fresh && (!is_file('/tmp/sysbox_net.lock.run') || time() - filemtime('/tmp/sysbox_net.lock.run') > 60)) {   // the sampler is not running (just installed, or switched on): start it now, cron keeps it alive
+        @touch('/tmp/sysbox_net.lock.run');
+        @exec('setsid nohup flock -n /tmp/sysbox_net.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/netmon.php') . ' >/dev/null 2>&1 </dev/null &');
+    }
+    if ($fresh) { @unlink('/tmp/sysbox_net.lock.run'); }
+    $net = ['pending' => !$fresh, 'unit' => sxnet_cfg()['unit']];
+    if ($fresh) {
+        $pts = []; $now = (int)$NL['t']; $acc = null;
+        foreach ((array)$NL['live'] as $p) {           // the last 30 minutes, 15-second averages: [seconds ago, down, up]
+            if ($p[0] < $now - 1800) { continue; }
+            $k = intdiv($p[0], 15);
+            if ($acc && $acc[0] !== $k) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; $acc = null; }
+            if (!$acc) { $acc = [$k, 0, 0, 0]; }
+            $acc[1] += $p[1]; $acc[2] += $p[2]; $acc[3]++;
+        }
+        if ($acc) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; }
+        $top = [];
+        foreach ((array)$NL['ct'] as $n => $r) { $top[] = [$n, (float)$r[0], (float)$r[1]]; }
+        usort($top, function ($a, $b) { return ($b[1] + $b[2]) <=> ($a[1] + $a[2]); });
+        $today = $NL['days'][date('Y-m-d')] ?? [0, 0];
+        $in = (array)$NL['inet'];
+        $net += ['iface' => (string)$NL['iface'], 'speed' => $NL['link']['speed'] ?? null, 'up' => $NL['link']['up'] ?? true, 'rate' => $NL['rate'], 'today' => [$today[0], $today[1]], 'pts' => $pts,
+                 'top' => array_slice($top, 0, 3), 'inet' => ['state' => (string)($in['state'] ?? 'wait'), 'since' => (int)($in['since'] ?? 0), 'router' => (string)($in['router'] ?? ''),
+                 'router_ms' => $in['router_ms'] ?? null, 'out' => (string)($in['out'] ?? ''), 'out_ms' => $in['out_ms'] ?? null]];
+        if (in_array($net['inet']['state'], ['down', 'norouter'], true)) {
+            $attn[] = ['rd', 'Internet', $net['inet']['state'] === 'down' ? $sxx_T('attn.no_inet') : $sxx_T('attn.no_router'), date('H:i', $net['inet']['since'])];
+        }
+    }
+}
+
 // ---- containers ----------------------------------------------------------------------------------
 $cont = ['enabled' => sx_on($cfg['show_containers']), 'docker' => false, 'rows' => [], 'mode' => $cfg['top_mode'], 'n' => (int)$cfg['top_n'],
          'controls' => sx_on($cfg['controls']), 'logs' => sx_on($cfg['logs']), 'log_lines' => (int)$cfg['log_lines'], 'pending' => $stats === null];
@@ -197,14 +232,14 @@ $attOut = [];
 foreach ($attn as $a) { $attOut[] = ['level' => $a[0], 'name' => $a[1], 'text' => $a[2], 'small' => $a[3]]; }
 
 $sxShow = [];
-foreach (['ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
+foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
 
 sx_json([
     'ok' => true, 'ts' => time(),
     'summary' => ['ram' => $memPct, 'cpu' => $load, 'temp' => $tPkg, 'uptime' => ($d > 0 ? $d . ' d ' . $h . ' h' : ($h > 0 ? $h . ' h ' . $m . ' m' : $m . ' m'))],
-    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'containers' => $cont,
+    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'net' => $net, 'containers' => $cont,
     'limits' => ['temp_warn' => (float)$cfg['temp_warn'], 'temp_crit' => (float)$cfg['temp_crit']],
     'ui' => ['hist_min' => max(1, min(60, (int)$cfg['hist_min'])), 'cpu_sec' => (int)$cfg['cpu_sec'], 'clk_sec' => (int)$cfg['clk_sec'], 'show_clock' => sx_on($cfg['show_clock']),
              'order' => sx_order($cfg), 'show' => ['ram' => sx_on($cfg['show_ram']), 'sto' => sx_on($cfg['show_sto']), 'cpu' => sx_on($cfg['show_cpu']),
-             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
+             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'net' => sx_on($cfg['show_net'] ?? '1'), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
 ]);

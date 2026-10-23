@@ -56,6 +56,8 @@ $new = [
     'cpu_hist' => sx_bool($_POST['cpu_hist'] ?? '1'), 'cpu_per' => sx_bool($_POST['cpu_per'] ?? '1'), 'cpu_la' => sx_bool($_POST['cpu_la'] ?? '0'),
     'pow_w' => sx_bool($_POST['pow_w'] ?? '1'), 'pow_day' => sx_bool($_POST['pow_day'] ?? '1'), 'pow_mon' => sx_bool($_POST['pow_mon'] ?? '1'),
     'pow_cost' => sx_bool($_POST['pow_cost'] ?? '1'), 'pow_name' => sx_bool($_POST['pow_name'] ?? '1'),
+    'show_net' => sx_bool($_POST['show_net'] ?? '1'), 'net_speed' => sx_bool($_POST['net_speed'] ?? '1'), 'net_today' => sx_bool($_POST['net_today'] ?? '1'),
+    'net_hist' => sx_bool($_POST['net_hist'] ?? '1'), 'net_inet' => sx_bool($_POST['net_inet'] ?? '1'), 'net_top' => sx_bool($_POST['net_top'] ?? '1'),
     'ram_warn' => sx_int($_POST['ram_warn'] ?? '80', 1, 100, 'RAM warning'), 'ram_crit' => sx_int($_POST['ram_crit'] ?? '92', 1, 100, 'RAM critical'),
     'log_warn' => sx_int($_POST['log_warn'] ?? '80', 1, 100, 'Log warning'), 'log_crit' => sx_int($_POST['log_crit'] ?? '92', 1, 100, 'Log critical'),
     'vd_warn' => sx_int($_POST['vd_warn'] ?? '80', 1, 100, 'Docker vdisk warning'), 'vd_crit' => sx_int($_POST['vd_crit'] ?? '92', 1, 100, 'Docker vdisk critical'),

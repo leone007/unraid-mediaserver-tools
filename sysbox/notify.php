@@ -121,5 +121,26 @@ if (sx_on($cfg['n_cpu'])) {
     }
 }
 
+// ---- internet outages (item 94): one message when an outage has ended (while it lasts, Discord cannot be reached) -----
+if (sx_on($cfg['show_net'] ?? '1')) {
+    require_once __DIR__ . '/net_lib.php';
+    $NL = sx_on(sxnet_cfg()['dc']) ? sxnet_live() : null;
+    if ($NL) {
+        $evs = array_values(array_filter((array)($NL['events'] ?? []), function ($e) { return is_array($e) && ($e['e'] ?? null) !== null; }));
+        if (!isset($st['misc']['net_ev'])) { $st['misc']['net_ev'] = $evs ? max(array_column($evs, 's')) : 0; }   // first run: older outages are not sent
+        foreach ($evs as $e) {
+            if ((int)$e['s'] <= (int)$st['misc']['net_ev']) { continue; }
+            $dur = sxn_fmt_dur(max(60, (int)$e['e'] - (int)$e['s']));
+            $emb = sxn_embed('a', '🌐 ' . sxnet_dt($lang, $e['k'] === 'norouter' ? 'netd.router_t' : 'netd.down_t', ['d' => $dur]),
+                sxnet_dt($lang, $e['k'] === 'norouter' ? 'netd.router_d' : 'netd.down_d'),
+                [[sxnet_dt($lang, 'netd.from'), date('Y-m-d H:i', (int)$e['s']), true], [sxnet_dt($lang, 'netd.to'), date('H:i', (int)$e['e']), true]]);
+            $r = sxn_post($hook, [$emb]);
+            if ($r[0] === 'retry') { break; }
+            sxn_guard_event('net', 'a', $emb); sxn_log($st, 'net', 'a');
+            $st['misc']['net_ev'] = (int)$e['s'];
+        }
+    }
+}
+
 if (json_encode($st) !== $st0) { sxn_write(SXN_STATE, $st); }
 sxn_write(SXN_TMP, $tm);

@@ -1,0 +1,273 @@
+Menu="Utilities"
+Type="xmenu"
+Title="Network"
+Icon="sysbox.png"
+Markdown="false"
+---
+<?PHP
+// texts from the dictionary (lang/en.json, see i18n.php)
+require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
+$nwp_lang = '/usr/local/emhttp/plugins/sysbox/lang';
+$nwp_T = mt_i18n_t($nwp_lang);
+$nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k, $v), ENT_QUOTES); };
+?>
+<style>
+/* the Dashboard tile look (common/tile.css, inserted by the build): now, traffic, totals, containers, outages, settings */
+/*@@TILE_CSS@@*/
+#nwp{--nwp-line:rgba(128,128,128,.22)}
+#nwp .nwp-mut{opacity:.6}
+#nwp .nwp-ok{color:#3fa24a}#nwp .nwp-er{color:#e5534b}#nwp .nwp-am{color:#d9921f}#nwp .nwp-dn{color:#3fa24a}#nwp .nwp-up{color:#4a90e2}
+#nwp .nwp-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
+#nwp .mt-band{margin-top:26px;padding:9px 12px}
+#nwp .mt-band span{font-weight:600}
+#nwp .mt-box{margin-top:8px}
+#nwp .mt-box>:first-child{border-top:0}
+#nwp .nwp-lead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 12px}
+#nwp .nwp-lead p{margin:0;max-width:95ch;flex:1 1 380px}
+#nwp .nwp-status{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:9px 12px;border-top:1px solid var(--nwp-line);font-size:12px}
+#nwp .nwp-status span{opacity:.75}#nwp .nwp-status b{font-variant-numeric:tabular-nums}
+#nwp input.nwp-ghost{color:inherit!important;opacity:.7;border-color:rgba(128,128,128,.45)!important}
+#nwp input.nwp-sm{padding:2px 8px!important;font-size:11px!important;letter-spacing:0!important;text-transform:none!important;margin:0!important;min-width:0}
+#nwp .nwp-chart{padding:10px 12px}
+#nwp .nwp-chart svg{display:block;width:100%;height:190px}
+#nwp .nwp-leg{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;font-size:12px;opacity:.75;margin-top:4px}
+#nwp .nwp-leg i{display:inline-block;width:10px;height:3px;margin:0 5px 2px 10px;vertical-align:middle}
+#nwp .nwp-tabs{display:inline-flex;gap:4px}
+#nwp .nwp-tabs a{font-size:11px;letter-spacing:0;text-transform:none;padding:2px 9px;border-radius:3px;background:rgba(128,128,128,.18);color:inherit;opacity:.7;cursor:pointer}
+#nwp .nwp-tabs a.on{opacity:1;background:rgba(128,128,128,.45)}
+#nwp .nwp-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:120px;padding:12px 12px 0}
+#nwp .nwp-day{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:1px}
+#nwp .nwp-day i{display:block;border-radius:2px 2px 0 0;min-height:1px}
+#nwp .nwp-dlab{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;padding:4px 12px 0;font-size:11px;text-align:center;opacity:.7;font-variant-numeric:tabular-nums}
+#nwp .nwp-dlab b{display:block;font-weight:600}
+#nwp .nwp-kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px}
+#nwp .nwp-kp .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
+#nwp .nwp-kp .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+#nwp .nwp-kp .v small{font-size:12px;font-weight:400;opacity:.65}
+#nwp .nwp-kp .s{font-size:12px;opacity:.65}
+#nwp .nwp-row{display:grid;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--nwp-line)}
+#nwp .nwp-row small{display:block;opacity:.6}
+#nwp .nwp-ct{grid-template-columns:minmax(0,1fr) 150px 100px 100px}
+#nwp .nwp-ct.h{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
+#nwp .nwp-num{font-family:monospace;text-align:right;white-space:nowrap}
+#nwp .nwp-ev{grid-template-columns:minmax(0,1fr) auto}
+#nwp .s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+#nwp .s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+#nwp .s-red{background:rgba(229,83,75,.13);box-shadow:inset 3px 0 0 #e5534b}
+#nwp .s-grey{background:rgba(128,128,128,.07);box-shadow:inset 3px 0 0 #8a8a8a}
+#nwp .nwp-gbar{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--nwp-line);cursor:pointer;font-weight:600}
+#nwp .nwp-gbar .c{font-weight:normal;font-size:12px;opacity:.7}
+#nwp .nwp-set{grid-template-columns:minmax(200px,280px) minmax(0,1fr)}
+#nwp .nwp-set .lb{opacity:.75}
+#nwp .nwp-ctl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+#nwp .nwp-ctl input[type=number]{width:80px!important;margin:0}
+#nwp .nwp-ctl input[type=text]{width:220px;margin:0}
+#nwp .nwp-ctl select{min-width:0!important;width:auto!important;margin:0}
+#nwp .nwp-ctl label{display:inline-flex;align-items:center;gap:6px}
+#nwp .nwp-ctl input[type=checkbox]{margin:0}
+#nwp .nwp-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+@media (max-width:760px){#nwp .nwp-ct{grid-template-columns:minmax(0,1fr) 120px}#nwp .nwp-ct>:nth-child(n+3){display:none}#nwp .nwp-set{grid-template-columns:1fr}#nwp .nwp-kp{grid-template-columns:1fr 1fr}}
+</style>
+<div id="nwp">
+<p class="nwp-sub"><?=$nwp_t('netp.intro')?></p>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.now')?></span><b id="nwp-nband"></b></div>
+<div class="mt-box" id="nwp-now"><div class="nwp-status nwp-mut"><?=$nwp_t('netp.loading')?></div></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.traffic')?></span><span class="nwp-tabs" id="nwp-tabs"><a data-r="1h">1 h</a><a data-r="24h" class="on">24 h</a><a data-r="7d">7 d</a></span></div>
+<div class="mt-box nwp-chart" id="nwp-chart"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.totals')?></span><b><?=$nwp_t('netp.h.totals_sub')?></b></div>
+<div class="mt-box" id="nwp-tot"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.containers')?></span><b><?=$nwp_t('netp.h.containers_sub')?></b></div>
+<div class="mt-box" id="nwp-ct"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.outages')?></span><b id="nwp-oband"></b></div>
+<div class="mt-box" id="nwp-ev"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.settings')?></span><b><?=$nwp_t('netp.h.settings_sub')?></b></div>
+<div class="mt-box" id="nwp-set"></div>
+</div>
+
+<?=mt_i18n_js($nwp_lang, 'nwp', ['netp.', 'net.'])?>
+<script>
+$(function () {
+  var T = function (k, v) { return MTL.t('nwp', k, v); };
+  var URL = '/plugins/sysbox/net.php', pollT = null, D = null, RANGE = '24h', OPEN = false, IP = null, CHK = null, setDrawn = false;
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
+  function fb(b) { b = +b || 0; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return Math.round(b / 1e3) + ' KB'; }
+  function unit() { return (D && D.cfg && D.cfg.unit === 'Mbit') ? 'Mbit' : 'MB'; }
+  function ut() { return unit() === 'Mbit' ? 'Mbit/s' : 'MB/s'; }
+  function rv(b) { return unit() === 'Mbit' ? (+b || 0) * 8 / 1e6 : (+b || 0) / 1e6; }
+  function fr(b) { var v = rv(b); return v >= 100 ? v.toFixed(0) : v.toFixed(v >= 10 ? 1 : 2); }
+  function two(n) { return ('0' + n).slice(-2); }
+  function hm(ts) { var d = new Date(ts * 1000); return two(d.getHours()) + ':' + two(d.getMinutes()); }
+  function dayLab(ts) { var d = new Date(ts * 1000); return T('netp.dow.' + d.getDay()) + ' ' + d.getDate(); }
+  function linkTxt(sp) { return !sp ? '' : (sp >= 1000 ? (sp / 1000).toString().replace(/\.0$/, '') + ' Gbit/s' : sp + ' Mbit/s'); }
+  function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
+
+  // ---- now
+  function drawNow() {
+    var L = D.live, $b = $('#nwp-now').empty();
+    if (!D.on) { $b.append($('<div class="nwp-lead">').append($('<p>').html(esc(T('netp.off')) + ' <a href="/Settings/SysboxSettings">' + esc(T('netp.off_link')) + '</a>'))); $('#nwp-nband').text(''); return; }
+    if (!L || !D.running) { $b.append($('<div class="nwp-status nwp-mut">').text(T('netp.starting'))); $('#nwp-nband').text(''); return; }
+    var I = L.inet || {}, st = I.state || 'wait', cls = { ok: 'nwp-ok', slow: 'nwp-am', down: 'nwp-er', norouter: 'nwp-er' }[st] || 'nwp-mut';
+    var top = null; $.each(L.ct || {}, function (n, r) { if (!top || r[0] + r[1] > top[1]) { top = [n, r[0] + r[1]]; } });
+    var tot = (L.rate[0] + L.rate[1]) || 0, share = (top && tot > 0 && top[1] > 0) ? Math.min(100, Math.round(top[1] / tot * 100)) : 0;
+    var lead = '<b class="' + cls + '">' + esc(T('net.inet_' + st)) + '.</b> ' + esc(T('netp.lead', { d: fr(L.rate[0]), u: fr(L.rate[1]), unit: ut() }));
+    if (share >= 10) { lead += ' ' + esc(T('netp.lead_top', { c: top[0], p: share })); }
+    $b.append($('<div class="nwp-lead">').append($('<p>').html(lead), $('<span>').append(
+      $('<input type="button" class="nwp-chk nwp-ghost nwp-sm">').val(T('netp.check_now')), document.createTextNode(' '),
+      $('<input type="button" class="nwp-ip nwp-ghost nwp-sm">').val(T('netp.show_ip')))));
+    var k = L.link || {}, $s = $('<div class="nwp-status">');
+    function it(label, val) { $s.append($('<span>').text(label + ' '), $('<b>').text(val)); }
+    it(L.iface, (k.speed ? linkTxt(k.speed) : '?') + (k.duplex ? ' ' + k.duplex : ''));
+    it(T('netp.errors'), k.errors || 0); it(T('netp.dropped'), k.dropped || 0);
+    if ((D.today[2] || 0) + (D.today[3] || 0) > 0) { it(T('netp.ts_today'), fb((D.today[2] || 0) + (D.today[3] || 0))); }
+    it(T('netp.router'), (I.router || '?') + ' ' + (I.router_ms === null || I.router_ms === undefined ? T('net.no_answer') : I.router_ms + ' ms'));
+    if (I.out) { it(I.out, I.out_ms + ' ms'); }
+    if (IP) { it(T('netp.public_ip'), IP); }
+    if (CHK) { it(T('netp.checked'), CHK); }
+    $b.append($s);
+    $('#nwp-nband').text(T('netp.checked_ago', { s: Math.max(0, Math.round(Date.now() / 1000 - (I.t || L.t))) }));
+  }
+
+  // ---- traffic chart: down filled green, up blue; y in the chosen unit, x in time
+  function drawChart() {
+    var L = D.live, $c = $('#nwp-chart').empty();
+    if (!L) { $c.append($('<div class="nwp-mut">').text(T('netp.no_data'))); return; }
+    var pts = RANGE === '1h' ? L.live : (RANGE === '24h' ? L.h24 : L.d7), span = RANGE === '1h' ? 3600 : (RANGE === '24h' ? 86400 : 7 * 86400), now = L.t, t0 = now - span;
+    pts = $.grep(pts || [], function (p) { return p[0] >= t0; });
+    if (pts.length < 2) { $c.append($('<div class="nwp-mut">').text(T('netp.collecting'))); return; }
+    var W = 600, H = 190, top = 10, bot = 22, left = 34, mx = 0, pk = null;
+    $.each(pts, function (i, p) { if (p[1] > mx || p[2] > mx) { mx = Math.max(p[1], p[2]); } if (!pk || p[1] > pk[1]) { pk = p; } });
+    var vmax = rv(mx) || 0.01, steps = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000], st = 1000;
+    for (var i = 0; i < steps.length; i++) { if (vmax / steps[i] <= 4) { st = steps[i]; break; } }
+    var ymax = Math.ceil(vmax / st) * st || st;
+    function X(t) { return (left + (t - t0) / span * (W - left)).toFixed(1); }
+    function Y(b) { return (H - bot - rv(b) / ymax * (H - bot - top)).toFixed(1); }
+    var g = '';
+    for (var v = 0; v <= ymax + 1e-9; v += st) {
+      var y = (H - bot - v / ymax * (H - bot - top)).toFixed(1);
+      g += '<line x1="' + left + '" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>'
+        + '<text x="' + (left - 4) + '" y="' + (+y + 3) + '" fill="currentColor" fill-opacity=".55" font-size="10" text-anchor="end">' + (st < 1 ? v.toFixed(st < 0.1 ? 2 : 1) : Math.round(v)) + '</text>';
+    }
+    var xt = RANGE === '1h' ? 900 : (RANGE === '24h' ? 4 * 3600 : 86400);
+    for (var t = Math.ceil(t0 / xt) * xt; t <= now; t += xt) {
+      if (+X(t) > W - 22 || +X(t) < left + 14) { continue; }   // a label cut by the edge is left out
+      g += '<text x="' + X(t) + '" y="' + (H - 6) + '" fill="currentColor" fill-opacity=".55" font-size="10" text-anchor="middle">' + esc(RANGE === '7d' ? dayLab(t) : hm(t)) + '</text>';
+    }
+    var dn = $.map(pts, function (p) { return X(p[0]) + ',' + Y(p[1]); }).join(' '), up = $.map(pts, function (p) { return X(p[0]) + ',' + Y(p[2]); }).join(' ');
+    g += '<polygon points="' + X(pts[0][0]) + ',' + (H - bot) + ' ' + dn + ' ' + X(pts[pts.length - 1][0]) + ',' + (H - bot) + '" fill="#3fa24a" fill-opacity=".22"/>'
+      + '<polyline points="' + dn + '" fill="none" stroke="#3fa24a" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+      + '<polyline points="' + up + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    $c.append($('<span>').html('<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' + g + '</svg>').children());
+    var avg = { '1h': T('netp.avg_5s'), '24h': T('netp.avg_5m'), '7d': T('netp.avg_30m') }[RANGE];
+    $c.append($('<div class="nwp-leg">').append($('<span>').text(ut() + ' · ' + avg + (pk ? ' · ' + T('netp.peak', { v: fr(pk[1]) + ' ' + ut(), t: RANGE === '7d' ? dayLab(pk[0]) + ' ' + hm(pk[0]) : hm(pk[0]) }) : '')),
+      $('<span>').append($('<i>').css('background', '#3fa24a'), document.createTextNode(T('net.down_s')), $('<i>').css('background', '#4a90e2'), document.createTextNode(T('net.up_s')))));
+  }
+
+  // ---- totals: the last 7 days, today, this month, last month
+  function drawTot() {
+    var $t = $('#nwp-tot').empty(), mx = 1;
+    $.each(D.last7, function (i, d) { mx = Math.max(mx, d.rx + d.tx); });
+    var $d = $('<div class="nwp-days">'), $l = $('<div class="nwp-dlab">');
+    $.each(D.last7, function (i, d) {
+      $d.append($('<div class="nwp-day">').attr('title', fb(d.rx) + ' ↓ · ' + fb(d.tx) + ' ↑').append(
+        $('<i>').css({ height: (d.tx / mx * 100) + '%', background: '#4a90e2' }), $('<i>').css({ height: (d.rx / mx * 100) + '%', background: '#3fa24a' })));
+      $l.append($('<span>').append($('<b>').text(dayLab(d.ts)), document.createTextNode(fb(d.rx + d.tx))));
+    });
+    $t.append($d, $l);
+    function k(label, v) {
+      var tb = v ? fb(v[0] + v[1]).split(' ') : ['–', ''];
+      return $('<div>').append($('<div class="k">').text(label), $('<div class="v">').append(document.createTextNode(tb[0]), $('<small>').text(' ' + tb[1])),
+        $('<div class="s">').text(v ? '↓ ' + fb(v[0]) + ' · ↑ ' + fb(v[1]) : ''));
+    }
+    $t.append($('<div class="nwp-kp">').append(k(T('netp.today'), D.today), k(T('netp.this_month'), D.month.v), k(T('netp.last_month'), D.prev.v)));
+  }
+
+  // ---- containers: now and today, the busiest first
+  function drawCt() {
+    var L = D.live, $c = $('#nwp-ct').empty();
+    if (!L) { return; }
+    var day = (L.ctday && L.ctday.ct) || {}, rows = [];
+    $.each(L.ct_names || [], function (i, n) { var r = (L.ct || {})[n] || [0, 0], d = day[n] || [0, 0]; rows.push([n, r, d]); });
+    rows.sort(function (a, b) { return (b[2][0] + b[2][1]) - (a[2][0] + a[2][1]) || (b[1][0] + b[1][1]) - (a[1][0] + a[1][1]); });
+    if (!rows.length) { $c.append($('<div class="nwp-row nwp-mut">').text(T('netp.no_ct'))); return; }
+    $c.append($('<div class="nwp-row nwp-ct h">').append($('<span>').text(T('netp.c_name')), $('<span class="nwp-num">').text(T('netp.c_now', { unit: ut() })), $('<span class="nwp-num">').text(T('netp.c_rx')), $('<span class="nwp-num">').text(T('netp.c_tx'))));
+    $.each(rows, function (i, r) {
+      $c.append($('<div class="nwp-row nwp-ct">').addClass(r[1][0] + r[1][1] > 0 ? 's-green' : 's-grey').append($('<span>').text(r[0]),
+        $('<span class="nwp-num">').text(fr(r[1][0]) + ' / ' + fr(r[1][1])), $('<span class="nwp-num">').text(fb(r[2][0])), $('<span class="nwp-num">').text(fb(r[2][1]))));
+    });
+    $c.append($('<div class="nwp-row nwp-mut">').append($('<small>').text(T('netp.ct_note'))));
+  }
+
+  // ---- outages: the last 7 days open, older ones under a closed bar
+  function evRow(e) {
+    var dur = Math.max(1, Math.round(((e.e || Date.now() / 1000) - e.s) / 60)), d = new Date(e.s * 1000);
+    var when = d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()) + ' ' + hm(e.s) + '–' + (e.e ? hm(e.e) : T('netp.ongoing'));
+    return $('<div class="nwp-row nwp-ev">').addClass(e.e ? 's-red' : 's-red').append(
+      $('<span>').append($('<b>').text(T(e.k === 'norouter' ? 'netp.ev_router' : 'netp.ev_down', { m: dur })), $('<small>').text(T(e.k === 'norouter' ? 'netp.ev_router_d' : 'netp.ev_down_d'))),
+      $('<span class="nwp-num">').text(when));
+  }
+  function drawEv() {
+    var $e = $('#nwp-ev').empty(), cut = Date.now() / 1000 - 7 * 86400, ev = (D.events || []).slice().reverse();
+    var recent = $.grep(ev, function (e) { return !e.e || e.s >= cut; }), old = $.grep(ev, function (e) { return e.e && e.s < cut; });
+    $('#nwp-oband').text(recent.length ? T('netp.n_outages', { n: recent.length }) : T('netp.no_outages')).toggleClass('nwp-ok', !recent.length);
+    $.each(recent, function (i, e) { $e.append(evRow(e)); });
+    if (!recent.length) { $e.append($('<div class="nwp-row nwp-mut">').text(T('netp.no_outages_long'))); }
+    if (old.length) {
+      $e.append($('<div class="nwp-gbar">').append($('<span>').text(OPEN ? '–' : '+'), $('<span>').text(T('netp.older')), $('<span class="c">').text(old.length)));
+      if (OPEN) { $.each(old, function (i, e) { $e.append(evRow(e)); }); }
+    }
+  }
+
+  // ---- settings (drawn once, so typing is not lost on the 5-second refresh)
+  function drawSet() {
+    if (setDrawn) { return; }
+    setDrawn = true;
+    var c = D.cfg, $s = $('#nwp-set').empty();
+    function row(label, $ctl, hint) { $s.append($('<div class="nwp-row nwp-set">').append($('<span class="lb">').text(label), $('<div class="nwp-ctl">').append($ctl, hint ? $('<span class="nwp-hint">').text(hint) : ''))); }
+    var $if = $('<select id="nwp-if">').append($('<option value="auto">').text(T('netp.s_auto', { v: D.auto_if })));
+    $.each(D.ifaces, function (i, n) { $if.append($('<option>').val(n).text(n)); });
+    $if.val(c.iface);
+    row(T('netp.s_if'), $if, T('netp.s_if_hint'));
+    row(T('netp.s_router'), $('<input type="text" id="nwp-rt">').val(c.router === 'auto' ? '' : c.router).attr('placeholder', T('netp.s_auto', { v: D.auto_gw || '?' })), T('netp.s_router_hint'));
+    row(T('netp.s_out'), $('<input type="text" id="nwp-out">').val(c.outside), T('netp.s_out_hint'));
+    row(T('netp.s_slow'), [$('<input type="number" id="nwp-ms" min="20" max="5000">').val(c.slow_ms), document.createTextNode(' ms')], T('netp.s_slow_hint'));
+    row(T('netp.s_unit'), $('<select id="nwp-unit">').append($('<option value="MB">').text(T('netp.u_mb')), $('<option value="Mbit">').text(T('netp.u_mbit'))).val(c.unit), '');
+    row('Discord', $('<label>').append($('<input type="checkbox" id="nwp-dc">').prop('checked', c.dc === '1'), document.createTextNode(T('netp.s_dc'))), T('netp.s_dc_hint'));
+    row('', [$('<input type="button" id="nwp-save">').val(T('netp.save')), $('<span id="nwp-msg">')], '');
+  }
+  $(document).on('click', '#nwp-save', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#nwp-msg').css('color', '').text(T('netp.saving'));
+    api('save', { iface: $('#nwp-if').val(), router: $.trim($('#nwp-rt').val()) || 'auto', outside: $('#nwp-out').val(), slow_ms: $('#nwp-ms').val(), unit: $('#nwp-unit').val(), dc: $('#nwp-dc').prop('checked') ? '1' : '0' })
+      .done(function (r) { if (r && r.ok) { $m.css('color', '#3fa24a').text(T('netp.saved')); load(); } else { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(r) })); } })
+      .fail(function (x) { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(x) })); })
+      .always(function () { $b.prop('disabled', false); });
+  });
+  $(document).on('click', '#nwp .nwp-chk', function () {
+    var $b = $(this).prop('disabled', true).val(T('netp.checking'));
+    api('check').done(function (r) {
+      if (r && r.ok) { var c = r.check; CHK = (c.out_ms !== null ? c.out + ' ' + c.out_ms + ' ms' : T('net.outside_none')) + ' · ' + T('netp.router') + ' ' + (c.router_ms !== null ? c.router_ms + ' ms' : T('net.no_answer')); }
+      else { CHK = err(r); }
+    }).fail(function (x) { CHK = err(x); }).always(function () { if (D) { drawNow(); } });
+  });
+  $(document).on('click', '#nwp .nwp-ip', function () {
+    var $b = $(this).prop('disabled', true).val(T('netp.asking'));
+    api('ip').done(function (r) { IP = (r && r.ok) ? r.ip : err(r); }).fail(function (x) { IP = err(x); }).always(function () { if (D) { drawNow(); } });
+  });
+  $('#nwp-tabs').on('click', 'a', function () { RANGE = $(this).data('r'); $('#nwp-tabs a').removeClass('on'); $(this).addClass('on'); if (D) { drawChart(); } });
+  $(document).on('click', '#nwp .nwp-gbar', function () { OPEN = !OPEN; drawEv(); });
+
+  function load() {
+    $.getJSON(URL, { op: 'state', _: Date.now() }).done(function (r) {
+      if (!r || !r.ok) { return; }
+      D = r; drawNow(); drawChart(); drawTot(); drawCt(); drawEv(); drawSet();
+    }).always(function () { clearTimeout(pollT); pollT = setTimeout(load, document.hidden ? 30000 : 5000); });
+  }
+  load();
+});
+</script>

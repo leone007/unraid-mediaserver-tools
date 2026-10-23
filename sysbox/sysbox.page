@@ -39,12 +39,13 @@ $mytiles[$pluginname]['column2'] =
     <div id="sx-cpu"></div>
     <div id="sx-gpu"></div>
     <div id="sx-pow"></div>
+    <div id="sx-net"></div>
     <div id="sx-con"></div>
   </div>
 </td></tr>
 </tbody>
 EOT;
-echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'con.', 'log.', 'sum.']);
+echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'net.', 'con.', 'log.', 'sum.']);
 ?>
 <style>
 i.f32.sx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/sysbox/icon.png) center/contain no-repeat!important}
@@ -116,6 +117,13 @@ a.sx-b2.rd{background:#e5534b;color:#fff}
 .sx-r,.sx-cr{min-width:0}
 .mt-box>.sx-conf{margin:0;border-radius:0}
 .mt-box>.sx-log{margin:4px 8px 6px}
+.sx-dn{color:#3fa24a}.sx-upc{color:#4a90e2}
+.sx-nrow{display:flex;justify-content:space-between;align-items:center;gap:4px 10px;flex-wrap:wrap;margin-top:8px;font-size:12px}
+.sx-nrow .sx-sub{white-space:normal}
+.sx-nrow a{font-size:11px;white-space:nowrap;opacity:.85}
+.sx-nbar{display:flex;height:4px;background:rgba(128,128,128,.3);border-radius:2px;overflow:hidden}
+.sx-nbar i{display:block;height:100%}
+.sx-nleg i{display:inline-block;width:9px;height:3px;margin:0 4px 2px 8px;vertical-align:middle}
 /*@@TILE_CSS@@*/
 </style>
 <script>
@@ -126,9 +134,9 @@ $(function () {
   var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
   var S = { confirm: null, busy: {}, logOpen: null, logs: {}, logErr: {}, logTimer: null, err: null };
   // Dashboard tile settings (item 53): which blocks, in which order, and which figures; all on until the first answer
-  var MX = { ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true };
-  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', con: 'sx-con' };
-  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, con: true }, ORDER = '';
+  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true };
+  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', con: 'sx-con' };
+  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, con: true }, ORDER = '';
   function mx(k) { return MX[k] !== false; }
   var LV = { g: 'sx-g', a: 'sx-a', rd: 'sx-rd', mu: 'sx-mu', '': '' };
   var ICON = {
@@ -371,6 +379,61 @@ $(function () {
     if (items.length) { $d.append(el('sx-box').append($k)); }
   }
 
+  // ---- network (item 94) ---------------------------------------------------------------------
+  function fmtRate(b, unit) {
+    var v = unit === 'Mbit' ? (Number(b) || 0) * 8 / 1e6 : (Number(b) || 0) / 1e6;
+    return v >= 100 ? v.toFixed(0) : v.toFixed(v >= 10 ? 1 : 2);
+  }
+  function unitTxt(unit) { return unit === 'Mbit' ? 'Mbit/s' : 'MB/s'; }
+  function linkTxt(sp) { return !sp ? '' : (sp >= 1000 ? (sp / 1000).toString().replace(/\.0$/, '') + ' Gbit/s' : sp + ' Mbit/s'); }
+  function hhmm(ts) { var d = new Date(ts * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function renderNet(N) {
+    var $d = $('#sx-net').empty();
+    if (!N) { return; }
+    $d.append(band(T('net.title'), N.pending ? '' : (N.iface + (N.speed ? ' \u00B7 ' + linkTxt(N.speed) : ''))));
+    if (N.pending) { $d.append(el('sx-box').append(txt('div', 'sx-fine', T('net.starting')).css('margin', 0))); return; }
+    var U = N.unit, $b = el('sx-box'), items = [];
+    if (mx('net_speed')) {
+      items.push(kp(T('net.down'), [document.createTextNode(fmtRate(N.rate[0], U)), small(' ' + unitTxt(U))], 'sx-dn'));
+      items.push(kp(T('net.up'), [document.createTextNode(fmtRate(N.rate[1], U)), small(' ' + unitTxt(U))], 'sx-upc'));
+    }
+    if (mx('net_today')) { var tb = fmtB(N.today[0] + N.today[1]).split(' '); items.push(kp(T('net.today'), [document.createTextNode(tb[0]), small(' ' + tb[1])], '')); }
+    if (items.length) { var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)'); $.each(items, function (i, x) { $k.append(x); }); $b.append($k); }
+    if (mx('net_hist') && N.pts && N.pts.length > 1) {
+      var mxv = 1; $.each(N.pts, function (i, p) { mxv = Math.max(mxv, p[1], p[2]); }); mxv *= 1.15;
+      function line(k) { return $.map(N.pts, function (p) { return (400 - p[0] / 1800 * 400).toFixed(1) + ',' + (52 - p[k] / mxv * 50).toFixed(1); }).join(' '); }
+      var dn = line(1), x0 = (400 - N.pts[0][0] / 1800 * 400).toFixed(1), x1 = (400 - N.pts[N.pts.length - 1][0] / 1800 * 400).toFixed(1);
+      var g = '<svg class="sx-spark" viewBox="0 0 400 54" preserveAspectRatio="none">'
+        + '<line x1="0" y1="27" x2="400" y2="27" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>'
+        + '<polygon points="' + x0 + ',52 ' + dn + ' ' + x1 + ',52" fill="#3fa24a" fill-opacity=".22"/>'
+        + '<polyline points="' + dn + '" fill="none" stroke="#3fa24a" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+        + '<polyline points="' + line(2) + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+      $b.append($('<span>').html(g).children());
+      $b.append(el('sx-cl').append(txt('span', '', T('net.last30', { v: fmtRate(mxv / 1.15, U) + ' ' + unitTxt(U) })),
+        $('<span class="sx-nleg">').append($('<i>').css('background', '#3fa24a'), document.createTextNode(T('net.down_s')), $('<i>').css('background', '#4a90e2'), document.createTextNode(T('net.up_s')))));
+    }
+    if (mx('net_inet')) {
+      var I = N.inet, st = I.state, cls = { ok: 'g', slow: 'a', down: 'rd', norouter: 'rd' }[st] || 'mu';
+      var det = [];
+      if (I.router) { det.push(T('net.router_ms', { v: I.router_ms === null ? T('net.no_answer') : I.router_ms + ' ms' })); }
+      if (st !== 'norouter' && st !== 'wait') { det.push(I.out_ms === null ? T('net.outside_none') : I.out + ' ' + I.out_ms + ' ms'); }
+      if ((st === 'down' || st === 'norouter' || st === 'slow') && I.since) { det.push(T('net.since', { t: hhmm(I.since), m: Math.max(1, Math.round((Date.now() / 1000 - I.since) / 60)) })); }
+      $b.append(el('sx-nrow').append($('<span>').append($('<b>').addClass(LV[cls]).text(T('net.inet_' + st)), document.createTextNode(' '), $('<span class="sx-sub">').text(det.join(' \u00B7 '))),
+        $('<a>').attr('href', '/Settings/SysboxNetwork').text(T('net.details'))));
+    }
+    if ($b.children().length) { $d.append($b); }
+    if (mx('net_top') && N.top && N.top.length) {
+      var top = 1; $.each(N.top, function (i, c) { top = Math.max(top, c[1] + c[2]); });
+      var $box = el('mt-box').appendTo($d);
+      $.each(N.top, function (i, c) {
+        $box.append(el('sx-cr mt-r mt-n mt-s-' + (c[1] + c[2] > 0 ? 'green' : 'grey')).css('grid-template-columns', 'minmax(0,1fr) 64px 118px').append(
+          txt('span', 'n', c[0]),
+          el('sx-nbar').append($('<i>').css({ width: (c[1] / top * 100) + '%', background: '#3fa24a' }), $('<i>').css({ width: (c[2] / top * 100) + '%', background: '#4a90e2' })),
+          $('<span class="sx-val sx-sub">').text('\u2193 ' + fmtRate(c[1], U) + ' \u00B7 \u2191 ' + fmtRate(c[2], U))));
+      });
+    }
+  }
+
   // ---- containers ----------------------------------------------------------------------------
   function stripAnsi(s) { return String(s).replace(/\u001b\[[0-9;?]*[A-Za-z]/g, ''); }
   function renderLogBody(name) {
@@ -501,7 +564,7 @@ $(function () {
   function firstBand() {
     $('.sx-tile .mt-band.mt-first').removeClass('mt-first');
     if ($('#sx-attn').children().length) { return; }
-    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'con'];
+    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
     for (var i = 0; i < k.length; i++) { var $b = $('#' + BLK[k[i]]).find('.mt-band').first(); if ($b.length) { $b.addClass('mt-first'); return; } }
   }
 
@@ -511,7 +574,7 @@ $(function () {
     var $s = $('#sx-summary');
     if (!r || !r.ok) {
       $s.text(T('sum.unavailable'));
-      $('#sx-attn,#sx-sto,#sx-cpu,#sx-gpu,#sx-pow,#sx-con').empty();
+      $('#sx-attn,#sx-sto,#sx-cpu,#sx-gpu,#sx-pow,#sx-net,#sx-con').empty();
       $('#sx-mem').empty().append(el('sx-note').text(T('sum.no_data')));
       return;
     }
@@ -536,6 +599,7 @@ $(function () {
     if (SHOW.cpu) { renderCpu(r.cpu); } else { $('#sx-cpu').empty(); }
     renderGpu(r.gpu);
     if (SHOW.pow) { renderPow(r.power); } else { $('#sx-pow').empty(); }
+    if (SHOW.net) { renderNet(r.net); } else { $('#sx-net').empty(); }
     renderCon();
     firstBand();
   }

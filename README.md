@@ -10,7 +10,7 @@ Dashboard plugins for **Unraid 7** (tested on **7.3.3**, see [Compatibility](#co
 
 | Plugin | Replaces / adds | Highlights |
 |---|---|---|
-| [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, containers; Update manager, Snapshots, Safe shutdown pages |
+| [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, network, containers; Network, Update manager, Snapshots, Safe shutdown pages |
 | [**Diskbox**](#diskbox) | Disk Viewer tile | Array, parity, pools, unassigned disks, SMART, preclear and clearing progress; **Balance** page: balance, empty or remove disks |
 | [**Streambox**](#streambox) | new Jellyfin tile | Now playing, this week's episodes, recently added, Discord announcements |
 | [**Seedbox**](#seedbox) | new qBittorrent tile and *Seedbox Tools* page | Find my torrent, Shape up, Season Repacker, autobrr watch, Discord bot |
@@ -24,6 +24,7 @@ One tile instead of the System and Processor tiles: memory as one bar (system, Z
 
 Pages under *Settings, Utilities*:
 - **Update manager**: every container with a waiting update, sorted *Wait*, *Look first* and *Safe* (rebuild, patch, feature or major change, from the image labels and the release notes), with a self-test of the services after an update.
+- **Network**: download and upload speed of the server (1 hour, 24 hour and 7 day graph), daily and monthly totals, traffic per container (counted inside each container), Tailscale traffic, and an internet check every 30 seconds (router and two outside addresses) with a list of outages and one Discord message after each. The tile shows the speed, today's traffic, a 30 minute graph, the internet state and the three busiest containers; every piece can be switched off. It only reads counters and sends pings.
 - **Snapshots**: daily ZFS snapshots of the dataset that holds the containers' data, taken before the container updates and kept for a number of days.
 - **Claude Guard** (optional, off by default): if you run Claude Code in a Docker container named `claude` (see `docker/claude-code`), it reads a snapshot of the server every day and after Sysbox, Diskbox and Seedbox alerts (disks, SMART, parity, containers, updates, logs, the *arr health lists, Jellyfin) and writes a short report on the page and to Discord. It only reads; API keys, passwords and webhook addresses never go into the snapshot. Quiet hours, a daily limit of alert reports and a weekly Claude limit are settings. Without the container the page only says what it needs, and the Claude button in the header is hidden.
 - **Safe shutdown**: shows what could hang a shutdown (parity check, mover, Diskbox Balance, containers, VMs, processes with files open on the array) and stops the containers in a safe order with one button.

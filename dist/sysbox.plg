@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.25d">
+<!ENTITY version   "2026.10.26">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,10 @@
 
 <CHANGES>
 ###&version;
+- New Network part on the tile (item 94): download and upload speed, traffic today, a 30-minute graph, an internet check (router and two outside addresses: amber when slow, red when down) and the three busiest containers; each piece can be switched off in the Sysbox settings, like the other parts
+- New page Settings, Utilities, Network: 1 hour, 24 hour and 7 day graph, daily bars, today, this month and last month, traffic per container, internet outages, and its settings (interface, router, outside addresses, slow limit, unit MB/s or Mbit/s, Discord); only reads counters and sends pings
+- Discord: one message after an internet outage, with its start and end
+###2026.10.25d
 - Update manager: when the self-test after an update fails because the program is still starting (e.g. Jellyfin with a Docker mod or a database migration), it tries again every 15 seconds for up to 3 minutes before it calls the update failed
 ###2026.10.25c
 - Update manager: the Update all confirmation has normal sized buttons (they were stretched into tall columns)
@@ -302,12 +306,13 @@ $mytiles[$pluginname]['column2'] =
     <div id="sx-cpu"></div>
     <div id="sx-gpu"></div>
     <div id="sx-pow"></div>
+    <div id="sx-net"></div>
     <div id="sx-con"></div>
   </div>
 </td></tr>
 </tbody>
 EOT;
-echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'con.', 'log.', 'sum.']);
+echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'net.', 'con.', 'log.', 'sum.']);
 ?>
 <style>
 i.f32.sx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/sysbox/icon.png) center/contain no-repeat!important}
@@ -379,6 +384,13 @@ a.sx-b2.rd{background:#e5534b;color:#fff}
 .sx-r,.sx-cr{min-width:0}
 .mt-box>.sx-conf{margin:0;border-radius:0}
 .mt-box>.sx-log{margin:4px 8px 6px}
+.sx-dn{color:#3fa24a}.sx-upc{color:#4a90e2}
+.sx-nrow{display:flex;justify-content:space-between;align-items:center;gap:4px 10px;flex-wrap:wrap;margin-top:8px;font-size:12px}
+.sx-nrow .sx-sub{white-space:normal}
+.sx-nrow a{font-size:11px;white-space:nowrap;opacity:.85}
+.sx-nbar{display:flex;height:4px;background:rgba(128,128,128,.3);border-radius:2px;overflow:hidden}
+.sx-nbar i{display:block;height:100%}
+.sx-nleg i{display:inline-block;width:9px;height:3px;margin:0 4px 2px 8px;vertical-align:middle}
 /* Shared tile look (the Sysbox / Diskbox style): dark section bands, the content in a box under them, colored left stripes on rows.
    Used by Seedbox and Streambox; the build copies this block into each plugin's page where the marker below stands. */
 .mt-band{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;margin-top:14px}
@@ -409,9 +421,9 @@ $(function () {
   var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
   var S = { confirm: null, busy: {}, logOpen: null, logs: {}, logErr: {}, logTimer: null, err: null };
   // Dashboard tile settings (item 53): which blocks, in which order, and which figures; all on until the first answer
-  var MX = { ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true };
-  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', con: 'sx-con' };
-  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, con: true }, ORDER = '';
+  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true };
+  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', con: 'sx-con' };
+  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, con: true }, ORDER = '';
   function mx(k) { return MX[k] !== false; }
   var LV = { g: 'sx-g', a: 'sx-a', rd: 'sx-rd', mu: 'sx-mu', '': '' };
   var ICON = {
@@ -654,6 +666,61 @@ $(function () {
     if (items.length) { $d.append(el('sx-box').append($k)); }
   }
 
+  // ---- network (item 94) ---------------------------------------------------------------------
+  function fmtRate(b, unit) {
+    var v = unit === 'Mbit' ? (Number(b) || 0) * 8 / 1e6 : (Number(b) || 0) / 1e6;
+    return v >= 100 ? v.toFixed(0) : v.toFixed(v >= 10 ? 1 : 2);
+  }
+  function unitTxt(unit) { return unit === 'Mbit' ? 'Mbit/s' : 'MB/s'; }
+  function linkTxt(sp) { return !sp ? '' : (sp >= 1000 ? (sp / 1000).toString().replace(/\.0$/, '') + ' Gbit/s' : sp + ' Mbit/s'); }
+  function hhmm(ts) { var d = new Date(ts * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function renderNet(N) {
+    var $d = $('#sx-net').empty();
+    if (!N) { return; }
+    $d.append(band(T('net.title'), N.pending ? '' : (N.iface + (N.speed ? ' \u00B7 ' + linkTxt(N.speed) : ''))));
+    if (N.pending) { $d.append(el('sx-box').append(txt('div', 'sx-fine', T('net.starting')).css('margin', 0))); return; }
+    var U = N.unit, $b = el('sx-box'), items = [];
+    if (mx('net_speed')) {
+      items.push(kp(T('net.down'), [document.createTextNode(fmtRate(N.rate[0], U)), small(' ' + unitTxt(U))], 'sx-dn'));
+      items.push(kp(T('net.up'), [document.createTextNode(fmtRate(N.rate[1], U)), small(' ' + unitTxt(U))], 'sx-upc'));
+    }
+    if (mx('net_today')) { var tb = fmtB(N.today[0] + N.today[1]).split(' '); items.push(kp(T('net.today'), [document.createTextNode(tb[0]), small(' ' + tb[1])], '')); }
+    if (items.length) { var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)'); $.each(items, function (i, x) { $k.append(x); }); $b.append($k); }
+    if (mx('net_hist') && N.pts && N.pts.length > 1) {
+      var mxv = 1; $.each(N.pts, function (i, p) { mxv = Math.max(mxv, p[1], p[2]); }); mxv *= 1.15;
+      function line(k) { return $.map(N.pts, function (p) { return (400 - p[0] / 1800 * 400).toFixed(1) + ',' + (52 - p[k] / mxv * 50).toFixed(1); }).join(' '); }
+      var dn = line(1), x0 = (400 - N.pts[0][0] / 1800 * 400).toFixed(1), x1 = (400 - N.pts[N.pts.length - 1][0] / 1800 * 400).toFixed(1);
+      var g = '<svg class="sx-spark" viewBox="0 0 400 54" preserveAspectRatio="none">'
+        + '<line x1="0" y1="27" x2="400" y2="27" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>'
+        + '<polygon points="' + x0 + ',52 ' + dn + ' ' + x1 + ',52" fill="#3fa24a" fill-opacity=".22"/>'
+        + '<polyline points="' + dn + '" fill="none" stroke="#3fa24a" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+        + '<polyline points="' + line(2) + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+      $b.append($('<span>').html(g).children());
+      $b.append(el('sx-cl').append(txt('span', '', T('net.last30', { v: fmtRate(mxv / 1.15, U) + ' ' + unitTxt(U) })),
+        $('<span class="sx-nleg">').append($('<i>').css('background', '#3fa24a'), document.createTextNode(T('net.down_s')), $('<i>').css('background', '#4a90e2'), document.createTextNode(T('net.up_s')))));
+    }
+    if (mx('net_inet')) {
+      var I = N.inet, st = I.state, cls = { ok: 'g', slow: 'a', down: 'rd', norouter: 'rd' }[st] || 'mu';
+      var det = [];
+      if (I.router) { det.push(T('net.router_ms', { v: I.router_ms === null ? T('net.no_answer') : I.router_ms + ' ms' })); }
+      if (st !== 'norouter' && st !== 'wait') { det.push(I.out_ms === null ? T('net.outside_none') : I.out + ' ' + I.out_ms + ' ms'); }
+      if ((st === 'down' || st === 'norouter' || st === 'slow') && I.since) { det.push(T('net.since', { t: hhmm(I.since), m: Math.max(1, Math.round((Date.now() / 1000 - I.since) / 60)) })); }
+      $b.append(el('sx-nrow').append($('<span>').append($('<b>').addClass(LV[cls]).text(T('net.inet_' + st)), document.createTextNode(' '), $('<span class="sx-sub">').text(det.join(' \u00B7 '))),
+        $('<a>').attr('href', '/Settings/SysboxNetwork').text(T('net.details'))));
+    }
+    if ($b.children().length) { $d.append($b); }
+    if (mx('net_top') && N.top && N.top.length) {
+      var top = 1; $.each(N.top, function (i, c) { top = Math.max(top, c[1] + c[2]); });
+      var $box = el('mt-box').appendTo($d);
+      $.each(N.top, function (i, c) {
+        $box.append(el('sx-cr mt-r mt-n mt-s-' + (c[1] + c[2] > 0 ? 'green' : 'grey')).css('grid-template-columns', 'minmax(0,1fr) 64px 118px').append(
+          txt('span', 'n', c[0]),
+          el('sx-nbar').append($('<i>').css({ width: (c[1] / top * 100) + '%', background: '#3fa24a' }), $('<i>').css({ width: (c[2] / top * 100) + '%', background: '#4a90e2' })),
+          $('<span class="sx-val sx-sub">').text('\u2193 ' + fmtRate(c[1], U) + ' \u00B7 \u2191 ' + fmtRate(c[2], U))));
+      });
+    }
+  }
+
   // ---- containers ----------------------------------------------------------------------------
   function stripAnsi(s) { return String(s).replace(/\u001b\[[0-9;?]*[A-Za-z]/g, ''); }
   function renderLogBody(name) {
@@ -784,7 +851,7 @@ $(function () {
   function firstBand() {
     $('.sx-tile .mt-band.mt-first').removeClass('mt-first');
     if ($('#sx-attn').children().length) { return; }
-    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'con'];
+    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
     for (var i = 0; i < k.length; i++) { var $b = $('#' + BLK[k[i]]).find('.mt-band').first(); if ($b.length) { $b.addClass('mt-first'); return; } }
   }
 
@@ -794,7 +861,7 @@ $(function () {
     var $s = $('#sx-summary');
     if (!r || !r.ok) {
       $s.text(T('sum.unavailable'));
-      $('#sx-attn,#sx-sto,#sx-cpu,#sx-gpu,#sx-pow,#sx-con').empty();
+      $('#sx-attn,#sx-sto,#sx-cpu,#sx-gpu,#sx-pow,#sx-net,#sx-con').empty();
       $('#sx-mem').empty().append(el('sx-note').text(T('sum.no_data')));
       return;
     }
@@ -819,6 +886,7 @@ $(function () {
     if (SHOW.cpu) { renderCpu(r.cpu); } else { $('#sx-cpu').empty(); }
     renderGpu(r.gpu);
     if (SHOW.pow) { renderPow(r.power); } else { $('#sx-pow').empty(); }
+    if (SHOW.net) { renderNet(r.net); } else { $('#sx-net').empty(); }
     renderCon();
     firstBand();
   }
@@ -980,6 +1048,7 @@ $sx_blk = [
   'cpu' => ['CPU', 'show_cpu', [['cpu_load', $sxs_T('blk.cpu_load')], ['cpu_temp', $sxs_T('blk.cpu_temp')], ['cpu_pow', $sxs_T('blk.cpu_pow')], ['show_clock', $sxs_T('cpu.clock')], ['cpu_hist', $sxs_T('blk.cpu_hist')], ['cpu_per', $sxs_T('blk.cpu_per')], ['cpu_la', $sxs_T('blk.cpu_la')]], ''],
   'gpu' => ['GPU', 'show_gpu', [], $sxs_T('blk.gpu_hint')],
   'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')]], $sxs_T('blk.pow_hint')],
+  'net' => [$sxs_T('net.title'), 'show_net', [['net_speed', $sxs_T('blk.net_speed')], ['net_today', $sxs_T('blk.net_today')], ['net_hist', $sxs_T('blk.net_hist')], ['net_inet', $sxs_T('blk.net_inet')], ['net_top', $sxs_T('blk.net_top')]], $sxs_T('blk.net_hint')],
   'con' => [$sxs_T('con.title'), 'show_containers', [], $sxs_T('blk.con_hint')],
 ];
 foreach (sx_order($sx) as $sx_k):
@@ -1174,7 +1243,9 @@ function sx_defaults() {
         'controls' => '1', 'logs' => '1', 'log_lines' => '100',
         'show_gpu' => '1', 'show_containers' => '1', 'hist_min' => '2', 'cpu_sec' => '1', 'clk_sec' => '2', 'show_clock' => '1',
         // Dashboard tile (item 53): blocks on or off, their order, and what the RAM, CPU and Power blocks show
-        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,con', 'ram_leg' => '1',
+        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,net,con', 'ram_leg' => '1',
+        // Network part (item 94): on by default; its own settings (interface, pings, unit, Discord) are in network.cfg
+        'show_net' => '1', 'net_speed' => '1', 'net_today' => '1', 'net_hist' => '1', 'net_inet' => '1', 'net_top' => '1',
         'cpu_load' => '1', 'cpu_temp' => '1', 'cpu_pow' => '1', 'cpu_hist' => '1', 'cpu_per' => '1', 'cpu_la' => '0',
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
         'ram_warn' => '80', 'ram_crit' => '92', 'log_warn' => '80', 'log_crit' => '92',
@@ -1195,10 +1266,15 @@ function sx_cfg() {
 }
 
 // The tile's block order: the saved list, unknown names dropped, missing ones added at the end
-const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'con'];
+const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
 function sx_order($cfg) {
     $o = array_values(array_unique(array_intersect(array_map('trim', explode(',', (string)($cfg['order'] ?? ''))), SX_BLOCKS)));
-    foreach (SX_BLOCKS as $b) { if (!in_array($b, $o, true)) { $o[] = $b; } }
+    // a block that is new since the order was saved goes after the one before it in the default order (Network after Power)
+    foreach (SX_BLOCKS as $i => $b) {
+        if (in_array($b, $o, true)) { continue; }
+        $at = $i > 0 ? array_search(SX_BLOCKS[$i - 1], $o, true) : -1;
+        array_splice($o, $at === false ? count($o) : $at + 1, 0, [$b]);
+    }
     return $o;
 }
 
@@ -1536,6 +1612,41 @@ if (trim((string)$cfg['socket_host']) !== '') {
     ];
 }
 
+// ---- network (item 94): netmon.php samples in the background ------------------------------------
+$net = null;
+if (sx_on($cfg['show_net'] ?? '1')) {
+    require_once __DIR__ . '/net_lib.php';
+    $NL = sxnet_live(); $fresh = $NL && time() - (int)$NL['t'] < 30;
+    if (!$fresh && (!is_file('/tmp/sysbox_net.lock.run') || time() - filemtime('/tmp/sysbox_net.lock.run') > 60)) {   // the sampler is not running (just installed, or switched on): start it now, cron keeps it alive
+        @touch('/tmp/sysbox_net.lock.run');
+        @exec('setsid nohup flock -n /tmp/sysbox_net.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/netmon.php') . ' >/dev/null 2>&1 </dev/null &');
+    }
+    if ($fresh) { @unlink('/tmp/sysbox_net.lock.run'); }
+    $net = ['pending' => !$fresh, 'unit' => sxnet_cfg()['unit']];
+    if ($fresh) {
+        $pts = []; $now = (int)$NL['t']; $acc = null;
+        foreach ((array)$NL['live'] as $p) {           // the last 30 minutes, 15-second averages: [seconds ago, down, up]
+            if ($p[0] < $now - 1800) { continue; }
+            $k = intdiv($p[0], 15);
+            if ($acc && $acc[0] !== $k) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; $acc = null; }
+            if (!$acc) { $acc = [$k, 0, 0, 0]; }
+            $acc[1] += $p[1]; $acc[2] += $p[2]; $acc[3]++;
+        }
+        if ($acc) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; }
+        $top = [];
+        foreach ((array)$NL['ct'] as $n => $r) { $top[] = [$n, (float)$r[0], (float)$r[1]]; }
+        usort($top, function ($a, $b) { return ($b[1] + $b[2]) <=> ($a[1] + $a[2]); });
+        $today = $NL['days'][date('Y-m-d')] ?? [0, 0];
+        $in = (array)$NL['inet'];
+        $net += ['iface' => (string)$NL['iface'], 'speed' => $NL['link']['speed'] ?? null, 'up' => $NL['link']['up'] ?? true, 'rate' => $NL['rate'], 'today' => [$today[0], $today[1]], 'pts' => $pts,
+                 'top' => array_slice($top, 0, 3), 'inet' => ['state' => (string)($in['state'] ?? 'wait'), 'since' => (int)($in['since'] ?? 0), 'router' => (string)($in['router'] ?? ''),
+                 'router_ms' => $in['router_ms'] ?? null, 'out' => (string)($in['out'] ?? ''), 'out_ms' => $in['out_ms'] ?? null]];
+        if (in_array($net['inet']['state'], ['down', 'norouter'], true)) {
+            $attn[] = ['rd', 'Internet', $net['inet']['state'] === 'down' ? $sxx_T('attn.no_inet') : $sxx_T('attn.no_router'), date('H:i', $net['inet']['since'])];
+        }
+    }
+}
+
 // ---- containers ----------------------------------------------------------------------------------
 $cont = ['enabled' => sx_on($cfg['show_containers']), 'docker' => false, 'rows' => [], 'mode' => $cfg['top_mode'], 'n' => (int)$cfg['top_n'],
          'controls' => sx_on($cfg['controls']), 'logs' => sx_on($cfg['logs']), 'log_lines' => (int)$cfg['log_lines'], 'pending' => $stats === null];
@@ -1596,16 +1707,16 @@ $attOut = [];
 foreach ($attn as $a) { $attOut[] = ['level' => $a[0], 'name' => $a[1], 'text' => $a[2], 'small' => $a[3]]; }
 
 $sxShow = [];
-foreach (['ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
+foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
 
 sx_json([
     'ok' => true, 'ts' => time(),
     'summary' => ['ram' => $memPct, 'cpu' => $load, 'temp' => $tPkg, 'uptime' => ($d > 0 ? $d . ' d ' . $h . ' h' : ($h > 0 ? $h . ' h ' . $m . ' m' : $m . ' m'))],
-    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'containers' => $cont,
+    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'net' => $net, 'containers' => $cont,
     'limits' => ['temp_warn' => (float)$cfg['temp_warn'], 'temp_crit' => (float)$cfg['temp_crit']],
     'ui' => ['hist_min' => max(1, min(60, (int)$cfg['hist_min'])), 'cpu_sec' => (int)$cfg['cpu_sec'], 'clk_sec' => (int)$cfg['clk_sec'], 'show_clock' => sx_on($cfg['show_clock']),
              'order' => sx_order($cfg), 'show' => ['ram' => sx_on($cfg['show_ram']), 'sto' => sx_on($cfg['show_sto']), 'cpu' => sx_on($cfg['show_cpu']),
-             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
+             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'net' => sx_on($cfg['show_net'] ?? '1'), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
 ]);
 ]]></INLINE>
 </FILE>
@@ -1831,6 +1942,8 @@ $new = [
     'cpu_hist' => sx_bool($_POST['cpu_hist'] ?? '1'), 'cpu_per' => sx_bool($_POST['cpu_per'] ?? '1'), 'cpu_la' => sx_bool($_POST['cpu_la'] ?? '0'),
     'pow_w' => sx_bool($_POST['pow_w'] ?? '1'), 'pow_day' => sx_bool($_POST['pow_day'] ?? '1'), 'pow_mon' => sx_bool($_POST['pow_mon'] ?? '1'),
     'pow_cost' => sx_bool($_POST['pow_cost'] ?? '1'), 'pow_name' => sx_bool($_POST['pow_name'] ?? '1'),
+    'show_net' => sx_bool($_POST['show_net'] ?? '1'), 'net_speed' => sx_bool($_POST['net_speed'] ?? '1'), 'net_today' => sx_bool($_POST['net_today'] ?? '1'),
+    'net_hist' => sx_bool($_POST['net_hist'] ?? '1'), 'net_inet' => sx_bool($_POST['net_inet'] ?? '1'), 'net_top' => sx_bool($_POST['net_top'] ?? '1'),
     'ram_warn' => sx_int($_POST['ram_warn'] ?? '80', 1, 100, 'RAM warning'), 'ram_crit' => sx_int($_POST['ram_crit'] ?? '92', 1, 100, 'RAM critical'),
     'log_warn' => sx_int($_POST['log_warn'] ?? '80', 1, 100, 'Log warning'), 'log_crit' => sx_int($_POST['log_crit'] ?? '92', 1, 100, 'Log critical'),
     'vd_warn' => sx_int($_POST['vd_warn'] ?? '80', 1, 100, 'Docker vdisk warning'), 'vd_crit' => sx_int($_POST['vd_crit'] ?? '92', 1, 100, 'Docker vdisk critical'),
@@ -2582,6 +2695,27 @@ if (sx_on($cfg['n_cpu'])) {
     }
 }
 
+// ---- internet outages (item 94): one message when an outage has ended (while it lasts, Discord cannot be reached) -----
+if (sx_on($cfg['show_net'] ?? '1')) {
+    require_once __DIR__ . '/net_lib.php';
+    $NL = sx_on(sxnet_cfg()['dc']) ? sxnet_live() : null;
+    if ($NL) {
+        $evs = array_values(array_filter((array)($NL['events'] ?? []), function ($e) { return is_array($e) && ($e['e'] ?? null) !== null; }));
+        if (!isset($st['misc']['net_ev'])) { $st['misc']['net_ev'] = $evs ? max(array_column($evs, 's')) : 0; }   // first run: older outages are not sent
+        foreach ($evs as $e) {
+            if ((int)$e['s'] <= (int)$st['misc']['net_ev']) { continue; }
+            $dur = sxn_fmt_dur(max(60, (int)$e['e'] - (int)$e['s']));
+            $emb = sxn_embed('a', '🌐 ' . sxnet_dt($lang, $e['k'] === 'norouter' ? 'netd.router_t' : 'netd.down_t', ['d' => $dur]),
+                sxnet_dt($lang, $e['k'] === 'norouter' ? 'netd.router_d' : 'netd.down_d'),
+                [[sxnet_dt($lang, 'netd.from'), date('Y-m-d H:i', (int)$e['s']), true], [sxnet_dt($lang, 'netd.to'), date('H:i', (int)$e['e']), true]]);
+            $r = sxn_post($hook, [$emb]);
+            if ($r[0] === 'retry') { break; }
+            sxn_guard_event('net', 'a', $emb); sxn_log($st, 'net', 'a');
+            $st['misc']['net_ev'] = (int)$e['s'];
+        }
+    }
+}
+
 if (json_encode($st) !== $st0) { sxn_write(SXN_STATE, $st); }
 sxn_write(SXN_TMP, $tm);
 ]]></INLINE>
@@ -2666,7 +2800,7 @@ sx_json($r[0] === 'ok' ? ['ok' => true] : ['ok' => false, 'error' => $r[1]]);
 <!-- README -->
 <!-- ========================================================= -->
 <FILE Name="/usr/local/emhttp/plugins/Sysbox/README.md">
-<INLINE><![CDATA[**Sysbox** replaces the System and Processor dashboard tiles with one native-looking tile: memory as a single bar (system, ZFS cache, Docker, free), boot, log and Docker vdisk usage, CPU load with history, temperature, power and per-thread heat map, the Intel GPU engines, wall power from a Shelly smart socket with the monthly kWh, and a list of containers (busiest or selected) with start, stop, restart and log buttons. Anything that needs attention is listed at the top.
+<INLINE><![CDATA[**Sysbox** replaces the System and Processor dashboard tiles with one native-looking tile: memory as a single bar (system, ZFS cache, Docker, free), boot, log and Docker vdisk usage, CPU load with history, temperature, power and per-thread heat map, the Intel GPU engines, wall power from a Shelly smart socket with the monthly kWh, network speed with the internet state and the busiest containers (details on the Network page), and a list of containers (busiest or selected) with start, stop, restart and log buttons. Anything that needs attention is listed at the top.
 
 Settings: Settings, Utilities, Sysbox (or the gear icon on the tile).
 ]]></INLINE>
@@ -5723,6 +5857,455 @@ function mt_i18n_js($dir, $name, $only = null) {
  "uj.all_dc_left": {
   "text": "Not started: {l}",
   "note": "Discord line: containers Update all did not start."
+ },
+ "net.title": {
+  "text": "Network",
+  "note": "tile band title of the network part (item 94); also its name on the settings page."
+ },
+ "net.starting": {
+  "text": "Starting the network meter… the first numbers come in a few seconds.",
+  "note": "tile: the background sampler has not written data yet."
+ },
+ "net.down": {
+  "text": "Down",
+  "note": "tile figure label: download speed now."
+ },
+ "net.up": {
+  "text": "Up",
+  "note": "tile figure label: upload speed now."
+ },
+ "net.today": {
+  "text": "Today",
+  "note": "tile figure label: traffic today (down + up)."
+ },
+ "net.last30": {
+  "text": "last 30 min · top {v}",
+  "note": "under the tile graph; {v} = the highest speed in the graph with its unit."
+ },
+ "net.down_s": {
+  "text": "down",
+  "note": "graph legend: the download line."
+ },
+ "net.up_s": {
+  "text": "up",
+  "note": "graph legend: the upload line."
+ },
+ "net.router_ms": {
+  "text": "router {v}",
+  "note": "internet row: ping time to the router; {v} = \"0.4 ms\" or \"no answer\"."
+ },
+ "net.no_answer": {
+  "text": "no answer",
+  "note": "a ping got no answer."
+ },
+ "net.outside_none": {
+  "text": "outside: no answer",
+  "note": "internet row: none of the outside addresses answered."
+ },
+ "net.since": {
+  "text": "since {t} ({m} min)",
+  "note": "internet row: when the problem started; {t} = time, {m} = minutes."
+ },
+ "net.inet_ok": {
+  "text": "Internet OK",
+  "note": "internet state: fine."
+ },
+ "net.inet_slow": {
+  "text": "Internet slow",
+  "note": "internet state: outside pings slower than the set limit."
+ },
+ "net.inet_down": {
+  "text": "No internet",
+  "note": "internet state: the router answers, the outside does not."
+ },
+ "net.inet_norouter": {
+  "text": "Router not reachable",
+  "note": "internet state: not even the router answers."
+ },
+ "net.inet_wait": {
+  "text": "Checking the internet…",
+  "note": "internet state before the first check."
+ },
+ "net.details": {
+  "text": "details ›",
+  "note": "link from the tile to the Network page."
+ },
+ "attn.no_inet": {
+  "text": "no internet: the router answers, the outside does not",
+  "note": "Needs attention row of the tile (name: Internet)."
+ },
+ "attn.no_router": {
+  "text": "the router does not answer",
+  "note": "Needs attention row of the tile (name: Internet)."
+ },
+ "blk.net_speed": {
+  "text": "Speed now",
+  "note": "settings chip of the Network part: down and up speed."
+ },
+ "blk.net_today": {
+  "text": "Today",
+  "note": "settings chip of the Network part: traffic today."
+ },
+ "blk.net_hist": {
+  "text": "Graph (30 min)",
+  "note": "settings chip of the Network part: the small graph."
+ },
+ "blk.net_inet": {
+  "text": "Internet check",
+  "note": "settings chip of the Network part: the internet row."
+ },
+ "blk.net_top": {
+  "text": "Busiest 3 containers",
+  "note": "settings chip of the Network part: the container rows."
+ },
+ "blk.net_hint": {
+  "text": "interface, internet check, unit and Discord: Settings, Utilities, Network",
+  "note": "hint of the Network part."
+ },
+ "netp.intro": {
+  "text": "Traffic of the server and its containers, and whether the internet works. The page only reads counters and sends pings; nothing on the server is changed. The server sees only its own traffic, not the other devices at home.",
+  "note": "intro line of the Network page."
+ },
+ "netp.h.now": {
+  "text": "Now",
+  "note": "band title: the current state."
+ },
+ "netp.loading": {
+  "text": "Loading…",
+  "note": "before the first answer."
+ },
+ "netp.h.traffic": {
+  "text": "Traffic",
+  "note": "band title: the traffic graph."
+ },
+ "netp.h.totals": {
+  "text": "Totals",
+  "note": "band title: daily and monthly totals."
+ },
+ "netp.h.totals_sub": {
+  "text": "down + up, months from the 1st",
+  "note": "right side of the Totals band."
+ },
+ "netp.h.containers": {
+  "text": "Containers",
+  "note": "band title: traffic per container."
+ },
+ "netp.h.containers_sub": {
+  "text": "now and today, the busiest first",
+  "note": "right side of the Containers band."
+ },
+ "netp.h.outages": {
+  "text": "Internet outages",
+  "note": "band title: the list of outages."
+ },
+ "netp.h.settings": {
+  "text": "Settings",
+  "note": "band title."
+ },
+ "netp.h.settings_sub": {
+  "text": "one check every 30 s",
+  "note": "right side of the Settings band: how often the internet is checked."
+ },
+ "netp.dow.0": {
+  "text": "Sun",
+  "note": "short day name (Sunday), under the daily bars and the 7-day graph."
+ },
+ "netp.dow.1": {
+  "text": "Mon",
+  "note": "short day name (Monday)."
+ },
+ "netp.dow.2": {
+  "text": "Tue",
+  "note": "short day name (Tuesday)."
+ },
+ "netp.dow.3": {
+  "text": "Wed",
+  "note": "short day name (Wednesday)."
+ },
+ "netp.dow.4": {
+  "text": "Thu",
+  "note": "short day name (Thursday)."
+ },
+ "netp.dow.5": {
+  "text": "Fri",
+  "note": "short day name (Friday)."
+ },
+ "netp.dow.6": {
+  "text": "Sat",
+  "note": "short day name (Saturday)."
+ },
+ "netp.off": {
+  "text": "The Network part is switched off in the Sysbox settings, so nothing is measured.",
+  "note": "Now box when the part is off; a link follows."
+ },
+ "netp.off_link": {
+  "text": "Sysbox settings",
+  "note": "link to the Sysbox settings page."
+ },
+ "netp.starting": {
+  "text": "The network meter is starting; the first numbers come in a few seconds.",
+  "note": "Now box before the sampler has written data."
+ },
+ "netp.lead": {
+  "text": "{d} {unit} down, {u} up.",
+  "note": "lead line of the Now box; {d}/{u} = numbers, {unit} = MB/s or Mbit/s."
+ },
+ "netp.lead_top": {
+  "text": "{c} moves {p} % of it.",
+  "note": "lead line: the busiest container and its share."
+ },
+ "netp.check_now": {
+  "text": "Check internet now",
+  "note": "button: one ping round now."
+ },
+ "netp.show_ip": {
+  "text": "Show public IP",
+  "note": "button: asks api.ipify.org for the public address, only on this click."
+ },
+ "netp.errors": {
+  "text": "errors",
+  "note": "status strip: interface errors since boot."
+ },
+ "netp.dropped": {
+  "text": "dropped",
+  "note": "status strip: dropped packets since boot."
+ },
+ "netp.ts_today": {
+  "text": "Tailscale today",
+  "note": "status strip: Tailscale traffic today (already part of the interface total)."
+ },
+ "netp.router": {
+  "text": "router",
+  "note": "status strip label: the router and its ping."
+ },
+ "netp.public_ip": {
+  "text": "public IP",
+  "note": "status strip label."
+ },
+ "netp.checked": {
+  "text": "check now",
+  "note": "status strip label: result of the Check internet now button."
+ },
+ "netp.checked_ago": {
+  "text": "checked {s} s ago",
+  "note": "right side of the Now band."
+ },
+ "netp.no_data": {
+  "text": "No data yet.",
+  "note": "graph: nothing recorded."
+ },
+ "netp.collecting": {
+  "text": "Collecting data for this range…",
+  "note": "graph: not enough points yet for the chosen range."
+ },
+ "netp.avg_5s": {
+  "text": "5-second values",
+  "note": "graph legend for 1 h."
+ },
+ "netp.avg_5m": {
+  "text": "5-minute averages",
+  "note": "graph legend for 24 h."
+ },
+ "netp.avg_30m": {
+  "text": "30-minute averages",
+  "note": "graph legend for 7 days."
+ },
+ "netp.peak": {
+  "text": "peak down {v} at {t}",
+  "note": "graph legend: the highest download point."
+ },
+ "netp.today": {
+  "text": "Today",
+  "note": "total label."
+ },
+ "netp.this_month": {
+  "text": "This month",
+  "note": "total label."
+ },
+ "netp.last_month": {
+  "text": "Last month",
+  "note": "total label."
+ },
+ "netp.no_ct": {
+  "text": "No running container with its own network.",
+  "note": "Containers box: nothing to list."
+ },
+ "netp.c_name": {
+  "text": "Container",
+  "note": "column title."
+ },
+ "netp.c_now": {
+  "text": "Now down / up {unit}",
+  "note": "column title; {unit} = MB/s or Mbit/s."
+ },
+ "netp.c_rx": {
+  "text": "Today down",
+  "note": "column title."
+ },
+ "netp.c_tx": {
+  "text": "Today up",
+  "note": "column title."
+ },
+ "netp.ct_note": {
+  "text": "Counted inside each container, so traffic on the home network is in it too. Containers on the host network share the server's counters and are not listed.",
+  "note": "small note under the container table."
+ },
+ "netp.ongoing": {
+  "text": "now",
+  "note": "outage row: still going on."
+ },
+ "netp.ev_down": {
+  "text": "No internet for {m} min",
+  "note": "outage row title."
+ },
+ "netp.ev_router": {
+  "text": "Router not reachable for {m} min",
+  "note": "outage row title."
+ },
+ "netp.ev_down_d": {
+  "text": "the router answered, the outside addresses did not",
+  "note": "outage row detail."
+ },
+ "netp.ev_router_d": {
+  "text": "not even the router answered",
+  "note": "outage row detail."
+ },
+ "netp.n_outages": {
+  "one": "{n} in the last 7 days",
+  "other": "{n} in the last 7 days",
+  "note": "right side of the Outages band."
+ },
+ "netp.no_outages": {
+  "text": "none in the last 7 days",
+  "note": "right side of the Outages band."
+ },
+ "netp.no_outages_long": {
+  "text": "No internet outage in the last 7 days.",
+  "note": "Outages box when empty."
+ },
+ "netp.older": {
+  "text": "Earlier outages",
+  "note": "foldable bar title."
+ },
+ "netp.s_auto": {
+  "text": "automatic ({v})",
+  "note": "option: found by itself; {v} = what was found."
+ },
+ "netp.s_if": {
+  "text": "Interface",
+  "note": "settings label."
+ },
+ "netp.s_if_hint": {
+  "text": "the one that carries the internet traffic; automatic takes the port under the default route",
+  "note": "settings hint."
+ },
+ "netp.s_router": {
+  "text": "Router",
+  "note": "settings label."
+ },
+ "netp.s_router_hint": {
+  "text": "empty = the default gateway",
+  "note": "settings hint."
+ },
+ "netp.s_out": {
+  "text": "Outside addresses",
+  "note": "settings label."
+ },
+ "netp.s_out_hint": {
+  "text": "one to three, comma separated; the internet is down when none of them answers twice in a row",
+  "note": "settings hint."
+ },
+ "netp.s_slow": {
+  "text": "Slow above",
+  "note": "settings label (and the field name in a range error)."
+ },
+ "netp.s_slow_hint": {
+  "text": "three checks in a row over this make the internet row amber",
+  "note": "settings hint."
+ },
+ "netp.s_unit": {
+  "text": "Unit",
+  "note": "settings label."
+ },
+ "netp.u_mb": {
+  "text": "MB/s (like qBittorrent)",
+  "note": "unit option."
+ },
+ "netp.u_mbit": {
+  "text": "Mbit/s (like your provider)",
+  "note": "unit option."
+ },
+ "netp.s_dc": {
+  "text": " a message after an internet outage",
+  "note": "Discord checkbox label (after the checkbox)."
+ },
+ "netp.s_dc_hint": {
+  "text": "sent when the outage is over (while it lasts Discord cannot be reached), with its start and end; the Sysbox webhook",
+  "note": "settings hint."
+ },
+ "netp.save": {
+  "text": "Save",
+  "note": "button."
+ },
+ "netp.saving": {
+  "text": "Saving…",
+  "note": "message."
+ },
+ "netp.saved": {
+  "text": "Saved",
+  "note": "message."
+ },
+ "netp.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message; {e} = the reason."
+ },
+ "netp.checking": {
+  "text": "Checking…",
+  "note": "button text while checking."
+ },
+ "netp.asking": {
+  "text": "Asking…",
+  "note": "button text while the public IP is asked."
+ },
+ "netp.err_if": {
+  "text": "Unknown interface name",
+  "note": "save error."
+ },
+ "netp.err_host": {
+  "text": "Not an address: {h}",
+  "note": "save error; {h} = what was typed."
+ },
+ "netp.err_out": {
+  "text": "Give one to three outside addresses",
+  "note": "save error."
+ },
+ "netp.ip_fail": {
+  "text": "The public address could not be read (api.ipify.org)",
+  "note": "error of the Show public IP button."
+ },
+ "netd.down_t": {
+  "text": "The internet was down for {d}",
+  "note": "Discord title after an outage; {d} = duration like \"6 m\" or \"1 h 5 m\"."
+ },
+ "netd.down_d": {
+  "text": "The router answered, the outside addresses did not: the problem was past the router (provider).",
+  "note": "Discord text."
+ },
+ "netd.router_t": {
+  "text": "The router was not reachable for {d}",
+  "note": "Discord title after an outage."
+ },
+ "netd.router_d": {
+  "text": "Not even the router answered: the cable, the switch or the router itself.",
+  "note": "Discord text."
+ },
+ "netd.from": {
+  "text": "From",
+  "note": "Discord field: start of the outage."
+ },
+ "netd.to": {
+  "text": "Until",
+  "note": "Discord field: end of the outage."
  }
 }
 ]]></INLINE>
@@ -7822,6 +8405,343 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "uj.all_dc_left": {
   "text": "Nem indult el: {l}"
+ },
+ "net.title": {
+  "text": "Hálózat"
+ },
+ "net.starting": {
+  "text": "A hálózatmérő indul… az első számok pár másodperc múlva jönnek."
+ },
+ "net.down": {
+  "text": "Le"
+ },
+ "net.up": {
+  "text": "Fel"
+ },
+ "net.today": {
+  "text": "Ma"
+ },
+ "net.last30": {
+  "text": "utolsó 30 perc · csúcs {v}"
+ },
+ "net.down_s": {
+  "text": "le"
+ },
+ "net.up_s": {
+  "text": "fel"
+ },
+ "net.router_ms": {
+  "text": "router {v}"
+ },
+ "net.no_answer": {
+  "text": "nem válaszol"
+ },
+ "net.outside_none": {
+  "text": "kint: nincs válasz"
+ },
+ "net.since": {
+  "text": "{t} óta ({m} perc)"
+ },
+ "net.inet_ok": {
+  "text": "Internet rendben"
+ },
+ "net.inet_slow": {
+  "text": "Lassú internet"
+ },
+ "net.inet_down": {
+  "text": "Nincs internet"
+ },
+ "net.inet_norouter": {
+  "text": "A router nem érhető el"
+ },
+ "net.inet_wait": {
+  "text": "Az internet ellenőrzése…"
+ },
+ "net.details": {
+  "text": "részletek ›"
+ },
+ "attn.no_inet": {
+  "text": "nincs internet: a router válaszol, kint semmi"
+ },
+ "attn.no_router": {
+  "text": "a router nem válaszol"
+ },
+ "blk.net_speed": {
+  "text": "Sebesség most"
+ },
+ "blk.net_today": {
+  "text": "Mai forgalom"
+ },
+ "blk.net_hist": {
+  "text": "Görbe (30 perc)"
+ },
+ "blk.net_inet": {
+  "text": "Internet-ellenőrzés"
+ },
+ "blk.net_top": {
+  "text": "A 3 legforgalmasabb konténer"
+ },
+ "blk.net_hint": {
+  "text": "interfész, internet-ellenőrzés, mértékegység és Discord: Settings, Utilities, Network"
+ },
+ "netp.intro": {
+  "text": "A szerver és a konténerei forgalma, és hogy működik-e az internet. Az oldal csak számlálókat olvas és pingel; a szerveren semmit nem változtat. A szerver csak a saját forgalmát látja, a többi otthoni eszközét nem."
+ },
+ "netp.h.now": {
+  "text": "Most"
+ },
+ "netp.loading": {
+  "text": "Betöltés…"
+ },
+ "netp.h.traffic": {
+  "text": "Forgalom"
+ },
+ "netp.h.totals": {
+  "text": "Összesen"
+ },
+ "netp.h.totals_sub": {
+  "text": "le + fel, a hónap 1-jétől"
+ },
+ "netp.h.containers": {
+  "text": "Konténerek"
+ },
+ "netp.h.containers_sub": {
+  "text": "most és ma, a legforgalmasabb elöl"
+ },
+ "netp.h.outages": {
+  "text": "Internet-kimaradások"
+ },
+ "netp.h.settings": {
+  "text": "Beállítások"
+ },
+ "netp.h.settings_sub": {
+  "text": "30 másodpercenként egy ellenőrzés"
+ },
+ "netp.dow.0": {
+  "text": "V"
+ },
+ "netp.dow.1": {
+  "text": "H"
+ },
+ "netp.dow.2": {
+  "text": "K"
+ },
+ "netp.dow.3": {
+  "text": "Sze"
+ },
+ "netp.dow.4": {
+  "text": "Cs"
+ },
+ "netp.dow.5": {
+  "text": "P"
+ },
+ "netp.dow.6": {
+  "text": "Szo"
+ },
+ "netp.off": {
+  "text": "A Hálózat rész ki van kapcsolva a Sysbox beállításaiban, ezért semmi nem mérődik."
+ },
+ "netp.off_link": {
+  "text": "Sysbox beállítások"
+ },
+ "netp.starting": {
+  "text": "A hálózatmérő indul; az első számok pár másodperc múlva jönnek."
+ },
+ "netp.lead": {
+  "text": "{d} {unit} le, {u} fel."
+ },
+ "netp.lead_top": {
+  "text": "Ennek {p} %-át a(z) {c} viszi."
+ },
+ "netp.check_now": {
+  "text": "Internet ellenőrzése most"
+ },
+ "netp.show_ip": {
+  "text": "Publikus IP mutatása"
+ },
+ "netp.errors": {
+  "text": "hibák"
+ },
+ "netp.dropped": {
+  "text": "eldobott"
+ },
+ "netp.ts_today": {
+  "text": "Tailscale ma"
+ },
+ "netp.router": {
+  "text": "router"
+ },
+ "netp.public_ip": {
+  "text": "publikus IP"
+ },
+ "netp.checked": {
+  "text": "mostani ellenőrzés"
+ },
+ "netp.checked_ago": {
+  "text": "{s} mp-e ellenőrizve"
+ },
+ "netp.no_data": {
+  "text": "Még nincs adat."
+ },
+ "netp.collecting": {
+  "text": "Adatgyűjtés ehhez az időszakhoz…"
+ },
+ "netp.avg_5s": {
+  "text": "5 másodperces értékek"
+ },
+ "netp.avg_5m": {
+  "text": "5 perces átlagok"
+ },
+ "netp.avg_30m": {
+  "text": "30 perces átlagok"
+ },
+ "netp.peak": {
+  "text": "letöltési csúcs {v}, {t}"
+ },
+ "netp.today": {
+  "text": "Ma"
+ },
+ "netp.this_month": {
+  "text": "E hónap"
+ },
+ "netp.last_month": {
+  "text": "Előző hónap"
+ },
+ "netp.no_ct": {
+  "text": "Nincs futó konténer saját hálózattal."
+ },
+ "netp.c_name": {
+  "text": "Konténer"
+ },
+ "netp.c_now": {
+  "text": "Most le / fel {unit}"
+ },
+ "netp.c_rx": {
+  "text": "Ma le"
+ },
+ "netp.c_tx": {
+  "text": "Ma fel"
+ },
+ "netp.ct_note": {
+  "text": "A konténereken belül számolva, így az otthoni hálózati forgalom is benne van. A host hálózatot használó konténerek a szerver számlálóit használják, ezért nincsenek a listában."
+ },
+ "netp.ongoing": {
+  "text": "most is"
+ },
+ "netp.ev_down": {
+  "text": "{m} percig nem volt internet"
+ },
+ "netp.ev_router": {
+  "text": "{m} percig nem volt elérhető a router"
+ },
+ "netp.ev_down_d": {
+  "text": "a router válaszolt, a külső címek nem"
+ },
+ "netp.ev_router_d": {
+  "text": "még a router sem válaszolt"
+ },
+ "netp.n_outages": {
+  "one": "{n} az utolsó 7 napban",
+  "other": "{n} az utolsó 7 napban"
+ },
+ "netp.no_outages": {
+  "text": "nem volt az utolsó 7 napban"
+ },
+ "netp.no_outages_long": {
+  "text": "Az utolsó 7 napban nem volt internet-kimaradás."
+ },
+ "netp.older": {
+  "text": "Korábbi kimaradások"
+ },
+ "netp.s_auto": {
+  "text": "automatikus ({v})"
+ },
+ "netp.s_if": {
+  "text": "Interfész"
+ },
+ "netp.s_if_hint": {
+  "text": "amelyiken az internetforgalom megy; az automatikus az alapútvonal alatti portot választja"
+ },
+ "netp.s_router": {
+  "text": "Router"
+ },
+ "netp.s_router_hint": {
+  "text": "üres = az alapértelmezett átjáró"
+ },
+ "netp.s_out": {
+  "text": "Külső címek"
+ },
+ "netp.s_out_hint": {
+  "text": "egy-három, vesszővel elválasztva; nincs internet, ha egyik sem válaszol kétszer egymás után"
+ },
+ "netp.s_slow": {
+  "text": "Lassú, ha több mint"
+ },
+ "netp.s_slow_hint": {
+  "text": "ha három ellenőrzés egymás után e fölött van, sárga lesz az internet sora"
+ },
+ "netp.s_unit": {
+  "text": "Mértékegység"
+ },
+ "netp.u_mb": {
+  "text": "MB/s (mint a qBittorrent)"
+ },
+ "netp.u_mbit": {
+  "text": "Mbit/s (mint a szolgáltató)"
+ },
+ "netp.s_dc": {
+  "text": " üzenet egy internet-kimaradás után"
+ },
+ "netp.s_dc_hint": {
+  "text": "a kimaradás végén megy ki (közben a Discord nem érhető el), a kezdetével és a végével; a Sysbox webhookja"
+ },
+ "netp.save": {
+  "text": "Mentés"
+ },
+ "netp.saving": {
+  "text": "Mentés…"
+ },
+ "netp.saved": {
+  "text": "Elmentve"
+ },
+ "netp.not_saved": {
+  "text": "Nem sikerült menteni: {e}"
+ },
+ "netp.checking": {
+  "text": "Ellenőrzés…"
+ },
+ "netp.asking": {
+  "text": "Lekérdezés…"
+ },
+ "netp.err_if": {
+  "text": "Ismeretlen interfésznév"
+ },
+ "netp.err_host": {
+  "text": "Nem cím: {h}"
+ },
+ "netp.err_out": {
+  "text": "Adj meg egy-három külső címet"
+ },
+ "netp.ip_fail": {
+  "text": "A publikus címet nem sikerült lekérdezni (api.ipify.org)"
+ },
+ "netd.down_t": {
+  "text": "{d} nem volt internet"
+ },
+ "netd.down_d": {
+  "text": "A router válaszolt, a külső címek nem: a hiba a routeren túl volt (szolgáltató)."
+ },
+ "netd.router_t": {
+  "text": "{d} nem volt elérhető a router"
+ },
+ "netd.router_d": {
+  "text": "Még a router sem válaszolt: a kábel, a switch vagy maga a router."
+ },
+ "netd.from": {
+  "text": "Kezdete"
+ },
+ "netd.to": {
+  "text": "Vége"
  }
 }
 ]]></INLINE>
@@ -11224,6 +12144,652 @@ gd_log($kind . ': ' . $txt);
 ]]></INLINE>
 </FILE>
 
+<!-- ========================================================= -->
+<!-- NETWORK PAGE -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/SysboxNetwork.page">
+<INLINE><![CDATA[Menu="Utilities"
+Type="xmenu"
+Title="Network"
+Icon="sysbox.png"
+Markdown="false"
+---
+<?PHP
+// texts from the dictionary (lang/en.json, see i18n.php)
+require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
+$nwp_lang = '/usr/local/emhttp/plugins/sysbox/lang';
+$nwp_T = mt_i18n_t($nwp_lang);
+$nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k, $v), ENT_QUOTES); };
+?>
+<style>
+/* the Dashboard tile look (common/tile.css, inserted by the build): now, traffic, totals, containers, outages, settings */
+/* Shared tile look (the Sysbox / Diskbox style): dark section bands, the content in a box under them, colored left stripes on rows.
+   Used by Seedbox and Streambox; the build copies this block into each plugin's page where the marker below stands. */
+.mt-band{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;margin-top:14px}
+.mt-band.mt-first{margin-top:6px}
+.mt-band span{opacity:.75}
+.mt-band b{font-weight:400;opacity:.5;text-transform:none;letter-spacing:0;text-align:right}
+.mt-band.mt-red span{color:#e5534b;opacity:1}
+.mt-box{background:rgba(128,128,128,.12);margin-top:8px}
+.mt-cols{display:grid;gap:8px;align-items:center;padding:6px 10px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.2)}
+.mt-cols>div{opacity:.6}
+.mt-r{display:grid;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid rgba(128,128,128,.2)}
+.mt-box>.mt-r:first-child,.mt-cols+.mt-r{border-top:0}
+.mt-s-orange{background:rgba(245,165,36,.10);box-shadow:inset 3px 0 0 #f5a524}
+.mt-s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+.mt-s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+.mt-s-red{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.mt-s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+.mt-s-purple{background:rgba(150,120,230,.10);box-shadow:inset 3px 0 0 #9a7de6}
+.mt-s-grey{background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.mt-box .mt-n{background:none}
+.mt-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+#nwp{--nwp-line:rgba(128,128,128,.22)}
+#nwp .nwp-mut{opacity:.6}
+#nwp .nwp-ok{color:#3fa24a}#nwp .nwp-er{color:#e5534b}#nwp .nwp-am{color:#d9921f}#nwp .nwp-dn{color:#3fa24a}#nwp .nwp-up{color:#4a90e2}
+#nwp .nwp-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
+#nwp .mt-band{margin-top:26px;padding:9px 12px}
+#nwp .mt-band span{font-weight:600}
+#nwp .mt-box{margin-top:8px}
+#nwp .mt-box>:first-child{border-top:0}
+#nwp .nwp-lead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 12px}
+#nwp .nwp-lead p{margin:0;max-width:95ch;flex:1 1 380px}
+#nwp .nwp-status{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:9px 12px;border-top:1px solid var(--nwp-line);font-size:12px}
+#nwp .nwp-status span{opacity:.75}#nwp .nwp-status b{font-variant-numeric:tabular-nums}
+#nwp input.nwp-ghost{color:inherit!important;opacity:.7;border-color:rgba(128,128,128,.45)!important}
+#nwp input.nwp-sm{padding:2px 8px!important;font-size:11px!important;letter-spacing:0!important;text-transform:none!important;margin:0!important;min-width:0}
+#nwp .nwp-chart{padding:10px 12px}
+#nwp .nwp-chart svg{display:block;width:100%;height:190px}
+#nwp .nwp-leg{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;font-size:12px;opacity:.75;margin-top:4px}
+#nwp .nwp-leg i{display:inline-block;width:10px;height:3px;margin:0 5px 2px 10px;vertical-align:middle}
+#nwp .nwp-tabs{display:inline-flex;gap:4px}
+#nwp .nwp-tabs a{font-size:11px;letter-spacing:0;text-transform:none;padding:2px 9px;border-radius:3px;background:rgba(128,128,128,.18);color:inherit;opacity:.7;cursor:pointer}
+#nwp .nwp-tabs a.on{opacity:1;background:rgba(128,128,128,.45)}
+#nwp .nwp-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:120px;padding:12px 12px 0}
+#nwp .nwp-day{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:1px}
+#nwp .nwp-day i{display:block;border-radius:2px 2px 0 0;min-height:1px}
+#nwp .nwp-dlab{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;padding:4px 12px 0;font-size:11px;text-align:center;opacity:.7;font-variant-numeric:tabular-nums}
+#nwp .nwp-dlab b{display:block;font-weight:600}
+#nwp .nwp-kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px}
+#nwp .nwp-kp .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
+#nwp .nwp-kp .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+#nwp .nwp-kp .v small{font-size:12px;font-weight:400;opacity:.65}
+#nwp .nwp-kp .s{font-size:12px;opacity:.65}
+#nwp .nwp-row{display:grid;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--nwp-line)}
+#nwp .nwp-row small{display:block;opacity:.6}
+#nwp .nwp-ct{grid-template-columns:minmax(0,1fr) 150px 100px 100px}
+#nwp .nwp-ct.h{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
+#nwp .nwp-num{font-family:monospace;text-align:right;white-space:nowrap}
+#nwp .nwp-ev{grid-template-columns:minmax(0,1fr) auto}
+#nwp .s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+#nwp .s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+#nwp .s-red{background:rgba(229,83,75,.13);box-shadow:inset 3px 0 0 #e5534b}
+#nwp .s-grey{background:rgba(128,128,128,.07);box-shadow:inset 3px 0 0 #8a8a8a}
+#nwp .nwp-gbar{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--nwp-line);cursor:pointer;font-weight:600}
+#nwp .nwp-gbar .c{font-weight:normal;font-size:12px;opacity:.7}
+#nwp .nwp-set{grid-template-columns:minmax(200px,280px) minmax(0,1fr)}
+#nwp .nwp-set .lb{opacity:.75}
+#nwp .nwp-ctl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+#nwp .nwp-ctl input[type=number]{width:80px!important;margin:0}
+#nwp .nwp-ctl input[type=text]{width:220px;margin:0}
+#nwp .nwp-ctl select{min-width:0!important;width:auto!important;margin:0}
+#nwp .nwp-ctl label{display:inline-flex;align-items:center;gap:6px}
+#nwp .nwp-ctl input[type=checkbox]{margin:0}
+#nwp .nwp-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+@media (max-width:760px){#nwp .nwp-ct{grid-template-columns:minmax(0,1fr) 120px}#nwp .nwp-ct>:nth-child(n+3){display:none}#nwp .nwp-set{grid-template-columns:1fr}#nwp .nwp-kp{grid-template-columns:1fr 1fr}}
+</style>
+<div id="nwp">
+<p class="nwp-sub"><?=$nwp_t('netp.intro')?></p>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.now')?></span><b id="nwp-nband"></b></div>
+<div class="mt-box" id="nwp-now"><div class="nwp-status nwp-mut"><?=$nwp_t('netp.loading')?></div></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.traffic')?></span><span class="nwp-tabs" id="nwp-tabs"><a data-r="1h">1 h</a><a data-r="24h" class="on">24 h</a><a data-r="7d">7 d</a></span></div>
+<div class="mt-box nwp-chart" id="nwp-chart"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.totals')?></span><b><?=$nwp_t('netp.h.totals_sub')?></b></div>
+<div class="mt-box" id="nwp-tot"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.containers')?></span><b><?=$nwp_t('netp.h.containers_sub')?></b></div>
+<div class="mt-box" id="nwp-ct"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.outages')?></span><b id="nwp-oband"></b></div>
+<div class="mt-box" id="nwp-ev"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.settings')?></span><b><?=$nwp_t('netp.h.settings_sub')?></b></div>
+<div class="mt-box" id="nwp-set"></div>
+</div>
+
+<?=mt_i18n_js($nwp_lang, 'nwp', ['netp.', 'net.'])?>
+<script>
+$(function () {
+  var T = function (k, v) { return MTL.t('nwp', k, v); };
+  var URL = '/plugins/sysbox/net.php', pollT = null, D = null, RANGE = '24h', OPEN = false, IP = null, CHK = null, setDrawn = false;
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
+  function fb(b) { b = +b || 0; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return Math.round(b / 1e3) + ' KB'; }
+  function unit() { return (D && D.cfg && D.cfg.unit === 'Mbit') ? 'Mbit' : 'MB'; }
+  function ut() { return unit() === 'Mbit' ? 'Mbit/s' : 'MB/s'; }
+  function rv(b) { return unit() === 'Mbit' ? (+b || 0) * 8 / 1e6 : (+b || 0) / 1e6; }
+  function fr(b) { var v = rv(b); return v >= 100 ? v.toFixed(0) : v.toFixed(v >= 10 ? 1 : 2); }
+  function two(n) { return ('0' + n).slice(-2); }
+  function hm(ts) { var d = new Date(ts * 1000); return two(d.getHours()) + ':' + two(d.getMinutes()); }
+  function dayLab(ts) { var d = new Date(ts * 1000); return T('netp.dow.' + d.getDay()) + ' ' + d.getDate(); }
+  function linkTxt(sp) { return !sp ? '' : (sp >= 1000 ? (sp / 1000).toString().replace(/\.0$/, '') + ' Gbit/s' : sp + ' Mbit/s'); }
+  function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
+
+  // ---- now
+  function drawNow() {
+    var L = D.live, $b = $('#nwp-now').empty();
+    if (!D.on) { $b.append($('<div class="nwp-lead">').append($('<p>').html(esc(T('netp.off')) + ' <a href="/Settings/SysboxSettings">' + esc(T('netp.off_link')) + '</a>'))); $('#nwp-nband').text(''); return; }
+    if (!L || !D.running) { $b.append($('<div class="nwp-status nwp-mut">').text(T('netp.starting'))); $('#nwp-nband').text(''); return; }
+    var I = L.inet || {}, st = I.state || 'wait', cls = { ok: 'nwp-ok', slow: 'nwp-am', down: 'nwp-er', norouter: 'nwp-er' }[st] || 'nwp-mut';
+    var top = null; $.each(L.ct || {}, function (n, r) { if (!top || r[0] + r[1] > top[1]) { top = [n, r[0] + r[1]]; } });
+    var tot = (L.rate[0] + L.rate[1]) || 0, share = (top && tot > 0 && top[1] > 0) ? Math.min(100, Math.round(top[1] / tot * 100)) : 0;
+    var lead = '<b class="' + cls + '">' + esc(T('net.inet_' + st)) + '.</b> ' + esc(T('netp.lead', { d: fr(L.rate[0]), u: fr(L.rate[1]), unit: ut() }));
+    if (share >= 10) { lead += ' ' + esc(T('netp.lead_top', { c: top[0], p: share })); }
+    $b.append($('<div class="nwp-lead">').append($('<p>').html(lead), $('<span>').append(
+      $('<input type="button" class="nwp-chk nwp-ghost nwp-sm">').val(T('netp.check_now')), document.createTextNode(' '),
+      $('<input type="button" class="nwp-ip nwp-ghost nwp-sm">').val(T('netp.show_ip')))));
+    var k = L.link || {}, $s = $('<div class="nwp-status">');
+    function it(label, val) { $s.append($('<span>').text(label + ' '), $('<b>').text(val)); }
+    it(L.iface, (k.speed ? linkTxt(k.speed) : '?') + (k.duplex ? ' ' + k.duplex : ''));
+    it(T('netp.errors'), k.errors || 0); it(T('netp.dropped'), k.dropped || 0);
+    if ((D.today[2] || 0) + (D.today[3] || 0) > 0) { it(T('netp.ts_today'), fb((D.today[2] || 0) + (D.today[3] || 0))); }
+    it(T('netp.router'), (I.router || '?') + ' ' + (I.router_ms === null || I.router_ms === undefined ? T('net.no_answer') : I.router_ms + ' ms'));
+    if (I.out) { it(I.out, I.out_ms + ' ms'); }
+    if (IP) { it(T('netp.public_ip'), IP); }
+    if (CHK) { it(T('netp.checked'), CHK); }
+    $b.append($s);
+    $('#nwp-nband').text(T('netp.checked_ago', { s: Math.max(0, Math.round(Date.now() / 1000 - (I.t || L.t))) }));
+  }
+
+  // ---- traffic chart: down filled green, up blue; y in the chosen unit, x in time
+  function drawChart() {
+    var L = D.live, $c = $('#nwp-chart').empty();
+    if (!L) { $c.append($('<div class="nwp-mut">').text(T('netp.no_data'))); return; }
+    var pts = RANGE === '1h' ? L.live : (RANGE === '24h' ? L.h24 : L.d7), span = RANGE === '1h' ? 3600 : (RANGE === '24h' ? 86400 : 7 * 86400), now = L.t, t0 = now - span;
+    pts = $.grep(pts || [], function (p) { return p[0] >= t0; });
+    if (pts.length < 2) { $c.append($('<div class="nwp-mut">').text(T('netp.collecting'))); return; }
+    var W = 600, H = 190, top = 10, bot = 22, left = 34, mx = 0, pk = null;
+    $.each(pts, function (i, p) { if (p[1] > mx || p[2] > mx) { mx = Math.max(p[1], p[2]); } if (!pk || p[1] > pk[1]) { pk = p; } });
+    var vmax = rv(mx) || 0.01, steps = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000], st = 1000;
+    for (var i = 0; i < steps.length; i++) { if (vmax / steps[i] <= 4) { st = steps[i]; break; } }
+    var ymax = Math.ceil(vmax / st) * st || st;
+    function X(t) { return (left + (t - t0) / span * (W - left)).toFixed(1); }
+    function Y(b) { return (H - bot - rv(b) / ymax * (H - bot - top)).toFixed(1); }
+    var g = '';
+    for (var v = 0; v <= ymax + 1e-9; v += st) {
+      var y = (H - bot - v / ymax * (H - bot - top)).toFixed(1);
+      g += '<line x1="' + left + '" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>'
+        + '<text x="' + (left - 4) + '" y="' + (+y + 3) + '" fill="currentColor" fill-opacity=".55" font-size="10" text-anchor="end">' + (st < 1 ? v.toFixed(st < 0.1 ? 2 : 1) : Math.round(v)) + '</text>';
+    }
+    var xt = RANGE === '1h' ? 900 : (RANGE === '24h' ? 4 * 3600 : 86400);
+    for (var t = Math.ceil(t0 / xt) * xt; t <= now; t += xt) {
+      if (+X(t) > W - 22 || +X(t) < left + 14) { continue; }   // a label cut by the edge is left out
+      g += '<text x="' + X(t) + '" y="' + (H - 6) + '" fill="currentColor" fill-opacity=".55" font-size="10" text-anchor="middle">' + esc(RANGE === '7d' ? dayLab(t) : hm(t)) + '</text>';
+    }
+    var dn = $.map(pts, function (p) { return X(p[0]) + ',' + Y(p[1]); }).join(' '), up = $.map(pts, function (p) { return X(p[0]) + ',' + Y(p[2]); }).join(' ');
+    g += '<polygon points="' + X(pts[0][0]) + ',' + (H - bot) + ' ' + dn + ' ' + X(pts[pts.length - 1][0]) + ',' + (H - bot) + '" fill="#3fa24a" fill-opacity=".22"/>'
+      + '<polyline points="' + dn + '" fill="none" stroke="#3fa24a" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+      + '<polyline points="' + up + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    $c.append($('<span>').html('<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img">' + g + '</svg>').children());
+    var avg = { '1h': T('netp.avg_5s'), '24h': T('netp.avg_5m'), '7d': T('netp.avg_30m') }[RANGE];
+    $c.append($('<div class="nwp-leg">').append($('<span>').text(ut() + ' · ' + avg + (pk ? ' · ' + T('netp.peak', { v: fr(pk[1]) + ' ' + ut(), t: RANGE === '7d' ? dayLab(pk[0]) + ' ' + hm(pk[0]) : hm(pk[0]) }) : '')),
+      $('<span>').append($('<i>').css('background', '#3fa24a'), document.createTextNode(T('net.down_s')), $('<i>').css('background', '#4a90e2'), document.createTextNode(T('net.up_s')))));
+  }
+
+  // ---- totals: the last 7 days, today, this month, last month
+  function drawTot() {
+    var $t = $('#nwp-tot').empty(), mx = 1;
+    $.each(D.last7, function (i, d) { mx = Math.max(mx, d.rx + d.tx); });
+    var $d = $('<div class="nwp-days">'), $l = $('<div class="nwp-dlab">');
+    $.each(D.last7, function (i, d) {
+      $d.append($('<div class="nwp-day">').attr('title', fb(d.rx) + ' ↓ · ' + fb(d.tx) + ' ↑').append(
+        $('<i>').css({ height: (d.tx / mx * 100) + '%', background: '#4a90e2' }), $('<i>').css({ height: (d.rx / mx * 100) + '%', background: '#3fa24a' })));
+      $l.append($('<span>').append($('<b>').text(dayLab(d.ts)), document.createTextNode(fb(d.rx + d.tx))));
+    });
+    $t.append($d, $l);
+    function k(label, v) {
+      var tb = v ? fb(v[0] + v[1]).split(' ') : ['–', ''];
+      return $('<div>').append($('<div class="k">').text(label), $('<div class="v">').append(document.createTextNode(tb[0]), $('<small>').text(' ' + tb[1])),
+        $('<div class="s">').text(v ? '↓ ' + fb(v[0]) + ' · ↑ ' + fb(v[1]) : ''));
+    }
+    $t.append($('<div class="nwp-kp">').append(k(T('netp.today'), D.today), k(T('netp.this_month'), D.month.v), k(T('netp.last_month'), D.prev.v)));
+  }
+
+  // ---- containers: now and today, the busiest first
+  function drawCt() {
+    var L = D.live, $c = $('#nwp-ct').empty();
+    if (!L) { return; }
+    var day = (L.ctday && L.ctday.ct) || {}, rows = [];
+    $.each(L.ct_names || [], function (i, n) { var r = (L.ct || {})[n] || [0, 0], d = day[n] || [0, 0]; rows.push([n, r, d]); });
+    rows.sort(function (a, b) { return (b[2][0] + b[2][1]) - (a[2][0] + a[2][1]) || (b[1][0] + b[1][1]) - (a[1][0] + a[1][1]); });
+    if (!rows.length) { $c.append($('<div class="nwp-row nwp-mut">').text(T('netp.no_ct'))); return; }
+    $c.append($('<div class="nwp-row nwp-ct h">').append($('<span>').text(T('netp.c_name')), $('<span class="nwp-num">').text(T('netp.c_now', { unit: ut() })), $('<span class="nwp-num">').text(T('netp.c_rx')), $('<span class="nwp-num">').text(T('netp.c_tx'))));
+    $.each(rows, function (i, r) {
+      $c.append($('<div class="nwp-row nwp-ct">').addClass(r[1][0] + r[1][1] > 0 ? 's-green' : 's-grey').append($('<span>').text(r[0]),
+        $('<span class="nwp-num">').text(fr(r[1][0]) + ' / ' + fr(r[1][1])), $('<span class="nwp-num">').text(fb(r[2][0])), $('<span class="nwp-num">').text(fb(r[2][1]))));
+    });
+    $c.append($('<div class="nwp-row nwp-mut">').append($('<small>').text(T('netp.ct_note'))));
+  }
+
+  // ---- outages: the last 7 days open, older ones under a closed bar
+  function evRow(e) {
+    var dur = Math.max(1, Math.round(((e.e || Date.now() / 1000) - e.s) / 60)), d = new Date(e.s * 1000);
+    var when = d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()) + ' ' + hm(e.s) + '–' + (e.e ? hm(e.e) : T('netp.ongoing'));
+    return $('<div class="nwp-row nwp-ev">').addClass(e.e ? 's-red' : 's-red').append(
+      $('<span>').append($('<b>').text(T(e.k === 'norouter' ? 'netp.ev_router' : 'netp.ev_down', { m: dur })), $('<small>').text(T(e.k === 'norouter' ? 'netp.ev_router_d' : 'netp.ev_down_d'))),
+      $('<span class="nwp-num">').text(when));
+  }
+  function drawEv() {
+    var $e = $('#nwp-ev').empty(), cut = Date.now() / 1000 - 7 * 86400, ev = (D.events || []).slice().reverse();
+    var recent = $.grep(ev, function (e) { return !e.e || e.s >= cut; }), old = $.grep(ev, function (e) { return e.e && e.s < cut; });
+    $('#nwp-oband').text(recent.length ? T('netp.n_outages', { n: recent.length }) : T('netp.no_outages')).toggleClass('nwp-ok', !recent.length);
+    $.each(recent, function (i, e) { $e.append(evRow(e)); });
+    if (!recent.length) { $e.append($('<div class="nwp-row nwp-mut">').text(T('netp.no_outages_long'))); }
+    if (old.length) {
+      $e.append($('<div class="nwp-gbar">').append($('<span>').text(OPEN ? '–' : '+'), $('<span>').text(T('netp.older')), $('<span class="c">').text(old.length)));
+      if (OPEN) { $.each(old, function (i, e) { $e.append(evRow(e)); }); }
+    }
+  }
+
+  // ---- settings (drawn once, so typing is not lost on the 5-second refresh)
+  function drawSet() {
+    if (setDrawn) { return; }
+    setDrawn = true;
+    var c = D.cfg, $s = $('#nwp-set').empty();
+    function row(label, $ctl, hint) { $s.append($('<div class="nwp-row nwp-set">').append($('<span class="lb">').text(label), $('<div class="nwp-ctl">').append($ctl, hint ? $('<span class="nwp-hint">').text(hint) : ''))); }
+    var $if = $('<select id="nwp-if">').append($('<option value="auto">').text(T('netp.s_auto', { v: D.auto_if })));
+    $.each(D.ifaces, function (i, n) { $if.append($('<option>').val(n).text(n)); });
+    $if.val(c.iface);
+    row(T('netp.s_if'), $if, T('netp.s_if_hint'));
+    row(T('netp.s_router'), $('<input type="text" id="nwp-rt">').val(c.router === 'auto' ? '' : c.router).attr('placeholder', T('netp.s_auto', { v: D.auto_gw || '?' })), T('netp.s_router_hint'));
+    row(T('netp.s_out'), $('<input type="text" id="nwp-out">').val(c.outside), T('netp.s_out_hint'));
+    row(T('netp.s_slow'), [$('<input type="number" id="nwp-ms" min="20" max="5000">').val(c.slow_ms), document.createTextNode(' ms')], T('netp.s_slow_hint'));
+    row(T('netp.s_unit'), $('<select id="nwp-unit">').append($('<option value="MB">').text(T('netp.u_mb')), $('<option value="Mbit">').text(T('netp.u_mbit'))).val(c.unit), '');
+    row('Discord', $('<label>').append($('<input type="checkbox" id="nwp-dc">').prop('checked', c.dc === '1'), document.createTextNode(T('netp.s_dc'))), T('netp.s_dc_hint'));
+    row('', [$('<input type="button" id="nwp-save">').val(T('netp.save')), $('<span id="nwp-msg">')], '');
+  }
+  $(document).on('click', '#nwp-save', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#nwp-msg').css('color', '').text(T('netp.saving'));
+    api('save', { iface: $('#nwp-if').val(), router: $.trim($('#nwp-rt').val()) || 'auto', outside: $('#nwp-out').val(), slow_ms: $('#nwp-ms').val(), unit: $('#nwp-unit').val(), dc: $('#nwp-dc').prop('checked') ? '1' : '0' })
+      .done(function (r) { if (r && r.ok) { $m.css('color', '#3fa24a').text(T('netp.saved')); load(); } else { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(r) })); } })
+      .fail(function (x) { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(x) })); })
+      .always(function () { $b.prop('disabled', false); });
+  });
+  $(document).on('click', '#nwp .nwp-chk', function () {
+    var $b = $(this).prop('disabled', true).val(T('netp.checking'));
+    api('check').done(function (r) {
+      if (r && r.ok) { var c = r.check; CHK = (c.out_ms !== null ? c.out + ' ' + c.out_ms + ' ms' : T('net.outside_none')) + ' · ' + T('netp.router') + ' ' + (c.router_ms !== null ? c.router_ms + ' ms' : T('net.no_answer')); }
+      else { CHK = err(r); }
+    }).fail(function (x) { CHK = err(x); }).always(function () { if (D) { drawNow(); } });
+  });
+  $(document).on('click', '#nwp .nwp-ip', function () {
+    var $b = $(this).prop('disabled', true).val(T('netp.asking'));
+    api('ip').done(function (r) { IP = (r && r.ok) ? r.ip : err(r); }).fail(function (x) { IP = err(x); }).always(function () { if (D) { drawNow(); } });
+  });
+  $('#nwp-tabs').on('click', 'a', function () { RANGE = $(this).data('r'); $('#nwp-tabs a').removeClass('on'); $(this).addClass('on'); if (D) { drawChart(); } });
+  $(document).on('click', '#nwp .nwp-gbar', function () { OPEN = !OPEN; drawEv(); });
+
+  function load() {
+    $.getJSON(URL, { op: 'state', _: Date.now() }).done(function (r) {
+      if (!r || !r.ok) { return; }
+      D = r; drawNow(); drawChart(); drawTot(); drawCt(); drawEv(); drawSet();
+    }).always(function () { clearTimeout(pollT); pollT = setTimeout(load, document.hidden ? 30000 : 5000); });
+  }
+  load();
+});
+</script>
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- NETWORK LIBRARY -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/net_lib.php">
+<INLINE><![CDATA[<?php
+// Network meter (item 94): settings, interface and gateway detection, counters of the host and of the containers, pings.
+// Only reads; netmon.php samples in the background, net.php serves the Network page, api_fetch.php the tile.
+require_once __DIR__ . '/lib.php';
+
+const SXNET_CFG  = '/boot/config/plugins/sysbox/network.cfg';
+const SXNET_HIST = '/boot/config/plugins/sysbox/net_hist.json';   // days, 24 h and 7 d series, today per container, outages
+const SXNET_LIVE = '/tmp/sysbox_net.json';                         // written by netmon.php every 5 seconds
+
+function sxnet_dir() { $d = getenv('SX_NET_DIR'); return ($d !== false && $d !== '') ? rtrim($d, '/') : ''; }   // tests only
+function sxnet_cfg_file() { return sxnet_dir() !== '' ? sxnet_dir() . '/network.cfg' : SXNET_CFG; }
+function sxnet_hist_file() { return sxnet_dir() !== '' ? sxnet_dir() . '/net_hist.json' : SXNET_HIST; }
+function sxnet_live_file() { return sxnet_dir() !== '' ? sxnet_dir() . '/sysbox_net.json' : SXNET_LIVE; }
+function sxnet_sys() { $d = getenv('SX_NET_SYS'); return ($d !== false && $d !== '') ? rtrim($d, '/') : ''; }       // tests only: a fake /proc and /sys root
+
+function sxnet_defaults() { return ['iface' => 'auto', 'router' => 'auto', 'outside' => '1.1.1.1, 8.8.8.8', 'slow_ms' => '150', 'unit' => 'MB', 'dc' => '1']; }
+function sxnet_cfg() {
+    $c = sxnet_defaults(); $f = sxnet_cfg_file();
+    if (is_file($f)) { $x = @parse_ini_file($f); if (is_array($x)) { $c = array_merge($c, array_intersect_key($x, $c)); } }
+    return $c;
+}
+function sxnet_cfg_save($c) {
+    $txt = '';
+    foreach (sxnet_defaults() as $k => $v) { $txt .= $k . '="' . str_replace('"', '', (string)($c[$k] ?? $v)) . "\"\n"; }
+    $f = sxnet_cfg_file(); @mkdir(dirname($f), 0755, true);
+    if (@file_put_contents($f . '.tmp', $txt) === false) { return false; }
+    return @rename($f . '.tmp', $f);
+}
+function sxnet_host_ok($h) { return (bool)preg_match('/^[A-Za-z0-9][A-Za-z0-9.:\-]{0,252}$/', (string)$h); }
+function sxnet_if_ok($i) { return (bool)preg_match('/^[A-Za-z0-9_.:\-]{1,15}$/', (string)$i); }
+function sxnet_outside($cfg) {
+    $o = [];
+    foreach (explode(',', (string)$cfg['outside']) as $h) { $h = trim($h); if ($h !== '' && sxnet_host_ok($h)) { $o[] = $h; } }
+    return array_slice($o, 0, 3);
+}
+
+// ---- /proc and /sys readers -------------------------------------------------------------------
+// iface => [rx bytes, tx bytes] from a net/dev file (the host's, or a container's /proc/<pid>/net/dev)
+function sxnet_dev($file = null) {
+    $file = $file ?? sxnet_sys() . '/proc/net/dev';
+    $out = [];
+    foreach ((array)@file($file, FILE_IGNORE_NEW_LINES) as $l) {
+        if (!preg_match('/^\s*([^:\s]+):\s*(.*)$/', $l, $m)) { continue; }
+        $v = preg_split('/\s+/', trim($m[2]));
+        if (count($v) >= 9) { $out[$m[1]] = [(float)$v[0], (float)$v[8]]; }
+    }
+    return $out;
+}
+// [interface of the default route, gateway address] from /proc/net/route
+function sxnet_route() {
+    foreach ((array)@file(sxnet_sys() . '/proc/net/route', FILE_IGNORE_NEW_LINES) as $l) {
+        $p = preg_split('/\s+/', trim($l));
+        if (count($p) < 3 || $p[1] !== '00000000' || !preg_match('/^[0-9A-Fa-f]{8}$/', $p[2])) { continue; }
+        $g = implode('.', array_reverse(array_map('hexdec', str_split($p[2], 2))));
+        return [$p[0], $g === '0.0.0.0' ? '' : $g];
+    }
+    return ['', ''];
+}
+function sxnet_sysnet($i, $f) { $v = @file_get_contents(sxnet_sys() . '/sys/class/net/' . $i . '/' . $f); return $v === false ? null : trim($v); }
+// the interface whose counters show the wire: the default route's one, or the physical port under a bridge (br0 -> eth0)
+function sxnet_iface($cfg) {
+    if ($cfg['iface'] !== 'auto' && sxnet_if_ok($cfg['iface'])) { return $cfg['iface']; }
+    [$dev] = sxnet_route();
+    if ($dev === '') { return 'eth0'; }
+    if (is_dir(sxnet_sys() . '/sys/class/net/' . $dev . '/bridge')) {
+        $m = glob(sxnet_sys() . '/sys/class/net/' . $dev . '/brif/*') ?: [];
+        foreach ($m as $p) { $n = basename($p); if (file_exists(sxnet_sys() . '/sys/class/net/' . $n . '/device') || is_dir(sxnet_sys() . '/sys/class/net/' . $n . '/bonding')) { return $n; } }
+    }
+    return $dev;
+}
+// interfaces offered on the settings page: real ports, bonds and bridges (no veth, docker or loopback)
+function sxnet_ifaces() {
+    $o = [];
+    foreach (glob(sxnet_sys() . '/sys/class/net/*') ?: [] as $p) {
+        $n = basename($p);
+        if ($n === 'lo' || preg_match('/^(veth|docker|br-|vnet|virbr|tunl|shim|vhost)/', $n)) { continue; }
+        $o[] = $n;
+    }
+    sort($o, SORT_NATURAL);
+    return $o;
+}
+function sxnet_link($i) {
+    $sp = (int)sxnet_sysnet($i, 'speed');
+    $st = function ($f) use ($i) { return (int)sxnet_sysnet($i, 'statistics/' . $f); };
+    return ['speed' => $sp > 0 ? $sp : null, 'duplex' => (string)sxnet_sysnet($i, 'duplex'), 'up' => sxnet_sysnet($i, 'operstate') === 'up',
+            'errors' => $st('rx_errors') + $st('tx_errors'), 'dropped' => $st('rx_dropped') + $st('tx_dropped')];
+}
+
+// ---- containers -------------------------------------------------------------------------------
+// name => pid of the running containers that have their own network (host-network ones share the host's counters)
+function sxnet_ct_pids() {
+    $t = getenv('SX_NET_PIDS');   // tests only: "name=pid,name=pid"
+    if ($t !== false && $t !== '') { $o = []; foreach (explode(',', $t) as $x) { [$n, $p] = array_pad(explode('=', $x, 2), 2, ''); if (sx_valid_name($n) && ctype_digit($p)) { $o[$n] = (int)$p; } } return $o; }
+    $d = sx_docker(); if ($d === '') { return []; }
+    [$rc, $ids] = sx_run(escapeshellarg($d) . ' ps -q --no-trunc', 8);
+    $ids = array_values(array_filter(array_map('trim', explode("\n", (string)$ids)), function ($x) { return preg_match('/^[0-9a-f]{12,64}$/', $x); }));
+    if ($rc !== 0 || !$ids) { return []; }
+    [$rc, $txt] = sx_run(escapeshellarg($d) . ' inspect -f ' . escapeshellarg('{{.Name}} {{.State.Pid}}') . ' ' . implode(' ', array_map('escapeshellarg', $ids)), 15);
+    if ($rc !== 0) { return []; }
+    $host = @readlink('/proc/self/ns/net'); $o = [];
+    foreach (explode("\n", (string)$txt) as $l) {
+        if (!preg_match('/^\/?(\S+)\s+(\d+)$/', trim($l), $m) || !sx_valid_name($m[1]) || (int)$m[2] <= 0) { continue; }
+        if ($host && @readlink('/proc/' . $m[2] . '/ns/net') === $host) { continue; }
+        $o[$m[1]] = (int)$m[2];
+    }
+    ksort($o, SORT_NATURAL | SORT_FLAG_CASE);
+    return $o;
+}
+// [rx, tx] of a container: the sum of its interfaces except loopback
+function sxnet_ct_bytes($pid) {
+    $f = getenv('SX_NET_SYS') ? sxnet_sys() . '/proc/' . (int)$pid . '/net/dev' : '/proc/' . (int)$pid . '/net/dev';
+    $d = sxnet_dev($f); if (!$d) { return null; }
+    $rx = 0.0; $tx = 0.0;
+    foreach ($d as $i => $v) { if ($i !== 'lo') { $rx += $v[0]; $tx += $v[1]; } }
+    return [$rx, $tx];
+}
+
+// ---- ping ---------------------------------------------------------------------------------------
+// round trip in ms, or null when there was no answer within 2 seconds
+function sxnet_ping($host) {
+    if (!sxnet_host_ok($host)) { return null; }
+    $fake = getenv('SX_NET_PING');   // tests only: "host=ms,host=-" ('-' = no answer), or a file that holds it
+    if ($fake !== false && $fake !== '' && $fake[0] === '/') { $fake = trim((string)@file_get_contents($fake)); }
+    if ($fake !== false && $fake !== '') { foreach (explode(',', $fake) as $x) { [$h, $v] = array_pad(explode('=', $x, 2), 2, '-'); if ($h === $host) { return is_numeric($v) ? (float)$v : null; } } return null; }
+    $b = sx_bin('ping'); if ($b === '') { return null; }
+    [$rc, $o] = sx_run(escapeshellarg($b) . ' -n -c 1 -W 2 ' . escapeshellarg($host), 4);
+    return ($rc === 0 && preg_match('/time[=<]\s*([0-9.]+)\s*ms/', $o, $m)) ? round((float)$m[1], 1) : null;
+}
+// one check: router, then the outside addresses until one answers. state: ok | slow | down | norouter (before the debounce)
+function sxnet_check($cfg) {
+    $gw = $cfg['router'] !== 'auto' && sxnet_host_ok($cfg['router']) ? $cfg['router'] : sxnet_route()[1];
+    $r = $gw !== '' ? sxnet_ping($gw) : null; $out = null; $oh = '';
+    foreach (sxnet_outside($cfg) as $h) { $v = sxnet_ping($h); if ($v !== null) { $out = $v; $oh = $h; break; } }
+    $raw = $out !== null ? ($out > (float)$cfg['slow_ms'] ? 'slow' : 'ok') : (($gw !== '' && $r === null) ? 'norouter' : 'down');
+    return ['t' => time(), 'router' => $gw, 'router_ms' => $r, 'out' => $oh, 'out_ms' => $out, 'raw' => $raw];
+}
+
+// Discord texts in the Discord language (lang/<code>.json, English for a missing text)
+function sxnet_dt($lang, $k, $v = []) {
+    static $tab = [];
+    if (!isset($tab[$lang])) {
+        $rd = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $rd(__DIR__ . '/lang/en.json'); $tr = $lang !== 'en' ? $rd(__DIR__ . '/lang/' . $lang . '.json') : [];
+        $tab[$lang] = ['en' => $en, 'tr' => $tr];
+    }
+    $e = $tab[$lang]['tr'][$k] ?? null; $s = (is_array($e) && trim((string)($e['text'] ?? '')) !== '') ? $e : ($tab[$lang]['en'][$k] ?? null);
+    return is_array($s) ? mt_i18n_fmt(['text' => (string)($s['text'] ?? $k)], $v) : $k;
+}
+function sxnet_live() { $j = json_decode((string)@file_get_contents(sxnet_live_file()), true); return is_array($j) ? $j : null; }
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- NETWORK ENDPOINT -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/net.php">
+<INLINE><![CDATA[<?php
+// Network page endpoint (item 94). GET: the page data. POST op=save (the page's settings), op=check (one internet check
+// now), op=ip (the public address, asked from api.ipify.org only on this click). Nothing on the server is changed.
+require_once __DIR__ . '/net_lib.php';
+
+$op = (string)($_POST['op'] ?? ($_GET['op'] ?? 'state'));
+if ($op !== 'state') {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
+    sx_guard();
+}
+
+if ($op === 'state') {
+    $L = sxnet_live(); $cfg = sxnet_cfg(); $sx = sx_cfg();
+    $hist = json_decode((string)@file_get_contents(sxnet_hist_file()), true); $days = is_array($hist) ? (array)($hist['days'] ?? []) : [];
+    if ($L) { $days = array_merge($days, (array)($L['days'] ?? [])); }
+    $mon = []; foreach ($days as $d => $v) { $m = substr((string)$d, 0, 7); $mon[$m] = [($mon[$m][0] ?? 0) + $v[0], ($mon[$m][1] ?? 0) + $v[1]]; }
+    ksort($days); $last7 = [];
+    for ($i = 6; $i >= 0; $i--) { $d = date('Y-m-d', strtotime("-$i days")); $last7[] = ['d' => $d, 'ts' => strtotime($d), 'rx' => $days[$d][0] ?? 0, 'tx' => $days[$d][1] ?? 0]; }
+    $tm = date('Y-m'); $pm = date('Y-m', strtotime(date('Y-m-01') . ' -1 month'));
+    sx_json(['ok' => true, 'on' => sx_on($sx['show_net'] ?? '1'), 'running' => $L !== null && time() - (int)$L['t'] < 30, 'cfg' => $cfg, 'ifaces' => sxnet_ifaces(), 'auto_if' => sxnet_iface(['iface' => 'auto']),
+        'auto_gw' => sxnet_route()[1], 'live' => $L, 'last7' => $last7, 'today' => $days[date('Y-m-d')] ?? [0, 0, 0, 0],
+        'month' => ['key' => $tm, 'v' => $mon[$tm] ?? [0, 0]], 'prev' => ['key' => $pm, 'v' => $mon[$pm] ?? null],
+        'events' => is_array($hist) ? array_slice((array)($hist['events'] ?? []), -50) : []]);
+}
+
+if ($op === 'save') {
+    $c = sxnet_cfg();
+    $if = trim((string)($_POST['iface'] ?? 'auto')); if ($if !== 'auto' && !sxnet_if_ok($if)) { sx_json(['ok' => false, 'error' => sx_tr('netp.err_if')]); }
+    $rt = trim((string)($_POST['router'] ?? 'auto')); if ($rt === '') { $rt = 'auto'; } if ($rt !== 'auto' && !sxnet_host_ok($rt)) { sx_json(['ok' => false, 'error' => sx_tr('netp.err_host', ['h' => $rt])]); }
+    $out = [];
+    foreach (explode(',', (string)($_POST['outside'] ?? '')) as $h) { $h = trim($h); if ($h === '') { continue; } if (!sxnet_host_ok($h)) { sx_json(['ok' => false, 'error' => sx_tr('netp.err_host', ['h' => $h])]); } $out[] = $h; }
+    if (!$out || count($out) > 3) { sx_json(['ok' => false, 'error' => sx_tr('netp.err_out')]); }
+    $ms = (int)($_POST['slow_ms'] ?? 150); if ($ms < 20 || $ms > 5000) { sx_json(['ok' => false, 'error' => sx_tr('save.err_number', ['name' => sx_tr('netp.s_slow'), 'min' => 20, 'max' => 5000])]); }
+    $c = ['iface' => $if, 'router' => $rt, 'outside' => implode(', ', $out), 'slow_ms' => (string)$ms,
+          'unit' => (($_POST['unit'] ?? 'MB') === 'Mbit') ? 'Mbit' : 'MB', 'dc' => in_array((string)($_POST['dc'] ?? '0'), ['1', 'on', 'yes'], true) ? '1' : '0'];
+    if (!sxnet_cfg_save($c)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_write')]); }
+    sx_json(['ok' => true]);
+}
+
+if ($op === 'check') { sx_json(['ok' => true, 'check' => sxnet_check(sxnet_cfg())]); }
+
+if ($op === 'ip') {
+    $ch = curl_init('https://api.ipify.org');
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 6, CURLOPT_CONNECTTIMEOUT => 4]);
+    $b = trim((string)curl_exec($ch)); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    if ($code !== 200 || !filter_var($b, FILTER_VALIDATE_IP)) { sx_json(['ok' => false, 'error' => sx_tr('netp.ip_fail')]); }
+    sx_json(['ok' => true, 'ip' => $b]);
+}
+sx_json(['ok' => false, 'error' => 'op'], 400);
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- NETWORK SAMPLER -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/netmon.php">
+<INLINE><![CDATA[<?php
+// Long-running network sampler (item 94; cron starts it every minute, one instance only, it exits when the Network part
+// is switched off). Every 5 s the wire interface's counters, every 15 s the containers' own counters, every 30 s a ping
+// to the router and outside. Live data in /tmp (SXNET_LIVE), the history on the flash every 30 minutes (SXNET_HIST).
+// It only reads counters and sends pings; nothing on the server is changed.
+if (PHP_SAPI !== 'cli') { exit; }
+require_once __DIR__ . '/net_lib.php';
+
+function sxnet_enabled() { return sx_on(sx_cfg()['show_net'] ?? '1'); }
+if (!sxnet_enabled()) { exit(0); }
+
+// tests: --rounds=N stops after N rounds, SX_NET_STEP sets the seconds between rounds
+$rounds = 0; foreach ($argv as $a) { if (preg_match('/^--rounds=(\d+)$/', $a, $m)) { $rounds = (int)$m[1]; } }
+$step = max(1, (int)(getenv('SX_NET_STEP') ?: 5));
+$H = json_decode((string)@file_get_contents(sxnet_hist_file()), true);
+if (!is_array($H)) { $H = []; }
+$H += ['v' => 1, 'days' => [], 'h24' => [], 'd7' => [], 'ctday' => ['d' => date('Y-m-d'), 'ct' => []], 'events' => []];
+$L0 = sxnet_live();
+if (is_array($L0) && !empty($L0['live']) && time() - (int)($L0['t'] ?? 0) < 600) { $live = $L0['live']; } else { $live = []; }
+
+$cfg = sxnet_cfg(); $iface = sxnet_iface($cfg);
+$prev = null; $prevT = 0; $prevTs = null;
+$b5 = [0, 0.0, 0.0]; $b30 = [0, 0.0, 0.0];
+$pids = []; $pidsT = 0; $ctPrev = []; $ctT = 0; $ctRate = [];
+$inet = ['state' => 'wait', 'since' => time()]; $pingT = 0; $slowN = 0; $failN = 0; $failSince = 0;
+$cfgT = time(); $saveT = time(); $link = sxnet_link($iface);
+
+function sxnet_save_hist(&$H) {
+    $f = sxnet_hist_file(); @mkdir(dirname($f), 0755, true);
+    $cut = date('Y-m-d', strtotime('-400 days'));
+    foreach (array_keys($H['days']) as $d) { if ($d < $cut) { unset($H['days'][$d]); } }
+    $H['events'] = array_slice($H['events'], -50);
+    @file_put_contents($f . '.tmp', json_encode($H)); @rename($f . '.tmp', $f);
+}
+function sxnet_bucket(&$b, &$list, $now, $len, $keep, $drx, $dtx) {
+    $k = intdiv($now, $len) * $len;
+    if ($b[0] && $b[0] !== $k) { $list[] = [$b[0], round($b[1] / $len), round($b[2] / $len)]; $b = [0, 0.0, 0.0]; }
+    if (!$b[0]) { $b[0] = $k; }
+    $b[1] += $drx; $b[2] += $dtx;
+    while ($list && $list[0][0] < $now - $keep) { array_shift($list); }
+}
+
+// a plugin update stops the sampler (pkill): keep the history of the last minutes
+if (function_exists('pcntl_async_signals')) {
+    pcntl_async_signals(true);
+    foreach ([SIGTERM, SIGINT] as $sg) { pcntl_signal($sg, function () use (&$H) { sxnet_save_hist($H); exit(0); }); }
+}
+
+while (true) {
+    $now = time(); $today = date('Y-m-d');
+    if (!is_dir(__DIR__)) { exit; }   // plugin removed
+
+    // settings: every minute (the Network page or the Sysbox settings may have changed)
+    if ($now - $cfgT >= 60) {
+        $cfgT = $now;
+        if (!sxnet_enabled()) { sxnet_save_hist($H); @unlink(sxnet_live_file()); exit(0); }
+        $cfg = sxnet_cfg(); $i2 = sxnet_iface($cfg);
+        if ($i2 !== $iface) { $iface = $i2; $prev = null; }
+        $link = sxnet_link($iface);
+    }
+
+    // a new day: today's per-container totals start again
+    if (($H['ctday']['d'] ?? '') !== $today) { $H['ctday'] = ['d' => $today, 'ct' => []]; sxnet_save_hist($H); $saveT = $now; }
+
+    // the wire interface (and Tailscale, which is part of it)
+    $dev = sxnet_dev(); $cur = $dev[$iface] ?? null; $ts = $dev['tailscale0'] ?? null; $rate = [0, 0];
+    if ($cur && $prev && $now > $prevT) {
+        $drx = $cur[0] >= $prev[0] ? $cur[0] - $prev[0] : $cur[0]; $dtx = $cur[1] >= $prev[1] ? $cur[1] - $prev[1] : $cur[1];   // a counter reset counts from 0
+        $dt = $now - $prevT; $rate = [round($drx / $dt), round($dtx / $dt)];
+        $live[] = [$now, $rate[0], $rate[1]];
+        while ($live && $live[0][0] < $now - 3600) { array_shift($live); }
+        sxnet_bucket($b5, $H['h24'], $now, 300, 86400, $drx, $dtx);
+        sxnet_bucket($b30, $H['d7'], $now, 1800, 7 * 86400, $drx, $dtx);
+        $dd = $H['days'][$today] ?? [0, 0, 0, 0];
+        $dd[0] += $drx; $dd[1] += $dtx;
+        if ($ts && $prevTs) { $dd[2] += $ts[0] >= $prevTs[0] ? $ts[0] - $prevTs[0] : $ts[0]; $dd[3] += $ts[1] >= $prevTs[1] ? $ts[1] - $prevTs[1] : $ts[1]; }
+        $H['days'][$today] = $dd;
+    }
+    if ($cur) { $prev = $cur; $prevT = $now; }
+    $prevTs = $ts;
+
+    // containers: their own network counters (/proc/<pid>/net/dev); the list of containers every minute
+    if ($now - $ctT >= 3 * $step) {
+        if ($now - $pidsT >= 12 * $step) { $pids = sxnet_ct_pids(); $pidsT = $now; }
+        $dtc = $ctT ? $now - $ctT : 0; $ctT = $now; $newPrev = []; $ctRate = [];
+        foreach ($pids as $n => $pid) {
+            $b = sxnet_ct_bytes($pid); if ($b === null) { continue; }
+            $p = $ctPrev[$n] ?? null;
+            if ($p && $dtc > 0) {
+                $samePid = $p[2] === $pid;
+                $drx = ($samePid && $b[0] >= $p[0]) ? $b[0] - $p[0] : $b[0]; $dtx = ($samePid && $b[1] >= $p[1]) ? $b[1] - $p[1] : $b[1];
+                $ctRate[$n] = [round($drx / $dtc), round($dtx / $dtc)];
+                $c = $H['ctday']['ct'][$n] ?? [0, 0]; $H['ctday']['ct'][$n] = [$c[0] + $drx, $c[1] + $dtx];
+            }
+            $newPrev[$n] = [$b[0], $b[1], $pid];
+        }
+        $ctPrev = $newPrev;
+    }
+
+    // internet: every 30 s; slow after 3 slow checks in a row, down after 2 failed ones; an outage is logged when it ends
+    if ($now - $pingT >= 6 * $step) {
+        $pingT = $now; $c = sxnet_check($cfg); $raw = $c['raw'];
+        if ($raw === 'ok' || $raw === 'slow') {
+            $failN = 0; $slowN = $raw === 'slow' ? $slowN + 1 : 0;
+            $st = $slowN >= 3 ? 'slow' : 'ok';
+            $n = count($H['events']);
+            if ($n && $H['events'][$n - 1]['e'] === null) { $H['events'][$n - 1]['e'] = $now; sxnet_save_hist($H); $saveT = $now; }
+        } else {
+            $slowN = 0; if ($failN === 0) { $failSince = $c['t']; } $failN++;
+            $st = $failN >= 2 ? $raw : ($inet['state'] === 'wait' ? 'ok' : $inet['state']);
+            $n = count($H['events']);
+            if ($failN >= 2 && (!$n || $H['events'][$n - 1]['e'] !== null)) { $H['events'][] = ['s' => $failSince, 'e' => null, 'k' => $raw]; }
+            elseif ($failN >= 2 && $n) { $H['events'][$n - 1]['k'] = $raw; }
+        }
+        if ($st !== $inet['state']) { $inet['since'] = ($st === 'down' || $st === 'norouter') ? $failSince : $now; }
+        $inet = array_merge($inet, $c, ['state' => $st]);
+    }
+
+    // the live file for the tile and the page
+    $L = ['t' => $now, 'iface' => $iface, 'link' => $link, 'rate' => $rate, 'live' => $live, 'ct' => $ctRate, 'ct_names' => array_keys($pids),
+          'inet' => $inet, 'h24' => $H['h24'], 'd7' => $H['d7'], 'days' => array_slice($H['days'], -62, null, true), 'ctday' => $H['ctday'], 'events' => array_slice($H['events'], -20),
+          'unit' => $cfg['unit'], 'slow_ms' => (int)$cfg['slow_ms']];
+    $f = sxnet_live_file(); @file_put_contents($f . '.tmp', json_encode($L)); @rename($f . '.tmp', $f);
+    if ($now - $saveT >= 1800) { sxnet_save_hist($H); $saveT = $now; }
+    if ($rounds && --$rounds === 0) { sxnet_save_hist($H); exit(0); }
+    sleep($step);
+}
+]]></INLINE>
+</FILE>
+
 <!-- Permissions + done -->
 <FILE Name="/tmp/&name;_finish.sh" Run="/bin/bash">
 <INLINE><![CDATA[
@@ -11238,6 +12804,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 */10 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/sample.php >/dev/null 2>&1
 # Sysbox: records the CPU load in RAM for the dashboard graph (one long-running process, restarted if it stops)
 * * * * * flock -n -E 0 /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
+# Sysbox: network meter (traffic counters every 5 s, internet ping every 30 s; one long-running process, restarted if it stops)
+* * * * * flock -n -E 0 /tmp/sysbox_net.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
 * * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/notify.php >/dev/null 2>&1
 # Sysbox: weekly summary, checked hourly (day and hour are settings)
@@ -11256,6 +12824,10 @@ nohup bash -c 'for i in $(seq 1 60); do [ -e /var/log/plugins/sysbox.plg ] && br
 # start the CPU recorder right away (cron keeps it alive afterwards)
 pkill -f "plugins/sysbox/cpuhist.php" 2>/dev/null
 setsid nohup flock -n /tmp/sysbox_hist.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1 </dev/null &
+
+# start the network meter right away (it exits by itself when the Network part is switched off)
+pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
+setsid nohup flock -n /tmp/sysbox_net.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1 </dev/null &
 
 # the claude container flag for the header button (Claude Guard tick; cron repeats it every 2 minutes)
 setsid nohup "$PHPBIN" /usr/local/emhttp/plugins/sysbox/guard_run.php tick >/dev/null 2>&1 </dev/null &
@@ -11284,6 +12856,7 @@ rm -rf /usr/local/emhttp/plugins/sysbox
 rm -rf /usr/local/emhttp/plugins/Sysbox
 pkill -f "php -S 127.0.0.1:18184" 2>/dev/null
 pkill -f "plugins/sysbox/cpuhist.php" 2>/dev/null
+pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
 rm -f /tmp/sysbox_*
 rm -f /boot/config/plugins/sysbox/sysbox.cron
 /usr/local/sbin/update_cron 2>/dev/null

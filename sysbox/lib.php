@@ -11,7 +11,9 @@ function sx_defaults() {
         'controls' => '1', 'logs' => '1', 'log_lines' => '100',
         'show_gpu' => '1', 'show_containers' => '1', 'hist_min' => '2', 'cpu_sec' => '1', 'clk_sec' => '2', 'show_clock' => '1',
         // Dashboard tile (item 53): blocks on or off, their order, and what the RAM, CPU and Power blocks show
-        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,con', 'ram_leg' => '1',
+        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,net,con', 'ram_leg' => '1',
+        // Network part (item 94): on by default; its own settings (interface, pings, unit, Discord) are in network.cfg
+        'show_net' => '1', 'net_speed' => '1', 'net_today' => '1', 'net_hist' => '1', 'net_inet' => '1', 'net_top' => '1',
         'cpu_load' => '1', 'cpu_temp' => '1', 'cpu_pow' => '1', 'cpu_hist' => '1', 'cpu_per' => '1', 'cpu_la' => '0',
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
         'ram_warn' => '80', 'ram_crit' => '92', 'log_warn' => '80', 'log_crit' => '92',
@@ -32,10 +34,15 @@ function sx_cfg() {
 }
 
 // The tile's block order: the saved list, unknown names dropped, missing ones added at the end
-const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'con'];
+const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
 function sx_order($cfg) {
     $o = array_values(array_unique(array_intersect(array_map('trim', explode(',', (string)($cfg['order'] ?? ''))), SX_BLOCKS)));
-    foreach (SX_BLOCKS as $b) { if (!in_array($b, $o, true)) { $o[] = $b; } }
+    // a block that is new since the order was saved goes after the one before it in the default order (Network after Power)
+    foreach (SX_BLOCKS as $i => $b) {
+        if (in_array($b, $o, true)) { continue; }
+        $at = $i > 0 ? array_search(SX_BLOCKS[$i - 1], $o, true) : -1;
+        array_splice($o, $at === false ? count($o) : $at + 1, 0, [$b]);
+    }
     return $o;
 }
 

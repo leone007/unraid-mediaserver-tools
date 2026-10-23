@@ -2088,5 +2088,342 @@
  },
  "uj.all_dc_left": {
   "text": "Nem indult el: {l}"
+ },
+ "net.title": {
+  "text": "Hálózat"
+ },
+ "net.starting": {
+  "text": "A hálózatmérő indul… az első számok pár másodperc múlva jönnek."
+ },
+ "net.down": {
+  "text": "Le"
+ },
+ "net.up": {
+  "text": "Fel"
+ },
+ "net.today": {
+  "text": "Ma"
+ },
+ "net.last30": {
+  "text": "utolsó 30 perc · csúcs {v}"
+ },
+ "net.down_s": {
+  "text": "le"
+ },
+ "net.up_s": {
+  "text": "fel"
+ },
+ "net.router_ms": {
+  "text": "router {v}"
+ },
+ "net.no_answer": {
+  "text": "nem válaszol"
+ },
+ "net.outside_none": {
+  "text": "kint: nincs válasz"
+ },
+ "net.since": {
+  "text": "{t} óta ({m} perc)"
+ },
+ "net.inet_ok": {
+  "text": "Internet rendben"
+ },
+ "net.inet_slow": {
+  "text": "Lassú internet"
+ },
+ "net.inet_down": {
+  "text": "Nincs internet"
+ },
+ "net.inet_norouter": {
+  "text": "A router nem érhető el"
+ },
+ "net.inet_wait": {
+  "text": "Az internet ellenőrzése…"
+ },
+ "net.details": {
+  "text": "részletek ›"
+ },
+ "attn.no_inet": {
+  "text": "nincs internet: a router válaszol, kint semmi"
+ },
+ "attn.no_router": {
+  "text": "a router nem válaszol"
+ },
+ "blk.net_speed": {
+  "text": "Sebesség most"
+ },
+ "blk.net_today": {
+  "text": "Mai forgalom"
+ },
+ "blk.net_hist": {
+  "text": "Görbe (30 perc)"
+ },
+ "blk.net_inet": {
+  "text": "Internet-ellenőrzés"
+ },
+ "blk.net_top": {
+  "text": "A 3 legforgalmasabb konténer"
+ },
+ "blk.net_hint": {
+  "text": "interfész, internet-ellenőrzés, mértékegység és Discord: Settings, Utilities, Network"
+ },
+ "netp.intro": {
+  "text": "A szerver és a konténerei forgalma, és hogy működik-e az internet. Az oldal csak számlálókat olvas és pingel; a szerveren semmit nem változtat. A szerver csak a saját forgalmát látja, a többi otthoni eszközét nem."
+ },
+ "netp.h.now": {
+  "text": "Most"
+ },
+ "netp.loading": {
+  "text": "Betöltés…"
+ },
+ "netp.h.traffic": {
+  "text": "Forgalom"
+ },
+ "netp.h.totals": {
+  "text": "Összesen"
+ },
+ "netp.h.totals_sub": {
+  "text": "le + fel, a hónap 1-jétől"
+ },
+ "netp.h.containers": {
+  "text": "Konténerek"
+ },
+ "netp.h.containers_sub": {
+  "text": "most és ma, a legforgalmasabb elöl"
+ },
+ "netp.h.outages": {
+  "text": "Internet-kimaradások"
+ },
+ "netp.h.settings": {
+  "text": "Beállítások"
+ },
+ "netp.h.settings_sub": {
+  "text": "30 másodpercenként egy ellenőrzés"
+ },
+ "netp.dow.0": {
+  "text": "V"
+ },
+ "netp.dow.1": {
+  "text": "H"
+ },
+ "netp.dow.2": {
+  "text": "K"
+ },
+ "netp.dow.3": {
+  "text": "Sze"
+ },
+ "netp.dow.4": {
+  "text": "Cs"
+ },
+ "netp.dow.5": {
+  "text": "P"
+ },
+ "netp.dow.6": {
+  "text": "Szo"
+ },
+ "netp.off": {
+  "text": "A Hálózat rész ki van kapcsolva a Sysbox beállításaiban, ezért semmi nem mérődik."
+ },
+ "netp.off_link": {
+  "text": "Sysbox beállítások"
+ },
+ "netp.starting": {
+  "text": "A hálózatmérő indul; az első számok pár másodperc múlva jönnek."
+ },
+ "netp.lead": {
+  "text": "{d} {unit} le, {u} fel."
+ },
+ "netp.lead_top": {
+  "text": "Ennek {p} %-át a(z) {c} viszi."
+ },
+ "netp.check_now": {
+  "text": "Internet ellenőrzése most"
+ },
+ "netp.show_ip": {
+  "text": "Publikus IP mutatása"
+ },
+ "netp.errors": {
+  "text": "hibák"
+ },
+ "netp.dropped": {
+  "text": "eldobott"
+ },
+ "netp.ts_today": {
+  "text": "Tailscale ma"
+ },
+ "netp.router": {
+  "text": "router"
+ },
+ "netp.public_ip": {
+  "text": "publikus IP"
+ },
+ "netp.checked": {
+  "text": "mostani ellenőrzés"
+ },
+ "netp.checked_ago": {
+  "text": "{s} mp-e ellenőrizve"
+ },
+ "netp.no_data": {
+  "text": "Még nincs adat."
+ },
+ "netp.collecting": {
+  "text": "Adatgyűjtés ehhez az időszakhoz…"
+ },
+ "netp.avg_5s": {
+  "text": "5 másodperces értékek"
+ },
+ "netp.avg_5m": {
+  "text": "5 perces átlagok"
+ },
+ "netp.avg_30m": {
+  "text": "30 perces átlagok"
+ },
+ "netp.peak": {
+  "text": "letöltési csúcs {v}, {t}"
+ },
+ "netp.today": {
+  "text": "Ma"
+ },
+ "netp.this_month": {
+  "text": "E hónap"
+ },
+ "netp.last_month": {
+  "text": "Előző hónap"
+ },
+ "netp.no_ct": {
+  "text": "Nincs futó konténer saját hálózattal."
+ },
+ "netp.c_name": {
+  "text": "Konténer"
+ },
+ "netp.c_now": {
+  "text": "Most le / fel {unit}"
+ },
+ "netp.c_rx": {
+  "text": "Ma le"
+ },
+ "netp.c_tx": {
+  "text": "Ma fel"
+ },
+ "netp.ct_note": {
+  "text": "A konténereken belül számolva, így az otthoni hálózati forgalom is benne van. A host hálózatot használó konténerek a szerver számlálóit használják, ezért nincsenek a listában."
+ },
+ "netp.ongoing": {
+  "text": "most is"
+ },
+ "netp.ev_down": {
+  "text": "{m} percig nem volt internet"
+ },
+ "netp.ev_router": {
+  "text": "{m} percig nem volt elérhető a router"
+ },
+ "netp.ev_down_d": {
+  "text": "a router válaszolt, a külső címek nem"
+ },
+ "netp.ev_router_d": {
+  "text": "még a router sem válaszolt"
+ },
+ "netp.n_outages": {
+  "one": "{n} az utolsó 7 napban",
+  "other": "{n} az utolsó 7 napban"
+ },
+ "netp.no_outages": {
+  "text": "nem volt az utolsó 7 napban"
+ },
+ "netp.no_outages_long": {
+  "text": "Az utolsó 7 napban nem volt internet-kimaradás."
+ },
+ "netp.older": {
+  "text": "Korábbi kimaradások"
+ },
+ "netp.s_auto": {
+  "text": "automatikus ({v})"
+ },
+ "netp.s_if": {
+  "text": "Interfész"
+ },
+ "netp.s_if_hint": {
+  "text": "amelyiken az internetforgalom megy; az automatikus az alapútvonal alatti portot választja"
+ },
+ "netp.s_router": {
+  "text": "Router"
+ },
+ "netp.s_router_hint": {
+  "text": "üres = az alapértelmezett átjáró"
+ },
+ "netp.s_out": {
+  "text": "Külső címek"
+ },
+ "netp.s_out_hint": {
+  "text": "egy-három, vesszővel elválasztva; nincs internet, ha egyik sem válaszol kétszer egymás után"
+ },
+ "netp.s_slow": {
+  "text": "Lassú, ha több mint"
+ },
+ "netp.s_slow_hint": {
+  "text": "ha három ellenőrzés egymás után e fölött van, sárga lesz az internet sora"
+ },
+ "netp.s_unit": {
+  "text": "Mértékegység"
+ },
+ "netp.u_mb": {
+  "text": "MB/s (mint a qBittorrent)"
+ },
+ "netp.u_mbit": {
+  "text": "Mbit/s (mint a szolgáltató)"
+ },
+ "netp.s_dc": {
+  "text": " üzenet egy internet-kimaradás után"
+ },
+ "netp.s_dc_hint": {
+  "text": "a kimaradás végén megy ki (közben a Discord nem érhető el), a kezdetével és a végével; a Sysbox webhookja"
+ },
+ "netp.save": {
+  "text": "Mentés"
+ },
+ "netp.saving": {
+  "text": "Mentés…"
+ },
+ "netp.saved": {
+  "text": "Elmentve"
+ },
+ "netp.not_saved": {
+  "text": "Nem sikerült menteni: {e}"
+ },
+ "netp.checking": {
+  "text": "Ellenőrzés…"
+ },
+ "netp.asking": {
+  "text": "Lekérdezés…"
+ },
+ "netp.err_if": {
+  "text": "Ismeretlen interfésznév"
+ },
+ "netp.err_host": {
+  "text": "Nem cím: {h}"
+ },
+ "netp.err_out": {
+  "text": "Adj meg egy-három külső címet"
+ },
+ "netp.ip_fail": {
+  "text": "A publikus címet nem sikerült lekérdezni (api.ipify.org)"
+ },
+ "netd.down_t": {
+  "text": "{d} nem volt internet"
+ },
+ "netd.down_d": {
+  "text": "A router válaszolt, a külső címek nem: a hiba a routeren túl volt (szolgáltató)."
+ },
+ "netd.router_t": {
+  "text": "{d} nem volt elérhető a router"
+ },
+ "netd.router_d": {
+  "text": "Még a router sem válaszolt: a kábel, a switch vagy maga a router."
+ },
+ "netd.from": {
+  "text": "Kezdete"
+ },
+ "netd.to": {
+  "text": "Vége"
  }
 }
