@@ -432,6 +432,14 @@
   "text": "Sonarr imported it; Jellyfin has not listed it yet",
   "note": "tooltip of the Imported badge."
  },
+ "week.eps": {
+  "text": "{n} episodes",
+  "note": "line under a season row in This week's episodes: several episodes of one season that come out on the same day are one row. {n} = how many."
+ },
+ "week.eps_jf": {
+  "text": "{n} in Jellyfin",
+  "note": "after the episode count of a season row, when some of its episodes are already in Jellyfin. {n} = how many."
+ },
  "why.container": {
   "text": "Container",
   "note": "why Jellyfin does not play a stream directly (its reason ContainerNotSupported): shown under the Mode badge and in its tooltip. Short."

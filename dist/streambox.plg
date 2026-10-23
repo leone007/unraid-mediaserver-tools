@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zd">
+<!ENTITY version   "2026.10.14ze">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Dashboard csempe This weeks episodes: ugyanannak az evadnak az egy napon erkezo epizodjai (2 vagy tobb) egy soron, mint a Jellyfinben
+###2026.10.14zd
 - Jellyfin Ezen a heten sor: ugyanannak az evadnak az egy napon erkezo epizodjai (2 vagy tobb) egy kartyan, kozos allapottal; a kartya a sorozat oldalara visz
 ###2026.10.14zc
 - Jellyfin: while the Watched page is open the library link of the page under it loses its pill, so only Watched is marked
@@ -610,6 +612,33 @@ $(function () {
     aired: ['mt-s-grey', 'sb-t-grey', T('week.st.aired')],
     wait:  ['mt-s-grey', 'sb-t-grey', T('week.st.wait')]
   };
+  // A season that comes out at once (2 or more episodes of one season on one day) is one row with one status:
+  // the most urgent state of the episodes not yet in Jellyfin (all in Jellyfin: green), as in the Jellyfin week row
+  var WORD = ['fail', 'dl', 'grab', 'imp', 'scan', 'pause', 'late', 'aired', 'wait'];
+  function weekItems(rows) {
+    var by = {}, order = [];
+    $.each(rows, function (i, r) {
+      var k = r.series + '|' + r.code.slice(0, 3);
+      if (!by[k]) { by[k] = []; order.push(k); }
+      by[k].push(r);
+    });
+    var out = [];
+    $.each(order, function (i, k) {
+      var g = by[k];
+      if (g.length < 2) { out.push(g[0]); return; }
+      g = g.slice().sort(function (a, b) { return a.code < b.code ? -1 : (a.code > b.code ? 1 : 0); });
+      var f = g[0], l = g[g.length - 1], run = +l.code.slice(4) - +f.code.slice(4) + 1 === g.length;
+      var jf = $.grep(g, function (r) { return r.st === 'jf' || r.st === 'file'; }).length, m = null;
+      for (var j = 0; j < WORD.length && !m; j++) {
+        var x = $.grep(g, function (r) { return r.st === WORD[j]; });
+        if (x.length) { m = WORD[j] === 'dl' ? x.sort(function (a, b) { return (a.pct || 0) - (b.pct || 0); })[0] : x[0]; }
+      }
+      m = m || f;
+      out.push($.extend({}, m, { code: run ? f.code + '–' + l.code.slice(3) : f.code.slice(0, 3), title: '', grp: g, jf: jf,
+        st: jf === g.length ? 'jf' : m.st, idx: [], 'new': $.grep(g, function (r) { return r['new']; }).length > 0 }));
+    });
+    return out;
+  }
   function renderWeek(w) {
     var $w = $('#sb-week').empty();
     if (!w || !w.show) { return; }
@@ -639,16 +668,19 @@ $(function () {
       $box.append($('<div class="sb-day">').toggleClass('sb-today', !!d.today)
         .append($('<span>').text((d.today ? T('week.today') + ' \u00B7 ' : '') + (d.ts ? dayLabel(d.ts) : d.label)))
         .append($('<span>').text(ready ? T('week.n_jf', { n: ready }) : '')));
-      $.each(d.rows, function (j, r) {
+      $.each(weekItems(d.rows), function (j, r) {
         var s = WST[r.st] || WST.wait;
         var $row = $('<div class="mt-r mt-n">').addClass(s[0]).css('grid-template-columns', t3);
         $row.append(icon('fa-television', '#9fb4c8'));
-        var $t = $('<div class="sb-nm">').attr('title', r.title ? r.code + ' \u00B7 ' + r.title : r.code).text(r.series + ' \u00B7 ' + r.code);
+        var ttl = r.grp ? $.map(r.grp, function (x) { return x.code + (x.title ? ' \u00B7 ' + x.title : '') + ' \u00B7 ' + (WST[x.st] || WST.wait)[2]; }).join('\n')
+          : (r.title ? r.code + ' \u00B7 ' + r.title : r.code);
+        var $t = $('<div class="sb-nm">').attr('title', ttl).text(r.series + ' \u00B7 ' + r.code);
         if (r['new']) { $t.append(' ').append($('<span class="sb-new">').attr('title', T('week.new_tip')).text(T('week.new'))); }
         var $nm = $('<div>').append($t);
         var sub = '';
         if (r.st === 'late') { sub = r.delay !== null ? T('week.late_usual', { usual: durTxt(r.delay), now: durTxt(w.now - r.air) }) : T('week.late_ago', { t: durTxt(w.now - r.air) }); }
         else if (r.idx && r.idx.length > 1 && (r.st === 'wait' || r.st === 'aired')) { sub = $.map(r.idx, function (x) { return x[0] + ' ~' + hm(x[1]); }).join(' \u00B7 '); }
+        if (r.grp) { sub = T('week.eps', { n: r.grp.length }) + (r.jf && r.jf < r.grp.length ? ' \u00B7 ' + T('week.eps_jf', { n: r.jf }) : '') + (sub ? ' \u00B7 ' + sub : ''); }
         if (sub) { $nm.append($('<div class="sb-wsub">').text(sub)); }
         if (r.st === 'dl' && r.pct !== null) { $nm.append($('<div class="sb-pb">').css('margin-top', '5px').append($('<i>').css({ width: r.pct + '%', background: COLOR.blue }))); }
         $row.append($nm);
@@ -3275,6 +3307,14 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Sonarr imported it; Jellyfin has not listed it yet",
   "note": "tooltip of the Imported badge."
  },
+ "week.eps": {
+  "text": "{n} episodes",
+  "note": "line under a season row in This week's episodes: several episodes of one season that come out on the same day are one row. {n} = how many."
+ },
+ "week.eps_jf": {
+  "text": "{n} in Jellyfin",
+  "note": "after the episode count of a season row, when some of its episodes are already in Jellyfin. {n} = how many."
+ },
  "why.container": {
   "text": "Container",
   "note": "why Jellyfin does not play a stream directly (its reason ContainerNotSupported): shown under the Mode badge and in its tooltip. Short."
@@ -4254,6 +4294,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "week.scan_tip": {
   "text": "A Sonarr importálta, a Jellyfin még nem listázza"
+ },
+ "week.eps": {
+  "text": "{n} epizód"
+ },
+ "week.eps_jf": {
+  "text": "{n} a Jellyfinben"
  },
  "why.container": {
   "text": "Konténer"

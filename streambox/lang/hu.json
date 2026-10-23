@@ -325,6 +325,12 @@
  "week.scan_tip": {
   "text": "A Sonarr importálta, a Jellyfin még nem listázza"
  },
+ "week.eps": {
+  "text": "{n} epizód"
+ },
+ "week.eps_jf": {
+  "text": "{n} a Jellyfinben"
+ },
  "why.container": {
   "text": "Konténer"
  },
