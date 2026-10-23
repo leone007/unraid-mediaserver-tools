@@ -147,6 +147,11 @@ function gd_brief_embed($c, $r, $now = null) {
         if (empty($c[$k])) { continue; }
         $t = $fn(); if ($t !== null && $t !== '') { $fields[] = [$name, $t]; }
     }
+    // 💡 the report's waiting suggestions (item 95 C); their order is their number
+    if (!empty($c['b_sug']) && !empty($r['id']) && is_file(__DIR__ . '/sugg_lib.php')) {
+        require_once __DIR__ . '/sugg_lib.php';
+        $f = gd_sug_field($c, gd_sug_of($r['id'])); if ($f) { $fields[] = $f; }
+    }
     $lvl = !$claude ? 'i' : ['green' => 'g', 'amber' => 'a', 'red' => 'rd'][$v];
     return sxn_embed($lvl, $title, mb_substr($desc, 0, 3500), $fields, 'Claude Guard');
 }
@@ -154,6 +159,12 @@ function gd_brief_embed($c, $r, $now = null) {
 function gd_brief_send($c, $r) {
     $hook = getenv('SX_BR_HOOK') ?: (string)(sx_cfg()['dc_hook'] ?? '');
     if ($hook === '') { return [false, sx_tr('gd.e_nohook')]; }
-    [$st, $e] = sxn_post($hook, [gd_brief_embed($c, $r)]);
+    $emb = gd_brief_embed($c, $r);
+    // with suggestions and the bot: sent with ?wait=true, the bot puts the numbers under it (item 95 C)
+    if (!empty($c['b_sug']) && !empty($r['id']) && function_exists('gd_sug_of') && gd_sug_dc_on($c)) {
+        $sids = array_column(array_slice(gd_sug_of($r['id']), 0, GD_SUG_MAX), 'id');
+        if ($sids) { return gd_sug_post($hook, $emb, $sids); }
+    }
+    [$st, $e] = sxn_post($hook, [$emb]);
     return [$st === 'ok', $e];
 }

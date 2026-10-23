@@ -20,7 +20,7 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
 #gdm .mt-band{margin-top:26px;padding:9px 12px}
 #gdm .mt-band span{font-weight:600}
-#gdm .mt-band.gdm-b-amber span{color:#d9921f}#gdm .mt-band.gdm-b-red span{color:#e5534b}
+#gdm .mt-band.gdm-b-amber span{color:#d9921f}#gdm .mt-band.gdm-b-purple span{color:#9a7de6}#gdm .mt-band.gdm-b-red span{color:#e5534b}
 #gdm .mt-box{margin-top:8px}
 #gdm .mt-box>:first-child{border-top:0}
 #gdm .gdm-status{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:9px 12px;border-top:1px solid var(--gdm-line);font-size:12px}
@@ -68,6 +68,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-form{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;border:1px solid rgba(154,125,230,.5);background:rgba(154,125,230,.08);padding:8px 10px}
 #gdm .gdm-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;opacity:.85;flex:1 1 240px;min-width:0}
 #gdm .gdm-form input[type=text]{margin:0;width:100%}
+#gdm .gdm-conf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:rgba(229,83,75,.08);box-shadow:inset 3px 0 0 #e5534b;padding:8px 10px}
+#gdm .gdm-conf span{flex:1 1 260px;white-space:normal}
+#gdm .gdm-acts.gdm-row2{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}
 @media (max-width:860px){#gdm .gdm-it{grid-template-columns:1fr}#gdm .gdm-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap}#gdm .gdm-set{grid-template-columns:1fr}}
 </style>
 <div id="gdm">
@@ -78,6 +81,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 
 <div class="mt-band" id="gdm-rb"><span id="gdm-rtitle"><?=$gdm_t('gdm.h.latest')?></span><b id="gdm-rband"></b></div>
 <div class="mt-box" id="gdm-rep"></div>
+
+<div class="mt-band gdm-b-purple"><span><?=$gdm_t('sg.h')?></span><b id="gdm-sband"></b></div>
+<div class="mt-box" id="gdm-sug"></div>
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.events')?></span><b id="gdm-eband"></b></div>
 <div class="mt-box" id="gdm-ev"></div>
@@ -224,6 +230,56 @@ $(function () {
     api('run').done(function (r) { if (!r.ok) { WAIT = 0; window.alert(r.error); } load(); }).fail(function (x) { WAIT = 0; window.alert(err(x)); });
   });
 
+  // ---- suggestions (item 95 C): Claude picks from the server's menu; nothing starts without Approve and the confirmation.
+  // An approved one leaves the list (its job is in Activity) and comes back only when it fails.
+  var SICO = {upd_safe: '&#9650;', upd_look: '&#9650;', snap_del: '&#10005;', selftest: '&#10003;', check: '&#8635;', sbx_dismiss: '&#8856;'};
+  var SSRC = {upd_safe: 'updates', upd_look: 'updates', snap_del: 'snapshots', selftest: 'updates', check: 'updates', sbx_dismiss: 'seedbox'};
+  var SST = {done: 's-green', fail: 's-red', run: 's-blue', no: 's-grey', expired: 's-grey', gone: 's-grey'};
+  var SCONF = null;   // the open confirmation survives the refresh
+  function sTitle(x) { return T('sug.t_' + x.act, x.vars || {}); }
+  function sOpen(x) { return (x.state === 'wait' || x.state === 'fail') && Math.floor(Date.now() / 1000) - x.t < 86400; }
+  function sRow(x, open) {
+    var acts = '';
+    if (open) { acts = '<input type="button" class="gdm-sok gdm-sm" value="' + esc(x.state === 'fail' ? T('sg.b_again') : T('sg.b_ok')) + '"><input type="button" class="gdm-sno gdm-ghost gdm-sm" value="' + esc(T('sg.b_no')) + '">'; }
+    else { acts = '<span class="gdm-chip' + (x.state === 'done' ? ' g' : x.state === 'fail' ? ' r' : x.state === 'run' ? ' b' : '') + '">' + esc(T('sg.st_' + x.state)) + '</span>'; }
+    var cls = open ? (x.state === 'fail' ? 's-red' : 's-purple') : (SST[x.state] || 's-grey');
+    return '<div class="gdm-row gdm-it ' + cls + '" data-sid="' + esc(x.id) + '"><span><b class="k"><span class="gdm-ico" style="color:#9a7de6">' + (SICO[x.act] || '?') + '</span> ' + esc(T('sg.src_' + SSRC[x.act])) + '</b><small>' + esc(day(x.t) + ' ' + hm(x.t)) + (x.via ? ' · ' + esc(T('sg.via_' + x.via)) : '') + '</small></span><span>' +
+      '<p><b>' + esc(sTitle(x)) + '</b></p>' + (x.why ? '<p class="why">' + esc(T('sg.why', { t: x.why })) + '</p>' : '') +
+      (x.msg && x.state !== 'wait' ? '<p class="why ' + (x.state === 'fail' ? 'gdm-er' : '') + '">' + esc(x.msg) + '</p>' : '') +
+      '</span><span class="gdm-acts gdm-row2">' + acts + '</span></div>';
+  }
+  function sConfHtml(x) { return '<div class="gdm-conf"><span>' + esc(T('sug.c_' + x.act, x.vars || {})) + '</span><input type="button" class="gdm-sgo gdm-sm" value="' + esc(T('sug.b_' + x.act)) + '"><input type="button" class="gdm-scx gdm-ghost gdm-sm" value="' + esc(T('gdm.cancel')) + '"></div>'; }
+  function sOn(c) { return +c.s_upd_safe || +c.s_upd_look || +c.s_snap || +c.s_test || +c.s_sbx; }
+  function drawSug(r) {
+    var L = r.sug || [], open = [], old = [], cnt = {ok: 0, no: 0, ex: 0};
+    $.each(L, function (i, x) {
+      if (sOpen(x)) { open.push(x); return; }
+      if (x.state === 'run') { return; }   // in Activity
+      old.push(x); if (x.state === 'done' || x.state === 'fail') { cnt.ok++; } else if (x.state === 'no') { cnt.no++; } else { cnt.ex++; }
+    });
+    var h = '';
+    if (!open.length) { h += '<div class="gdm-lead"><p class="gdm-mut">' + esc(sOn(r.cfg) ? T('sg.none') : T('sg.off')) + '</p></div>'; }
+    $.each(open, function (i, x) { h += sRow(x, true); });
+    if (old.length) { h += gbar('sold', 's-grey', esc(T('sg.old')), esc(T('sg.old_count', { n: old.length, a: cnt.ok, d: cnt.no, e: cnt.ex }))) + grp('sold', $.map(old, function (x) { return sRow(x, false); }).join('')); }
+    $('#gdm-sug').html(h);
+    $('#gdm-sband').text(open.length ? T('sg.band', { n: open.length }) : '');
+    if (SCONF) { var x = null; $.each(open, function (i, y) { if (y.id === SCONF) { x = y; } }); if (x) { $('#gdm [data-sid="' + x.id + '"]').append(sConfHtml(x)); } else { SCONF = null; } }
+  }
+  function sById(id) { var x = null; $.each((D && D.sug) || [], function (i, y) { if (y.id === id) { x = y; } }); return x; }
+  $(document).on('click', '#gdm .gdm-sok', function () {
+    var $r = $(this).closest('[data-sid]'), x = sById(String($r.data('sid'))); if (!x) { return; }
+    $('#gdm .gdm-conf').remove(); SCONF = x.id; $r.append(sConfHtml(x));
+  });
+  $(document).on('click', '#gdm .gdm-scx', function () { $(this).closest('.gdm-conf').remove(); SCONF = null; });
+  $(document).on('click', '#gdm .gdm-sgo', function () {
+    var $b = $(this).prop('disabled', true), id = String($(this).closest('[data-sid]').data('sid'));
+    api('sug_do', {sid: id}).done(function (r) { SCONF = null; if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
+  });
+  $(document).on('click', '#gdm .gdm-sno', function () {
+    var $b = $(this).prop('disabled', true), id = String($(this).closest('[data-sid]').data('sid'));
+    api('sug_no', {sid: id}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
+  });
+
   // ---- event reports of the last 7 days, and the earlier reports folded by week
   function evRow(x) {
     var n = bad(x), v = x.error || x.skipped ? 'amber' : x.verdict, l = LV[v] || LV.amber;
@@ -272,8 +328,10 @@ $(function () {
         ' <span class="gdm-chip ' + (r.ctx_path ? 'g' : 'a') + '">' + esc(r.ctx_path ? T('gds.ctx_reads', { p: r.ctx_path }) : T('gds.ctx_none')) + '</span>', esc(T('gds.ctx_hint'))) +
       row('Discord', '<select id="gdm-dc">' + dc + '</select>', esc(T('gds.dc_hint'))) +
       row(esc(T('gds.brief_lb')), ck('gdm-br', c.brief, esc(T('gds.brief'))), esc(T('gds.brief_hint'))) +
-      row(esc(T('gds.parts')), $.map(['ep', 'dl', 'upd', 'net', 'pow'], function (k) { return ck('gdm-b' + k, c['b_' + k], esc(T('gds.p_' + k))); }).join('') +
+      row(esc(T('gds.parts')), $.map(['ep', 'dl', 'upd', 'net', 'pow', 'sug'], function (k) { return ck('gdm-b' + k, c['b_' + k], esc(T('gds.p_' + k))); }).join('') +
         '<input type="button" id="gdm-brnow" value="' + esc(T('gds.brief_now')) + '"><span id="gdm-brmsg"></span>', esc(T('gds.parts_hint'))) +
+      row(esc(T('gds.s_lb')), $.map(['upd_safe', 'upd_look', 'snap', 'test', 'sbx'], function (k) { return ck('gdm-s' + k, c['s_' + k], esc(T('gds.s_' + k))); }).join(''), esc(T('gds.s_hint'))) +
+      row(esc(T('gds.sdc_lb')), ck('gdm-sdc', c.s_dc, esc(T('gds.sdc'))) + ' <span class="gdm-chip ' + (r.bot ? 'g' : 'a') + '">' + esc(r.bot ? T('gds.bot_ok') : T('gds.bot_no')) + '</span>', esc(T('gds.sdc_hint'))) +
       row(esc(T('gds.todo_lb')), ck('gdm-todo', c.todo, esc(T('gds.todo'))), esc(T('gds.todo_hint'))) +
       '<div class="gdm-row gdm-set"><span></span><div class="gdm-ctl"><input type="button" id="gdm-save" value="' + esc(T('gds.save')) + '"><span id="gdm-smsg"></span></div></div>');
   }
@@ -283,7 +341,8 @@ $(function () {
     api('save', {on: b('gdm-on'), hour: $('#gdm-h').val(), min: $('#gdm-m').val(), q_from: $('#gdm-qf').val(), q_to: $('#gdm-qt').val(),
       ev_sys: b('gdm-es'), ev_dsk: b('gdm-ed'), ev_sbx: b('gdm-eb'), ev_max: $('#gdm-em').val(), t_disk: b('gdm-td'), t_ct: b('gdm-tc'), t_log: b('gdm-tl'), t_arr: b('gdm-ta'),
       limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val(),
-      brief: b('gdm-br'), b_ep: b('gdm-bep'), b_dl: b('gdm-bdl'), b_upd: b('gdm-bupd'), b_net: b('gdm-bnet'), b_pow: b('gdm-bpow')})
+      brief: b('gdm-br'), b_ep: b('gdm-bep'), b_dl: b('gdm-bdl'), b_upd: b('gdm-bupd'), b_net: b('gdm-bnet'), b_pow: b('gdm-bpow'),
+      b_sug: b('gdm-bsug'), s_dc: b('gdm-sdc'), s_upd_safe: b('gdm-supd_safe'), s_upd_look: b('gdm-supd_look'), s_snap: b('gdm-ssnap'), s_test: b('gdm-stest'), s_sbx: b('gdm-ssbx')})
       .done(function (r) { if (r.ok) { $m.attr('class', 'gdm-ok').text(T('gdm.saved')); load(); } else { $m.attr('class', 'gdm-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'gdm-er').text(err(x)); });
   });
 
@@ -295,7 +354,7 @@ $(function () {
   });
 
   function draw(r) {
-    D = r; drawAct(r); drawRep(r); drawOld(r); drawKnown(r); restoreForm();
+    D = r; drawAct(r); drawRep(r); drawSug(r); drawOld(r); drawKnown(r); restoreForm();
     if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); }
   }
   function load() {
@@ -303,7 +362,8 @@ $(function () {
       // the worker starts in the background: right after the click its job may not exist yet
       if (WAIT && (r.busy || Math.floor(Date.now() / 1000) - WAIT > 20 || $.grep(r.reports || [], function (x) { return x.t >= WAIT - 2; }).length)) { if (!r.busy) { WAIT = 0; } }
       draw(r);
-      clearTimeout(pollT); if (r.busy || WAIT) { pollT = setTimeout(load, 3000); }
+      var live = $.grep(r.jobs || [], function (j) { return j.state === 'running'; }).length;   // a suggestion's job (an update) runs outside the Claude lock
+      clearTimeout(pollT); if (r.busy || WAIT || live) { pollT = setTimeout(load, 3000); }
     }).fail(function (x) { $('#gdm-act').html('<div class="gdm-status gdm-er">' + esc(err(x)) + '</div>'); });
   }
   load();

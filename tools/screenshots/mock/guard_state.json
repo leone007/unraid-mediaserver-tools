@@ -1,1 +1,134 @@
-{"ok":true,"cfg":{"on":1,"hour":7,"min":0,"q_from":22,"q_to":6,"ev_sys":1,"ev_dsk":1,"ev_sbx":1,"ev_max":3,"t_disk":1,"t_ct":1,"t_log":1,"t_arr":1,"limit":70,"discord":"issues","todo":1,"lang":"auto","ctx":"auto","brief":1,"b_ep":1,"b_dl":1,"b_upd":1,"b_net":1,"b_pow":1},"ct":true,"usage":{"week":34},"reports":[],"jobs":[],"night":0,"ev_today":0,"quiet":false,"ctx_path":"\/work\/unraid-mediaserver-tools\/ATADAS.md","lang_now":"hu","busy":false,"log":[],"known":[]}
+{
+ "ok": true,
+ "cfg": {
+  "on": 1,
+  "hour": 7,
+  "min": 0,
+  "q_from": 22,
+  "q_to": 6,
+  "ev_sys": 1,
+  "ev_dsk": 1,
+  "ev_sbx": 1,
+  "ev_max": 3,
+  "t_disk": 1,
+  "t_ct": 1,
+  "t_log": 1,
+  "t_arr": 1,
+  "limit": 70,
+  "discord": "issues",
+  "todo": 1,
+  "lang": "auto",
+  "ctx": "auto",
+  "brief": 1,
+  "b_ep": 1,
+  "b_dl": 1,
+  "b_upd": 1,
+  "b_net": 1,
+  "b_pow": 1,
+  "b_sug": 1,
+  "s_dc": 1,
+  "s_upd_safe": 1,
+  "s_upd_look": 1,
+  "s_snap": 1,
+  "s_test": 1,
+  "s_sbx": 0
+ },
+ "ct": true,
+ "usage": {
+  "week": 34
+ },
+ "reports": [],
+ "jobs": [],
+ "night": 0,
+ "ev_today": 0,
+ "quiet": false,
+ "ctx_path": "/work/unraid-mediaserver-tools/ATADAS.md",
+ "lang_now": "hu",
+ "busy": false,
+ "log": [],
+ "known": [],
+ "bot": true,
+ "sug": [
+  {
+   "id": "a1b2c3d4e5",
+   "rid": "r1",
+   "t": 1792759179,
+   "act": "upd_safe",
+   "arg": "prowlarr",
+   "vars": {
+    "n": "prowlarr",
+    "from": "2.6.5",
+    "to": "2.6.6"
+   },
+   "why": "Waiting 3 days; a patch release, the release notes are harmless.",
+   "state": "wait"
+  },
+  {
+   "id": "b1b2c3d4e5",
+   "rid": "r1",
+   "t": 1792759179,
+   "act": "snap_del",
+   "arg": "cache/docker@before-update-jellyfin-2026-10-20-0750",
+   "vars": {
+    "s": "before-update-jellyfin-2026-10-20-0750",
+    "ds": "cache/docker",
+    "size": "4.1 GB"
+   },
+   "why": "Jellyfin has run fine on 12.3 for 2 days.",
+   "state": "wait"
+  },
+  {
+   "id": "c1b2c3d4e5",
+   "rid": "r1",
+   "t": 1792759179,
+   "act": "upd_look",
+   "arg": "sonarr",
+   "vars": {
+    "n": "sonarr",
+    "from": "4.0.15",
+    "to": "4.0.16"
+   },
+   "why": "Our Seedbox code uses the queue API; the notes mention no change there.",
+   "state": "fail",
+   "via": "discord",
+   "rt": 1792760979,
+   "msg": "sonarr: did not stop, nothing was changed"
+  },
+  {
+   "id": "d1b2c3d4e5",
+   "rid": "r0",
+   "t": 1792672779,
+   "act": "selftest",
+   "arg": "",
+   "vars": {},
+   "why": "It has not run since the reboot.",
+   "state": "done",
+   "via": "page",
+   "msg": "Self-test: 8 of 8 passed"
+  },
+  {
+   "id": "e1b2c3d4e5",
+   "rid": "r0",
+   "t": 1792672779,
+   "act": "check",
+   "arg": "",
+   "vars": {},
+   "why": "The last check is 2 days old.",
+   "state": "no"
+  },
+  {
+   "id": "f1b2c3d4e5",
+   "rid": "r0",
+   "t": 1792582779,
+   "act": "snap_del",
+   "arg": "cache/docker@before-update-radarr-2026-10-19-0610",
+   "vars": {
+    "s": "before-update-radarr-2026-10-19-0610",
+    "ds": "cache/docker",
+    "size": "310 MB"
+   },
+   "why": "Radarr runs fine.",
+   "state": "expired"
+  }
+ ]
+}

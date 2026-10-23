@@ -3485,5 +3485,313 @@
  "brief.job_failed": {
   "text": "failed",
   "note": "Discord morning brief: state of a Seedbox Tools job"
+ },
+ "sug.t_upd_safe": {
+  "text": "Update {n} ({from} → {to})",
+  "note": "title of a Claude Guard suggestion: a safe (green) container update. {n} container name, {from}/{to} versions. Also in Discord."
+ },
+ "sug.t_upd_look": {
+  "text": "Update {n} ({from} → {to}, look first)",
+  "note": "title of a suggestion: a look-first (amber) container update. Also in Discord."
+ },
+ "sug.t_snap_del": {
+  "text": "Delete snapshot {s} ({size})",
+  "note": "title of a suggestion: delete an old before-update ZFS snapshot. {s} snapshot name, {size} space it holds. Also in Discord."
+ },
+ "sug.t_selftest": {
+  "text": "Run the self-test of our connections",
+  "note": "title of a suggestion: run the Update manager self-test. Also in Discord."
+ },
+ "sug.t_check": {
+  "text": "Check for updates now",
+  "note": "title of a suggestion: the Update manager Check now. Also in Discord."
+ },
+ "sug.t_sbx_dismiss": {
+  "text": "Hide the stuck Seedbox job {n}",
+  "note": "title of a suggestion: hide a stuck season pack job in Seedbox Tools. {n} its name. Also in Discord."
+ },
+ "sug.c_upd_safe": {
+  "text": "Update {n} now ({from} → {to})? A ZFS snapshot of its data is made first and the self-test runs after it.",
+  "note": "confirmation text before a suggested container update starts."
+ },
+ "sug.c_upd_look": {
+  "text": "Update {n} now ({from} → {to})? It is a look-first update: read the release notes on the Update manager page if you have not. A ZFS snapshot is made first.",
+  "note": "confirmation text before a suggested look-first update starts."
+ },
+ "sug.c_snap_del": {
+  "text": "Delete snapshot {ds}@{s} for good? It cannot be undone; the container can no longer be restored from it.",
+  "note": "confirmation text before a suggested snapshot is deleted."
+ },
+ "sug.c_selftest": {
+  "text": "Run the self-test now? It only reads (logins and lists of the programs).",
+  "note": "confirmation text before the suggested self-test."
+ },
+ "sug.c_check": {
+  "text": "Check for updates now? It only reads (image registries, release notes).",
+  "note": "confirmation text before the suggested Check now."
+ },
+ "sug.c_sbx_dismiss": {
+  "text": "Hide the stuck job {n} in Seedbox Tools? Only the record changes; nothing is deleted and the season can be started again.",
+  "note": "confirmation text before a suggested Seedbox job is hidden."
+ },
+ "sug.b_upd_safe": {
+  "text": "Update",
+  "note": "button in the confirmation of a suggested update."
+ },
+ "sug.b_upd_look": {
+  "text": "Update",
+  "note": "button in the confirmation of a suggested look-first update."
+ },
+ "sug.b_snap_del": {
+  "text": "Delete",
+  "note": "button in the confirmation of a suggested snapshot deletion."
+ },
+ "sug.b_selftest": {
+  "text": "Run",
+  "note": "button in the confirmation of the suggested self-test."
+ },
+ "sug.b_check": {
+  "text": "Check",
+  "note": "button in the confirmation of the suggested Check now."
+ },
+ "sug.b_sbx_dismiss": {
+  "text": "Hide",
+  "note": "button in the confirmation of a suggested Seedbox hide."
+ },
+ "sug.e_noseedbox": {
+  "text": "Seedbox is not installed",
+  "note": "error of a suggestion: the Seedbox plugin is missing."
+ },
+ "sug.e_seedbox": {
+  "text": "Seedbox Tools did not hide the job (it is no longer stuck?)",
+  "note": "error of a suggestion: Seedbox refused to hide the job."
+ },
+ "sug.e_gone": {
+  "text": "This suggestion no longer exists",
+  "note": "error when the owner approves a suggestion that was removed."
+ },
+ "sug.e_done": {
+  "text": "This suggestion was already answered",
+  "note": "error when the suggestion is no longer waiting."
+ },
+ "sug.e_old": {
+  "text": "This suggestion is older than 24 hours",
+  "note": "error when an expired suggestion is approved."
+ },
+ "sug.e_stale": {
+  "text": "No longer valid: the update, snapshot or job is gone or changed. Nothing was started.",
+  "note": "error when the suggested action is no longer on the menu (e.g. the update was done meanwhile)."
+ },
+ "sug.e_nostart": {
+  "text": "the job did not start in 10 minutes",
+  "note": "error part: the started job never showed up."
+ },
+ "sug.j_page": {
+  "text": "Suggestion approved: {t}",
+  "note": "Activity row title when the owner approved a suggestion on the page. {t} the suggestion title."
+ },
+ "sug.j_dc": {
+  "text": "Suggestion approved on Discord: {t}",
+  "note": "Activity row title when the owner approved a suggestion with a reaction."
+ },
+ "sug.j_ok": {
+  "text": "Done: {t}",
+  "note": "Activity row when a suggestion finished well."
+ },
+ "sug.j_fail": {
+  "text": "Failed: {t}: {e}",
+  "note": "Activity row when a suggestion failed. {e} the error."
+ },
+ "sug.m_ok": {
+  "text": "done",
+  "note": "short result under a finished suggestion."
+ },
+ "sug.l_started": {
+  "text": "started, follow it on its own page too",
+  "note": "Activity log line right after a suggestion started a job."
+ },
+ "sg.h": {
+  "text": "Suggestions",
+  "note": "band title on the Claude Guard page."
+ },
+ "sg.band": {
+  "text": "{n} waiting",
+  "note": "right side of the Suggestions band."
+ },
+ "sg.b_ok": {
+  "text": "Approve",
+  "note": "button on a waiting suggestion; opens the confirmation."
+ },
+ "sg.b_again": {
+  "text": "Try again",
+  "note": "button on a failed suggestion."
+ },
+ "sg.b_no": {
+  "text": "Not now",
+  "note": "button on a suggestion: dismiss it (not offered again for 3 days)."
+ },
+ "sg.st_wait": {
+  "text": "waiting",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_run": {
+  "text": "running",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_done": {
+  "text": "done",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_fail": {
+  "text": "failed",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_no": {
+  "text": "not now",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_expired": {
+  "text": "expired",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_gone": {
+  "text": "no longer valid",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.src_updates": {
+  "text": "Update manager",
+  "note": "label of a suggestion row: which page the action belongs to."
+ },
+ "sg.src_snapshots": {
+  "text": "Snapshots",
+  "note": "label of a suggestion row: which page the action belongs to."
+ },
+ "sg.src_seedbox": {
+  "text": "Seedbox Tools",
+  "note": "label of a suggestion row: which page the action belongs to."
+ },
+ "sg.via_page": {
+  "text": "approved on the page",
+  "note": "small text: where the owner approved it."
+ },
+ "sg.via_discord": {
+  "text": "approved on Discord",
+  "note": "small text: where the owner approved it."
+ },
+ "sg.why": {
+  "text": "Claude: {t}",
+  "note": "why Claude suggests it. {t} Claude's sentence."
+ },
+ "sg.none": {
+  "text": "No suggestion waiting. In the daily report Claude may suggest an action from a fixed list; you approve it here or with a reaction on Discord.",
+  "note": "lead text when no suggestion waits."
+ },
+ "sg.off": {
+  "text": "Suggestions are off (no action type is allowed in the settings below).",
+  "note": "lead text when every suggestion type is off."
+ },
+ "sg.old": {
+  "text": "Earlier suggestions",
+  "note": "foldable bar title."
+ },
+ "sg.old_count": {
+  "text": "{n} · {a} approved, {d} not now, {e} expired",
+  "note": "count on the Earlier suggestions bar."
+ },
+ "gds.p_sug": {
+  "text": "Suggestions",
+  "note": "morning brief part chip: Claude's suggestions."
+ },
+ "gds.s_lb": {
+  "text": "Suggestions may offer",
+  "note": "settings label."
+ },
+ "gds.s_upd_safe": {
+  "text": "Safe container updates",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_upd_look": {
+  "text": "Look-first updates",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_snap": {
+  "text": "Old before-update snapshots to delete",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_test": {
+  "text": "Self-test, Check now",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_sbx": {
+  "text": "Seedbox: stuck job to hide",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_hint": {
+  "text": "Claude picks from these in the daily report (at most 3). Never the red (Wait) updates, never anything outside this list; each needs Approve and its own confirmation. Not now hides it for 3 days.",
+  "note": "hint under the suggestion types."
+ },
+ "gds.sdc_lb": {
+  "text": "Approve from Discord",
+  "note": "settings label."
+ },
+ "gds.sdc": {
+  "text": "with reactions under the morning brief",
+  "note": "checkbox label."
+ },
+ "gds.bot_ok": {
+  "text": "bot set ✓",
+  "note": "chip: the shared Discord bot is set."
+ },
+ "gds.bot_no": {
+  "text": "set the Discord bot below",
+  "note": "chip: the shared Discord bot is not set."
+ },
+ "gds.sdc_hint": {
+  "text": "The bot puts 1️⃣ 2️⃣ 3️⃣ 👎 under the brief; only your reaction counts, for 24 hours (👎 = Not now for all). A number starts the action without another question, like Approve and the confirmation here.",
+  "note": "hint under Approve from Discord."
+ },
+ "brief.h_sug": {
+  "text": "Suggestions ({n})",
+  "note": "Discord morning brief: field title of Claude's suggestions."
+ },
+ "brief.sug_how": {
+  "text": "Approve: react with the number (valid for 24 hours), 👎 = not now; or on the Claude Guard page",
+  "note": "Discord morning brief: how to approve (bot set)."
+ },
+ "brief.sug_page": {
+  "text": "Approve them on the Claude Guard page (Settings, Utilities)",
+  "note": "Discord morning brief: how to approve (no bot)."
+ },
+ "brief.h_sst": {
+  "text": "Status",
+  "note": "Discord morning brief: field title of the suggestions' status, edited later."
+ },
+ "brief.sst_wait": {
+  "text": "⏳ waiting",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_run": {
+  "text": "▶ running",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_done": {
+  "text": "✅ done",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_fail": {
+  "text": "⛔ failed (see the Guard page)",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_no": {
+  "text": "👎 not now",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_expired": {
+  "text": "⌛ expired",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_gone": {
+  "text": "✖ no longer valid",
+  "note": "Discord morning brief: state of one suggestion in the status field."
  }
 }

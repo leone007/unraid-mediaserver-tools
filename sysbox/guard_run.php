@@ -10,36 +10,6 @@ require_once __DIR__ . '/guard_lib.php';
 $mode = $argv[1] ?? ''; $kind = (string)($argv[2] ?? '');
 if (!in_array($mode, ['tick', 'run'], true) || ($mode === 'run' && !in_array($kind, ['daily', 'event', 'manual'], true))) { exit(1); }
 
-// the state file is shared by tick and run: read-change-write under its own lock
-function gd_state_edit($fn) {
-    $l = @fopen(gd_lock_file('state'), 'c'); if ($l) { flock($l, LOCK_EX); }
-    $S = upd_json(gd_state_file(), []); $out = $fn($S); upd_write(gd_state_file(), $S);
-    if ($l) { flock($l, LOCK_UN); fclose($l); }
-    return $out;
-}
-function gd_run_edit($fn) {
-    $l = @fopen(gd_lock_file('runfile'), 'c'); if ($l) { flock($l, LOCK_EX); }
-    $R = upd_json(gd_run_file(), ['jobs' => []]); $out = $fn($R); upd_write(gd_run_file(), $R);
-    if ($l) { flock($l, LOCK_UN); fclose($l); }
-    return $out;
-}
-function gd_job_start($kind, $text) {
-    return gd_run_edit(function (&$R) use ($kind, $text) {
-        $id = $kind . ':' . time();
-        $R['jobs'][$id] = ['kind' => $kind, 'text' => $text, 'state' => 'running', 'started' => time(), 'log' => []];
-        foreach ($R['jobs'] as $k => $j) { if ($j['state'] !== 'running' && time() - (int)($j['finished'] ?? 0) > 86400) { unset($R['jobs'][$k]); } }
-        return $id;
-    });
-}
-function gd_job($id, $set = [], $line = '') {
-    gd_run_edit(function (&$R) use ($id, $set, $line) {
-        if (!isset($R['jobs'][$id])) { return; }
-        $R['jobs'][$id] = $set + $R['jobs'][$id];
-        if ($line !== '') { $R['jobs'][$id]['log'][] = date('H:i:s') . ' ' . $line; }
-        if (isset($set['state']) && $set['state'] !== 'running') { $R['jobs'][$id]['finished'] = time(); }
-    });
-}
-
 if ($mode === 'tick') {
     $lk = @fopen(gd_lock_file('tick'), 'c');
     if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) { exit(0); }
@@ -48,6 +18,9 @@ if ($mode === 'tick') {
     $c = gd_cfg();
     $ev = gd_take_events();   // emptied even when the Guard is off, so the queue never grows
     if (empty($c['on']) || !is_file(gd_flag_file())) { exit(0); }
+    // suggestions (item 95 C): the owner's reactions under the morning brief, the started jobs, the status lines
+    require_once __DIR__ . '/sugg_lib.php';
+    if (is_file(gd_sug_file())) { gd_sug_poll($c, (string)(getenv('SX_BR_HOOK') ?: (sx_cfg()['dc_hook'] ?? ''))); }
     $want = ['sysbox' => !empty($c['ev_sys']), 'diskbox' => !empty($c['ev_dsk'])];
     $ev = array_values(array_filter($ev, function ($e) use ($want) { return !empty($want[$e['src']]) && in_array($e['level'] ?? '', ['a', 'rd'], true); }));
     $spawn = gd_state_edit(function (&$S) use ($c, $ev) {
@@ -101,12 +74,16 @@ if (empty($rep['error']) && $kind !== 'manual' && $u && $u['week'] >= (float)$c[
 
 if (empty($rep['error']) && empty($rep['skipped'])) {
     gd_job($id, [], sx_tr('gd.l_ask'));
-    [$ans, $e] = gd_ask(gd_prompt($kind, $snap, $prev, $events, $c));
+    // the daily and the manual report may suggest actions from the server's menu (item 95 C)
+    $menu = []; if ($kind !== 'event') { require_once __DIR__ . '/sugg_lib.php'; $menu = gd_sug_on($c) ? gd_sug_cands($c) : []; }
+    [$ans, $e] = gd_ask(gd_prompt($kind, $snap, $prev, $events, $c, $menu ? gd_sug_prompt($menu) : ''));
     if ($ans) { $rep = $ans + $rep; } else { $rep['error'] = $e; }
 }
+$picks = isset($rep['suggest']) && $menu ? gd_sug_pick($rep['suggest'], $menu) : []; unset($rep['suggest']);
 $rep['took'] = time() - $t0;
 // a skipped or failed run keeps its alerts for the next daily report
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
+if ($picks) { $rep['sug'] = gd_sug_add($rep['id'], $picks); }
 gd_report_add($rep);
 gd_handover($dir, $rep);
 // the morning brief (item 95 B) replaces the daily report's own message: it goes every day, also when all is green

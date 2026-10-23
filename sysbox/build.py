@@ -13,7 +13,7 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/ClaudeButton.page','sysbox/ClaudeButton.page','CLAUDE HEADER BUTTON'),('&plugdir;/claude.php','sysbox/claude.php','CLAUDE BUTTON ENDPOINT'),
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
  ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
- ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),('&plugdir;/brief_lib.php','sysbox/brief_lib.php','CLAUDE GUARD MORNING BRIEF'),
+ ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),('&plugdir;/brief_lib.php','sysbox/brief_lib.php','CLAUDE GUARD MORNING BRIEF'),('&plugdir;/sugg_lib.php','sysbox/sugg_lib.php','CLAUDE GUARD SUGGESTIONS'),
  ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),
  ('&plugdir;/bot.php','common/bot.php','SHARED DISCORD BOT SETTING'),('&plugdir;/bot_block.php','common/bot_block.php','DISCORD BOT BLOCK'),('&plugdir;/bot_save.php','common/bot_save.php','DISCORD BOT SAVE AND TEST'),('&plugdir;/mtlang/en.json','common/lang/en.json','SHARED BLOCKS ENGLISH DICTIONARY'),('&plugdir;/mtlang/hu.json','common/lang/hu.json','SHARED BLOCKS HUNGARIAN DICTIONARY')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.27b">
+<!ENTITY version   "2026.10.28">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,12 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.28
+- Claude Guard: suggestions. In the daily report Claude may suggest up to three actions from a fixed list built by the server: a safe or a look-first container update, deleting an old before-update snapshot, the self-test, Check now, and (off by default) hiding a stuck Seedbox season pack job. Never a red (Wait) update, never anything outside the list
+- Guard page: new Suggestions band with Approve (and a confirmation) or Not now; an approved one runs with the Update manager, Snapshots or Seedbox code like their own buttons and shows in Activity; a failed one comes back; earlier ones are folded
+- Morning brief: the suggestions are numbered; with the shared bot it puts 1, 2, 3 and thumbs down under the message, your reaction approves (24 hours) and the Status field of the message follows the jobs
+- Settings: which actions may be suggested, Approve from Discord, and Suggestions as a part of the brief
+
 ###2026.10.27b
 - Claude Guard and the morning brief: a Seedbox Tools job you closed yourself (Hide, Cancel, or replaced by a later finished job of the same season) no longer counts as failed and starts no alert report
 

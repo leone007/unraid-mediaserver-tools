@@ -26,7 +26,8 @@ const GD_SNAP_DAYS = 7;
 function gd_defaults() {
     return ['on' => 0, 'hour' => 7, 'min' => 0, 'q_from' => 22, 'q_to' => 6, 'ev_sys' => 1, 'ev_dsk' => 1, 'ev_sbx' => 1, 'ev_max' => 3,
             't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto',
-            'brief' => 1, 'b_ep' => 1, 'b_dl' => 1, 'b_upd' => 1, 'b_net' => 1, 'b_pow' => 1];   // morning brief (item 95 B)
+            'brief' => 1, 'b_ep' => 1, 'b_dl' => 1, 'b_upd' => 1, 'b_net' => 1, 'b_pow' => 1,   // morning brief (item 95 B)
+            'b_sug' => 1, 's_dc' => 1, 's_upd_safe' => 1, 's_upd_look' => 1, 's_snap' => 1, 's_test' => 1, 's_sbx' => 0];   // suggestions (item 95 C)
 }
 function gd_cfg() {
     $c = gd_defaults(); $x = upd_json(gd_cfg_file(), []);
@@ -42,6 +43,36 @@ function gd_quiet($c, $now = null) {
     $h = (int)date('G', $now ?? time()); $f = (int)$c['q_from']; $t = (int)$c['q_to'];
     if ($f === $t) { return false; }
     return $f < $t ? ($h >= $f && $h < $t) : ($h >= $f || $h < $t);
+}
+
+// the state file is shared by tick, run and the suggestions: read-change-write under its own lock
+function gd_state_edit($fn) {
+    $l = @fopen(gd_lock_file('state'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $S = upd_json(gd_state_file(), []); $out = $fn($S); upd_write(gd_state_file(), $S);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $out;
+}
+function gd_run_edit($fn) {
+    $l = @fopen(gd_lock_file('runfile'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $R = upd_json(gd_run_file(), ['jobs' => []]); $out = $fn($R); upd_write(gd_run_file(), $R);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $out;
+}
+function gd_job_start($kind, $text) {
+    return gd_run_edit(function (&$R) use ($kind, $text) {
+        $id = $kind . ':' . time();
+        $R['jobs'][$id] = ['kind' => $kind, 'text' => $text, 'state' => 'running', 'started' => time(), 'log' => []];
+        foreach ($R['jobs'] as $k => $j) { if ($j['state'] !== 'running' && time() - (int)($j['finished'] ?? 0) > 86400) { unset($R['jobs'][$k]); } }
+        return $id;
+    });
+}
+function gd_job($id, $set = [], $line = '') {
+    gd_run_edit(function (&$R) use ($id, $set, $line) {
+        if (!isset($R['jobs'][$id])) { return; }
+        $R['jobs'][$id] = $set + $R['jobs'][$id];
+        if ($line !== '') { $R['jobs'][$id]['log'][] = date('H:i:s') . ' ' . $line; }
+        if (isset($set['state']) && $set['state'] !== 'running') { $R['jobs'][$id]['finished'] = time(); }
+    });
 }
 
 // ---- the claude container ---------------------------------------------------------------------------------------
@@ -235,7 +266,7 @@ function gd_ctx_path($c) {
     $f = upd_todo_file(); if ($f === '') { return ''; }
     return is_file(dirname($f) . '/ATADAS.md') ? '/work/' . basename(dirname($f)) . '/ATADAS.md' : '';
 }
-function gd_prompt($kind, $now, $prev, $events, $c = null) {
+function gd_prompt($kind, $now, $prev, $events, $c = null, $menu = '') {
     $c = $c ?? gd_cfg(); $lang = gd_lang($c); $ctx = gd_ctx_path($c);
     $p = "You are Claude Guard, the daily watch of the owner's Unraid home media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr in Docker).\n" .
         "Below is a read-only snapshot of the server now" . ($prev ? ' and the one before it (compare them: what changed matters most)' : '') . ".\n" .
@@ -260,11 +291,11 @@ function gd_prompt($kind, $now, $prev, $events, $c = null) {
         '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services",' .
         '"level":"green|amber|red","title":"what happened, one short sentence","text":"what it means, 1-3 sentences","todo":"what to do, 1-2 sentences, or empty",' .
         '"cmd":"one read-only command for the Unraid terminal, or empty","link":"diskbox|updates|docker|seedbox|sonarr|radarr|prowlarr|jellyfin|syslog or empty"}],' .
-        '"noise":"one sentence on the log lines that are harmless, with counts, or empty"}' . "\n" .
+        '"noise":"one sentence on the log lines that are harmless, with counts, or empty"' . ($menu !== '' ? ',"suggest":[]' : '') . '}' . "\n" .
         "Rules: amber = worth watching or a small action; red = act today (data at risk, a disk failing, protection lost, a service down). " .
         "List every amber and red finding as its own item; for the topics that are fine give one short green item each. " .
         "Do not invent problems: a value that did not change and is within normal limits is fine. Write the texts in {$lang}; keep the JSON keys in English.";
-    return $p;
+    return $p . $menu;
 }
 // a command Claude gives must only read: anything that writes, deletes, restarts or downloads is dropped
 function gd_cmd_ok($c) {
@@ -293,7 +324,8 @@ function gd_parse($text) {
     usort($items, function ($a, $b) use ($rank) { return $rank[$a['level']] <=> $rank[$b['level']]; });
     $v = $lv($j['verdict']);
     foreach ($items as $x) { if ($rank[$x['level']] < $rank[$v]) { $v = $x['level']; } }   // the verdict is never milder than an item
-    return ['verdict' => $v, 'summary' => mb_substr((string)($j['summary'] ?? ''), 0, 600), 'items' => $items, 'noise' => mb_substr((string)($j['noise'] ?? ''), 0, 600)];
+    $sug = array_slice(array_values(array_filter((array)($j['suggest'] ?? []), 'is_array')), 0, 6);   // checked against the menu by gd_sug_pick
+    return ['verdict' => $v, 'summary' => mb_substr((string)($j['summary'] ?? ''), 0, 600), 'items' => $items, 'noise' => mb_substr((string)($j['noise'] ?? ''), 0, 600), 'suggest' => $sug];
 }
 // runs Claude Code in the container (read-only tools, no saved session); [answer array or null, error text]
 function gd_ask($prompt) {

@@ -12,7 +12,9 @@ if ($op === 'state') {
     $st = upd_json(gd_state_file(), []);
     $log = is_file(gd_log_file()) ? array_slice(file(gd_log_file(), FILE_IGNORE_NEW_LINES), -40) : [];
     $reps = gd_reports(); usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });
-    sx_json(['ok' => true, 'cfg' => gd_cfg(), 'ct' => is_file(gd_flag_file()), 'usage' => gd_usage(), 'reports' => $reps, 'jobs' => array_values($run['jobs']),
+    require_once __DIR__ . '/sugg_lib.php'; gd_sug_follow();
+    $sug = array_reverse(gd_sug_all()['list']);
+    sx_json(['ok' => true, 'cfg' => gd_cfg(), 'ct' => is_file(gd_flag_file()), 'sug' => $sug, 'bot' => mt_bot_ready(), 'usage' => gd_usage(), 'reports' => $reps, 'jobs' => array_values($run['jobs']),
              'night' => count($st['night'] ?? []), 'ev_today' => ($st['ev_day']['d'] ?? '') === date('Y-m-d') ? (int)$st['ev_day']['n'] : 0,
              'quiet' => gd_quiet(gd_cfg()), 'ctx_path' => gd_ctx_path(gd_cfg()), 'lang_now' => gd_lang_code(gd_cfg()), 'busy' => gd_running('claude'), 'log' => $log, 'known' => gd_known()]);
 }
@@ -61,7 +63,8 @@ if ($op === 'save') {
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'q_from' => [0, 23], 'q_to' => [0, 23], 'ev_max' => [0, 10], 'limit' => [10, 100]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
-    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
+    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow',
+              'b_sug', 's_dc', 's_upd_safe', 's_upd_look', 's_snap', 's_test', 's_sbx'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
     $lg = (string)($_POST['lang'] ?? 'auto'); $c['lang'] = in_array($lg, ['auto', 'en', 'hu'], true) ? $lg : 'auto';
     $cx = trim((string)($_POST['ctx'] ?? 'auto')); if ($cx !== 'auto' && $cx !== '' && !preg_match('#^/[A-Za-z0-9_./ -]{1,200}$#', $cx)) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_ctx')]); } $c['ctx'] = $cx;
     $dc = (string)($_POST['discord'] ?? 'issues'); $c['discord'] = in_array($dc, ['issues', 'short', 'full', 'off'], true) ? $dc : 'issues';
@@ -75,5 +78,13 @@ if ($op === 'brief') {
     $r = $reps[0] ?? ['t' => time(), 'kind' => 'manual', 'items' => [], 'error' => sx_tr('gd.brief_norep')];
     [$ok, $e] = gd_brief_send(gd_cfg(), $r);
     sx_json($ok ? ['ok' => true, 'msg' => sx_tr('gd.brief_sent')] : ['ok' => false, 'error' => $e]);
+}
+// suggestions (item 95 C): Approve after the page's confirmation, or Not now
+if ($op === 'sug_do' || $op === 'sug_no') {
+    require_once __DIR__ . '/sugg_lib.php';
+    $id = (string)($_POST['sid'] ?? ''); if (!preg_match('/^[a-f0-9]{10}$/', $id)) { sx_json(['ok' => false, 'error' => 'id']); }
+    if ($op === 'sug_no') { sx_json(gd_sug_no($id) ? ['ok' => true] : ['ok' => false, 'error' => sx_tr('sug.e_done')]); }
+    [$ok, $e] = gd_sug_do($id, 'page');
+    sx_json($ok ? ['ok' => true] : ['ok' => false, 'error' => $e]);
 }
 sx_json(['ok' => false, 'error' => 'unknown action'], 400);

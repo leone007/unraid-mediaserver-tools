@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.27b">
+<!ENTITY version   "2026.10.28">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,12 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.28
+- Claude Guard: suggestions. In the daily report Claude may suggest up to three actions from a fixed list built by the server: a safe or a look-first container update, deleting an old before-update snapshot, the self-test, Check now, and (off by default) hiding a stuck Seedbox season pack job. Never a red (Wait) update, never anything outside the list
+- Guard page: new Suggestions band with Approve (and a confirmation) or Not now; an approved one runs with the Update manager, Snapshots or Seedbox code like their own buttons and shows in Activity; a failed one comes back; earlier ones are folded
+- Morning brief: the suggestions are numbered; with the shared bot it puts 1, 2, 3 and thumbs down under the message, your reaction approves (24 hours) and the Status field of the message follows the jobs
+- Settings: which actions may be suggested, Approve from Discord, and Suggestions as a part of the brief
+
 ###2026.10.27b
 - Claude Guard and the morning brief: a Seedbox Tools job you closed yourself (Hide, Cancel, or replaced by a later finished job of the same season) no longer counts as failed and starts no alert report
 
@@ -6579,8 +6585,317 @@ function mt_i18n_js($dir, $name, $only = null) {
  "brief.job_failed": {
   "text": "failed",
   "note": "Discord morning brief: state of a Seedbox Tools job"
+ },
+ "sug.t_upd_safe": {
+  "text": "Update {n} ({from} → {to})",
+  "note": "title of a Claude Guard suggestion: a safe (green) container update. {n} container name, {from}/{to} versions. Also in Discord."
+ },
+ "sug.t_upd_look": {
+  "text": "Update {n} ({from} → {to}, look first)",
+  "note": "title of a suggestion: a look-first (amber) container update. Also in Discord."
+ },
+ "sug.t_snap_del": {
+  "text": "Delete snapshot {s} ({size})",
+  "note": "title of a suggestion: delete an old before-update ZFS snapshot. {s} snapshot name, {size} space it holds. Also in Discord."
+ },
+ "sug.t_selftest": {
+  "text": "Run the self-test of our connections",
+  "note": "title of a suggestion: run the Update manager self-test. Also in Discord."
+ },
+ "sug.t_check": {
+  "text": "Check for updates now",
+  "note": "title of a suggestion: the Update manager Check now. Also in Discord."
+ },
+ "sug.t_sbx_dismiss": {
+  "text": "Hide the stuck Seedbox job {n}",
+  "note": "title of a suggestion: hide a stuck season pack job in Seedbox Tools. {n} its name. Also in Discord."
+ },
+ "sug.c_upd_safe": {
+  "text": "Update {n} now ({from} → {to})? A ZFS snapshot of its data is made first and the self-test runs after it.",
+  "note": "confirmation text before a suggested container update starts."
+ },
+ "sug.c_upd_look": {
+  "text": "Update {n} now ({from} → {to})? It is a look-first update: read the release notes on the Update manager page if you have not. A ZFS snapshot is made first.",
+  "note": "confirmation text before a suggested look-first update starts."
+ },
+ "sug.c_snap_del": {
+  "text": "Delete snapshot {ds}@{s} for good? It cannot be undone; the container can no longer be restored from it.",
+  "note": "confirmation text before a suggested snapshot is deleted."
+ },
+ "sug.c_selftest": {
+  "text": "Run the self-test now? It only reads (logins and lists of the programs).",
+  "note": "confirmation text before the suggested self-test."
+ },
+ "sug.c_check": {
+  "text": "Check for updates now? It only reads (image registries, release notes).",
+  "note": "confirmation text before the suggested Check now."
+ },
+ "sug.c_sbx_dismiss": {
+  "text": "Hide the stuck job {n} in Seedbox Tools? Only the record changes; nothing is deleted and the season can be started again.",
+  "note": "confirmation text before a suggested Seedbox job is hidden."
+ },
+ "sug.b_upd_safe": {
+  "text": "Update",
+  "note": "button in the confirmation of a suggested update."
+ },
+ "sug.b_upd_look": {
+  "text": "Update",
+  "note": "button in the confirmation of a suggested look-first update."
+ },
+ "sug.b_snap_del": {
+  "text": "Delete",
+  "note": "button in the confirmation of a suggested snapshot deletion."
+ },
+ "sug.b_selftest": {
+  "text": "Run",
+  "note": "button in the confirmation of the suggested self-test."
+ },
+ "sug.b_check": {
+  "text": "Check",
+  "note": "button in the confirmation of the suggested Check now."
+ },
+ "sug.b_sbx_dismiss": {
+  "text": "Hide",
+  "note": "button in the confirmation of a suggested Seedbox hide."
+ },
+ "sug.e_noseedbox": {
+  "text": "Seedbox is not installed",
+  "note": "error of a suggestion: the Seedbox plugin is missing."
+ },
+ "sug.e_seedbox": {
+  "text": "Seedbox Tools did not hide the job (it is no longer stuck?)",
+  "note": "error of a suggestion: Seedbox refused to hide the job."
+ },
+ "sug.e_gone": {
+  "text": "This suggestion no longer exists",
+  "note": "error when the owner approves a suggestion that was removed."
+ },
+ "sug.e_done": {
+  "text": "This suggestion was already answered",
+  "note": "error when the suggestion is no longer waiting."
+ },
+ "sug.e_old": {
+  "text": "This suggestion is older than 24 hours",
+  "note": "error when an expired suggestion is approved."
+ },
+ "sug.e_stale": {
+  "text": "No longer valid: the update, snapshot or job is gone or changed. Nothing was started.",
+  "note": "error when the suggested action is no longer on the menu (e.g. the update was done meanwhile)."
+ },
+ "sug.e_nostart": {
+  "text": "the job did not start in 10 minutes",
+  "note": "error part: the started job never showed up."
+ },
+ "sug.j_page": {
+  "text": "Suggestion approved: {t}",
+  "note": "Activity row title when the owner approved a suggestion on the page. {t} the suggestion title."
+ },
+ "sug.j_dc": {
+  "text": "Suggestion approved on Discord: {t}",
+  "note": "Activity row title when the owner approved a suggestion with a reaction."
+ },
+ "sug.j_ok": {
+  "text": "Done: {t}",
+  "note": "Activity row when a suggestion finished well."
+ },
+ "sug.j_fail": {
+  "text": "Failed: {t}: {e}",
+  "note": "Activity row when a suggestion failed. {e} the error."
+ },
+ "sug.m_ok": {
+  "text": "done",
+  "note": "short result under a finished suggestion."
+ },
+ "sug.l_started": {
+  "text": "started, follow it on its own page too",
+  "note": "Activity log line right after a suggestion started a job."
+ },
+ "sg.h": {
+  "text": "Suggestions",
+  "note": "band title on the Claude Guard page."
+ },
+ "sg.band": {
+  "text": "{n} waiting",
+  "note": "right side of the Suggestions band."
+ },
+ "sg.b_ok": {
+  "text": "Approve",
+  "note": "button on a waiting suggestion; opens the confirmation."
+ },
+ "sg.b_again": {
+  "text": "Try again",
+  "note": "button on a failed suggestion."
+ },
+ "sg.b_no": {
+  "text": "Not now",
+  "note": "button on a suggestion: dismiss it (not offered again for 3 days)."
+ },
+ "sg.st_wait": {
+  "text": "waiting",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_run": {
+  "text": "running",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_done": {
+  "text": "done",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_fail": {
+  "text": "failed",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_no": {
+  "text": "not now",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_expired": {
+  "text": "expired",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.st_gone": {
+  "text": "no longer valid",
+  "note": "state chip of an earlier suggestion."
+ },
+ "sg.src_updates": {
+  "text": "Update manager",
+  "note": "label of a suggestion row: which page the action belongs to."
+ },
+ "sg.src_snapshots": {
+  "text": "Snapshots",
+  "note": "label of a suggestion row: which page the action belongs to."
+ },
+ "sg.src_seedbox": {
+  "text": "Seedbox Tools",
+  "note": "label of a suggestion row: which page the action belongs to."
+ },
+ "sg.via_page": {
+  "text": "approved on the page",
+  "note": "small text: where the owner approved it."
+ },
+ "sg.via_discord": {
+  "text": "approved on Discord",
+  "note": "small text: where the owner approved it."
+ },
+ "sg.why": {
+  "text": "Claude: {t}",
+  "note": "why Claude suggests it. {t} Claude's sentence."
+ },
+ "sg.none": {
+  "text": "No suggestion waiting. In the daily report Claude may suggest an action from a fixed list; you approve it here or with a reaction on Discord.",
+  "note": "lead text when no suggestion waits."
+ },
+ "sg.off": {
+  "text": "Suggestions are off (no action type is allowed in the settings below).",
+  "note": "lead text when every suggestion type is off."
+ },
+ "sg.old": {
+  "text": "Earlier suggestions",
+  "note": "foldable bar title."
+ },
+ "sg.old_count": {
+  "text": "{n} · {a} approved, {d} not now, {e} expired",
+  "note": "count on the Earlier suggestions bar."
+ },
+ "gds.p_sug": {
+  "text": "Suggestions",
+  "note": "morning brief part chip: Claude's suggestions."
+ },
+ "gds.s_lb": {
+  "text": "Suggestions may offer",
+  "note": "settings label."
+ },
+ "gds.s_upd_safe": {
+  "text": "Safe container updates",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_upd_look": {
+  "text": "Look-first updates",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_snap": {
+  "text": "Old before-update snapshots to delete",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_test": {
+  "text": "Self-test, Check now",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_sbx": {
+  "text": "Seedbox: stuck job to hide",
+  "note": "checkbox: suggestion type."
+ },
+ "gds.s_hint": {
+  "text": "Claude picks from these in the daily report (at most 3). Never the red (Wait) updates, never anything outside this list; each needs Approve and its own confirmation. Not now hides it for 3 days.",
+  "note": "hint under the suggestion types."
+ },
+ "gds.sdc_lb": {
+  "text": "Approve from Discord",
+  "note": "settings label."
+ },
+ "gds.sdc": {
+  "text": "with reactions under the morning brief",
+  "note": "checkbox label."
+ },
+ "gds.bot_ok": {
+  "text": "bot set ✓",
+  "note": "chip: the shared Discord bot is set."
+ },
+ "gds.bot_no": {
+  "text": "set the Discord bot below",
+  "note": "chip: the shared Discord bot is not set."
+ },
+ "gds.sdc_hint": {
+  "text": "The bot puts 1️⃣ 2️⃣ 3️⃣ 👎 under the brief; only your reaction counts, for 24 hours (👎 = Not now for all). A number starts the action without another question, like Approve and the confirmation here.",
+  "note": "hint under Approve from Discord."
+ },
+ "brief.h_sug": {
+  "text": "Suggestions ({n})",
+  "note": "Discord morning brief: field title of Claude's suggestions."
+ },
+ "brief.sug_how": {
+  "text": "Approve: react with the number (valid for 24 hours), 👎 = not now; or on the Claude Guard page",
+  "note": "Discord morning brief: how to approve (bot set)."
+ },
+ "brief.sug_page": {
+  "text": "Approve them on the Claude Guard page (Settings, Utilities)",
+  "note": "Discord morning brief: how to approve (no bot)."
+ },
+ "brief.h_sst": {
+  "text": "Status",
+  "note": "Discord morning brief: field title of the suggestions' status, edited later."
+ },
+ "brief.sst_wait": {
+  "text": "⏳ waiting",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_run": {
+  "text": "▶ running",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_done": {
+  "text": "✅ done",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_fail": {
+  "text": "⛔ failed (see the Guard page)",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_no": {
+  "text": "👎 not now",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_expired": {
+  "text": "⌛ expired",
+  "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "brief.sst_gone": {
+  "text": "✖ no longer valid",
+  "note": "Discord morning brief: state of one suggestion in the status field."
  }
-}]]></INLINE>
+}
+]]></INLINE>
 </FILE>
 
 <!-- ========================================================= -->
@@ -9209,8 +9524,240 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "brief.job_failed": {
   "text": "hibás"
+ },
+ "sug.t_upd_safe": {
+  "text": "{n} frissítése ({from} → {to})"
+ },
+ "sug.t_upd_look": {
+  "text": "{n} frissítése ({from} → {to}, előbb nézd meg)"
+ },
+ "sug.t_snap_del": {
+  "text": "A(z) {s} snapshot törlése ({size})"
+ },
+ "sug.t_selftest": {
+  "text": "Kapcsolatok öntesztje"
+ },
+ "sug.t_check": {
+  "text": "Frissítések ellenőrzése most"
+ },
+ "sug.t_sbx_dismiss": {
+  "text": "Az elakadt Seedbox-feladat elrejtése: {n}"
+ },
+ "sug.c_upd_safe": {
+  "text": "Frissíted most a(z) {n} konténert ({from} → {to})? Előbb ZFS-snapshot készül az adatairól, utána lefut az önteszt."
+ },
+ "sug.c_upd_look": {
+  "text": "Frissíted most a(z) {n} konténert ({from} → {to})? Ez „előbb nézd meg” frissítés: ha még nem tetted, olvasd el a kiadási jegyzetet az Update manager oldalon. Előbb ZFS-snapshot készül."
+ },
+ "sug.c_snap_del": {
+  "text": "Végleg törlöd a(z) {ds}@{s} snapshotot? Nem vonható vissza; a konténert ebből már nem lehet visszaállítani."
+ },
+ "sug.c_selftest": {
+  "text": "Lefuttatod most az öntesztet? Csak olvas (bejelentkezés és listák a programokban)."
+ },
+ "sug.c_check": {
+  "text": "Ellenőrzöd most a frissítéseket? Csak olvas (image-tárak, kiadási jegyzetek)."
+ },
+ "sug.c_sbx_dismiss": {
+  "text": "Elrejted az elakadt {n} feladatot a Seedbox Toolsban? Csak a bejegyzés változik, semmi nem törlődik, az évad újra indítható."
+ },
+ "sug.b_upd_safe": {
+  "text": "Frissítés"
+ },
+ "sug.b_upd_look": {
+  "text": "Frissítés"
+ },
+ "sug.b_snap_del": {
+  "text": "Törlés"
+ },
+ "sug.b_selftest": {
+  "text": "Futtatás"
+ },
+ "sug.b_check": {
+  "text": "Ellenőrzés"
+ },
+ "sug.b_sbx_dismiss": {
+  "text": "Elrejtés"
+ },
+ "sug.e_noseedbox": {
+  "text": "A Seedbox nincs telepítve"
+ },
+ "sug.e_seedbox": {
+  "text": "A Seedbox Tools nem rejtette el a feladatot (már nem akadt el?)"
+ },
+ "sug.e_gone": {
+  "text": "Ez a javaslat már nem létezik"
+ },
+ "sug.e_done": {
+  "text": "Erre a javaslatra már válaszoltál"
+ },
+ "sug.e_old": {
+  "text": "Ez a javaslat 24 óránál régebbi"
+ },
+ "sug.e_stale": {
+  "text": "Már nem érvényes: a frissítés, a snapshot vagy a feladat megszűnt vagy megváltozott. Semmi nem indult el."
+ },
+ "sug.e_nostart": {
+  "text": "a feladat 10 percen belül nem indult el"
+ },
+ "sug.j_page": {
+  "text": "Jóváhagyott javaslat: {t}"
+ },
+ "sug.j_dc": {
+  "text": "Discordon jóváhagyott javaslat: {t}"
+ },
+ "sug.j_ok": {
+  "text": "Kész: {t}"
+ },
+ "sug.j_fail": {
+  "text": "Nem sikerült: {t}: {e}"
+ },
+ "sug.m_ok": {
+  "text": "kész"
+ },
+ "sug.l_started": {
+  "text": "elindult, a saját oldalán is követheted"
+ },
+ "sg.h": {
+  "text": "Javaslatok"
+ },
+ "sg.band": {
+  "text": "{n} vár"
+ },
+ "sg.b_ok": {
+  "text": "Jóváhagyás"
+ },
+ "sg.b_again": {
+  "text": "Újra"
+ },
+ "sg.b_no": {
+  "text": "Most nem"
+ },
+ "sg.st_wait": {
+  "text": "vár"
+ },
+ "sg.st_run": {
+  "text": "fut"
+ },
+ "sg.st_done": {
+  "text": "kész"
+ },
+ "sg.st_fail": {
+  "text": "nem sikerült"
+ },
+ "sg.st_no": {
+  "text": "most nem"
+ },
+ "sg.st_expired": {
+  "text": "lejárt"
+ },
+ "sg.st_gone": {
+  "text": "már nem érvényes"
+ },
+ "sg.src_updates": {
+  "text": "Update manager"
+ },
+ "sg.src_snapshots": {
+  "text": "Snapshots"
+ },
+ "sg.src_seedbox": {
+  "text": "Seedbox Tools"
+ },
+ "sg.via_page": {
+  "text": "az oldalon jóváhagyva"
+ },
+ "sg.via_discord": {
+  "text": "Discordon jóváhagyva"
+ },
+ "sg.why": {
+  "text": "Claude: {t}"
+ },
+ "sg.none": {
+  "text": "Nincs váró javaslat. A napi jelentésben Claude egy fix listából javasolhat műveletet; itt vagy Discordon reakcióval hagyod jóvá."
+ },
+ "sg.off": {
+  "text": "A javaslatok ki vannak kapcsolva (lent a beállításokban egy művelettípus sincs engedélyezve)."
+ },
+ "sg.old": {
+  "text": "Korábbi javaslatok"
+ },
+ "sg.old_count": {
+  "text": "{n} · {a} jóváhagyva, {d} most nem, {e} lejárt"
+ },
+ "gds.p_sug": {
+  "text": "Javaslatok"
+ },
+ "gds.s_lb": {
+  "text": "Javasolható műveletek"
+ },
+ "gds.s_upd_safe": {
+  "text": "Biztonságos konténerfrissítések"
+ },
+ "gds.s_upd_look": {
+  "text": "„Előbb nézd meg” frissítések"
+ },
+ "gds.s_snap": {
+  "text": "Régi frissítés előtti snapshotok törlése"
+ },
+ "gds.s_test": {
+  "text": "Önteszt, Check now"
+ },
+ "gds.s_sbx": {
+  "text": "Seedbox: elakadt feladat elrejtése"
+ },
+ "gds.s_hint": {
+  "text": "Claude ezekből választhat a napi jelentésben (legfeljebb 3). Piros (Wait) frissítést és listán kívülit soha; mindegyikhez Jóváhagyás és külön megerősítés kell. A Most nem 3 napra elrejti."
+ },
+ "gds.sdc_lb": {
+  "text": "Jóváhagyás Discordon"
+ },
+ "gds.sdc": {
+  "text": "reakcióval a reggeli összefoglaló alatt"
+ },
+ "gds.bot_ok": {
+  "text": "bot beállítva ✓"
+ },
+ "gds.bot_no": {
+  "text": "állítsd be lent a Discord-botot"
+ },
+ "gds.sdc_hint": {
+  "text": "A bot 1️⃣ 2️⃣ 3️⃣ 👎 reakciót tesz az összefoglaló alá; csak a te reakciód számít, 24 óráig (👎 = mindegyikre Most nem). A szám kérdés nélkül elindítja a műveletet, mint itt a Jóváhagyás és a megerősítés."
+ },
+ "brief.h_sug": {
+  "text": "Javaslatok ({n})"
+ },
+ "brief.sug_how": {
+  "text": "Jóváhagyás: reagálj a számmal (24 óráig érvényes), 👎 = most nem; vagy a Claude Guard oldalán"
+ },
+ "brief.sug_page": {
+  "text": "A Claude Guard oldalán hagyhatod jóvá (Settings, Utilities)"
+ },
+ "brief.h_sst": {
+  "text": "Állapot"
+ },
+ "brief.sst_wait": {
+  "text": "⏳ vár"
+ },
+ "brief.sst_run": {
+  "text": "▶ fut"
+ },
+ "brief.sst_done": {
+  "text": "✅ kész"
+ },
+ "brief.sst_fail": {
+  "text": "⛔ nem sikerült (lásd a Guard oldalt)"
+ },
+ "brief.sst_no": {
+  "text": "👎 most nem"
+ },
+ "brief.sst_expired": {
+  "text": "⌛ lejárt"
+ },
+ "brief.sst_gone": {
+  "text": "✖ már nem érvényes"
  }
-}]]></INLINE>
+}
+]]></INLINE>
 </FILE>
 
 <!-- ========================================================= -->
@@ -11688,7 +12235,7 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
 #gdm .mt-band{margin-top:26px;padding:9px 12px}
 #gdm .mt-band span{font-weight:600}
-#gdm .mt-band.gdm-b-amber span{color:#d9921f}#gdm .mt-band.gdm-b-red span{color:#e5534b}
+#gdm .mt-band.gdm-b-amber span{color:#d9921f}#gdm .mt-band.gdm-b-purple span{color:#9a7de6}#gdm .mt-band.gdm-b-red span{color:#e5534b}
 #gdm .mt-box{margin-top:8px}
 #gdm .mt-box>:first-child{border-top:0}
 #gdm .gdm-status{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:9px 12px;border-top:1px solid var(--gdm-line);font-size:12px}
@@ -11736,6 +12283,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-form{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;border:1px solid rgba(154,125,230,.5);background:rgba(154,125,230,.08);padding:8px 10px}
 #gdm .gdm-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;opacity:.85;flex:1 1 240px;min-width:0}
 #gdm .gdm-form input[type=text]{margin:0;width:100%}
+#gdm .gdm-conf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:rgba(229,83,75,.08);box-shadow:inset 3px 0 0 #e5534b;padding:8px 10px}
+#gdm .gdm-conf span{flex:1 1 260px;white-space:normal}
+#gdm .gdm-acts.gdm-row2{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}
 @media (max-width:860px){#gdm .gdm-it{grid-template-columns:1fr}#gdm .gdm-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap}#gdm .gdm-set{grid-template-columns:1fr}}
 </style>
 <div id="gdm">
@@ -11746,6 +12296,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 
 <div class="mt-band" id="gdm-rb"><span id="gdm-rtitle"><?=$gdm_t('gdm.h.latest')?></span><b id="gdm-rband"></b></div>
 <div class="mt-box" id="gdm-rep"></div>
+
+<div class="mt-band gdm-b-purple"><span><?=$gdm_t('sg.h')?></span><b id="gdm-sband"></b></div>
+<div class="mt-box" id="gdm-sug"></div>
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.events')?></span><b id="gdm-eband"></b></div>
 <div class="mt-box" id="gdm-ev"></div>
@@ -11892,6 +12445,56 @@ $(function () {
     api('run').done(function (r) { if (!r.ok) { WAIT = 0; window.alert(r.error); } load(); }).fail(function (x) { WAIT = 0; window.alert(err(x)); });
   });
 
+  // ---- suggestions (item 95 C): Claude picks from the server's menu; nothing starts without Approve and the confirmation.
+  // An approved one leaves the list (its job is in Activity) and comes back only when it fails.
+  var SICO = {upd_safe: '&#9650;', upd_look: '&#9650;', snap_del: '&#10005;', selftest: '&#10003;', check: '&#8635;', sbx_dismiss: '&#8856;'};
+  var SSRC = {upd_safe: 'updates', upd_look: 'updates', snap_del: 'snapshots', selftest: 'updates', check: 'updates', sbx_dismiss: 'seedbox'};
+  var SST = {done: 's-green', fail: 's-red', run: 's-blue', no: 's-grey', expired: 's-grey', gone: 's-grey'};
+  var SCONF = null;   // the open confirmation survives the refresh
+  function sTitle(x) { return T('sug.t_' + x.act, x.vars || {}); }
+  function sOpen(x) { return (x.state === 'wait' || x.state === 'fail') && Math.floor(Date.now() / 1000) - x.t < 86400; }
+  function sRow(x, open) {
+    var acts = '';
+    if (open) { acts = '<input type="button" class="gdm-sok gdm-sm" value="' + esc(x.state === 'fail' ? T('sg.b_again') : T('sg.b_ok')) + '"><input type="button" class="gdm-sno gdm-ghost gdm-sm" value="' + esc(T('sg.b_no')) + '">'; }
+    else { acts = '<span class="gdm-chip' + (x.state === 'done' ? ' g' : x.state === 'fail' ? ' r' : x.state === 'run' ? ' b' : '') + '">' + esc(T('sg.st_' + x.state)) + '</span>'; }
+    var cls = open ? (x.state === 'fail' ? 's-red' : 's-purple') : (SST[x.state] || 's-grey');
+    return '<div class="gdm-row gdm-it ' + cls + '" data-sid="' + esc(x.id) + '"><span><b class="k"><span class="gdm-ico" style="color:#9a7de6">' + (SICO[x.act] || '?') + '</span> ' + esc(T('sg.src_' + SSRC[x.act])) + '</b><small>' + esc(day(x.t) + ' ' + hm(x.t)) + (x.via ? ' · ' + esc(T('sg.via_' + x.via)) : '') + '</small></span><span>' +
+      '<p><b>' + esc(sTitle(x)) + '</b></p>' + (x.why ? '<p class="why">' + esc(T('sg.why', { t: x.why })) + '</p>' : '') +
+      (x.msg && x.state !== 'wait' ? '<p class="why ' + (x.state === 'fail' ? 'gdm-er' : '') + '">' + esc(x.msg) + '</p>' : '') +
+      '</span><span class="gdm-acts gdm-row2">' + acts + '</span></div>';
+  }
+  function sConfHtml(x) { return '<div class="gdm-conf"><span>' + esc(T('sug.c_' + x.act, x.vars || {})) + '</span><input type="button" class="gdm-sgo gdm-sm" value="' + esc(T('sug.b_' + x.act)) + '"><input type="button" class="gdm-scx gdm-ghost gdm-sm" value="' + esc(T('gdm.cancel')) + '"></div>'; }
+  function sOn(c) { return +c.s_upd_safe || +c.s_upd_look || +c.s_snap || +c.s_test || +c.s_sbx; }
+  function drawSug(r) {
+    var L = r.sug || [], open = [], old = [], cnt = {ok: 0, no: 0, ex: 0};
+    $.each(L, function (i, x) {
+      if (sOpen(x)) { open.push(x); return; }
+      if (x.state === 'run') { return; }   // in Activity
+      old.push(x); if (x.state === 'done' || x.state === 'fail') { cnt.ok++; } else if (x.state === 'no') { cnt.no++; } else { cnt.ex++; }
+    });
+    var h = '';
+    if (!open.length) { h += '<div class="gdm-lead"><p class="gdm-mut">' + esc(sOn(r.cfg) ? T('sg.none') : T('sg.off')) + '</p></div>'; }
+    $.each(open, function (i, x) { h += sRow(x, true); });
+    if (old.length) { h += gbar('sold', 's-grey', esc(T('sg.old')), esc(T('sg.old_count', { n: old.length, a: cnt.ok, d: cnt.no, e: cnt.ex }))) + grp('sold', $.map(old, function (x) { return sRow(x, false); }).join('')); }
+    $('#gdm-sug').html(h);
+    $('#gdm-sband').text(open.length ? T('sg.band', { n: open.length }) : '');
+    if (SCONF) { var x = null; $.each(open, function (i, y) { if (y.id === SCONF) { x = y; } }); if (x) { $('#gdm [data-sid="' + x.id + '"]').append(sConfHtml(x)); } else { SCONF = null; } }
+  }
+  function sById(id) { var x = null; $.each((D && D.sug) || [], function (i, y) { if (y.id === id) { x = y; } }); return x; }
+  $(document).on('click', '#gdm .gdm-sok', function () {
+    var $r = $(this).closest('[data-sid]'), x = sById(String($r.data('sid'))); if (!x) { return; }
+    $('#gdm .gdm-conf').remove(); SCONF = x.id; $r.append(sConfHtml(x));
+  });
+  $(document).on('click', '#gdm .gdm-scx', function () { $(this).closest('.gdm-conf').remove(); SCONF = null; });
+  $(document).on('click', '#gdm .gdm-sgo', function () {
+    var $b = $(this).prop('disabled', true), id = String($(this).closest('[data-sid]').data('sid'));
+    api('sug_do', {sid: id}).done(function (r) { SCONF = null; if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
+  });
+  $(document).on('click', '#gdm .gdm-sno', function () {
+    var $b = $(this).prop('disabled', true), id = String($(this).closest('[data-sid]').data('sid'));
+    api('sug_no', {sid: id}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { $b.prop('disabled', false); window.alert(err(x)); });
+  });
+
   // ---- event reports of the last 7 days, and the earlier reports folded by week
   function evRow(x) {
     var n = bad(x), v = x.error || x.skipped ? 'amber' : x.verdict, l = LV[v] || LV.amber;
@@ -11940,8 +12543,10 @@ $(function () {
         ' <span class="gdm-chip ' + (r.ctx_path ? 'g' : 'a') + '">' + esc(r.ctx_path ? T('gds.ctx_reads', { p: r.ctx_path }) : T('gds.ctx_none')) + '</span>', esc(T('gds.ctx_hint'))) +
       row('Discord', '<select id="gdm-dc">' + dc + '</select>', esc(T('gds.dc_hint'))) +
       row(esc(T('gds.brief_lb')), ck('gdm-br', c.brief, esc(T('gds.brief'))), esc(T('gds.brief_hint'))) +
-      row(esc(T('gds.parts')), $.map(['ep', 'dl', 'upd', 'net', 'pow'], function (k) { return ck('gdm-b' + k, c['b_' + k], esc(T('gds.p_' + k))); }).join('') +
+      row(esc(T('gds.parts')), $.map(['ep', 'dl', 'upd', 'net', 'pow', 'sug'], function (k) { return ck('gdm-b' + k, c['b_' + k], esc(T('gds.p_' + k))); }).join('') +
         '<input type="button" id="gdm-brnow" value="' + esc(T('gds.brief_now')) + '"><span id="gdm-brmsg"></span>', esc(T('gds.parts_hint'))) +
+      row(esc(T('gds.s_lb')), $.map(['upd_safe', 'upd_look', 'snap', 'test', 'sbx'], function (k) { return ck('gdm-s' + k, c['s_' + k], esc(T('gds.s_' + k))); }).join(''), esc(T('gds.s_hint'))) +
+      row(esc(T('gds.sdc_lb')), ck('gdm-sdc', c.s_dc, esc(T('gds.sdc'))) + ' <span class="gdm-chip ' + (r.bot ? 'g' : 'a') + '">' + esc(r.bot ? T('gds.bot_ok') : T('gds.bot_no')) + '</span>', esc(T('gds.sdc_hint'))) +
       row(esc(T('gds.todo_lb')), ck('gdm-todo', c.todo, esc(T('gds.todo'))), esc(T('gds.todo_hint'))) +
       '<div class="gdm-row gdm-set"><span></span><div class="gdm-ctl"><input type="button" id="gdm-save" value="' + esc(T('gds.save')) + '"><span id="gdm-smsg"></span></div></div>');
   }
@@ -11951,7 +12556,8 @@ $(function () {
     api('save', {on: b('gdm-on'), hour: $('#gdm-h').val(), min: $('#gdm-m').val(), q_from: $('#gdm-qf').val(), q_to: $('#gdm-qt').val(),
       ev_sys: b('gdm-es'), ev_dsk: b('gdm-ed'), ev_sbx: b('gdm-eb'), ev_max: $('#gdm-em').val(), t_disk: b('gdm-td'), t_ct: b('gdm-tc'), t_log: b('gdm-tl'), t_arr: b('gdm-ta'),
       limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val(),
-      brief: b('gdm-br'), b_ep: b('gdm-bep'), b_dl: b('gdm-bdl'), b_upd: b('gdm-bupd'), b_net: b('gdm-bnet'), b_pow: b('gdm-bpow')})
+      brief: b('gdm-br'), b_ep: b('gdm-bep'), b_dl: b('gdm-bdl'), b_upd: b('gdm-bupd'), b_net: b('gdm-bnet'), b_pow: b('gdm-bpow'),
+      b_sug: b('gdm-bsug'), s_dc: b('gdm-sdc'), s_upd_safe: b('gdm-supd_safe'), s_upd_look: b('gdm-supd_look'), s_snap: b('gdm-ssnap'), s_test: b('gdm-stest'), s_sbx: b('gdm-ssbx')})
       .done(function (r) { if (r.ok) { $m.attr('class', 'gdm-ok').text(T('gdm.saved')); load(); } else { $m.attr('class', 'gdm-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'gdm-er').text(err(x)); });
   });
 
@@ -11963,7 +12569,7 @@ $(function () {
   });
 
   function draw(r) {
-    D = r; drawAct(r); drawRep(r); drawOld(r); drawKnown(r); restoreForm();
+    D = r; drawAct(r); drawRep(r); drawSug(r); drawOld(r); drawKnown(r); restoreForm();
     if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); }
   }
   function load() {
@@ -11971,7 +12577,8 @@ $(function () {
       // the worker starts in the background: right after the click its job may not exist yet
       if (WAIT && (r.busy || Math.floor(Date.now() / 1000) - WAIT > 20 || $.grep(r.reports || [], function (x) { return x.t >= WAIT - 2; }).length)) { if (!r.busy) { WAIT = 0; } }
       draw(r);
-      clearTimeout(pollT); if (r.busy || WAIT) { pollT = setTimeout(load, 3000); }
+      var live = $.grep(r.jobs || [], function (j) { return j.state === 'running'; }).length;   // a suggestion's job (an update) runs outside the Claude lock
+      clearTimeout(pollT); if (r.busy || WAIT || live) { pollT = setTimeout(load, 3000); }
     }).fail(function (x) { $('#gdm-act').html('<div class="gdm-status gdm-er">' + esc(err(x)) + '</div>'); });
   }
   load();
@@ -12012,7 +12619,8 @@ const GD_SNAP_DAYS = 7;
 function gd_defaults() {
     return ['on' => 0, 'hour' => 7, 'min' => 0, 'q_from' => 22, 'q_to' => 6, 'ev_sys' => 1, 'ev_dsk' => 1, 'ev_sbx' => 1, 'ev_max' => 3,
             't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto',
-            'brief' => 1, 'b_ep' => 1, 'b_dl' => 1, 'b_upd' => 1, 'b_net' => 1, 'b_pow' => 1];   // morning brief (item 95 B)
+            'brief' => 1, 'b_ep' => 1, 'b_dl' => 1, 'b_upd' => 1, 'b_net' => 1, 'b_pow' => 1,   // morning brief (item 95 B)
+            'b_sug' => 1, 's_dc' => 1, 's_upd_safe' => 1, 's_upd_look' => 1, 's_snap' => 1, 's_test' => 1, 's_sbx' => 0];   // suggestions (item 95 C)
 }
 function gd_cfg() {
     $c = gd_defaults(); $x = upd_json(gd_cfg_file(), []);
@@ -12028,6 +12636,36 @@ function gd_quiet($c, $now = null) {
     $h = (int)date('G', $now ?? time()); $f = (int)$c['q_from']; $t = (int)$c['q_to'];
     if ($f === $t) { return false; }
     return $f < $t ? ($h >= $f && $h < $t) : ($h >= $f || $h < $t);
+}
+
+// the state file is shared by tick, run and the suggestions: read-change-write under its own lock
+function gd_state_edit($fn) {
+    $l = @fopen(gd_lock_file('state'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $S = upd_json(gd_state_file(), []); $out = $fn($S); upd_write(gd_state_file(), $S);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $out;
+}
+function gd_run_edit($fn) {
+    $l = @fopen(gd_lock_file('runfile'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $R = upd_json(gd_run_file(), ['jobs' => []]); $out = $fn($R); upd_write(gd_run_file(), $R);
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $out;
+}
+function gd_job_start($kind, $text) {
+    return gd_run_edit(function (&$R) use ($kind, $text) {
+        $id = $kind . ':' . time();
+        $R['jobs'][$id] = ['kind' => $kind, 'text' => $text, 'state' => 'running', 'started' => time(), 'log' => []];
+        foreach ($R['jobs'] as $k => $j) { if ($j['state'] !== 'running' && time() - (int)($j['finished'] ?? 0) > 86400) { unset($R['jobs'][$k]); } }
+        return $id;
+    });
+}
+function gd_job($id, $set = [], $line = '') {
+    gd_run_edit(function (&$R) use ($id, $set, $line) {
+        if (!isset($R['jobs'][$id])) { return; }
+        $R['jobs'][$id] = $set + $R['jobs'][$id];
+        if ($line !== '') { $R['jobs'][$id]['log'][] = date('H:i:s') . ' ' . $line; }
+        if (isset($set['state']) && $set['state'] !== 'running') { $R['jobs'][$id]['finished'] = time(); }
+    });
 }
 
 // ---- the claude container ---------------------------------------------------------------------------------------
@@ -12221,7 +12859,7 @@ function gd_ctx_path($c) {
     $f = upd_todo_file(); if ($f === '') { return ''; }
     return is_file(dirname($f) . '/ATADAS.md') ? '/work/' . basename(dirname($f)) . '/ATADAS.md' : '';
 }
-function gd_prompt($kind, $now, $prev, $events, $c = null) {
+function gd_prompt($kind, $now, $prev, $events, $c = null, $menu = '') {
     $c = $c ?? gd_cfg(); $lang = gd_lang($c); $ctx = gd_ctx_path($c);
     $p = "You are Claude Guard, the daily watch of the owner's Unraid home media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr in Docker).\n" .
         "Below is a read-only snapshot of the server now" . ($prev ? ' and the one before it (compare them: what changed matters most)' : '') . ".\n" .
@@ -12246,11 +12884,11 @@ function gd_prompt($kind, $now, $prev, $events, $c = null) {
         '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services",' .
         '"level":"green|amber|red","title":"what happened, one short sentence","text":"what it means, 1-3 sentences","todo":"what to do, 1-2 sentences, or empty",' .
         '"cmd":"one read-only command for the Unraid terminal, or empty","link":"diskbox|updates|docker|seedbox|sonarr|radarr|prowlarr|jellyfin|syslog or empty"}],' .
-        '"noise":"one sentence on the log lines that are harmless, with counts, or empty"}' . "\n" .
+        '"noise":"one sentence on the log lines that are harmless, with counts, or empty"' . ($menu !== '' ? ',"suggest":[]' : '') . '}' . "\n" .
         "Rules: amber = worth watching or a small action; red = act today (data at risk, a disk failing, protection lost, a service down). " .
         "List every amber and red finding as its own item; for the topics that are fine give one short green item each. " .
         "Do not invent problems: a value that did not change and is within normal limits is fine. Write the texts in {$lang}; keep the JSON keys in English.";
-    return $p;
+    return $p . $menu;
 }
 // a command Claude gives must only read: anything that writes, deletes, restarts or downloads is dropped
 function gd_cmd_ok($c) {
@@ -12279,7 +12917,8 @@ function gd_parse($text) {
     usort($items, function ($a, $b) use ($rank) { return $rank[$a['level']] <=> $rank[$b['level']]; });
     $v = $lv($j['verdict']);
     foreach ($items as $x) { if ($rank[$x['level']] < $rank[$v]) { $v = $x['level']; } }   // the verdict is never milder than an item
-    return ['verdict' => $v, 'summary' => mb_substr((string)($j['summary'] ?? ''), 0, 600), 'items' => $items, 'noise' => mb_substr((string)($j['noise'] ?? ''), 0, 600)];
+    $sug = array_slice(array_values(array_filter((array)($j['suggest'] ?? []), 'is_array')), 0, 6);   // checked against the menu by gd_sug_pick
+    return ['verdict' => $v, 'summary' => mb_substr((string)($j['summary'] ?? ''), 0, 600), 'items' => $items, 'noise' => mb_substr((string)($j['noise'] ?? ''), 0, 600), 'suggest' => $sug];
 }
 // runs Claude Code in the container (read-only tools, no saved session); [answer array or null, error text]
 function gd_ask($prompt) {
@@ -12443,7 +13082,9 @@ if ($op === 'state') {
     $st = upd_json(gd_state_file(), []);
     $log = is_file(gd_log_file()) ? array_slice(file(gd_log_file(), FILE_IGNORE_NEW_LINES), -40) : [];
     $reps = gd_reports(); usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });
-    sx_json(['ok' => true, 'cfg' => gd_cfg(), 'ct' => is_file(gd_flag_file()), 'usage' => gd_usage(), 'reports' => $reps, 'jobs' => array_values($run['jobs']),
+    require_once __DIR__ . '/sugg_lib.php'; gd_sug_follow();
+    $sug = array_reverse(gd_sug_all()['list']);
+    sx_json(['ok' => true, 'cfg' => gd_cfg(), 'ct' => is_file(gd_flag_file()), 'sug' => $sug, 'bot' => mt_bot_ready(), 'usage' => gd_usage(), 'reports' => $reps, 'jobs' => array_values($run['jobs']),
              'night' => count($st['night'] ?? []), 'ev_today' => ($st['ev_day']['d'] ?? '') === date('Y-m-d') ? (int)$st['ev_day']['n'] : 0,
              'quiet' => gd_quiet(gd_cfg()), 'ctx_path' => gd_ctx_path(gd_cfg()), 'lang_now' => gd_lang_code(gd_cfg()), 'busy' => gd_running('claude'), 'log' => $log, 'known' => gd_known()]);
 }
@@ -12492,7 +13133,8 @@ if ($op === 'save') {
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'q_from' => [0, 23], 'q_to' => [0, 23], 'ev_max' => [0, 10], 'limit' => [10, 100]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
-    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
+    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow',
+              'b_sug', 's_dc', 's_upd_safe', 's_upd_look', 's_snap', 's_test', 's_sbx'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
     $lg = (string)($_POST['lang'] ?? 'auto'); $c['lang'] = in_array($lg, ['auto', 'en', 'hu'], true) ? $lg : 'auto';
     $cx = trim((string)($_POST['ctx'] ?? 'auto')); if ($cx !== 'auto' && $cx !== '' && !preg_match('#^/[A-Za-z0-9_./ -]{1,200}$#', $cx)) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_ctx')]); } $c['ctx'] = $cx;
     $dc = (string)($_POST['discord'] ?? 'issues'); $c['discord'] = in_array($dc, ['issues', 'short', 'full', 'off'], true) ? $dc : 'issues';
@@ -12506,6 +13148,14 @@ if ($op === 'brief') {
     $r = $reps[0] ?? ['t' => time(), 'kind' => 'manual', 'items' => [], 'error' => sx_tr('gd.brief_norep')];
     [$ok, $e] = gd_brief_send(gd_cfg(), $r);
     sx_json($ok ? ['ok' => true, 'msg' => sx_tr('gd.brief_sent')] : ['ok' => false, 'error' => $e]);
+}
+// suggestions (item 95 C): Approve after the page's confirmation, or Not now
+if ($op === 'sug_do' || $op === 'sug_no') {
+    require_once __DIR__ . '/sugg_lib.php';
+    $id = (string)($_POST['sid'] ?? ''); if (!preg_match('/^[a-f0-9]{10}$/', $id)) { sx_json(['ok' => false, 'error' => 'id']); }
+    if ($op === 'sug_no') { sx_json(gd_sug_no($id) ? ['ok' => true] : ['ok' => false, 'error' => sx_tr('sug.e_done')]); }
+    [$ok, $e] = gd_sug_do($id, 'page');
+    sx_json($ok ? ['ok' => true] : ['ok' => false, 'error' => $e]);
 }
 sx_json(['ok' => false, 'error' => 'unknown action'], 400);
 ]]></INLINE>
@@ -12527,36 +13177,6 @@ require_once __DIR__ . '/guard_lib.php';
 $mode = $argv[1] ?? ''; $kind = (string)($argv[2] ?? '');
 if (!in_array($mode, ['tick', 'run'], true) || ($mode === 'run' && !in_array($kind, ['daily', 'event', 'manual'], true))) { exit(1); }
 
-// the state file is shared by tick and run: read-change-write under its own lock
-function gd_state_edit($fn) {
-    $l = @fopen(gd_lock_file('state'), 'c'); if ($l) { flock($l, LOCK_EX); }
-    $S = upd_json(gd_state_file(), []); $out = $fn($S); upd_write(gd_state_file(), $S);
-    if ($l) { flock($l, LOCK_UN); fclose($l); }
-    return $out;
-}
-function gd_run_edit($fn) {
-    $l = @fopen(gd_lock_file('runfile'), 'c'); if ($l) { flock($l, LOCK_EX); }
-    $R = upd_json(gd_run_file(), ['jobs' => []]); $out = $fn($R); upd_write(gd_run_file(), $R);
-    if ($l) { flock($l, LOCK_UN); fclose($l); }
-    return $out;
-}
-function gd_job_start($kind, $text) {
-    return gd_run_edit(function (&$R) use ($kind, $text) {
-        $id = $kind . ':' . time();
-        $R['jobs'][$id] = ['kind' => $kind, 'text' => $text, 'state' => 'running', 'started' => time(), 'log' => []];
-        foreach ($R['jobs'] as $k => $j) { if ($j['state'] !== 'running' && time() - (int)($j['finished'] ?? 0) > 86400) { unset($R['jobs'][$k]); } }
-        return $id;
-    });
-}
-function gd_job($id, $set = [], $line = '') {
-    gd_run_edit(function (&$R) use ($id, $set, $line) {
-        if (!isset($R['jobs'][$id])) { return; }
-        $R['jobs'][$id] = $set + $R['jobs'][$id];
-        if ($line !== '') { $R['jobs'][$id]['log'][] = date('H:i:s') . ' ' . $line; }
-        if (isset($set['state']) && $set['state'] !== 'running') { $R['jobs'][$id]['finished'] = time(); }
-    });
-}
-
 if ($mode === 'tick') {
     $lk = @fopen(gd_lock_file('tick'), 'c');
     if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) { exit(0); }
@@ -12565,6 +13185,9 @@ if ($mode === 'tick') {
     $c = gd_cfg();
     $ev = gd_take_events();   // emptied even when the Guard is off, so the queue never grows
     if (empty($c['on']) || !is_file(gd_flag_file())) { exit(0); }
+    // suggestions (item 95 C): the owner's reactions under the morning brief, the started jobs, the status lines
+    require_once __DIR__ . '/sugg_lib.php';
+    if (is_file(gd_sug_file())) { gd_sug_poll($c, (string)(getenv('SX_BR_HOOK') ?: (sx_cfg()['dc_hook'] ?? ''))); }
     $want = ['sysbox' => !empty($c['ev_sys']), 'diskbox' => !empty($c['ev_dsk'])];
     $ev = array_values(array_filter($ev, function ($e) use ($want) { return !empty($want[$e['src']]) && in_array($e['level'] ?? '', ['a', 'rd'], true); }));
     $spawn = gd_state_edit(function (&$S) use ($c, $ev) {
@@ -12618,12 +13241,16 @@ if (empty($rep['error']) && $kind !== 'manual' && $u && $u['week'] >= (float)$c[
 
 if (empty($rep['error']) && empty($rep['skipped'])) {
     gd_job($id, [], sx_tr('gd.l_ask'));
-    [$ans, $e] = gd_ask(gd_prompt($kind, $snap, $prev, $events, $c));
+    // the daily and the manual report may suggest actions from the server's menu (item 95 C)
+    $menu = []; if ($kind !== 'event') { require_once __DIR__ . '/sugg_lib.php'; $menu = gd_sug_on($c) ? gd_sug_cands($c) : []; }
+    [$ans, $e] = gd_ask(gd_prompt($kind, $snap, $prev, $events, $c, $menu ? gd_sug_prompt($menu) : ''));
     if ($ans) { $rep = $ans + $rep; } else { $rep['error'] = $e; }
 }
+$picks = isset($rep['suggest']) && $menu ? gd_sug_pick($rep['suggest'], $menu) : []; unset($rep['suggest']);
 $rep['took'] = time() - $t0;
 // a skipped or failed run keeps its alerts for the next daily report
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
+if ($picks) { $rep['sug'] = gd_sug_add($rep['id'], $picks); }
 gd_report_add($rep);
 gd_handover($dir, $rep);
 // the morning brief (item 95 B) replaces the daily report's own message: it goes every day, also when all is green
@@ -12794,6 +13421,11 @@ function gd_brief_embed($c, $r, $now = null) {
         if (empty($c[$k])) { continue; }
         $t = $fn(); if ($t !== null && $t !== '') { $fields[] = [$name, $t]; }
     }
+    // 💡 the report's waiting suggestions (item 95 C); their order is their number
+    if (!empty($c['b_sug']) && !empty($r['id']) && is_file(__DIR__ . '/sugg_lib.php')) {
+        require_once __DIR__ . '/sugg_lib.php';
+        $f = gd_sug_field($c, gd_sug_of($r['id'])); if ($f) { $fields[] = $f; }
+    }
     $lvl = !$claude ? 'i' : ['green' => 'g', 'amber' => 'a', 'red' => 'rd'][$v];
     return sxn_embed($lvl, $title, mb_substr($desc, 0, 3500), $fields, 'Claude Guard');
 }
@@ -12801,8 +13433,309 @@ function gd_brief_embed($c, $r, $now = null) {
 function gd_brief_send($c, $r) {
     $hook = getenv('SX_BR_HOOK') ?: (string)(sx_cfg()['dc_hook'] ?? '');
     if ($hook === '') { return [false, sx_tr('gd.e_nohook')]; }
-    [$st, $e] = sxn_post($hook, [gd_brief_embed($c, $r)]);
+    $emb = gd_brief_embed($c, $r);
+    // with suggestions and the bot: sent with ?wait=true, the bot puts the numbers under it (item 95 C)
+    if (!empty($c['b_sug']) && !empty($r['id']) && function_exists('gd_sug_of') && gd_sug_dc_on($c)) {
+        $sids = array_column(array_slice(gd_sug_of($r['id']), 0, GD_SUG_MAX), 'id');
+        if ($sids) { return gd_sug_post($hook, $emb, $sids); }
+    }
+    [$st, $e] = sxn_post($hook, [$emb]);
     return [$st === 'ok', $e];
+}
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- CLAUDE GUARD SUGGESTIONS -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/sugg_lib.php">
+<INLINE><![CDATA[<?php
+// Claude Guard suggestions (Sysbox, item 95 C). In the daily (and the manual) report Claude may pick actions from a fixed
+// menu that the server builds itself: a waiting safe (green) or look-first (amber) container update, deleting an old
+// before-update snapshot, the self-test, Check now, and (off by default) hiding a stuck Seedbox season pack job.
+// Red (Wait) updates and anything outside the menu are never offered. Nothing runs without the owner: Approve and a
+// confirmation on the Guard page, or the owner's number reaction under the morning brief (the shared bot, item 95 A).
+// The actions are the ones the plugins' own buttons start (upd_run.php update|selftest|scan, snp_destroy, Seedbox
+// st_sp_dismiss), so they show up in Activity like any other job.
+require_once __DIR__ . '/guard_lib.php';
+require_once __DIR__ . '/snap_lib.php';
+require_once __DIR__ . '/discord.php';
+require_once __DIR__ . '/brief_lib.php';   // gd_bt: texts in the Discord language
+require_once __DIR__ . '/bot.php';
+
+const GD_SUG_EMO = ["1\u{FE0F}\u{20E3}", "2\u{FE0F}\u{20E3}", "3\u{FE0F}\u{20E3}"];
+const GD_SUG_NO = "\u{1F44E}";
+const GD_SUG_MAX = 3;
+const GD_SUG_TTL = 86400;   // a suggestion waits 24 hours
+// action => the setting that allows it
+const GD_SUG_ACTS = ['upd_safe' => 's_upd_safe', 'upd_look' => 's_upd_look', 'snap_del' => 's_snap', 'selftest' => 's_test', 'check' => 's_test', 'sbx_dismiss' => 's_sbx'];
+
+function gd_sug_file() { return gd_dir() . '/guard_sugg.json'; }
+// read-change-write under a lock; the file holds the suggestions (7 days) and the Discord messages that carry them
+function gd_sug_edit($fn) {
+    $l = @fopen(gd_lock_file('sugg'), 'c'); if ($l) { flock($l, LOCK_EX); }
+    $S = upd_json(gd_sug_file(), []) + ['list' => [], 'msgs' => []]; $o = json_encode($S);
+    $out = $fn($S);
+    $S['list'] = array_values(array_filter($S['list'], function ($x) { return time() - (int)$x['t'] < 7 * 86400; }));
+    $S['msgs'] = array_values(array_filter($S['msgs'], function ($x) { return time() - (int)$x['t'] < 3 * 86400; }));
+    if (json_encode($S) !== $o) { upd_write(gd_sug_file(), $S); }
+    if ($l) { flock($l, LOCK_UN); fclose($l); }
+    return $out;
+}
+function gd_sug_all() { return upd_json(gd_sug_file(), []) + ['list' => [], 'msgs' => []]; }
+function gd_sug_on($c) { foreach (array_unique(GD_SUG_ACTS) as $k) { if (!empty($c[$k])) { return true; } } return false; }
+
+// ---- the menu: what may be suggested right now, with the facts Claude needs --------------------------------------
+// [act, arg, vars (for the titles), facts (one line for Claude)]
+function gd_sug_cands($c) {
+    $out = [];
+    $add = function ($act, $arg, $vars, $facts) use (&$out, $c) { if (!empty($c[GD_SUG_ACTS[$act]])) { $out[$act . '|' . $arg] = ['act' => $act, 'arg' => (string)$arg, 'vars' => $vars, 'facts' => $facts]; } };
+    $scan = upd_json(upd_scan_file(), []); $cache = upd_json(upd_cache_file(), []);
+    foreach ((array)($scan['rows'] ?? []) as $r) {
+        if (($r['state'] ?? '') !== 'update' || ($r['name'] ?? '') === 'claude' || !in_array($r['risk'] ?? '', ['green', 'amber'], true)) { continue; }   // never red (Wait)
+        $cl = $cache[$r['key'] ?? '']['claude']['text'] ?? '';
+        $add($r['risk'] === 'green' ? 'upd_safe' : 'upd_look', $r['name'], ['n' => $r['name'], 'from' => (string)($r['ver'] ?: '?'), 'to' => (string)($r['rver'] ?: '?')],
+            'container update ' . $r['name'] . ' ' . ($r['ver'] ?: '?') . ' -> ' . ($r['rver'] ?: '?') . ', ' . $r['risk'] . ' (' . ($r['risk'] === 'green' ? 'safe' : 'look first') . '), kind ' . $r['kind'] .
+            ($r['age'] !== null ? ', released ' . $r['age'] . ' days ago' : '') . ($r['deps'] ? ', used by our plugins: ' . implode(', ', $r['deps']) : '') .
+            ($r['flags'] ? ', release notes mention: ' . implode(', ', array_keys(array_filter((array)$r['flags']))) : '') .
+            ($cl !== '' ? '; Claude read the notes earlier: ' . mb_substr(preg_replace('/\s+/', ' ', $cl), 0, 300) : '; nobody asked Claude about it'));
+    }
+    if (!empty($c['s_snap'])) {
+        foreach (snp_datasets() as $ds) {
+            foreach (snp_snaps($ds['name']) as $s) {
+                if (!preg_match('/^before-update-(.+)-\d{4}-\d{2}-\d{2}-\d{4}$/', $s['name'], $m) || time() - $s['t'] < 86400) { continue; }
+                $add('snap_del', $ds['name'] . '@' . $s['name'], ['s' => $s['name'], 'ds' => $ds['name'], 'size' => sxn_fmt_bytes($s['used'])],
+                    'ZFS snapshot ' . $ds['name'] . '@' . $s['name'] . ' made before updating ' . $m[1] . ', ' . round((time() - $s['t']) / 86400, 1) . ' days old, holds ' . sxn_fmt_bytes($s['used']));
+            }
+        }
+    }
+    if (!empty($c['s_test'])) {
+        $t = upd_json(upd_test_file(), []); $bad = array_column(array_filter((array)($t['tests'] ?? []), function ($x) { return empty($x['ok']); }), 'name');
+        $add('selftest', '', [], 'self-test of our connections (qBittorrent, Radarr, Sonarr, Prowlarr, Jellyfin, autobrr): ' . (!empty($t['t']) ? 'last run ' . round((time() - (int)$t['t']) / 3600, 1) . ' hours ago, ' . ($bad ? 'failed: ' . implode(', ', $bad) : 'all passed') : 'no result since the last reboot'));
+        $add('check', '', [], 'Check now of the Update manager (container, plugin and Unraid updates): ' . (!empty($scan['t']) ? 'last check ' . round((time() - (int)$scan['t']) / 3600, 1) . ' hours ago' : 'no result since the last reboot'));
+    }
+    if (!empty($c['s_sbx'])) {
+        foreach ((array)(gd_seedbox_state()['packjobs'] ?? []) as $j) {
+            if (($j['stage'] ?? '') !== 'blocked' || gd_sbx_closed($j) || empty($j['id']) || !preg_match('/^[A-Za-z0-9_.:-]{1,80}$/', (string)$j['id'])) { continue; }
+            $nm = (string)($j['name'] ?? $j['title'] ?? $j['key'] ?? '?');
+            $add('sbx_dismiss', $j['id'], ['n' => $nm], 'Seedbox Tools season pack job "' . $nm . '" stuck since ' . date('m-d H:i', (int)($j['t'] ?? 0)) . ': ' . gd_mask((string)($j['msg'] ?? '')));
+        }
+    }
+    return $out;
+}
+
+// the part of the daily prompt that offers the menu; '' when nothing may be suggested
+function gd_sug_prompt($cands) {
+    if (!$cands) { return ''; }
+    $l = [];
+    foreach ($cands as $x) { $l[] = '- act "' . $x['act'] . '", arg "' . $x['arg'] . '": ' . $x['facts']; }
+    return "\nYou may also suggest up to " . GD_SUG_MAX . " actions for the owner to approve, ONLY from this menu (the server built it; act and arg must be copied exactly):\n<suggestion_menu>\n" .
+        implode("\n", $l) . "\n</suggestion_menu>\n" .
+        "Suggest an action only when it is clearly useful today: an update that is safe to take (a look-first one only when the notes and our code use look harmless), " .
+        "a before-update snapshot whose container has run fine since (no problems in the snapshot or the logs), the self-test when a connection looks broken or it has not run for days, " .
+        "Check now when the last check is old. When in doubt, suggest nothing; an empty list is normal. Put them in the JSON as " .
+        '"suggest":[{"act":"...","arg":"...","why":"one short sentence for the owner"}]' . ".\n";
+}
+
+// Claude's picks checked against the menu: [[act, arg, vars, why], ...]
+function gd_sug_pick($raw, $cands) {
+    $out = [];
+    foreach ((array)$raw as $x) {
+        if (!is_array($x)) { continue; }
+        $k = (string)($x['act'] ?? '') . '|' . (string)($x['arg'] ?? '');
+        if (!isset($cands[$k]) || isset($out[$k])) { continue; }
+        $out[$k] = $cands[$k] + ['why' => mb_substr(trim(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', (string)($x['why'] ?? ''))), 0, 300)];
+        if (count($out) >= GD_SUG_MAX) { break; }
+    }
+    return array_values($out);
+}
+
+// a new report's suggestions: the older waiting ones expire; an action the owner said Not now to in the last 3 days is not offered again
+function gd_sug_add($rid, $picks) {
+    return gd_sug_edit(function (&$S) use ($rid, $picks) {
+        foreach ($S['list'] as &$x) { if (in_array($x['state'], ['wait', 'fail'], true)) { $x['state'] = 'expired'; $x['et'] = time(); } }
+        unset($x);
+        $no = []; foreach ($S['list'] as $x) { if ($x['state'] === 'no' && time() - (int)($x['et'] ?? 0) < 3 * 86400) { $no[$x['act'] . '|' . $x['arg']] = 1; } }
+        $ids = [];
+        foreach ($picks as $p) {
+            if (isset($no[$p['act'] . '|' . $p['arg']])) { continue; }
+            $id = substr(md5($rid . $p['act'] . $p['arg'] . microtime()), 0, 10);
+            $S['list'][] = ['id' => $id, 'rid' => $rid, 't' => time(), 'act' => $p['act'], 'arg' => $p['arg'], 'vars' => $p['vars'], 'why' => $p['why'], 'state' => 'wait'];
+            $ids[] = $id;
+        }
+        return $ids;
+    });
+}
+function gd_sug_get($id) { foreach (gd_sug_all()['list'] as $x) { if ($x['id'] === $id) { return $x; } } return null; }
+// the waiting ones of a report, oldest first (their order is their Discord number)
+function gd_sug_of($rid) { return array_values(array_filter(gd_sug_all()['list'], function ($x) use ($rid) { return $x['rid'] === $rid && $x['state'] === 'wait'; })); }
+
+// ---- texts ---------------------------------------------------------------------------------------------------------
+// $tr: sx_tr (page language) or gd_bt (Discord language); the keys are the same
+function gd_sug_title($x, $tr) { return $tr('sug.t_' . $x['act'], (array)$x['vars']); }
+
+// ---- doing it ------------------------------------------------------------------------------------------------------
+function gd_sbx_dismiss($id) {
+    $lib = '/usr/local/emhttp/plugins/qbittorrent_widget';
+    if (!is_file($lib . '/tools_packs.php')) { return sx_tr('sug.e_noseedbox'); }
+    $code = 'require "' . $lib . '/tools_lib.php"; require "' . $lib . '/tools_packs.php"; echo json_encode(st_sp_dismiss($argv[1]));';
+    [$rc, $o] = sx_run(escapeshellarg(sx_php()) . ' -d display_errors=0 -r ' . escapeshellarg($code) . ' ' . escapeshellarg($id), 60);
+    $ln = explode("\n", trim((string)$o)); $j = json_decode((string)end($ln), true);
+    return is_array($j) && !empty($j[0]) ? '' : (is_array($j) && !empty($j[1]) ? (string)$j[1] : sx_tr('sug.e_seedbox'));
+}
+// Approve (page) or the owner's reaction (Discord): checks that it is still on the menu, then starts it. [ok, error]
+function gd_sug_do($id, $via) {
+    $x = gd_sug_get($id);
+    if (!$x) { return [false, sx_tr('sug.e_gone')]; }
+    if (!in_array($x['state'], ['wait', 'fail'], true)) { return [false, sx_tr('sug.e_done')]; }
+    if (time() - (int)$x['t'] > GD_SUG_TTL) { gd_sug_set($id, ['state' => 'expired']); return [false, sx_tr('sug.e_old')]; }
+    $c = gd_cfg(); $cands = gd_sug_cands($c);
+    if (!isset($cands[$x['act'] . '|' . $x['arg']])) { gd_sug_set($id, ['state' => 'gone', 'msg' => sx_tr('sug.e_stale')]); return [false, sx_tr('sug.e_stale')]; }
+    $title = gd_sug_title($x, 'sx_tr');
+    $e = '';
+    if ($x['act'] === 'upd_safe' || $x['act'] === 'upd_look') {
+        if (upd_running('update')) { return [false, sx_tr('ue.upd_busy')]; }
+        upd_spawn(['update', $x['arg']]);
+    } elseif ($x['act'] === 'selftest') {
+        if (upd_running('selftest')) { return [false, sx_tr('ue.test_busy')]; }
+        upd_spawn(['selftest']);
+    } elseif ($x['act'] === 'check') {
+        if (upd_running('scan')) { return [false, sx_tr('ue.scan_busy')]; }
+        upd_spawn(['scan']);
+    } elseif ($x['act'] === 'snap_del') {
+        [$ds, $sn] = explode('@', $x['arg'], 2);
+        $e = snp_destroy($ds, $sn); if ($e === '') { snp_log($x['arg'] . ' deleted (Claude Guard suggestion, approved ' . ($via === 'discord' ? 'on Discord' : 'on the page') . ')'); }
+    } elseif ($x['act'] === 'sbx_dismiss') {
+        $e = gd_sbx_dismiss($x['arg']);
+    }
+    $quick = in_array($x['act'], ['snap_del', 'sbx_dismiss'], true);
+    $jid = gd_job_start('sug', sx_tr($via === 'discord' ? 'sug.j_dc' : 'sug.j_page', ['t' => $title]));
+    if ($quick) {
+        gd_job($jid, ['state' => $e === '' ? 'done' : 'error', 'text' => $e === '' ? sx_tr('sug.j_ok', ['t' => $title]) : sx_tr('sug.j_fail', ['t' => $title, 'e' => $e])]);
+        gd_sug_set($id, ['state' => $e === '' ? 'done' : 'fail', 'msg' => $e === '' ? sx_tr('sug.m_ok') : $e, 'via' => $via, 'rt' => time()]);
+    } else {
+        gd_job($jid, [], sx_tr('sug.l_started'));
+        gd_sug_set($id, ['state' => 'run', 'via' => $via, 'rt' => time(), 'jid' => $jid, 'msg' => '']);
+    }
+    gd_log('suggestion ' . $x['act'] . ' ' . $x['arg'] . ' approved (' . $via . ')' . ($e !== '' ? ': ' . $e : ''));
+    return $e === '' ? [true, ''] : [false, $e];
+}
+function gd_sug_set($id, $set) {
+    gd_sug_edit(function (&$S) use ($id, $set) { foreach ($S['list'] as &$x) { if ($x['id'] === $id) { $x = $set + $x; $x['et'] = time(); } } unset($x); });
+}
+// Not now
+function gd_sug_no($id) {
+    $x = gd_sug_get($id);
+    if (!$x || !in_array($x['state'], ['wait', 'fail'], true)) { return false; }
+    gd_sug_set($id, ['state' => 'no']); return true;
+}
+
+// started jobs: follow the Update manager job (the newest of its kind started after the click); old waiting ones expire.
+// Called by the tick and by the page's state. Returns true when something changed.
+function gd_sug_follow() {
+    $S = gd_sug_all(); $ch = false;
+    $jobs = upd_json(upd_run_file(), ['jobs' => []])['jobs'];
+    foreach ($S['list'] as $x) {
+        if ($x['state'] === 'wait' && time() - (int)$x['t'] > GD_SUG_TTL) { gd_sug_set($x['id'], ['state' => 'expired']); $ch = true; continue; }
+        if ($x['state'] !== 'run') { continue; }
+        $kind = ['upd_safe' => 'update', 'upd_look' => 'update', 'selftest' => 'selftest', 'check' => 'scan'][$x['act']] ?? '';
+        $j = null;
+        foreach ($jobs as $y) { if (($y['kind'] ?? '') === $kind && ($kind !== 'update' || ($y['name'] ?? '') === $x['arg']) && (int)$y['started'] >= (int)$x['rt'] - 5 && (!$j || $y['started'] > $j['started'])) { $j = $y; } }
+        $title = gd_sug_title($x, 'sx_tr');
+        if (!$j) {
+            if (time() - (int)$x['rt'] > 600) { gd_sug_set($x['id'], ['state' => 'fail', 'msg' => sx_tr('sug.e_nostart')]); gd_job($x['jid'] ?? '', ['state' => 'error', 'text' => sx_tr('sug.j_fail', ['t' => $title, 'e' => sx_tr('sug.e_nostart')])]); $ch = true; }
+            continue;
+        }
+        if ($j['state'] === 'running') { if (($x['msg'] ?? '') !== (string)$j['text']) { gd_sug_set($x['id'], ['msg' => (string)$j['text']]); gd_job($x['jid'] ?? '', [], (string)$j['text']); } continue; }
+        $ok = $j['state'] === 'done';
+        gd_sug_set($x['id'], ['state' => $ok ? 'done' : 'fail', 'msg' => (string)$j['text']]);
+        gd_job($x['jid'] ?? '', ['state' => $ok ? 'done' : 'error', 'text' => sx_tr($ok ? 'sug.j_ok' : 'sug.j_fail', ['t' => $title, 'e' => (string)$j['text']])]);
+        $ch = true;
+    }
+    return $ch;
+}
+
+// ---- Discord: the brief's suggestion part, the reactions and the status line ----------------------------------------
+function gd_sug_dc_on($c) { return !empty($c['s_dc']) && mt_bot_ready(); }
+// the field under the brief: [name, value] or null
+function gd_sug_field($c, $list) {
+    if (!$list) { return null; }
+    $l = [];
+    foreach (array_slice($list, 0, GD_SUG_MAX) as $i => $x) { $l[] = GD_SUG_EMO[$i] . ' ' . gd_sug_title($x, 'gd_bt') . ($x['why'] !== '' ? ': ' . $x['why'] : ''); }
+    $l[] = gd_sug_dc_on($c) ? gd_bt('brief.sug_how') : gd_bt('brief.sug_page');
+    return ['💡 ' . gd_bt('brief.h_sug', ['n' => count($l) - 1]), implode("\n", $l)];
+}
+// the status line of a message: one line per number, in the Discord language
+function gd_sug_status($m, $byId) {
+    $p = [];
+    foreach ($m['sids'] as $i => $sid) {
+        $x = $byId[$sid] ?? null; if (!$x) { continue; }
+        $st = in_array($x['state'], ['wait', 'run', 'done', 'fail', 'no', 'expired', 'gone'], true) ? $x['state'] : 'gone';
+        $p[] = GD_SUG_EMO[$i] . ' ' . gd_bt('brief.sst_' . $st) . ': ' . gd_sug_title($x, 'gd_bt');
+    }
+    return implode("\n", $p);
+}
+// posts the brief with ?wait=true so the bot can react under it; [ok, error]
+function gd_sug_post($hook, $embed, $sids) {
+    $pl = json_encode(['embeds' => [$embed], 'allowed_mentions' => ['parse' => []]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+    [$code, $b, $err] = mt_bot_http('POST', $hook . (strpos($hook, '?') === false ? '?' : '&') . 'wait=true', ['Content-Type: application/json'], $pl);
+    $msg = json_decode($b, true);
+    if ($err !== '' || $code >= 400 || !is_array($msg) || empty($msg['id'])) { return [false, $err !== '' ? $err : 'Discord HTTP ' . $code]; }
+    $rec = ['mid' => (string)$msg['id'], 'ch' => (string)($msg['channel_id'] ?? ''), 't' => time(), 'sids' => $sids, 'embed' => $embed, 'last' => ''];
+    $er = '';
+    foreach (array_merge(array_slice(GD_SUG_EMO, 0, count($sids)), [GD_SUG_NO]) as $em) {
+        [$c, $j, $e] = mt_bot_api('PUT', '/channels/' . $rec['ch'] . '/messages/' . $rec['mid'] . '/reactions/' . rawurlencode($em) . '/@me');
+        if ($e !== '') { $er = $e; break; }
+        usleep(350000);
+    }
+    if ($er !== '') { $rec['err'] = $er; gd_log('suggestions: the bot could not react: ' . $er); }
+    gd_sug_edit(function (&$S) use ($rec) { $S['msgs'][] = $rec; $S['msgs'] = array_slice($S['msgs'], -20); });
+    return [true, ''];
+}
+// edits the brief through the webhook: the stored embed with the status field
+function gd_sug_edit_msg($hook, $m, $status) {
+    $e = (array)$m['embed']; $name = '📋 ' . gd_bt('brief.h_sst');
+    $f = array_values(array_filter((array)($e['fields'] ?? []), function ($x) use ($name) { return ($x['name'] ?? '') !== $name; }));
+    $f[] = ['name' => $name, 'value' => mb_substr($status, 0, 1000), 'inline' => false];
+    $e['fields'] = array_slice($f, 0, 25);
+    mt_bot_http('PATCH', $hook . '/messages/' . $m['mid'], ['Content-Type: application/json'], json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
+}
+// who reacted with $em (user ids), null on an error
+function gd_sug_who($m, $em) {
+    [$c, $j, $e] = mt_bot_api('GET', '/channels/' . $m['ch'] . '/messages/' . $m['mid'] . '/reactions/' . rawurlencode($em) . '?limit=100');
+    if ($e !== '' || !is_array($j)) { return null; }
+    return array_map(function ($u) { return (string)($u['id'] ?? ''); }, $j);
+}
+// the tick (every 2 minutes): the owner's reactions under the briefs of the last 24 hours, then the status lines
+function gd_sug_poll($c, $hook) {
+    $S = gd_sug_all(); if (!$S['msgs']) { return; }
+    $byId = []; foreach ($S['list'] as $x) { $byId[$x['id']] = $x; }
+    if (gd_sug_dc_on($c)) {
+        $me = mt_bot_cfg()['user'];
+        foreach ($S['msgs'] as $m) {
+            if (time() - (int)$m['t'] > GD_SUG_TTL || !empty($m['err'])) { continue; }
+            $wait = array_filter($m['sids'], function ($sid) use ($byId) { return ($byId[$sid]['state'] ?? '') === 'wait'; });
+            if (!$wait) { continue; }
+            $no = gd_sug_who($m, GD_SUG_NO); if ($no === null) { continue; }
+            if (in_array($me, $no, true)) { foreach ($wait as $sid) { gd_sug_no($sid); } continue; }   // 👎: Not now for the waiting ones
+            foreach ($wait as $i => $sid) {
+                $w = gd_sug_who($m, GD_SUG_EMO[$i]);
+                if ($w !== null && in_array($me, $w, true)) { gd_sug_do($sid, 'discord'); }
+            }
+        }
+    }
+    gd_sug_follow();
+    // the status line follows the suggestions (also the ones approved on the page); not before anything happened
+    $S = gd_sug_all(); $byId = []; foreach ($S['list'] as $x) { $byId[$x['id']] = $x; }
+    foreach ($S['msgs'] as $m) {
+        if (time() - (int)$m['t'] > 2 * 86400 || $hook === '') { continue; }
+        $moved = array_filter($m['sids'], function ($s) use ($byId) { return ($byId[$s]['state'] ?? 'wait') !== 'wait'; });
+        if (!$moved && ($m['last'] ?? '') === '') { continue; }
+        $st = gd_sug_status($m, $byId);
+        if ($st === '' || $st === ($m['last'] ?? '')) { continue; }
+        gd_sug_edit_msg($hook, $m, $st);
+        gd_sug_edit(function (&$D) use ($m, $st) { foreach ($D['msgs'] as &$y) { if ($y['mid'] === $m['mid']) { $y['last'] = $st; } } unset($y); });
+    }
 }
 ]]></INLINE>
 </FILE>

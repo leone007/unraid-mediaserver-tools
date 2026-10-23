@@ -2620,5 +2620,236 @@
  },
  "brief.job_failed": {
   "text": "hibás"
+ },
+ "sug.t_upd_safe": {
+  "text": "{n} frissítése ({from} → {to})"
+ },
+ "sug.t_upd_look": {
+  "text": "{n} frissítése ({from} → {to}, előbb nézd meg)"
+ },
+ "sug.t_snap_del": {
+  "text": "A(z) {s} snapshot törlése ({size})"
+ },
+ "sug.t_selftest": {
+  "text": "Kapcsolatok öntesztje"
+ },
+ "sug.t_check": {
+  "text": "Frissítések ellenőrzése most"
+ },
+ "sug.t_sbx_dismiss": {
+  "text": "Az elakadt Seedbox-feladat elrejtése: {n}"
+ },
+ "sug.c_upd_safe": {
+  "text": "Frissíted most a(z) {n} konténert ({from} → {to})? Előbb ZFS-snapshot készül az adatairól, utána lefut az önteszt."
+ },
+ "sug.c_upd_look": {
+  "text": "Frissíted most a(z) {n} konténert ({from} → {to})? Ez „előbb nézd meg” frissítés: ha még nem tetted, olvasd el a kiadási jegyzetet az Update manager oldalon. Előbb ZFS-snapshot készül."
+ },
+ "sug.c_snap_del": {
+  "text": "Végleg törlöd a(z) {ds}@{s} snapshotot? Nem vonható vissza; a konténert ebből már nem lehet visszaállítani."
+ },
+ "sug.c_selftest": {
+  "text": "Lefuttatod most az öntesztet? Csak olvas (bejelentkezés és listák a programokban)."
+ },
+ "sug.c_check": {
+  "text": "Ellenőrzöd most a frissítéseket? Csak olvas (image-tárak, kiadási jegyzetek)."
+ },
+ "sug.c_sbx_dismiss": {
+  "text": "Elrejted az elakadt {n} feladatot a Seedbox Toolsban? Csak a bejegyzés változik, semmi nem törlődik, az évad újra indítható."
+ },
+ "sug.b_upd_safe": {
+  "text": "Frissítés"
+ },
+ "sug.b_upd_look": {
+  "text": "Frissítés"
+ },
+ "sug.b_snap_del": {
+  "text": "Törlés"
+ },
+ "sug.b_selftest": {
+  "text": "Futtatás"
+ },
+ "sug.b_check": {
+  "text": "Ellenőrzés"
+ },
+ "sug.b_sbx_dismiss": {
+  "text": "Elrejtés"
+ },
+ "sug.e_noseedbox": {
+  "text": "A Seedbox nincs telepítve"
+ },
+ "sug.e_seedbox": {
+  "text": "A Seedbox Tools nem rejtette el a feladatot (már nem akadt el?)"
+ },
+ "sug.e_gone": {
+  "text": "Ez a javaslat már nem létezik"
+ },
+ "sug.e_done": {
+  "text": "Erre a javaslatra már válaszoltál"
+ },
+ "sug.e_old": {
+  "text": "Ez a javaslat 24 óránál régebbi"
+ },
+ "sug.e_stale": {
+  "text": "Már nem érvényes: a frissítés, a snapshot vagy a feladat megszűnt vagy megváltozott. Semmi nem indult el."
+ },
+ "sug.e_nostart": {
+  "text": "a feladat 10 percen belül nem indult el"
+ },
+ "sug.j_page": {
+  "text": "Jóváhagyott javaslat: {t}"
+ },
+ "sug.j_dc": {
+  "text": "Discordon jóváhagyott javaslat: {t}"
+ },
+ "sug.j_ok": {
+  "text": "Kész: {t}"
+ },
+ "sug.j_fail": {
+  "text": "Nem sikerült: {t}: {e}"
+ },
+ "sug.m_ok": {
+  "text": "kész"
+ },
+ "sug.l_started": {
+  "text": "elindult, a saját oldalán is követheted"
+ },
+ "sg.h": {
+  "text": "Javaslatok"
+ },
+ "sg.band": {
+  "text": "{n} vár"
+ },
+ "sg.b_ok": {
+  "text": "Jóváhagyás"
+ },
+ "sg.b_again": {
+  "text": "Újra"
+ },
+ "sg.b_no": {
+  "text": "Most nem"
+ },
+ "sg.st_wait": {
+  "text": "vár"
+ },
+ "sg.st_run": {
+  "text": "fut"
+ },
+ "sg.st_done": {
+  "text": "kész"
+ },
+ "sg.st_fail": {
+  "text": "nem sikerült"
+ },
+ "sg.st_no": {
+  "text": "most nem"
+ },
+ "sg.st_expired": {
+  "text": "lejárt"
+ },
+ "sg.st_gone": {
+  "text": "már nem érvényes"
+ },
+ "sg.src_updates": {
+  "text": "Update manager"
+ },
+ "sg.src_snapshots": {
+  "text": "Snapshots"
+ },
+ "sg.src_seedbox": {
+  "text": "Seedbox Tools"
+ },
+ "sg.via_page": {
+  "text": "az oldalon jóváhagyva"
+ },
+ "sg.via_discord": {
+  "text": "Discordon jóváhagyva"
+ },
+ "sg.why": {
+  "text": "Claude: {t}"
+ },
+ "sg.none": {
+  "text": "Nincs váró javaslat. A napi jelentésben Claude egy fix listából javasolhat műveletet; itt vagy Discordon reakcióval hagyod jóvá."
+ },
+ "sg.off": {
+  "text": "A javaslatok ki vannak kapcsolva (lent a beállításokban egy művelettípus sincs engedélyezve)."
+ },
+ "sg.old": {
+  "text": "Korábbi javaslatok"
+ },
+ "sg.old_count": {
+  "text": "{n} · {a} jóváhagyva, {d} most nem, {e} lejárt"
+ },
+ "gds.p_sug": {
+  "text": "Javaslatok"
+ },
+ "gds.s_lb": {
+  "text": "Javasolható műveletek"
+ },
+ "gds.s_upd_safe": {
+  "text": "Biztonságos konténerfrissítések"
+ },
+ "gds.s_upd_look": {
+  "text": "„Előbb nézd meg” frissítések"
+ },
+ "gds.s_snap": {
+  "text": "Régi frissítés előtti snapshotok törlése"
+ },
+ "gds.s_test": {
+  "text": "Önteszt, Check now"
+ },
+ "gds.s_sbx": {
+  "text": "Seedbox: elakadt feladat elrejtése"
+ },
+ "gds.s_hint": {
+  "text": "Claude ezekből választhat a napi jelentésben (legfeljebb 3). Piros (Wait) frissítést és listán kívülit soha; mindegyikhez Jóváhagyás és külön megerősítés kell. A Most nem 3 napra elrejti."
+ },
+ "gds.sdc_lb": {
+  "text": "Jóváhagyás Discordon"
+ },
+ "gds.sdc": {
+  "text": "reakcióval a reggeli összefoglaló alatt"
+ },
+ "gds.bot_ok": {
+  "text": "bot beállítva ✓"
+ },
+ "gds.bot_no": {
+  "text": "állítsd be lent a Discord-botot"
+ },
+ "gds.sdc_hint": {
+  "text": "A bot 1️⃣ 2️⃣ 3️⃣ 👎 reakciót tesz az összefoglaló alá; csak a te reakciód számít, 24 óráig (👎 = mindegyikre Most nem). A szám kérdés nélkül elindítja a műveletet, mint itt a Jóváhagyás és a megerősítés."
+ },
+ "brief.h_sug": {
+  "text": "Javaslatok ({n})"
+ },
+ "brief.sug_how": {
+  "text": "Jóváhagyás: reagálj a számmal (24 óráig érvényes), 👎 = most nem; vagy a Claude Guard oldalán"
+ },
+ "brief.sug_page": {
+  "text": "A Claude Guard oldalán hagyhatod jóvá (Settings, Utilities)"
+ },
+ "brief.h_sst": {
+  "text": "Állapot"
+ },
+ "brief.sst_wait": {
+  "text": "⏳ vár"
+ },
+ "brief.sst_run": {
+  "text": "▶ fut"
+ },
+ "brief.sst_done": {
+  "text": "✅ kész"
+ },
+ "brief.sst_fail": {
+  "text": "⛔ nem sikerült (lásd a Guard oldalt)"
+ },
+ "brief.sst_no": {
+  "text": "👎 most nem"
+ },
+ "brief.sst_expired": {
+  "text": "⌛ lejárt"
+ },
+ "brief.sst_gone": {
+  "text": "✖ már nem érvényes"
  }
 }
