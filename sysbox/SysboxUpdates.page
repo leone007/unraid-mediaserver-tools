@@ -57,6 +57,7 @@ $upm_t = function ($k, $v = []) use ($upm_T) { return htmlspecialchars($upm_T($k
 #upm .upm-claude .who{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#c3b0ff;margin-bottom:6px;white-space:normal}
 #upm .upm-conf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;background:rgba(229,83,75,.10);border:1px solid rgba(229,83,75,.4);padding:8px 10px}
 #upm .upm-conf span{flex:1 1 320px;min-width:0}
+#upm .upm-conf.upm-col{flex-direction:column;align-items:flex-start}#upm .upm-conf.upm-col span{flex:none}
 #upm .upm-gbar{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--upm-line);cursor:pointer;font-weight:600}
 #upm .upm-gbar .c{font-weight:normal;font-size:12px;opacity:.7}
 #upm .upm-gbar.empty{opacity:.5}
@@ -165,7 +166,7 @@ $(function () {
     if ($('#upm-sum .upm-conf').length) { return; }
     var L = allList(D.scan), out = $.map($.grep(D.scan.rows || [], function (x) { return x.state === 'update' && (x.risk === 'red' || x.name === 'claude'); }), function (x) { return x.name; });
     var li = $.map(L, function (x) { var k = KIND[x.kind] || KIND.unknown; return '<li><b>' + esc(x.name) + '</b> <span class="upm-ver">' + esc(x.ver || '?') + '<i>&rarr;</i>' + esc(x.rver || '?') + '</span> <span class="upm-chip ' + k[0] + '">' + esc(k[1]) + '</span>' + (/qbittorrent/i.test(x.image) ? ' <small class="upm-mut">' + esc(T('upm.c.s2_qb')) + '</small>' : '') + '</li>'; }).join('');
-    $('#upm-sum').append('<div class="upm-conf" style="margin:0 12px 12px;flex-direction:column;align-items:flex-start"><b>' + esc(T('upm.all_conf', { n: L.length })) + '</b><ol style="margin:0;padding-left:20px">' + li + '</ol>' +
+    $('#upm-sum').append('<div class="upm-conf upm-col" style="margin:0 12px 12px"><b>' + esc(T('upm.all_conf', { n: L.length })) + '</b><ol style="margin:0;padding-left:20px">' + li + '</ol>' +
       '<span class="upm-mut">' + esc((out.length ? T('upm.all_left', { l: out.join(', ') }) + ' ' : '') + T('upm.all_stop')) + '</span>' +
       '<span class="upm-acts" style="justify-content:flex-start"><input type="button" class="upm-all-go upm-sm" value="' + esc(T('upm.all_yes', { n: L.length })) + '"><input type="button" class="upm-all-no upm-ghost upm-sm" value="' + esc(T('upm.c.cancel')) + '"></span></div>');
   });
