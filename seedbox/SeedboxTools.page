@@ -222,8 +222,7 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 <dt><?=$tp_t('tp.dt.discord_webhook')?></dt>
 <dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.https_discord_com_api')?>" style="width:420px"> <span class="stt-hint"><?=$tp_t('tp.hint.one_webhook_for_all')?></span></dd>
 <dt><?=$tp_t('tp.dt.discord_bot_reactions')?></dt>
-<dd><input type="password" name="bot_token" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.bot_token')?>" style="width:300px"> <input type="text" name="bot_user" placeholder="<?=$tp_t('tp.ph.your_discord_user_id')?>" style="width:200px" inputmode="numeric">
-<span class="stt-brk"></span><label><input type="checkbox" name="bot_rep" value="1"> <?=$tp_t('tp.lbl.season_packs_from_autobrr')?></label> &nbsp; <label><input type="checkbox" name="bot_find" value="1"> <?=$tp_t('tp.lbl.torrents_removed_from_the')?></label> &nbsp; <input type="button" id="stt-bottest" value="<?=$tp_t('tp.btn.test_the_bot')?>" class="stt-ghost"> <span id="stt-botmsg" class="stt-mut"></span>
+<dd><label><input type="checkbox" name="bot_rep" value="1"> <?=$tp_t('tp.lbl.season_packs_from_autobrr')?></label> &nbsp; <label><input type="checkbox" name="bot_find" value="1"> <?=$tp_t('tp.lbl.torrents_removed_from_the')?></label> &nbsp; <input type="button" id="stt-bottest" value="<?=$tp_t('tp.btn.test_the_bot')?>" class="stt-ghost"> <span id="stt-botmsg" class="stt-mut"></span>
 <span class="stt-hint"><?=$tp_t('tp.hint.optional_the_seedbox_message')?></span></dd>
 <dt><?=$tp_t('tp.dt.check_the_connections')?></dt>
 <dd><input type="button" id="stt-test" value="<?=$tp_t('tp.btn.test_the_connections')?>"> <span class="stt-hint"><?=$tp_t('tp.hint.tests_the_saved_settings')?></span><div id="stt-tests" class="stt-mut"></div></dd>
@@ -297,6 +296,7 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 <dd><input type="button" id="stt-save" value="<?=$tp_t('tp.btn.save')?>"> <span id="stt-cmsg" style="margin-left:10px"></span></dd>
 </dl>
 </form>
+<?php $mt_bot_post = '/plugins/qbittorrent_widget/bot_save.php'; include '/usr/local/emhttp/plugins/qbittorrent_widget/bot_block.php'; ?>
 <?php $mt_lang_post = '/plugins/qbittorrent_widget/lang_save.php'; include '/usr/local/emhttp/plugins/qbittorrent_widget/lang_block.php'; ?>
 
 </div>
@@ -359,7 +359,6 @@ $(function () {
     $.each(['dc_find', 'dc_upd', 'dc_rep'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); }); f.find('[name=find_cat]').prop('checked', !!+c.find_cat); $.each(['auto_scan', 'auto_upd', 'auto_rep', 'ab_on', 'upd_cat_save', 'upd_cat_hdr', 'upd_cat_res'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); });
     f.find('[name=ab_filters]').val((c.ab_filters || []).join('\n')); drawAbf(null);
     f.find('[name=dc_hook]').val('').attr('placeholder', c.dc_hook_set ? T('cfg.saved_keep') : 'https://discord.com/api/webhooks/...');
-    f.find('[name=bot_token]').val('').attr('placeholder', c.bot_token_set ? T('cfg.saved_keep') : T('tp.ph.bot_token')); f.find('[name=bot_user]').val(c.bot_user || '');
     $.each(['bot_rep', 'bot_find'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); });
   }
   $('#stt-bottest').on('click', function () {

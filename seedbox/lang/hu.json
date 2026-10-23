@@ -1040,12 +1040,6 @@
  "set.base_ex": {
   "text": "a letöltési mappa /mnt/ alatti útvonal kell legyen (például /mnt/user/data/downloads)"
  },
- "set.bot": {
-  "text": "a bot token hibásnak tűnik (Developer Portal, Bot, Reset Token)"
- },
- "set.bot_hook": {
-  "text": "a bot a Seedbox-üzenetek alatt reagál: Discord webhookot is ments"
- },
  "set.cats": {
   "text": "a Shape up-hoz legalább egy kell ezek közül: megtakarítás, HDR / DV upgrade, felbontás-upgrade"
  },
@@ -1081,9 +1075,6 @@
  },
  "set.trash": {
   "text": "a kuka napjai 0 és 60 között lehetnek"
- },
- "set.uid": {
-  "text": "a Discord-felhasználó ID egy 17-20 jegyű szám (Fejlesztői mód, jobb klikk a nevedre, Felhasználói azonosító másolása)"
  },
  "set.upg": {
   "text": "az upgrade méretnövekedése 0 és 1000 százalék között lehet"
@@ -1405,7 +1396,7 @@
   "text": "A seedelt torrentek átnézése"
  },
  "tp.btn.test_the_bot": {
-  "text": "A bot tesztelése"
+  "text": "Reakció próbája"
  },
  "tp.btn.test_the_connections": {
   "text": "A kapcsolatok tesztelése"
@@ -1537,7 +1528,7 @@
   "text": "nem kötelező, csak a Season repacker évadcsomag-üzeneteihez (autobrr, Settings, API keys)"
  },
  "tp.hint.optional_the_seedbox_message": {
-  "text": "nem kötelező. A Seedbox-üzenet 1️⃣ 2️⃣ 3️⃣ 👎 reakciókat kap a botodtól; egy szám elindítja azt a cserét (ugyanazokkal az ellenőrzésekkel, mint az itteni gomb), a 👎 elveti. Csak a te reakcióid számítanak, 24 óráig; a bot percenként egyszer néz rá. Token: Discord Developer Portal, az alkalmazásod, Bot, Reset Token (üresen hagyva megmarad, - törli). Felhasználói ID: Discord, Felhasználói beállítások, Fejlesztő, Fejlesztői mód, majd jobb klikk a nevedre, Felhasználói azonosító másolása. A botnak a webhook csatornájában kell a Csatornák megtekintése, a Reakciók hozzáadása és az Üzenetelőzmények visszaolvasása jog"
+  "text": "opcionális. A Seedbox-üzenet alá a botod 1️⃣ 2️⃣ 3️⃣ 👎 reakciót tesz; egy szám elindítja azt a cserét (ugyanazokkal az ellenőrzésekkel, mint az itteni gomb), a 👎 elveti. Csak a te reakcióid számítanak, 24 óráig; a bot percenként néz rá. A bot token és a felhasználói azonosítód lent, a Discord-bot blokkban van (közös a Sysboxszal). Reakció próbája: koppints egy reakcióra, és egy percen belül zöld lesz az üzenet"
  },
  "tp.hint.relevant_a_season_that": {
   "text": "Releváns: csomagolható évad, futó csomagolás vagy keresés, még sosem volt keresés. A hibás vagy elakadt sor minden módban látszik, kivéve a sosem módot. Ha nem marad sor, a csempe eszközrésze elrejtődik."
@@ -1656,9 +1647,6 @@
  "tp.ph.api_key": {
   "text": "API-kulcs"
  },
- "tp.ph.bot_token": {
-  "text": "bot token"
- },
  "tp.ph.filter_by_name": {
   "text": "szűrés névre"
  },
@@ -1691,9 +1679,6 @@
  },
  "tp.ph.slimmer_or_stronger_in": {
   "text": "karcsúbb vagy erősebb, jobb formában"
- },
- "tp.ph.your_discord_user_id": {
-  "text": "a Discord-felhasználó ID-d"
  },
  "tp.settings": {
   "text": "Beállítások"

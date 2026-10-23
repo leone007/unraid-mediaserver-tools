@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzh">
+<!ENTITY version   "2026.10.99zzi">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzi
+- Discord bot: the bot token and your user ID moved into a shared Discord bot block (Seedbox Tools settings, and the Claude Guard page of Sysbox): set once, used by both plugins. The saved Seedbox values are taken over, nothing to retype. Test the bot in the block checks the token, the webhook and the reactions without waiting for you
+
 ###2026.10.99zzh
 - Season repacker: a stuck season pack job has a Dismiss button (it leaves Processing and the STUCK badge of the tile; nothing is deleted), and a stuck job closes by itself when a later replacement of the same season finished
 
@@ -1776,8 +1779,7 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 <dt><?=$tp_t('tp.dt.discord_webhook')?></dt>
 <dd><input type="password" name="dc_hook" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.https_discord_com_api')?>" style="width:420px"> <span class="stt-hint"><?=$tp_t('tp.hint.one_webhook_for_all')?></span></dd>
 <dt><?=$tp_t('tp.dt.discord_bot_reactions')?></dt>
-<dd><input type="password" name="bot_token" autocomplete="new-password" placeholder="<?=$tp_t('tp.ph.bot_token')?>" style="width:300px"> <input type="text" name="bot_user" placeholder="<?=$tp_t('tp.ph.your_discord_user_id')?>" style="width:200px" inputmode="numeric">
-<span class="stt-brk"></span><label><input type="checkbox" name="bot_rep" value="1"> <?=$tp_t('tp.lbl.season_packs_from_autobrr')?></label> &nbsp; <label><input type="checkbox" name="bot_find" value="1"> <?=$tp_t('tp.lbl.torrents_removed_from_the')?></label> &nbsp; <input type="button" id="stt-bottest" value="<?=$tp_t('tp.btn.test_the_bot')?>" class="stt-ghost"> <span id="stt-botmsg" class="stt-mut"></span>
+<dd><label><input type="checkbox" name="bot_rep" value="1"> <?=$tp_t('tp.lbl.season_packs_from_autobrr')?></label> &nbsp; <label><input type="checkbox" name="bot_find" value="1"> <?=$tp_t('tp.lbl.torrents_removed_from_the')?></label> &nbsp; <input type="button" id="stt-bottest" value="<?=$tp_t('tp.btn.test_the_bot')?>" class="stt-ghost"> <span id="stt-botmsg" class="stt-mut"></span>
 <span class="stt-hint"><?=$tp_t('tp.hint.optional_the_seedbox_message')?></span></dd>
 <dt><?=$tp_t('tp.dt.check_the_connections')?></dt>
 <dd><input type="button" id="stt-test" value="<?=$tp_t('tp.btn.test_the_connections')?>"> <span class="stt-hint"><?=$tp_t('tp.hint.tests_the_saved_settings')?></span><div id="stt-tests" class="stt-mut"></div></dd>
@@ -1851,6 +1853,7 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 <dd><input type="button" id="stt-save" value="<?=$tp_t('tp.btn.save')?>"> <span id="stt-cmsg" style="margin-left:10px"></span></dd>
 </dl>
 </form>
+<?php $mt_bot_post = '/plugins/qbittorrent_widget/bot_save.php'; include '/usr/local/emhttp/plugins/qbittorrent_widget/bot_block.php'; ?>
 <?php $mt_lang_post = '/plugins/qbittorrent_widget/lang_save.php'; include '/usr/local/emhttp/plugins/qbittorrent_widget/lang_block.php'; ?>
 
 </div>
@@ -1913,7 +1916,6 @@ $(function () {
     $.each(['dc_find', 'dc_upd', 'dc_rep'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); }); f.find('[name=find_cat]').prop('checked', !!+c.find_cat); $.each(['auto_scan', 'auto_upd', 'auto_rep', 'ab_on', 'upd_cat_save', 'upd_cat_hdr', 'upd_cat_res'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); });
     f.find('[name=ab_filters]').val((c.ab_filters || []).join('\n')); drawAbf(null);
     f.find('[name=dc_hook]').val('').attr('placeholder', c.dc_hook_set ? T('cfg.saved_keep') : 'https://discord.com/api/webhooks/...');
-    f.find('[name=bot_token]').val('').attr('placeholder', c.bot_token_set ? T('cfg.saved_keep') : T('tp.ph.bot_token')); f.find('[name=bot_user]').val(c.bot_user || '');
     $.each(['bot_rep', 'bot_find'], function (i, k) { f.find('[name=' + k + ']').prop('checked', !!+c[k]); });
   }
   $('#stt-bottest').on('click', function () {
@@ -2551,6 +2553,7 @@ const ST_JAR   = '/tmp/qbt_tools_cookie.txt';
 
 require_once __DIR__ . '/moveprog.php';
 require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/bot.php';
 // the texts the pages show, in the page language (lang/en.json); Discord texts use st_l()
 // the same dictionary in the Discord language (Settings, Language: Discord messages), for texts that go to both the page
 // and Discord, e.g. a job's message shown in the BoxBot message (seen 2026-10-20: the page language reached Discord)
@@ -2599,6 +2602,7 @@ function st_cfg() {
     foreach (['prowlarr', 'radarr', 'sonarr', 'lidarr', 'autobrr'] as $k) { if (isset($x[$k]) && is_array($x[$k])) { $c[$k] = array_merge($c[$k], $x[$k]); } }
     foreach (['ab_on', 'ab_filters', 'map_qb', 'map_host', 'roots', 'dl_base', 'folders', 'upd_min_gb', 'upd_min_age', 'upd_saving', 'dv_all', 'upd_upg_growth', 'upd_cat_save', 'upd_cat_hdr', 'upd_cat_res', 'find_tol', 'find_accept', 'repl_max_growth', 'find_missing_files', 'trash_days', 'dc_hook', 'dc_lang', 'dc_on', 'bot_token', 'bot_user', 'bot_rep', 'bot_find', 'tag_find', 'tag_upd', 'tag_rep', 'show_find', 'show_upd', 'show_rep', 'show_find_days', 'show_upd_days', 'show_rep_days', 'dc_find', 'dc_upd', 'dc_rep', 'find_cat', 'auto_scan', 'auto_upd', 'auto_rep', 'auto_freq', 'auto_day', 'auto_hour'] as $k) { if (isset($x[$k])) { $c[$k] = $x[$k]; } }
     foreach (['dc_find', 'dc_upd', 'dc_rep'] as $k) { if (!isset($x[$k])) { $c[$k] = !empty($c['dc_on']) ? 1 : 0; } } // the old single switch decides until the new ones are saved
+    $b = mt_bot_cfg(); $c['bot_token'] = $b['token']; $c['bot_user'] = $b['user']; // the shared Discord bot (bot.php, item 95); tools.json keeps the old values only for the move
     return st_cfg_folders($c);
 }
 
@@ -5286,14 +5290,9 @@ if ($op === 'saveconfig') {
     $td = (int)($_POST['trash_days'] ?? 3); if ($td < 0 || $td > 60) { st_out(false, ['error' => st_tr('set.trash')]); }
     $hk = trim((string)($_POST['dc_hook'] ?? ''));
     if ($hk === '-') { $new['dc_hook'] = ''; } elseif ($hk !== '') { if (!st_dc_hook_ok($hk)) { st_out(false, ['error' => st_tr('set.hook')]); } $new['dc_hook'] = $hk; }
-    // BoxBot (item 72): the token like an API key (empty keeps the saved one, - removes it), the owner's user id
-    $bt = trim((string)($_POST['bot_token'] ?? ''));
-    if ($bt === '-') { $new['bot_token'] = ''; } elseif ($bt !== '') { if (!preg_match('/^[A-Za-z0-9_\-.]{50,100}$/', $bt)) { st_out(false, ['error' => st_tr('set.bot')]); } $new['bot_token'] = $bt; }
-    $bu = trim((string)($_POST['bot_user'] ?? ''));
-    if ($bu !== '' && !preg_match('/^\d{15,25}$/', $bu)) { st_out(false, ['error' => st_tr('set.uid')]); }
-    $new['bot_user'] = $bu;
+    // BoxBot (item 72): token and user id are the shared bot setting now (bot.php, item 95); tools.json keeps its old values untouched
+    $raw = st_json_read(st_cfg_file(), []); $new['bot_token'] = (string)($raw['bot_token'] ?? ''); $new['bot_user'] = (string)($raw['bot_user'] ?? '');
     foreach (['bot_rep', 'bot_find'] as $k) { $new[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
-    if ($new['bot_token'] !== '' && $bu !== '' && $new['dc_hook'] === '') { st_out(false, ['error' => st_tr('set.bot_hook')]); }
     $new['auto_scan'] = !empty($_POST['auto_scan']) && $_POST['auto_scan'] !== '0' ? 1 : 0;
     $new['auto_upd'] = !empty($_POST['auto_upd']) && $_POST['auto_upd'] !== '0' ? 1 : 0;
     $new['auto_rep'] = !empty($_POST['auto_rep']) && $_POST['auto_rep'] !== '0' ? 1 : 0;
@@ -7205,14 +7204,6 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "the downloads folder must be a path under /mnt/ (for example /mnt/user/data/downloads)",
   "note": "settings error shown under the Save button; starts lowercase."
  },
- "set.bot": {
-  "text": "the bot token looks wrong (Developer Portal, Bot, Reset Token)",
-  "note": "settings error. The words in brackets are the menu path on the Discord Developer Portal (English there)."
- },
- "set.bot_hook": {
-  "text": "the bot reacts under the Seedbox messages: save a Discord webhook too",
-  "note": "settings error shown under the Save button; starts lowercase."
- },
  "set.cats": {
   "text": "Shape up needs at least one of saving, HDR / DV upgrade, resolution upgrade",
   "note": "settings error; the three are the Shape up kinds."
@@ -7260,10 +7251,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.trash": {
   "text": "the trash days must be between 0 and 60",
   "note": "settings error shown under the Save button; starts lowercase."
- },
- "set.uid": {
-  "text": "the Discord user id is a number of 17-20 digits (Developer Mode, right-click your name, Copy User ID)",
-  "note": "settings error. The words in brackets are Discord menu items: use the names of the Discord app in your language."
  },
  "set.upg": {
   "text": "the upgrade size increase must be between 0 and 1000 percent",
@@ -7689,8 +7676,8 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "button."
  },
  "tp.btn.test_the_bot": {
-  "text": "Test the bot",
-  "note": "button."
+  "text": "Try a reaction",
+  "note": "button: sends a Seedbox test message with 1️⃣ 👎; the owner taps one and it turns green within a minute"
  },
  "tp.btn.test_the_connections": {
   "text": "Test the connections",
@@ -7865,7 +7852,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "grey hint next to or under a setting."
  },
  "tp.hint.optional_the_seedbox_message": {
-  "text": "optional. The Seedbox message gets 1️⃣ 2️⃣ 3️⃣ 👎 reactions from your bot; a number starts that replacement (with the same checks as the button here), 👎 dismisses it. Only your reactions count, for 24 hours; the bot looks once a minute. Token: Discord Developer Portal, your app, Bot, Reset Token (leave empty to keep, - to remove). User ID: Discord, Settings, Advanced, Developer Mode, then right-click your name, Copy User ID. The bot needs View Channel, Add Reactions and Read Message History in the webhook's channel",
+  "text": "optional. The Seedbox message gets 1️⃣ 2️⃣ 3️⃣ 👎 reactions from your bot; a number starts that replacement (with the same checks as the button here), 👎 dismisses it. Only your reactions count, for 24 hours; the bot looks once a minute. The bot token and your user ID are in the Discord bot block below (shared with Sysbox). Try a reaction: tap a reaction and the message turns green within a minute",
   "note": "grey hint next to or under a setting."
  },
  "tp.hint.relevant_a_season_that": {
@@ -8024,10 +8011,6 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "API key",
   "note": "grey example text in an empty field."
  },
- "tp.ph.bot_token": {
-  "text": "bot token",
-  "note": "grey example text in an empty field."
- },
  "tp.ph.filter_by_name": {
   "text": "filter by name",
   "note": "grey example text in an empty field."
@@ -8070,10 +8053,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "tp.ph.slimmer_or_stronger_in": {
   "text": "slimmer or stronger, in better shape",
-  "note": "grey example text in an empty field."
- },
- "tp.ph.your_discord_user_id": {
-  "text": "your Discord user ID",
   "note": "grey example text in an empty field."
  },
  "tp.settings": {
@@ -8624,8 +8603,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Remove this stuck job from Processing and from the tile's STUCK badge. Nothing is deleted; the season can be started again.",
   "note": "tooltip of the Dismiss button on a stuck season pack job."
  }
-}
-]]></INLINE>
+}]]></INLINE>
 </FILE>
 
 <FILE Name="&plugdir;/lang/hu.json">
@@ -9671,12 +9649,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.base_ex": {
   "text": "a letöltési mappa /mnt/ alatti útvonal kell legyen (például /mnt/user/data/downloads)"
  },
- "set.bot": {
-  "text": "a bot token hibásnak tűnik (Developer Portal, Bot, Reset Token)"
- },
- "set.bot_hook": {
-  "text": "a bot a Seedbox-üzenetek alatt reagál: Discord webhookot is ments"
- },
  "set.cats": {
   "text": "a Shape up-hoz legalább egy kell ezek közül: megtakarítás, HDR / DV upgrade, felbontás-upgrade"
  },
@@ -9712,9 +9684,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "set.trash": {
   "text": "a kuka napjai 0 és 60 között lehetnek"
- },
- "set.uid": {
-  "text": "a Discord-felhasználó ID egy 17-20 jegyű szám (Fejlesztői mód, jobb klikk a nevedre, Felhasználói azonosító másolása)"
  },
  "set.upg": {
   "text": "az upgrade méretnövekedése 0 és 1000 százalék között lehet"
@@ -10036,7 +10005,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "A seedelt torrentek átnézése"
  },
  "tp.btn.test_the_bot": {
-  "text": "A bot tesztelése"
+  "text": "Reakció próbája"
  },
  "tp.btn.test_the_connections": {
   "text": "A kapcsolatok tesztelése"
@@ -10168,7 +10137,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "nem kötelező, csak a Season repacker évadcsomag-üzeneteihez (autobrr, Settings, API keys)"
  },
  "tp.hint.optional_the_seedbox_message": {
-  "text": "nem kötelező. A Seedbox-üzenet 1️⃣ 2️⃣ 3️⃣ 👎 reakciókat kap a botodtól; egy szám elindítja azt a cserét (ugyanazokkal az ellenőrzésekkel, mint az itteni gomb), a 👎 elveti. Csak a te reakcióid számítanak, 24 óráig; a bot percenként egyszer néz rá. Token: Discord Developer Portal, az alkalmazásod, Bot, Reset Token (üresen hagyva megmarad, - törli). Felhasználói ID: Discord, Felhasználói beállítások, Fejlesztő, Fejlesztői mód, majd jobb klikk a nevedre, Felhasználói azonosító másolása. A botnak a webhook csatornájában kell a Csatornák megtekintése, a Reakciók hozzáadása és az Üzenetelőzmények visszaolvasása jog"
+  "text": "opcionális. A Seedbox-üzenet alá a botod 1️⃣ 2️⃣ 3️⃣ 👎 reakciót tesz; egy szám elindítja azt a cserét (ugyanazokkal az ellenőrzésekkel, mint az itteni gomb), a 👎 elveti. Csak a te reakcióid számítanak, 24 óráig; a bot percenként néz rá. A bot token és a felhasználói azonosítód lent, a Discord-bot blokkban van (közös a Sysboxszal). Reakció próbája: koppints egy reakcióra, és egy percen belül zöld lesz az üzenet"
  },
  "tp.hint.relevant_a_season_that": {
   "text": "Releváns: csomagolható évad, futó csomagolás vagy keresés, még sosem volt keresés. A hibás vagy elakadt sor minden módban látszik, kivéve a sosem módot. Ha nem marad sor, a csempe eszközrésze elrejtődik."
@@ -10287,9 +10256,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  "tp.ph.api_key": {
   "text": "API-kulcs"
  },
- "tp.ph.bot_token": {
-  "text": "bot token"
- },
  "tp.ph.filter_by_name": {
   "text": "szűrés névre"
  },
@@ -10322,9 +10288,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "tp.ph.slimmer_or_stronger_in": {
   "text": "karcsúbb vagy erősebb, jobb formában"
- },
- "tp.ph.your_discord_user_id": {
-  "text": "a Discord-felhasználó ID-d"
  },
  "tp.settings": {
   "text": "Beállítások"
@@ -10740,8 +10703,470 @@ function mt_i18n_js($dir, $name, $only = null) {
  "act.sp_dismiss_tip": {
   "text": "Az elakadt feladat kikerül a Folyamatban részből és a csempe STUCK jelzéséből. Semmi nem törlődik; az évad újra indítható."
  }
+}]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/bot.php">
+<INLINE><![CDATA[<?php
+// Shared Discord bot setting of the media server tools (Seedbox, Sysbox; item 95): one file on the flash drive with the
+// bot token and the owner's Discord user id, so the bot is set once and every plugin's messages can get reactions.
+//   token = the bot token (Discord Developer Portal, your app, Bot, Reset Token); never sent to a page
+//   user  = the owner's user id: only this user's reactions count
+// Before this file existed the bot lived in the Seedbox settings (tools.json bot_token, bot_user): while the file is
+// missing those are used, and the first save writes the file (from then on an empty token in it means none).
+// The bot has no gateway connection: messages go out through the plugin's webhook with ?wait=true, the bot adds the
+// reactions and reads them back over REST, so it needs only View Channel, Add Reactions and Read Message History.
+// Every plugin ships its own copy of this file; the guard keeps a second copy from being declared again.
+if (!function_exists('mt_bot_cfg')) {
+
+require_once __DIR__ . '/lang.php';
+
+function mt_bot_file() { return getenv('MT_BOT_FILE') ?: '/boot/config/plugins/mediaserver-tools/discord_bot.cfg'; }
+
+function mt_bot_cfg() {
+    $f = mt_bot_file();
+    if (is_file($f)) {
+        $c = @parse_ini_file($f, false, INI_SCANNER_RAW);
+        $c = is_array($c) ? $c : [];
+        return ['token' => trim((string)($c['token'] ?? ''), "\"' "), 'user' => trim((string)($c['user'] ?? ''), "\"' "), 'src' => 'shared'];
+    }
+    $j = @json_decode((string)@file_get_contents(getenv('MT_BOT_SEEDBOX') ?: '/boot/config/plugins/qbittorrent_widget/tools.json'), true);
+    $j = is_array($j) ? $j : [];
+    return ['token' => trim((string)($j['bot_token'] ?? '')), 'user' => trim((string)($j['bot_user'] ?? '')), 'src' => 'seedbox'];
+}
+function mt_bot_ready() { $c = mt_bot_cfg(); return $c['token'] !== '' && preg_match('/^\d{15,25}$/', $c['user']) === 1; }
+
+// $token: empty keeps the saved one, - removes it. Returns '' or the dictionary key of the error.
+function mt_bot_save($token, $user) {
+    $old = mt_bot_cfg();
+    $token = trim((string)$token); $user = trim((string)$user);
+    if ($token === '-') { $token = ''; }
+    elseif ($token === '') { $token = $old['token']; }
+    elseif (!preg_match('/^[A-Za-z0-9_\-.]{50,100}$/', $token)) { return 'bot.e.token'; }
+    if ($user !== '' && !preg_match('/^\d{15,25}$/', $user)) { return 'bot.e.user'; }
+    $f = mt_bot_file();
+    @mkdir(dirname($f), 0777, true);
+    if (@file_put_contents($f . '.tmp', 'token="' . $token . "\"\nuser=\"" . $user . "\"\n") === false || !@rename($f . '.tmp', $f)) { return 'bot.e.write'; }
+    @chmod($f, 0600);
+    return '';
+}
+
+// the texts of this file (Discord messages in the Discord language, page messages in the page language)
+function mt_bot_dir() { return is_dir(__DIR__ . '/mtlang') ? __DIR__ . '/mtlang' : __DIR__ . '/lang'; }
+function mt_bot_t($key, $vars = [], $discord = false) {
+    static $tabs = [];
+    $code = $discord ? mt_lang_discord() : mt_lang_ui();
+    if (!isset($tabs[$code])) {
+        $rd = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $rd(mt_bot_dir() . '/en.json'); $tr = $code !== 'en' ? $rd(mt_bot_dir() . '/' . $code . '.json') : [];
+        $tabs[$code] = [];
+        foreach ($en as $k => $v) { if (is_array($v) && isset($v['text'])) { $t = $tr[$k]['text'] ?? ''; $tabs[$code][$k] = is_string($t) && trim($t) !== '' ? $t : (string)$v['text']; } }
+    }
+    $s = $tabs[$code][$key] ?? $key;
+    return preg_replace_callback('/\{([a-z0-9_]+)\}/', function ($m) use ($vars) { return array_key_exists($m[1], $vars) ? (string)$vars[$m[1]] : $m[0]; }, $s);
+}
+
+// the Discord webhook of the plugin this copy belongs to (the bot reacts under that plugin's messages)
+function mt_bot_hook() {
+    if (getenv('MT_BOT_HOOK') !== false) { return (string)getenv('MT_BOT_HOOK'); }
+    $p = basename(__DIR__);
+    if ($p === 'qbittorrent_widget') {
+        $j = @json_decode((string)@file_get_contents('/boot/config/plugins/qbittorrent_widget/tools.json'), true);
+        return is_array($j) ? trim((string)($j['dc_hook'] ?? '')) : '';
+    }
+    $c = @parse_ini_file('/boot/config/plugins/' . $p . '/settings.cfg', false, INI_SCANNER_RAW);
+    return is_array($c) ? trim((string)($c['dc_hook'] ?? ''), "\"' ") : '';
+}
+
+// one HTTP request: [code, body, error]
+function mt_bot_http($method, $url, $headers, $body = null) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_CUSTOMREQUEST => $method, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_HTTPHEADER => $headers]);
+    if ($body !== null) { curl_setopt($ch, CURLOPT_POSTFIELDS, $body); }
+    $b = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE); $err = $b === false ? curl_error($ch) : '';
+    curl_close($ch);
+    return [$code, (string)$b, $err];
+}
+// Discord REST as the bot: [code, json, error]; one wait on a rate limit
+function mt_bot_api($method, $path, $body = null) {
+    $base = getenv('MT_BOT_API') ?: 'https://discord.com/api/v10';
+    $tok = mt_bot_cfg()['token'];
+    for ($try = 0; $try < 2; $try++) {
+        $h = ['Authorization: Bot ' . $tok, 'User-Agent: DiscordBot (mediaserver-tools, 1)', 'Content-Type: application/json'];
+        [$code, $b, $err] = mt_bot_http($method, $base . $path, $h, $body !== null ? json_encode($body, JSON_UNESCAPED_UNICODE) : ($method === 'PUT' ? '' : null));
+        if ($err !== '') { return [0, null, $err]; }
+        $j = json_decode($b, true);
+        if ($code === 429 && $try === 0) { $w = is_array($j) ? (float)($j['retry_after'] ?? 1) : 1.0; if ($w <= 5) { usleep((int)(($w + 0.2) * 1e6)); continue; } }
+        if ($code >= 400) { return [$code, $j, 'Discord HTTP ' . $code . (is_array($j) && !empty($j['message']) ? ': ' . $j['message'] : '')]; }
+        return [$code, $j, ''];
+    }
+    return [429, null, 'Discord rate limit'];
+}
+
+// The Test button of the block: the token works, a message goes out with this plugin's webhook, the bot reacts under it
+// and reads the reaction back (the three permissions). Nothing waits for the owner. Returns [ok, page text].
+function mt_bot_test($plugin) {
+    $c = mt_bot_cfg();
+    if ($c['token'] === '') { return [false, mt_bot_t('bot.t.no_token')]; }
+    [$code, $me, $e] = mt_bot_api('GET', '/users/@me');
+    if ($e !== '') { return [false, mt_bot_t('bot.t.token', ['e' => $e])]; }
+    $name = (string)($me['username'] ?? 'bot');
+    $hook = mt_bot_hook();
+    if ($hook === '') { return [false, mt_bot_t('bot.t.no_hook', ['p' => $plugin])]; }
+    $emb = ['title' => mt_bot_t('bot.d.title', ['p' => $plugin], true), 'description' => mt_bot_t('bot.d.desc', ['bot' => $name], true), 'color' => 0x9A7DE6];
+    [$hc, $hb, $he] = mt_bot_http('POST', $hook . (strpos($hook, '?') === false ? '?' : '&') . 'wait=true', ['Content-Type: application/json'], json_encode(['embeds' => [$emb]], JSON_UNESCAPED_UNICODE));
+    $msg = json_decode($hb, true);
+    if ($he !== '' || $hc >= 400 || !is_array($msg) || empty($msg['id'])) { return [false, mt_bot_t('bot.t.hook', ['e' => $he !== '' ? $he : 'HTTP ' . $hc])]; }
+    $path = '/channels/' . (string)($msg['channel_id'] ?? '') . '/messages/' . $msg['id'] . '/reactions/' . rawurlencode("\u{2705}");
+    [$rc, $rj, $re] = mt_bot_api('PUT', $path . '/@me');
+    if ($re !== '') { return [false, mt_bot_t('bot.t.react', ['e' => $re])]; }
+    [$gc, $gj, $ge] = mt_bot_api('GET', $path . '?limit=10');
+    if ($ge !== '' || !is_array($gj)) { return [false, mt_bot_t('bot.t.read', ['e' => $ge !== '' ? $ge : 'HTTP ' . $gc])]; }
+    return [true, trim(mt_bot_t('bot.t.ok', ['bot' => $name]) . ($c['user'] === '' ? ' ' . mt_bot_t('bot.t.no_user') : ''))];
+}
+
 }
 ]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/bot_block.php">
+<INLINE><![CDATA[<?php
+// The Discord bot block (Seedbox Tools settings, Sysbox Claude Guard; item 95): the shared setting of bot.php. The page
+// sets $mt_bot_post (this plugin's bot_save.php) and includes this file. The token never goes into the page.
+require_once __DIR__ . '/bot.php';
+$mtb_c = mt_bot_cfg();
+$mtb_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$mtb_tok = is_array($mtb_var) ? (string)($mtb_var['csrf_token'] ?? '') : '';
+$mtb_h = function ($k, $v = []) { return htmlspecialchars(mt_bot_t($k, $v), ENT_QUOTES); };
+$mtb_state = $mtb_c['token'] === '' ? mt_bot_t('bot.st.off') : ($mtb_c['user'] === '' ? mt_bot_t('bot.st.no_user') : mt_bot_t('bot.st.on'));
+?>
+<style>
+#mtb{margin:28px 0 8px;max-width:1100px}
+#mtb .mtb-band{display:flex;justify-content:space-between;align-items:center;gap:12px;background:rgba(0,0,0,.35);padding:10px 14px;text-transform:uppercase;letter-spacing:1.5px;font-size:12px}
+#mtb .mtb-band b{font-weight:normal;text-transform:none;letter-spacing:0;opacity:.6}
+#mtb .mtb-box{background:rgba(128,128,128,.08);border-radius:0 0 6px 6px}
+#mtb .mtb-row{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;padding:14px 16px;border-left:3px solid #8a8a8a;border-bottom:1px solid rgba(128,128,128,.15)}
+#mtb .mtb-row.on{border-left-color:#3fa24a}
+#mtb .mtb-row label{padding-top:6px}
+#mtb .mtb-row input[type=password],#mtb .mtb-row input[type=text]{width:320px;max-width:100%;margin:0}
+#mtb .mtb-hint{display:block;opacity:.6;line-height:1.5;margin-top:6px;white-space:normal}
+#mtb .mtb-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+#mtb .mtb-foot button{margin:0 0 0 8px}
+#mtb .mtb-foot .mtb-ghost{background:transparent;border:1px solid rgba(128,128,128,.5)}
+@media (max-width:700px){#mtb .mtb-row{grid-template-columns:1fr;gap:4px}}
+</style>
+<div id="mtb">
+  <div class="mtb-band"><span><?=$mtb_h('bot.h.band')?></span><b id="mtb-state"><?=htmlspecialchars($mtb_state, ENT_QUOTES)?></b></div>
+  <div class="mtb-box">
+    <div class="mtb-row<?=$mtb_c['token'] !== '' ? ' on' : ''?>">
+      <label for="mtb-token"><?=$mtb_h('bot.l.token')?></label>
+      <div>
+        <input type="password" id="mtb-token" autocomplete="new-password" placeholder="<?=$mtb_h($mtb_c['token'] !== '' ? 'bot.ph.saved' : 'bot.ph.token')?>">
+        <span class="mtb-hint"><?=$mtb_h('bot.hint.token')?></span>
+      </div>
+    </div>
+    <div class="mtb-row<?=$mtb_c['user'] !== '' ? ' on' : ''?>">
+      <label for="mtb-user"><?=$mtb_h('bot.l.user')?></label>
+      <div>
+        <input type="text" id="mtb-user" inputmode="numeric" value="<?=htmlspecialchars($mtb_c['user'], ENT_QUOTES)?>" placeholder="<?=$mtb_h('bot.ph.user')?>">
+        <span class="mtb-hint"><?=$mtb_h('bot.hint.user')?></span>
+      </div>
+    </div>
+    <div class="mtb-foot">
+      <span id="mtb-msg" class="mtb-hint" style="margin:0"><?=$mtb_h('bot.hint.foot')?></span>
+      <span><button type="button" id="mtb-test" class="mtb-ghost"><?=$mtb_h('bot.btn.test')?></button><button type="button" id="mtb-apply"><?=$mtb_h('bot.btn.save')?></button></span>
+    </div>
+  </div>
+</div>
+<script>
+$(function () {
+  // outside every form: Unraid's Apply-disabling does not apply, enable the buttons after Unraid's scripts ran (like the Language block)
+  var en = function () { $('#mtb-apply, #mtb-test').prop('disabled', false).removeAttr('disabled'); };
+  en(); setTimeout(en, 500);
+  var URL = <?=json_encode((string)$mt_bot_post)?>, TOK = <?=json_encode($mtb_tok)?>;
+  var TX = <?=json_encode(['wait' => mt_bot_t('bot.wait'), 'fail' => mt_bot_t('bot.fail'), 'saved_ph' => mt_bot_t('bot.ph.saved'), 'ph' => mt_bot_t('bot.ph.token'), 'on' => mt_bot_t('bot.st.on'), 'off' => mt_bot_t('bot.st.off'), 'no_user' => mt_bot_t('bot.st.no_user')], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)?>;
+  var show = function (ok, t) { $('#mtb-msg').css({ color: ok ? '#3fa24a' : '#e5534b', opacity: 1 }).text(t); };
+  var call = function ($b, data, done) {
+    $b.prop('disabled', true); $('#mtb-msg').css({ color: '', opacity: .6 }).text(TX.wait);
+    $.post(URL, $.extend({ csrf_token: TOK }, data), null, 'json')
+      .done(function (r) { show(r.ok, r.ok ? r.msg : (r.error || TX.fail)); if (r.ok && done) { done(r); } })
+      .fail(function (x) { show(false, (x.responseJSON && x.responseJSON.error) || TX.fail); })
+      .always(function () { $b.prop('disabled', false); });
+  };
+  $('#mtb-apply').on('click', function () {
+    var u = $.trim($('#mtb-user').val());
+    call($(this), { op: 'save', token: $.trim($('#mtb-token').val()), user: u }, function (r) {
+      $('#mtb-token').val('').attr('placeholder', r.token_set ? TX.saved_ph : TX.ph);
+      $('#mtb-token').closest('.mtb-row').toggleClass('on', r.token_set); $('#mtb-user').closest('.mtb-row').toggleClass('on', u !== '');
+      $('#mtb-state').text(!r.token_set ? TX.off : (u === '' ? TX.no_user : TX.on));
+    });
+  });
+  $('#mtb-test').on('click', function () { call($(this), { op: 'test' }); });
+});
+</script>
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/bot_save.php">
+<INLINE><![CDATA[<?php
+// Saves or tests the shared Discord bot setting (see bot.php). POST op=save (token, user) | test, csrf_token.
+require_once __DIR__ . '/bot.php';
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+function mt_bot_out($ok, $extra = []) { echo json_encode(array_merge(['ok' => $ok], $extra)); exit; }
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { http_response_code(405); mt_bot_out(false, ['error' => 'method']); }
+$var = @parse_ini_file('/var/local/emhttp/var.ini');
+$tok = is_array($var) ? (string)($var['csrf_token'] ?? '') : '';
+// Unraid's own prepend checks the token of every POST and then removes it from $_POST (like lang_save.php)
+$sent = (string)($_POST['csrf_token'] ?? '');
+if ($sent !== '') {
+    if ($tok === '' || !hash_equals($tok, $sent)) { http_response_code(403); mt_bot_out(false, ['error' => 'csrf token mismatch']); }
+} elseif (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403); mt_bot_out(false, ['error' => 'csrf: token removed and request is not AJAX']);
+}
+$op = (string)($_POST['op'] ?? '');
+if ($op === 'save') {
+    $e = mt_bot_save((string)($_POST['token'] ?? ''), (string)($_POST['user'] ?? ''));
+    if ($e !== '') { mt_bot_out(false, ['error' => mt_bot_t($e)]); }
+    $c = mt_bot_cfg();
+    mt_bot_out(true, ['msg' => mt_bot_t($c['token'] === '' ? 'bot.saved_off' : 'bot.saved'), 'token_set' => $c['token'] !== '']);
+}
+if ($op === 'test') {
+    $p = basename(__DIR__) === 'qbittorrent_widget' ? 'Seedbox' : ucfirst(basename(__DIR__));
+    [$ok, $m] = mt_bot_test($p);
+    mt_bot_out($ok, $ok ? ['msg' => $m] : ['error' => $m]);
+}
+mt_bot_out(false, ['error' => 'op']);
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/mtlang/en.json">
+<INLINE><![CDATA[{
+ "_about": "Texts of the shared blocks in common/ (Discord bot), shipped by Seedbox and Sysbox as mtlang/",
+ "bot.h.band": {
+  "text": "Discord bot",
+  "note": "band title of the shared bot block (Seedbox Tools settings and Claude Guard page)"
+ },
+ "bot.l.token": {
+  "text": "Bot token:",
+  "note": "label"
+ },
+ "bot.l.user": {
+  "text": "Your Discord user ID:",
+  "note": "label"
+ },
+ "bot.ph.token": {
+  "text": "bot token",
+  "note": "placeholder of the token field when none is saved"
+ },
+ "bot.ph.saved": {
+  "text": "saved, leave empty to keep it",
+  "note": "placeholder of the token field when a token is saved"
+ },
+ "bot.ph.user": {
+  "text": "e.g. 123456789012345678",
+  "note": "placeholder of the user id field"
+ },
+ "bot.hint.token": {
+  "text": "Discord Developer Portal, your app, Bot, Reset Token. Leave empty to keep the saved one, - removes it. The bot needs View Channel, Add Reactions and Read Message History in the channel of the webhooks. It always shows offline: that is normal, it only adds and reads reactions.",
+  "note": "grey hint under the token field"
+ },
+ "bot.hint.user": {
+  "text": "Only your reactions count. Discord, Settings, Advanced, Developer Mode, then right-click your name, Copy User ID.",
+  "note": "grey hint under the user id field"
+ },
+ "bot.hint.foot": {
+  "text": "One bot for Seedbox and Sysbox: saved here, it is saved for both.",
+  "note": "grey line next to the Save button"
+ },
+ "bot.btn.test": {
+  "text": "Test the bot",
+  "note": "button: sends a test message with this plugin's webhook and lets the bot react under it"
+ },
+ "bot.btn.save": {
+  "text": "Save bot",
+  "note": "button"
+ },
+ "bot.wait": {
+  "text": "Working...",
+  "note": "status while saving or testing"
+ },
+ "bot.fail": {
+  "text": "Not saved",
+  "note": "status when the request failed"
+ },
+ "bot.st.on": {
+  "text": "set up",
+  "note": "state on the right of the band"
+ },
+ "bot.st.off": {
+  "text": "not set up",
+  "note": "state on the right of the band"
+ },
+ "bot.st.no_user": {
+  "text": "token saved, user ID missing",
+  "note": "state on the right of the band"
+ },
+ "bot.saved": {
+  "text": "Saved for Seedbox and Sysbox.",
+  "note": "result of Save bot"
+ },
+ "bot.saved_off": {
+  "text": "Saved: no bot.",
+  "note": "result of Save bot when the token was removed"
+ },
+ "bot.e.token": {
+  "text": "The bot token looks wrong (Developer Portal, Bot, Reset Token).",
+  "note": "error of Save bot"
+ },
+ "bot.e.user": {
+  "text": "The user ID is a number of 15 to 25 digits.",
+  "note": "error of Save bot"
+ },
+ "bot.e.write": {
+  "text": "Could not write the setting to the flash drive.",
+  "note": "error of Save bot"
+ },
+ "bot.t.no_token": {
+  "text": "Save a bot token first.",
+  "note": "result of Test the bot"
+ },
+ "bot.t.token": {
+  "text": "The bot token does not work: {e}",
+  "note": "result of Test the bot ({e} Discord's error)"
+ },
+ "bot.t.no_hook": {
+  "text": "{p} has no Discord webhook: save one in its settings first.",
+  "note": "result of Test the bot ({p} plugin name)"
+ },
+ "bot.t.hook": {
+  "text": "The webhook did not take the test message: {e}",
+  "note": "result of Test the bot ({e} the error)"
+ },
+ "bot.t.react": {
+  "text": "The bot could not react (View Channel and Add Reactions in that channel?): {e}",
+  "note": "result of Test the bot ({e} Discord's error)"
+ },
+ "bot.t.read": {
+  "text": "The bot could not read the reactions (Read Message History?): {e}",
+  "note": "result of Test the bot ({e} Discord's error)"
+ },
+ "bot.t.ok": {
+  "text": "It works: {bot} reacted under the test message and can read the reactions.",
+  "note": "result of Test the bot ({bot} the bot's name)"
+ },
+ "bot.t.no_user": {
+  "text": "Save your user ID too, otherwise no reaction counts.",
+  "note": "added to a successful test when the user id is empty"
+ },
+ "bot.d.title": {
+  "text": "{p}: bot test",
+  "note": "Discord message title ({p} plugin name)"
+ },
+ "bot.d.desc": {
+  "text": "If a ✅ from {bot} appears under this message, the bot can react here. Nothing else happens.",
+  "note": "Discord message text ({bot} the bot's name)"
+ }
+}]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/mtlang/hu.json">
+<INLINE><![CDATA[{
+ "_about": "A közös blokkok szövegei (Discord-bot)",
+ "bot.h.band": {
+  "text": "Discord-bot"
+ },
+ "bot.l.token": {
+  "text": "Bot token:"
+ },
+ "bot.l.user": {
+  "text": "A Discord felhasználói azonosítód:"
+ },
+ "bot.ph.token": {
+  "text": "bot token"
+ },
+ "bot.ph.saved": {
+  "text": "mentve, üresen hagyva megmarad"
+ },
+ "bot.ph.user": {
+  "text": "pl. 123456789012345678"
+ },
+ "bot.hint.token": {
+  "text": "Discord Developer Portal, az alkalmazásod, Bot, Reset Token. Üresen hagyva a mentett marad, a - törli. A botnak a webhookok csatornájában View Channel, Add Reactions és Read Message History jog kell. Mindig offline-nak látszik: ez rendben van, csak reakciókat tesz ki és olvas."
+ },
+ "bot.hint.user": {
+  "text": "Csak a te reakcióid számítanak. Discord, Beállítások, Speciális, Fejlesztői mód, majd jobb klikk a nevedre, Felhasználói azonosító másolása."
+ },
+ "bot.hint.foot": {
+  "text": "Egy bot a Seedboxhoz és a Sysboxhoz: itt mentve mindkettőnél érvényes."
+ },
+ "bot.btn.test": {
+  "text": "Bot tesztelése"
+ },
+ "bot.btn.save": {
+  "text": "Bot mentése"
+ },
+ "bot.wait": {
+  "text": "Folyamatban..."
+ },
+ "bot.fail": {
+  "text": "Nem sikerült menteni"
+ },
+ "bot.st.on": {
+  "text": "beállítva"
+ },
+ "bot.st.off": {
+  "text": "nincs beállítva"
+ },
+ "bot.st.no_user": {
+  "text": "token mentve, felhasználói azonosító hiányzik"
+ },
+ "bot.saved": {
+  "text": "Mentve a Seedboxnak és a Sysboxnak."
+ },
+ "bot.saved_off": {
+  "text": "Mentve: nincs bot."
+ },
+ "bot.e.token": {
+  "text": "A bot token hibásnak tűnik (Developer Portal, Bot, Reset Token)."
+ },
+ "bot.e.user": {
+  "text": "A felhasználói azonosító 15–25 jegyű szám."
+ },
+ "bot.e.write": {
+  "text": "Nem sikerült a beállítást a flashre írni."
+ },
+ "bot.t.no_token": {
+  "text": "Előbb ments egy bot tokent."
+ },
+ "bot.t.token": {
+  "text": "A bot token nem működik: {e}"
+ },
+ "bot.t.no_hook": {
+  "text": "A {p} pluginnak nincs Discord-webhookja: előbb ments egyet a beállításainál."
+ },
+ "bot.t.hook": {
+  "text": "A webhook nem fogadta a tesztüzenetet: {e}"
+ },
+ "bot.t.react": {
+  "text": "A bot nem tudott reagálni (View Channel és Add Reactions abban a csatornában?): {e}"
+ },
+ "bot.t.read": {
+  "text": "A bot nem tudta kiolvasni a reakciókat (Read Message History?): {e}"
+ },
+ "bot.t.ok": {
+  "text": "Működik: a {bot} reagált a tesztüzenetre, és ki tudja olvasni a reakciókat."
+ },
+ "bot.t.no_user": {
+  "text": "Mentsd a felhasználói azonosítódat is, különben egy reakció sem számít."
+ },
+ "bot.d.title": {
+  "text": "{p}: bot teszt"
+ },
+ "bot.d.desc": {
+  "text": "Ha az üzenet alatt megjelenik a {bot} ✅ reakciója, a bot itt tud reagálni. Más nem történik."
+ }
+}]]></INLINE>
 </FILE>
 
 <!-- Permissions + done -->

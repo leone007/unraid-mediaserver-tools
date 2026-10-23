@@ -14,6 +14,8 @@ foreach ($ids as $id => $dir) {
     file_put_contents("$tmp/plugins/$id/lang.php", str_replace('/boot/config/plugins', "$tmp/boot", file_get_contents("$repo/common/lang.php")));
     copy("$repo/common/i18n.php", "$tmp/plugins/$id/i18n.php");
     file_put_contents("$tmp/plugins/$id/lang_block.php", str_replace("/boot/config/plugins", "$tmp/boot", file_get_contents("$repo/common/lang_block.php")));
+    foreach (['bot.php', 'bot_block.php'] as $f) { file_put_contents("$tmp/plugins/$id/$f", str_replace('/boot/config/plugins', "$tmp/boot", file_get_contents("$repo/common/$f"))); }
+    @mkdir("$tmp/plugins/$id/mtlang"); foreach (glob("$repo/common/lang/*.json") ?: [] as $f) { copy($f, "$tmp/plugins/$id/mtlang/" . basename($f)); }
     foreach (glob("$repo/$dir/lang/*.json") ?: [] as $f) { copy($f, "$tmp/plugins/$id/lang/" . basename($f)); }
 }
 // MT_TEST_DICT=streambox=/path/hu.json adds a test translation that is not in the repository

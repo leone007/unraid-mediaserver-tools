@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzh">
+<!ENTITY version   "2026.10.99zzi">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzi
+- Discord bot: the bot token and your user ID moved into a shared Discord bot block (Seedbox Tools settings, and the Claude Guard page of Sysbox): set once, used by both plugins. The saved Seedbox values are taken over, nothing to retype. Test the bot in the block checks the token, the webhook and the reactions without waiting for you
+
 ###2026.10.99zzh
 - Season repacker: a stuck season pack job has a Dismiss button (it leaves Processing and the STUCK badge of the tile; nothing is deleted), and a stuck job closes by itself when a later replacement of the same season finished
 
@@ -628,6 +631,26 @@ exit 0
 
 <FILE Name="&plugdir;/lang/hu.json">
 <INLINE><![CDATA[@@SRC:seedbox/lang/hu.json@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/bot.php">
+<INLINE><![CDATA[@@SRC:common/bot.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/bot_block.php">
+<INLINE><![CDATA[@@SRC:common/bot_block.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/bot_save.php">
+<INLINE><![CDATA[@@SRC:common/bot_save.php@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/mtlang/en.json">
+<INLINE><![CDATA[@@SRC:common/lang/en.json@@]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/mtlang/hu.json">
+<INLINE><![CDATA[@@SRC:common/lang/hu.json@@]]></INLINE>
 </FILE>
 
 <!-- Permissions + done -->

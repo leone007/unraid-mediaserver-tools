@@ -1385,14 +1385,6 @@
   "text": "the downloads folder must be a path under /mnt/ (for example /mnt/user/data/downloads)",
   "note": "settings error shown under the Save button; starts lowercase."
  },
- "set.bot": {
-  "text": "the bot token looks wrong (Developer Portal, Bot, Reset Token)",
-  "note": "settings error. The words in brackets are the menu path on the Discord Developer Portal (English there)."
- },
- "set.bot_hook": {
-  "text": "the bot reacts under the Seedbox messages: save a Discord webhook too",
-  "note": "settings error shown under the Save button; starts lowercase."
- },
  "set.cats": {
   "text": "Shape up needs at least one of saving, HDR / DV upgrade, resolution upgrade",
   "note": "settings error; the three are the Shape up kinds."
@@ -1440,10 +1432,6 @@
  "set.trash": {
   "text": "the trash days must be between 0 and 60",
   "note": "settings error shown under the Save button; starts lowercase."
- },
- "set.uid": {
-  "text": "the Discord user id is a number of 17-20 digits (Developer Mode, right-click your name, Copy User ID)",
-  "note": "settings error. The words in brackets are Discord menu items: use the names of the Discord app in your language."
  },
  "set.upg": {
   "text": "the upgrade size increase must be between 0 and 1000 percent",
@@ -1869,8 +1857,8 @@
   "note": "button."
  },
  "tp.btn.test_the_bot": {
-  "text": "Test the bot",
-  "note": "button."
+  "text": "Try a reaction",
+  "note": "button: sends a Seedbox test message with 1️⃣ 👎; the owner taps one and it turns green within a minute"
  },
  "tp.btn.test_the_connections": {
   "text": "Test the connections",
@@ -2045,7 +2033,7 @@
   "note": "grey hint next to or under a setting."
  },
  "tp.hint.optional_the_seedbox_message": {
-  "text": "optional. The Seedbox message gets 1️⃣ 2️⃣ 3️⃣ 👎 reactions from your bot; a number starts that replacement (with the same checks as the button here), 👎 dismisses it. Only your reactions count, for 24 hours; the bot looks once a minute. Token: Discord Developer Portal, your app, Bot, Reset Token (leave empty to keep, - to remove). User ID: Discord, Settings, Advanced, Developer Mode, then right-click your name, Copy User ID. The bot needs View Channel, Add Reactions and Read Message History in the webhook's channel",
+  "text": "optional. The Seedbox message gets 1️⃣ 2️⃣ 3️⃣ 👎 reactions from your bot; a number starts that replacement (with the same checks as the button here), 👎 dismisses it. Only your reactions count, for 24 hours; the bot looks once a minute. The bot token and your user ID are in the Discord bot block below (shared with Sysbox). Try a reaction: tap a reaction and the message turns green within a minute",
   "note": "grey hint next to or under a setting."
  },
  "tp.hint.relevant_a_season_that": {
@@ -2204,10 +2192,6 @@
   "text": "API key",
   "note": "grey example text in an empty field."
  },
- "tp.ph.bot_token": {
-  "text": "bot token",
-  "note": "grey example text in an empty field."
- },
  "tp.ph.filter_by_name": {
   "text": "filter by name",
   "note": "grey example text in an empty field."
@@ -2250,10 +2234,6 @@
  },
  "tp.ph.slimmer_or_stronger_in": {
   "text": "slimmer or stronger, in better shape",
-  "note": "grey example text in an empty field."
- },
- "tp.ph.your_discord_user_id": {
-  "text": "your Discord user ID",
   "note": "grey example text in an empty field."
  },
  "tp.settings": {

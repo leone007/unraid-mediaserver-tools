@@ -69,14 +69,9 @@ if ($op === 'saveconfig') {
     $td = (int)($_POST['trash_days'] ?? 3); if ($td < 0 || $td > 60) { st_out(false, ['error' => st_tr('set.trash')]); }
     $hk = trim((string)($_POST['dc_hook'] ?? ''));
     if ($hk === '-') { $new['dc_hook'] = ''; } elseif ($hk !== '') { if (!st_dc_hook_ok($hk)) { st_out(false, ['error' => st_tr('set.hook')]); } $new['dc_hook'] = $hk; }
-    // BoxBot (item 72): the token like an API key (empty keeps the saved one, - removes it), the owner's user id
-    $bt = trim((string)($_POST['bot_token'] ?? ''));
-    if ($bt === '-') { $new['bot_token'] = ''; } elseif ($bt !== '') { if (!preg_match('/^[A-Za-z0-9_\-.]{50,100}$/', $bt)) { st_out(false, ['error' => st_tr('set.bot')]); } $new['bot_token'] = $bt; }
-    $bu = trim((string)($_POST['bot_user'] ?? ''));
-    if ($bu !== '' && !preg_match('/^\d{15,25}$/', $bu)) { st_out(false, ['error' => st_tr('set.uid')]); }
-    $new['bot_user'] = $bu;
+    // BoxBot (item 72): token and user id are the shared bot setting now (bot.php, item 95); tools.json keeps its old values untouched
+    $raw = st_json_read(st_cfg_file(), []); $new['bot_token'] = (string)($raw['bot_token'] ?? ''); $new['bot_user'] = (string)($raw['bot_user'] ?? '');
     foreach (['bot_rep', 'bot_find'] as $k) { $new[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
-    if ($new['bot_token'] !== '' && $bu !== '' && $new['dc_hook'] === '') { st_out(false, ['error' => st_tr('set.bot_hook')]); }
     $new['auto_scan'] = !empty($_POST['auto_scan']) && $_POST['auto_scan'] !== '0' ? 1 : 0;
     $new['auto_upd'] = !empty($_POST['auto_upd']) && $_POST['auto_upd'] !== '0' ? 1 : 0;
     $new['auto_rep'] = !empty($_POST['auto_rep']) && $_POST['auto_rep'] !== '0' ? 1 : 0;

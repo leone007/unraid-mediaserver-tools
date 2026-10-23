@@ -1,0 +1,127 @@
+{
+ "_about": "Texts of the shared blocks in common/ (Discord bot), shipped by Seedbox and Sysbox as mtlang/",
+ "bot.h.band": {
+  "text": "Discord bot",
+  "note": "band title of the shared bot block (Seedbox Tools settings and Claude Guard page)"
+ },
+ "bot.l.token": {
+  "text": "Bot token:",
+  "note": "label"
+ },
+ "bot.l.user": {
+  "text": "Your Discord user ID:",
+  "note": "label"
+ },
+ "bot.ph.token": {
+  "text": "bot token",
+  "note": "placeholder of the token field when none is saved"
+ },
+ "bot.ph.saved": {
+  "text": "saved, leave empty to keep it",
+  "note": "placeholder of the token field when a token is saved"
+ },
+ "bot.ph.user": {
+  "text": "e.g. 123456789012345678",
+  "note": "placeholder of the user id field"
+ },
+ "bot.hint.token": {
+  "text": "Discord Developer Portal, your app, Bot, Reset Token. Leave empty to keep the saved one, - removes it. The bot needs View Channel, Add Reactions and Read Message History in the channel of the webhooks. It always shows offline: that is normal, it only adds and reads reactions.",
+  "note": "grey hint under the token field"
+ },
+ "bot.hint.user": {
+  "text": "Only your reactions count. Discord, Settings, Advanced, Developer Mode, then right-click your name, Copy User ID.",
+  "note": "grey hint under the user id field"
+ },
+ "bot.hint.foot": {
+  "text": "One bot for Seedbox and Sysbox: saved here, it is saved for both.",
+  "note": "grey line next to the Save button"
+ },
+ "bot.btn.test": {
+  "text": "Test the bot",
+  "note": "button: sends a test message with this plugin's webhook and lets the bot react under it"
+ },
+ "bot.btn.save": {
+  "text": "Save bot",
+  "note": "button"
+ },
+ "bot.wait": {
+  "text": "Working...",
+  "note": "status while saving or testing"
+ },
+ "bot.fail": {
+  "text": "Not saved",
+  "note": "status when the request failed"
+ },
+ "bot.st.on": {
+  "text": "set up",
+  "note": "state on the right of the band"
+ },
+ "bot.st.off": {
+  "text": "not set up",
+  "note": "state on the right of the band"
+ },
+ "bot.st.no_user": {
+  "text": "token saved, user ID missing",
+  "note": "state on the right of the band"
+ },
+ "bot.saved": {
+  "text": "Saved for Seedbox and Sysbox.",
+  "note": "result of Save bot"
+ },
+ "bot.saved_off": {
+  "text": "Saved: no bot.",
+  "note": "result of Save bot when the token was removed"
+ },
+ "bot.e.token": {
+  "text": "The bot token looks wrong (Developer Portal, Bot, Reset Token).",
+  "note": "error of Save bot"
+ },
+ "bot.e.user": {
+  "text": "The user ID is a number of 15 to 25 digits.",
+  "note": "error of Save bot"
+ },
+ "bot.e.write": {
+  "text": "Could not write the setting to the flash drive.",
+  "note": "error of Save bot"
+ },
+ "bot.t.no_token": {
+  "text": "Save a bot token first.",
+  "note": "result of Test the bot"
+ },
+ "bot.t.token": {
+  "text": "The bot token does not work: {e}",
+  "note": "result of Test the bot ({e} Discord's error)"
+ },
+ "bot.t.no_hook": {
+  "text": "{p} has no Discord webhook: save one in its settings first.",
+  "note": "result of Test the bot ({p} plugin name)"
+ },
+ "bot.t.hook": {
+  "text": "The webhook did not take the test message: {e}",
+  "note": "result of Test the bot ({e} the error)"
+ },
+ "bot.t.react": {
+  "text": "The bot could not react (View Channel and Add Reactions in that channel?): {e}",
+  "note": "result of Test the bot ({e} Discord's error)"
+ },
+ "bot.t.read": {
+  "text": "The bot could not read the reactions (Read Message History?): {e}",
+  "note": "result of Test the bot ({e} Discord's error)"
+ },
+ "bot.t.ok": {
+  "text": "It works: {bot} reacted under the test message and can read the reactions.",
+  "note": "result of Test the bot ({bot} the bot's name)"
+ },
+ "bot.t.no_user": {
+  "text": "Save your user ID too, otherwise no reaction counts.",
+  "note": "added to a successful test when the user id is empty"
+ },
+ "bot.d.title": {
+  "text": "{p}: bot test",
+  "note": "Discord message title ({p} plugin name)"
+ },
+ "bot.d.desc": {
+  "text": "If a ✅ from {bot} appears under this message, the bot can react here. Nothing else happens.",
+  "note": "Discord message text ({bot} the bot's name)"
+ }
+}

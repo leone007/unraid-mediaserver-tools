@@ -14,14 +14,15 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
  ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
  ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),
- ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER')]
+ ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),
+ ('&plugdir;/bot.php','common/bot.php','SHARED DISCORD BOT SETTING'),('&plugdir;/bot_block.php','common/bot_block.php','DISCORD BOT BLOCK'),('&plugdir;/bot_save.php','common/bot_save.php','DISCORD BOT SAVE AND TEST'),('&plugdir;/mtlang/en.json','common/lang/en.json','SHARED BLOCKS ENGLISH DICTIONARY'),('&plugdir;/mtlang/hu.json','common/lang/hu.json','SHARED BLOCKS HUNGARIAN DICTIONARY')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.26">
+<!ENTITY version   "2026.10.26a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.26a
+- Claude Guard page: a shared Discord bot block (bot token and your Discord user ID, the same setting as in Seedbox Tools; the saved Seedbox bot is taken over). Test the bot sends a message with the Sysbox webhook, the bot reacts under it and reads the reaction back, so a missing permission shows at once. The morning summary and the suggestions with reactions come in the next versions
+
 ###&version;
 - New Network part on the tile (item 94): download and upload speed, traffic today, a 30-minute graph, an internet check (router and two outside addresses: amber when slow, red when down) and the three busiest containers; each piece can be switched off in the Sysbox settings, like the other parts
 - New page Settings, Utilities, Network: 1 hour, 24 hour and 7 day graph, daily bars, today, this month and last month, traffic per container, internet outages, and its settings (interface, router, outside addresses, slow limit, unit MB/s or Mbit/s, Discord); only reads counters and sends pings

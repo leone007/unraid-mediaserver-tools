@@ -90,6 +90,7 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.settings')?></span><b><?=$gdm_t('gdm.h.settings_sub')?></b></div>
 <div class="mt-box" id="gdm-set"></div>
+<?php $mt_bot_post = '/plugins/sysbox/bot_save.php'; include '/usr/local/emhttp/plugins/sysbox/bot_block.php'; ?>
 </div>
 
 <?=mt_i18n_js($gdm_lang, 'gdm')?>

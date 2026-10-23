@@ -1,0 +1,96 @@
+{
+ "_about": "A közös blokkok szövegei (Discord-bot)",
+ "bot.h.band": {
+  "text": "Discord-bot"
+ },
+ "bot.l.token": {
+  "text": "Bot token:"
+ },
+ "bot.l.user": {
+  "text": "A Discord felhasználói azonosítód:"
+ },
+ "bot.ph.token": {
+  "text": "bot token"
+ },
+ "bot.ph.saved": {
+  "text": "mentve, üresen hagyva megmarad"
+ },
+ "bot.ph.user": {
+  "text": "pl. 123456789012345678"
+ },
+ "bot.hint.token": {
+  "text": "Discord Developer Portal, az alkalmazásod, Bot, Reset Token. Üresen hagyva a mentett marad, a - törli. A botnak a webhookok csatornájában View Channel, Add Reactions és Read Message History jog kell. Mindig offline-nak látszik: ez rendben van, csak reakciókat tesz ki és olvas."
+ },
+ "bot.hint.user": {
+  "text": "Csak a te reakcióid számítanak. Discord, Beállítások, Speciális, Fejlesztői mód, majd jobb klikk a nevedre, Felhasználói azonosító másolása."
+ },
+ "bot.hint.foot": {
+  "text": "Egy bot a Seedboxhoz és a Sysboxhoz: itt mentve mindkettőnél érvényes."
+ },
+ "bot.btn.test": {
+  "text": "Bot tesztelése"
+ },
+ "bot.btn.save": {
+  "text": "Bot mentése"
+ },
+ "bot.wait": {
+  "text": "Folyamatban..."
+ },
+ "bot.fail": {
+  "text": "Nem sikerült menteni"
+ },
+ "bot.st.on": {
+  "text": "beállítva"
+ },
+ "bot.st.off": {
+  "text": "nincs beállítva"
+ },
+ "bot.st.no_user": {
+  "text": "token mentve, felhasználói azonosító hiányzik"
+ },
+ "bot.saved": {
+  "text": "Mentve a Seedboxnak és a Sysboxnak."
+ },
+ "bot.saved_off": {
+  "text": "Mentve: nincs bot."
+ },
+ "bot.e.token": {
+  "text": "A bot token hibásnak tűnik (Developer Portal, Bot, Reset Token)."
+ },
+ "bot.e.user": {
+  "text": "A felhasználói azonosító 15–25 jegyű szám."
+ },
+ "bot.e.write": {
+  "text": "Nem sikerült a beállítást a flashre írni."
+ },
+ "bot.t.no_token": {
+  "text": "Előbb ments egy bot tokent."
+ },
+ "bot.t.token": {
+  "text": "A bot token nem működik: {e}"
+ },
+ "bot.t.no_hook": {
+  "text": "A {p} pluginnak nincs Discord-webhookja: előbb ments egyet a beállításainál."
+ },
+ "bot.t.hook": {
+  "text": "A webhook nem fogadta a tesztüzenetet: {e}"
+ },
+ "bot.t.react": {
+  "text": "A bot nem tudott reagálni (View Channel és Add Reactions abban a csatornában?): {e}"
+ },
+ "bot.t.read": {
+  "text": "A bot nem tudta kiolvasni a reakciókat (Read Message History?): {e}"
+ },
+ "bot.t.ok": {
+  "text": "Működik: a {bot} reagált a tesztüzenetre, és ki tudja olvasni a reakciókat."
+ },
+ "bot.t.no_user": {
+  "text": "Mentsd a felhasználói azonosítódat is, különben egy reakció sem számít."
+ },
+ "bot.d.title": {
+  "text": "{p}: bot teszt"
+ },
+ "bot.d.desc": {
+  "text": "Ha az üzenet alatt megjelenik a {bot} ✅ reakciója, a bot itt tud reagálni. Más nem történik."
+ }
+}

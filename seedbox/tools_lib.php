@@ -11,6 +11,7 @@ const ST_JAR   = '/tmp/qbt_tools_cookie.txt';
 
 require_once __DIR__ . '/moveprog.php';
 require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/bot.php';
 // the texts the pages show, in the page language (lang/en.json); Discord texts use st_l()
 // the same dictionary in the Discord language (Settings, Language: Discord messages), for texts that go to both the page
 // and Discord, e.g. a job's message shown in the BoxBot message (seen 2026-10-20: the page language reached Discord)
@@ -59,6 +60,7 @@ function st_cfg() {
     foreach (['prowlarr', 'radarr', 'sonarr', 'lidarr', 'autobrr'] as $k) { if (isset($x[$k]) && is_array($x[$k])) { $c[$k] = array_merge($c[$k], $x[$k]); } }
     foreach (['ab_on', 'ab_filters', 'map_qb', 'map_host', 'roots', 'dl_base', 'folders', 'upd_min_gb', 'upd_min_age', 'upd_saving', 'dv_all', 'upd_upg_growth', 'upd_cat_save', 'upd_cat_hdr', 'upd_cat_res', 'find_tol', 'find_accept', 'repl_max_growth', 'find_missing_files', 'trash_days', 'dc_hook', 'dc_lang', 'dc_on', 'bot_token', 'bot_user', 'bot_rep', 'bot_find', 'tag_find', 'tag_upd', 'tag_rep', 'show_find', 'show_upd', 'show_rep', 'show_find_days', 'show_upd_days', 'show_rep_days', 'dc_find', 'dc_upd', 'dc_rep', 'find_cat', 'auto_scan', 'auto_upd', 'auto_rep', 'auto_freq', 'auto_day', 'auto_hour'] as $k) { if (isset($x[$k])) { $c[$k] = $x[$k]; } }
     foreach (['dc_find', 'dc_upd', 'dc_rep'] as $k) { if (!isset($x[$k])) { $c[$k] = !empty($c['dc_on']) ? 1 : 0; } } // the old single switch decides until the new ones are saved
+    $b = mt_bot_cfg(); $c['bot_token'] = $b['token']; $c['bot_user'] = $b['user']; // the shared Discord bot (bot.php, item 95); tools.json keeps the old values only for the move
     return st_cfg_folders($c);
 }
 
