@@ -25,7 +25,8 @@ const GD_SNAP_DAYS = 7;
 
 function gd_defaults() {
     return ['on' => 0, 'hour' => 7, 'min' => 0, 'q_from' => 22, 'q_to' => 6, 'ev_sys' => 1, 'ev_dsk' => 1, 'ev_sbx' => 1, 'ev_max' => 3,
-            't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto'];
+            't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto',
+            'brief' => 1, 'b_ep' => 1, 'b_dl' => 1, 'b_upd' => 1, 'b_net' => 1, 'b_pow' => 1];   // morning brief (item 95 B)
 }
 function gd_cfg() {
     $c = gd_defaults(); $x = upd_json(gd_cfg_file(), []);
@@ -407,7 +408,7 @@ function gd_discord($c, $r) {
     $title = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$r['verdict']] . ' ' . ($r['kind'] === 'event' ? sx_tr('gd.dc_title_event') : 'Claude Guard') . ($n ? ' · ' . sx_tr('gd.n_look', ['n' => $n]) : '');
     $body = $r['summary'];
     if ($c['discord'] !== 'short' || $r['kind'] === 'event') { $body .= "\n\n" . implode("\n", gd_discord_text($r)); }
-    upd_discord(['green' => 'g', 'amber' => 'a', 'red' => 'r'][$r['verdict']], $title, mb_substr($body, 0, 3800) . "\n\n" . sx_tr('gd.dc_more'));
+    upd_discord(['green' => 'g', 'amber' => 'a', 'red' => 'rd'][$r['verdict']], $title, mb_substr($body, 0, 3800) . "\n\n" . sx_tr('gd.dc_more'));
 }
 // amber and red findings go to guard_todo.md in the repo; the same area and level is written once a week, or again when it gets worse
 function gd_todo_file() { $f = upd_todo_file(); return $f === '' ? '' : dirname($f) . '/guard_todo.md'; }

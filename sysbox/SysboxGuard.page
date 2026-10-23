@@ -271,6 +271,9 @@ $(function () {
       row(esc(T('gds.ctx')), '<input type="text" id="gdm-ctx" style="width:340px;max-width:100%" value="' + esc(c.ctx) + '">' +
         ' <span class="gdm-chip ' + (r.ctx_path ? 'g' : 'a') + '">' + esc(r.ctx_path ? T('gds.ctx_reads', { p: r.ctx_path }) : T('gds.ctx_none')) + '</span>', esc(T('gds.ctx_hint'))) +
       row('Discord', '<select id="gdm-dc">' + dc + '</select>', esc(T('gds.dc_hint'))) +
+      row(esc(T('gds.brief_lb')), ck('gdm-br', c.brief, esc(T('gds.brief'))), esc(T('gds.brief_hint'))) +
+      row(esc(T('gds.parts')), $.map(['ep', 'dl', 'upd', 'net', 'pow'], function (k) { return ck('gdm-b' + k, c['b_' + k], esc(T('gds.p_' + k))); }).join('') +
+        '<input type="button" id="gdm-brnow" value="' + esc(T('gds.brief_now')) + '"><span id="gdm-brmsg"></span>', esc(T('gds.parts_hint'))) +
       row(esc(T('gds.todo_lb')), ck('gdm-todo', c.todo, esc(T('gds.todo'))), esc(T('gds.todo_hint'))) +
       '<div class="gdm-row gdm-set"><span></span><div class="gdm-ctl"><input type="button" id="gdm-save" value="' + esc(T('gds.save')) + '"><span id="gdm-smsg"></span></div></div>');
   }
@@ -279,8 +282,16 @@ $(function () {
     function b(id) { return $('#' + id).prop('checked') ? 1 : 0; }
     api('save', {on: b('gdm-on'), hour: $('#gdm-h').val(), min: $('#gdm-m').val(), q_from: $('#gdm-qf').val(), q_to: $('#gdm-qt').val(),
       ev_sys: b('gdm-es'), ev_dsk: b('gdm-ed'), ev_sbx: b('gdm-eb'), ev_max: $('#gdm-em').val(), t_disk: b('gdm-td'), t_ct: b('gdm-tc'), t_log: b('gdm-tl'), t_arr: b('gdm-ta'),
-      limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val()})
+      limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val(),
+      brief: b('gdm-br'), b_ep: b('gdm-bep'), b_dl: b('gdm-bdl'), b_upd: b('gdm-bupd'), b_net: b('gdm-bnet'), b_pow: b('gdm-bpow')})
       .done(function (r) { if (r.ok) { $m.attr('class', 'gdm-ok').text(T('gdm.saved')); load(); } else { $m.attr('class', 'gdm-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'gdm-er').text(err(x)); });
+  });
+
+  // the morning brief now (item 95 B): the saved settings and the latest report, to see it without waiting for the morning
+  $(document).on('click', '#gdm-brnow', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#gdm-brmsg').attr('class', '').text(T('gds.brief_sending'));
+    api('brief').done(function (r) { $m.attr('class', r.ok ? 'gdm-ok' : 'gdm-er').text(r.ok ? r.msg : r.error); })
+      .fail(function (x) { $m.attr('class', 'gdm-er').text(err(x)); }).always(function () { $b.prop('disabled', false); });
   });
 
   function draw(r) {

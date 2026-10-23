@@ -109,7 +109,12 @@ $rep['took'] = time() - $t0;
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
 gd_report_add($rep);
 gd_handover($dir, $rep);
-gd_discord($c, $rep);
+// the morning brief (item 95 B) replaces the daily report's own message: it goes every day, also when all is green
+if ($kind === 'daily' && !empty($c['brief']) && !gd_quiet($c)) {
+    require_once __DIR__ . '/brief_lib.php';
+    [$bok, $be] = gd_brief_send($c, $rep);
+    gd_job($id, [], $bok ? sx_tr('gd.l_brief') : sx_tr('gd.l_brief_err', ['e' => $be]));
+} else { gd_discord($c, $rep); }
 $n = 0; if (empty($rep['error']) && empty($rep['skipped'])) { $n = gd_state_edit(function (&$S) use ($c, $rep) { return gd_todo($c, $rep, $S); }); }
 $bad = count(array_filter($rep['items'], function ($x) { return $x['level'] !== 'green'; }));
 $txt = !empty($rep['error']) ? sx_tr('gd.j_err', ['e' => $rep['error']]) : (!empty($rep['skipped']) ? $rep['skipped'] : ($bad ? sx_tr('gd.j_look', ['n' => $bad]) : sx_tr('gd.j_fine')));

@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.26a">
+<!ENTITY version   "2026.10.27">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,10 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.27
+- Claude Guard: morning brief. With the daily report one Discord message goes out every day, also when everything is fine: Claude's summary and findings on top, then today's episodes (Streambox), downloads (Seedbox), waiting updates, yesterday's network and outages, and on the 1st last month's power. It replaces the daily report's own message. Settings: on or off, which parts, and Send it now
+- Claude Guard: a red report's Discord message is red again (it showed blue); the Hungarian quiet hours row no longer starts with an English word
+
 ###2026.10.26a
 - Claude Guard page: a shared Discord bot block (bot token and your Discord user ID, the same setting as in Seedbox Tools; the saved Seedbox bot is taken over). Test the bot sends a message with the Sysbox webhook, the bot reacts under it and reads the reaction back, so a missing permission shows at once. The morning summary and the suggestions with reactions come in the next versions
 
@@ -6309,9 +6313,260 @@ function mt_i18n_js($dir, $name, $only = null) {
  "netd.to": {
   "text": "Until",
   "note": "Discord field: end of the outage."
+ },
+ "gds.brief_lb": {
+  "text": "Morning brief",
+  "note": "Claude Guard page, settings row label"
+ },
+ "gds.brief": {
+  "text": "send it every morning",
+  "note": "Claude Guard page, settings row checkbox"
+ },
+ "gds.brief_hint": {
+  "text": "One Discord message with the daily report, every day, also when everything is fine. It replaces the daily report's own message (the Discord setting above stays for the alert reports). Not in the quiet hours.",
+  "note": "Claude Guard page, settings row hint"
+ },
+ "gds.parts": {
+  "text": "What it shows",
+  "note": "Claude Guard page, settings row label"
+ },
+ "gds.p_ep": {
+  "text": "Today's episodes",
+  "note": "Claude Guard page, settings row checkbox: from Streambox"
+ },
+ "gds.p_dl": {
+  "text": "Downloads",
+  "note": "Claude Guard page, settings row checkbox: from Seedbox"
+ },
+ "gds.p_upd": {
+  "text": "Updates",
+  "note": "Claude Guard page, settings row checkbox: Update manager"
+ },
+ "gds.p_net": {
+  "text": "Network yesterday",
+  "note": "Claude Guard page, settings row checkbox"
+ },
+ "gds.p_pow": {
+  "text": "Power last month (on the 1st)",
+  "note": "Claude Guard page, settings row checkbox"
+ },
+ "gds.parts_hint": {
+  "text": "Episodes come from Streambox, downloads from Seedbox, the rest from Sysbox; a part whose plugin or data is missing is left out. Send it now uses the saved settings and the latest report.",
+  "note": "Claude Guard page, settings row hint"
+ },
+ "gds.brief_now": {
+  "text": "Send it now",
+  "note": "button"
+ },
+ "gds.brief_sending": {
+  "text": "Putting it together...",
+  "note": "status after Send it now"
+ },
+ "gd.e_nohook": {
+  "text": "Sysbox has no Discord webhook (Settings, Sysbox).",
+  "note": "error"
+ },
+ "gd.brief_norep": {
+  "text": "no report yet",
+  "note": "shown in the brief when there is no Claude report yet"
+ },
+ "gd.brief_sent": {
+  "text": "Sent to Discord.",
+  "note": "result of Send it now"
+ },
+ "gd.l_brief": {
+  "text": "Morning brief sent",
+  "note": "Activity log line"
+ },
+ "gd.l_brief_err": {
+  "text": "Morning brief not sent: {e}",
+  "note": "Activity log line ({e} error)"
+ },
+ "brief.hello": {
+  "text": "Good morning!",
+  "note": "Discord morning brief title start"
+ },
+ "brief.date": {
+  "text": "{m} {d}",
+  "note": "Discord morning brief title date ({m} month name, {d} day)"
+ },
+ "brief.look": {
+  "text": "{n} to look at",
+  "note": "Discord morning brief title: findings count"
+ },
+ "brief.no_claude": {
+  "text": "Claude did not write a report this time: {e}. The server data is below.",
+  "note": "Discord morning brief"
+ },
+ "brief.h_ep": {
+  "text": "Today",
+  "note": "Discord morning brief field: today's episodes"
+ },
+ "brief.h_dl": {
+  "text": "Downloads",
+  "note": "Discord morning brief field"
+ },
+ "brief.h_upd": {
+  "text": "Updates",
+  "note": "Discord morning brief field"
+ },
+ "brief.h_net": {
+  "text": "Yesterday",
+  "note": "Discord morning brief field: network yesterday"
+ },
+ "brief.h_pow": {
+  "text": "Power",
+  "note": "Discord morning brief field"
+ },
+ "brief.ep_none": {
+  "text": "no new episode today",
+  "note": "Discord morning brief"
+ },
+ "brief.ep_late": {
+  "text": "late",
+  "note": "Discord morning brief episode state"
+ },
+ "brief.ep_fail": {
+  "text": "download failed",
+  "note": "Discord morning brief episode state"
+ },
+ "brief.more": {
+  "text": "+{n} more",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_noconn": {
+  "text": "qBittorrent does not answer",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_n": {
+  "text": "Downloading: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_idle": {
+  "text": "nothing is downloading",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_attn": {
+  "text": "torrents to look at: {n} (Seedbox tile)",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_jobs": {
+  "text": "failed or stuck Seedbox Tools jobs: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.risk_green": {
+  "text": "safe",
+  "note": "Discord morning brief update risk"
+ },
+ "brief.risk_amber": {
+  "text": "look first",
+  "note": "Discord morning brief update risk"
+ },
+ "brief.risk_red": {
+  "text": "wait",
+  "note": "Discord morning brief update risk"
+ },
+ "brief.upd_none": {
+  "text": "nothing waiting",
+  "note": "Discord morning brief"
+ },
+ "brief.upd_n": {
+  "text": "Waiting: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.net_noout": {
+  "text": "no outage",
+  "note": "Discord morning brief"
+ },
+ "brief.net_out": {
+  "text": "outages: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.min": {
+  "text": "{n} min",
+  "note": "Discord morning brief minutes"
+ },
+ "brief.pow_days": {
+  "text": "measured on {n} of {d} days",
+  "note": "Discord morning brief"
+ },
+ "brief.dow_0": {
+  "text": "Sunday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_1": {
+  "text": "Monday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_2": {
+  "text": "Tuesday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_3": {
+  "text": "Wednesday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_4": {
+  "text": "Thursday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_5": {
+  "text": "Friday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_6": {
+  "text": "Saturday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.mon_1": {
+  "text": "January",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_2": {
+  "text": "February",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_3": {
+  "text": "March",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_4": {
+  "text": "April",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_5": {
+  "text": "May",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_6": {
+  "text": "June",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_7": {
+  "text": "July",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_8": {
+  "text": "August",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_9": {
+  "text": "September",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_10": {
+  "text": "October",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_11": {
+  "text": "November",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_12": {
+  "text": "December",
+  "note": "Discord morning brief month name (title date and the power line)"
  }
-}
-]]></INLINE>
+}]]></INLINE>
 </FILE>
 
 <!-- ========================================================= -->
@@ -8113,7 +8368,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "A sárga és piros riasztás indít jelentést. Csendes órákban vagy a napi limit felett a következő napi jelentésbe kerülnek."
  },
  "gds.from": {
-  "text": ""
+  "text": "minden nap"
  },
  "gds.hours": {
   "text": "óráig"
@@ -8745,9 +9000,197 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "netd.to": {
   "text": "Vége"
+ },
+ "gds.brief_lb": {
+  "text": "Reggeli összefoglaló"
+ },
+ "gds.brief": {
+  "text": "küldés minden reggel"
+ },
+ "gds.brief_hint": {
+  "text": "Egy Discord-üzenet a napi jelentéssel, minden nap, akkor is, ha minden rendben. Ez váltja fel a napi jelentés saját üzenetét (a fenti Discord-beállítás a riasztási jelentésekre marad). Csendes órákban nem megy."
+ },
+ "gds.parts": {
+  "text": "Mit mutasson"
+ },
+ "gds.p_ep": {
+  "text": "Ma érkező epizódok"
+ },
+ "gds.p_dl": {
+  "text": "Letöltések"
+ },
+ "gds.p_upd": {
+  "text": "Frissítések"
+ },
+ "gds.p_net": {
+  "text": "Hálózat tegnap"
+ },
+ "gds.p_pow": {
+  "text": "Áram az előző hónapban (1-jén)"
+ },
+ "gds.parts_hint": {
+  "text": "Az epizódok a Streamboxból, a letöltések a Seedboxból, a többi a Sysboxból jön; ha egy rész pluginja vagy adata hiányzik, kimarad. A Küldés most a mentett beállításokkal és a legutóbbi jelentéssel küld."
+ },
+ "gds.brief_now": {
+  "text": "Küldés most"
+ },
+ "gds.brief_sending": {
+  "text": "Összeállítás..."
+ },
+ "gd.e_nohook": {
+  "text": "A Sysboxnak nincs Discord-webhookja (Settings, Sysbox)."
+ },
+ "gd.brief_norep": {
+  "text": "még nincs jelentés"
+ },
+ "gd.brief_sent": {
+  "text": "Elküldve a Discordra."
+ },
+ "gd.l_brief": {
+  "text": "Reggeli összefoglaló elküldve"
+ },
+ "gd.l_brief_err": {
+  "text": "A reggeli összefoglaló nem ment el: {e}"
+ },
+ "brief.hello": {
+  "text": "Jó reggelt!"
+ },
+ "brief.date": {
+  "text": "{m} {d}."
+ },
+ "brief.look": {
+  "text": "{n} dolgot nézz meg"
+ },
+ "brief.no_claude": {
+  "text": "Claude most nem írt jelentést: {e}. A szerver adatai lent."
+ },
+ "brief.h_ep": {
+  "text": "Ma érkezik"
+ },
+ "brief.h_dl": {
+  "text": "Letöltések"
+ },
+ "brief.h_upd": {
+  "text": "Frissítések"
+ },
+ "brief.h_net": {
+  "text": "Tegnap"
+ },
+ "brief.h_pow": {
+  "text": "Áram"
+ },
+ "brief.ep_none": {
+  "text": "ma nincs új epizód"
+ },
+ "brief.ep_late": {
+  "text": "késik"
+ },
+ "brief.ep_fail": {
+  "text": "letöltés hibás"
+ },
+ "brief.more": {
+  "text": "+{n} további"
+ },
+ "brief.dl_noconn": {
+  "text": "a qBittorrent nem válaszol"
+ },
+ "brief.dl_n": {
+  "text": "Letöltés: {n}"
+ },
+ "brief.dl_idle": {
+  "text": "nincs letöltés"
+ },
+ "brief.dl_attn": {
+  "text": "megnézendő torrent: {n} (Seedbox csempe)"
+ },
+ "brief.dl_jobs": {
+  "text": "hibás vagy elakadt Seedbox Tools feladat: {n}"
+ },
+ "brief.risk_green": {
+  "text": "biztonságos"
+ },
+ "brief.risk_amber": {
+  "text": "először nézd meg"
+ },
+ "brief.risk_red": {
+  "text": "várj vele"
+ },
+ "brief.upd_none": {
+  "text": "nincs várakozó frissítés"
+ },
+ "brief.upd_n": {
+  "text": "Vár: {n}"
+ },
+ "brief.net_noout": {
+  "text": "kimaradás nem volt"
+ },
+ "brief.net_out": {
+  "text": "kimaradás: {n}"
+ },
+ "brief.min": {
+  "text": "{n} perc"
+ },
+ "brief.pow_days": {
+  "text": "{d} napból {n} napot mért"
+ },
+ "brief.dow_0": {
+  "text": "Vasárnap"
+ },
+ "brief.dow_1": {
+  "text": "Hétfő"
+ },
+ "brief.dow_2": {
+  "text": "Kedd"
+ },
+ "brief.dow_3": {
+  "text": "Szerda"
+ },
+ "brief.dow_4": {
+  "text": "Csütörtök"
+ },
+ "brief.dow_5": {
+  "text": "Péntek"
+ },
+ "brief.dow_6": {
+  "text": "Szombat"
+ },
+ "brief.mon_1": {
+  "text": "január"
+ },
+ "brief.mon_2": {
+  "text": "február"
+ },
+ "brief.mon_3": {
+  "text": "március"
+ },
+ "brief.mon_4": {
+  "text": "április"
+ },
+ "brief.mon_5": {
+  "text": "május"
+ },
+ "brief.mon_6": {
+  "text": "június"
+ },
+ "brief.mon_7": {
+  "text": "július"
+ },
+ "brief.mon_8": {
+  "text": "augusztus"
+ },
+ "brief.mon_9": {
+  "text": "szeptember"
+ },
+ "brief.mon_10": {
+  "text": "október"
+ },
+ "brief.mon_11": {
+  "text": "november"
+ },
+ "brief.mon_12": {
+  "text": "december"
  }
-}
-]]></INLINE>
+}]]></INLINE>
 </FILE>
 
 <!-- ========================================================= -->
@@ -11476,6 +11919,9 @@ $(function () {
       row(esc(T('gds.ctx')), '<input type="text" id="gdm-ctx" style="width:340px;max-width:100%" value="' + esc(c.ctx) + '">' +
         ' <span class="gdm-chip ' + (r.ctx_path ? 'g' : 'a') + '">' + esc(r.ctx_path ? T('gds.ctx_reads', { p: r.ctx_path }) : T('gds.ctx_none')) + '</span>', esc(T('gds.ctx_hint'))) +
       row('Discord', '<select id="gdm-dc">' + dc + '</select>', esc(T('gds.dc_hint'))) +
+      row(esc(T('gds.brief_lb')), ck('gdm-br', c.brief, esc(T('gds.brief'))), esc(T('gds.brief_hint'))) +
+      row(esc(T('gds.parts')), $.map(['ep', 'dl', 'upd', 'net', 'pow'], function (k) { return ck('gdm-b' + k, c['b_' + k], esc(T('gds.p_' + k))); }).join('') +
+        '<input type="button" id="gdm-brnow" value="' + esc(T('gds.brief_now')) + '"><span id="gdm-brmsg"></span>', esc(T('gds.parts_hint'))) +
       row(esc(T('gds.todo_lb')), ck('gdm-todo', c.todo, esc(T('gds.todo'))), esc(T('gds.todo_hint'))) +
       '<div class="gdm-row gdm-set"><span></span><div class="gdm-ctl"><input type="button" id="gdm-save" value="' + esc(T('gds.save')) + '"><span id="gdm-smsg"></span></div></div>');
   }
@@ -11484,8 +11930,16 @@ $(function () {
     function b(id) { return $('#' + id).prop('checked') ? 1 : 0; }
     api('save', {on: b('gdm-on'), hour: $('#gdm-h').val(), min: $('#gdm-m').val(), q_from: $('#gdm-qf').val(), q_to: $('#gdm-qt').val(),
       ev_sys: b('gdm-es'), ev_dsk: b('gdm-ed'), ev_sbx: b('gdm-eb'), ev_max: $('#gdm-em').val(), t_disk: b('gdm-td'), t_ct: b('gdm-tc'), t_log: b('gdm-tl'), t_arr: b('gdm-ta'),
-      limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val()})
+      limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val(),
+      brief: b('gdm-br'), b_ep: b('gdm-bep'), b_dl: b('gdm-bdl'), b_upd: b('gdm-bupd'), b_net: b('gdm-bnet'), b_pow: b('gdm-bpow')})
       .done(function (r) { if (r.ok) { $m.attr('class', 'gdm-ok').text(T('gdm.saved')); load(); } else { $m.attr('class', 'gdm-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'gdm-er').text(err(x)); });
+  });
+
+  // the morning brief now (item 95 B): the saved settings and the latest report, to see it without waiting for the morning
+  $(document).on('click', '#gdm-brnow', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#gdm-brmsg').attr('class', '').text(T('gds.brief_sending'));
+    api('brief').done(function (r) { $m.attr('class', r.ok ? 'gdm-ok' : 'gdm-er').text(r.ok ? r.msg : r.error); })
+      .fail(function (x) { $m.attr('class', 'gdm-er').text(err(x)); }).always(function () { $b.prop('disabled', false); });
   });
 
   function draw(r) {
@@ -11537,7 +11991,8 @@ const GD_SNAP_DAYS = 7;
 
 function gd_defaults() {
     return ['on' => 0, 'hour' => 7, 'min' => 0, 'q_from' => 22, 'q_to' => 6, 'ev_sys' => 1, 'ev_dsk' => 1, 'ev_sbx' => 1, 'ev_max' => 3,
-            't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto'];
+            't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto',
+            'brief' => 1, 'b_ep' => 1, 'b_dl' => 1, 'b_upd' => 1, 'b_net' => 1, 'b_pow' => 1];   // morning brief (item 95 B)
 }
 function gd_cfg() {
     $c = gd_defaults(); $x = upd_json(gd_cfg_file(), []);
@@ -11919,7 +12374,7 @@ function gd_discord($c, $r) {
     $title = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$r['verdict']] . ' ' . ($r['kind'] === 'event' ? sx_tr('gd.dc_title_event') : 'Claude Guard') . ($n ? ' · ' . sx_tr('gd.n_look', ['n' => $n]) : '');
     $body = $r['summary'];
     if ($c['discord'] !== 'short' || $r['kind'] === 'event') { $body .= "\n\n" . implode("\n", gd_discord_text($r)); }
-    upd_discord(['green' => 'g', 'amber' => 'a', 'red' => 'r'][$r['verdict']], $title, mb_substr($body, 0, 3800) . "\n\n" . sx_tr('gd.dc_more'));
+    upd_discord(['green' => 'g', 'amber' => 'a', 'red' => 'rd'][$r['verdict']], $title, mb_substr($body, 0, 3800) . "\n\n" . sx_tr('gd.dc_more'));
 }
 // amber and red findings go to guard_todo.md in the repo; the same area and level is written once a week, or again when it gets worse
 function gd_todo_file() { $f = upd_todo_file(); return $f === '' ? '' : dirname($f) . '/guard_todo.md'; }
@@ -12013,11 +12468,20 @@ if ($op === 'save') {
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'q_from' => [0, 23], 'q_to' => [0, 23], 'ev_max' => [0, 10], 'limit' => [10, 100]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
-    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
+    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
     $lg = (string)($_POST['lang'] ?? 'auto'); $c['lang'] = in_array($lg, ['auto', 'en', 'hu'], true) ? $lg : 'auto';
     $cx = trim((string)($_POST['ctx'] ?? 'auto')); if ($cx !== 'auto' && $cx !== '' && !preg_match('#^/[A-Za-z0-9_./ -]{1,200}$#', $cx)) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_ctx')]); } $c['ctx'] = $cx;
     $dc = (string)($_POST['discord'] ?? 'issues'); $c['discord'] = in_array($dc, ['issues', 'short', 'full', 'off'], true) ? $dc : 'issues';
     sx_json(['ok' => upd_write(gd_cfg_file(), $c), 'cfg' => $c]);
+}
+// the morning brief now, from the latest daily or manual report (item 95 B): to see it without waiting for the morning
+if ($op === 'brief') {
+    require_once __DIR__ . '/brief_lib.php';
+    $reps = array_values(array_filter(gd_reports(), function ($r) { return ($r['kind'] ?? '') !== 'event'; }));
+    usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });
+    $r = $reps[0] ?? ['t' => time(), 'kind' => 'manual', 'items' => [], 'error' => sx_tr('gd.brief_norep')];
+    [$ok, $e] = gd_brief_send(gd_cfg(), $r);
+    sx_json($ok ? ['ok' => true, 'msg' => sx_tr('gd.brief_sent')] : ['ok' => false, 'error' => $e]);
 }
 sx_json(['ok' => false, 'error' => 'unknown action'], 400);
 ]]></INLINE>
@@ -12138,13 +12602,181 @@ $rep['took'] = time() - $t0;
 if ((!empty($rep['skipped']) || !empty($rep['error'])) && $events) { gd_state_edit(function (&$S) use ($events) { $S['night'] = array_slice(array_merge($S['night'] ?? [], $events), -30); }); }
 gd_report_add($rep);
 gd_handover($dir, $rep);
-gd_discord($c, $rep);
+// the morning brief (item 95 B) replaces the daily report's own message: it goes every day, also when all is green
+if ($kind === 'daily' && !empty($c['brief']) && !gd_quiet($c)) {
+    require_once __DIR__ . '/brief_lib.php';
+    [$bok, $be] = gd_brief_send($c, $rep);
+    gd_job($id, [], $bok ? sx_tr('gd.l_brief') : sx_tr('gd.l_brief_err', ['e' => $be]));
+} else { gd_discord($c, $rep); }
 $n = 0; if (empty($rep['error']) && empty($rep['skipped'])) { $n = gd_state_edit(function (&$S) use ($c, $rep) { return gd_todo($c, $rep, $S); }); }
 $bad = count(array_filter($rep['items'], function ($x) { return $x['level'] !== 'green'; }));
 $txt = !empty($rep['error']) ? sx_tr('gd.j_err', ['e' => $rep['error']]) : (!empty($rep['skipped']) ? $rep['skipped'] : ($bad ? sx_tr('gd.j_look', ['n' => $bad]) : sx_tr('gd.j_fine')));
 if ($n) { $txt .= ' · ' . sx_tr('gd.j_todo', ['n' => $n]); }
 gd_job($id, ['state' => !empty($rep['error']) ? 'error' : 'done', 'text' => $label . ': ' . $txt]);
 gd_log($kind . ': ' . $txt);
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- CLAUDE GUARD MORNING BRIEF -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/brief_lib.php">
+<INLINE><![CDATA[<?php
+// Claude Guard morning brief (Sysbox, item 95 B): one Discord message every morning with the daily report, also when
+// everything is fine. Claude's summary and findings on top, then parts made from the server's own data (no Claude):
+// today's episodes (Streambox), downloads (Seedbox), waiting updates (Update manager), yesterday's network
+// (Sysbox network meter) and, on the 1st of the month, last month's power (Sysbox energy). A part whose plugin or data
+// is missing is left out. Only reads: the Streambox and Seedbox tile endpoints are run as CLI scripts (GET only).
+require_once __DIR__ . '/guard_lib.php';
+require_once __DIR__ . '/net_lib.php';
+require_once __DIR__ . '/discord.php';
+
+const GD_BRIEF_PARTS = ['b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow'];
+
+// texts in the Discord language (lang/<code>.json)
+function gd_bt($k, $v = []) { return sxnet_dt(mt_lang_discord(), $k, $v); }
+function gd_bnum($x, $dec = 1) { return mt_lang_discord() === 'hu' ? number_format((float)$x, $dec, ',', ' ') : number_format((float)$x, $dec, '.', ','); }
+function gd_bbytes($b) {
+    $u = ['B', 'KB', 'MB', 'GB', 'TB']; $i = 0; $b = (float)$b;
+    while ($b >= 1000 && $i < 4) { $b /= 1000; $i++; }
+    return gd_bnum($b, $i >= 3 ? 1 : 0) . ' ' . $u[$i];
+}
+function gd_bshort($s, $n = 48) { $s = (string)$s; return mb_strlen($s) > $n ? mb_substr($s, 0, $n - 1) . '…' : $s; }
+
+// another plugin's tile endpoint as a CLI script: its JSON or null (missing plugin, error, timeout)
+function gd_bjson($envKey, $script) {
+    $e = getenv($envKey);
+    if ($e !== false && $e !== '') { $j = json_decode((string)@file_get_contents($e), true); return is_array($j) ? $j : null; }   // tests: a JSON file
+    if (!is_file($script)) { return null; }
+    $to = sx_bin('timeout'); $out = []; $rc = 0;
+    @exec(($to !== '' ? $to . ' 45 ' : '') . escapeshellarg(sx_php()) . ' -d display_errors=0 ' . escapeshellarg($script) . ' 2>/dev/null', $out, $rc);
+    $j = json_decode(implode("\n", $out), true);
+    return $rc === 0 && is_array($j) ? $j : null;
+}
+
+// 📺 today's episodes from Streambox's This week's episodes
+function gd_brief_ep($now) {
+    $w = gd_bjson('SX_BR_WEEK', '/usr/local/emhttp/plugins/streambox/week.php');
+    if (!$w || empty($w['ok'])) { return null; }
+    $today = date('Y-m-d', $now); $rows = [];
+    foreach ((array)($w['days'] ?? []) as $d) { foreach ((array)($d['rows'] ?? []) as $r) { if (date('Y-m-d', (int)$r['air']) === $today) { $rows[] = $r; } } }
+    if (!$rows) { return gd_bt('brief.ep_none'); }
+    $out = [];
+    foreach (array_slice($rows, 0, 8) as $r) {
+        $st = (string)($r['st'] ?? '');
+        $tail = in_array($st, ['jf', 'file', 'scan', 'imp'], true) ? ' ✅' : ($st === 'dl' ? ' ⬇️ ' . (int)($r['pct'] ?? 0) . ' %' : ($st === 'late' ? ' · ' . gd_bt('brief.ep_late') : ($st === 'fail' ? ' · ' . gd_bt('brief.ep_fail') : '')));
+        $out[] = gd_bshort($r['series'] ?? '?', 40) . ' ' . (string)($r['code'] ?? '') . ' (' . date('H:i', (int)$r['air']) . ')' . $tail;
+    }
+    if (count($rows) > 8) { $out[] = gd_bt('brief.more', ['n' => count($rows) - 8]); }
+    return implode("\n", $out);
+}
+
+// ⬇️ downloads from the Seedbox tile (qBittorrent) and the Seedbox Tools jobs
+function gd_brief_dl() {
+    $q = gd_bjson('SX_BR_QB', '/usr/local/emhttp/plugins/qbittorrent_widget/api_fetch.php');
+    if ($q === null) { return null; }
+    if (($q['conn'] ?? '') !== 'connected') { return gd_bt('brief.dl_noconn'); }
+    $out = []; $n = (int)($q['counts']['downloading'] ?? 0);
+    $down = array_values(array_filter((array)($q['transfer'] ?? []), function ($t) { return ($t['dir'] ?? '') === 'down'; }));
+    if ($n > 0) {
+        $l = array_map(function ($t) { return gd_bshort($t['name'] ?? '?') . ' ' . (int)round(100 * (float)($t['progress'] ?? 0)) . ' %'; }, array_slice($down, 0, 3));
+        $out[] = gd_bt('brief.dl_n', ['n' => $n]); foreach ($l as $x) { $out[] = '· ' . $x; }
+    } else { $out[] = gd_bt('brief.dl_idle'); }
+    $red = count(array_filter((array)($q['attention'] ?? []), function ($a) { return ($a['sev'] ?? '') === 'red' && !in_array($a['kind'] ?? '', ['conn', 'disc'], true); }));
+    if ((int)($q['attention_total'] ?? 0) > count((array)($q['attention'] ?? []))) { $red = max($red, 1); }
+    if ($red) { $out[] = '⚠️ ' . gd_bt('brief.dl_attn', ['n' => $red]); }
+    $sb = gd_seedbox();
+    if ($sb && $sb['failed_or_blocked']) { $out[] = '⚠️ ' . gd_bt('brief.dl_jobs', ['n' => count($sb['failed_or_blocked'])]); }
+    return implode("\n", $out);
+}
+
+// 🔄 waiting updates from the Update manager's last check
+function gd_brief_upd() {
+    $s = upd_json(upd_scan_file(), []);
+    if (!$s) { return null; }
+    $l = [];
+    foreach ((array)($s['rows'] ?? []) as $r) {
+        if (($r['state'] ?? '') !== 'update') { continue; }
+        $risk = in_array($r['risk'] ?? '', ['green', 'amber', 'red'], true) ? $r['risk'] : 'amber';
+        $l[] = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$risk] . ' ' . (string)$r['name'] . ' (' . gd_bt('brief.risk_' . $risk) . ')';
+    }
+    foreach ((array)($s['plugins'] ?? []) as $p) { if ((string)($p['new'] ?? '') !== '') { $l[] = '🧩 ' . (string)($p['ours'] ?? $p['id'] ?? '?') . ' ' . (string)$p['new']; } }
+    if ((string)($s['os']['new'] ?? '') !== '') { $l[] = '💿 Unraid ' . (string)$s['os']['new']; }
+    if (!$l) { return gd_bt('brief.upd_none'); }
+    return gd_bt('brief.upd_n', ['n' => count($l)]) . "\n" . implode("\n", array_slice($l, 0, 8)) . (count($l) > 8 ? "\n" . gd_bt('brief.more', ['n' => count($l) - 8]) : '');
+}
+
+// 🌐 yesterday's traffic and outages from the network meter
+function gd_brief_net($now) {
+    if (!sx_on(sx_cfg()['show_net'] ?? '1')) { return null; }
+    $h = upd_json(sxnet_hist_file(), []); $L = sxnet_live() ?: [];
+    $days = array_merge((array)($h['days'] ?? []), (array)($L['days'] ?? []));
+    $y = date('Y-m-d', strtotime('-1 day', $now));
+    if (!isset($days[$y])) { return null; }
+    $d = $days[$y];
+    $line = '↓ ' . gd_bbytes($d[0]) . ' · ↑ ' . gd_bbytes($d[1]);
+    $y0 = strtotime($y . ' 00:00'); $y1 = $y0 + 86400; $evs = [];
+    foreach (array_merge((array)($h['events'] ?? []), (array)($L['events'] ?? [])) as $e) {
+        $s = (int)($e['s'] ?? 0); $en = $e['e'] === null ? $now : (int)$e['e'];
+        if ($s < $y1 && $en > $y0) { $evs[$s] = [$s, $en]; }
+    }
+    if (!$evs) { return $line . ' · ' . gd_bt('brief.net_noout'); }
+    ksort($evs);
+    $txt = array_map(function ($e) { return date('H:i', $e[0]) . '–' . date('H:i', $e[1]) . ' (' . gd_bt('brief.min', ['n' => max(1, (int)round(($e[1] - $e[0]) / 60))]) . ')'; }, array_slice(array_values($evs), 0, 3));
+    return $line . "\n" . gd_bt('brief.net_out', ['n' => count($evs)]) . "\n· " . implode("\n· ", $txt);
+}
+
+// ⚡ last month's power, only on the 1st (owner: no daily power line)
+function gd_brief_pow($now, $force = false) {
+    if (!$force && (int)date('j', $now) !== 1) { return null; }
+    $j = null;
+    foreach ([getenv('SX_BR_EDAYS') ?: '/tmp/sysbox_edays.json', '/boot/config/plugins/sysbox/energy_days.json'] as $f) { $x = upd_json($f, []); if (!empty($x['days'])) { $j = $x; break; } }
+    if (!$j) { return null; }
+    $pm = date('Y-m', strtotime(date('Y-m-01', $now) . ' -1 month')); $wh = 0.0; $n = 0;
+    foreach ($j['days'] as $d => $v) { if (strpos((string)$d, $pm) === 0) { $wh += (float)$v; $n++; } }
+    if ($n === 0) { return null; }
+    $cfg = sx_cfg(); $price = (float)str_replace(',', '.', (string)($cfg['kwh_price'] ?? '')); $kwh = $wh / 1000;
+    $line = gd_bt('brief.mon_' . (int)substr($pm, 5, 2)) . ': ' . gd_bnum($kwh, 1) . ' kWh' . ($price > 0 ? ' · ~' . gd_bnum($kwh * $price, 0) . ' ' . (string)($cfg['currency'] ?? '') : '');
+    $days = (int)date('t', strtotime($pm . '-01'));
+    if ($n < $days) { $line .= ' · ' . gd_bt('brief.pow_days', ['n' => $n, 'd' => $days]); }
+    return $line;
+}
+
+// the message: [embed] built from a report (daily or manual; error and skipped reports still get the server parts)
+function gd_brief_embed($c, $r, $now = null) {
+    $now = $now ?? time();
+    $bad = array_values(array_filter((array)($r['items'] ?? []), function ($x) { return ($x['level'] ?? '') !== 'green'; }));
+    $claude = empty($r['error']) && empty($r['skipped']);
+    $v = $claude ? (string)($r['verdict'] ?? 'green') : '';
+    $title = '☀️ ' . gd_bt('brief.hello') . ' ' . gd_bt('brief.dow_' . date('w', $now)) . ', ' . gd_bt('brief.date', ['m' => gd_bt('brief.mon_' . date('n', $now)), 'd' => date('j', $now)]);
+    if ($bad) { $title .= ' · ' . ($v === 'red' ? '🔴' : '🟡') . ' ' . gd_bt('brief.look', ['n' => count($bad)]); }
+    if ($claude) {
+        $desc = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$v] ?? '🟢';
+        $desc .= ' ' . trim((string)($r['summary'] ?? ''));
+        foreach ($bad as $x) { $desc .= "\n" . ($x['level'] === 'red' ? '🔴' : '🟡') . ' **' . $x['area'] . '**: ' . $x['title'] . ($x['todo'] !== '' ? ' ' . $x['todo'] : ''); }
+    } else {
+        $desc = '⚪ ' . (!empty($r['skipped']) ? (string)$r['skipped'] : gd_bt('brief.no_claude', ['e' => mb_substr((string)$r['error'], 0, 300)]));
+    }
+    $parts = [['b_ep', '📺 ' . gd_bt('brief.h_ep'), function () use ($now) { return gd_brief_ep($now); }],
+              ['b_dl', '⬇️ ' . gd_bt('brief.h_dl'), function () { return gd_brief_dl(); }],
+              ['b_upd', '🔄 ' . gd_bt('brief.h_upd'), function () { return gd_brief_upd(); }],
+              ['b_net', '🌐 ' . gd_bt('brief.h_net'), function () use ($now) { return gd_brief_net($now); }],
+              ['b_pow', '⚡ ' . gd_bt('brief.h_pow'), function () use ($now) { return gd_brief_pow($now); }]];
+    $fields = [];
+    foreach ($parts as [$k, $name, $fn]) {
+        if (empty($c[$k])) { continue; }
+        $t = $fn(); if ($t !== null && $t !== '') { $fields[] = [$name, $t]; }
+    }
+    $lvl = !$claude ? 'i' : ['green' => 'g', 'amber' => 'a', 'red' => 'rd'][$v];
+    return sxn_embed($lvl, $title, mb_substr($desc, 0, 3500), $fields, 'Claude Guard');
+}
+// sends the brief with the Sysbox webhook: [ok, error]
+function gd_brief_send($c, $r) {
+    $hook = getenv('SX_BR_HOOK') ?: (string)(sx_cfg()['dc_hook'] ?? '');
+    if ($hook === '') { return [false, sx_tr('gd.e_nohook')]; }
+    [$st, $e] = sxn_post($hook, [gd_brief_embed($c, $r)]);
+    return [$st === 'ok', $e];
+}
 ]]></INLINE>
 </FILE>
 

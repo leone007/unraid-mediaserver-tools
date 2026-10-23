@@ -3225,5 +3225,257 @@
  "netd.to": {
   "text": "Until",
   "note": "Discord field: end of the outage."
+ },
+ "gds.brief_lb": {
+  "text": "Morning brief",
+  "note": "Claude Guard page, settings row label"
+ },
+ "gds.brief": {
+  "text": "send it every morning",
+  "note": "Claude Guard page, settings row checkbox"
+ },
+ "gds.brief_hint": {
+  "text": "One Discord message with the daily report, every day, also when everything is fine. It replaces the daily report's own message (the Discord setting above stays for the alert reports). Not in the quiet hours.",
+  "note": "Claude Guard page, settings row hint"
+ },
+ "gds.parts": {
+  "text": "What it shows",
+  "note": "Claude Guard page, settings row label"
+ },
+ "gds.p_ep": {
+  "text": "Today's episodes",
+  "note": "Claude Guard page, settings row checkbox: from Streambox"
+ },
+ "gds.p_dl": {
+  "text": "Downloads",
+  "note": "Claude Guard page, settings row checkbox: from Seedbox"
+ },
+ "gds.p_upd": {
+  "text": "Updates",
+  "note": "Claude Guard page, settings row checkbox: Update manager"
+ },
+ "gds.p_net": {
+  "text": "Network yesterday",
+  "note": "Claude Guard page, settings row checkbox"
+ },
+ "gds.p_pow": {
+  "text": "Power last month (on the 1st)",
+  "note": "Claude Guard page, settings row checkbox"
+ },
+ "gds.parts_hint": {
+  "text": "Episodes come from Streambox, downloads from Seedbox, the rest from Sysbox; a part whose plugin or data is missing is left out. Send it now uses the saved settings and the latest report.",
+  "note": "Claude Guard page, settings row hint"
+ },
+ "gds.brief_now": {
+  "text": "Send it now",
+  "note": "button"
+ },
+ "gds.brief_sending": {
+  "text": "Putting it together...",
+  "note": "status after Send it now"
+ },
+ "gd.e_nohook": {
+  "text": "Sysbox has no Discord webhook (Settings, Sysbox).",
+  "note": "error"
+ },
+ "gd.brief_norep": {
+  "text": "no report yet",
+  "note": "shown in the brief when there is no Claude report yet"
+ },
+ "gd.brief_sent": {
+  "text": "Sent to Discord.",
+  "note": "result of Send it now"
+ },
+ "gd.l_brief": {
+  "text": "Morning brief sent",
+  "note": "Activity log line"
+ },
+ "gd.l_brief_err": {
+  "text": "Morning brief not sent: {e}",
+  "note": "Activity log line ({e} error)"
+ },
+ "brief.hello": {
+  "text": "Good morning!",
+  "note": "Discord morning brief title start"
+ },
+ "brief.date": {
+  "text": "{m} {d}",
+  "note": "Discord morning brief title date ({m} month name, {d} day)"
+ },
+ "brief.look": {
+  "text": "{n} to look at",
+  "note": "Discord morning brief title: findings count"
+ },
+ "brief.no_claude": {
+  "text": "Claude did not write a report this time: {e}. The server data is below.",
+  "note": "Discord morning brief"
+ },
+ "brief.h_ep": {
+  "text": "Today",
+  "note": "Discord morning brief field: today's episodes"
+ },
+ "brief.h_dl": {
+  "text": "Downloads",
+  "note": "Discord morning brief field"
+ },
+ "brief.h_upd": {
+  "text": "Updates",
+  "note": "Discord morning brief field"
+ },
+ "brief.h_net": {
+  "text": "Yesterday",
+  "note": "Discord morning brief field: network yesterday"
+ },
+ "brief.h_pow": {
+  "text": "Power",
+  "note": "Discord morning brief field"
+ },
+ "brief.ep_none": {
+  "text": "no new episode today",
+  "note": "Discord morning brief"
+ },
+ "brief.ep_late": {
+  "text": "late",
+  "note": "Discord morning brief episode state"
+ },
+ "brief.ep_fail": {
+  "text": "download failed",
+  "note": "Discord morning brief episode state"
+ },
+ "brief.more": {
+  "text": "+{n} more",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_noconn": {
+  "text": "qBittorrent does not answer",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_n": {
+  "text": "Downloading: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_idle": {
+  "text": "nothing is downloading",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_attn": {
+  "text": "torrents to look at: {n} (Seedbox tile)",
+  "note": "Discord morning brief"
+ },
+ "brief.dl_jobs": {
+  "text": "failed or stuck Seedbox Tools jobs: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.risk_green": {
+  "text": "safe",
+  "note": "Discord morning brief update risk"
+ },
+ "brief.risk_amber": {
+  "text": "look first",
+  "note": "Discord morning brief update risk"
+ },
+ "brief.risk_red": {
+  "text": "wait",
+  "note": "Discord morning brief update risk"
+ },
+ "brief.upd_none": {
+  "text": "nothing waiting",
+  "note": "Discord morning brief"
+ },
+ "brief.upd_n": {
+  "text": "Waiting: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.net_noout": {
+  "text": "no outage",
+  "note": "Discord morning brief"
+ },
+ "brief.net_out": {
+  "text": "outages: {n}",
+  "note": "Discord morning brief"
+ },
+ "brief.min": {
+  "text": "{n} min",
+  "note": "Discord morning brief minutes"
+ },
+ "brief.pow_days": {
+  "text": "measured on {n} of {d} days",
+  "note": "Discord morning brief"
+ },
+ "brief.dow_0": {
+  "text": "Sunday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_1": {
+  "text": "Monday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_2": {
+  "text": "Tuesday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_3": {
+  "text": "Wednesday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_4": {
+  "text": "Thursday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_5": {
+  "text": "Friday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.dow_6": {
+  "text": "Saturday",
+  "note": "Discord morning brief day name in the title (0 Sunday)"
+ },
+ "brief.mon_1": {
+  "text": "January",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_2": {
+  "text": "February",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_3": {
+  "text": "March",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_4": {
+  "text": "April",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_5": {
+  "text": "May",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_6": {
+  "text": "June",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_7": {
+  "text": "July",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_8": {
+  "text": "August",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_9": {
+  "text": "September",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_10": {
+  "text": "October",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_11": {
+  "text": "November",
+  "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.mon_12": {
+  "text": "December",
+  "note": "Discord morning brief month name (title date and the power line)"
  }
 }

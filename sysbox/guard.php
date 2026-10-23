@@ -61,10 +61,19 @@ if ($op === 'save') {
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'q_from' => [0, 23], 'q_to' => [0, 23], 'ev_max' => [0, 10], 'limit' => [10, 100]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
-    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
+    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
     $lg = (string)($_POST['lang'] ?? 'auto'); $c['lang'] = in_array($lg, ['auto', 'en', 'hu'], true) ? $lg : 'auto';
     $cx = trim((string)($_POST['ctx'] ?? 'auto')); if ($cx !== 'auto' && $cx !== '' && !preg_match('#^/[A-Za-z0-9_./ -]{1,200}$#', $cx)) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_ctx')]); } $c['ctx'] = $cx;
     $dc = (string)($_POST['discord'] ?? 'issues'); $c['discord'] = in_array($dc, ['issues', 'short', 'full', 'off'], true) ? $dc : 'issues';
     sx_json(['ok' => upd_write(gd_cfg_file(), $c), 'cfg' => $c]);
+}
+// the morning brief now, from the latest daily or manual report (item 95 B): to see it without waiting for the morning
+if ($op === 'brief') {
+    require_once __DIR__ . '/brief_lib.php';
+    $reps = array_values(array_filter(gd_reports(), function ($r) { return ($r['kind'] ?? '') !== 'event'; }));
+    usort($reps, function ($a, $b) { return $b['t'] <=> $a['t']; });
+    $r = $reps[0] ?? ['t' => time(), 'kind' => 'manual', 'items' => [], 'error' => sx_tr('gd.brief_norep')];
+    [$ok, $e] = gd_brief_send(gd_cfg(), $r);
+    sx_json($ok ? ['ok' => true, 'msg' => sx_tr('gd.brief_sent')] : ['ok' => false, 'error' => $e]);
 }
 sx_json(['ok' => false, 'error' => 'unknown action'], 400);

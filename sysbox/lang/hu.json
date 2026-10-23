@@ -1793,7 +1793,7 @@
   "text": "A sárga és piros riasztás indít jelentést. Csendes órákban vagy a napi limit felett a következő napi jelentésbe kerülnek."
  },
  "gds.from": {
-  "text": ""
+  "text": "minden nap"
  },
  "gds.hours": {
   "text": "óráig"
@@ -2425,5 +2425,194 @@
  },
  "netd.to": {
   "text": "Vége"
+ },
+ "gds.brief_lb": {
+  "text": "Reggeli összefoglaló"
+ },
+ "gds.brief": {
+  "text": "küldés minden reggel"
+ },
+ "gds.brief_hint": {
+  "text": "Egy Discord-üzenet a napi jelentéssel, minden nap, akkor is, ha minden rendben. Ez váltja fel a napi jelentés saját üzenetét (a fenti Discord-beállítás a riasztási jelentésekre marad). Csendes órákban nem megy."
+ },
+ "gds.parts": {
+  "text": "Mit mutasson"
+ },
+ "gds.p_ep": {
+  "text": "Ma érkező epizódok"
+ },
+ "gds.p_dl": {
+  "text": "Letöltések"
+ },
+ "gds.p_upd": {
+  "text": "Frissítések"
+ },
+ "gds.p_net": {
+  "text": "Hálózat tegnap"
+ },
+ "gds.p_pow": {
+  "text": "Áram az előző hónapban (1-jén)"
+ },
+ "gds.parts_hint": {
+  "text": "Az epizódok a Streamboxból, a letöltések a Seedboxból, a többi a Sysboxból jön; ha egy rész pluginja vagy adata hiányzik, kimarad. A Küldés most a mentett beállításokkal és a legutóbbi jelentéssel küld."
+ },
+ "gds.brief_now": {
+  "text": "Küldés most"
+ },
+ "gds.brief_sending": {
+  "text": "Összeállítás..."
+ },
+ "gd.e_nohook": {
+  "text": "A Sysboxnak nincs Discord-webhookja (Settings, Sysbox)."
+ },
+ "gd.brief_norep": {
+  "text": "még nincs jelentés"
+ },
+ "gd.brief_sent": {
+  "text": "Elküldve a Discordra."
+ },
+ "gd.l_brief": {
+  "text": "Reggeli összefoglaló elküldve"
+ },
+ "gd.l_brief_err": {
+  "text": "A reggeli összefoglaló nem ment el: {e}"
+ },
+ "brief.hello": {
+  "text": "Jó reggelt!"
+ },
+ "brief.date": {
+  "text": "{m} {d}."
+ },
+ "brief.look": {
+  "text": "{n} dolgot nézz meg"
+ },
+ "brief.no_claude": {
+  "text": "Claude most nem írt jelentést: {e}. A szerver adatai lent."
+ },
+ "brief.h_ep": {
+  "text": "Ma érkezik"
+ },
+ "brief.h_dl": {
+  "text": "Letöltések"
+ },
+ "brief.h_upd": {
+  "text": "Frissítések"
+ },
+ "brief.h_net": {
+  "text": "Tegnap"
+ },
+ "brief.h_pow": {
+  "text": "Áram"
+ },
+ "brief.ep_none": {
+  "text": "ma nincs új epizód"
+ },
+ "brief.ep_late": {
+  "text": "késik"
+ },
+ "brief.ep_fail": {
+  "text": "letöltés hibás"
+ },
+ "brief.more": {
+  "text": "+{n} további"
+ },
+ "brief.dl_noconn": {
+  "text": "a qBittorrent nem válaszol"
+ },
+ "brief.dl_n": {
+  "text": "Letöltés: {n}"
+ },
+ "brief.dl_idle": {
+  "text": "nincs letöltés"
+ },
+ "brief.dl_attn": {
+  "text": "megnézendő torrent: {n} (Seedbox csempe)"
+ },
+ "brief.dl_jobs": {
+  "text": "hibás vagy elakadt Seedbox Tools feladat: {n}"
+ },
+ "brief.risk_green": {
+  "text": "biztonságos"
+ },
+ "brief.risk_amber": {
+  "text": "először nézd meg"
+ },
+ "brief.risk_red": {
+  "text": "várj vele"
+ },
+ "brief.upd_none": {
+  "text": "nincs várakozó frissítés"
+ },
+ "brief.upd_n": {
+  "text": "Vár: {n}"
+ },
+ "brief.net_noout": {
+  "text": "kimaradás nem volt"
+ },
+ "brief.net_out": {
+  "text": "kimaradás: {n}"
+ },
+ "brief.min": {
+  "text": "{n} perc"
+ },
+ "brief.pow_days": {
+  "text": "{d} napból {n} napot mért"
+ },
+ "brief.dow_0": {
+  "text": "Vasárnap"
+ },
+ "brief.dow_1": {
+  "text": "Hétfő"
+ },
+ "brief.dow_2": {
+  "text": "Kedd"
+ },
+ "brief.dow_3": {
+  "text": "Szerda"
+ },
+ "brief.dow_4": {
+  "text": "Csütörtök"
+ },
+ "brief.dow_5": {
+  "text": "Péntek"
+ },
+ "brief.dow_6": {
+  "text": "Szombat"
+ },
+ "brief.mon_1": {
+  "text": "január"
+ },
+ "brief.mon_2": {
+  "text": "február"
+ },
+ "brief.mon_3": {
+  "text": "március"
+ },
+ "brief.mon_4": {
+  "text": "április"
+ },
+ "brief.mon_5": {
+  "text": "május"
+ },
+ "brief.mon_6": {
+  "text": "június"
+ },
+ "brief.mon_7": {
+  "text": "július"
+ },
+ "brief.mon_8": {
+  "text": "augusztus"
+ },
+ "brief.mon_9": {
+  "text": "szeptember"
+ },
+ "brief.mon_10": {
+  "text": "október"
+ },
+ "brief.mon_11": {
+  "text": "november"
+ },
+ "brief.mon_12": {
+  "text": "december"
  }
 }
