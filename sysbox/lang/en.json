@@ -3477,5 +3477,13 @@
  "brief.mon_12": {
   "text": "December",
   "note": "Discord morning brief month name (title date and the power line)"
+ },
+ "brief.job_blocked": {
+  "text": "stuck",
+  "note": "Discord morning brief: state of a Seedbox Tools job"
+ },
+ "brief.job_failed": {
+  "text": "failed",
+  "note": "Discord morning brief: state of a Seedbox Tools job"
  }
 }

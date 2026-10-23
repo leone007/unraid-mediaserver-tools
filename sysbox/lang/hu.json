@@ -2614,5 +2614,11 @@
  },
  "brief.mon_12": {
   "text": "december"
+ },
+ "brief.job_blocked": {
+  "text": "elakadt"
+ },
+ "brief.job_failed": {
+  "text": "hibás"
  }
 }

@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.27">
+<!ENTITY version   "2026.10.27a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.27a
+- Morning brief: a failed or stuck Seedbox Tools job is named (up to three, with its state and time), not only counted
+
 ###2026.10.27
 - Claude Guard: morning brief. With the daily report one Discord message goes out every day, also when everything is fine: Claude's summary and findings on top, then today's episodes (Streambox), downloads (Seedbox), waiting updates, yesterday's network and outages, and on the 1st last month's power. It replaces the daily report's own message. Settings: on or off, which parts, and Send it now
 - Claude Guard: a red report's Discord message is red again (it showed blue); the Hungarian quiet hours row no longer starts with an English word

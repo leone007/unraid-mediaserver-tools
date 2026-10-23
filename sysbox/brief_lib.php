@@ -63,7 +63,10 @@ function gd_brief_dl() {
     if ((int)($q['attention_total'] ?? 0) > count((array)($q['attention'] ?? []))) { $red = max($red, 1); }
     if ($red) { $out[] = '⚠️ ' . gd_bt('brief.dl_attn', ['n' => $red]); }
     $sb = gd_seedbox();
-    if ($sb && $sb['failed_or_blocked']) { $out[] = '⚠️ ' . gd_bt('brief.dl_jobs', ['n' => count($sb['failed_or_blocked'])]); }
+    if ($sb && $sb['failed_or_blocked']) {
+        $out[] = '⚠️ ' . gd_bt('brief.dl_jobs', ['n' => count($sb['failed_or_blocked'])]);
+        foreach (array_slice($sb['failed_or_blocked'], 0, 3) as $j) { $out[] = '· ' . gd_bshort($j['name'] !== '' ? $j['name'] : $j['tool'], 60) . ' (' . gd_bt($j['stage'] === 'blocked' ? 'brief.job_blocked' : 'brief.job_failed') . ', ' . $j['when'] . ')'; }
+    }
     return implode("\n", $out);
 }
 
