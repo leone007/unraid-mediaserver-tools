@@ -151,12 +151,16 @@ function gd_arr_health() {
 }
 // Seedbox Tools jobs that failed or are blocked (the last 7 days) and what runs now
 function gd_seedbox_state() { $l = '/tmp/qbt_tools_state.json'; return upd_json(is_file($l) ? $l : '/boot/config/plugins/qbittorrent_widget/tools_state.json', []); }
+// a job the owner closed (Hide, Cancel, or a later replacement of the season took its place) is stage failed with
+// dismissed or cancelled set: that is not a fault
+function gd_sbx_closed($j) { return !empty($j['dismissed']) || !empty($j['cancelled']); }
 function gd_seedbox() {
     $s = gd_seedbox_state(); if (!$s) { return null; }
     $bad = []; $run = 0;
     foreach (['pending' => 'find', 'jobs' => 'replace', 'packjobs' => 'season pack'] as $k => $what) {
         foreach ((array)($s[$k] ?? []) as $j) {
             $stg = (string)($j['stage'] ?? '');
+            if (gd_sbx_closed($j)) { continue; }
             if (in_array($stg, ['failed', 'blocked'], true) && time() - (int)($j['t'] ?? 0) < 7 * 86400) {
                 $bad[] = ['tool' => $what, 'stage' => $stg, 'name' => (string)($j['name'] ?? $j['title'] ?? $j['key'] ?? ''), 'msg' => gd_mask((string)($j['msg'] ?? '')), 'when' => date('m-d H:i', (int)($j['t'] ?? 0))];
             } elseif (!in_array($stg, ['done', 'imported', 'removed', 'cleaned', 'failed', 'blocked'], true)) { $run++; }
@@ -171,7 +175,7 @@ function gd_seedbox_events(&$st) {
     $s = gd_seedbox_state(); $seen = $st['sbx_seen'] ?? []; $new = []; $first = !isset($st['sbx_seen']);
     foreach (['pending', 'jobs', 'packjobs'] as $k) {
         foreach ((array)($s[$k] ?? []) as $j) {
-            $stg = (string)($j['stage'] ?? ''); if (!in_array($stg, ['failed', 'blocked'], true)) { continue; }
+            $stg = (string)($j['stage'] ?? ''); if (!in_array($stg, ['failed', 'blocked'], true) || gd_sbx_closed($j)) { continue; }
             $id = md5($k . '|' . ($j['id'] ?? $j['key'] ?? $j['name'] ?? '') . '|' . $stg . '|' . ($j['t'] ?? ''));
             if (isset($seen[$id])) { continue; }
             $seen[$id] = time();

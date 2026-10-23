@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.27a">
+<!ENTITY version   "2026.10.27b">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.27b
+- Claude Guard and the morning brief: a Seedbox Tools job you closed yourself (Hide, Cancel, or replaced by a later finished job of the same season) no longer counts as failed and starts no alert report
+
 ###2026.10.27a
 - Morning brief: a failed or stuck Seedbox Tools job is named (up to three, with its state and time), not only counted
 
