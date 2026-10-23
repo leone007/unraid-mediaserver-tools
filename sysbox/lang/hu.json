@@ -1525,6 +1525,9 @@
  "uj.failed_list": {
   "text": "{l} HIBÁS"
  },
+ "uj.test_retry": {
+  "text": "önteszt: {l} még nem áll készen, 3 percig újrapróbálom"
+ },
  "uj.claude_ok": {
   "text": "Claude válaszolt ezzel kapcsolatban: {n}"
  },

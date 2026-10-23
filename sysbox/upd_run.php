@@ -165,6 +165,13 @@ function upd_update_one($name, $dc = true) {
     if (!empty($cfg['selftest'])) {
         if ($was) { sleep(20); }   // the program needs a moment after the start
         $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
+        // a program still starting fails the first try (Jellyfin with a Docker mod that installs packages at every start,
+        // a database migration: 12.2 -> 12.3 on 2026-10-23 failed after 20 s): try again every 15 s for up to 3 minutes
+        for ($i = 0; $bad && $was && $i < 12; $i++) {
+            if ($i === 0) { upd_job($id, [], sx_tr('uj.test_retry', ['l' => implode(', ', array_column($bad, 'name'))])); }
+            sleep(15);
+            $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
+        }
         $tmsg = '; self-test ' . (count($t['tests']) - count($bad)) . '/' . count($t['tests']) . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' FAILED)' : ' passed');
     }
     upd_scan($name);

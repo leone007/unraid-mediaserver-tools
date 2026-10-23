@@ -2025,6 +2025,10 @@
   "text": "{l} FAILED",
   "note": "added to the self-test row: which tests failed (in capitals on purpose)."
  },
+ "uj.test_retry": {
+  "text": "self-test: {l} not ready yet, trying again for up to 3 minutes",
+  "note": "Activity log line after an update: a test failed right after the start, the worker tries again (the program may still be starting)."
+ },
  "uj.claude_ok": {
   "text": "Claude answered about {n}",
   "note": "Activity row."

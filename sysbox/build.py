@@ -20,7 +20,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.25c">
+<!ENTITY version   "2026.10.25d">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -34,6 +34,8 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 
 <CHANGES>
 ###&version;
+- Update manager: when the self-test after an update fails because the program is still starting (e.g. Jellyfin with a Docker mod or a database migration), it tries again every 15 seconds for up to 3 minutes before it calls the update failed
+###2026.10.25c
 - Update manager: the Update all confirmation has normal sized buttons (they were stretched into tall columns)
 ###2026.10.25b
 - Update manager: after a click on Update, Update all, Check now or Run self-test the job shows up in Activity at once and the buttons lock (before, the first click seemed to do nothing until a second click)
