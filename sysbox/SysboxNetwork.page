@@ -66,10 +66,24 @@ $nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k
 #nwp .nwp-ctl label{display:inline-flex;align-items:center;gap:6px}
 #nwp .nwp-ctl input[type=checkbox]{margin:0}
 #nwp .nwp-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+#nwp .s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+#nwp .nwp-act{grid-template-columns:56px minmax(0,1fr) auto}
+#nwp .nwp-bd{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:2px 7px;white-space:nowrap}
+#nwp .nwp-bd.b{color:#7fb0ef;background:rgba(74,144,226,.22)}#nwp .nwp-bd.g{color:#b0b0b0;background:rgba(128,128,128,.25)}#nwp .nwp-bd.a{color:#d9921f;background:rgba(224,160,48,.22)}
+#nwp .nwp-seg{display:inline-flex}
+#nwp .nwp-seg label{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(128,128,128,.45);margin-left:-1px;cursor:pointer}
+#nwp .nwp-seg label:first-child{border-radius:4px 0 0 4px;margin-left:0}#nwp .nwp-seg label:last-child{border-radius:0 4px 4px 0}
+#nwp .nwp-seg label.on{background:rgba(74,144,226,.25);border-color:#4a90e2}
+#nwp .nwp-seg input{display:none}
+#nwp .nwp-chip{font-size:12px;padding:2px 8px;border-radius:3px}
+#nwp .nwp-chip.ok{color:#5fbf6a;background:rgba(63,162,74,.16)}#nwp .nwp-chip.no{color:#d9921f;background:rgba(224,160,48,.18)}
 @media (max-width:760px){#nwp .nwp-ct{grid-template-columns:minmax(0,1fr) 120px}#nwp .nwp-ct>:nth-child(n+3){display:none}#nwp .nwp-set{grid-template-columns:1fr}#nwp .nwp-kp{grid-template-columns:1fr 1fr}}
 </style>
 <div id="nwp">
 <p class="nwp-sub"><?=$nwp_t('netp.intro')?></p>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.activity')?></span><b id="nwp-aband"></b></div>
+<div class="mt-box" id="nwp-act"></div>
 
 <div class="mt-band"><span><?=$nwp_t('netp.h.now')?></span><b id="nwp-nband"></b></div>
 <div class="mt-box" id="nwp-now"><div class="nwp-status nwp-mut"><?=$nwp_t('netp.loading')?></div></div>
@@ -85,6 +99,9 @@ $nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k
 
 <div class="mt-band"><span><?=$nwp_t('netp.h.outages')?></span><b id="nwp-oband"></b></div>
 <div class="mt-box" id="nwp-ev"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.sp')?></span><b id="nwp-spband"></b></div>
+<div class="mt-box" id="nwp-sp"></div>
 
 <div class="mt-band"><span><?=$nwp_t('netp.h.settings')?></span><b><?=$nwp_t('netp.h.settings_sub')?></b></div>
 <div class="mt-box" id="nwp-set"></div>
@@ -201,6 +218,10 @@ $(function () {
       $c.append($('<div class="nwp-row nwp-ct">').addClass(r[1][0] + r[1][1] > 0 ? 's-green' : 's-grey').append($('<span>').text(r[0]),
         $('<span class="nwp-num">').text(fr(r[1][0]) + ' / ' + fr(r[1][1])), $('<span class="nwp-num">').text(fb(r[2][0])), $('<span class="nwp-num">').text(fb(r[2][1]))));
     });
+    if (L.host_ct && L.host_ct.length && L.host_rate) {
+      $c.append($('<div class="nwp-row nwp-ct s-grey">').append($('<span>').append(document.createTextNode(T('net.host_row') + ' '), $('<small>').text(T('netp.host_names', { n: L.host_ct.join(', ') }))),
+        $('<span class="nwp-num">').text(fr(L.host_rate[0]) + ' / ' + fr(L.host_rate[1])), $('<span class="nwp-num">').text('–'), $('<span class="nwp-num">').text('–')));
+    }
     $c.append($('<div class="nwp-row nwp-mut">').append($('<small>').text(T('netp.ct_note'))));
   }
 
@@ -224,10 +245,74 @@ $(function () {
     }
   }
 
+  // ---- activity: what stream priority did (the running limit open, the earlier ones under a closed bar)
+  var AOPEN = false;
+  function evTxt(e) { return T('netp.sp_ev.' + e.k, $.extend({ u: '', m: 0 }, e.v || {})); }
+  function drawAct() {
+    var P = D.sp, $a = $('#nwp-act').empty(), ev = P && P.ev ? P.ev.slice().reverse() : [];
+    if (P && P.held) {
+      $a.append($('<div class="nwp-row nwp-act s-blue">').append($('<span class="nwp-num">').text(hm(P.since)),
+        $('<span>').append($('<b>').text(T('netp.sp_act_held', { v: D.cfg.sp_up })), $('<small>').text(P.out.length ? $.map(P.out, function (o) { return o.u + ' · ' + o.t + (o.d ? ' (' + o.d + ')' : ''); }).join(' / ') : T('netp.sp_act_ending'))),
+        $('<span class="nwp-bd b">').text(T('net.sp_b_limit'))));
+    }
+    var old = $.grep(ev, function (e, i) { return !(P && P.held && i === 0 && /^hold/.test(e.k)); });
+    $('#nwp-aband').text(P && P.held ? T('netp.sp_act_n', { n: 1 }) : (old.length ? T('netp.sp_act_none_now') : ''));
+    if (!(P && P.held) && !old.length) { $a.append($('<div class="nwp-row nwp-mut">').text(T('netp.sp_act_empty'))); return; }
+    if (old.length) {
+      $a.append($('<div class="nwp-gbar nwp-agbar">').append($('<span>').text(AOPEN ? '–' : '+'), $('<span>').text(T('netp.sp_act_earlier')), $('<span class="c">').text(old.length)));
+      if (AOPEN) { $.each(old, function (i, e) { $a.append($('<div class="nwp-row nwp-act s-grey">').append($('<span class="nwp-num">').text(hm(e.t)), $('<span>').text(evTxt(e)), $('<span>'))); }); }
+    }
+  }
+  $(document).on('click', '#nwp .nwp-agbar', function () { AOPEN = !AOPEN; drawAct(); });
+
+  // ---- stream priority: state now, then its settings (drawn once with the other settings)
+  function drawSpState() {
+    var P = D.sp, H = D.sp_have || {}, $s = $('#nwp-sp-st');
+    if (!$s.length) { return; }
+    $s.empty();
+    $s.append($('<span class="nwp-chip">').addClass(H.jf && (!P || P.jf) ? 'ok' : 'no').text(H.jf ? (P && !P.jf ? T('netp.sp_jf_err') : T('netp.sp_jf_ok')) : T('netp.sp_jf_none')));
+    $s.append($('<span class="nwp-chip">').addClass(H.qb && (!P || P.qb) ? 'ok' : 'no').text(H.qb ? (P && !P.qb ? T('netp.sp_qb_err') : T('netp.sp_qb_ok')) : T('netp.sp_qb_none')));
+    if (P) { $s.append($('<span>').text(T('netp.sp_checked', { t: hm(P.t) }))); }
+    var mode = D.cfg.sp_mode, band = mode === 'off' ? T('netp.sp_band_off') : (P && P.held ? T('netp.sp_band_held') : T('netp.sp_band_on'));
+    $('#nwp-spband').text(band).toggleClass('nwp-up', !!(P && P.held));
+  }
+  function drawSp() {
+    var c = D.cfg, $s = $('#nwp-sp').empty();
+    $s.append($('<div class="nwp-lead">').append($('<p>').text(T('netp.sp_lead')), $('<span>').append($('<input type="button" class="nwp-save2">').val(T('netp.save')), $('<span class="nwp-msg2">'))));
+    function row(label, $ctl, hint) { $s.append($('<div class="nwp-row nwp-set">').append($('<span class="lb">').text(label), $('<div class="nwp-ctl">').append($ctl, hint ? $('<span class="nwp-hint">').text(hint) : ''))); }
+    var $seg = $('<span class="nwp-seg" id="nwp-spmode">');
+    $.each([['off', T('netp.sp_m_off')], ['auto', T('netp.sp_m_auto')], ['button', T('netp.sp_m_button')]], function (i, m) {
+      $seg.append($('<label>').toggleClass('on', c.sp_mode === m[0]).append($('<input type="radio" name="nwp-spm">').val(m[0]).prop('checked', c.sp_mode === m[0]), document.createTextNode(m[1])));
+    });
+    row(T('netp.sp_s_mode'), $seg, T('netp.sp_s_mode_hint'));
+    var peak = 0; $.each((D.live && D.live.h24) || [], function (i, p) { peak = Math.max(peak, p[2]); });
+    row(T('netp.sp_s_up'), [$('<input type="number" id="nwp-spup" min="0.1" max="1000" step="0.5">').val(c.sp_up), document.createTextNode(' MB/s'), $('<span class="nwp-mut" id="nwp-spmbit">')],
+      T('netp.sp_s_up_hint') + (peak ? ' ' + T('netp.sp_s_up_peak', { v: (peak / 1e6).toFixed(1) }) : ''));
+    row(T('netp.sp_s_dn'), [$('<input type="number" id="nwp-spdn" min="0" max="1000" step="0.5">').val(c.sp_dn), document.createTextNode(' MB/s')], T('netp.sp_s_dn_hint'));
+    row(T('netp.sp_s_out'), [$('<label>').append($('<input type="radio" name="nwp-spo" value="outside">').prop('checked', c.sp_out !== 'all'), document.createTextNode(T('netp.sp_o_outside'))),
+      $('<label>').append($('<input type="radio" name="nwp-spo" value="all">').prop('checked', c.sp_out === 'all'), document.createTextNode(T('netp.sp_o_all')))], T('netp.sp_s_out_hint'));
+    row(T('netp.sp_s_back'), [$('<input type="number" id="nwp-spback" min="1" max="120">').val(c.sp_back), document.createTextNode(' ' + T('netp.sp_s_back_u'))], T('netp.sp_s_back_hint'));
+    row(T('netp.sp_s_own'), $('<label>').append($('<input type="checkbox" id="nwp-spown">').prop('checked', c.sp_own === '1'), document.createTextNode(T('netp.sp_s_own_l'))), T('netp.sp_s_own_hint'));
+    $s.append($('<div class="nwp-status" id="nwp-sp-st">'), $('<div class="nwp-status">').append($('<input type="button" class="nwp-sptest nwp-ghost nwp-sm">').val(T('netp.sp_test')), $('<span id="nwp-sptest-r">')));
+    function mbit() { var v = parseFloat($('#nwp-spup').val()); $('#nwp-spmbit').text(v > 0 ? '≈ ' + Math.round(v * 8) + ' Mbit/s' : ''); }
+    $s.on('input', '#nwp-spup', mbit); mbit();
+  }
+  $(document).on('change', '#nwp-spmode input', function () { $('#nwp-spmode label').removeClass('on'); $(this).closest('label').addClass('on'); });
+  $(document).on('click', '#nwp .nwp-sptest', function () {
+    var $b = $(this).prop('disabled', true), $r = $('#nwp-sptest-r').css('color', '').text(T('netp.checking'));
+    api('sp_test').done(function (r) {
+      if (!r || !r.ok) { $r.css('color', '#e5534b').text(err(r)); return; }
+      var t = [r.jf ? T('netp.sp_t_jf', { n: r.n, o: r.out }) : T('netp.sp_jf_err'), r.qb ? T(r.q ? 'netp.sp_t_qb_on' : 'netp.sp_t_qb_off') : T('netp.sp_qb_err')];
+      if (r.alt) { t.push(T('netp.sp_t_alt', { u: r.alt[0] || '∞', d: r.alt[1] || '∞' })); }
+      $r.css('color', r.jf && r.qb ? '#3fa24a' : '#d9921f').text(t.join(' · '));
+    }).fail(function (x) { $r.css('color', '#e5534b').text(err(x)); }).always(function () { $b.prop('disabled', false); });
+  });
+
   // ---- settings (drawn once, so typing is not lost on the 5-second refresh)
   function drawSet() {
     if (setDrawn) { return; }
     setDrawn = true;
+    drawSp();
     var c = D.cfg, $s = $('#nwp-set').empty();
     function row(label, $ctl, hint) { $s.append($('<div class="nwp-row nwp-set">').append($('<span class="lb">').text(label), $('<div class="nwp-ctl">').append($ctl, hint ? $('<span class="nwp-hint">').text(hint) : ''))); }
     var $if = $('<select id="nwp-if">').append($('<option value="auto">').text(T('netp.s_auto', { v: D.auto_if })));
@@ -239,12 +324,19 @@ $(function () {
     row(T('netp.s_slow'), [$('<input type="number" id="nwp-ms" min="20" max="5000">').val(c.slow_ms), document.createTextNode(' ms')], T('netp.s_slow_hint'));
     row(T('netp.s_unit'), $('<select id="nwp-unit">').append($('<option value="MB">').text(T('netp.u_mb')), $('<option value="Mbit">').text(T('netp.u_mbit'))).val(c.unit), '');
     row('Discord', $('<label>').append($('<input type="checkbox" id="nwp-dc">').prop('checked', c.dc === '1'), document.createTextNode(T('netp.s_dc'))), T('netp.s_dc_hint'));
+    row(T('netp.s_host'), $('<label>').append($('<input type="checkbox" id="nwp-host">').prop('checked', c.host_row === '1'), document.createTextNode(T('netp.s_host_l'))), T('netp.s_host_hint'));
     row('', [$('<input type="button" id="nwp-save">').val(T('netp.save')), $('<span id="nwp-msg">')], '');
   }
-  $(document).on('click', '#nwp-save', function () {
-    var $b = $(this).prop('disabled', true), $m = $('#nwp-msg').css('color', '').text(T('netp.saving'));
-    api('save', { iface: $('#nwp-if').val(), router: $.trim($('#nwp-rt').val()) || 'auto', outside: $('#nwp-out').val(), slow_ms: $('#nwp-ms').val(), unit: $('#nwp-unit').val(), dc: $('#nwp-dc').prop('checked') ? '1' : '0' })
-      .done(function (r) { if (r && r.ok) { $m.css('color', '#3fa24a').text(T('netp.saved')); load(); } else { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(r) })); } })
+  // one Save for both bands (the stream priority band has its own button that saves the same)
+  $(document).on('click', '#nwp-save, #nwp .nwp-save2', function () {
+    var $b = $(this).prop('disabled', true), $m = ($(this).is('#nwp-save') ? $('#nwp-msg') : $('#nwp .nwp-msg2')).css('color', '').text(T('netp.saving'));
+    api('save', { iface: $('#nwp-if').val(), router: $.trim($('#nwp-rt').val()) || 'auto', outside: $('#nwp-out').val(), slow_ms: $('#nwp-ms').val(), unit: $('#nwp-unit').val(), dc: $('#nwp-dc').prop('checked') ? '1' : '0',
+      host_row: $('#nwp-host').prop('checked') ? '1' : '0', sp_mode: $('#nwp-spmode input:checked').val() || 'auto', sp_up: $('#nwp-spup').val(), sp_dn: $('#nwp-spdn').val(),
+      sp_out: $('input[name=nwp-spo]:checked').val() || 'outside', sp_back: $('#nwp-spback').val(), sp_own: $('#nwp-spown').prop('checked') ? '1' : '0' })
+      .done(function (r) {
+        if (r && r.ok) { $m.css('color', r.warn ? '#d9921f' : '#3fa24a').text(r.warn ? T('netp.saved') + ' · ' + r.warn : T('netp.saved')); load(); }
+        else { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(r) })); }
+      })
       .fail(function (x) { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(x) })); })
       .always(function () { $b.prop('disabled', false); });
   });
@@ -265,7 +357,7 @@ $(function () {
   function load() {
     $.getJSON(URL, { op: 'state', _: Date.now() }).done(function (r) {
       if (!r || !r.ok) { return; }
-      D = r; drawNow(); drawChart(); drawTot(); drawCt(); drawEv(); drawSet();
+      D = r; drawAct(); drawNow(); drawChart(); drawTot(); drawCt(); drawEv(); drawSet(); drawSpState();
     }).always(function () { clearTimeout(pollT); pollT = setTimeout(load, document.hidden ? 30000 : 5000); });
   }
   load();

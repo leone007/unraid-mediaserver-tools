@@ -21,7 +21,7 @@ if (is_array($L0) && !empty($L0['live']) && time() - (int)($L0['t'] ?? 0) < 600)
 $cfg = sxnet_cfg(); $iface = sxnet_iface($cfg);
 $prev = null; $prevT = 0; $prevTs = null;
 $b5 = [0, 0.0, 0.0]; $b30 = [0, 0.0, 0.0];
-$pids = []; $pidsT = 0; $ctPrev = []; $ctT = 0; $ctRate = [];
+$pids = []; $pidsT = 0; $ctPrev = []; $ctT = 0; $ctRate = []; $hostCt = []; $hostRate = null; $wireAt = null;
 $inet = ['state' => 'wait', 'since' => time()]; $pingT = 0; $slowN = 0; $failN = 0; $failSince = 0;
 $cfgT = time(); $saveT = time(); $link = sxnet_link($iface);
 
@@ -81,7 +81,7 @@ while (true) {
 
     // containers: their own network counters (/proc/<pid>/net/dev); the list of containers every minute
     if ($now - $ctT >= 3 * $step) {
-        if ($now - $pidsT >= 12 * $step) { $pids = sxnet_ct_pids(); $pidsT = $now; }
+        if ($now - $pidsT >= 12 * $step) { $pids = sxnet_ct_pids($hostCt); $pidsT = $now; }
         $dtc = $ctT ? $now - $ctT : 0; $ctT = $now; $newPrev = []; $ctRate = [];
         foreach ($pids as $n => $pid) {
             $b = sxnet_ct_bytes($pid); if ($b === null) { continue; }
@@ -95,6 +95,12 @@ while (true) {
             $newPrev[$n] = [$b[0], $b[1], $pid];
         }
         $ctPrev = $newPrev;
+        // the host network (containers without their own network, and the server itself): the wire minus the containers
+        if ($cur && $wireAt && $dtc > 0) {
+            $sum = [0, 0]; foreach ($ctRate as $r) { $sum[0] += $r[0]; $sum[1] += $r[1]; }
+            $hostRate = [max(0, round(($cur[0] - $wireAt[0]) / $dtc) - $sum[0]), max(0, round(($cur[1] - $wireAt[1]) / $dtc) - $sum[1])];
+        }
+        $wireAt = $cur;
     }
 
     // internet: every 30 s; slow after 3 slow checks in a row, down after 2 failed ones; an outage is logged when it ends
@@ -117,7 +123,7 @@ while (true) {
     }
 
     // the live file for the tile and the page
-    $L = ['t' => $now, 'iface' => $iface, 'link' => $link, 'rate' => $rate, 'live' => $live, 'ct' => $ctRate, 'ct_names' => array_keys($pids),
+    $L = ['t' => $now, 'iface' => $iface, 'link' => $link, 'rate' => $rate, 'live' => $live, 'ct' => $ctRate, 'ct_names' => array_keys($pids), 'host_ct' => $hostCt, 'host_rate' => $hostRate,
           'inet' => $inet, 'h24' => $H['h24'], 'd7' => $H['d7'], 'days' => array_slice($H['days'], -62, null, true), 'ctday' => $H['ctday'], 'events' => array_slice($H['events'], -20),
           'unit' => $cfg['unit'], 'slow_ms' => (int)$cfg['slow_ms']];
     $f = sxnet_live_file(); @file_put_contents($f . '.tmp', json_encode($L)); @rename($f . '.tmp', $f);

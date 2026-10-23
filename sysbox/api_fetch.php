@@ -160,12 +160,23 @@ if (sx_on($cfg['show_net'] ?? '1')) {
         if ($acc) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; }
         $top = [];
         foreach ((array)$NL['ct'] as $n => $r) { $top[] = [$n, (float)$r[0], (float)$r[1]]; }
+        // the host network as one row (item 98): containers without their own network and the server itself
+        $ncfg = sxnet_cfg();
+        if (sx_on($ncfg['host_row']) && !empty($NL['host_ct']) && is_array($NL['host_rate'] ?? null)) { $top[] = ['@host', (float)$NL['host_rate'][0], (float)$NL['host_rate'][1], array_values((array)$NL['host_ct'])]; }
         usort($top, function ($a, $b) { return ($b[1] + $b[2]) <=> ($a[1] + $a[2]); });
         $today = $NL['days'][date('Y-m-d')] ?? [0, 0];
         $in = (array)$NL['inet'];
         $net += ['iface' => (string)$NL['iface'], 'speed' => $NL['link']['speed'] ?? null, 'up' => $NL['link']['up'] ?? true, 'rate' => $NL['rate'], 'today' => [$today[0], $today[1]], 'pts' => $pts,
                  'top' => array_slice($top, 0, 3), 'inet' => ['state' => (string)($in['state'] ?? 'wait'), 'since' => (int)($in['since'] ?? 0), 'router' => (string)($in['router'] ?? ''),
                  'router_ms' => $in['router_ms'] ?? null, 'out' => (string)($in['out'] ?? ''), 'out_ms' => $in['out_ms'] ?? null]];
+        // stream priority (item 98): the last check of sp_tick.php (cron, every minute)
+        $SP = sxsp_live();
+        if ($SP && $ncfg['sp_mode'] !== 'off' && !empty($SP['jf']) && time() - (int)$SP['t'] < 180) {
+            $net['sp'] = ['mode' => $SP['mode'], 'held' => (int)$SP['held'], 'since' => (int)$SP['since'], 'q' => $SP['q'], 'qb' => !empty($SP['qb']), 'own' => (int)$SP['own'], 'user_off' => (int)$SP['user_off'],
+                          'users' => array_values(array_unique(array_map(function ($x) { return (string)$x['u']; }, (array)$SP['out']))), 'n' => count((array)$SP['out']),
+                          'up' => (float)$ncfg['sp_up'], 'last' => null];
+            foreach (array_reverse((array)$SP['ev']) as $e) { if (in_array($e['k'] ?? '', ['release', 'release_btn'], true)) { $net['sp']['last'] = (int)$e['t']; break; } }
+        }
         if (in_array($net['inet']['state'], ['down', 'norouter'], true)) {
             $attn[] = ['rd', 'Internet', $net['inet']['state'] === 'down' ? $sxx_T('attn.no_inet') : $sxx_T('attn.no_router'), date('H:i', $net['inet']['since'])];
         }

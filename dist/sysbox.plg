@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.28">
+<!ENTITY version   "2026.10.29">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,10 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.29
+- Stream priority (Settings, Utilities, Network, and a row on the tile): while someone watches Jellyfin from outside the house, qBittorrent switches to its alternative speed limit (25 MB/s upload by default, written into qBittorrent on Save) and goes back to full speed 5 minutes after the last outside stream; modes Off, Automatic (default) and Button on the tile; a limit you switched on yourself is left alone; Jellyfin from the Streambox settings, qBittorrent from the Seedbox settings; Activity at the top of the Network page
+- Network: the containers on the host network (for example Jellyfin) and the server itself show as one host network row on the tile and the Network page
+
 ###2026.10.28
 - Claude Guard: suggestions. In the daily report Claude may suggest up to three actions from a fixed list built by the server: a safe or a look-first container update, deleting an old before-update snapshot, the self-test, Check now, and (off by default) hiding a stuck Seedbox season pack job. Never a red (Wait) update, never anything outside the list
 - Guard page: new Suggestions band with Approve (and a confirmation) or Not now; an approved one runs with the Update manager, Snapshots or Seedbox code like their own buttons and shows in Activity; a failed one comes back; earlier ones are folded
@@ -35,7 +39,7 @@
 ###2026.10.26a
 - Claude Guard page: a shared Discord bot block (bot token and your Discord user ID, the same setting as in Seedbox Tools; the saved Seedbox bot is taken over). Test the bot sends a message with the Sysbox webhook, the bot reacts under it and reads the reaction back, so a missing permission shows at once. The morning summary and the suggestions with reactions come in the next versions
 
-###&version;
+###2026.10.26
 - New Network part on the tile (item 94): download and upload speed, traffic today, a 30-minute graph, an internet check (router and two outside addresses: amber when slow, red when down) and the three busiest containers; each piece can be switched off in the Sysbox settings, like the other parts
 - New page Settings, Utilities, Network: 1 hour, 24 hour and 7 day graph, daily bars, today, this month and last month, traffic per container, internet outages, and its settings (interface, router, outside addresses, slow limit, unit MB/s or Mbit/s, Discord); only reads counters and sends pings
 - Discord: one message after an internet outage, with its start and end
@@ -410,6 +414,11 @@ a.sx-b2.rd{background:#e5534b;color:#fff}
 .sx-nbar{display:flex;height:4px;background:rgba(128,128,128,.3);border-radius:2px;overflow:hidden}
 .sx-nbar i{display:block;height:100%}
 .sx-nleg i{display:inline-block;width:9px;height:3px;margin:0 4px 2px 8px;vertical-align:middle}
+.sx-sp{grid-template-columns:18px minmax(0,1fr) auto;margin-top:8px}
+.sx-sp .t{font-weight:600;font-size:13px}.sx-sp .sx-sub{display:block;font-size:12px;opacity:.7;white-space:normal}
+.sx-sp .bd{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:2px 7px;white-space:nowrap}
+.sx-sp .bd.b{color:#7fb0ef;background:rgba(74,144,226,.22)}.sx-sp .bd.g{color:#b0b0b0;background:rgba(128,128,128,.25)}.sx-sp .bd.a{color:#d9921f;background:rgba(224,160,48,.22)}
+.sx-cr .n small{font-weight:400;opacity:.65;letter-spacing:0}
 /* Shared tile look (the Sysbox / Diskbox style): dark section bands, the content in a box under them, colored left stripes on rows.
    Used by Seedbox and Streambox; the build copies this block into each plugin's page where the marker below stands. */
 .mt-band{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;margin-top:14px}
@@ -728,17 +737,49 @@ $(function () {
         $('<a>').attr('href', '/Settings/SysboxNetwork').text(T('net.details'))));
     }
     if ($b.children().length) { $d.append($b); }
+    if (N.sp) { $d.append(spRow(N.sp, U)); }
     if (mx('net_top') && N.top && N.top.length) {
       var top = 1; $.each(N.top, function (i, c) { top = Math.max(top, c[1] + c[2]); });
       var $box = el('mt-box').appendTo($d);
       $.each(N.top, function (i, c) {
-        $box.append(el('sx-cr mt-r mt-n mt-s-' + (c[1] + c[2] > 0 ? 'green' : 'grey')).css('grid-template-columns', 'minmax(0,1fr) 64px 118px').append(
-          txt('span', 'n', c[0]),
+        var host = c[0] === '@host', $n = txt('span', 'n', host ? T('net.host_row') : c[0]);
+        if (host) { $n.attr('title', T('net.host_tip', { n: c[3].join(', ') })).append(' ', txt('small', '', c[3].join(', '))); }
+        $box.append(el('sx-cr mt-r mt-n mt-s-' + (host ? 'grey' : (c[1] + c[2] > 0 ? 'green' : 'grey'))).css('grid-template-columns', 'minmax(0,1fr) 64px 118px').append(
+          $n,
           el('sx-nbar').append($('<i>').css({ width: (c[1] / top * 100) + '%', background: '#3fa24a' }), $('<i>').css({ width: (c[2] / top * 100) + '%', background: '#4a90e2' })),
           $('<span class="sx-val sx-sub">').text('\u2193 ' + fmtRate(c[1], U) + ' \u00B7 \u2191 ' + fmtRate(c[2], U))));
       });
     }
   }
+
+  // stream priority (item 98): one row under the network box; a button only in the "Button on the tile" mode
+  function spRow(P, U) {
+    var lim = (U === 'Mbit' ? Math.round(P.up * 8) : P.up) + ' ' + unitTxt(U), stripe = 'grey', t, sub, bd = null, btn = null;
+    var who = P.users.length ? T('net.sp_who', { n: P.n, u: P.users.join(', ') }) : '';
+    if (!P.qb) { stripe = 'amber'; t = T('net.sp_t_noqb'); sub = T('net.sp_s_noqb'); bd = ['a', T('net.sp_b_check')]; }
+    else if (P.held) {
+      stripe = 'blue'; t = T('net.sp_t_held', { v: lim });
+      sub = (P.n ? who : T('net.sp_s_ending')) + ' \u00B7 ' + T('net.sp_since', { t: hhmm(P.since) });
+      if (P.mode === 'button') { btn = ['sp_release', T('net.sp_release')]; } else { bd = ['b', T('net.sp_b_limit')]; }
+    } else if (P.n && P.q === 1) { t = T('net.sp_t_own'); sub = who + ' \u00B7 ' + T('net.sp_s_own'); bd = ['g', T('net.sp_b_own')]; }
+    else if (P.n && P.user_off) { t = T('net.sp_t_full'); sub = who + ' \u00B7 ' + T('net.sp_s_user_off'); bd = ['g', T('net.sp_b_left')]; }
+    else if (P.n && P.mode === 'button') { stripe = 'amber'; t = T('net.sp_t_offer'); sub = who; btn = ['sp_hold', T('net.sp_hold')]; }
+    else if (P.n) { t = T('net.sp_t_full'); sub = who + ' \u00B7 ' + T('net.sp_s_next'); bd = ['g', T('net.sp_b_ready')]; }
+    else { t = T('net.sp_t_ready'); sub = T('net.sp_s_full') + (P.last ? ' \u00B7 ' + T('net.sp_s_last', { t: hhmm(P.last) }) : ''); bd = ['g', T('net.sp_b_ready')]; }
+    var $r = el('sx-sp mt-r mt-s-' + stripe).append(icon('fa-tachometer', stripe === 'blue' ? 'sx-upc' : ''),
+      $('<div>').append(txt('span', 't', t), txt('span', 'sx-sub', sub)));
+    if (btn) { $r.append($('<a class="sx-b2" href="#">').attr('data-sp', btn[0]).text(btn[1])); }
+    else if (bd) { $r.append(txt('span', 'bd ' + bd[0], bd[1])); }
+    return $r;
+  }
+  $(document).on('click', '#sx-net a[data-sp]', function (e) {
+    e.preventDefault();
+    var $a = $(this).css('pointer-events', 'none').text(T('net.sp_working'));
+    $.post('/plugins/sysbox/net.php', { op: $a.attr('data-sp') }, null, 'json')
+      .done(function (r) { if (!r || !r.ok) { alert((r && r.error) || T('net.sp_err')); } })
+      .fail(function (x) { alert((x.responseJSON && x.responseJSON.error) || 'HTTP ' + x.status); })
+      .always(function () { poll(); });
+  });
 
   // ---- containers ----------------------------------------------------------------------------
   function stripAnsi(s) { return String(s).replace(/\u001b\[[0-9;?]*[A-Za-z]/g, ''); }
@@ -1654,12 +1695,23 @@ if (sx_on($cfg['show_net'] ?? '1')) {
         if ($acc) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; }
         $top = [];
         foreach ((array)$NL['ct'] as $n => $r) { $top[] = [$n, (float)$r[0], (float)$r[1]]; }
+        // the host network as one row (item 98): containers without their own network and the server itself
+        $ncfg = sxnet_cfg();
+        if (sx_on($ncfg['host_row']) && !empty($NL['host_ct']) && is_array($NL['host_rate'] ?? null)) { $top[] = ['@host', (float)$NL['host_rate'][0], (float)$NL['host_rate'][1], array_values((array)$NL['host_ct'])]; }
         usort($top, function ($a, $b) { return ($b[1] + $b[2]) <=> ($a[1] + $a[2]); });
         $today = $NL['days'][date('Y-m-d')] ?? [0, 0];
         $in = (array)$NL['inet'];
         $net += ['iface' => (string)$NL['iface'], 'speed' => $NL['link']['speed'] ?? null, 'up' => $NL['link']['up'] ?? true, 'rate' => $NL['rate'], 'today' => [$today[0], $today[1]], 'pts' => $pts,
                  'top' => array_slice($top, 0, 3), 'inet' => ['state' => (string)($in['state'] ?? 'wait'), 'since' => (int)($in['since'] ?? 0), 'router' => (string)($in['router'] ?? ''),
                  'router_ms' => $in['router_ms'] ?? null, 'out' => (string)($in['out'] ?? ''), 'out_ms' => $in['out_ms'] ?? null]];
+        // stream priority (item 98): the last check of sp_tick.php (cron, every minute)
+        $SP = sxsp_live();
+        if ($SP && $ncfg['sp_mode'] !== 'off' && !empty($SP['jf']) && time() - (int)$SP['t'] < 180) {
+            $net['sp'] = ['mode' => $SP['mode'], 'held' => (int)$SP['held'], 'since' => (int)$SP['since'], 'q' => $SP['q'], 'qb' => !empty($SP['qb']), 'own' => (int)$SP['own'], 'user_off' => (int)$SP['user_off'],
+                          'users' => array_values(array_unique(array_map(function ($x) { return (string)$x['u']; }, (array)$SP['out']))), 'n' => count((array)$SP['out']),
+                          'up' => (float)$ncfg['sp_up'], 'last' => null];
+            foreach (array_reverse((array)$SP['ev']) as $e) { if (in_array($e['k'] ?? '', ['release', 'release_btn'], true)) { $net['sp']['last'] = (int)$e['t']; break; } }
+        }
         if (in_array($net['inet']['state'], ['down', 'norouter'], true)) {
             $attn[] = ['rd', 'Internet', $net['inet']['state'] === 'down' ? $sxx_T('attn.no_inet') : $sxx_T('attn.no_router'), date('H:i', $net['inet']['since'])];
         }
@@ -6166,7 +6218,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "column title."
  },
  "netp.ct_note": {
-  "text": "Counted inside each container, so traffic on the home network is in it too. Containers on the host network share the server's counters and are not listed.",
+  "text": "Counted inside each container, so traffic on the home network is in it too. Containers on the host network share the server's counters: they are shown together in the host network row.",
   "note": "small note under the container table."
  },
  "netp.ongoing": {
@@ -6893,6 +6945,342 @@ function mt_i18n_js($dir, $name, $only = null) {
  "brief.sst_gone": {
   "text": "✖ no longer valid",
   "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "net.host_row": {
+  "text": "host network",
+  "note": "tile, Network part: one row in the container list for the containers that share the server's own network (they cannot be measured one by one) and the server itself."
+ },
+ "net.host_tip": {
+  "text": "Containers on the host network: {n}. Their traffic is the server's traffic minus the containers measured on their own.",
+  "note": "tooltip of the host network row. {n} = container names."
+ },
+ "net.sp_who": {
+  "text": "{n} outside: {u}",
+  "note": "tile, stream priority row: how many Jellyfin streams play outside the house and who watches. {n} = count, {u} = user names."
+ },
+ "net.sp_t_noqb": {
+  "text": "Stream priority · qBittorrent cannot be reached",
+  "note": "tile, stream priority row title when qBittorrent does not answer."
+ },
+ "net.sp_s_noqb": {
+  "text": "check the qBittorrent login in the Seedbox settings",
+  "note": "tile, stream priority row: what to do when qBittorrent does not answer."
+ },
+ "net.sp_b_check": {
+  "text": "Check",
+  "note": "tile, stream priority row: small badge when something needs a look."
+ },
+ "net.sp_t_held": {
+  "text": "Stream priority · qBittorrent held at {v}",
+  "note": "tile, stream priority row title while the limit is on. {v} = the upload limit with its unit."
+ },
+ "net.sp_s_ending": {
+  "text": "no stream outside now, full speed again in a few minutes",
+  "note": "tile, stream priority row: the limit is still on for the waiting minutes after the last outside stream."
+ },
+ "net.sp_since": {
+  "text": "since {t}",
+  "note": "tile, stream priority row: since when the limit is on. {t} = time (HH:MM)."
+ },
+ "net.sp_release": {
+  "text": "Release",
+  "note": "tile, stream priority row: button that switches the qBittorrent limit off (Button on the tile mode)."
+ },
+ "net.sp_b_limit": {
+  "text": "Limiting",
+  "note": "badge: the qBittorrent limit is on now because of outside streams."
+ },
+ "net.sp_t_own": {
+  "text": "Stream priority · your own qBittorrent limit is on",
+  "note": "tile, stream priority row title: the limit was already on when the outside stream began, so Sysbox leaves it."
+ },
+ "net.sp_s_own": {
+  "text": "left as you set it",
+  "note": "tile, stream priority row: Sysbox does not touch a limit the owner switched on."
+ },
+ "net.sp_b_own": {
+  "text": "Yours",
+  "note": "badge: the qBittorrent limit was switched on by the owner, not by Sysbox."
+ },
+ "net.sp_t_full": {
+  "text": "Stream priority · qBittorrent at full speed",
+  "note": "tile, stream priority row title: no limit now."
+ },
+ "net.sp_s_user_off": {
+  "text": "you switched the limit off; it stays off until these streams end",
+  "note": "tile, stream priority row: the owner turned the limit off in qBittorrent during outside streams."
+ },
+ "net.sp_b_left": {
+  "text": "Left off",
+  "note": "badge: the limit was switched off by the owner and Sysbox respects it."
+ },
+ "net.sp_t_offer": {
+  "text": "Stream priority · streams outside the house",
+  "note": "tile, stream priority row title in the Button on the tile mode while outside streams play and nothing is limited."
+ },
+ "net.sp_hold": {
+  "text": "Hold qBittorrent",
+  "note": "tile, stream priority row: button that switches the qBittorrent alternative limit on (Button on the tile mode)."
+ },
+ "net.sp_s_next": {
+  "text": "the limit comes on at the next check",
+  "note": "tile, stream priority row: an outside stream just started; the minute check will switch the limit on."
+ },
+ "net.sp_b_ready": {
+  "text": "Ready",
+  "note": "badge: stream priority is on and waits for an outside stream."
+ },
+ "net.sp_t_ready": {
+  "text": "Stream priority · standing by",
+  "note": "tile, stream priority row title when nobody watches from outside."
+ },
+ "net.sp_s_full": {
+  "text": "qBittorrent at full speed",
+  "note": "tile, stream priority row: no limit now."
+ },
+ "net.sp_s_last": {
+  "text": "last limited until {t}",
+  "note": "tile, stream priority row: when the last limit ended. {t} = time (HH:MM)."
+ },
+ "net.sp_working": {
+  "text": "…",
+  "note": "tile, stream priority button while the request runs."
+ },
+ "net.sp_err": {
+  "text": "The qBittorrent limit could not be switched",
+  "note": "alert on the tile when the Hold or Release button fails without a message."
+ },
+ "netp.h.activity": {
+  "text": "Activity",
+  "note": "Network page: band of what stream priority did (switches of the qBittorrent limit)."
+ },
+ "netp.h.sp": {
+  "text": "Stream priority",
+  "note": "Network page: band of the stream priority settings (qBittorrent gives way to Jellyfin streams outside the house)."
+ },
+ "netp.sp_ev.hold": {
+  "text": "qBittorrent held at its alternative limit · {u}",
+  "note": "Activity line: Sysbox switched the limit on because of outside streams. {u} = user names."
+ },
+ "netp.sp_ev.hold_btn": {
+  "text": "qBittorrent held with the tile's button · {u}",
+  "note": "Activity line: the owner pressed Hold qBittorrent on the tile. {u} = user names (may be empty)."
+ },
+ "netp.sp_ev.release": {
+  "text": "Back to full speed after {m} min · no stream outside the house",
+  "note": "Activity line: Sysbox switched the limit off. {m} = minutes the limit was on."
+ },
+ "netp.sp_ev.release_btn": {
+  "text": "Released with the tile's button",
+  "note": "Activity line: the owner pressed Release on the tile."
+ },
+ "netp.sp_ev.release_off": {
+  "text": "Back to full speed · stream priority switched off",
+  "note": "Activity line: the mode was set to Off while the limit was on."
+ },
+ "netp.sp_ev.user_off": {
+  "text": "You switched the limit off in qBittorrent · left off until the streams end",
+  "note": "Activity line: the owner turned the limit off by hand during outside streams."
+ },
+ "netp.sp_ev.own": {
+  "text": "Left alone: you had switched the qBittorrent limit on yourself",
+  "note": "Activity line: an outside stream began while the owner's own limit was on."
+ },
+ "netp.sp_act_held": {
+  "text": "qBittorrent held at {v} MB/s",
+  "note": "Activity, the running row: the limit is on. {v} = upload limit in MB/s."
+ },
+ "netp.sp_act_ending": {
+  "text": "no stream outside now · full speed again after the waiting minutes",
+  "note": "Activity, running row: the last outside stream ended, the limit waits a few minutes."
+ },
+ "netp.sp_act_n": {
+  "text": "{n} running",
+  "note": "Activity band, right side: running items. {n} = count."
+ },
+ "netp.sp_act_none_now": {
+  "text": "nothing running",
+  "note": "Activity band, right side: no limit on now."
+ },
+ "netp.sp_act_empty": {
+  "text": "Nothing yet: the switches of the qBittorrent limit appear here.",
+  "note": "Activity box when there is no event yet."
+ },
+ "netp.sp_act_earlier": {
+  "text": "Earlier",
+  "note": "Activity: the closed bar of earlier events."
+ },
+ "netp.sp_jf_ok": {
+  "text": "Jellyfin ✓ (from Streambox)",
+  "note": "stream priority status chip: Jellyfin answers, with the key from the Streambox settings."
+ },
+ "netp.sp_jf_err": {
+  "text": "Jellyfin does not answer",
+  "note": "stream priority status chip / test result: Jellyfin could not be asked."
+ },
+ "netp.sp_jf_none": {
+  "text": "Jellyfin: set it up in Streambox first",
+  "note": "stream priority status chip: there is no Jellyfin key in the Streambox settings."
+ },
+ "netp.sp_qb_ok": {
+  "text": "qBittorrent ✓ (from Seedbox)",
+  "note": "stream priority status chip: qBittorrent answers, with the login from the Seedbox settings."
+ },
+ "netp.sp_qb_err": {
+  "text": "qBittorrent does not answer",
+  "note": "stream priority status chip / test result: qBittorrent could not be asked or the login failed."
+ },
+ "netp.sp_qb_none": {
+  "text": "qBittorrent: set it up in Seedbox first",
+  "note": "stream priority status chip: there are no qBittorrent settings from Seedbox."
+ },
+ "netp.sp_checked": {
+  "text": "checked {t} · every minute",
+  "note": "stream priority status: time of the last check. {t} = time (HH:MM)."
+ },
+ "netp.sp_band_off": {
+  "text": "Off",
+  "note": "Stream priority band, right side: switched off."
+ },
+ "netp.sp_band_held": {
+  "text": "On · limiting now",
+  "note": "Stream priority band, right side: the qBittorrent limit is on now."
+ },
+ "netp.sp_band_on": {
+  "text": "On · standing by",
+  "note": "Stream priority band, right side: on, no outside stream."
+ },
+ "netp.sp_lead": {
+  "text": "While someone watches Jellyfin from outside the house, qBittorrent switches to its alternative speed limit, so the uploads leave room for the stream. When the last outside stream has ended, it goes back to full speed. Only that switch of qBittorrent is touched.",
+  "note": "Stream priority band: the lead text."
+ },
+ "netp.sp_m_off": {
+  "text": "Off",
+  "note": "stream priority mode: nothing is done."
+ },
+ "netp.sp_m_auto": {
+  "text": "Automatic",
+  "note": "stream priority mode: the limit switches on and off by itself."
+ },
+ "netp.sp_m_button": {
+  "text": "Button on the tile",
+  "note": "stream priority mode: nothing changes by itself, the tile offers a button."
+ },
+ "netp.sp_s_mode": {
+  "text": "Mode",
+  "note": "stream priority setting label."
+ },
+ "netp.sp_s_mode_hint": {
+  "text": "Button on the tile: nothing changes by itself; while a stream plays outside, the tile offers Hold qBittorrent.",
+  "note": "hint under the Mode setting."
+ },
+ "netp.sp_s_up": {
+  "text": "Upload limit during streams",
+  "note": "stream priority setting label (also used in the error message of a wrong number)."
+ },
+ "netp.sp_s_up_hint": {
+  "text": "Written into qBittorrent's alternative upload limit when you save.",
+  "note": "hint under the upload limit setting."
+ },
+ "netp.sp_s_up_peak": {
+  "text": "Highest upload in the last 24 hours (5-minute average): {v} MB/s.",
+  "note": "hint addition: the measured upload peak. {v} = MB/s."
+ },
+ "netp.sp_s_dn": {
+  "text": "Download limit during streams",
+  "note": "stream priority setting label (also used in the error message of a wrong number)."
+ },
+ "netp.sp_s_dn_hint": {
+  "text": "0 = no limit. Downloads do not take from the upload; leave it at 0 unless your line is shared.",
+  "note": "hint under the download limit setting."
+ },
+ "netp.sp_s_out": {
+  "text": "Counts as outside",
+  "note": "stream priority setting label: which Jellyfin streams switch the limit on."
+ },
+ "netp.sp_o_outside": {
+  "text": "Streams from outside the home network",
+  "note": "stream priority option: only streams from a public address."
+ },
+ "netp.sp_o_all": {
+  "text": "Every stream",
+  "note": "stream priority option: every Jellyfin stream."
+ },
+ "netp.sp_s_out_hint": {
+  "text": "Tailscale and the streams that come through your own domain (Cloudflare) count as outside: they also use your upload.",
+  "note": "hint under Counts as outside."
+ },
+ "netp.sp_s_back": {
+  "text": "Back to full speed after",
+  "note": "stream priority setting label (also used in the error message of a wrong number)."
+ },
+ "netp.sp_s_back_u": {
+  "text": "minutes without an outside stream",
+  "note": "unit after the Back to full speed number."
+ },
+ "netp.sp_s_back_hint": {
+  "text": "A paused film or a short break does not flip the limit back and forth.",
+  "note": "hint under Back to full speed."
+ },
+ "netp.sp_s_own": {
+  "text": "Your own switch",
+  "note": "stream priority setting label."
+ },
+ "netp.sp_s_own_l": {
+  "text": "Never undo a limit I switched on myself in qBittorrent",
+  "note": "checkbox text."
+ },
+ "netp.sp_s_own_hint": {
+  "text": "Sysbox only switches back what it switched on.",
+  "note": "hint under Your own switch."
+ },
+ "netp.sp_test": {
+  "text": "Test the connections",
+  "note": "button: asks Jellyfin and qBittorrent once."
+ },
+ "netp.sp_t_jf": {
+  "text": "Jellyfin: {n} playing, {o} outside",
+  "note": "test result. {n} = playing sessions, {o} = of them outside."
+ },
+ "netp.sp_t_qb_on": {
+  "text": "qBittorrent: alternative limit on",
+  "note": "test result: qBittorrent answers and its limit is on."
+ },
+ "netp.sp_t_qb_off": {
+  "text": "qBittorrent: full speed",
+  "note": "test result: qBittorrent answers and its limit is off."
+ },
+ "netp.sp_t_alt": {
+  "text": "its alternative limits: ↑ {u} · ↓ {d} MB/s",
+  "note": "test result: the alternative limits set in qBittorrent now (∞ = none). {u} = upload, {d} = download."
+ },
+ "netp.sp_qb_not_set": {
+  "text": "the limits could not be written into qBittorrent",
+  "note": "warning after Save when qBittorrent did not take the alternative limits."
+ },
+ "netp.sp_err_qb": {
+  "text": "qBittorrent does not answer, the limit was not switched",
+  "note": "error of the tile's Hold or Release button."
+ },
+ "netp.s_host": {
+  "text": "Host network",
+  "note": "Network settings label: show the host network row."
+ },
+ "netp.s_host_l": {
+  "text": "One host network row on the tile",
+  "note": "checkbox text."
+ },
+ "netp.s_host_hint": {
+  "text": "Containers without their own network (for example Jellyfin) and the server itself: the server's traffic minus the containers measured on their own.",
+  "note": "hint under Host network."
+ },
+ "netp.host_names": {
+  "text": "{n} and the server itself",
+  "note": "Network page, container list: the host network row's names. {n} = container names."
+ },
+ "netp.sp_ev.release_nojf": {
+  "text": "Back to full speed · Jellyfin has not answered for 30 minutes",
+  "note": "Activity line: the limit was given back because Jellyfin could not be asked for a long time."
  }
 }
 ]]></INLINE>
@@ -9210,7 +9598,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Ma fel"
  },
  "netp.ct_note": {
-  "text": "A konténereken belül számolva, így az otthoni hálózati forgalom is benne van. A host hálózatot használó konténerek a szerver számlálóit használják, ezért nincsenek a listában."
+  "text": "Konténerenként számolva, így az otthoni hálózat forgalma is benne van. A host hálózatú konténerek a szerver számlálóit használják: együtt látszanak a host hálózat sorban."
  },
  "netp.ongoing": {
   "text": "most is"
@@ -9755,6 +10143,258 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "brief.sst_gone": {
   "text": "✖ már nem érvényes"
+ },
+ "net.host_row": {
+  "text": "host hálózat"
+ },
+ "net.host_tip": {
+  "text": "Host hálózaton futó konténerek: {n}. A forgalmuk a szerver forgalma, levonva a külön mért konténereket."
+ },
+ "net.sp_who": {
+  "text": "{n} kint: {u}"
+ },
+ "net.sp_t_noqb": {
+  "text": "Stream-elsőbbség · a qBittorrent nem érhető el"
+ },
+ "net.sp_s_noqb": {
+  "text": "nézd meg a qBittorrent belépést a Seedbox beállításaiban"
+ },
+ "net.sp_b_check": {
+  "text": "Nézd meg"
+ },
+ "net.sp_t_held": {
+  "text": "Stream-elsőbbség · qBittorrent {v}-ra fogva"
+ },
+ "net.sp_s_ending": {
+  "text": "most nincs kinti stream, pár perc múlva újra teljes sebesség"
+ },
+ "net.sp_since": {
+  "text": "{t} óta"
+ },
+ "net.sp_release": {
+  "text": "Elengedés"
+ },
+ "net.sp_b_limit": {
+  "text": "Korlátoz"
+ },
+ "net.sp_t_own": {
+  "text": "Stream-elsőbbség · a saját qBittorrent-korlátod van bekapcsolva"
+ },
+ "net.sp_s_own": {
+  "text": "úgy hagyva, ahogy beállítottad"
+ },
+ "net.sp_b_own": {
+  "text": "Saját"
+ },
+ "net.sp_t_full": {
+  "text": "Stream-elsőbbség · qBittorrent teljes sebességgel"
+ },
+ "net.sp_s_user_off": {
+  "text": "kikapcsoltad a korlátot; ezeknek a streameknek a végéig kikapcsolva marad"
+ },
+ "net.sp_b_left": {
+  "text": "Kikapcsolva hagyva"
+ },
+ "net.sp_t_offer": {
+  "text": "Stream-elsőbbség · kinti streamek"
+ },
+ "net.sp_hold": {
+  "text": "qBittorrent fogása"
+ },
+ "net.sp_s_next": {
+  "text": "a következő ellenőrzésnél bekapcsol a korlát"
+ },
+ "net.sp_b_ready": {
+  "text": "Készenlétben"
+ },
+ "net.sp_t_ready": {
+  "text": "Stream-elsőbbség · készenlétben"
+ },
+ "net.sp_s_full": {
+  "text": "qBittorrent teljes sebességgel"
+ },
+ "net.sp_s_last": {
+  "text": "utoljára {t}-ig korlátozott"
+ },
+ "net.sp_working": {
+  "text": "…"
+ },
+ "net.sp_err": {
+  "text": "A qBittorrent-korlátot nem sikerült átkapcsolni"
+ },
+ "netp.h.activity": {
+  "text": "Tevékenység"
+ },
+ "netp.h.sp": {
+  "text": "Stream-elsőbbség"
+ },
+ "netp.sp_ev.hold": {
+  "text": "qBittorrent az alternatív korlátra fogva · {u}"
+ },
+ "netp.sp_ev.hold_btn": {
+  "text": "qBittorrent fogva a csempe gombjával · {u}"
+ },
+ "netp.sp_ev.release": {
+  "text": "Újra teljes sebesség {m} perc után · nincs kinti stream"
+ },
+ "netp.sp_ev.release_btn": {
+  "text": "Elengedve a csempe gombjával"
+ },
+ "netp.sp_ev.release_off": {
+  "text": "Újra teljes sebesség · a stream-elsőbbség kikapcsolva"
+ },
+ "netp.sp_ev.user_off": {
+  "text": "Kikapcsoltad a korlátot a qBittorrentben · a streamek végéig kikapcsolva marad"
+ },
+ "netp.sp_ev.own": {
+  "text": "Békén hagyva: magad kapcsoltad be a qBittorrent-korlátot"
+ },
+ "netp.sp_act_held": {
+  "text": "qBittorrent {v} MB/s-ra fogva"
+ },
+ "netp.sp_act_ending": {
+  "text": "most nincs kinti stream · a várakozási percek után újra teljes sebesség"
+ },
+ "netp.sp_act_n": {
+  "text": "{n} fut"
+ },
+ "netp.sp_act_none_now": {
+  "text": "most nem fut semmi"
+ },
+ "netp.sp_act_empty": {
+  "text": "Még semmi: itt jelennek meg a qBittorrent-korlát kapcsolásai."
+ },
+ "netp.sp_act_earlier": {
+  "text": "Korábban"
+ },
+ "netp.sp_jf_ok": {
+  "text": "Jellyfin ✓ (a Streamboxból)"
+ },
+ "netp.sp_jf_err": {
+  "text": "A Jellyfin nem válaszol"
+ },
+ "netp.sp_jf_none": {
+  "text": "Jellyfin: előbb állítsd be a Streamboxban"
+ },
+ "netp.sp_qb_ok": {
+  "text": "qBittorrent ✓ (a Seedboxból)"
+ },
+ "netp.sp_qb_err": {
+  "text": "A qBittorrent nem válaszol"
+ },
+ "netp.sp_qb_none": {
+  "text": "qBittorrent: előbb állítsd be a Seedboxban"
+ },
+ "netp.sp_checked": {
+  "text": "ellenőrizve {t} · percenként"
+ },
+ "netp.sp_band_off": {
+  "text": "Kikapcsolva"
+ },
+ "netp.sp_band_held": {
+  "text": "Bekapcsolva · most korlátoz"
+ },
+ "netp.sp_band_on": {
+  "text": "Bekapcsolva · készenlétben"
+ },
+ "netp.sp_lead": {
+  "text": "Amíg valaki kintről nézi a Jellyfint, a qBittorrent az alternatív sebességkorlátjára vált, így a feltöltések helyet hagynak a streamnek. Az utolsó kinti stream után visszaáll teljes sebességre. A qBittorrentben csak ezt a kapcsolót állítja."
+ },
+ "netp.sp_m_off": {
+  "text": "Ki"
+ },
+ "netp.sp_m_auto": {
+  "text": "Automatikus"
+ },
+ "netp.sp_m_button": {
+  "text": "Gomb a csempén"
+ },
+ "netp.sp_s_mode": {
+  "text": "Mód"
+ },
+ "netp.sp_s_mode_hint": {
+  "text": "Gomb a csempén: magától semmi nem változik; amíg kinti stream megy, a csempe felajánlja a qBittorrent fogását."
+ },
+ "netp.sp_s_up": {
+  "text": "Feltöltési korlát streamek alatt"
+ },
+ "netp.sp_s_up_hint": {
+  "text": "Mentéskor beíródik a qBittorrent alternatív feltöltési korlátjába."
+ },
+ "netp.sp_s_up_peak": {
+  "text": "A legnagyobb feltöltés az elmúlt 24 órában (5 perces átlag): {v} MB/s."
+ },
+ "netp.sp_s_dn": {
+  "text": "Letöltési korlát streamek alatt"
+ },
+ "netp.sp_s_dn_hint": {
+  "text": "0 = nincs korlát. A letöltés nem veszi el a feltöltést; hagyd 0-n, hacsak nem osztott a vonalad."
+ },
+ "netp.sp_s_out": {
+  "text": "Kintinek számít"
+ },
+ "netp.sp_o_outside": {
+  "text": "Az otthoni hálózaton kívüli streamek"
+ },
+ "netp.sp_o_all": {
+  "text": "Minden stream"
+ },
+ "netp.sp_s_out_hint": {
+  "text": "A Tailscale és a saját domainen (Cloudflare) át jövő streamek is kintinek számítanak: azok is a feltöltésedet használják."
+ },
+ "netp.sp_s_back": {
+  "text": "Teljes sebesség újra"
+ },
+ "netp.sp_s_back_u": {
+  "text": "perc kinti stream nélkül"
+ },
+ "netp.sp_s_back_hint": {
+  "text": "Egy szüneteltetett film vagy egy rövid szünet nem kapcsolgatja ide-oda a korlátot."
+ },
+ "netp.sp_s_own": {
+  "text": "A saját kapcsolód"
+ },
+ "netp.sp_s_own_l": {
+  "text": "Soha ne kapcsolja ki azt a korlátot, amit én kapcsoltam be a qBittorrentben"
+ },
+ "netp.sp_s_own_hint": {
+  "text": "A Sysbox csak azt kapcsolja vissza, amit ő kapcsolt be."
+ },
+ "netp.sp_test": {
+  "text": "Kapcsolatok tesztje"
+ },
+ "netp.sp_t_jf": {
+  "text": "Jellyfin: {n} lejátszás, ebből {o} kint"
+ },
+ "netp.sp_t_qb_on": {
+  "text": "qBittorrent: az alternatív korlát be van kapcsolva"
+ },
+ "netp.sp_t_qb_off": {
+  "text": "qBittorrent: teljes sebesség"
+ },
+ "netp.sp_t_alt": {
+  "text": "az alternatív korlátjai: ↑ {u} · ↓ {d} MB/s"
+ },
+ "netp.sp_qb_not_set": {
+  "text": "a korlátokat nem sikerült beírni a qBittorrentbe"
+ },
+ "netp.sp_err_qb": {
+  "text": "A qBittorrent nem válaszol, a korlát nem kapcsolt át"
+ },
+ "netp.s_host": {
+  "text": "Host hálózat"
+ },
+ "netp.s_host_l": {
+  "text": "Egy host hálózat sor a csempén"
+ },
+ "netp.s_host_hint": {
+  "text": "A saját hálózat nélküli konténerek (pl. a Jellyfin) és maga a szerver: a szerver forgalma, levonva a külön mért konténereket."
+ },
+ "netp.host_names": {
+  "text": "{n} és maga a szerver"
+ },
+ "netp.sp_ev.release_nojf": {
+  "text": "Újra teljes sebesség · a Jellyfin 30 perce nem válaszol"
  }
 }
 ]]></INLINE>
@@ -13832,10 +14472,24 @@ $nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k
 #nwp .nwp-ctl label{display:inline-flex;align-items:center;gap:6px}
 #nwp .nwp-ctl input[type=checkbox]{margin:0}
 #nwp .nwp-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+#nwp .s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+#nwp .nwp-act{grid-template-columns:56px minmax(0,1fr) auto}
+#nwp .nwp-bd{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:2px 7px;white-space:nowrap}
+#nwp .nwp-bd.b{color:#7fb0ef;background:rgba(74,144,226,.22)}#nwp .nwp-bd.g{color:#b0b0b0;background:rgba(128,128,128,.25)}#nwp .nwp-bd.a{color:#d9921f;background:rgba(224,160,48,.22)}
+#nwp .nwp-seg{display:inline-flex}
+#nwp .nwp-seg label{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid rgba(128,128,128,.45);margin-left:-1px;cursor:pointer}
+#nwp .nwp-seg label:first-child{border-radius:4px 0 0 4px;margin-left:0}#nwp .nwp-seg label:last-child{border-radius:0 4px 4px 0}
+#nwp .nwp-seg label.on{background:rgba(74,144,226,.25);border-color:#4a90e2}
+#nwp .nwp-seg input{display:none}
+#nwp .nwp-chip{font-size:12px;padding:2px 8px;border-radius:3px}
+#nwp .nwp-chip.ok{color:#5fbf6a;background:rgba(63,162,74,.16)}#nwp .nwp-chip.no{color:#d9921f;background:rgba(224,160,48,.18)}
 @media (max-width:760px){#nwp .nwp-ct{grid-template-columns:minmax(0,1fr) 120px}#nwp .nwp-ct>:nth-child(n+3){display:none}#nwp .nwp-set{grid-template-columns:1fr}#nwp .nwp-kp{grid-template-columns:1fr 1fr}}
 </style>
 <div id="nwp">
 <p class="nwp-sub"><?=$nwp_t('netp.intro')?></p>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.activity')?></span><b id="nwp-aband"></b></div>
+<div class="mt-box" id="nwp-act"></div>
 
 <div class="mt-band"><span><?=$nwp_t('netp.h.now')?></span><b id="nwp-nband"></b></div>
 <div class="mt-box" id="nwp-now"><div class="nwp-status nwp-mut"><?=$nwp_t('netp.loading')?></div></div>
@@ -13851,6 +14505,9 @@ $nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k
 
 <div class="mt-band"><span><?=$nwp_t('netp.h.outages')?></span><b id="nwp-oband"></b></div>
 <div class="mt-box" id="nwp-ev"></div>
+
+<div class="mt-band"><span><?=$nwp_t('netp.h.sp')?></span><b id="nwp-spband"></b></div>
+<div class="mt-box" id="nwp-sp"></div>
 
 <div class="mt-band"><span><?=$nwp_t('netp.h.settings')?></span><b><?=$nwp_t('netp.h.settings_sub')?></b></div>
 <div class="mt-box" id="nwp-set"></div>
@@ -13967,6 +14624,10 @@ $(function () {
       $c.append($('<div class="nwp-row nwp-ct">').addClass(r[1][0] + r[1][1] > 0 ? 's-green' : 's-grey').append($('<span>').text(r[0]),
         $('<span class="nwp-num">').text(fr(r[1][0]) + ' / ' + fr(r[1][1])), $('<span class="nwp-num">').text(fb(r[2][0])), $('<span class="nwp-num">').text(fb(r[2][1]))));
     });
+    if (L.host_ct && L.host_ct.length && L.host_rate) {
+      $c.append($('<div class="nwp-row nwp-ct s-grey">').append($('<span>').append(document.createTextNode(T('net.host_row') + ' '), $('<small>').text(T('netp.host_names', { n: L.host_ct.join(', ') }))),
+        $('<span class="nwp-num">').text(fr(L.host_rate[0]) + ' / ' + fr(L.host_rate[1])), $('<span class="nwp-num">').text('–'), $('<span class="nwp-num">').text('–')));
+    }
     $c.append($('<div class="nwp-row nwp-mut">').append($('<small>').text(T('netp.ct_note'))));
   }
 
@@ -13990,10 +14651,74 @@ $(function () {
     }
   }
 
+  // ---- activity: what stream priority did (the running limit open, the earlier ones under a closed bar)
+  var AOPEN = false;
+  function evTxt(e) { return T('netp.sp_ev.' + e.k, $.extend({ u: '', m: 0 }, e.v || {})); }
+  function drawAct() {
+    var P = D.sp, $a = $('#nwp-act').empty(), ev = P && P.ev ? P.ev.slice().reverse() : [];
+    if (P && P.held) {
+      $a.append($('<div class="nwp-row nwp-act s-blue">').append($('<span class="nwp-num">').text(hm(P.since)),
+        $('<span>').append($('<b>').text(T('netp.sp_act_held', { v: D.cfg.sp_up })), $('<small>').text(P.out.length ? $.map(P.out, function (o) { return o.u + ' · ' + o.t + (o.d ? ' (' + o.d + ')' : ''); }).join(' / ') : T('netp.sp_act_ending'))),
+        $('<span class="nwp-bd b">').text(T('net.sp_b_limit'))));
+    }
+    var old = $.grep(ev, function (e, i) { return !(P && P.held && i === 0 && /^hold/.test(e.k)); });
+    $('#nwp-aband').text(P && P.held ? T('netp.sp_act_n', { n: 1 }) : (old.length ? T('netp.sp_act_none_now') : ''));
+    if (!(P && P.held) && !old.length) { $a.append($('<div class="nwp-row nwp-mut">').text(T('netp.sp_act_empty'))); return; }
+    if (old.length) {
+      $a.append($('<div class="nwp-gbar nwp-agbar">').append($('<span>').text(AOPEN ? '–' : '+'), $('<span>').text(T('netp.sp_act_earlier')), $('<span class="c">').text(old.length)));
+      if (AOPEN) { $.each(old, function (i, e) { $a.append($('<div class="nwp-row nwp-act s-grey">').append($('<span class="nwp-num">').text(hm(e.t)), $('<span>').text(evTxt(e)), $('<span>'))); }); }
+    }
+  }
+  $(document).on('click', '#nwp .nwp-agbar', function () { AOPEN = !AOPEN; drawAct(); });
+
+  // ---- stream priority: state now, then its settings (drawn once with the other settings)
+  function drawSpState() {
+    var P = D.sp, H = D.sp_have || {}, $s = $('#nwp-sp-st');
+    if (!$s.length) { return; }
+    $s.empty();
+    $s.append($('<span class="nwp-chip">').addClass(H.jf && (!P || P.jf) ? 'ok' : 'no').text(H.jf ? (P && !P.jf ? T('netp.sp_jf_err') : T('netp.sp_jf_ok')) : T('netp.sp_jf_none')));
+    $s.append($('<span class="nwp-chip">').addClass(H.qb && (!P || P.qb) ? 'ok' : 'no').text(H.qb ? (P && !P.qb ? T('netp.sp_qb_err') : T('netp.sp_qb_ok')) : T('netp.sp_qb_none')));
+    if (P) { $s.append($('<span>').text(T('netp.sp_checked', { t: hm(P.t) }))); }
+    var mode = D.cfg.sp_mode, band = mode === 'off' ? T('netp.sp_band_off') : (P && P.held ? T('netp.sp_band_held') : T('netp.sp_band_on'));
+    $('#nwp-spband').text(band).toggleClass('nwp-up', !!(P && P.held));
+  }
+  function drawSp() {
+    var c = D.cfg, $s = $('#nwp-sp').empty();
+    $s.append($('<div class="nwp-lead">').append($('<p>').text(T('netp.sp_lead')), $('<span>').append($('<input type="button" class="nwp-save2">').val(T('netp.save')), $('<span class="nwp-msg2">'))));
+    function row(label, $ctl, hint) { $s.append($('<div class="nwp-row nwp-set">').append($('<span class="lb">').text(label), $('<div class="nwp-ctl">').append($ctl, hint ? $('<span class="nwp-hint">').text(hint) : ''))); }
+    var $seg = $('<span class="nwp-seg" id="nwp-spmode">');
+    $.each([['off', T('netp.sp_m_off')], ['auto', T('netp.sp_m_auto')], ['button', T('netp.sp_m_button')]], function (i, m) {
+      $seg.append($('<label>').toggleClass('on', c.sp_mode === m[0]).append($('<input type="radio" name="nwp-spm">').val(m[0]).prop('checked', c.sp_mode === m[0]), document.createTextNode(m[1])));
+    });
+    row(T('netp.sp_s_mode'), $seg, T('netp.sp_s_mode_hint'));
+    var peak = 0; $.each((D.live && D.live.h24) || [], function (i, p) { peak = Math.max(peak, p[2]); });
+    row(T('netp.sp_s_up'), [$('<input type="number" id="nwp-spup" min="0.1" max="1000" step="0.5">').val(c.sp_up), document.createTextNode(' MB/s'), $('<span class="nwp-mut" id="nwp-spmbit">')],
+      T('netp.sp_s_up_hint') + (peak ? ' ' + T('netp.sp_s_up_peak', { v: (peak / 1e6).toFixed(1) }) : ''));
+    row(T('netp.sp_s_dn'), [$('<input type="number" id="nwp-spdn" min="0" max="1000" step="0.5">').val(c.sp_dn), document.createTextNode(' MB/s')], T('netp.sp_s_dn_hint'));
+    row(T('netp.sp_s_out'), [$('<label>').append($('<input type="radio" name="nwp-spo" value="outside">').prop('checked', c.sp_out !== 'all'), document.createTextNode(T('netp.sp_o_outside'))),
+      $('<label>').append($('<input type="radio" name="nwp-spo" value="all">').prop('checked', c.sp_out === 'all'), document.createTextNode(T('netp.sp_o_all')))], T('netp.sp_s_out_hint'));
+    row(T('netp.sp_s_back'), [$('<input type="number" id="nwp-spback" min="1" max="120">').val(c.sp_back), document.createTextNode(' ' + T('netp.sp_s_back_u'))], T('netp.sp_s_back_hint'));
+    row(T('netp.sp_s_own'), $('<label>').append($('<input type="checkbox" id="nwp-spown">').prop('checked', c.sp_own === '1'), document.createTextNode(T('netp.sp_s_own_l'))), T('netp.sp_s_own_hint'));
+    $s.append($('<div class="nwp-status" id="nwp-sp-st">'), $('<div class="nwp-status">').append($('<input type="button" class="nwp-sptest nwp-ghost nwp-sm">').val(T('netp.sp_test')), $('<span id="nwp-sptest-r">')));
+    function mbit() { var v = parseFloat($('#nwp-spup').val()); $('#nwp-spmbit').text(v > 0 ? '≈ ' + Math.round(v * 8) + ' Mbit/s' : ''); }
+    $s.on('input', '#nwp-spup', mbit); mbit();
+  }
+  $(document).on('change', '#nwp-spmode input', function () { $('#nwp-spmode label').removeClass('on'); $(this).closest('label').addClass('on'); });
+  $(document).on('click', '#nwp .nwp-sptest', function () {
+    var $b = $(this).prop('disabled', true), $r = $('#nwp-sptest-r').css('color', '').text(T('netp.checking'));
+    api('sp_test').done(function (r) {
+      if (!r || !r.ok) { $r.css('color', '#e5534b').text(err(r)); return; }
+      var t = [r.jf ? T('netp.sp_t_jf', { n: r.n, o: r.out }) : T('netp.sp_jf_err'), r.qb ? T(r.q ? 'netp.sp_t_qb_on' : 'netp.sp_t_qb_off') : T('netp.sp_qb_err')];
+      if (r.alt) { t.push(T('netp.sp_t_alt', { u: r.alt[0] || '∞', d: r.alt[1] || '∞' })); }
+      $r.css('color', r.jf && r.qb ? '#3fa24a' : '#d9921f').text(t.join(' · '));
+    }).fail(function (x) { $r.css('color', '#e5534b').text(err(x)); }).always(function () { $b.prop('disabled', false); });
+  });
+
   // ---- settings (drawn once, so typing is not lost on the 5-second refresh)
   function drawSet() {
     if (setDrawn) { return; }
     setDrawn = true;
+    drawSp();
     var c = D.cfg, $s = $('#nwp-set').empty();
     function row(label, $ctl, hint) { $s.append($('<div class="nwp-row nwp-set">').append($('<span class="lb">').text(label), $('<div class="nwp-ctl">').append($ctl, hint ? $('<span class="nwp-hint">').text(hint) : ''))); }
     var $if = $('<select id="nwp-if">').append($('<option value="auto">').text(T('netp.s_auto', { v: D.auto_if })));
@@ -14005,12 +14730,19 @@ $(function () {
     row(T('netp.s_slow'), [$('<input type="number" id="nwp-ms" min="20" max="5000">').val(c.slow_ms), document.createTextNode(' ms')], T('netp.s_slow_hint'));
     row(T('netp.s_unit'), $('<select id="nwp-unit">').append($('<option value="MB">').text(T('netp.u_mb')), $('<option value="Mbit">').text(T('netp.u_mbit'))).val(c.unit), '');
     row('Discord', $('<label>').append($('<input type="checkbox" id="nwp-dc">').prop('checked', c.dc === '1'), document.createTextNode(T('netp.s_dc'))), T('netp.s_dc_hint'));
+    row(T('netp.s_host'), $('<label>').append($('<input type="checkbox" id="nwp-host">').prop('checked', c.host_row === '1'), document.createTextNode(T('netp.s_host_l'))), T('netp.s_host_hint'));
     row('', [$('<input type="button" id="nwp-save">').val(T('netp.save')), $('<span id="nwp-msg">')], '');
   }
-  $(document).on('click', '#nwp-save', function () {
-    var $b = $(this).prop('disabled', true), $m = $('#nwp-msg').css('color', '').text(T('netp.saving'));
-    api('save', { iface: $('#nwp-if').val(), router: $.trim($('#nwp-rt').val()) || 'auto', outside: $('#nwp-out').val(), slow_ms: $('#nwp-ms').val(), unit: $('#nwp-unit').val(), dc: $('#nwp-dc').prop('checked') ? '1' : '0' })
-      .done(function (r) { if (r && r.ok) { $m.css('color', '#3fa24a').text(T('netp.saved')); load(); } else { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(r) })); } })
+  // one Save for both bands (the stream priority band has its own button that saves the same)
+  $(document).on('click', '#nwp-save, #nwp .nwp-save2', function () {
+    var $b = $(this).prop('disabled', true), $m = ($(this).is('#nwp-save') ? $('#nwp-msg') : $('#nwp .nwp-msg2')).css('color', '').text(T('netp.saving'));
+    api('save', { iface: $('#nwp-if').val(), router: $.trim($('#nwp-rt').val()) || 'auto', outside: $('#nwp-out').val(), slow_ms: $('#nwp-ms').val(), unit: $('#nwp-unit').val(), dc: $('#nwp-dc').prop('checked') ? '1' : '0',
+      host_row: $('#nwp-host').prop('checked') ? '1' : '0', sp_mode: $('#nwp-spmode input:checked').val() || 'auto', sp_up: $('#nwp-spup').val(), sp_dn: $('#nwp-spdn').val(),
+      sp_out: $('input[name=nwp-spo]:checked').val() || 'outside', sp_back: $('#nwp-spback').val(), sp_own: $('#nwp-spown').prop('checked') ? '1' : '0' })
+      .done(function (r) {
+        if (r && r.ok) { $m.css('color', r.warn ? '#d9921f' : '#3fa24a').text(r.warn ? T('netp.saved') + ' · ' + r.warn : T('netp.saved')); load(); }
+        else { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(r) })); }
+      })
       .fail(function (x) { $m.css('color', '#e5534b').text(T('netp.not_saved', { e: err(x) })); })
       .always(function () { $b.prop('disabled', false); });
   });
@@ -14031,7 +14763,7 @@ $(function () {
   function load() {
     $.getJSON(URL, { op: 'state', _: Date.now() }).done(function (r) {
       if (!r || !r.ok) { return; }
-      D = r; drawNow(); drawChart(); drawTot(); drawCt(); drawEv(); drawSet();
+      D = r; drawAct(); drawNow(); drawChart(); drawTot(); drawCt(); drawEv(); drawSet(); drawSpState();
     }).always(function () { clearTimeout(pollT); pollT = setTimeout(load, document.hidden ? 30000 : 5000); });
   }
   load();
@@ -14059,7 +14791,11 @@ function sxnet_hist_file() { return sxnet_dir() !== '' ? sxnet_dir() . '/net_his
 function sxnet_live_file() { return sxnet_dir() !== '' ? sxnet_dir() . '/sysbox_net.json' : SXNET_LIVE; }
 function sxnet_sys() { $d = getenv('SX_NET_SYS'); return ($d !== false && $d !== '') ? rtrim($d, '/') : ''; }       // tests only: a fake /proc and /sys root
 
-function sxnet_defaults() { return ['iface' => 'auto', 'router' => 'auto', 'outside' => '1.1.1.1, 8.8.8.8', 'slow_ms' => '150', 'unit' => 'MB', 'dc' => '1']; }
+function sxnet_defaults() {
+    return ['iface' => 'auto', 'router' => 'auto', 'outside' => '1.1.1.1, 8.8.8.8', 'slow_ms' => '150', 'unit' => 'MB', 'dc' => '1', 'host_row' => '1',
+            // stream priority (item 98): mode off | auto | button, limits in MB/s during outside streams, which streams count, minutes before full speed again
+            'sp_mode' => 'auto', 'sp_up' => '25', 'sp_dn' => '0', 'sp_out' => 'outside', 'sp_back' => '5', 'sp_own' => '1'];
+}
 function sxnet_cfg() {
     $c = sxnet_defaults(); $f = sxnet_cfg_file();
     if (is_file($f)) { $x = @parse_ini_file($f); if (is_array($x)) { $c = array_merge($c, array_intersect_key($x, $c)); } }
@@ -14133,10 +14869,15 @@ function sxnet_link($i) {
 }
 
 // ---- containers -------------------------------------------------------------------------------
-// name => pid of the running containers that have their own network (host-network ones share the host's counters)
-function sxnet_ct_pids() {
-    $t = getenv('SX_NET_PIDS');   // tests only: "name=pid,name=pid"
-    if ($t !== false && $t !== '') { $o = []; foreach (explode(',', $t) as $x) { [$n, $p] = array_pad(explode('=', $x, 2), 2, ''); if (sx_valid_name($n) && ctype_digit($p)) { $o[$n] = (int)$p; } } return $o; }
+// name => pid of the running containers that have their own network (host-network ones share the host's counters;
+// their names go into $hostNames)
+function sxnet_ct_pids(&$hostNames = null) {
+    $hostNames = [];
+    $t = getenv('SX_NET_PIDS');   // tests only: "name=pid,name=pid"; SX_NET_HOSTCT: "name,name" on the host network
+    if ($t !== false && $t !== '') {
+        $hostNames = array_values(array_filter(explode(',', (string)getenv('SX_NET_HOSTCT')), 'sx_valid_name'));
+        $o = []; foreach (explode(',', $t) as $x) { [$n, $p] = array_pad(explode('=', $x, 2), 2, ''); if (sx_valid_name($n) && ctype_digit($p)) { $o[$n] = (int)$p; } } return $o;
+    }
     $d = sx_docker(); if ($d === '') { return []; }
     [$rc, $ids] = sx_run(escapeshellarg($d) . ' ps -q --no-trunc', 8);
     $ids = array_values(array_filter(array_map('trim', explode("\n", (string)$ids)), function ($x) { return preg_match('/^[0-9a-f]{12,64}$/', $x); }));
@@ -14146,10 +14887,11 @@ function sxnet_ct_pids() {
     $host = @readlink('/proc/self/ns/net'); $o = [];
     foreach (explode("\n", (string)$txt) as $l) {
         if (!preg_match('/^\/?(\S+)\s+(\d+)$/', trim($l), $m) || !sx_valid_name($m[1]) || (int)$m[2] <= 0) { continue; }
-        if ($host && @readlink('/proc/' . $m[2] . '/ns/net') === $host) { continue; }
+        if ($host && @readlink('/proc/' . $m[2] . '/ns/net') === $host) { $hostNames[] = $m[1]; continue; }
         $o[$m[1]] = (int)$m[2];
     }
     ksort($o, SORT_NATURAL | SORT_FLAG_CASE);
+    sort($hostNames, SORT_NATURAL | SORT_FLAG_CASE);
     return $o;
 }
 // [rx, tx] of a container: the sum of its interfaces except loopback
@@ -14193,6 +14935,171 @@ function sxnet_dt($lang, $k, $v = []) {
     return is_array($s) ? mt_i18n_fmt(['text' => (string)($s['text'] ?? $k)], $v) : $k;
 }
 function sxnet_live() { $j = json_decode((string)@file_get_contents(sxnet_live_file()), true); return is_array($j) ? $j : null; }
+
+// ---- stream priority (item 98) ------------------------------------------------------------------
+// While Jellyfin plays to somebody outside the house, qBittorrent runs on its alternative speed limit (written there
+// when the Network page is saved); after the last outside stream it goes back to full speed. Only the limit switch of
+// qBittorrent is touched, and only one Sysbox switched on itself (a limit you set yourself stays).
+const SXSP_STATE = '/boot/config/plugins/sysbox/streamprio.json';   // held or not, events (written only when it changes)
+const SXSP_LIVE  = '/tmp/sysbox_sp.json';                           // the last check, for the tile and the page
+const SXSP_JAR   = '/tmp/sysbox_qb.jar';
+function sxsp_state_file() { return sxnet_dir() !== '' ? sxnet_dir() . '/streamprio.json' : SXSP_STATE; }
+function sxsp_live_file() { return sxnet_dir() !== '' ? sxnet_dir() . '/sysbox_sp.json' : SXSP_LIVE; }
+function sxsp_jar() { return sxnet_dir() !== '' ? sxnet_dir() . '/qb.jar' : SXSP_JAR; }
+
+// an address the stream goes to inside the house (private, loopback, link-local); Tailscale (100.64.0.0/10) is outside
+function sxsp_inside($ep) {
+    $ip = trim((string)$ep);
+    if (preg_match('/^\[([0-9a-fA-F:.]+)\](?::\d+)?$/', $ip, $m)) { $ip = $m[1]; }
+    elseif (substr_count($ip, ':') === 1) { $ip = explode(':', $ip)[0]; }
+    if (stripos($ip, '::ffff:') === 0 && filter_var(substr($ip, 7), FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) { $ip = substr($ip, 7); }
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $n = ip2long($ip);
+        foreach ([['10.0.0.0', 8], ['172.16.0.0', 12], ['192.168.0.0', 16], ['127.0.0.0', 8], ['169.254.0.0', 16]] as [$b, $l]) {
+            if (($n & (-1 << (32 - $l))) === (ip2long($b) & (-1 << (32 - $l)))) { return true; }
+        }
+        return false;
+    }
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        $l = strtolower($ip);
+        return $l === '::1' || preg_match('/^f[cd]/', $l) || preg_match('/^fe[89ab]/', $l);
+    }
+    return false;   // unknown: counted as outside, the safe side for the stream
+}
+function sxsp_ini($f) { $x = is_file($f) ? @parse_ini_file($f, false, INI_SCANNER_RAW) : false; return is_array($x) ? $x : []; }
+// Jellyfin from the Streambox settings, qBittorrent from the Seedbox settings (no second copy of the keys)
+function sxsp_jf_cfg() {
+    $c = sxsp_ini(getenv('SX_SP_SB_CFG') ?: '/boot/config/plugins/streambox/settings.cfg');
+    $h = (string)($c['jf_host'] ?? '127.0.0.1');
+    return ['host' => preg_match('/^[A-Za-z0-9.\-]+$/', $h) ? $h : '', 'port' => (int)($c['jf_port'] ?? 8096), 'key' => (string)($c['jf_key'] ?? '')];
+}
+function sxsp_qb_cfg() {
+    $c = sxsp_ini(getenv('SX_SP_QB_CFG') ?: '/boot/config/plugins/qbittorrent_widget/settings.cfg');
+    $h = (string)($c['host'] ?? '127.0.0.1');
+    return ['host' => preg_match('/^[A-Za-z0-9.\-]+$/', $h) ? $h : '', 'port' => (int)($c['port'] ?? 8080), 'user' => (string)($c['user'] ?? ''), 'pass' => (string)($c['pass'] ?? '')];
+}
+function sxsp_http($method, $url, $headers = [], $post = null, $jar = '') {
+    $ch = curl_init($url);
+    $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => 6, CURLOPT_HTTPHEADER => $headers];
+    if ($jar !== '') { $o[CURLOPT_COOKIEJAR] = $jar; $o[CURLOPT_COOKIEFILE] = $jar; }
+    if ($method === 'POST') { $o[CURLOPT_POST] = true; $o[CURLOPT_POSTFIELDS] = is_array($post) ? http_build_query($post) : (string)$post; }
+    curl_setopt_array($ch, $o);
+    $b = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    if ($jar !== '' && is_file($jar)) { @chmod($jar, 0600); }
+    return [$b === false ? 0 : $code, $b === false ? '' : (string)$b];
+}
+// the playing Jellyfin sessions: [[user, device, title, outside], ...]; null when Jellyfin cannot be asked
+function sxsp_sessions() {
+    $c = sxsp_jf_cfg();
+    if ($c['key'] === '' || $c['host'] === '') { return null; }
+    [$code, $b] = sxsp_http('GET', 'http://' . $c['host'] . ':' . $c['port'] . '/Sessions?ActiveWithinSeconds=120', ['Authorization: MediaBrowser Token="' . $c['key'] . '"', 'Accept: application/json']);
+    $j = $code === 200 ? json_decode($b, true) : null;
+    if (!is_array($j)) { return null; }
+    $o = [];
+    foreach ($j as $s) {
+        if (!is_array($s) || empty($s['NowPlayingItem'])) { continue; }
+        $it = $s['NowPlayingItem'];
+        $t = (string)($it['Name'] ?? '');
+        if (!empty($it['SeriesName'])) { $t = $it['SeriesName'] . ' · ' . $t; }
+        $o[] = [(string)($s['UserName'] ?? '?'), (string)($s['DeviceName'] ?? ''), mb_substr($t, 0, 80), !sxsp_inside($s['RemoteEndPoint'] ?? '')];
+    }
+    return $o;
+}
+// qBittorrent Web API with the Seedbox login (one login retry); [code, body]
+function sxsp_qb($path, $post = null) {
+    $c = sxsp_qb_cfg();
+    if ($c['host'] === '') { return [0, '']; }
+    $base = 'http://' . $c['host'] . ':' . $c['port']; $h = ['Referer: ' . $base, 'Origin: ' . $base];
+    $do = function () use ($base, $path, $post, $h) { return sxsp_http($post === null ? 'GET' : 'POST', $base . $path, $h, $post, sxsp_jar()); };
+    $r = $do();
+    if ($r[0] === 401 || $r[0] === 403) {
+        [$lc, $lb] = sxsp_http('POST', $base . '/api/v2/auth/login', $h, ['username' => $c['user'], 'password' => $c['pass']], sxsp_jar());
+        if ($lc !== 200 || trim($lb) !== 'Ok.') { return [403, '']; }
+        $r = $do();
+    }
+    return $r;
+}
+// 1 = alternative limit on, 0 = off, null = qBittorrent cannot be asked
+function sxsp_qb_mode() { [$c, $b] = sxsp_qb('/api/v2/transfer/speedLimitsMode'); return $c === 200 && in_array(trim($b), ['0', '1'], true) ? (int)trim($b) : null; }
+function sxsp_qb_toggle() { [$c] = sxsp_qb('/api/v2/transfer/toggleSpeedLimitsMode', []); return $c === 200; }
+// the alternative limits in MB/s (qBittorrent keeps bytes per second; 0 = no limit)
+function sxsp_qb_alt() {
+    [$c, $b] = sxsp_qb('/api/v2/app/preferences'); $j = $c === 200 ? json_decode($b, true) : null;
+    return is_array($j) ? [round((float)($j['alt_up_limit'] ?? 0) / 1e6, 1), round((float)($j['alt_dl_limit'] ?? 0) / 1e6, 1)] : null;
+}
+function sxsp_qb_set_alt($up, $dn) {
+    [$c] = sxsp_qb('/api/v2/app/setPreferences', ['json' => json_encode(['alt_up_limit' => (int)round($up * 1e6), 'alt_dl_limit' => (int)round($dn * 1e6)])]);
+    return $c === 200;
+}
+
+function sxsp_state() {
+    $j = json_decode((string)@file_get_contents(sxsp_state_file()), true);
+    return (is_array($j) ? $j : []) + ['held' => 0, 'since' => 0, 'last_out' => 0, 'own' => 0, 'user_off' => 0, 'ev' => []];
+}
+function sxsp_save(&$S, $before) {
+    $S['ev'] = array_slice($S['ev'], -30);
+    $txt = json_encode($S);
+    if ($txt === $before) { return; }   // the flash is written only when something changed
+    $f = sxsp_state_file(); @mkdir(dirname($f), 0755, true);
+    @file_put_contents($f . '.tmp', $txt); @rename($f . '.tmp', $f);
+}
+function sxsp_ev(&$S, $k, $v = []) { $S['ev'][] = ['t' => time(), 'k' => $k, 'v' => $v]; }
+function sxsp_lock() { $h = @fopen((sxnet_dir() !== '' ? sxnet_dir() : '/tmp') . '/sysbox_sp.state.lock', 'c'); if ($h) { @flock($h, LOCK_EX); } return $h; }
+function sxsp_names($out) { return implode(', ', array_values(array_unique(array_map(function ($x) { return $x[0]; }, $out)))); }
+
+// one check (cron, every minute); $op: tick | hold (the tile's button) | release; returns the live data
+function sxsp_run($op = 'tick') {
+    $lk = sxsp_lock();
+    $cfg = sxnet_cfg(); $S = sxsp_state(); $before = json_encode($S); $now = time();
+    $mode = in_array($cfg['sp_mode'], ['off', 'auto', 'button'], true) ? $cfg['sp_mode'] : 'auto';
+    $back = max(1, min(120, (int)$cfg['sp_back'])) * 60;
+    $sess = sxsp_sessions();
+    $out = $sess === null ? [] : array_values(array_filter($sess, function ($x) use ($cfg) { return $cfg['sp_out'] === 'all' || $x[3]; }));
+    $q = sxsp_qb_mode(); $msg = '';
+    if ($out) { $S['last_out'] = $now; }
+
+    if ($op === 'hold') {
+        if ($q === null) { $msg = 'qb'; }
+        else {
+            if ($q === 0 && !sxsp_qb_toggle()) { $msg = 'qb'; }
+            else { $S['held'] = 1; $S['since'] = $now; $S['user_off'] = 0; $S['last_out'] = max($S['last_out'], $now); sxsp_ev($S, 'hold_btn', ['u' => sxsp_names($out)]); $q = 1; }
+        }
+    } elseif ($op === 'release') {
+        if ($S['held'] && $q === 1 && !sxsp_qb_toggle()) { $msg = 'qb'; }
+        else { if ($S['held']) { sxsp_ev($S, 'release_btn'); } $S['held'] = 0; $S['user_off'] = $out ? 1 : 0; $q = $q === null ? null : 0; }
+    } elseif ($mode === 'off') {
+        if ($S['held'] && $q === 1 && sxsp_qb_toggle()) { sxsp_ev($S, 'release_off'); $q = 0; }
+        if ($q !== null) { $S['held'] = 0; }
+    } elseif ($sess !== null && $q !== null) {
+        if ($S['held'] && $q === 0) {
+            // somebody switched the limit off in qBittorrent: leave it off until the outside streams have ended
+            $S['held'] = 0; if ($out) { $S['user_off'] = 1; sxsp_ev($S, 'user_off'); }
+        } elseif ($S['held'] && !$out && $now - $S['last_out'] >= $back) {
+            if (sxsp_qb_toggle()) { $S['held'] = 0; sxsp_ev($S, 'release', ['m' => (int)round(($now - $S['since']) / 60)]); $q = 0; }
+            else { $msg = 'qb'; }
+        } elseif (!$S['held'] && $out && $mode === 'auto' && !$S['user_off']) {
+            if ($q === 1) {
+                if (!$S['own']) { $S['own'] = 1; sxsp_ev($S, 'own'); }
+                if ($cfg['sp_own'] === '0') { $S['held'] = 1; $S['since'] = $now; }
+            } elseif (sxsp_qb_toggle()) { $S['held'] = 1; $S['since'] = $now; sxsp_ev($S, 'hold', ['u' => sxsp_names($out)]); $q = 1; }
+            else { $msg = 'qb'; }
+        }
+        if (!$out && $now - $S['last_out'] >= $back) { $S['user_off'] = 0; $S['own'] = 0; }
+    }
+    // Jellyfin has not answered for a long time while the limit is on: give qBittorrent its speed back
+    if ($op === 'tick' && $sess === null && $S['held'] && $q === 1 && $now - $S['last_out'] >= max($back, 1800) && sxsp_qb_toggle()) {
+        $S['held'] = 0; sxsp_ev($S, 'release_nojf'); $q = 0;
+    }
+    sxsp_save($S, $before);
+    $L = ['t' => $now, 'mode' => $mode, 'jf' => $sess !== null, 'qb' => $q !== null, 'q' => $q, 'out' => array_map(function ($x) { return ['u' => $x[0], 'd' => $x[1], 't' => $x[2]]; }, $out),
+          'n_all' => $sess === null ? 0 : count($sess), 'held' => (int)$S['held'], 'since' => (int)$S['since'], 'own' => (int)$S['own'], 'user_off' => (int)$S['user_off'],
+          'last_out' => (int)$S['last_out'], 'back' => $back, 'ev' => array_slice($S['ev'], -20), 'err' => $msg];
+    $f = sxsp_live_file(); @file_put_contents($f . '.tmp', json_encode($L)); @rename($f . '.tmp', $f);
+    if ($lk) { @flock($lk, LOCK_UN); @fclose($lk); }
+    return $L;
+}
+function sxsp_live() { $j = json_decode((string)@file_get_contents(sxsp_live_file()), true); return is_array($j) ? $j : null; }
+
 ]]></INLINE>
 </FILE>
 
@@ -14201,8 +15108,10 @@ function sxnet_live() { $j = json_decode((string)@file_get_contents(sxnet_live_f
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/net.php">
 <INLINE><![CDATA[<?php
-// Network page endpoint (item 94). GET: the page data. POST op=save (the page's settings), op=check (one internet check
-// now), op=ip (the public address, asked from api.ipify.org only on this click). Nothing on the server is changed.
+// Network page endpoint (item 94). GET: the page data. POST op=save (the page's settings; with stream priority on, the
+// upload and download limits are written into qBittorrent's alternative limits), op=check (one internet check now),
+// op=ip (the public address, asked from api.ipify.org only on this click), op=sp_hold / sp_release (the tile's stream
+// priority button: qBittorrent's alternative limit on or off), op=sp_test (asks Jellyfin and qBittorrent once).
 require_once __DIR__ . '/net_lib.php';
 
 $op = (string)($_POST['op'] ?? ($_GET['op'] ?? 'state'));
@@ -14222,7 +15131,8 @@ if ($op === 'state') {
     sx_json(['ok' => true, 'on' => sx_on($sx['show_net'] ?? '1'), 'running' => $L !== null && time() - (int)$L['t'] < 30, 'cfg' => $cfg, 'ifaces' => sxnet_ifaces(), 'auto_if' => sxnet_iface(['iface' => 'auto']),
         'auto_gw' => sxnet_route()[1], 'live' => $L, 'last7' => $last7, 'today' => $days[date('Y-m-d')] ?? [0, 0, 0, 0],
         'month' => ['key' => $tm, 'v' => $mon[$tm] ?? [0, 0]], 'prev' => ['key' => $pm, 'v' => $mon[$pm] ?? null],
-        'events' => is_array($hist) ? array_slice((array)($hist['events'] ?? []), -50) : []]);
+        'events' => is_array($hist) ? array_slice((array)($hist['events'] ?? []), -50) : [],
+        'sp' => sxsp_live(), 'sp_have' => ['jf' => sxsp_jf_cfg()['key'] !== '', 'qb' => sxsp_qb_cfg()['host'] !== '' && is_file(getenv('SX_SP_QB_CFG') ?: '/boot/config/plugins/qbittorrent_widget/settings.cfg')]]);
 }
 
 if ($op === 'save') {
@@ -14233,10 +15143,32 @@ if ($op === 'save') {
     foreach (explode(',', (string)($_POST['outside'] ?? '')) as $h) { $h = trim($h); if ($h === '') { continue; } if (!sxnet_host_ok($h)) { sx_json(['ok' => false, 'error' => sx_tr('netp.err_host', ['h' => $h])]); } $out[] = $h; }
     if (!$out || count($out) > 3) { sx_json(['ok' => false, 'error' => sx_tr('netp.err_out')]); }
     $ms = (int)($_POST['slow_ms'] ?? 150); if ($ms < 20 || $ms > 5000) { sx_json(['ok' => false, 'error' => sx_tr('save.err_number', ['name' => sx_tr('netp.s_slow'), 'min' => 20, 'max' => 5000])]); }
-    $c = ['iface' => $if, 'router' => $rt, 'outside' => implode(', ', $out), 'slow_ms' => (string)$ms,
-          'unit' => (($_POST['unit'] ?? 'MB') === 'Mbit') ? 'Mbit' : 'MB', 'dc' => in_array((string)($_POST['dc'] ?? '0'), ['1', 'on', 'yes'], true) ? '1' : '0'];
+    $on = function ($k) { return in_array((string)($_POST[$k] ?? '0'), ['1', 'on', 'yes'], true) ? '1' : '0'; };
+    $num = function ($k, $min, $max, $label) {
+        $v = str_replace(',', '.', trim((string)($_POST[$k] ?? '')));
+        if (!is_numeric($v) || (float)$v < $min || (float)$v > $max) { sx_json(['ok' => false, 'error' => sx_tr('save.err_number', ['name' => sx_tr($label), 'min' => $min, 'max' => $max])]); }
+        return rtrim(rtrim(number_format((float)$v, 1, '.', ''), '0'), '.');
+    };
+    $mode = in_array((string)($_POST['sp_mode'] ?? ''), ['off', 'auto', 'button'], true) ? (string)$_POST['sp_mode'] : $c['sp_mode'];
+    $c = array_merge($c, ['iface' => $if, 'router' => $rt, 'outside' => implode(', ', $out), 'slow_ms' => (string)$ms,
+          'unit' => (($_POST['unit'] ?? 'MB') === 'Mbit') ? 'Mbit' : 'MB', 'dc' => $on('dc'), 'host_row' => $on('host_row'),
+          'sp_mode' => $mode, 'sp_up' => $num('sp_up', 0.1, 1000, 'netp.sp_s_up'), 'sp_dn' => $num('sp_dn', 0, 1000, 'netp.sp_s_dn'),
+          'sp_out' => ($_POST['sp_out'] ?? '') === 'all' ? 'all' : 'outside', 'sp_back' => (string)(int)$num('sp_back', 1, 120, 'netp.sp_s_back'), 'sp_own' => $on('sp_own')]);
     if (!sxnet_cfg_save($c)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_write')]); }
-    sx_json(['ok' => true]);
+    // the limits go into qBittorrent's alternative limits (the only qBittorrent setting Sysbox writes, on this click)
+    $warn = '';
+    if ($mode !== 'off' && !sxsp_qb_set_alt((float)$c['sp_up'], (float)$c['sp_dn'])) { $warn = sx_tr('netp.sp_qb_not_set'); }
+    sx_json(['ok' => true, 'warn' => $warn]);
+}
+
+if ($op === 'sp_hold' || $op === 'sp_release') {
+    $L = sxsp_run($op === 'sp_hold' ? 'hold' : 'release');
+    if ($L['err'] !== '') { sx_json(['ok' => false, 'error' => sx_tr('netp.sp_err_qb')]); }
+    sx_json(['ok' => true, 'sp' => $L]);
+}
+if ($op === 'sp_test') {
+    $s = sxsp_sessions(); $q = sxsp_qb_mode(); $a = $q === null ? null : sxsp_qb_alt();
+    sx_json(['ok' => true, 'jf' => $s !== null, 'n' => $s === null ? 0 : count($s), 'out' => $s === null ? 0 : count(array_filter($s, function ($x) { return $x[3]; })), 'qb' => $q !== null, 'q' => $q, 'alt' => $a]);
 }
 
 if ($op === 'check') { sx_json(['ok' => true, 'check' => sxnet_check(sxnet_cfg())]); }
@@ -14279,7 +15211,7 @@ if (is_array($L0) && !empty($L0['live']) && time() - (int)($L0['t'] ?? 0) < 600)
 $cfg = sxnet_cfg(); $iface = sxnet_iface($cfg);
 $prev = null; $prevT = 0; $prevTs = null;
 $b5 = [0, 0.0, 0.0]; $b30 = [0, 0.0, 0.0];
-$pids = []; $pidsT = 0; $ctPrev = []; $ctT = 0; $ctRate = [];
+$pids = []; $pidsT = 0; $ctPrev = []; $ctT = 0; $ctRate = []; $hostCt = []; $hostRate = null; $wireAt = null;
 $inet = ['state' => 'wait', 'since' => time()]; $pingT = 0; $slowN = 0; $failN = 0; $failSince = 0;
 $cfgT = time(); $saveT = time(); $link = sxnet_link($iface);
 
@@ -14339,7 +15271,7 @@ while (true) {
 
     // containers: their own network counters (/proc/<pid>/net/dev); the list of containers every minute
     if ($now - $ctT >= 3 * $step) {
-        if ($now - $pidsT >= 12 * $step) { $pids = sxnet_ct_pids(); $pidsT = $now; }
+        if ($now - $pidsT >= 12 * $step) { $pids = sxnet_ct_pids($hostCt); $pidsT = $now; }
         $dtc = $ctT ? $now - $ctT : 0; $ctT = $now; $newPrev = []; $ctRate = [];
         foreach ($pids as $n => $pid) {
             $b = sxnet_ct_bytes($pid); if ($b === null) { continue; }
@@ -14353,6 +15285,12 @@ while (true) {
             $newPrev[$n] = [$b[0], $b[1], $pid];
         }
         $ctPrev = $newPrev;
+        // the host network (containers without their own network, and the server itself): the wire minus the containers
+        if ($cur && $wireAt && $dtc > 0) {
+            $sum = [0, 0]; foreach ($ctRate as $r) { $sum[0] += $r[0]; $sum[1] += $r[1]; }
+            $hostRate = [max(0, round(($cur[0] - $wireAt[0]) / $dtc) - $sum[0]), max(0, round(($cur[1] - $wireAt[1]) / $dtc) - $sum[1])];
+        }
+        $wireAt = $cur;
     }
 
     // internet: every 30 s; slow after 3 slow checks in a row, down after 2 failed ones; an outage is logged when it ends
@@ -14375,7 +15313,7 @@ while (true) {
     }
 
     // the live file for the tile and the page
-    $L = ['t' => $now, 'iface' => $iface, 'link' => $link, 'rate' => $rate, 'live' => $live, 'ct' => $ctRate, 'ct_names' => array_keys($pids),
+    $L = ['t' => $now, 'iface' => $iface, 'link' => $link, 'rate' => $rate, 'live' => $live, 'ct' => $ctRate, 'ct_names' => array_keys($pids), 'host_ct' => $hostCt, 'host_rate' => $hostRate,
           'inet' => $inet, 'h24' => $H['h24'], 'd7' => $H['d7'], 'days' => array_slice($H['days'], -62, null, true), 'ctday' => $H['ctday'], 'events' => array_slice($H['events'], -20),
           'unit' => $cfg['unit'], 'slow_ms' => (int)$cfg['slow_ms']];
     $f = sxnet_live_file(); @file_put_contents($f . '.tmp', json_encode($L)); @rename($f . '.tmp', $f);
@@ -14383,6 +15321,22 @@ while (true) {
     if ($rounds && --$rounds === 0) { sxnet_save_hist($H); exit(0); }
     sleep($step);
 }
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- STREAM PRIORITY CHECK -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/sp_tick.php">
+<INLINE><![CDATA[<?php
+// Stream priority (item 98): cron runs this every minute. It asks Jellyfin which streams play outside the house and
+// switches qBittorrent's alternative speed limit on or off (only that switch, and only one Sysbox switched on itself).
+if (PHP_SAPI !== 'cli') { exit; }
+require_once __DIR__ . '/net_lib.php';
+$cfg = sxnet_cfg(); $S = sxsp_state();
+if ($cfg['sp_mode'] === 'off' && empty($S['held'])) { @unlink(sxsp_live_file()); exit(0); }   // nothing to do and nothing to give back
+if (sxsp_jf_cfg()['key'] === '' && empty($S['held'])) { exit(0); }                             // no Jellyfin in the Streambox settings
+sxsp_run('tick');
 ]]></INLINE>
 </FILE>
 
@@ -14880,6 +15834,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 * * * * * flock -n -E 0 /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
 # Sysbox: network meter (traffic counters every 5 s, internet ping every 30 s; one long-running process, restarted if it stops)
 * * * * * flock -n -E 0 /tmp/sysbox_net.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1
+# Sysbox: stream priority, every minute (qBittorrent gives way to Jellyfin streams outside the house; off on the Network page)
+* * * * * flock -n -E 0 /tmp/sysbox_sp.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/sp_tick.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
 * * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/notify.php >/dev/null 2>&1
 # Sysbox: weekly summary, checked hourly (day and hour are settings)

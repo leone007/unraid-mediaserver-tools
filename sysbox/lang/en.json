@@ -3066,7 +3066,7 @@
   "note": "column title."
  },
  "netp.ct_note": {
-  "text": "Counted inside each container, so traffic on the home network is in it too. Containers on the host network share the server's counters and are not listed.",
+  "text": "Counted inside each container, so traffic on the home network is in it too. Containers on the host network share the server's counters: they are shown together in the host network row.",
   "note": "small note under the container table."
  },
  "netp.ongoing": {
@@ -3793,5 +3793,341 @@
  "brief.sst_gone": {
   "text": "✖ no longer valid",
   "note": "Discord morning brief: state of one suggestion in the status field."
+ },
+ "net.host_row": {
+  "text": "host network",
+  "note": "tile, Network part: one row in the container list for the containers that share the server's own network (they cannot be measured one by one) and the server itself."
+ },
+ "net.host_tip": {
+  "text": "Containers on the host network: {n}. Their traffic is the server's traffic minus the containers measured on their own.",
+  "note": "tooltip of the host network row. {n} = container names."
+ },
+ "net.sp_who": {
+  "text": "{n} outside: {u}",
+  "note": "tile, stream priority row: how many Jellyfin streams play outside the house and who watches. {n} = count, {u} = user names."
+ },
+ "net.sp_t_noqb": {
+  "text": "Stream priority · qBittorrent cannot be reached",
+  "note": "tile, stream priority row title when qBittorrent does not answer."
+ },
+ "net.sp_s_noqb": {
+  "text": "check the qBittorrent login in the Seedbox settings",
+  "note": "tile, stream priority row: what to do when qBittorrent does not answer."
+ },
+ "net.sp_b_check": {
+  "text": "Check",
+  "note": "tile, stream priority row: small badge when something needs a look."
+ },
+ "net.sp_t_held": {
+  "text": "Stream priority · qBittorrent held at {v}",
+  "note": "tile, stream priority row title while the limit is on. {v} = the upload limit with its unit."
+ },
+ "net.sp_s_ending": {
+  "text": "no stream outside now, full speed again in a few minutes",
+  "note": "tile, stream priority row: the limit is still on for the waiting minutes after the last outside stream."
+ },
+ "net.sp_since": {
+  "text": "since {t}",
+  "note": "tile, stream priority row: since when the limit is on. {t} = time (HH:MM)."
+ },
+ "net.sp_release": {
+  "text": "Release",
+  "note": "tile, stream priority row: button that switches the qBittorrent limit off (Button on the tile mode)."
+ },
+ "net.sp_b_limit": {
+  "text": "Limiting",
+  "note": "badge: the qBittorrent limit is on now because of outside streams."
+ },
+ "net.sp_t_own": {
+  "text": "Stream priority · your own qBittorrent limit is on",
+  "note": "tile, stream priority row title: the limit was already on when the outside stream began, so Sysbox leaves it."
+ },
+ "net.sp_s_own": {
+  "text": "left as you set it",
+  "note": "tile, stream priority row: Sysbox does not touch a limit the owner switched on."
+ },
+ "net.sp_b_own": {
+  "text": "Yours",
+  "note": "badge: the qBittorrent limit was switched on by the owner, not by Sysbox."
+ },
+ "net.sp_t_full": {
+  "text": "Stream priority · qBittorrent at full speed",
+  "note": "tile, stream priority row title: no limit now."
+ },
+ "net.sp_s_user_off": {
+  "text": "you switched the limit off; it stays off until these streams end",
+  "note": "tile, stream priority row: the owner turned the limit off in qBittorrent during outside streams."
+ },
+ "net.sp_b_left": {
+  "text": "Left off",
+  "note": "badge: the limit was switched off by the owner and Sysbox respects it."
+ },
+ "net.sp_t_offer": {
+  "text": "Stream priority · streams outside the house",
+  "note": "tile, stream priority row title in the Button on the tile mode while outside streams play and nothing is limited."
+ },
+ "net.sp_hold": {
+  "text": "Hold qBittorrent",
+  "note": "tile, stream priority row: button that switches the qBittorrent alternative limit on (Button on the tile mode)."
+ },
+ "net.sp_s_next": {
+  "text": "the limit comes on at the next check",
+  "note": "tile, stream priority row: an outside stream just started; the minute check will switch the limit on."
+ },
+ "net.sp_b_ready": {
+  "text": "Ready",
+  "note": "badge: stream priority is on and waits for an outside stream."
+ },
+ "net.sp_t_ready": {
+  "text": "Stream priority · standing by",
+  "note": "tile, stream priority row title when nobody watches from outside."
+ },
+ "net.sp_s_full": {
+  "text": "qBittorrent at full speed",
+  "note": "tile, stream priority row: no limit now."
+ },
+ "net.sp_s_last": {
+  "text": "last limited until {t}",
+  "note": "tile, stream priority row: when the last limit ended. {t} = time (HH:MM)."
+ },
+ "net.sp_working": {
+  "text": "…",
+  "note": "tile, stream priority button while the request runs."
+ },
+ "net.sp_err": {
+  "text": "The qBittorrent limit could not be switched",
+  "note": "alert on the tile when the Hold or Release button fails without a message."
+ },
+ "netp.h.activity": {
+  "text": "Activity",
+  "note": "Network page: band of what stream priority did (switches of the qBittorrent limit)."
+ },
+ "netp.h.sp": {
+  "text": "Stream priority",
+  "note": "Network page: band of the stream priority settings (qBittorrent gives way to Jellyfin streams outside the house)."
+ },
+ "netp.sp_ev.hold": {
+  "text": "qBittorrent held at its alternative limit · {u}",
+  "note": "Activity line: Sysbox switched the limit on because of outside streams. {u} = user names."
+ },
+ "netp.sp_ev.hold_btn": {
+  "text": "qBittorrent held with the tile's button · {u}",
+  "note": "Activity line: the owner pressed Hold qBittorrent on the tile. {u} = user names (may be empty)."
+ },
+ "netp.sp_ev.release": {
+  "text": "Back to full speed after {m} min · no stream outside the house",
+  "note": "Activity line: Sysbox switched the limit off. {m} = minutes the limit was on."
+ },
+ "netp.sp_ev.release_btn": {
+  "text": "Released with the tile's button",
+  "note": "Activity line: the owner pressed Release on the tile."
+ },
+ "netp.sp_ev.release_off": {
+  "text": "Back to full speed · stream priority switched off",
+  "note": "Activity line: the mode was set to Off while the limit was on."
+ },
+ "netp.sp_ev.user_off": {
+  "text": "You switched the limit off in qBittorrent · left off until the streams end",
+  "note": "Activity line: the owner turned the limit off by hand during outside streams."
+ },
+ "netp.sp_ev.own": {
+  "text": "Left alone: you had switched the qBittorrent limit on yourself",
+  "note": "Activity line: an outside stream began while the owner's own limit was on."
+ },
+ "netp.sp_act_held": {
+  "text": "qBittorrent held at {v} MB/s",
+  "note": "Activity, the running row: the limit is on. {v} = upload limit in MB/s."
+ },
+ "netp.sp_act_ending": {
+  "text": "no stream outside now · full speed again after the waiting minutes",
+  "note": "Activity, running row: the last outside stream ended, the limit waits a few minutes."
+ },
+ "netp.sp_act_n": {
+  "text": "{n} running",
+  "note": "Activity band, right side: running items. {n} = count."
+ },
+ "netp.sp_act_none_now": {
+  "text": "nothing running",
+  "note": "Activity band, right side: no limit on now."
+ },
+ "netp.sp_act_empty": {
+  "text": "Nothing yet: the switches of the qBittorrent limit appear here.",
+  "note": "Activity box when there is no event yet."
+ },
+ "netp.sp_act_earlier": {
+  "text": "Earlier",
+  "note": "Activity: the closed bar of earlier events."
+ },
+ "netp.sp_jf_ok": {
+  "text": "Jellyfin ✓ (from Streambox)",
+  "note": "stream priority status chip: Jellyfin answers, with the key from the Streambox settings."
+ },
+ "netp.sp_jf_err": {
+  "text": "Jellyfin does not answer",
+  "note": "stream priority status chip / test result: Jellyfin could not be asked."
+ },
+ "netp.sp_jf_none": {
+  "text": "Jellyfin: set it up in Streambox first",
+  "note": "stream priority status chip: there is no Jellyfin key in the Streambox settings."
+ },
+ "netp.sp_qb_ok": {
+  "text": "qBittorrent ✓ (from Seedbox)",
+  "note": "stream priority status chip: qBittorrent answers, with the login from the Seedbox settings."
+ },
+ "netp.sp_qb_err": {
+  "text": "qBittorrent does not answer",
+  "note": "stream priority status chip / test result: qBittorrent could not be asked or the login failed."
+ },
+ "netp.sp_qb_none": {
+  "text": "qBittorrent: set it up in Seedbox first",
+  "note": "stream priority status chip: there are no qBittorrent settings from Seedbox."
+ },
+ "netp.sp_checked": {
+  "text": "checked {t} · every minute",
+  "note": "stream priority status: time of the last check. {t} = time (HH:MM)."
+ },
+ "netp.sp_band_off": {
+  "text": "Off",
+  "note": "Stream priority band, right side: switched off."
+ },
+ "netp.sp_band_held": {
+  "text": "On · limiting now",
+  "note": "Stream priority band, right side: the qBittorrent limit is on now."
+ },
+ "netp.sp_band_on": {
+  "text": "On · standing by",
+  "note": "Stream priority band, right side: on, no outside stream."
+ },
+ "netp.sp_lead": {
+  "text": "While someone watches Jellyfin from outside the house, qBittorrent switches to its alternative speed limit, so the uploads leave room for the stream. When the last outside stream has ended, it goes back to full speed. Only that switch of qBittorrent is touched.",
+  "note": "Stream priority band: the lead text."
+ },
+ "netp.sp_m_off": {
+  "text": "Off",
+  "note": "stream priority mode: nothing is done."
+ },
+ "netp.sp_m_auto": {
+  "text": "Automatic",
+  "note": "stream priority mode: the limit switches on and off by itself."
+ },
+ "netp.sp_m_button": {
+  "text": "Button on the tile",
+  "note": "stream priority mode: nothing changes by itself, the tile offers a button."
+ },
+ "netp.sp_s_mode": {
+  "text": "Mode",
+  "note": "stream priority setting label."
+ },
+ "netp.sp_s_mode_hint": {
+  "text": "Button on the tile: nothing changes by itself; while a stream plays outside, the tile offers Hold qBittorrent.",
+  "note": "hint under the Mode setting."
+ },
+ "netp.sp_s_up": {
+  "text": "Upload limit during streams",
+  "note": "stream priority setting label (also used in the error message of a wrong number)."
+ },
+ "netp.sp_s_up_hint": {
+  "text": "Written into qBittorrent's alternative upload limit when you save.",
+  "note": "hint under the upload limit setting."
+ },
+ "netp.sp_s_up_peak": {
+  "text": "Highest upload in the last 24 hours (5-minute average): {v} MB/s.",
+  "note": "hint addition: the measured upload peak. {v} = MB/s."
+ },
+ "netp.sp_s_dn": {
+  "text": "Download limit during streams",
+  "note": "stream priority setting label (also used in the error message of a wrong number)."
+ },
+ "netp.sp_s_dn_hint": {
+  "text": "0 = no limit. Downloads do not take from the upload; leave it at 0 unless your line is shared.",
+  "note": "hint under the download limit setting."
+ },
+ "netp.sp_s_out": {
+  "text": "Counts as outside",
+  "note": "stream priority setting label: which Jellyfin streams switch the limit on."
+ },
+ "netp.sp_o_outside": {
+  "text": "Streams from outside the home network",
+  "note": "stream priority option: only streams from a public address."
+ },
+ "netp.sp_o_all": {
+  "text": "Every stream",
+  "note": "stream priority option: every Jellyfin stream."
+ },
+ "netp.sp_s_out_hint": {
+  "text": "Tailscale and the streams that come through your own domain (Cloudflare) count as outside: they also use your upload.",
+  "note": "hint under Counts as outside."
+ },
+ "netp.sp_s_back": {
+  "text": "Back to full speed after",
+  "note": "stream priority setting label (also used in the error message of a wrong number)."
+ },
+ "netp.sp_s_back_u": {
+  "text": "minutes without an outside stream",
+  "note": "unit after the Back to full speed number."
+ },
+ "netp.sp_s_back_hint": {
+  "text": "A paused film or a short break does not flip the limit back and forth.",
+  "note": "hint under Back to full speed."
+ },
+ "netp.sp_s_own": {
+  "text": "Your own switch",
+  "note": "stream priority setting label."
+ },
+ "netp.sp_s_own_l": {
+  "text": "Never undo a limit I switched on myself in qBittorrent",
+  "note": "checkbox text."
+ },
+ "netp.sp_s_own_hint": {
+  "text": "Sysbox only switches back what it switched on.",
+  "note": "hint under Your own switch."
+ },
+ "netp.sp_test": {
+  "text": "Test the connections",
+  "note": "button: asks Jellyfin and qBittorrent once."
+ },
+ "netp.sp_t_jf": {
+  "text": "Jellyfin: {n} playing, {o} outside",
+  "note": "test result. {n} = playing sessions, {o} = of them outside."
+ },
+ "netp.sp_t_qb_on": {
+  "text": "qBittorrent: alternative limit on",
+  "note": "test result: qBittorrent answers and its limit is on."
+ },
+ "netp.sp_t_qb_off": {
+  "text": "qBittorrent: full speed",
+  "note": "test result: qBittorrent answers and its limit is off."
+ },
+ "netp.sp_t_alt": {
+  "text": "its alternative limits: ↑ {u} · ↓ {d} MB/s",
+  "note": "test result: the alternative limits set in qBittorrent now (∞ = none). {u} = upload, {d} = download."
+ },
+ "netp.sp_qb_not_set": {
+  "text": "the limits could not be written into qBittorrent",
+  "note": "warning after Save when qBittorrent did not take the alternative limits."
+ },
+ "netp.sp_err_qb": {
+  "text": "qBittorrent does not answer, the limit was not switched",
+  "note": "error of the tile's Hold or Release button."
+ },
+ "netp.s_host": {
+  "text": "Host network",
+  "note": "Network settings label: show the host network row."
+ },
+ "netp.s_host_l": {
+  "text": "One host network row on the tile",
+  "note": "checkbox text."
+ },
+ "netp.s_host_hint": {
+  "text": "Containers without their own network (for example Jellyfin) and the server itself: the server's traffic minus the containers measured on their own.",
+  "note": "hint under Host network."
+ },
+ "netp.host_names": {
+  "text": "{n} and the server itself",
+  "note": "Network page, container list: the host network row's names. {n} = container names."
+ },
+ "netp.sp_ev.release_nojf": {
+  "text": "Back to full speed · Jellyfin has not answered for 30 minutes",
+  "note": "Activity line: the limit was given back because Jellyfin could not be asked for a long time."
  }
 }

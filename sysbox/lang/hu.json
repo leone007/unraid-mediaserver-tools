@@ -2306,7 +2306,7 @@
   "text": "Ma fel"
  },
  "netp.ct_note": {
-  "text": "A konténereken belül számolva, így az otthoni hálózati forgalom is benne van. A host hálózatot használó konténerek a szerver számlálóit használják, ezért nincsenek a listában."
+  "text": "Konténerenként számolva, így az otthoni hálózat forgalma is benne van. A host hálózatú konténerek a szerver számlálóit használják: együtt látszanak a host hálózat sorban."
  },
  "netp.ongoing": {
   "text": "most is"
@@ -2851,5 +2851,257 @@
  },
  "brief.sst_gone": {
   "text": "✖ már nem érvényes"
+ },
+ "net.host_row": {
+  "text": "host hálózat"
+ },
+ "net.host_tip": {
+  "text": "Host hálózaton futó konténerek: {n}. A forgalmuk a szerver forgalma, levonva a külön mért konténereket."
+ },
+ "net.sp_who": {
+  "text": "{n} kint: {u}"
+ },
+ "net.sp_t_noqb": {
+  "text": "Stream-elsőbbség · a qBittorrent nem érhető el"
+ },
+ "net.sp_s_noqb": {
+  "text": "nézd meg a qBittorrent belépést a Seedbox beállításaiban"
+ },
+ "net.sp_b_check": {
+  "text": "Nézd meg"
+ },
+ "net.sp_t_held": {
+  "text": "Stream-elsőbbség · qBittorrent {v}-ra fogva"
+ },
+ "net.sp_s_ending": {
+  "text": "most nincs kinti stream, pár perc múlva újra teljes sebesség"
+ },
+ "net.sp_since": {
+  "text": "{t} óta"
+ },
+ "net.sp_release": {
+  "text": "Elengedés"
+ },
+ "net.sp_b_limit": {
+  "text": "Korlátoz"
+ },
+ "net.sp_t_own": {
+  "text": "Stream-elsőbbség · a saját qBittorrent-korlátod van bekapcsolva"
+ },
+ "net.sp_s_own": {
+  "text": "úgy hagyva, ahogy beállítottad"
+ },
+ "net.sp_b_own": {
+  "text": "Saját"
+ },
+ "net.sp_t_full": {
+  "text": "Stream-elsőbbség · qBittorrent teljes sebességgel"
+ },
+ "net.sp_s_user_off": {
+  "text": "kikapcsoltad a korlátot; ezeknek a streameknek a végéig kikapcsolva marad"
+ },
+ "net.sp_b_left": {
+  "text": "Kikapcsolva hagyva"
+ },
+ "net.sp_t_offer": {
+  "text": "Stream-elsőbbség · kinti streamek"
+ },
+ "net.sp_hold": {
+  "text": "qBittorrent fogása"
+ },
+ "net.sp_s_next": {
+  "text": "a következő ellenőrzésnél bekapcsol a korlát"
+ },
+ "net.sp_b_ready": {
+  "text": "Készenlétben"
+ },
+ "net.sp_t_ready": {
+  "text": "Stream-elsőbbség · készenlétben"
+ },
+ "net.sp_s_full": {
+  "text": "qBittorrent teljes sebességgel"
+ },
+ "net.sp_s_last": {
+  "text": "utoljára {t}-ig korlátozott"
+ },
+ "net.sp_working": {
+  "text": "…"
+ },
+ "net.sp_err": {
+  "text": "A qBittorrent-korlátot nem sikerült átkapcsolni"
+ },
+ "netp.h.activity": {
+  "text": "Tevékenység"
+ },
+ "netp.h.sp": {
+  "text": "Stream-elsőbbség"
+ },
+ "netp.sp_ev.hold": {
+  "text": "qBittorrent az alternatív korlátra fogva · {u}"
+ },
+ "netp.sp_ev.hold_btn": {
+  "text": "qBittorrent fogva a csempe gombjával · {u}"
+ },
+ "netp.sp_ev.release": {
+  "text": "Újra teljes sebesség {m} perc után · nincs kinti stream"
+ },
+ "netp.sp_ev.release_btn": {
+  "text": "Elengedve a csempe gombjával"
+ },
+ "netp.sp_ev.release_off": {
+  "text": "Újra teljes sebesség · a stream-elsőbbség kikapcsolva"
+ },
+ "netp.sp_ev.user_off": {
+  "text": "Kikapcsoltad a korlátot a qBittorrentben · a streamek végéig kikapcsolva marad"
+ },
+ "netp.sp_ev.own": {
+  "text": "Békén hagyva: magad kapcsoltad be a qBittorrent-korlátot"
+ },
+ "netp.sp_act_held": {
+  "text": "qBittorrent {v} MB/s-ra fogva"
+ },
+ "netp.sp_act_ending": {
+  "text": "most nincs kinti stream · a várakozási percek után újra teljes sebesség"
+ },
+ "netp.sp_act_n": {
+  "text": "{n} fut"
+ },
+ "netp.sp_act_none_now": {
+  "text": "most nem fut semmi"
+ },
+ "netp.sp_act_empty": {
+  "text": "Még semmi: itt jelennek meg a qBittorrent-korlát kapcsolásai."
+ },
+ "netp.sp_act_earlier": {
+  "text": "Korábban"
+ },
+ "netp.sp_jf_ok": {
+  "text": "Jellyfin ✓ (a Streamboxból)"
+ },
+ "netp.sp_jf_err": {
+  "text": "A Jellyfin nem válaszol"
+ },
+ "netp.sp_jf_none": {
+  "text": "Jellyfin: előbb állítsd be a Streamboxban"
+ },
+ "netp.sp_qb_ok": {
+  "text": "qBittorrent ✓ (a Seedboxból)"
+ },
+ "netp.sp_qb_err": {
+  "text": "A qBittorrent nem válaszol"
+ },
+ "netp.sp_qb_none": {
+  "text": "qBittorrent: előbb állítsd be a Seedboxban"
+ },
+ "netp.sp_checked": {
+  "text": "ellenőrizve {t} · percenként"
+ },
+ "netp.sp_band_off": {
+  "text": "Kikapcsolva"
+ },
+ "netp.sp_band_held": {
+  "text": "Bekapcsolva · most korlátoz"
+ },
+ "netp.sp_band_on": {
+  "text": "Bekapcsolva · készenlétben"
+ },
+ "netp.sp_lead": {
+  "text": "Amíg valaki kintről nézi a Jellyfint, a qBittorrent az alternatív sebességkorlátjára vált, így a feltöltések helyet hagynak a streamnek. Az utolsó kinti stream után visszaáll teljes sebességre. A qBittorrentben csak ezt a kapcsolót állítja."
+ },
+ "netp.sp_m_off": {
+  "text": "Ki"
+ },
+ "netp.sp_m_auto": {
+  "text": "Automatikus"
+ },
+ "netp.sp_m_button": {
+  "text": "Gomb a csempén"
+ },
+ "netp.sp_s_mode": {
+  "text": "Mód"
+ },
+ "netp.sp_s_mode_hint": {
+  "text": "Gomb a csempén: magától semmi nem változik; amíg kinti stream megy, a csempe felajánlja a qBittorrent fogását."
+ },
+ "netp.sp_s_up": {
+  "text": "Feltöltési korlát streamek alatt"
+ },
+ "netp.sp_s_up_hint": {
+  "text": "Mentéskor beíródik a qBittorrent alternatív feltöltési korlátjába."
+ },
+ "netp.sp_s_up_peak": {
+  "text": "A legnagyobb feltöltés az elmúlt 24 órában (5 perces átlag): {v} MB/s."
+ },
+ "netp.sp_s_dn": {
+  "text": "Letöltési korlát streamek alatt"
+ },
+ "netp.sp_s_dn_hint": {
+  "text": "0 = nincs korlát. A letöltés nem veszi el a feltöltést; hagyd 0-n, hacsak nem osztott a vonalad."
+ },
+ "netp.sp_s_out": {
+  "text": "Kintinek számít"
+ },
+ "netp.sp_o_outside": {
+  "text": "Az otthoni hálózaton kívüli streamek"
+ },
+ "netp.sp_o_all": {
+  "text": "Minden stream"
+ },
+ "netp.sp_s_out_hint": {
+  "text": "A Tailscale és a saját domainen (Cloudflare) át jövő streamek is kintinek számítanak: azok is a feltöltésedet használják."
+ },
+ "netp.sp_s_back": {
+  "text": "Teljes sebesség újra"
+ },
+ "netp.sp_s_back_u": {
+  "text": "perc kinti stream nélkül"
+ },
+ "netp.sp_s_back_hint": {
+  "text": "Egy szüneteltetett film vagy egy rövid szünet nem kapcsolgatja ide-oda a korlátot."
+ },
+ "netp.sp_s_own": {
+  "text": "A saját kapcsolód"
+ },
+ "netp.sp_s_own_l": {
+  "text": "Soha ne kapcsolja ki azt a korlátot, amit én kapcsoltam be a qBittorrentben"
+ },
+ "netp.sp_s_own_hint": {
+  "text": "A Sysbox csak azt kapcsolja vissza, amit ő kapcsolt be."
+ },
+ "netp.sp_test": {
+  "text": "Kapcsolatok tesztje"
+ },
+ "netp.sp_t_jf": {
+  "text": "Jellyfin: {n} lejátszás, ebből {o} kint"
+ },
+ "netp.sp_t_qb_on": {
+  "text": "qBittorrent: az alternatív korlát be van kapcsolva"
+ },
+ "netp.sp_t_qb_off": {
+  "text": "qBittorrent: teljes sebesség"
+ },
+ "netp.sp_t_alt": {
+  "text": "az alternatív korlátjai: ↑ {u} · ↓ {d} MB/s"
+ },
+ "netp.sp_qb_not_set": {
+  "text": "a korlátokat nem sikerült beírni a qBittorrentbe"
+ },
+ "netp.sp_err_qb": {
+  "text": "A qBittorrent nem válaszol, a korlát nem kapcsolt át"
+ },
+ "netp.s_host": {
+  "text": "Host hálózat"
+ },
+ "netp.s_host_l": {
+  "text": "Egy host hálózat sor a csempén"
+ },
+ "netp.s_host_hint": {
+  "text": "A saját hálózat nélküli konténerek (pl. a Jellyfin) és maga a szerver: a szerver forgalma, levonva a külön mért konténereket."
+ },
+ "netp.host_names": {
+  "text": "{n} és maga a szerver"
+ },
+ "netp.sp_ev.release_nojf": {
+  "text": "Újra teljes sebesség · a Jellyfin 30 perce nem válaszol"
  }
 }

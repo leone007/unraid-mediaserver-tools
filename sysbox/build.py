@@ -14,7 +14,7 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
  ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
  ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),('&plugdir;/brief_lib.php','sysbox/brief_lib.php','CLAUDE GUARD MORNING BRIEF'),('&plugdir;/sugg_lib.php','sysbox/sugg_lib.php','CLAUDE GUARD SUGGESTIONS'),
- ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),
+ ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),('&plugdir;/sp_tick.php','sysbox/sp_tick.php','STREAM PRIORITY CHECK'),
  ('&plugdir;/bot.php','common/bot.php','SHARED DISCORD BOT SETTING'),('&plugdir;/bot_block.php','common/bot_block.php','DISCORD BOT BLOCK'),('&plugdir;/bot_save.php','common/bot_save.php','DISCORD BOT SAVE AND TEST'),('&plugdir;/mtlang/en.json','common/lang/en.json','SHARED BLOCKS ENGLISH DICTIONARY'),('&plugdir;/mtlang/hu.json','common/lang/hu.json','SHARED BLOCKS HUNGARIAN DICTIONARY')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.28">
+<!ENTITY version   "2026.10.29">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,10 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.29
+- Stream priority (Settings, Utilities, Network, and a row on the tile): while someone watches Jellyfin from outside the house, qBittorrent switches to its alternative speed limit (25 MB/s upload by default, written into qBittorrent on Save) and goes back to full speed 5 minutes after the last outside stream; modes Off, Automatic (default) and Button on the tile; a limit you switched on yourself is left alone; Jellyfin from the Streambox settings, qBittorrent from the Seedbox settings; Activity at the top of the Network page
+- Network: the containers on the host network (for example Jellyfin) and the server itself show as one host network row on the tile and the Network page
+
 ###2026.10.28
 - Claude Guard: suggestions. In the daily report Claude may suggest up to three actions from a fixed list built by the server: a safe or a look-first container update, deleting an old before-update snapshot, the self-test, Check now, and (off by default) hiding a stuck Seedbox season pack job. Never a red (Wait) update, never anything outside the list
 - Guard page: new Suggestions band with Approve (and a confirmation) or Not now; an approved one runs with the Update manager, Snapshots or Seedbox code like their own buttons and shows in Activity; a failed one comes back; earlier ones are folded
@@ -54,7 +58,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 ###2026.10.26a
 - Claude Guard page: a shared Discord bot block (bot token and your Discord user ID, the same setting as in Seedbox Tools; the saved Seedbox bot is taken over). Test the bot sends a message with the Sysbox webhook, the bot reacts under it and reads the reaction back, so a missing permission shows at once. The morning summary and the suggestions with reactions come in the next versions
 
-###&version;
+###2026.10.26
 - New Network part on the tile (item 94): download and upload speed, traffic today, a 30-minute graph, an internet check (router and two outside addresses: amber when slow, red when down) and the three busiest containers; each piece can be switched off in the Sysbox settings, like the other parts
 - New page Settings, Utilities, Network: 1 hour, 24 hour and 7 day graph, daily bars, today, this month and last month, traffic per container, internet outages, and its settings (interface, router, outside addresses, slow limit, unit MB/s or Mbit/s, Discord); only reads counters and sends pings
 - Discord: one message after an internet outage, with its start and end
@@ -279,6 +283,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 * * * * * flock -n -E 0 /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
 # Sysbox: network meter (traffic counters every 5 s, internet ping every 30 s; one long-running process, restarted if it stops)
 * * * * * flock -n -E 0 /tmp/sysbox_net.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1
+# Sysbox: stream priority, every minute (qBittorrent gives way to Jellyfin streams outside the house; off on the Network page)
+* * * * * flock -n -E 0 /tmp/sysbox_sp.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/sp_tick.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
 * * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/notify.php >/dev/null 2>&1
 # Sysbox: weekly summary, checked hourly (day and hour are settings)

@@ -124,6 +124,11 @@ a.sx-b2.rd{background:#e5534b;color:#fff}
 .sx-nbar{display:flex;height:4px;background:rgba(128,128,128,.3);border-radius:2px;overflow:hidden}
 .sx-nbar i{display:block;height:100%}
 .sx-nleg i{display:inline-block;width:9px;height:3px;margin:0 4px 2px 8px;vertical-align:middle}
+.sx-sp{grid-template-columns:18px minmax(0,1fr) auto;margin-top:8px}
+.sx-sp .t{font-weight:600;font-size:13px}.sx-sp .sx-sub{display:block;font-size:12px;opacity:.7;white-space:normal}
+.sx-sp .bd{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:2px 7px;white-space:nowrap}
+.sx-sp .bd.b{color:#7fb0ef;background:rgba(74,144,226,.22)}.sx-sp .bd.g{color:#b0b0b0;background:rgba(128,128,128,.25)}.sx-sp .bd.a{color:#d9921f;background:rgba(224,160,48,.22)}
+.sx-cr .n small{font-weight:400;opacity:.65;letter-spacing:0}
 /*@@TILE_CSS@@*/
 </style>
 <script>
@@ -422,17 +427,49 @@ $(function () {
         $('<a>').attr('href', '/Settings/SysboxNetwork').text(T('net.details'))));
     }
     if ($b.children().length) { $d.append($b); }
+    if (N.sp) { $d.append(spRow(N.sp, U)); }
     if (mx('net_top') && N.top && N.top.length) {
       var top = 1; $.each(N.top, function (i, c) { top = Math.max(top, c[1] + c[2]); });
       var $box = el('mt-box').appendTo($d);
       $.each(N.top, function (i, c) {
-        $box.append(el('sx-cr mt-r mt-n mt-s-' + (c[1] + c[2] > 0 ? 'green' : 'grey')).css('grid-template-columns', 'minmax(0,1fr) 64px 118px').append(
-          txt('span', 'n', c[0]),
+        var host = c[0] === '@host', $n = txt('span', 'n', host ? T('net.host_row') : c[0]);
+        if (host) { $n.attr('title', T('net.host_tip', { n: c[3].join(', ') })).append(' ', txt('small', '', c[3].join(', '))); }
+        $box.append(el('sx-cr mt-r mt-n mt-s-' + (host ? 'grey' : (c[1] + c[2] > 0 ? 'green' : 'grey'))).css('grid-template-columns', 'minmax(0,1fr) 64px 118px').append(
+          $n,
           el('sx-nbar').append($('<i>').css({ width: (c[1] / top * 100) + '%', background: '#3fa24a' }), $('<i>').css({ width: (c[2] / top * 100) + '%', background: '#4a90e2' })),
           $('<span class="sx-val sx-sub">').text('\u2193 ' + fmtRate(c[1], U) + ' \u00B7 \u2191 ' + fmtRate(c[2], U))));
       });
     }
   }
+
+  // stream priority (item 98): one row under the network box; a button only in the "Button on the tile" mode
+  function spRow(P, U) {
+    var lim = (U === 'Mbit' ? Math.round(P.up * 8) : P.up) + ' ' + unitTxt(U), stripe = 'grey', t, sub, bd = null, btn = null;
+    var who = P.users.length ? T('net.sp_who', { n: P.n, u: P.users.join(', ') }) : '';
+    if (!P.qb) { stripe = 'amber'; t = T('net.sp_t_noqb'); sub = T('net.sp_s_noqb'); bd = ['a', T('net.sp_b_check')]; }
+    else if (P.held) {
+      stripe = 'blue'; t = T('net.sp_t_held', { v: lim });
+      sub = (P.n ? who : T('net.sp_s_ending')) + ' \u00B7 ' + T('net.sp_since', { t: hhmm(P.since) });
+      if (P.mode === 'button') { btn = ['sp_release', T('net.sp_release')]; } else { bd = ['b', T('net.sp_b_limit')]; }
+    } else if (P.n && P.q === 1) { t = T('net.sp_t_own'); sub = who + ' \u00B7 ' + T('net.sp_s_own'); bd = ['g', T('net.sp_b_own')]; }
+    else if (P.n && P.user_off) { t = T('net.sp_t_full'); sub = who + ' \u00B7 ' + T('net.sp_s_user_off'); bd = ['g', T('net.sp_b_left')]; }
+    else if (P.n && P.mode === 'button') { stripe = 'amber'; t = T('net.sp_t_offer'); sub = who; btn = ['sp_hold', T('net.sp_hold')]; }
+    else if (P.n) { t = T('net.sp_t_full'); sub = who + ' \u00B7 ' + T('net.sp_s_next'); bd = ['g', T('net.sp_b_ready')]; }
+    else { t = T('net.sp_t_ready'); sub = T('net.sp_s_full') + (P.last ? ' \u00B7 ' + T('net.sp_s_last', { t: hhmm(P.last) }) : ''); bd = ['g', T('net.sp_b_ready')]; }
+    var $r = el('sx-sp mt-r mt-s-' + stripe).append(icon('fa-tachometer', stripe === 'blue' ? 'sx-upc' : ''),
+      $('<div>').append(txt('span', 't', t), txt('span', 'sx-sub', sub)));
+    if (btn) { $r.append($('<a class="sx-b2" href="#">').attr('data-sp', btn[0]).text(btn[1])); }
+    else if (bd) { $r.append(txt('span', 'bd ' + bd[0], bd[1])); }
+    return $r;
+  }
+  $(document).on('click', '#sx-net a[data-sp]', function (e) {
+    e.preventDefault();
+    var $a = $(this).css('pointer-events', 'none').text(T('net.sp_working'));
+    $.post('/plugins/sysbox/net.php', { op: $a.attr('data-sp') }, null, 'json')
+      .done(function (r) { if (!r || !r.ok) { alert((r && r.error) || T('net.sp_err')); } })
+      .fail(function (x) { alert((x.responseJSON && x.responseJSON.error) || 'HTTP ' + x.status); })
+      .always(function () { poll(); });
+  });
 
   // ---- containers ----------------------------------------------------------------------------
   function stripAnsi(s) { return String(s).replace(/\u001b\[[0-9;?]*[A-Za-z]/g, ''); }
