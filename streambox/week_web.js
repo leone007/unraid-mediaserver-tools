@@ -16,7 +16,7 @@
   var DAYS = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
   var MON = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.'];
   var KEY = 'streamboxWeekView';
-  var data = null, lastFetch = 0, busy = false;
+  var data = null, shown = [], lastFetch = 0, busy = false;   // shown: what the row lists (episodes and season cards)
 
   var css = '' +
     '#sbWeek .sectionTitleContainer{display:flex;align-items:center;flex-wrap:wrap}' +
@@ -82,8 +82,31 @@
   }
   function dayIdx(ts) { return (new Date(ts * 1000).getDay() + 6) % 7; }   // Monday 0 .. Sunday 6
 
+  // A season that comes out at once (2 or more episodes of one season on one day) is one card: a whole season of
+  // posters would cover the row. The card links to the series and shows one status for all its episodes.
+  var GROUP_MIN = 2;
+  function items(w) {
+    var keys = {}, out = [];
+    w.eps.forEach(function (e) {
+      var k = dayIdx(e.air) + '|' + e.s + '|' + e.c.slice(0, 3);
+      if (!keys[k]) { keys[k] = []; out.push(keys[k]); }
+      keys[k].push(e);
+    });
+    var res = [];
+    out.forEach(function (g) {
+      if (g.length < GROUP_MIN) { Array.prototype.push.apply(res, g); return; }
+      g = g.slice().sort(function (a, b) { return a.c < b.c ? -1 : a.c > b.c ? 1 : 0; });
+      var f = g[0], l = g[g.length - 1], nf = +f.c.slice(4), nl = +l.c.slice(4);
+      var run = nl - nf + 1 === g.length;   // S02E01–E08; with gaps: S02 · 3 epizód
+      res.push({ s: f.s, c: run ? f.c + '–' + l.c.slice(3) : f.c.slice(0, 3), t: run ? '' : g.length + ' epizód', air: Math.min.apply(null, g.map(function (e) { return e.air; })),
+        exp: f.exp, st: 'grp', pct: null, 'new': g.some(function (e) { return e['new']; }), ep: '', sid: f.sid, img: f.img, g: g });
+    });
+    return res.sort(function (a, b) { return a.air - b.air || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0); });
+  }
+
   // Status text and its colour; the countdowns are recomputed in the browser
   function status(e, now) {
+    if (e.g) { return groupStatus(e.g, now); }
     var target = e.exp !== null ? e.exp : e.air;
     switch (e.st) {
       case 'jf': return ['Elérhető', 'sbw-ok'];
@@ -99,8 +122,23 @@
     }
   }
 
+  // One status for a season card: all available, how many are available, else the most urgent state of its episodes
+  function groupStatus(g, now) {
+    var n = g.filter(function (e) { return e.st === 'jf'; }).length;
+    if (n === g.length) { return ['Elérhető', 'sbw-ok']; }
+    if (n) { return [n + '/' + g.length + ' elérhető', 'sbw-ok']; }
+    var order = ['fail', 'dl', 'grab', 'imp', 'file', 'scan', 'pause', 'late'];
+    for (var i = 0; i < order.length; i++) {
+      var m = g.filter(function (e) { return e.st === order[i]; });
+      if (!m.length) { continue; }
+      if (order[i] === 'dl') { m.sort(function (a, b) { return (a.pct || 0) - (b.pct || 0); }); }
+      return status(m[0], now);
+    }
+    return status(g[0], now);
+  }
+
   function link(e) {
-    var id = e.ep || e.sid;
+    var id = e.g ? e.sid : (e.ep || e.sid);
     if (!id) { return ''; }
     var sv = '';
     try { sv = window.ApiClient && window.ApiClient.serverId ? window.ApiClient.serverId() : ''; } catch (x) { sv = ''; }
@@ -112,6 +150,10 @@
   }
   function bg(node, src) { if (src) { node.style.backgroundImage = 'url("' + src.replace(/"/g, '%22') + '")'; } }
   function tip(e) {
+    if (e.g) {
+      return e.s + ' · ' + e.c + ' · ' + e.g.length + ' epizód\nAdás: ' + DAYS[dayIdx(e.air)].toLowerCase() + ' ' + hm(e.air) + '\n' +
+        e.g.map(function (x) { return x.c + (x.t ? ' · ' + x.t : '') + ' · ' + status(x, Date.now() / 1000)[0]; }).join('\n');
+    }
     return e.s + ' · ' + e.c + (e.t ? ' · ' + e.t : '') + '\nAdás: ' + DAYS[dayIdx(e.air)].toLowerCase() + ' ' + hm(e.air) +
       (e.exp !== null ? '\nVárható: ~' + hm(e.exp) : '');
   }
@@ -148,7 +190,7 @@
     for (var d = 0; d < 7; d++) {
       var col = el('div', 'sbw-col' + (thisWeek && d === today ? ' sbw-today' : '') + (thisWeek && d < today ? ' sbw-past' : ''));
       var eps = [];
-      w.eps.forEach(function (e, i) { if (dayIdx(e.air) === d) { eps.push([e, i]); } });
+      shown.forEach(function (e, i) { if (dayIdx(e.air) === d) { eps.push([e, i]); } });
       var box = el('div', 'sbw-box');
       if (!eps.length) { box.appendChild(el('div', 'sbw-none', 'nincs epizód')); }
       eps.forEach(function (x) {
@@ -166,10 +208,11 @@
       });
       col.appendChild(box);
       // under the card like Jellyfin's card titles: the day, then its date and how many are available
-      var n = eps.filter(function (x) { return x[0].st === 'jf'; }).length, dt = new Date(w.from * 1000);
+      var n = 0, all = 0, dt = new Date(w.from * 1000);
+      eps.forEach(function (x) { (x[0].g || [x[0]]).forEach(function (e) { all++; if (e.st === 'jf') { n++; } }); });
       dt = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + d);
       col.appendChild(el('div', 'sbw-t1', thisWeek && d === today ? 'Ma · ' + DAYS[d] : DAYS[d]));
-      col.appendChild(el('div', 'sbw-t2', MON[dt.getMonth()] + ' ' + dt.getDate() + '.' + (eps.length ? ' · ' + n + '/' + eps.length + ' elérhető' : '')));
+      col.appendChild(el('div', 'sbw-t2', MON[dt.getMonth()] + ' ' + dt.getDate() + '.' + (all ? ' · ' + n + '/' + all + ' elérhető' : '')));
       grid.appendChild(col);
     }
     return grid;
@@ -178,7 +221,7 @@
   function buildRow(w, now) {
     var row = el('div', 'sbw-row');
     var today = dayIdx(now), thisWeek = now >= w.from && now < w.to, last = -1;
-    w.eps.forEach(function (e, i) {
+    shown.forEach(function (e, i) {
       var d = dayIdx(e.air);
       if (d !== last) {
         row.appendChild(el('div', 'sbw-day' + (thisWeek && d === today ? ' sbw-today' : ''), (thisWeek && d === today ? 'Ma · ' : '') + DAYS[d]));
@@ -203,6 +246,7 @@
 
   function build(w, v) {
     var now = Date.now() / 1000;
+    shown = items(w);
     var box = el('div', 'verticalSection sbw');
     box.id = 'sbWeek';
     var head = el('div', 'sectionTitleContainer sectionTitleContainer-cards padded-left padded-right');
@@ -294,7 +338,7 @@
       // same list: refresh the countdowns in place
       var now = Date.now() / 1000;
       Array.prototype.forEach.call(old.querySelectorAll('[data-sbw]'), function (n) {
-        var e = data.eps[+n.getAttribute('data-sbw')];
+        var e = shown[+n.getAttribute('data-sbw')];
         if (!e) { return; }
         var st = status(e, now);
         if (n.textContent !== st[0]) { n.textContent = st[0]; }
