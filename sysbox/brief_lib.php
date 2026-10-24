@@ -70,6 +70,13 @@ function gd_brief_dl() {
     return implode("\n", $out);
 }
 
+// a plugin's name for the brief: ours by product name, a known Unraid one by its usual name, else the .plg id
+function gd_brief_plgname($p) {
+    if ((string)($p['ours'] ?? '') !== '') { return (string)$p['ours']; }
+    $id = (string)($p['id'] ?? '?');
+    return ['dynamix.unraid.net' => 'Unraid Connect', 'community.applications' => 'Community Applications', 'unassigned.devices' => 'Unassigned Devices'][$id] ?? $id;
+}
+
 // 🔄 waiting updates from the Update manager's last check
 function gd_brief_upd() {
     $s = upd_json(upd_scan_file(), []);
@@ -80,7 +87,7 @@ function gd_brief_upd() {
         $risk = in_array($r['risk'] ?? '', ['green', 'amber', 'red'], true) ? $r['risk'] : 'amber';
         $l[] = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$risk] . ' ' . (string)$r['name'] . ' (' . gd_bt('brief.risk_' . $risk) . ')';
     }
-    foreach ((array)($s['plugins'] ?? []) as $p) { if ((string)($p['new'] ?? '') !== '') { $l[] = '🧩 ' . (string)($p['ours'] ?? $p['id'] ?? '?') . ' ' . (string)$p['new']; } }
+    foreach ((array)($s['plugins'] ?? []) as $p) { if ((string)($p['new'] ?? '') !== '') { $l[] = '🧩 ' . gd_brief_plgname($p) . ' ' . (string)$p['new']; } }
     if ((string)($s['os']['new'] ?? '') !== '') { $l[] = '💿 Unraid ' . (string)$s['os']['new']; }
     if (!$l) { return gd_bt('brief.upd_none'); }
     return gd_bt('brief.upd_n', ['n' => count($l)]) . "\n" . implode("\n", array_slice($l, 0, 8)) . (count($l) > 8 ? "\n" . gd_bt('brief.more', ['n' => count($l) - 8]) : '');

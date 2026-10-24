@@ -137,7 +137,8 @@ function gd_snapshot($c, $since) {
         $s['containers'] = $dk === '' ? 'Docker is not running' : $ct;
         $scan = upd_json(upd_scan_file(), []); $u = [];
         foreach ($scan['rows'] ?? [] as $r) { if (($r['state'] ?? '') === 'update') { $u[] = ['name' => $r['name'], 'from' => $r['ver'], 'to' => $r['rver'], 'kind' => $r['kind'], 'risk' => $r['risk']]; } }
-        $s['updates'] = ['checked' => !empty($scan['t']) ? date('Y-m-d H:i', (int)$scan['t']) : null, 'waiting' => $u, 'unraid_os' => !empty($scan['os']['new']) ? $scan['os']['new'] : null];
+        $pl = []; foreach ($scan['plugins'] ?? [] as $x) { if ((string)($x['new'] ?? '') !== '') { $pl[] = ['id' => $x['id'], 'from' => $x['cur'], 'to' => $x['new']]; } }
+        $s['updates'] = ['checked' => !empty($scan['t']) ? date('Y-m-d H:i', (int)$scan['t']) : null, 'waiting' => $u, 'plugins' => $pl, 'unraid_os' => !empty($scan['os']['new']) ? $scan['os']['new'] : null];
     }
     if (!empty($c['t_log'])) { $s['logs'] = gd_logs($since); }
     if (!empty($c['t_arr'])) {

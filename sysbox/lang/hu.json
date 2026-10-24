@@ -2628,7 +2628,7 @@
   "text": "{n} frissítése ({from} → {to}, előbb nézd meg)"
  },
  "sug.t_snap_del": {
-  "text": "A(z) {s} snapshot törlése ({size})"
+  "text": "A(z) {ds}@{s} snapshot törlése ({size})"
  },
  "sug.t_selftest": {
   "text": "Kapcsolatok öntesztje"

@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.29">
+<!ENTITY version   "2026.10.29a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.29a
+- Morning summary: a waiting plugin update shows its name (for example Unraid Connect), not only the new version
+- Claude Guard: the snapshot it reads lists the waiting plugin updates too, so the report no longer says nothing waits while the summary shows one
+- Suggestions: a snapshot to delete shows its dataset too (for example cache/docker@before-update-autobrr-...), so two snapshots of one update are told apart
+
 ###2026.10.29
 - Stream priority (Settings, Utilities, Network, and a row on the tile): while someone watches Jellyfin from outside the house, qBittorrent switches to its alternative speed limit (25 MB/s upload by default, written into qBittorrent on Save) and goes back to full speed 5 minutes after the last outside stream; modes Off, Automatic (default) and Button on the tile; a limit you switched on yourself is left alone; Jellyfin from the Streambox settings, qBittorrent from the Seedbox settings; Activity at the top of the Network page
 - Network: the containers on the host network (for example Jellyfin) and the server itself show as one host network row on the tile and the Network page
@@ -6647,8 +6652,8 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "title of a suggestion: a look-first (amber) container update. Also in Discord."
  },
  "sug.t_snap_del": {
-  "text": "Delete snapshot {s} ({size})",
-  "note": "title of a suggestion: delete an old before-update ZFS snapshot. {s} snapshot name, {size} space it holds. Also in Discord."
+  "text": "Delete snapshot {ds}@{s} ({size})",
+  "note": "title of a suggestion: delete an old before-update ZFS snapshot. {ds} dataset (e.g. cache/docker), {s} snapshot name, {size} space it holds. Also in Discord."
  },
  "sug.t_selftest": {
   "text": "Run the self-test of our connections",
@@ -9920,7 +9925,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "{n} frissítése ({from} → {to}, előbb nézd meg)"
  },
  "sug.t_snap_del": {
-  "text": "A(z) {s} snapshot törlése ({size})"
+  "text": "A(z) {ds}@{s} snapshot törlése ({size})"
  },
  "sug.t_selftest": {
   "text": "Kapcsolatok öntesztje"
@@ -13370,7 +13375,8 @@ function gd_snapshot($c, $since) {
         $s['containers'] = $dk === '' ? 'Docker is not running' : $ct;
         $scan = upd_json(upd_scan_file(), []); $u = [];
         foreach ($scan['rows'] ?? [] as $r) { if (($r['state'] ?? '') === 'update') { $u[] = ['name' => $r['name'], 'from' => $r['ver'], 'to' => $r['rver'], 'kind' => $r['kind'], 'risk' => $r['risk']]; } }
-        $s['updates'] = ['checked' => !empty($scan['t']) ? date('Y-m-d H:i', (int)$scan['t']) : null, 'waiting' => $u, 'unraid_os' => !empty($scan['os']['new']) ? $scan['os']['new'] : null];
+        $pl = []; foreach ($scan['plugins'] ?? [] as $x) { if ((string)($x['new'] ?? '') !== '') { $pl[] = ['id' => $x['id'], 'from' => $x['cur'], 'to' => $x['new']]; } }
+        $s['updates'] = ['checked' => !empty($scan['t']) ? date('Y-m-d H:i', (int)$scan['t']) : null, 'waiting' => $u, 'plugins' => $pl, 'unraid_os' => !empty($scan['os']['new']) ? $scan['os']['new'] : null];
     }
     if (!empty($c['t_log'])) { $s['logs'] = gd_logs($since); }
     if (!empty($c['t_arr'])) {
@@ -13984,6 +13990,13 @@ function gd_brief_dl() {
     return implode("\n", $out);
 }
 
+// a plugin's name for the brief: ours by product name, a known Unraid one by its usual name, else the .plg id
+function gd_brief_plgname($p) {
+    if ((string)($p['ours'] ?? '') !== '') { return (string)$p['ours']; }
+    $id = (string)($p['id'] ?? '?');
+    return ['dynamix.unraid.net' => 'Unraid Connect', 'community.applications' => 'Community Applications', 'unassigned.devices' => 'Unassigned Devices'][$id] ?? $id;
+}
+
 // 🔄 waiting updates from the Update manager's last check
 function gd_brief_upd() {
     $s = upd_json(upd_scan_file(), []);
@@ -13994,7 +14007,7 @@ function gd_brief_upd() {
         $risk = in_array($r['risk'] ?? '', ['green', 'amber', 'red'], true) ? $r['risk'] : 'amber';
         $l[] = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$risk] . ' ' . (string)$r['name'] . ' (' . gd_bt('brief.risk_' . $risk) . ')';
     }
-    foreach ((array)($s['plugins'] ?? []) as $p) { if ((string)($p['new'] ?? '') !== '') { $l[] = '🧩 ' . (string)($p['ours'] ?? $p['id'] ?? '?') . ' ' . (string)$p['new']; } }
+    foreach ((array)($s['plugins'] ?? []) as $p) { if ((string)($p['new'] ?? '') !== '') { $l[] = '🧩 ' . gd_brief_plgname($p) . ' ' . (string)$p['new']; } }
     if ((string)($s['os']['new'] ?? '') !== '') { $l[] = '💿 Unraid ' . (string)$s['os']['new']; }
     if (!$l) { return gd_bt('brief.upd_none'); }
     return gd_bt('brief.upd_n', ['n' => count($l)]) . "\n" . implode("\n", array_slice($l, 0, 8)) . (count($l) > 8 ? "\n" . gd_bt('brief.more', ['n' => count($l) - 8]) : '');

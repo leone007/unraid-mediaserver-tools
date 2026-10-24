@@ -3495,8 +3495,8 @@
   "note": "title of a suggestion: a look-first (amber) container update. Also in Discord."
  },
  "sug.t_snap_del": {
-  "text": "Delete snapshot {s} ({size})",
-  "note": "title of a suggestion: delete an old before-update ZFS snapshot. {s} snapshot name, {size} space it holds. Also in Discord."
+  "text": "Delete snapshot {ds}@{s} ({size})",
+  "note": "title of a suggestion: delete an old before-update ZFS snapshot. {ds} dataset (e.g. cache/docker), {s} snapshot name, {size} space it holds. Also in Discord."
  },
  "sug.t_selftest": {
   "text": "Run the self-test of our connections",

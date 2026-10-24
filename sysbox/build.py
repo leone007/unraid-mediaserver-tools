@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.29">
+<!ENTITY version   "2026.10.29a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,11 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.29a
+- Morning summary: a waiting plugin update shows its name (for example Unraid Connect), not only the new version
+- Claude Guard: the snapshot it reads lists the waiting plugin updates too, so the report no longer says nothing waits while the summary shows one
+- Suggestions: a snapshot to delete shows its dataset too (for example cache/docker@before-update-autobrr-...), so two snapshots of one update are told apart
+
 ###2026.10.29
 - Stream priority (Settings, Utilities, Network, and a row on the tile): while someone watches Jellyfin from outside the house, qBittorrent switches to its alternative speed limit (25 MB/s upload by default, written into qBittorrent on Save) and goes back to full speed 5 minutes after the last outside stream; modes Off, Automatic (default) and Button on the tile; a limit you switched on yourself is left alone; Jellyfin from the Streambox settings, qBittorrent from the Seedbox settings; Activity at the top of the Network page
 - Network: the containers on the host network (for example Jellyfin) and the server itself show as one host network row on the tile and the Network page
