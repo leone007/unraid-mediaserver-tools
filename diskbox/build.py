@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22p">
+<!ENTITY version   "2026.10.22q">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -27,6 +27,10 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22q
+- Remove disks: Clear can no longer start a second clearing of the same disk (a double click, a click while the disk is being unmounted, or a click after the disk was fully cleared); a clearing that stopped can still be started again
+- Remove disks: the step 5 error texts come from the dictionary (Hungarian too)
+
 ###&version;
 - Security: folder and file names with quote marks can no longer break into the Balance page as code; they show as plain text
 ###2026.10.22o

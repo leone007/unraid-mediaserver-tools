@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22p">
+<!ENTITY version   "2026.10.22q">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,10 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22q
+- Remove disks: Clear can no longer start a second clearing of the same disk (a double click, a click while the disk is being unmounted, or a click after the disk was fully cleared); a clearing that stopped can still be started again
+- Remove disks: the step 5 error texts come from the dictionary (Hungarian too)
+
 ###&version;
 - Security: folder and file names with quote marks can no longer break into the Balance page as code; they show as plain text
 ###2026.10.22o
@@ -4239,6 +4243,30 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "The parity-protected device of {d} was not found.",
   "note": "error of step 5 (technical: the /dev/md device)."
  },
+ "rm.err.clearing_d": {
+  "text": "{d} is being cleared already.",
+  "note": "error of step 5."
+ },
+ "rm.err.cleared": {
+  "text": "{d} is cleared already; it does not need a second clearing.",
+  "note": "error of step 5 when the disk was fully zeroed before."
+ },
+ "rm.err.starting": {
+  "text": "The clearing of {d} is starting (unmount, stand-in image); wait until the log shows it running or failed.",
+  "note": "error of step 5 after a second click right after the start."
+ },
+ "rm.err.not_empty_now": {
+  "text": "{d} is not empty any more ({n} files). See step 4.",
+  "note": "error of step 5; {n} number of files."
+ },
+ "rm.err.not_mounted": {
+  "text": "{d} is not mounted.",
+  "note": "error of step 5."
+ },
+ "rm.err.type": {
+  "text": "Type exactly: {w}",
+  "note": "error of step 5; {w} the disk names to type."
+ },
  "run.nothing": {
   "text": "Nothing to move.",
   "note": "red text in Activity when a started move has no title."
@@ -5420,6 +5448,24 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "rm.err.nodev": {
   "text": "A(z) {d} paritással védett eszköze nem található."
+ },
+ "rm.err.clearing_d": {
+  "text": "A(z) {d} kinullázása már fut."
+ },
+ "rm.err.cleared": {
+  "text": "A(z) {d} már ki van nullázva; nem kell újra."
+ },
+ "rm.err.starting": {
+  "text": "A(z) {d} kinullázása most indul (leválasztás, helyettesítő kép); várd meg, amíg a napló szerint fut vagy hibát ad."
+ },
+ "rm.err.not_empty_now": {
+  "text": "A(z) {d} már nem üres ({n} fájl). Lásd a 4. lépést."
+ },
+ "rm.err.not_mounted": {
+  "text": "A(z) {d} nincs csatolva."
+ },
+ "rm.err.type": {
+  "text": "Írd be pontosan: {w}"
  },
  "run.nothing": {
   "text": "Nincs mit áthelyezni."
@@ -6635,8 +6681,10 @@ function rm_op($op) {
         bl_out(true);
     }
     if ($op === 'rm_clear') {
+        // one start at a time: a double click must not start two dd runs on one disk (item 104)
+        $lk = @fopen('/tmp/dbx_rm_clear.lock', 'c'); if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) { bl_out(false, ['error' => bl_tr('rm.err.clearing')]); }
         $want = implode(' ', $sel);
-        if (trim(preg_replace('/\s+/', ' ', (string)($_POST['confirm'] ?? ''))) !== $want) { bl_out(false, ['error' => 'Type exactly: ' . $want]); }
+        if (trim(preg_replace('/\s+/', ' ', (string)($_POST['confirm'] ?? ''))) !== $want) { bl_out(false, ['error' => bl_tr('rm.err.type', ['w' => $want])]); }
         if ($s['parity'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['parity']])]); }
         if ($s['busy'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['busy']])]); }
         if ($s['balance']) { bl_out(false, ['error' => bl_tr('err.running')]); }
@@ -6644,9 +6692,15 @@ function rm_op($op) {
         if (!($s['check']['ok'] ?? false)) { bl_out(false, ['error' => bl_tr('rm.err.step4')]); }
         foreach ($sel as $d) { // checked again now: something may have arrived since the check
             $r = rm_scan($d);
-            if ($r['n'] !== 0) { $st['check'] = ['t' => time(), 'ok' => false, 'res' => [$d => $r]]; bl_json_write(RM_STATE, $st, 0600); bl_out(false, ['error' => strtoupper($d) . ' is not empty any more (' . $r['n'] . ' files). See step 4.']); }
-            if (!$s['disks'][$d]['mounted']) { bl_out(false, ['error' => strtoupper($d) . ' is not mounted.']); }
-            if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['run']) { bl_out(false, ['error' => strtoupper($d) . ' is being cleared already.']); }
+            if ($r['n'] !== 0) { $st['check'] = ['t' => time(), 'ok' => false, 'res' => [$d => $r]]; bl_json_write(RM_STATE, $st, 0600); bl_out(false, ['error' => bl_tr('rm.err.not_empty_now', ['d' => strtoupper($d), 'n' => $r['n']])]); }
+            if (!$s['disks'][$d]['mounted']) { bl_out(false, ['error' => bl_tr('rm.err.not_mounted', ['d' => strtoupper($d)])]); }
+            if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['run']) { bl_out(false, ['error' => bl_tr('rm.err.clearing_d', ['d' => strtoupper($d)])]); }
+            if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['done']) { bl_out(false, ['error' => bl_tr('rm.err.cleared', ['d' => strtoupper($d)])]); }
+            // started, dd not there yet (umount, stand-in image): wait until the log shows how it ended; a run that stopped may start again
+            if (in_array($d, (array)($st['clear']['disks'] ?? []), true) && !$s['disks'][$d]['zero'] && time() - (int)($st['clear']['t'] ?? 0) < 600) {
+                $lg = (string)@file_get_contents('/tmp/dbx_clear_' . (int)substr($d, 4) . '.log'); $lg = substr($lg, (int)strrpos($lg, 'start '));
+                if (strpos($lg, 'FAILED') === false && strpos($lg, 'dd ended') === false) { bl_out(false, ['error' => bl_tr('rm.err.starting', ['d' => strtoupper($d)])]); }
+            }
             if (rm_dev($d) === '') { bl_out(false, ['error' => bl_tr('rm.err.nodev', ['d' => strtoupper($d)])]); }
         }
         foreach ($sel as $d) {

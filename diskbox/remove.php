@@ -115,8 +115,10 @@ function rm_op($op) {
         bl_out(true);
     }
     if ($op === 'rm_clear') {
+        // one start at a time: a double click must not start two dd runs on one disk (item 104)
+        $lk = @fopen('/tmp/dbx_rm_clear.lock', 'c'); if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) { bl_out(false, ['error' => bl_tr('rm.err.clearing')]); }
         $want = implode(' ', $sel);
-        if (trim(preg_replace('/\s+/', ' ', (string)($_POST['confirm'] ?? ''))) !== $want) { bl_out(false, ['error' => 'Type exactly: ' . $want]); }
+        if (trim(preg_replace('/\s+/', ' ', (string)($_POST['confirm'] ?? ''))) !== $want) { bl_out(false, ['error' => bl_tr('rm.err.type', ['w' => $want])]); }
         if ($s['parity'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['parity']])]); }
         if ($s['busy'] !== '') { bl_out(false, ['error' => bl_tr('rm.err.cannot', ['why' => $s['busy']])]); }
         if ($s['balance']) { bl_out(false, ['error' => bl_tr('err.running')]); }
@@ -124,9 +126,15 @@ function rm_op($op) {
         if (!($s['check']['ok'] ?? false)) { bl_out(false, ['error' => bl_tr('rm.err.step4')]); }
         foreach ($sel as $d) { // checked again now: something may have arrived since the check
             $r = rm_scan($d);
-            if ($r['n'] !== 0) { $st['check'] = ['t' => time(), 'ok' => false, 'res' => [$d => $r]]; bl_json_write(RM_STATE, $st, 0600); bl_out(false, ['error' => strtoupper($d) . ' is not empty any more (' . $r['n'] . ' files). See step 4.']); }
-            if (!$s['disks'][$d]['mounted']) { bl_out(false, ['error' => strtoupper($d) . ' is not mounted.']); }
-            if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['run']) { bl_out(false, ['error' => strtoupper($d) . ' is being cleared already.']); }
+            if ($r['n'] !== 0) { $st['check'] = ['t' => time(), 'ok' => false, 'res' => [$d => $r]]; bl_json_write(RM_STATE, $st, 0600); bl_out(false, ['error' => bl_tr('rm.err.not_empty_now', ['d' => strtoupper($d), 'n' => $r['n']])]); }
+            if (!$s['disks'][$d]['mounted']) { bl_out(false, ['error' => bl_tr('rm.err.not_mounted', ['d' => strtoupper($d)])]); }
+            if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['run']) { bl_out(false, ['error' => bl_tr('rm.err.clearing_d', ['d' => strtoupper($d)])]); }
+            if ($s['disks'][$d]['zero'] && $s['disks'][$d]['zero']['done']) { bl_out(false, ['error' => bl_tr('rm.err.cleared', ['d' => strtoupper($d)])]); }
+            // started, dd not there yet (umount, stand-in image): wait until the log shows how it ended; a run that stopped may start again
+            if (in_array($d, (array)($st['clear']['disks'] ?? []), true) && !$s['disks'][$d]['zero'] && time() - (int)($st['clear']['t'] ?? 0) < 600) {
+                $lg = (string)@file_get_contents('/tmp/dbx_clear_' . (int)substr($d, 4) . '.log'); $lg = substr($lg, (int)strrpos($lg, 'start '));
+                if (strpos($lg, 'FAILED') === false && strpos($lg, 'dd ended') === false) { bl_out(false, ['error' => bl_tr('rm.err.starting', ['d' => strtoupper($d)])]); }
+            }
             if (rm_dev($d) === '') { bl_out(false, ['error' => bl_tr('rm.err.nodev', ['d' => strtoupper($d)])]); }
         }
         foreach ($sel as $d) {

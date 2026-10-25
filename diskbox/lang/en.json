@@ -1461,6 +1461,30 @@
   "text": "The parity-protected device of {d} was not found.",
   "note": "error of step 5 (technical: the /dev/md device)."
  },
+ "rm.err.clearing_d": {
+  "text": "{d} is being cleared already.",
+  "note": "error of step 5."
+ },
+ "rm.err.cleared": {
+  "text": "{d} is cleared already; it does not need a second clearing.",
+  "note": "error of step 5 when the disk was fully zeroed before."
+ },
+ "rm.err.starting": {
+  "text": "The clearing of {d} is starting (unmount, stand-in image); wait until the log shows it running or failed.",
+  "note": "error of step 5 after a second click right after the start."
+ },
+ "rm.err.not_empty_now": {
+  "text": "{d} is not empty any more ({n} files). See step 4.",
+  "note": "error of step 5; {n} number of files."
+ },
+ "rm.err.not_mounted": {
+  "text": "{d} is not mounted.",
+  "note": "error of step 5."
+ },
+ "rm.err.type": {
+  "text": "Type exactly: {w}",
+  "note": "error of step 5; {w} the disk names to type."
+ },
  "run.nothing": {
   "text": "Nothing to move.",
   "note": "red text in Activity when a started move has no title."

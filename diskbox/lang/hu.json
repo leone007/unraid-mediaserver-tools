@@ -1101,6 +1101,24 @@
  "rm.err.nodev": {
   "text": "A(z) {d} paritással védett eszköze nem található."
  },
+ "rm.err.clearing_d": {
+  "text": "A(z) {d} kinullázása már fut."
+ },
+ "rm.err.cleared": {
+  "text": "A(z) {d} már ki van nullázva; nem kell újra."
+ },
+ "rm.err.starting": {
+  "text": "A(z) {d} kinullázása most indul (leválasztás, helyettesítő kép); várd meg, amíg a napló szerint fut vagy hibát ad."
+ },
+ "rm.err.not_empty_now": {
+  "text": "A(z) {d} már nem üres ({n} fájl). Lásd a 4. lépést."
+ },
+ "rm.err.not_mounted": {
+  "text": "A(z) {d} nincs csatolva."
+ },
+ "rm.err.type": {
+  "text": "Írd be pontosan: {w}"
+ },
  "run.nothing": {
   "text": "Nincs mit áthelyezni."
  },
