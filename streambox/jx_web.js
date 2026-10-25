@@ -670,9 +670,22 @@
       if (t && !t.closest('#sbxW') && !t.classList.contains('sbx-nav')) { closeW(); }
     }, true);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.getElementById('sbxW')) { closeW(); } });
+    // new nodes and data-id run a tick at once; a class change (a page shown or hidden, the active menu link) at most every
+    // 400 ms, and never our own elements or ripple and hover classes (item 104: a full tick on every scroll frame)
+    var clsT = null, OWN = /\b(sbx-[\w-]+|MuiTouchRipple[\w-]*|Mui-focusVisible)\b/;
     new MutationObserver(function (ms) {
-      for (var i = 0; i < ms.length; i++) { if (!ms[i].target.closest || !ms[i].target.closest('#sbxW')) { queue(); return; } }
-    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-id', 'class'] });
+      var cls = false;
+      for (var i = 0; i < ms.length; i++) {
+        var t = ms[i].target;
+        if (t.closest && t.closest('#sbxW')) { continue; }
+        if (ms[i].type === 'attributes' && ms[i].attributeName === 'class') {
+          if (!OWN.test(typeof t.className === 'string' ? t.className : '') && !OWN.test(ms[i].oldValue || '')) { cls = true; }
+          continue;
+        }
+        queue(); return;
+      }
+      if (cls && !clsT) { clsT = setTimeout(function () { clsT = null; queue(); }, 400); }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['data-id', 'class'] });
     setInterval(function () { loadR(false); queue(); }, 60000);
     loadR(true);
     queue();

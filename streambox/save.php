@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/week_lib.php';   // wk_web_dir_ok
 $sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 function sb_out($ok, $extra = []) {
@@ -60,7 +61,7 @@ if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $
 $sonUrl = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['son_url'] ?? ''))), '/');
 if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => $sbx_T('save.err_son_url')]); }
 $wkWebDir = rtrim(trim((string)($_POST['wk_web_dir'] ?? '/mnt/cache/docker/streambox/web')), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir) || preg_match('#(^|/)\.\.?(/|$)#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
+if (!wk_web_dir_ok($wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
 $wkDelay = (string)($_POST['wk_delay'] ?? 'series');
 if (!in_array($wkDelay, ['series', 'idx', 'all'], true)) { $wkDelay = 'series'; }
 

@@ -95,7 +95,7 @@
     var res = [];
     out.forEach(function (g) {
       if (g.length < GROUP_MIN) { Array.prototype.push.apply(res, g); return; }
-      g = g.slice().sort(function (a, b) { return a.c < b.c ? -1 : a.c > b.c ? 1 : 0; });
+      g = g.slice().sort(function (a, b) { return +a.c.slice(4) - +b.c.slice(4); });   // by episode number: E99 before E100 (item 104)
       var f = g[0], l = g[g.length - 1], nf = +f.c.slice(4), nl = +l.c.slice(4);
       var run = nl - nf + 1 === g.length;   // S02E01–E08; with gaps: S02 · 3 epizód
       res.push({ s: f.s, c: run ? f.c + '–' + l.c.slice(3) : f.c.slice(0, 3), t: run ? '' : g.length + ' epizód', air: Math.min.apply(null, g.map(function (e) { return e.air; })),

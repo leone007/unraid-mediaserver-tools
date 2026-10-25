@@ -12,7 +12,7 @@ $cfg = wk_cfg();
 $jxOn = (string)($cfg['jx_on'] ?? '1') === '1';
 if ((string)$cfg['wk_web'] !== '1' && !$jxOn) { exit(0); }
 $dir = rtrim(trim((string)$cfg['wk_web_dir']), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir) || preg_match('#(^|/)\.\.?(/|$)#', $dir)) { exit(0); }
+if (!wk_web_dir_ok($dir)) { exit(0); }
 // The pool or share is mounted only while the array runs: never create its top folder (/mnt/cache) ourselves
 $top = '/mnt/' . explode('/', substr($dir, 5))[0];
 if (!is_dir($top)) { exit(0); }
@@ -36,17 +36,30 @@ wk_tz();
 $now = time();
 jx_run($cfg, $dir, $now);
 if ((string)$cfg['wk_web'] !== '1') { ww_put($dir . '/week.json', json_encode(['ok' => false, 'gen' => $now, 'off' => true])); exit(0); }
-$w = wk_build($cfg, $now);
+// the tile's list when it is under a minute old (week.php writes it), else a fresh one (item 104: Sonarr was asked twice)
+$c = is_file(WK_CACHE) ? json_decode((string)@file_get_contents(WK_CACHE), true) : null;
+if (is_array($c) && ($now - (int)($c['t'] ?? 0)) < 60 && is_array($c['w'] ?? null) && $now < (int)($c['w']['to'] ?? 0)) { $w = $c['w']; }
+else {
+    $w = wk_build($cfg, $now);
+    if ($w['ok']) { @file_put_contents(WK_CACHE, json_encode(['t' => $now, 'w' => $w], JSON_INVALID_UTF8_SUBSTITUTE)); }
+}
 $jf = $dir . '/week.json';
 if (!$w['ok']) {
-    // Sonarr hiccup: keep the last list while its week lasts, then say there is nothing to show
+    // Sonarr hiccup: keep the last list while its week lasts, then say there is nothing to show; without Sonarr settings
+    // (removed, or the source changed) the old list goes at once, as on the tile (item 104)
     $old = is_file($jf) ? json_decode((string)@file_get_contents($jf), true) : null;
-    if (is_array($old) && !empty($old['ok']) && $now < (int)($old['to'] ?? 0)) { exit(0); }
+    if (($w['error'] ?? '') !== 'nosonarr' && is_array($old) && !empty($old['ok']) && $now < (int)($old['to'] ?? 0)) { exit(0); }
     ww_put($jf, json_encode(['ok' => false, 'gen' => $now]));
     exit(0);
 }
 
-$ser = $w['counts']['all'] ? wk_jf_series($cfg) : null;
+// Jellyfin's series list changes rarely: asked at most every 15 minutes (it was every 2 minutes)
+$ser = null;
+if ($w['counts']['all']) {
+    $sf = '/tmp/streambox_jfseries.json'; $sc = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : null;
+    if (is_array($sc) && $now - (int)($sc['t'] ?? 0) < 900 && is_array($sc['m'] ?? null)) { $ser = $sc['m']; }
+    else { $ser = wk_jf_series($cfg); if (is_array($ser)) { @file_put_contents($sf, json_encode(['t' => $now, 'm' => $ser], JSON_INVALID_UTF8_SUBSTITUTE)); } }
+}
 $eps = [];
 foreach ($w['days'] as $day) {
     foreach ($day['rows'] as $r) {

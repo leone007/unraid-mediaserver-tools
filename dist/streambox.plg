@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zh">
+<!ENTITY version   "2026.10.14zi">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- This week: removing the Sonarr settings clears the Jellyfin row at once; same-day episodes sort by number (E99 before E100); Sonarr and Jellyfin are asked less often; the Jellyfin page extras react less to style changes, so scrolling is smoother
+###2026.10.14zh
 - Jellyfin This week row: without a list it asks again every 15 s, not on every page change; the IMDb link and rating on a details page show up once the ratings have loaded, without a reload
 ###2026.10.14zg
 - This week: a redirect is followed only to the same host, so the Sonarr API key is never sent to another host
@@ -1548,6 +1550,7 @@ echo json_encode(['ok' => true, 'gpu' => $gpu, 'cpu' => $cpu, 'gpu_note' => $gpu
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/week_lib.php';   // wk_web_dir_ok
 $sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the settings page
 
 function sb_out($ok, $extra = []) {
@@ -1606,7 +1609,7 @@ if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $
 $sonUrl = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['son_url'] ?? ''))), '/');
 if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => $sbx_T('save.err_son_url')]); }
 $wkWebDir = rtrim(trim((string)($_POST['wk_web_dir'] ?? '/mnt/cache/docker/streambox/web')), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir) || preg_match('#(^|/)\.\.?(/|$)#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
+if (!wk_web_dir_ok($wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
 $wkDelay = (string)($_POST['wk_delay'] ?? 'series');
 if (!in_array($wkDelay, ['series', 'idx', 'all'], true)) { $wkDelay = 'series'; }
 
@@ -1791,6 +1794,9 @@ if ($s !== null && $s['total_wh'] !== null) { sb_energy_month_wh($s['total_wh'])
 
 const WK_CACHE = '/tmp/streambox_week.json';
 const WK_DELAY = '/tmp/streambox_delay.json';
+
+// the This week web folder: under /mnt, plain names, no . or .. part (save.php and week_web.php use the same rule)
+function wk_web_dir_ok($dir) { return (bool)preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir) && !preg_match('#(^|/)\.\.?(/|$)#', $dir); }
 
 function wk_cfg() {
     $c = [
@@ -2175,7 +2181,7 @@ $cfg = wk_cfg();
 $jxOn = (string)($cfg['jx_on'] ?? '1') === '1';
 if ((string)$cfg['wk_web'] !== '1' && !$jxOn) { exit(0); }
 $dir = rtrim(trim((string)$cfg['wk_web_dir']), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir) || preg_match('#(^|/)\.\.?(/|$)#', $dir)) { exit(0); }
+if (!wk_web_dir_ok($dir)) { exit(0); }
 // The pool or share is mounted only while the array runs: never create its top folder (/mnt/cache) ourselves
 $top = '/mnt/' . explode('/', substr($dir, 5))[0];
 if (!is_dir($top)) { exit(0); }
@@ -2199,17 +2205,30 @@ wk_tz();
 $now = time();
 jx_run($cfg, $dir, $now);
 if ((string)$cfg['wk_web'] !== '1') { ww_put($dir . '/week.json', json_encode(['ok' => false, 'gen' => $now, 'off' => true])); exit(0); }
-$w = wk_build($cfg, $now);
+// the tile's list when it is under a minute old (week.php writes it), else a fresh one (item 104: Sonarr was asked twice)
+$c = is_file(WK_CACHE) ? json_decode((string)@file_get_contents(WK_CACHE), true) : null;
+if (is_array($c) && ($now - (int)($c['t'] ?? 0)) < 60 && is_array($c['w'] ?? null) && $now < (int)($c['w']['to'] ?? 0)) { $w = $c['w']; }
+else {
+    $w = wk_build($cfg, $now);
+    if ($w['ok']) { @file_put_contents(WK_CACHE, json_encode(['t' => $now, 'w' => $w], JSON_INVALID_UTF8_SUBSTITUTE)); }
+}
 $jf = $dir . '/week.json';
 if (!$w['ok']) {
-    // Sonarr hiccup: keep the last list while its week lasts, then say there is nothing to show
+    // Sonarr hiccup: keep the last list while its week lasts, then say there is nothing to show; without Sonarr settings
+    // (removed, or the source changed) the old list goes at once, as on the tile (item 104)
     $old = is_file($jf) ? json_decode((string)@file_get_contents($jf), true) : null;
-    if (is_array($old) && !empty($old['ok']) && $now < (int)($old['to'] ?? 0)) { exit(0); }
+    if (($w['error'] ?? '') !== 'nosonarr' && is_array($old) && !empty($old['ok']) && $now < (int)($old['to'] ?? 0)) { exit(0); }
     ww_put($jf, json_encode(['ok' => false, 'gen' => $now]));
     exit(0);
 }
 
-$ser = $w['counts']['all'] ? wk_jf_series($cfg) : null;
+// Jellyfin's series list changes rarely: asked at most every 15 minutes (it was every 2 minutes)
+$ser = null;
+if ($w['counts']['all']) {
+    $sf = '/tmp/streambox_jfseries.json'; $sc = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : null;
+    if (is_array($sc) && $now - (int)($sc['t'] ?? 0) < 900 && is_array($sc['m'] ?? null)) { $ser = $sc['m']; }
+    else { $ser = wk_jf_series($cfg); if (is_array($ser)) { @file_put_contents($sf, json_encode(['t' => $now, 'm' => $ser], JSON_INVALID_UTF8_SUBSTITUTE)); } }
+}
 $eps = [];
 foreach ($w['days'] as $day) {
     foreach ($day['rows'] as $r) {
@@ -2333,7 +2352,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     var res = [];
     out.forEach(function (g) {
       if (g.length < GROUP_MIN) { Array.prototype.push.apply(res, g); return; }
-      g = g.slice().sort(function (a, b) { return a.c < b.c ? -1 : a.c > b.c ? 1 : 0; });
+      g = g.slice().sort(function (a, b) { return +a.c.slice(4) - +b.c.slice(4); });   // by episode number: E99 before E100 (item 104)
       var f = g[0], l = g[g.length - 1], nf = +f.c.slice(4), nl = +l.c.slice(4);
       var run = nl - nf + 1 === g.length;   // S02E01–E08; with gaps: S02 · 3 epizód
       res.push({ s: f.s, c: run ? f.c + '–' + l.c.slice(3) : f.c.slice(0, 3), t: run ? '' : g.length + ' epizód', air: Math.min.apply(null, g.map(function (e) { return e.air; })),
@@ -5604,9 +5623,22 @@ function jx_run($cfg, $dir, $now) {
       if (t && !t.closest('#sbxW') && !t.classList.contains('sbx-nav')) { closeW(); }
     }, true);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.getElementById('sbxW')) { closeW(); } });
+    // new nodes and data-id run a tick at once; a class change (a page shown or hidden, the active menu link) at most every
+    // 400 ms, and never our own elements or ripple and hover classes (item 104: a full tick on every scroll frame)
+    var clsT = null, OWN = /\b(sbx-[\w-]+|MuiTouchRipple[\w-]*|Mui-focusVisible)\b/;
     new MutationObserver(function (ms) {
-      for (var i = 0; i < ms.length; i++) { if (!ms[i].target.closest || !ms[i].target.closest('#sbxW')) { queue(); return; } }
-    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-id', 'class'] });
+      var cls = false;
+      for (var i = 0; i < ms.length; i++) {
+        var t = ms[i].target;
+        if (t.closest && t.closest('#sbxW')) { continue; }
+        if (ms[i].type === 'attributes' && ms[i].attributeName === 'class') {
+          if (!OWN.test(typeof t.className === 'string' ? t.className : '') && !OWN.test(ms[i].oldValue || '')) { cls = true; }
+          continue;
+        }
+        queue(); return;
+      }
+      if (cls && !clsT) { clsT = setTimeout(function () { clsT = null; queue(); }, 400); }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['data-id', 'class'] });
     setInterval(function () { loadR(false); queue(); }, 60000);
     loadR(true);
     queue();

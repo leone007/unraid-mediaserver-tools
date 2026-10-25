@@ -6,6 +6,9 @@
 const WK_CACHE = '/tmp/streambox_week.json';
 const WK_DELAY = '/tmp/streambox_delay.json';
 
+// the This week web folder: under /mnt, plain names, no . or .. part (save.php and week_web.php use the same rule)
+function wk_web_dir_ok($dir) { return (bool)preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir) && !preg_match('#(^|/)\.\.?(/|$)#', $dir); }
+
 function wk_cfg() {
     $c = [
         'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '',
