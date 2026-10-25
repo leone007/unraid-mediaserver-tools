@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zi">
+<!ENTITY version   "2026.10.14zj">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Jellyfin This week row: the texts follow Jellyfin's language (English or Hungarian), day and month names come from the browser; the Live TV Program line on the tile is translated
+###2026.10.14zi
 - This week: removing the Sonarr settings clears the Jellyfin row at once; same-day episodes sort by number (E99 before E100); Sonarr and Jellyfin are asked less often; the Jellyfin page extras react less to style changes, so scrolling is smoother
 ###2026.10.14zh
 - Jellyfin This week row: without a list it asks again every 15 s, not on every page change; the IMDb link and rating on a details page show up once the ratings have loaded, without a reload
@@ -1344,7 +1346,7 @@ foreach ($sessions as $s) {
             $pct   = max(0, min(1, ($nowTs - $st) / ($en - $st)));
             $left  = max(0, $en - $nowTs);
             $epg   = true;
-            $info[] = 'Program: ' . date('H:i', $st) . " \u{2013} " . date('H:i', $en);
+            $info[] = $sbx_T('ww.program', ['t' => date('H:i', $st) . " \u{2013} " . date('H:i', $en)]);
         }
     }
     $dev = (string)($s['DeviceName'] ?? '?');
@@ -2197,9 +2199,20 @@ function ww_put($f, $data) {
     @rename($f . '.tmp', $f);
 }
 
-// The renderer ships with the plugin; copy it when it changed
+// The renderer ships with the plugin; copy it when it changed, with its texts (ww.* of the dictionary, English and Hungarian)
+// in front: the row follows Jellyfin's language (item 104)
 $js = (string)@file_get_contents(__DIR__ . '/week_web.js');
-if ($js !== '') { ww_put($dir . '/week.js', $js); }
+if ($js !== '') {
+    $t = [];
+    foreach (['en', 'hu'] as $lc) {
+        $j = json_decode((string)@file_get_contents(__DIR__ . '/lang/' . $lc . '.json'), true);
+        foreach ((array)$j as $k => $v) {
+            if (strpos((string)$k, 'ww.') !== 0 || !is_array($v)) { continue; }
+            foreach (['text', 'one', 'other'] as $x) { if (isset($v[$x]) && trim((string)$v[$x]) !== '') { $t[$lc][$k][$x] = (string)$v[$x]; } }
+        }
+    }
+    ww_put($dir . '/week.js', 'window.__sbxW=' . json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . ";\n" . $js);
+}
 
 wk_tz();
 $now = time();
@@ -2255,7 +2268,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
 </FILE>
 
 <FILE Name="&plugdir;/week_web.js">
-<INLINE><![CDATA[/* Streambox: "Ezen a héten" row on Jellyfin's home page (web client and Jellyfin Desktop).
+<INLINE><![CDATA[/* Streambox: "This week" ("Ezen a héten") row on Jellyfin's home page (web client and Jellyfin Desktop).
    Loaded by the JavaScript Injector plugin; reads week.json next to this file (written by the Streambox plugin every 2 minutes).
    Two views: calendar (seven day cards) and posters (one poster row with day separators); the default comes from the
    Streambox settings, each viewer can switch with the two icons next to the title (remembered in this browser).
@@ -2270,8 +2283,22 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
   var ROOT = new URL('../../', new URL(BASE, location.href)).href;   // the Jellyfin server root (/web/streambox/ -> /)
   // IMDb ratings and the Watched menu (extras.js, written by Streambox; a stub when they are switched off)
   (function () { var x = document.createElement('script'); x.src = BASE + 'extras.js?v=' + Date.now(); document.head.appendChild(x); })();
-  var DAYS = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
-  var MON = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.'];
+  // ---- texts: window.__sbxW (en and hu, put before this file by Streambox), in Jellyfin's language (item 104: they were Hungarian
+  // for everyone); day and month names come from the browser
+  function lang() {
+    var l = (document.documentElement.getAttribute('lang') || navigator.language || 'en').slice(0, 2).toLowerCase();
+    return window.__sbxW && window.__sbxW[l] ? l : 'en';
+  }
+  function T(k, v) {
+    var d = window.__sbxW || {}, e = (d[lang()] || {})[k] || (d.en || {})[k], s;
+    if (!e) { return k; }
+    v = v || {};
+    if (e.other !== undefined) { s = (Math.abs(+v.n || 0) === 1 && e.one !== undefined) ? e.one : e.other; } else { s = e.text || ''; }
+    return s.replace(/\{([a-z0-9_]+)\}/g, function (a, b) { return Object.prototype.hasOwnProperty.call(v, b) ? String(v[b]) : a; });
+  }
+  function cap(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
+  function dayName(d) { try { return cap(new Date(2024, 0, 1 + d).toLocaleDateString(lang(), { weekday: 'long' })); } catch (x) { return String(d + 1); } }   // 2024-01-01 is a Monday
+  function dateShort(dt) { try { return dt.toLocaleDateString(lang(), { month: 'short', day: 'numeric' }); } catch (x) { return (dt.getMonth() + 1) + '/' + dt.getDate(); } }
   var KEY = 'streamboxWeekView';
   var data = null, shown = [], lastFetch = 0, busy = false;   // shown: what the row lists (episodes and season cards)
 
@@ -2335,7 +2362,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
   function dur(s) {
     s = Math.max(0, Math.round(s / 60));
     var d = Math.floor(s / 1440), h = Math.floor(s % 1440 / 60), m = s % 60;
-    return d ? d + 'n ' + h + 'ó' : (h ? h + 'ó ' + m + 'p' : m + 'p');
+    return d ? T('ww.dur_dh', { d: d, h: h }) : (h ? T('ww.dur_hm', { h: h, m: m }) : T('ww.dur_m', { m: m }));
   }
   function dayIdx(ts) { return (new Date(ts * 1000).getDay() + 6) % 7; }   // Monday 0 .. Sunday 6
 
@@ -2355,7 +2382,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
       g = g.slice().sort(function (a, b) { return +a.c.slice(4) - +b.c.slice(4); });   // by episode number: E99 before E100 (item 104)
       var f = g[0], l = g[g.length - 1], nf = +f.c.slice(4), nl = +l.c.slice(4);
       var run = nl - nf + 1 === g.length;   // S02E01–E08; with gaps: S02 · 3 epizód
-      res.push({ s: f.s, c: run ? f.c + '–' + l.c.slice(3) : f.c.slice(0, 3), t: run ? '' : g.length + ' epizód', air: Math.min.apply(null, g.map(function (e) { return e.air; })),
+      res.push({ s: f.s, c: run ? f.c + '–' + l.c.slice(3) : f.c.slice(0, 3), t: run ? '' : T('ww.n_eps', { n: g.length }), air: Math.min.apply(null, g.map(function (e) { return e.air; })),
         exp: f.exp, st: 'grp', pct: null, 'new': g.some(function (e) { return e['new']; }), ep: '', sid: f.sid, img: f.img, g: g });
     });
     return res.sort(function (a, b) { return a.air - b.air || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0); });
@@ -2366,24 +2393,24 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     if (e.g) { return groupStatus(e.g, now); }
     var target = e.exp !== null ? e.exp : e.air;
     switch (e.st) {
-      case 'jf': return ['Elérhető', 'sbw-ok'];
-      case 'file': case 'scan': case 'imp': return ['Hamarosan elérhető', 'sbw-proc'];
-      case 'dl': return ['Letöltés ' + (e.pct !== null ? e.pct + '%' : ''), 'sbw-dl'];
-      case 'grab': return ['Letöltés indul', 'sbw-dl'];
-      case 'pause': return ['Szünetel', 'sbw-wait'];
-      case 'fail': return ['Letöltési hiba', 'sbw-fail'];
-      case 'late': return ['Késik ' + dur(now - target), 'sbw-late'];
+      case 'jf': return [T('ww.st_ok'), 'sbw-ok'];
+      case 'file': case 'scan': case 'imp': return [T('ww.st_soon'), 'sbw-proc'];
+      case 'dl': return [e.pct !== null ? T('ww.st_dl_p', { p: e.pct }) : T('ww.st_dl'), 'sbw-dl'];
+      case 'grab': return [T('ww.st_grab'), 'sbw-dl'];
+      case 'pause': return [T('ww.st_pause'), 'sbw-wait'];
+      case 'fail': return [T('ww.st_fail'), 'sbw-fail'];
+      case 'late': return [T('ww.st_late', { d: dur(now - target) }), 'sbw-late'];
       default:
-        if (target > now) { return [(e.exp !== null ? '' : 'Adás ') + dur(target - now) + ' múlva', 'sbw-wait']; }
-        return ['Bármikor jöhet', 'sbw-wait'];
+        if (target > now) { return [T(e.exp !== null ? 'ww.st_in' : 'ww.st_air_in', { d: dur(target - now) }), 'sbw-wait']; }
+        return [T('ww.st_any'), 'sbw-wait'];
     }
   }
 
   // One status for a season card: all available, how many are available, else the most urgent state of its episodes
   function groupStatus(g, now) {
     var n = g.filter(function (e) { return e.st === 'jf'; }).length;
-    if (n === g.length) { return ['Elérhető', 'sbw-ok']; }
-    if (n) { return [n + '/' + g.length + ' elérhető', 'sbw-ok']; }
+    if (n === g.length) { return [T('ww.st_ok'), 'sbw-ok']; }
+    if (n) { return [T('ww.n_of_ok', { n: n, m: g.length }), 'sbw-ok']; }
     var order = ['fail', 'dl', 'grab', 'imp', 'file', 'scan', 'pause', 'late'];
     for (var i = 0; i < order.length; i++) {
       var m = g.filter(function (e) { return e.st === order[i]; });
@@ -2408,11 +2435,11 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
   function bg(node, src) { if (src) { node.style.backgroundImage = 'url("' + src.replace(/"/g, '%22') + '")'; } }
   function tip(e) {
     if (e.g) {
-      return e.s + ' · ' + e.c + ' · ' + e.g.length + ' epizód\nAdás: ' + DAYS[dayIdx(e.air)].toLowerCase() + ' ' + hm(e.air) + '\n' +
+      return e.s + ' · ' + e.c + ' · ' + T('ww.n_eps', { n: e.g.length }) + '\n' + T('ww.tip_air', { d: dayName(dayIdx(e.air)).toLowerCase(), t: hm(e.air) }) + '\n' +
         e.g.map(function (x) { return x.c + (x.t ? ' · ' + x.t : '') + ' · ' + status(x, Date.now() / 1000)[0]; }).join('\n');
     }
-    return e.s + ' · ' + e.c + (e.t ? ' · ' + e.t : '') + '\nAdás: ' + DAYS[dayIdx(e.air)].toLowerCase() + ' ' + hm(e.air) +
-      (e.exp !== null ? '\nVárható: ~' + hm(e.exp) : '');
+    return e.s + ' · ' + e.c + (e.t ? ' · ' + e.t : '') + '\n' + T('ww.tip_air', { d: dayName(dayIdx(e.air)).toLowerCase(), t: hm(e.air) }) +
+      (e.exp !== null ? '\n' + T('ww.tip_exp', { t: hm(e.exp) }) : '');
   }
   function stNode(tag, cls, e, now, i) {
     var st = status(e, now);
@@ -2437,8 +2464,8 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     var ready = 0, late = 0;
     w.eps.forEach(function (e) { if (e.st === 'jf') { ready++; } if (e.st === 'late') { late++; } });
     var f = new Date(w.from * 1000), t = new Date(f.getFullYear(), f.getMonth(), f.getDate() + 6);
-    var range = MON[f.getMonth()] + ' ' + f.getDate() + '–' + (f.getMonth() !== t.getMonth() ? MON[t.getMonth()] + ' ' : '') + t.getDate() + '.';
-    return [range + ' · ' + w.eps.length + ' epizód · ' + ready + ' elérhető', late];
+    var range = dateShort(f) + '–' + (f.getMonth() !== t.getMonth() ? dateShort(t) : T('ww.day_only', { d: t.getDate() }));
+    return [range + ' · ' + T('ww.n_eps', { n: w.eps.length }) + ' · ' + T('ww.n_ok', { n: ready }), late];
   }
 
   function buildGrid(w, now) {
@@ -2449,7 +2476,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
       var eps = [];
       shown.forEach(function (e, i) { if (dayIdx(e.air) === d) { eps.push([e, i]); } });
       var box = el('div', 'sbw-box');
-      if (!eps.length) { box.appendChild(el('div', 'sbw-none', 'nincs epizód')); }
+      if (!eps.length) { box.appendChild(el('div', 'sbw-none', T('ww.none'))); }
       eps.forEach(function (x) {
         var e = x[0], href = link(e);
         var row = el(href ? 'a' : 'div', 'sbw-ep');
@@ -2457,7 +2484,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
         row.title = tip(e);
         var nm = el('div', 'sbw-n');
         nm.appendChild(el('span', '', e.s));
-        if (e['new']) { nm.appendChild(el('span', 'sbw-new', 'ÚJ')); }
+        if (e['new']) { nm.appendChild(el('span', 'sbw-new', T('ww.new'))); }
         row.appendChild(nm);
         row.appendChild(el('div', 'sbw-s sbw-c', e.c + ' · ' + hm(e.air)));
         row.appendChild(stNode('div', 'sbw-st', e, now, x[1]));
@@ -2468,8 +2495,8 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
       var n = 0, all = 0, dt = new Date(w.from * 1000);
       eps.forEach(function (x) { (x[0].g || [x[0]]).forEach(function (e) { all++; if (e.st === 'jf') { n++; } }); });
       dt = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + d);
-      col.appendChild(el('div', 'sbw-t1', thisWeek && d === today ? 'Ma · ' + DAYS[d] : DAYS[d]));
-      col.appendChild(el('div', 'sbw-t2', MON[dt.getMonth()] + ' ' + dt.getDate() + '.' + (all ? ' · ' + n + '/' + all + ' elérhető' : '')));
+      col.appendChild(el('div', 'sbw-t1', thisWeek && d === today ? T('ww.today', { d: dayName(d) }) : dayName(d)));
+      col.appendChild(el('div', 'sbw-t2', dateShort(dt) + (all ? ' · ' + T('ww.n_of_ok', { n: n, m: all }) : '')));
       grid.appendChild(col);
     }
     return grid;
@@ -2481,7 +2508,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     shown.forEach(function (e, i) {
       var d = dayIdx(e.air);
       if (d !== last) {
-        row.appendChild(el('div', 'sbw-day' + (thisWeek && d === today ? ' sbw-today' : ''), (thisWeek && d === today ? 'Ma · ' : '') + DAYS[d]));
+        row.appendChild(el('div', 'sbw-day' + (thisWeek && d === today ? ' sbw-today' : ''), thisWeek && d === today ? T('ww.today', { d: dayName(d) }) : dayName(d)));
         last = d;
       }
       var href = link(e);
@@ -2491,7 +2518,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
       var p = el('div', 'sbw-pos');
       bg(p, thumb(e, 400));
       p.appendChild(el('span', 'sbw-when', hm(e.air)));
-      if (e['new']) { p.appendChild(el('span', 'sbw-new', 'ÚJ')); }
+      if (e['new']) { p.appendChild(el('span', 'sbw-new', T('ww.new'))); }
       p.appendChild(stNode('span', 'sbw-chip', e, now, i));
       c.appendChild(p);
       c.appendChild(el('div', 'sbw-t1', e.s));
@@ -2507,11 +2534,11 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     var box = el('div', 'verticalSection sbw');
     box.id = 'sbWeek';
     var head = el('div', 'sectionTitleContainer sectionTitleContainer-cards padded-left padded-right');
-    var h2 = el('h2', 'sectionTitle sectionTitle-cards', 'Ezen a héten');
+    var h2 = el('h2', 'sectionTitle sectionTitle-cards', T('ww.title'));
     // like Jellyfin's own rows: the title with a chevron; here it switches between the calendar and the posters view
     var more = el('button', 'more button-flat button-flat-mini sectionTitleTextButton emby-button');
     more.type = 'button';
-    more.title = v === 'row' ? 'Naptár nézet' : 'Poszter nézet';
+    more.title = v === 'row' ? T('ww.view_cal') : T('ww.view_poster');
     more.appendChild(h2);
     var ic = el('span', 'material-icons chevron_right');
     ic.setAttribute('aria-hidden', 'true');
@@ -2520,10 +2547,10 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     head.appendChild(more);
     var mt = metaText(w);
     var meta = el('span', 'sbw-meta', mt[0]);
-    if (mt[1]) { meta.appendChild(document.createTextNode(' · ')); meta.appendChild(el('b', '', mt[1] + ' késik')); }
+    if (mt[1]) { meta.appendChild(document.createTextNode(' · ')); meta.appendChild(el('b', '', T('ww.n_late', { n: mt[1] }))); }
     head.appendChild(meta);
     var vs = el('span', 'sbw-views');
-    [['grid', 'calendar_view_week', 'Naptár nézet'], ['row', 'view_carousel', 'Poszter nézet']].forEach(function (b) {
+    [['grid', 'calendar_view_week', T('ww.view_cal')], ['row', 'view_carousel', T('ww.view_poster')]].forEach(function (b) {
       var bt = el('button', b[0] === v ? 'on' : '');
       bt.type = 'button';
       bt.title = b[2];
@@ -4000,6 +4027,119 @@ function mt_i18n_js($dir, $name, $only = null) {
   "one": "Average IMDb rating of the {n} rated episode of this season",
   "other": "Average IMDb rating of the {n} rated episodes of this season",
   "note": "tooltip of the IMDb average badge on a season's poster (IMDb rates episodes, not seasons); {n} = episodes with an IMDb rating."
+ },
+ "ww.title": {
+  "text": "This week",
+  "note": "Jellyfin home page, This week row: the row title."
+ },
+ "ww.view_cal": {
+  "text": "Calendar view",
+  "note": "Jellyfin home page, This week row: tooltip of the view switch (seven day cards)."
+ },
+ "ww.view_poster": {
+  "text": "Poster view",
+  "note": "Jellyfin home page, This week row: tooltip of the view switch (one poster row)."
+ },
+ "ww.n_eps": {
+  "one": "{n} episode",
+  "other": "{n} episodes",
+  "note": "Jellyfin home page, This week row: number of episodes (season card, header)."
+ },
+ "ww.n_ok": {
+  "text": "{n} available",
+  "note": "Jellyfin home page, This week row: header: episodes already in Jellyfin."
+ },
+ "ww.n_of_ok": {
+  "text": "{n}/{m} available",
+  "note": "Jellyfin home page, This week row: {n} of {m} episodes are in Jellyfin (day or season card)."
+ },
+ "ww.n_late": {
+  "text": "{n} late",
+  "note": "Jellyfin home page, This week row: header: episodes later than expected."
+ },
+ "ww.day_only": {
+  "text": "{d}",
+  "note": "Jellyfin home page, This week row: end of the week range when the month is the same (Oct 20–{d}); Hungarian adds a dot."
+ },
+ "ww.today": {
+  "text": "Today · {d}",
+  "note": "Jellyfin home page, This week row: day heading of today; {d} the day name."
+ },
+ "ww.none": {
+  "text": "no episodes",
+  "note": "Jellyfin home page, This week row: an empty day card."
+ },
+ "ww.new": {
+  "text": "NEW",
+  "note": "Jellyfin home page, This week row: badge of a season premiere or a new series (short, upper case)."
+ },
+ "ww.st_ok": {
+  "text": "Available",
+  "note": "Jellyfin home page, This week row: status: in Jellyfin."
+ },
+ "ww.st_soon": {
+  "text": "Available soon",
+  "note": "Jellyfin home page, This week row: status: downloaded, being imported."
+ },
+ "ww.st_dl": {
+  "text": "Downloading",
+  "note": "Jellyfin home page, This week row: status without a percentage."
+ },
+ "ww.st_dl_p": {
+  "text": "Downloading {p}%",
+  "note": "Jellyfin home page, This week row: status; {p} percent done."
+ },
+ "ww.st_grab": {
+  "text": "Download starting",
+  "note": "Jellyfin home page, This week row: status: grabbed, not downloading yet."
+ },
+ "ww.st_pause": {
+  "text": "Paused",
+  "note": "Jellyfin home page, This week row: status: the download is paused."
+ },
+ "ww.st_fail": {
+  "text": "Download error",
+  "note": "Jellyfin home page, This week row: status."
+ },
+ "ww.st_late": {
+  "text": "Late {d}",
+  "note": "Jellyfin home page, This week row: status; {d} how late (e.g. 2h 5m)."
+ },
+ "ww.st_in": {
+  "text": "in {d}",
+  "note": "Jellyfin home page, This week row: status: expected in {d} (the usual delay after airing included)."
+ },
+ "ww.st_air_in": {
+  "text": "Airs in {d}",
+  "note": "Jellyfin home page, This week row: status: the episode airs in {d}."
+ },
+ "ww.st_any": {
+  "text": "Any time now",
+  "note": "Jellyfin home page, This week row: status: aired, the usual delay has not passed yet."
+ },
+ "ww.tip_air": {
+  "text": "Airs: {d} {t}",
+  "note": "Jellyfin home page, This week row: tooltip line; {d} day name, {t} time."
+ },
+ "ww.tip_exp": {
+  "text": "Expected: ~{t}",
+  "note": "Jellyfin home page, This week row: tooltip line; {t} the expected time."
+ },
+ "ww.dur_dh": {
+  "text": "{d}d {h}h",
+  "note": "Jellyfin home page, This week row: a duration in days and hours (short)."
+ },
+ "ww.dur_hm": {
+  "text": "{h}h {m}m",
+  "note": "Jellyfin home page, This week row: a duration in hours and minutes (short)."
+ },
+ "ww.dur_m": {
+  "text": "{m}m",
+  "note": "Jellyfin home page, This week row: a duration in minutes (short)."
+ },
+ "ww.program": {
+  "text": "Program: {t}",
+  "note": "Dashboard tile, Live TV stream tooltip: the programme time."
  }
 }
 ]]></INLINE>
@@ -4825,6 +4965,91 @@ function mt_i18n_js($dir, $name, $only = null) {
  "jx.season_avg": {
   "one": "Az évad {n} IMDb-n pontozott részének átlaga",
   "other": "Az évad {n} IMDb-n pontozott részének átlaga"
+ },
+ "ww.title": {
+  "text": "Ezen a héten"
+ },
+ "ww.view_cal": {
+  "text": "Naptár nézet"
+ },
+ "ww.view_poster": {
+  "text": "Poszter nézet"
+ },
+ "ww.n_eps": {
+  "one": "{n} epizód",
+  "other": "{n} epizód"
+ },
+ "ww.n_ok": {
+  "text": "{n} elérhető"
+ },
+ "ww.n_of_ok": {
+  "text": "{n}/{m} elérhető"
+ },
+ "ww.n_late": {
+  "text": "{n} késik"
+ },
+ "ww.day_only": {
+  "text": "{d}."
+ },
+ "ww.today": {
+  "text": "Ma · {d}"
+ },
+ "ww.none": {
+  "text": "nincs epizód"
+ },
+ "ww.new": {
+  "text": "ÚJ"
+ },
+ "ww.st_ok": {
+  "text": "Elérhető"
+ },
+ "ww.st_soon": {
+  "text": "Hamarosan elérhető"
+ },
+ "ww.st_dl": {
+  "text": "Letöltés"
+ },
+ "ww.st_dl_p": {
+  "text": "Letöltés {p}%"
+ },
+ "ww.st_grab": {
+  "text": "Letöltés indul"
+ },
+ "ww.st_pause": {
+  "text": "Szünetel"
+ },
+ "ww.st_fail": {
+  "text": "Letöltési hiba"
+ },
+ "ww.st_late": {
+  "text": "Késik {d}"
+ },
+ "ww.st_in": {
+  "text": "{d} múlva"
+ },
+ "ww.st_air_in": {
+  "text": "Adás {d} múlva"
+ },
+ "ww.st_any": {
+  "text": "Bármikor jöhet"
+ },
+ "ww.tip_air": {
+  "text": "Adás: {d} {t}"
+ },
+ "ww.tip_exp": {
+  "text": "Várható: ~{t}"
+ },
+ "ww.dur_dh": {
+  "text": "{d}n {h}ó"
+ },
+ "ww.dur_hm": {
+  "text": "{h}ó {m}p"
+ },
+ "ww.dur_m": {
+  "text": "{m}p"
+ },
+ "ww.program": {
+  "text": "Műsor: {t}"
  }
 }
 ]]></INLINE>

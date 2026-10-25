@@ -1,4 +1,4 @@
-/* Streambox: "Ezen a héten" row on Jellyfin's home page (web client and Jellyfin Desktop).
+/* Streambox: "This week" ("Ezen a héten") row on Jellyfin's home page (web client and Jellyfin Desktop).
    Loaded by the JavaScript Injector plugin; reads week.json next to this file (written by the Streambox plugin every 2 minutes).
    Two views: calendar (seven day cards) and posters (one poster row with day separators); the default comes from the
    Streambox settings, each viewer can switch with the two icons next to the title (remembered in this browser).
@@ -13,8 +13,22 @@
   var ROOT = new URL('../../', new URL(BASE, location.href)).href;   // the Jellyfin server root (/web/streambox/ -> /)
   // IMDb ratings and the Watched menu (extras.js, written by Streambox; a stub when they are switched off)
   (function () { var x = document.createElement('script'); x.src = BASE + 'extras.js?v=' + Date.now(); document.head.appendChild(x); })();
-  var DAYS = ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
-  var MON = ['jan.', 'febr.', 'márc.', 'ápr.', 'máj.', 'jún.', 'júl.', 'aug.', 'szept.', 'okt.', 'nov.', 'dec.'];
+  // ---- texts: window.__sbxW (en and hu, put before this file by Streambox), in Jellyfin's language (item 104: they were Hungarian
+  // for everyone); day and month names come from the browser
+  function lang() {
+    var l = (document.documentElement.getAttribute('lang') || navigator.language || 'en').slice(0, 2).toLowerCase();
+    return window.__sbxW && window.__sbxW[l] ? l : 'en';
+  }
+  function T(k, v) {
+    var d = window.__sbxW || {}, e = (d[lang()] || {})[k] || (d.en || {})[k], s;
+    if (!e) { return k; }
+    v = v || {};
+    if (e.other !== undefined) { s = (Math.abs(+v.n || 0) === 1 && e.one !== undefined) ? e.one : e.other; } else { s = e.text || ''; }
+    return s.replace(/\{([a-z0-9_]+)\}/g, function (a, b) { return Object.prototype.hasOwnProperty.call(v, b) ? String(v[b]) : a; });
+  }
+  function cap(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
+  function dayName(d) { try { return cap(new Date(2024, 0, 1 + d).toLocaleDateString(lang(), { weekday: 'long' })); } catch (x) { return String(d + 1); } }   // 2024-01-01 is a Monday
+  function dateShort(dt) { try { return dt.toLocaleDateString(lang(), { month: 'short', day: 'numeric' }); } catch (x) { return (dt.getMonth() + 1) + '/' + dt.getDate(); } }
   var KEY = 'streamboxWeekView';
   var data = null, shown = [], lastFetch = 0, busy = false;   // shown: what the row lists (episodes and season cards)
 
@@ -78,7 +92,7 @@
   function dur(s) {
     s = Math.max(0, Math.round(s / 60));
     var d = Math.floor(s / 1440), h = Math.floor(s % 1440 / 60), m = s % 60;
-    return d ? d + 'n ' + h + 'ó' : (h ? h + 'ó ' + m + 'p' : m + 'p');
+    return d ? T('ww.dur_dh', { d: d, h: h }) : (h ? T('ww.dur_hm', { h: h, m: m }) : T('ww.dur_m', { m: m }));
   }
   function dayIdx(ts) { return (new Date(ts * 1000).getDay() + 6) % 7; }   // Monday 0 .. Sunday 6
 
@@ -98,7 +112,7 @@
       g = g.slice().sort(function (a, b) { return +a.c.slice(4) - +b.c.slice(4); });   // by episode number: E99 before E100 (item 104)
       var f = g[0], l = g[g.length - 1], nf = +f.c.slice(4), nl = +l.c.slice(4);
       var run = nl - nf + 1 === g.length;   // S02E01–E08; with gaps: S02 · 3 epizód
-      res.push({ s: f.s, c: run ? f.c + '–' + l.c.slice(3) : f.c.slice(0, 3), t: run ? '' : g.length + ' epizód', air: Math.min.apply(null, g.map(function (e) { return e.air; })),
+      res.push({ s: f.s, c: run ? f.c + '–' + l.c.slice(3) : f.c.slice(0, 3), t: run ? '' : T('ww.n_eps', { n: g.length }), air: Math.min.apply(null, g.map(function (e) { return e.air; })),
         exp: f.exp, st: 'grp', pct: null, 'new': g.some(function (e) { return e['new']; }), ep: '', sid: f.sid, img: f.img, g: g });
     });
     return res.sort(function (a, b) { return a.air - b.air || (a.s < b.s ? -1 : a.s > b.s ? 1 : 0); });
@@ -109,24 +123,24 @@
     if (e.g) { return groupStatus(e.g, now); }
     var target = e.exp !== null ? e.exp : e.air;
     switch (e.st) {
-      case 'jf': return ['Elérhető', 'sbw-ok'];
-      case 'file': case 'scan': case 'imp': return ['Hamarosan elérhető', 'sbw-proc'];
-      case 'dl': return ['Letöltés ' + (e.pct !== null ? e.pct + '%' : ''), 'sbw-dl'];
-      case 'grab': return ['Letöltés indul', 'sbw-dl'];
-      case 'pause': return ['Szünetel', 'sbw-wait'];
-      case 'fail': return ['Letöltési hiba', 'sbw-fail'];
-      case 'late': return ['Késik ' + dur(now - target), 'sbw-late'];
+      case 'jf': return [T('ww.st_ok'), 'sbw-ok'];
+      case 'file': case 'scan': case 'imp': return [T('ww.st_soon'), 'sbw-proc'];
+      case 'dl': return [e.pct !== null ? T('ww.st_dl_p', { p: e.pct }) : T('ww.st_dl'), 'sbw-dl'];
+      case 'grab': return [T('ww.st_grab'), 'sbw-dl'];
+      case 'pause': return [T('ww.st_pause'), 'sbw-wait'];
+      case 'fail': return [T('ww.st_fail'), 'sbw-fail'];
+      case 'late': return [T('ww.st_late', { d: dur(now - target) }), 'sbw-late'];
       default:
-        if (target > now) { return [(e.exp !== null ? '' : 'Adás ') + dur(target - now) + ' múlva', 'sbw-wait']; }
-        return ['Bármikor jöhet', 'sbw-wait'];
+        if (target > now) { return [T(e.exp !== null ? 'ww.st_in' : 'ww.st_air_in', { d: dur(target - now) }), 'sbw-wait']; }
+        return [T('ww.st_any'), 'sbw-wait'];
     }
   }
 
   // One status for a season card: all available, how many are available, else the most urgent state of its episodes
   function groupStatus(g, now) {
     var n = g.filter(function (e) { return e.st === 'jf'; }).length;
-    if (n === g.length) { return ['Elérhető', 'sbw-ok']; }
-    if (n) { return [n + '/' + g.length + ' elérhető', 'sbw-ok']; }
+    if (n === g.length) { return [T('ww.st_ok'), 'sbw-ok']; }
+    if (n) { return [T('ww.n_of_ok', { n: n, m: g.length }), 'sbw-ok']; }
     var order = ['fail', 'dl', 'grab', 'imp', 'file', 'scan', 'pause', 'late'];
     for (var i = 0; i < order.length; i++) {
       var m = g.filter(function (e) { return e.st === order[i]; });
@@ -151,11 +165,11 @@
   function bg(node, src) { if (src) { node.style.backgroundImage = 'url("' + src.replace(/"/g, '%22') + '")'; } }
   function tip(e) {
     if (e.g) {
-      return e.s + ' · ' + e.c + ' · ' + e.g.length + ' epizód\nAdás: ' + DAYS[dayIdx(e.air)].toLowerCase() + ' ' + hm(e.air) + '\n' +
+      return e.s + ' · ' + e.c + ' · ' + T('ww.n_eps', { n: e.g.length }) + '\n' + T('ww.tip_air', { d: dayName(dayIdx(e.air)).toLowerCase(), t: hm(e.air) }) + '\n' +
         e.g.map(function (x) { return x.c + (x.t ? ' · ' + x.t : '') + ' · ' + status(x, Date.now() / 1000)[0]; }).join('\n');
     }
-    return e.s + ' · ' + e.c + (e.t ? ' · ' + e.t : '') + '\nAdás: ' + DAYS[dayIdx(e.air)].toLowerCase() + ' ' + hm(e.air) +
-      (e.exp !== null ? '\nVárható: ~' + hm(e.exp) : '');
+    return e.s + ' · ' + e.c + (e.t ? ' · ' + e.t : '') + '\n' + T('ww.tip_air', { d: dayName(dayIdx(e.air)).toLowerCase(), t: hm(e.air) }) +
+      (e.exp !== null ? '\n' + T('ww.tip_exp', { t: hm(e.exp) }) : '');
   }
   function stNode(tag, cls, e, now, i) {
     var st = status(e, now);
@@ -180,8 +194,8 @@
     var ready = 0, late = 0;
     w.eps.forEach(function (e) { if (e.st === 'jf') { ready++; } if (e.st === 'late') { late++; } });
     var f = new Date(w.from * 1000), t = new Date(f.getFullYear(), f.getMonth(), f.getDate() + 6);
-    var range = MON[f.getMonth()] + ' ' + f.getDate() + '–' + (f.getMonth() !== t.getMonth() ? MON[t.getMonth()] + ' ' : '') + t.getDate() + '.';
-    return [range + ' · ' + w.eps.length + ' epizód · ' + ready + ' elérhető', late];
+    var range = dateShort(f) + '–' + (f.getMonth() !== t.getMonth() ? dateShort(t) : T('ww.day_only', { d: t.getDate() }));
+    return [range + ' · ' + T('ww.n_eps', { n: w.eps.length }) + ' · ' + T('ww.n_ok', { n: ready }), late];
   }
 
   function buildGrid(w, now) {
@@ -192,7 +206,7 @@
       var eps = [];
       shown.forEach(function (e, i) { if (dayIdx(e.air) === d) { eps.push([e, i]); } });
       var box = el('div', 'sbw-box');
-      if (!eps.length) { box.appendChild(el('div', 'sbw-none', 'nincs epizód')); }
+      if (!eps.length) { box.appendChild(el('div', 'sbw-none', T('ww.none'))); }
       eps.forEach(function (x) {
         var e = x[0], href = link(e);
         var row = el(href ? 'a' : 'div', 'sbw-ep');
@@ -200,7 +214,7 @@
         row.title = tip(e);
         var nm = el('div', 'sbw-n');
         nm.appendChild(el('span', '', e.s));
-        if (e['new']) { nm.appendChild(el('span', 'sbw-new', 'ÚJ')); }
+        if (e['new']) { nm.appendChild(el('span', 'sbw-new', T('ww.new'))); }
         row.appendChild(nm);
         row.appendChild(el('div', 'sbw-s sbw-c', e.c + ' · ' + hm(e.air)));
         row.appendChild(stNode('div', 'sbw-st', e, now, x[1]));
@@ -211,8 +225,8 @@
       var n = 0, all = 0, dt = new Date(w.from * 1000);
       eps.forEach(function (x) { (x[0].g || [x[0]]).forEach(function (e) { all++; if (e.st === 'jf') { n++; } }); });
       dt = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + d);
-      col.appendChild(el('div', 'sbw-t1', thisWeek && d === today ? 'Ma · ' + DAYS[d] : DAYS[d]));
-      col.appendChild(el('div', 'sbw-t2', MON[dt.getMonth()] + ' ' + dt.getDate() + '.' + (all ? ' · ' + n + '/' + all + ' elérhető' : '')));
+      col.appendChild(el('div', 'sbw-t1', thisWeek && d === today ? T('ww.today', { d: dayName(d) }) : dayName(d)));
+      col.appendChild(el('div', 'sbw-t2', dateShort(dt) + (all ? ' · ' + T('ww.n_of_ok', { n: n, m: all }) : '')));
       grid.appendChild(col);
     }
     return grid;
@@ -224,7 +238,7 @@
     shown.forEach(function (e, i) {
       var d = dayIdx(e.air);
       if (d !== last) {
-        row.appendChild(el('div', 'sbw-day' + (thisWeek && d === today ? ' sbw-today' : ''), (thisWeek && d === today ? 'Ma · ' : '') + DAYS[d]));
+        row.appendChild(el('div', 'sbw-day' + (thisWeek && d === today ? ' sbw-today' : ''), thisWeek && d === today ? T('ww.today', { d: dayName(d) }) : dayName(d)));
         last = d;
       }
       var href = link(e);
@@ -234,7 +248,7 @@
       var p = el('div', 'sbw-pos');
       bg(p, thumb(e, 400));
       p.appendChild(el('span', 'sbw-when', hm(e.air)));
-      if (e['new']) { p.appendChild(el('span', 'sbw-new', 'ÚJ')); }
+      if (e['new']) { p.appendChild(el('span', 'sbw-new', T('ww.new'))); }
       p.appendChild(stNode('span', 'sbw-chip', e, now, i));
       c.appendChild(p);
       c.appendChild(el('div', 'sbw-t1', e.s));
@@ -250,11 +264,11 @@
     var box = el('div', 'verticalSection sbw');
     box.id = 'sbWeek';
     var head = el('div', 'sectionTitleContainer sectionTitleContainer-cards padded-left padded-right');
-    var h2 = el('h2', 'sectionTitle sectionTitle-cards', 'Ezen a héten');
+    var h2 = el('h2', 'sectionTitle sectionTitle-cards', T('ww.title'));
     // like Jellyfin's own rows: the title with a chevron; here it switches between the calendar and the posters view
     var more = el('button', 'more button-flat button-flat-mini sectionTitleTextButton emby-button');
     more.type = 'button';
-    more.title = v === 'row' ? 'Naptár nézet' : 'Poszter nézet';
+    more.title = v === 'row' ? T('ww.view_cal') : T('ww.view_poster');
     more.appendChild(h2);
     var ic = el('span', 'material-icons chevron_right');
     ic.setAttribute('aria-hidden', 'true');
@@ -263,10 +277,10 @@
     head.appendChild(more);
     var mt = metaText(w);
     var meta = el('span', 'sbw-meta', mt[0]);
-    if (mt[1]) { meta.appendChild(document.createTextNode(' · ')); meta.appendChild(el('b', '', mt[1] + ' késik')); }
+    if (mt[1]) { meta.appendChild(document.createTextNode(' · ')); meta.appendChild(el('b', '', T('ww.n_late', { n: mt[1] }))); }
     head.appendChild(meta);
     var vs = el('span', 'sbw-views');
-    [['grid', 'calendar_view_week', 'Naptár nézet'], ['row', 'view_carousel', 'Poszter nézet']].forEach(function (b) {
+    [['grid', 'calendar_view_week', T('ww.view_cal')], ['row', 'view_carousel', T('ww.view_poster')]].forEach(function (b) {
       var bt = el('button', b[0] === v ? 'on' : '');
       bt.type = 'button';
       bt.title = b[2];

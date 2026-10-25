@@ -1087,5 +1087,118 @@
   "one": "Average IMDb rating of the {n} rated episode of this season",
   "other": "Average IMDb rating of the {n} rated episodes of this season",
   "note": "tooltip of the IMDb average badge on a season's poster (IMDb rates episodes, not seasons); {n} = episodes with an IMDb rating."
+ },
+ "ww.title": {
+  "text": "This week",
+  "note": "Jellyfin home page, This week row: the row title."
+ },
+ "ww.view_cal": {
+  "text": "Calendar view",
+  "note": "Jellyfin home page, This week row: tooltip of the view switch (seven day cards)."
+ },
+ "ww.view_poster": {
+  "text": "Poster view",
+  "note": "Jellyfin home page, This week row: tooltip of the view switch (one poster row)."
+ },
+ "ww.n_eps": {
+  "one": "{n} episode",
+  "other": "{n} episodes",
+  "note": "Jellyfin home page, This week row: number of episodes (season card, header)."
+ },
+ "ww.n_ok": {
+  "text": "{n} available",
+  "note": "Jellyfin home page, This week row: header: episodes already in Jellyfin."
+ },
+ "ww.n_of_ok": {
+  "text": "{n}/{m} available",
+  "note": "Jellyfin home page, This week row: {n} of {m} episodes are in Jellyfin (day or season card)."
+ },
+ "ww.n_late": {
+  "text": "{n} late",
+  "note": "Jellyfin home page, This week row: header: episodes later than expected."
+ },
+ "ww.day_only": {
+  "text": "{d}",
+  "note": "Jellyfin home page, This week row: end of the week range when the month is the same (Oct 20–{d}); Hungarian adds a dot."
+ },
+ "ww.today": {
+  "text": "Today · {d}",
+  "note": "Jellyfin home page, This week row: day heading of today; {d} the day name."
+ },
+ "ww.none": {
+  "text": "no episodes",
+  "note": "Jellyfin home page, This week row: an empty day card."
+ },
+ "ww.new": {
+  "text": "NEW",
+  "note": "Jellyfin home page, This week row: badge of a season premiere or a new series (short, upper case)."
+ },
+ "ww.st_ok": {
+  "text": "Available",
+  "note": "Jellyfin home page, This week row: status: in Jellyfin."
+ },
+ "ww.st_soon": {
+  "text": "Available soon",
+  "note": "Jellyfin home page, This week row: status: downloaded, being imported."
+ },
+ "ww.st_dl": {
+  "text": "Downloading",
+  "note": "Jellyfin home page, This week row: status without a percentage."
+ },
+ "ww.st_dl_p": {
+  "text": "Downloading {p}%",
+  "note": "Jellyfin home page, This week row: status; {p} percent done."
+ },
+ "ww.st_grab": {
+  "text": "Download starting",
+  "note": "Jellyfin home page, This week row: status: grabbed, not downloading yet."
+ },
+ "ww.st_pause": {
+  "text": "Paused",
+  "note": "Jellyfin home page, This week row: status: the download is paused."
+ },
+ "ww.st_fail": {
+  "text": "Download error",
+  "note": "Jellyfin home page, This week row: status."
+ },
+ "ww.st_late": {
+  "text": "Late {d}",
+  "note": "Jellyfin home page, This week row: status; {d} how late (e.g. 2h 5m)."
+ },
+ "ww.st_in": {
+  "text": "in {d}",
+  "note": "Jellyfin home page, This week row: status: expected in {d} (the usual delay after airing included)."
+ },
+ "ww.st_air_in": {
+  "text": "Airs in {d}",
+  "note": "Jellyfin home page, This week row: status: the episode airs in {d}."
+ },
+ "ww.st_any": {
+  "text": "Any time now",
+  "note": "Jellyfin home page, This week row: status: aired, the usual delay has not passed yet."
+ },
+ "ww.tip_air": {
+  "text": "Airs: {d} {t}",
+  "note": "Jellyfin home page, This week row: tooltip line; {d} day name, {t} time."
+ },
+ "ww.tip_exp": {
+  "text": "Expected: ~{t}",
+  "note": "Jellyfin home page, This week row: tooltip line; {t} the expected time."
+ },
+ "ww.dur_dh": {
+  "text": "{d}d {h}h",
+  "note": "Jellyfin home page, This week row: a duration in days and hours (short)."
+ },
+ "ww.dur_hm": {
+  "text": "{h}h {m}m",
+  "note": "Jellyfin home page, This week row: a duration in hours and minutes (short)."
+ },
+ "ww.dur_m": {
+  "text": "{m}m",
+  "note": "Jellyfin home page, This week row: a duration in minutes (short)."
+ },
+ "ww.program": {
+  "text": "Program: {t}",
+  "note": "Dashboard tile, Live TV stream tooltip: the programme time."
  }
 }

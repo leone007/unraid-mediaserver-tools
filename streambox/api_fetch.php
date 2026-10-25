@@ -296,7 +296,7 @@ foreach ($sessions as $s) {
             $pct   = max(0, min(1, ($nowTs - $st) / ($en - $st)));
             $left  = max(0, $en - $nowTs);
             $epg   = true;
-            $info[] = 'Program: ' . date('H:i', $st) . " \u{2013} " . date('H:i', $en);
+            $info[] = $sbx_T('ww.program', ['t' => date('H:i', $st) . " \u{2013} " . date('H:i', $en)]);
         }
     }
     $dev = (string)($s['DeviceName'] ?? '?');

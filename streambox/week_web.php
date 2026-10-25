@@ -28,9 +28,20 @@ function ww_put($f, $data) {
     @rename($f . '.tmp', $f);
 }
 
-// The renderer ships with the plugin; copy it when it changed
+// The renderer ships with the plugin; copy it when it changed, with its texts (ww.* of the dictionary, English and Hungarian)
+// in front: the row follows Jellyfin's language (item 104)
 $js = (string)@file_get_contents(__DIR__ . '/week_web.js');
-if ($js !== '') { ww_put($dir . '/week.js', $js); }
+if ($js !== '') {
+    $t = [];
+    foreach (['en', 'hu'] as $lc) {
+        $j = json_decode((string)@file_get_contents(__DIR__ . '/lang/' . $lc . '.json'), true);
+        foreach ((array)$j as $k => $v) {
+            if (strpos((string)$k, 'ww.') !== 0 || !is_array($v)) { continue; }
+            foreach (['text', 'one', 'other'] as $x) { if (isset($v[$x]) && trim((string)$v[$x]) !== '') { $t[$lc][$k][$x] = (string)$v[$x]; } }
+        }
+    }
+    ww_put($dir . '/week.js', 'window.__sbxW=' . json_encode($t, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . ";\n" . $js);
+}
 
 wk_tz();
 $now = time();

@@ -817,5 +817,90 @@
  "jx.season_avg": {
   "one": "Az évad {n} IMDb-n pontozott részének átlaga",
   "other": "Az évad {n} IMDb-n pontozott részének átlaga"
+ },
+ "ww.title": {
+  "text": "Ezen a héten"
+ },
+ "ww.view_cal": {
+  "text": "Naptár nézet"
+ },
+ "ww.view_poster": {
+  "text": "Poszter nézet"
+ },
+ "ww.n_eps": {
+  "one": "{n} epizód",
+  "other": "{n} epizód"
+ },
+ "ww.n_ok": {
+  "text": "{n} elérhető"
+ },
+ "ww.n_of_ok": {
+  "text": "{n}/{m} elérhető"
+ },
+ "ww.n_late": {
+  "text": "{n} késik"
+ },
+ "ww.day_only": {
+  "text": "{d}."
+ },
+ "ww.today": {
+  "text": "Ma · {d}"
+ },
+ "ww.none": {
+  "text": "nincs epizód"
+ },
+ "ww.new": {
+  "text": "ÚJ"
+ },
+ "ww.st_ok": {
+  "text": "Elérhető"
+ },
+ "ww.st_soon": {
+  "text": "Hamarosan elérhető"
+ },
+ "ww.st_dl": {
+  "text": "Letöltés"
+ },
+ "ww.st_dl_p": {
+  "text": "Letöltés {p}%"
+ },
+ "ww.st_grab": {
+  "text": "Letöltés indul"
+ },
+ "ww.st_pause": {
+  "text": "Szünetel"
+ },
+ "ww.st_fail": {
+  "text": "Letöltési hiba"
+ },
+ "ww.st_late": {
+  "text": "Késik {d}"
+ },
+ "ww.st_in": {
+  "text": "{d} múlva"
+ },
+ "ww.st_air_in": {
+  "text": "Adás {d} múlva"
+ },
+ "ww.st_any": {
+  "text": "Bármikor jöhet"
+ },
+ "ww.tip_air": {
+  "text": "Adás: {d} {t}"
+ },
+ "ww.tip_exp": {
+  "text": "Várható: ~{t}"
+ },
+ "ww.dur_dh": {
+  "text": "{d}n {h}ó"
+ },
+ "ww.dur_hm": {
+  "text": "{h}ó {m}p"
+ },
+ "ww.dur_m": {
+  "text": "{m}p"
+ },
+ "ww.program": {
+  "text": "Műsor: {t}"
  }
 }
