@@ -7,7 +7,7 @@ const ST_SP = '/tmp/qbt_tools_sp.json';
 
 // the reason codes of st_sp_item (also the keys of the skipped counts) in the page language
 function st_sp_why($w) {
-    $k = ['airing' => 'spw.airing', 'already a pack' => 'spw.pack', 'no pack' => 'spw.nopack', 'search failed' => 'spw.search', 'Sonarr did not answer' => 'spw.noanswer', 'nothing to replace' => 'spw.nothing'][$w] ?? '';
+    $k = ['airing' => 'spw.airing', 'already a pack' => 'spw.pack', 'no pack' => 'spw.nopack', 'search failed' => 'spw.search', 'Sonarr did not answer' => 'spw.noanswer', 'qBittorrent did not answer' => 'e.qb_noanswer', 'nothing to replace' => 'spw.nothing'][$w] ?? '';
     return $k !== '' ? st_tr($k) : $w;
 }
 function st_sp_ep($s, $e) { return 'S' . str_pad((string)(int)$s, 2, '0', STR_PAD_LEFT) . 'E' . str_pad((string)(int)$e, 2, '0', STR_PAD_LEFT); }
@@ -159,7 +159,10 @@ function st_sp_scan($filter = '') {
     st_sp_put('running', st_tr('run.sonarr'), []);
     [$c, $series, $e] = st_arr('sonarr', '/series', 'GET', null, 120);
     if ($e !== '' || !is_array($series)) { st_sp_put('error', 'Sonarr: ' . ($e ?: st_tr('e.bad_resp')), []); return; }
-    $tor = st_lib_in(st_qb_torrents(), st_cfg()); $now = time(); $n = 0; $total = count($series); $skipped = ['airing' => 0, 'already a pack' => 0, 'no pack' => 0];
+    // without qBittorrent's list every season would look unseeded and no old episode torrent would be found: stop (item 104)
+    $tor = st_lib_in(st_qb_torrents(), st_cfg());
+    if ($tor === null) { st_sp_put('error', st_tr('e.qb_noanswer'), []); return; }
+    $now = time(); $n = 0; $total = count($series); $skipped = ['airing' => 0, 'already a pack' => 0, 'no pack' => 0];
     foreach ($series as $s) {
         $n++;
         if (empty($s['monitored'])) { continue; } // finished series you keep (unmonitored) are left alone
@@ -312,15 +315,19 @@ function st_sp_step(&$j, $tor) {
         $notes = [];
         if ($e !== '') { $notes[] = st_tr('pk.remon', ['e' => $e]); }
         $cl = 0; $paths = [];
-        // first take every single-episode torrent out of qBittorrent (files kept), then move each folder once: two torrents can share a folder
+        // each folder once (two torrents can share a folder): the folder moves first, its single-episode torrents leave qBittorrent
+        // only after that (item 104); a folder that cannot move keeps its torrents, so nothing is half removed
         foreach ((array)$j['old'] as $o) {
             if (!empty($j['hash']) && strtolower($o['hash']) === $j['hash']) { continue; }
-            st_qb('/api/v2/torrents/delete', ['hashes' => $o['hash'], 'deleteFiles' => 'false']); st_watch_forget($o['hash']);
-            $paths[st_to_host((string)$o['path'], $cfg)] = $o['name'];
+            $hp = st_to_host((string)$o['path'], $cfg);
+            $paths[$hp]['name'] = $o['name']; $paths[$hp]['hashes'][] = strtolower((string)$o['hash']);
         }
-        foreach ($paths as $hp => $nm) {
-            [$ok, $m] = st_cleanup_old(['hash' => '', 'old_path' => $hp, 'media_paths' => []]);
-            if ($ok) { $cl++; } elseif (st_under_roots($hp, $cfg) !== false && !file_exists($hp)) { $cl++; } else { $notes[] = $nm . ': ' . $m; }
+        foreach ($paths as $hp => $pi) {
+            [$ok, $m] = st_cleanup_old(['hash' => '', 'old_path' => $hp, 'media_paths' => [], 'skip' => $pi['hashes']]);
+            if ($ok || (st_under_roots($hp, $cfg) !== false && !file_exists($hp))) {
+                $cl++;
+                foreach ($pi['hashes'] as $h) { st_qb('/api/v2/torrents/delete', ['hashes' => $h, 'deleteFiles' => 'false']); st_watch_forget($h); }
+            } else { $notes[] = $pi['name'] . ': ' . $m; }
         }
         st_find_prune();
         $j['stage'] = 'done'; $j['t'] = time();
@@ -688,11 +695,12 @@ function st_sp_ab_run() {
         [$c0, $ser, $e0] = st_arr('sonarr', '/series/' . $sid, 'GET', null, 60);
         [$c1, $files] = st_arr('sonarr', '/episodefile?seriesId=' . $sid, 'GET', null, 60);
         [$c2, $eps] = st_arr('sonarr', '/episode?seriesId=' . $sid . '&seasonNumber=' . $sn, 'GET', null, 60);
-        $it = null; $why = 'Sonarr did not answer';
-        if (is_array($ser) && is_array($files) && is_array($eps)) {
+        $it = null; $why = 'Sonarr did not answer'; $tq = st_lib_in(st_qb_torrents(), st_cfg());
+        if ($tq === null) { $why = 'qBittorrent did not answer'; }
+        elseif (is_array($ser) && is_array($files) && is_array($eps)) {
             $fby = []; foreach ($files as $f) { $fby[(int)$f['id']] = $f; }
             $list = array_values(array_filter($eps, function ($x) use ($sn) { return (int)($x['seasonNumber'] ?? -1) === $sn; }));
-            [$it, $why] = st_sp_item($ser, $sn, $list, $fby, st_lib_in(st_qb_torrents(), st_cfg()), 1); // autobrr: one episode is enough (the rest, often the finale, comes from the pack)
+            [$it, $why] = st_sp_item($ser, $sn, $list, $fby, $tq, 1); // autobrr: one episode is enough (the rest, often the finale, comes from the pack)
         }
         if ($it) {
             // the release autobrr saw first, when Sonarr lists it; else the best pack Sonarr found
@@ -701,7 +709,7 @@ function st_sp_ab_run() {
             if ($hit !== null) { $p = $it['packs'][$hit]; array_splice($it['packs'], $hit, 1); array_unshift($it['packs'], $p); }
             $it += ['src' => 'ab', 't' => (int)$q['t'], 'ab_name' => (string)$q['name'], 'ab_match' => $hit !== null, 'ab_indexer' => (string)$q['indexer'], 'eplines' => st_sp_eplines($list, $fby)];
         }
-        $retry = !$it && in_array($why, ['no pack', 'search failed', 'Sonarr did not answer'], true) && (int)$q['tries'] < 4;
+        $retry = !$it && in_array($why, ['no pack', 'search failed', 'Sonarr did not answer', 'qBittorrent did not answer'], true) && (int)$q['tries'] < 4;
         if (!empty($q['rel'])) {
             if ($it) { st_sp_ab_bot($it, $q); }
             elseif (!$retry) { st_ab_message($q['rel'], $q['v']); } // no row: the message without choices, as before

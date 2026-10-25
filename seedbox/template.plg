@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzk">
+<!ENTITY version   "2026.10.99zzl">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzl
+- Season pack scan stops with an error when qBittorrent does not answer, instead of listing every season with no old torrents to clean up
+- Replace, Shape up, Find my torrent and season packs: the old files go to the trash first and the old torrent leaves qBittorrent only after that, so a failed move no longer leaves a half-removed item
+- A redirect to another host never gets the Radarr, Sonarr, Prowlarr or autobrr API key
+
 ###2026.10.99zzk
 - Season pack: old single-episode torrents and an already seeded pack are matched by the whole series name, so another series whose name starts with the same words (Star Trek Discovery for Star Trek, Doctor Who 1963 for Doctor Who 2005) is never cleaned up with it
 - Shape up: when the trash is on and the old files cannot go to the trash (outside the watched folders), they now stay where they are instead of being deleted by qBittorrent for good

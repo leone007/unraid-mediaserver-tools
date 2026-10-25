@@ -214,11 +214,24 @@ function st_qbcfg() {
 
 // ---- HTTP ---------------------------------------------------------------------------------------------
 // opts: headers[], post (array|string), file (field => path), timeout, follow (bool), jar (path)
+// follow: a GET follows up to 5 redirects; on a hop to another host (or from https to http) the key headers are dropped first,
+// because curl keeps a custom X-Api-Key / X-API-Token header there (item 104)
 function st_http($method, $url, $opts = []) {
+    $r = st_http_once($method, $url, $opts);
+    for ($hop = 0; !empty($opts['follow']) && $method === 'GET' && $r[0] >= 300 && $r[0] < 400 && $r[4] !== '' && $hop < 5; $hop++) {
+        $a = parse_url($url); $b = parse_url($r[4]);
+        $same = $a && $b && strcasecmp((string)($a['host'] ?? ''), (string)($b['host'] ?? '')) === 0
+             && !(strtolower((string)($a['scheme'] ?? '')) === 'https' && strtolower((string)($b['scheme'] ?? '')) !== 'https');
+        if (!$same) { $opts['headers'] = array_values(array_filter((array)($opts['headers'] ?? []), function ($x) { return !preg_match('/^\s*(x-api-key|x-api-token|authorization|cookie)\s*:/i', $x); })); }
+        $url = $r[4]; $r = st_http_once($method, $url, $opts);
+    }
+    return array_slice($r, 0, 4);
+}
+function st_http_once($method, $url, $opts) {
     $ch = curl_init($url);
     $h = $opts['headers'] ?? [];
     $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => $opts['timeout'] ?? 30,
-          CURLOPT_FOLLOWLOCATION => !empty($opts['follow']), CURLOPT_MAXREDIRS => 5, CURLOPT_HEADER => true];
+          CURLOPT_FOLLOWLOCATION => false, CURLOPT_HEADER => true];
     if (!empty($opts['jar'])) { $o[CURLOPT_COOKIEJAR] = $opts['jar']; $o[CURLOPT_COOKIEFILE] = $opts['jar']; }
     if ($method === 'POST') {
         $o[CURLOPT_POST] = true;
@@ -234,10 +247,11 @@ function st_http($method, $url, $opts = []) {
     $raw = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $hs = (int)curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $next = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
     $err = curl_errno($ch) ? curl_error($ch) : '';
     curl_close($ch);
-    if ($raw === false) { return [0, '', $err ?: 'request failed', '']; }
-    return [$code, substr($raw, $hs), $err, substr($raw, 0, $hs)];
+    if ($raw === false) { return [0, '', $err ?: 'request failed', '', '']; }
+    return [$code, substr($raw, $hs), $err, substr($raw, 0, $hs), $next];
 }
 
 // ---- qBittorrent ---------------------------------------------------------------------------------------

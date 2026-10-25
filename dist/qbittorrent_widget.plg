@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzk">
+<!ENTITY version   "2026.10.99zzl">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzl
+- Season pack scan stops with an error when qBittorrent does not answer, instead of listing every season with no old torrents to clean up
+- Replace, Shape up, Find my torrent and season packs: the old files go to the trash first and the old torrent leaves qBittorrent only after that, so a failed move no longer leaves a half-removed item
+- A redirect to another host never gets the Radarr, Sonarr, Prowlarr or autobrr API key
+
 ###2026.10.99zzk
 - Season pack: old single-episode torrents and an already seeded pack are matched by the whole series name, so another series whose name starts with the same words (Star Trek Discovery for Star Trek, Doctor Who 1963 for Doctor Who 2005) is never cleaned up with it
 - Shape up: when the trash is on and the old files cannot go to the trash (outside the watched folders), they now stay where they are instead of being deleted by qBittorrent for good
@@ -2764,11 +2769,24 @@ function st_qbcfg() {
 
 // ---- HTTP ---------------------------------------------------------------------------------------------
 // opts: headers[], post (array|string), file (field => path), timeout, follow (bool), jar (path)
+// follow: a GET follows up to 5 redirects; on a hop to another host (or from https to http) the key headers are dropped first,
+// because curl keeps a custom X-Api-Key / X-API-Token header there (item 104)
 function st_http($method, $url, $opts = []) {
+    $r = st_http_once($method, $url, $opts);
+    for ($hop = 0; !empty($opts['follow']) && $method === 'GET' && $r[0] >= 300 && $r[0] < 400 && $r[4] !== '' && $hop < 5; $hop++) {
+        $a = parse_url($url); $b = parse_url($r[4]);
+        $same = $a && $b && strcasecmp((string)($a['host'] ?? ''), (string)($b['host'] ?? '')) === 0
+             && !(strtolower((string)($a['scheme'] ?? '')) === 'https' && strtolower((string)($b['scheme'] ?? '')) !== 'https');
+        if (!$same) { $opts['headers'] = array_values(array_filter((array)($opts['headers'] ?? []), function ($x) { return !preg_match('/^\s*(x-api-key|x-api-token|authorization|cookie)\s*:/i', $x); })); }
+        $url = $r[4]; $r = st_http_once($method, $url, $opts);
+    }
+    return array_slice($r, 0, 4);
+}
+function st_http_once($method, $url, $opts) {
     $ch = curl_init($url);
     $h = $opts['headers'] ?? [];
     $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => $opts['timeout'] ?? 30,
-          CURLOPT_FOLLOWLOCATION => !empty($opts['follow']), CURLOPT_MAXREDIRS => 5, CURLOPT_HEADER => true];
+          CURLOPT_FOLLOWLOCATION => false, CURLOPT_HEADER => true];
     if (!empty($opts['jar'])) { $o[CURLOPT_COOKIEJAR] = $opts['jar']; $o[CURLOPT_COOKIEFILE] = $opts['jar']; }
     if ($method === 'POST') {
         $o[CURLOPT_POST] = true;
@@ -2784,10 +2802,11 @@ function st_http($method, $url, $opts = []) {
     $raw = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $hs = (int)curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $next = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
     $err = curl_errno($ch) ? curl_error($ch) : '';
     curl_close($ch);
-    if ($raw === false) { return [0, '', $err ?: 'request failed', '']; }
-    return [$code, substr($raw, $hs), $err, substr($raw, 0, $hs)];
+    if ($raw === false) { return [0, '', $err ?: 'request failed', '', '']; }
+    return [$code, substr($raw, $hs), $err, substr($raw, 0, $hs), $next];
 }
 
 // ---- qBittorrent ---------------------------------------------------------------------------------------
@@ -3087,7 +3106,7 @@ const ST_SP = '/tmp/qbt_tools_sp.json';
 
 // the reason codes of st_sp_item (also the keys of the skipped counts) in the page language
 function st_sp_why($w) {
-    $k = ['airing' => 'spw.airing', 'already a pack' => 'spw.pack', 'no pack' => 'spw.nopack', 'search failed' => 'spw.search', 'Sonarr did not answer' => 'spw.noanswer', 'nothing to replace' => 'spw.nothing'][$w] ?? '';
+    $k = ['airing' => 'spw.airing', 'already a pack' => 'spw.pack', 'no pack' => 'spw.nopack', 'search failed' => 'spw.search', 'Sonarr did not answer' => 'spw.noanswer', 'qBittorrent did not answer' => 'e.qb_noanswer', 'nothing to replace' => 'spw.nothing'][$w] ?? '';
     return $k !== '' ? st_tr($k) : $w;
 }
 function st_sp_ep($s, $e) { return 'S' . str_pad((string)(int)$s, 2, '0', STR_PAD_LEFT) . 'E' . str_pad((string)(int)$e, 2, '0', STR_PAD_LEFT); }
@@ -3239,7 +3258,10 @@ function st_sp_scan($filter = '') {
     st_sp_put('running', st_tr('run.sonarr'), []);
     [$c, $series, $e] = st_arr('sonarr', '/series', 'GET', null, 120);
     if ($e !== '' || !is_array($series)) { st_sp_put('error', 'Sonarr: ' . ($e ?: st_tr('e.bad_resp')), []); return; }
-    $tor = st_lib_in(st_qb_torrents(), st_cfg()); $now = time(); $n = 0; $total = count($series); $skipped = ['airing' => 0, 'already a pack' => 0, 'no pack' => 0];
+    // without qBittorrent's list every season would look unseeded and no old episode torrent would be found: stop (item 104)
+    $tor = st_lib_in(st_qb_torrents(), st_cfg());
+    if ($tor === null) { st_sp_put('error', st_tr('e.qb_noanswer'), []); return; }
+    $now = time(); $n = 0; $total = count($series); $skipped = ['airing' => 0, 'already a pack' => 0, 'no pack' => 0];
     foreach ($series as $s) {
         $n++;
         if (empty($s['monitored'])) { continue; } // finished series you keep (unmonitored) are left alone
@@ -3392,15 +3414,19 @@ function st_sp_step(&$j, $tor) {
         $notes = [];
         if ($e !== '') { $notes[] = st_tr('pk.remon', ['e' => $e]); }
         $cl = 0; $paths = [];
-        // first take every single-episode torrent out of qBittorrent (files kept), then move each folder once: two torrents can share a folder
+        // each folder once (two torrents can share a folder): the folder moves first, its single-episode torrents leave qBittorrent
+        // only after that (item 104); a folder that cannot move keeps its torrents, so nothing is half removed
         foreach ((array)$j['old'] as $o) {
             if (!empty($j['hash']) && strtolower($o['hash']) === $j['hash']) { continue; }
-            st_qb('/api/v2/torrents/delete', ['hashes' => $o['hash'], 'deleteFiles' => 'false']); st_watch_forget($o['hash']);
-            $paths[st_to_host((string)$o['path'], $cfg)] = $o['name'];
+            $hp = st_to_host((string)$o['path'], $cfg);
+            $paths[$hp]['name'] = $o['name']; $paths[$hp]['hashes'][] = strtolower((string)$o['hash']);
         }
-        foreach ($paths as $hp => $nm) {
-            [$ok, $m] = st_cleanup_old(['hash' => '', 'old_path' => $hp, 'media_paths' => []]);
-            if ($ok) { $cl++; } elseif (st_under_roots($hp, $cfg) !== false && !file_exists($hp)) { $cl++; } else { $notes[] = $nm . ': ' . $m; }
+        foreach ($paths as $hp => $pi) {
+            [$ok, $m] = st_cleanup_old(['hash' => '', 'old_path' => $hp, 'media_paths' => [], 'skip' => $pi['hashes']]);
+            if ($ok || (st_under_roots($hp, $cfg) !== false && !file_exists($hp))) {
+                $cl++;
+                foreach ($pi['hashes'] as $h) { st_qb('/api/v2/torrents/delete', ['hashes' => $h, 'deleteFiles' => 'false']); st_watch_forget($h); }
+            } else { $notes[] = $pi['name'] . ': ' . $m; }
         }
         st_find_prune();
         $j['stage'] = 'done'; $j['t'] = time();
@@ -3768,11 +3794,12 @@ function st_sp_ab_run() {
         [$c0, $ser, $e0] = st_arr('sonarr', '/series/' . $sid, 'GET', null, 60);
         [$c1, $files] = st_arr('sonarr', '/episodefile?seriesId=' . $sid, 'GET', null, 60);
         [$c2, $eps] = st_arr('sonarr', '/episode?seriesId=' . $sid . '&seasonNumber=' . $sn, 'GET', null, 60);
-        $it = null; $why = 'Sonarr did not answer';
-        if (is_array($ser) && is_array($files) && is_array($eps)) {
+        $it = null; $why = 'Sonarr did not answer'; $tq = st_lib_in(st_qb_torrents(), st_cfg());
+        if ($tq === null) { $why = 'qBittorrent did not answer'; }
+        elseif (is_array($ser) && is_array($files) && is_array($eps)) {
             $fby = []; foreach ($files as $f) { $fby[(int)$f['id']] = $f; }
             $list = array_values(array_filter($eps, function ($x) use ($sn) { return (int)($x['seasonNumber'] ?? -1) === $sn; }));
-            [$it, $why] = st_sp_item($ser, $sn, $list, $fby, st_lib_in(st_qb_torrents(), st_cfg()), 1); // autobrr: one episode is enough (the rest, often the finale, comes from the pack)
+            [$it, $why] = st_sp_item($ser, $sn, $list, $fby, $tq, 1); // autobrr: one episode is enough (the rest, often the finale, comes from the pack)
         }
         if ($it) {
             // the release autobrr saw first, when Sonarr lists it; else the best pack Sonarr found
@@ -3781,7 +3808,7 @@ function st_sp_ab_run() {
             if ($hit !== null) { $p = $it['packs'][$hit]; array_splice($it['packs'], $hit, 1); array_unshift($it['packs'], $p); }
             $it += ['src' => 'ab', 't' => (int)$q['t'], 'ab_name' => (string)$q['name'], 'ab_match' => $hit !== null, 'ab_indexer' => (string)$q['indexer'], 'eplines' => st_sp_eplines($list, $fby)];
         }
-        $retry = !$it && in_array($why, ['no pack', 'search failed', 'Sonarr did not answer'], true) && (int)$q['tries'] < 4;
+        $retry = !$it && in_array($why, ['no pack', 'search failed', 'Sonarr did not answer', 'qBittorrent did not answer'], true) && (int)$q['tries'] < 4;
         if (!empty($q['rel'])) {
             if ($it) { st_sp_ab_bot($it, $q); }
             elseif (!$retry) { st_ab_message($q['rel'], $q['v']); } // no row: the message without choices, as before
@@ -4294,12 +4321,13 @@ function st_find_delete($id) {
         $cp = rtrim(st_to_host((string)($t['content_path'] ?? ''), $cfg), '/');
         if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0) && strtolower((string)$t['hash']) !== $old) { return [false, st_tr('e.nodel_seed', ['p' => $p, 't' => $t['name']])]; }
     }
-    if ($old !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $old, 'deleteFiles' => 'false']); st_watch_forget($old); }
+    // the files first, the torrent after: a failed move leaves both as they were (item 104)
     $days = (int)($cfg['trash_days'] ?? 0);
     if ($days > 0) {
         $tr = $root . '/' . ST_TRASH; @mkdir($tr, 0777, true);
         if (!@rename($rp, $tr . '/' . date('YmdHis') . '_' . basename($rp))) { return [false, st_tr('e.notrash', ['p' => $p])]; }
     } elseif (!st_rm_tree($rp)) { return [false, st_tr('e.nodelete', ['p' => $p])]; }
+    if ($old !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $old, 'deleteFiles' => 'false']); st_watch_forget($old); }
     st_find_prune();
     return [true, ''];
 }
@@ -5021,15 +5049,23 @@ function st_rm_tree($p) {
 function st_cleanup_old($j) {
     $cfg = st_cfg(); $msg = []; $msgL = []; $oldIno = [];
     $add = function ($hu, $en, $k, $v = []) use (&$msg, &$msgL) { $msg[] = st_tr($k, $v); $msgL[] = st_l($hu, $en); }; // $msg: the page language, $msgL: the Discord language
-    if ($j['hash'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => 'false']); st_watch_forget($j['hash']); $add('a régi torrent kikerült a qBittorrentből (a fájlok megmaradtak)', 'old torrent removed from qBittorrent (files kept)', 'cl.torrent'); }
+    // the old torrent leaves qBittorrent only after the checks and the move of its files passed (item 104: a failed move left a
+    // half-removed item); its message stays first
+    $rmTorrent = function () use ($j, &$msg, &$msgL) {
+        if ($j['hash'] === '') { return; }
+        st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => 'false']); st_watch_forget($j['hash']);
+        array_unshift($msg, st_tr('cl.torrent')); array_unshift($msgL, st_l('a régi torrent kikerült a qBittorrentből (a fájlok megmaradtak)', 'old torrent removed from qBittorrent (files kept)'));
+    };
     $p = (string)$j['old_path'];
     if ($p !== '' && file_exists($p)) {
         $root = st_under_roots($p, $cfg);
         if ($root === false) { return [false, st_tr('e.norm_root', ['p' => $p])]; }
         // never remove what a torrent seeds
-        $rp = realpath($p);
-        foreach ((array)st_qb_torrents() as $t) {
-            if ($j['hash'] !== '' && strtolower((string)$t['hash']) === strtolower((string)$j['hash'])) { continue; } // the old torrent itself (just deleted, qBittorrent may still list it)
+        $rp = realpath($p); $tl = st_qb_torrents();
+        if ($tl === null) { return [false, st_tr('e.qb_nodel')]; } // no list: no proof that nothing else seeds it
+        foreach ($tl as $t) {
+            $th = strtolower((string)$t['hash']);
+            if (($j['hash'] !== '' && $th === strtolower((string)$j['hash'])) || in_array($th, (array)($j['skip'] ?? []), true)) { continue; } // the old torrent(s) themselves (they go after the move)
             $cp = rtrim(st_to_host((string)($t['content_path'] ?? ''), $cfg), '/');
             if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0)) { return [false, st_tr('e.norm_seed', ['p' => $p, 't' => $t['name']])]; }
         }
@@ -5047,6 +5083,7 @@ function st_cleanup_old($j) {
             $add('a régi fájlok törölve', 'old files deleted', 'cl.deleted');
         }
     }
+    $rmTorrent();
     // the old hardlink in the media folder (Radarr/Sonarr normally removes it when it upgrades)
     $gone = 0; unset($oldIno['']);
     foreach ((array)($j['media_paths'] ?? []) as $mp) {

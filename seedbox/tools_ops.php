@@ -337,12 +337,13 @@ function st_find_delete($id) {
         $cp = rtrim(st_to_host((string)($t['content_path'] ?? ''), $cfg), '/');
         if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0) && strtolower((string)$t['hash']) !== $old) { return [false, st_tr('e.nodel_seed', ['p' => $p, 't' => $t['name']])]; }
     }
-    if ($old !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $old, 'deleteFiles' => 'false']); st_watch_forget($old); }
+    // the files first, the torrent after: a failed move leaves both as they were (item 104)
     $days = (int)($cfg['trash_days'] ?? 0);
     if ($days > 0) {
         $tr = $root . '/' . ST_TRASH; @mkdir($tr, 0777, true);
         if (!@rename($rp, $tr . '/' . date('YmdHis') . '_' . basename($rp))) { return [false, st_tr('e.notrash', ['p' => $p])]; }
     } elseif (!st_rm_tree($rp)) { return [false, st_tr('e.nodelete', ['p' => $p])]; }
+    if ($old !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $old, 'deleteFiles' => 'false']); st_watch_forget($old); }
     st_find_prune();
     return [true, ''];
 }
@@ -1064,15 +1065,23 @@ function st_rm_tree($p) {
 function st_cleanup_old($j) {
     $cfg = st_cfg(); $msg = []; $msgL = []; $oldIno = [];
     $add = function ($hu, $en, $k, $v = []) use (&$msg, &$msgL) { $msg[] = st_tr($k, $v); $msgL[] = st_l($hu, $en); }; // $msg: the page language, $msgL: the Discord language
-    if ($j['hash'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => 'false']); st_watch_forget($j['hash']); $add('a régi torrent kikerült a qBittorrentből (a fájlok megmaradtak)', 'old torrent removed from qBittorrent (files kept)', 'cl.torrent'); }
+    // the old torrent leaves qBittorrent only after the checks and the move of its files passed (item 104: a failed move left a
+    // half-removed item); its message stays first
+    $rmTorrent = function () use ($j, &$msg, &$msgL) {
+        if ($j['hash'] === '') { return; }
+        st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => 'false']); st_watch_forget($j['hash']);
+        array_unshift($msg, st_tr('cl.torrent')); array_unshift($msgL, st_l('a régi torrent kikerült a qBittorrentből (a fájlok megmaradtak)', 'old torrent removed from qBittorrent (files kept)'));
+    };
     $p = (string)$j['old_path'];
     if ($p !== '' && file_exists($p)) {
         $root = st_under_roots($p, $cfg);
         if ($root === false) { return [false, st_tr('e.norm_root', ['p' => $p])]; }
         // never remove what a torrent seeds
-        $rp = realpath($p);
-        foreach ((array)st_qb_torrents() as $t) {
-            if ($j['hash'] !== '' && strtolower((string)$t['hash']) === strtolower((string)$j['hash'])) { continue; } // the old torrent itself (just deleted, qBittorrent may still list it)
+        $rp = realpath($p); $tl = st_qb_torrents();
+        if ($tl === null) { return [false, st_tr('e.qb_nodel')]; } // no list: no proof that nothing else seeds it
+        foreach ($tl as $t) {
+            $th = strtolower((string)$t['hash']);
+            if (($j['hash'] !== '' && $th === strtolower((string)$j['hash'])) || in_array($th, (array)($j['skip'] ?? []), true)) { continue; } // the old torrent(s) themselves (they go after the move)
             $cp = rtrim(st_to_host((string)($t['content_path'] ?? ''), $cfg), '/');
             if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0)) { return [false, st_tr('e.norm_seed', ['p' => $p, 't' => $t['name']])]; }
         }
@@ -1090,6 +1099,7 @@ function st_cleanup_old($j) {
             $add('a régi fájlok törölve', 'old files deleted', 'cl.deleted');
         }
     }
+    $rmTorrent();
     // the old hardlink in the media folder (Radarr/Sonarr normally removes it when it upgrades)
     $gone = 0; unset($oldIno['']);
     foreach ((array)($j['media_paths'] ?? []) as $mp) {
