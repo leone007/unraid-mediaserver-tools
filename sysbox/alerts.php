@@ -61,27 +61,6 @@ function sxn_inspect() {
     return $out;
 }
 
-function sxn_mem() {
-    $mi = [];
-    foreach ((array)@file('/proc/meminfo', FILE_IGNORE_NEW_LINES) as $l) { if (preg_match('/^(\w+):\s+(\d+)/', $l, $m)) { $mi[$m[1]] = (float)$m[2] * 1024; } }
-    $total = $mi['MemTotal'] ?? 0.0; $avail = $mi['MemAvailable'] ?? ($mi['MemFree'] ?? 0.0);
-    $arc = 0.0;
-    foreach ((array)@file('/proc/spl/kstat/zfs/arcstats', FILE_IGNORE_NEW_LINES) as $l) { if (preg_match('/^size\s+\d+\s+(\d+)/', $l, $m)) { $arc = (float)$m[1]; break; } }
-    $used = max(0.0, $total - $avail); $arc = min($arc, $used);
-    return ['total' => $total, 'avail' => $avail, 'arc' => $arc, 'app' => max(0.0, $used - $arc), 'pct' => $total > 0 ? max(0.0, $used - $arc) / $total * 100 : 0.0];
-}
-
-function sxn_fs($path) {
-    $t = @disk_total_space($path); $f = @disk_free_space($path);
-    if (!$t) { return null; }
-    return ['size' => $t, 'used' => $t - $f, 'pct' => ($t - $f) / $t * 100];
-}
-
-function sxn_mounted($path) {
-    foreach ((array)@file('/proc/mounts', FILE_IGNORE_NEW_LINES) as $l) { $p = explode(' ', $l); if (isset($p[1]) && $p[1] === $path) { return true; } }
-    return false;
-}
-
 // ---- builders (kind: 'alert' | 'resolved') ------------------------------------------------------
 function sxn_e_down($lang, $name, $exit, $oom, $kind) {
     if ($kind === 'resolved') { return sxn_embed('g', '🟢 ' . sxn_t($lang, 'ct_up', [$name])); }
@@ -151,11 +130,11 @@ function sxn_e_weekly($lang, $cfg, $st) {
         if ($g !== '') { $by[$g]++; }
     }
     $up = (int)((float)@file_get_contents('/proc/uptime'));
-    $m = sxn_mem();
+    $m = sx_mem();
     $lines = [];
     foreach ([['BOOT', '/boot'], ['LOG', '/var/log'], ['DOCKER VDISK', '/var/lib/docker']] as $x) {
-        if ($x[1] === '/var/lib/docker' && !sxn_mounted($x[1])) { continue; }
-        $f = sxn_fs($x[1]);
+        if ($x[1] === '/var/lib/docker' && !sx_is_mounted($x[1])) { continue; }
+        $f = sx_fs_use($x[1]);
         if ($f) { $lines[] = str_pad($x[0], 13) . number_format($f['pct'], 0, '.', '') . '%'; }
     }
     list($tp,) = sx_temps();

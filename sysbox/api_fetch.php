@@ -30,21 +30,8 @@ function sx_physical_ram() {
     return $res;
 }
 
-function sx_arc() {
-    foreach ((array)@file('/proc/spl/kstat/zfs/arcstats', FILE_IGNORE_NEW_LINES) as $l) {
-        if (preg_match('/^size\s+\d+\s+(\d+)/', $l, $m)) { return (float)$m[1]; }
-    }
-    return 0.0;
-}
-
-$mi = [];
-foreach ((array)@file('/proc/meminfo', FILE_IGNORE_NEW_LINES) as $l) {
-    if (preg_match('/^(\w+):\s+(\d+)/', $l, $m)) { $mi[$m[1]] = (float)$m[2] * 1024; }
-}
-$mTotal = $mi['MemTotal'] ?? 0.0;
-$mAvail = $mi['MemAvailable'] ?? ($mi['MemFree'] ?? 0.0);
-$mUsed  = max(0.0, $mTotal - $mAvail);
-$arc    = min(sx_arc(), $mUsed);
+$mm = sx_mem();
+$mTotal = $mm['total']; $mAvail = $mm['avail']; $mUsed = $mm['used']; $arc = $mm['arc'];
 
 // ---- slow readings (containers' stats, GPU, socket): collected in the background ----------------
 $slowFile = '/tmp/sysbox_slow.json';
@@ -78,18 +65,11 @@ $memory = [
 ];
 
 // ---- storage -------------------------------------------------------------------------------------
-function sx_mounted($path) {
-    foreach ((array)@file('/proc/mounts', FILE_IGNORE_NEW_LINES) as $l) {
-        $p = explode(' ', $l);
-        if (isset($p[1]) && $p[1] === $path) { return true; }
-    }
-    return false;
-}
 function sx_fs($label, $path, $warn, $crit, &$attn) {
     global $sxx_T;
-    $t = @disk_total_space($path); $f = @disk_free_space($path);
-    if (!$t) { return null; }
-    $used = $t - $f; $pct = $used / $t * 100;
+    $u = sx_fs_use($path);
+    if (!$u) { return null; }
+    $t = $u['size']; $f = $u['free']; $used = $u['used']; $pct = $u['pct'];
     $lv = $pct >= $crit ? 'rd' : ($pct >= $warn ? 'a' : '');
     if ($lv !== '') { $attn[] = [$lv, $label, $sxx_T('attn.full', ['p' => number_format($pct, 0)]), '@FREE@' . $f . ' free']; }
     return ['label' => $label, 'size' => $t, 'used' => $used, 'pct' => $pct, 'level' => $lv];
@@ -97,7 +77,7 @@ function sx_fs($label, $path, $warn, $crit, &$attn) {
 $storage = [];
 $s = sx_fs('BOOT', '/boot', 90, 97, $attn); if ($s) { $storage[] = $s; }
 $s = sx_fs('LOG', '/var/log', (float)$cfg['log_warn'], (float)$cfg['log_crit'], $attn); if ($s) { $storage[] = $s; }
-if (sx_mounted('/var/lib/docker')) {
+if (sx_is_mounted('/var/lib/docker')) {
     $s = sx_fs($sxx_T('sto.vdisk'), '/var/lib/docker', (float)$cfg['vd_warn'], (float)$cfg['vd_crit'], $attn); if ($s) { $storage[] = $s; }
 }
 

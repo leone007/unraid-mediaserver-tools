@@ -85,7 +85,7 @@ if ($ct !== null) {
 
 // ---- memory ----------------------------------------------------------------------------------------
 if (sx_on($cfg['n_ram'])) {
-    $m = sxn_mem();
+    $m = sx_mem();
     $w = (float)$cfg['ram_warn']; $c = (float)$cfg['ram_crit'];
     $lv = $m['pct'] >= $c ? 'rd' : ($m['pct'] >= $w ? 'a' : '');
     $prev = sxn_cur_level($st, 'ram');
@@ -96,9 +96,9 @@ if (sx_on($cfg['n_ram'])) {
 // ---- storage ---------------------------------------------------------------------------------------
 if (sx_on($cfg['n_storage'])) {
     $items = [['BOOT', '/boot', 90, 97, 'boot'], ['LOG', '/var/log', (float)$cfg['log_warn'], (float)$cfg['log_crit'], 'log']];
-    if (sxn_mounted('/var/lib/docker')) { $items[] = ['DOCKER VDISK', '/var/lib/docker', (float)$cfg['vd_warn'], (float)$cfg['vd_crit'], 'vdisk']; }
+    if (sx_is_mounted('/var/lib/docker')) { $items[] = ['DOCKER VDISK', '/var/lib/docker', (float)$cfg['vd_warn'], (float)$cfg['vd_crit'], 'vdisk']; }
     foreach ($items as $it) {
-        $f = sxn_fs($it[1]);
+        $f = sx_fs_use($it[1]);
         if (!$f) { continue; }
         $key = 'st:' . $it[4];
         $lv = $f['pct'] >= $it[3] ? 'rd' : ($f['pct'] >= $it[2] ? 'a' : '');

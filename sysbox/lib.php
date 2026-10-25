@@ -124,6 +124,27 @@ function sx_guard() {
     }
 }
 
+// ---- memory and filesystems (shared by the tile api_fetch.php and the alerts alerts.php / notify.php; item 104: three copies) ----
+// RAM: the ZFS cache (ARC) counts as used by Linux but gives way to applications, so 'app' and 'pct' leave it out
+function sx_mem() {
+    $mi = [];
+    foreach ((array)@file('/proc/meminfo', FILE_IGNORE_NEW_LINES) as $l) { if (preg_match('/^(\w+):\s+(\d+)/', $l, $m)) { $mi[$m[1]] = (float)$m[2] * 1024; } }
+    $total = $mi['MemTotal'] ?? 0.0; $avail = $mi['MemAvailable'] ?? ($mi['MemFree'] ?? 0.0);
+    $arc = 0.0;
+    foreach ((array)@file('/proc/spl/kstat/zfs/arcstats', FILE_IGNORE_NEW_LINES) as $l) { if (preg_match('/^size\s+\d+\s+(\d+)/', $l, $m)) { $arc = (float)$m[1]; break; } }
+    $used = max(0.0, $total - $avail); $arc = min($arc, $used);
+    return ['total' => $total, 'avail' => $avail, 'used' => $used, 'arc' => $arc, 'app' => max(0.0, $used - $arc), 'pct' => $total > 0 ? max(0.0, $used - $arc) / $total * 100 : 0.0];
+}
+function sx_fs_use($path) {
+    $t = @disk_total_space($path); $f = @disk_free_space($path);
+    if (!$t) { return null; }
+    return ['size' => $t, 'used' => $t - $f, 'free' => $f, 'pct' => ($t - $f) / $t * 100];
+}
+function sx_is_mounted($path) {
+    foreach ((array)@file('/proc/mounts', FILE_IGNORE_NEW_LINES) as $l) { $p = explode(' ', $l); if (isset($p[1]) && $p[1] === $path) { return true; } }
+    return false;
+}
+
 // ---- CPU helpers (shared by api_fetch.php and cpu.php) ----------------------------------------
 function sx_stat() {
     $out = [];
