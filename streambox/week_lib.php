@@ -36,14 +36,26 @@ function wk_tz() {
     if ($tz !== '' && in_array($tz, timezone_identifiers_list(), true)) { date_default_timezone_set($tz); }
 }
 
+// a redirect is followed only to the same host and never from https to http: curl keeps a custom X-Api-Key header on a
+// redirect to another host, so the key would go there (item 104)
+function wk_redirect_ok($from, $to) {
+    $a = parse_url($from); $b = parse_url((string)$to);
+    if (!$a || !$b || empty($a['host']) || empty($b['host'])) { return false; }
+    return strcasecmp($a['host'], $b['host']) === 0 && !(strtolower($a['scheme'] ?? '') === 'https' && strtolower($b['scheme'] ?? '') !== 'https');
+}
 function wk_http($url, $headers, $timeout = 8) {
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => $timeout,
-        CURLOPT_FOLLOWLOCATION => true, CURLOPT_HTTPHEADER => array_merge($headers, ['Accept: application/json'])]);
-    $body = curl_exec($ch);
-    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $err = curl_errno($ch);
-    curl_close($ch);
+    for ($hop = 0; ; $hop++) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_FOLLOWLOCATION => false, CURLOPT_HTTPHEADER => array_merge($headers, ['Accept: application/json'])]);
+        $body = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $next = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+        $err = curl_errno($ch);
+        curl_close($ch);
+        if ($err || $code < 300 || $code > 399 || $next === '' || $hop >= 4 || !wk_redirect_ok($url, $next)) { break; }
+        $url = $next;
+    }
     if ($err) { return [null, 'unreachable']; }
     if ($code === 401 || $code === 403) { return [null, 'auth']; }
     if ($code !== 200) { return [null, 'HTTP ' . $code]; }
