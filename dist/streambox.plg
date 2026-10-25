@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zg">
+<!ENTITY version   "2026.10.14zh">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Jellyfin This week row: without a list it asks again every 15 s, not on every page change; the IMDb link and rating on a details page show up once the ratings have loaded, without a reload
+###2026.10.14zg
 - This week: a redirect is followed only to the same host, so the Sonarr API key is never sent to another host
 ###2026.10.14zf
 - Security: the web folder of the This week page must be a real folder under /mnt: a path with .. in it is refused
@@ -2595,8 +2597,9 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     else if (td && sc.scrollWidth > sc.clientWidth) { sc.scrollLeft = Math.max(0, td.offsetLeft - sc.offsetLeft - 8); }   // today in sight
   }
 
+  // every 110 s; without a list yet (week.json missing or broken) every 15 s, never on each page change (item 104)
   function load(force) {
-    if (busy || (!force && Date.now() - lastFetch < 110000)) { return; }
+    if (busy || (!force && Date.now() - lastFetch < (data ? 110000 : 15000))) { return; }
     busy = true;
     fetch(BASE + 'week.json?_=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
@@ -2611,7 +2614,7 @@ ww_put($jf, json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNIC
     queued = false;
     var sec = homeSections();
     if (!sec) { return; }
-    if (!sec.querySelector('#sbWeek')) { if (data) { render(false); } load(!data); }
+    if (!sec.querySelector('#sbWeek')) { if (data) { render(false); } load(false); }
     else if (data) { render(false); }   // Jellyfin's rows came in: the card height may follow them
   }
   function start() {
@@ -5131,22 +5134,30 @@ function jx_run($cfg, $dir, $now) {
     for (var i = 0; i < ps.length; i++) { if (!ps[i].classList.contains('hide') && ps[i].offsetParent !== null) { return ps[i]; } }
     return null;
   }
-  var dCache = {};   // id -> {tt, r} for items not in imdb.json (an episode without its own IMDb id: the series')
+  // id -> {tt, ser} for items not in imdb.json (ser: the IMDb id is the series', an episode without its own), {none} when it has
+  // none, 'wait' while Jellyfin is asked, {t} after a failed ask (asked again after 30 s). The rating is read from imdb.json at
+  // each draw, so it shows up once imdb.json has loaded (item 104: it stayed away until a reload).
+  var dCache = {};
   function detailInfo(id, cb) {
     if (R && R[id] && R[id][2]) { cb({ tt: R[id][2], r: R[id] }); return; }
-    if (dCache[id] !== undefined) { if (dCache[id]) { cb(dCache[id]); } return; }
-    dCache[id] = null;
+    var c = dCache[id];
+    if (c && c.tt) { cb({ tt: c.tt, r: R ? (c.ser ? R[c.ser] || null : (R[id] && R[id][0] ? R[id] : null)) : null }); return; }
+    if (c && (c === 'wait' || c.none || Date.now() - c.t < 30000)) { return; }
     var a = api();
-    if (!a || !uid()) { return; }
+    if (!a || !uid()) { return; }   // Jellyfin not ready: asked on a later tick
+    dCache[id] = 'wait';
     jget('Items/' + id, { userId: uid() }).then(function (it) {
       var tt = it && it.ProviderIds ? (it.ProviderIds.Imdb || it.ProviderIds.IMDB || '') : '';
       var sid = it && it.SeriesId ? String(it.SeriesId).replace(/-/g, '').toLowerCase() : '';
-      var r = null;
-      if (!tt && sid && R && R[sid]) { tt = R[sid][2]; r = R[sid]; }
-      if (!/^tt\d+$/.test(tt)) { return; }
-      dCache[id] = { tt: tt, r: r };
+      var ser = '';
+      if (!/^tt\d+$/.test(tt) && sid) {
+        if (!R) { dCache[id] = { t: Date.now() }; return; }   // the series' id comes from imdb.json: ask again when it is here
+        if (R[sid] && R[sid][2]) { tt = R[sid][2]; ser = sid; }
+      }
+      if (!/^tt\d+$/.test(tt)) { dCache[id] = { none: 1 }; return; }
+      dCache[id] = { tt: tt, ser: ser };
       queue();
-    }).catch(function () { /* no link */ });
+    }).catch(function () { dCache[id] = { t: Date.now() }; });
   }
   function detail() {
     var p = detailPage(), id = hashId();
@@ -5154,12 +5165,13 @@ function jx_run($cfg, $dir, $now) {
     var mi = p.querySelector('.itemMiscInfo-primary') || p.querySelector('.itemMiscInfo');
     if (!mi) { return; }
     var cur = mi.querySelector('.sbx-mi');
-    if (cur && cur.getAttribute('data-id') === id) { return; }
+    var key = R ? 'r' : '';   // drawn again once imdb.json is here (the rating may come with it)
+    if (cur && cur.getAttribute('data-id') === id && cur.getAttribute('data-k') === key) { return; }
     detailInfo(id, function (d) {
       var c2 = mi.querySelector('.sbx-mi');
       if (c2) { c2.remove(); }
       var a = el('a', 'sbx-mi');
-      a.setAttribute('data-id', id);
+      a.setAttribute('data-id', id); a.setAttribute('data-k', key);
       a.href = IMDB + d.tt + '/';
       a.target = '_blank';
       a.rel = 'noopener';

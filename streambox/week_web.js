@@ -359,8 +359,9 @@
     else if (td && sc.scrollWidth > sc.clientWidth) { sc.scrollLeft = Math.max(0, td.offsetLeft - sc.offsetLeft - 8); }   // today in sight
   }
 
+  // every 110 s; without a list yet (week.json missing or broken) every 15 s, never on each page change (item 104)
   function load(force) {
-    if (busy || (!force && Date.now() - lastFetch < 110000)) { return; }
+    if (busy || (!force && Date.now() - lastFetch < (data ? 110000 : 15000))) { return; }
     busy = true;
     fetch(BASE + 'week.json?_=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
@@ -375,7 +376,7 @@
     queued = false;
     var sec = homeSections();
     if (!sec) { return; }
-    if (!sec.querySelector('#sbWeek')) { if (data) { render(false); } load(!data); }
+    if (!sec.querySelector('#sbWeek')) { if (data) { render(false); } load(false); }
     else if (data) { render(false); }   // Jellyfin's rows came in: the card height may follow them
   }
   function start() {

@@ -200,22 +200,30 @@
     for (var i = 0; i < ps.length; i++) { if (!ps[i].classList.contains('hide') && ps[i].offsetParent !== null) { return ps[i]; } }
     return null;
   }
-  var dCache = {};   // id -> {tt, r} for items not in imdb.json (an episode without its own IMDb id: the series')
+  // id -> {tt, ser} for items not in imdb.json (ser: the IMDb id is the series', an episode without its own), {none} when it has
+  // none, 'wait' while Jellyfin is asked, {t} after a failed ask (asked again after 30 s). The rating is read from imdb.json at
+  // each draw, so it shows up once imdb.json has loaded (item 104: it stayed away until a reload).
+  var dCache = {};
   function detailInfo(id, cb) {
     if (R && R[id] && R[id][2]) { cb({ tt: R[id][2], r: R[id] }); return; }
-    if (dCache[id] !== undefined) { if (dCache[id]) { cb(dCache[id]); } return; }
-    dCache[id] = null;
+    var c = dCache[id];
+    if (c && c.tt) { cb({ tt: c.tt, r: R ? (c.ser ? R[c.ser] || null : (R[id] && R[id][0] ? R[id] : null)) : null }); return; }
+    if (c && (c === 'wait' || c.none || Date.now() - c.t < 30000)) { return; }
     var a = api();
-    if (!a || !uid()) { return; }
+    if (!a || !uid()) { return; }   // Jellyfin not ready: asked on a later tick
+    dCache[id] = 'wait';
     jget('Items/' + id, { userId: uid() }).then(function (it) {
       var tt = it && it.ProviderIds ? (it.ProviderIds.Imdb || it.ProviderIds.IMDB || '') : '';
       var sid = it && it.SeriesId ? String(it.SeriesId).replace(/-/g, '').toLowerCase() : '';
-      var r = null;
-      if (!tt && sid && R && R[sid]) { tt = R[sid][2]; r = R[sid]; }
-      if (!/^tt\d+$/.test(tt)) { return; }
-      dCache[id] = { tt: tt, r: r };
+      var ser = '';
+      if (!/^tt\d+$/.test(tt) && sid) {
+        if (!R) { dCache[id] = { t: Date.now() }; return; }   // the series' id comes from imdb.json: ask again when it is here
+        if (R[sid] && R[sid][2]) { tt = R[sid][2]; ser = sid; }
+      }
+      if (!/^tt\d+$/.test(tt)) { dCache[id] = { none: 1 }; return; }
+      dCache[id] = { tt: tt, ser: ser };
       queue();
-    }).catch(function () { /* no link */ });
+    }).catch(function () { dCache[id] = { t: Date.now() }; });
   }
   function detail() {
     var p = detailPage(), id = hashId();
@@ -223,12 +231,13 @@
     var mi = p.querySelector('.itemMiscInfo-primary') || p.querySelector('.itemMiscInfo');
     if (!mi) { return; }
     var cur = mi.querySelector('.sbx-mi');
-    if (cur && cur.getAttribute('data-id') === id) { return; }
+    var key = R ? 'r' : '';   // drawn again once imdb.json is here (the rating may come with it)
+    if (cur && cur.getAttribute('data-id') === id && cur.getAttribute('data-k') === key) { return; }
     detailInfo(id, function (d) {
       var c2 = mi.querySelector('.sbx-mi');
       if (c2) { c2.remove(); }
       var a = el('a', 'sbx-mi');
-      a.setAttribute('data-id', id);
+      a.setAttribute('data-id', id); a.setAttribute('data-k', key);
       a.href = IMDB + d.tt + '/';
       a.target = '_blank';
       a.rel = 'noopener';
