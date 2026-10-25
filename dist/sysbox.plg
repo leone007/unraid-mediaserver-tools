@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30c">
+<!ENTITY version   "2026.10.30d">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,13 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30d
+- Snapshots: a restore is refused before anything changes when a container folder is a separate dataset or mount, which the snapshot does not hold
+- Update manager: an Ask Claude answer or a to-do mark saved while a check runs is no longer lost when the check ends
+- Update manager: plugin versions compare by their parts (2025.10.01 is newer than 2025.9.30)
+- Claude Guard: two findings of one area in the same report both go to the to-do file
+- Discord: editing the morning brief works with a webhook that has a thread id
+
 ###2026.10.30c
 - Update manager: the self-test runs before the update too; a service that already failed then (stopped, or broken for another reason) no longer makes the update fail or stops Update all
 - Safe shutdown: after a cancelled or failed Stop, a second Stop keeps the containers the first one stopped on the list, so Start them again starts them too
@@ -3966,6 +3973,10 @@ function mt_i18n_js($dir, $name, $only = null) {
  "snp.intro": {
   "text": "A ZFS snapshot freezes a dataset as it is: it costs almost no space at first and grows only with the changes. A daily one before the container updates lets you bring back any container's data from the last days. The whole dataset is never rolled back; a single container can be restored, with a safety snapshot first.",
   "note": "lead line at the top of the Snapshots page (Settings, Utilities, Snapshots). \"safety snapshot\" is a snapshot of now, made before a restore."
+ },
+ "snr.nested": {
+  "text": "restore of {c} refused before anything changed: {d} is a separate dataset or mount, which the {ds} snapshot does not hold (restoring would empty it)",
+  "note": "error of a container restore on the Snapshots page and in Discord."
  },
  "snp.h.activity": {
   "text": "Activity",
@@ -8005,6 +8016,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  "snp.intro": {
   "text": "A ZFS-pillanatkép (snapshot) a datasetet úgy fagyasztja be, ahogy éppen van: eleinte szinte nem foglal helyet, és csak a változásokkal nő. A konténerfrissítések előtti napi pillanatképből bármelyik konténer adatait visszahozhatod az elmúlt napokból. A teljes datasetet sosem görgeti vissza; egyetlen konténer állítható vissza, előtte egy biztonsági pillanatképpel."
  },
+ "snr.nested": {
+  "text": "A(z) {c} visszaállítása elutasítva, semmi nem változott: a(z) {d} külön dataset vagy csatolás, amit a(z) {ds} snapshot nem tartalmaz (a visszaállítás kiürítené)"
+ },
  "snp.h.activity": {
   "text": "Tevékenység"
  },
@@ -11780,6 +11794,8 @@ function snp_containers($ds) {
     usort($out, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
     return $out;
 }
+// the mount table (tests: SX_SNP_MOUNTS)
+function snp_mounts_file() { $t = getenv('SX_SNP_MOUNTS'); return ($t !== false && $t !== '') ? $t : '/proc/mounts'; }
 // where the snapshot copy of a live folder is
 function snp_snapdir($ds, $snap, $dir) { $root = rtrim($ds['mnt'], '/'); return $root . '/.zfs/snapshot/' . $snap . substr($dir, strlen($root)); }
 
@@ -11925,6 +11941,12 @@ if ($mode === 'restore') {
     if (!$have) { $end('error', 'restore refused: ' . $dsn . '@' . $snap . ' does not exist'); }
     $ct = null; foreach (snp_containers($ds) as $x) { if ($x['name'] === $ctr) { $ct = $x; } }
     if (!$ct) { $end('error', 'restore refused: ' . $ctr . ' has no folder in ' . $dsn); }
+    // a folder that is (or holds) another mount, e.g. its own child dataset, is not in this snapshot: rsync --delete would empty it
+    // and the safety snapshot would not cover it (item 104). Refused before anything changes.
+    $mnts = []; foreach ((array)@file(snp_mounts_file(), FILE_IGNORE_NEW_LINES) as $l) { $f = explode(' ', $l); if (isset($f[1])) { $mnts[] = stripcslashes($f[1]); } }
+    foreach ($ct['dirs'] as $dir) {
+        foreach ($mnts as $m) { if ($m === $dir || strpos($m, rtrim($dir, '/') . '/') === 0) { $end('error', sx_tr('snr.nested', ['c' => $ctr, 'd' => $m, 'ds' => $dsn])); } }
+    }
     // 1. a safety snapshot of now, so the restore can be undone the same way
     $safe = 'before-restore-' . $ctr . '-' . date('Y-m-d-Hi');
     $e = snp_make($dsn, $safe);
@@ -12363,6 +12385,26 @@ function upd_write($f, $data) {
     if (@file_put_contents($t, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)) === false) { return false; }
     return @rename($t, $f);
 }
+// read, change and write the cache under one lock: a scan runs for minutes, and an Ask Claude answer or a to-do mark saved
+// meanwhile must not be overwritten by the scan's older copy (item 104)
+function upd_cache_edit(callable $fn) {
+    $lk = @fopen(upd_cache_file() . '.lock', 'c'); if ($lk) { @flock($lk, LOCK_EX); }
+    try { $c = upd_json(upd_cache_file(), []); if ($fn($c) !== false) { upd_write(upd_cache_file(), $c); } return $c; }
+    finally { if ($lk) { @flock($lk, LOCK_UN); @fclose($lk); } }
+}
+// plugin versions (2025.9.30, 2026.10.99zzj, 2026.10.100): number parts compare as numbers, letter parts as text, a longer
+// version is newer (2026.10.99 < 2026.10.99a); strcmp put 2025.10.01 before 2025.9.30 (item 104)
+function upd_ver_cmp($a, $b) {
+    $ta = preg_split('/(\d+)|[.\-_]/', (string)$a, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    $tb = preg_split('/(\d+)|[.\-_]/', (string)$b, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    for ($i = 0; $i < max(count($ta), count($tb)); $i++) {
+        if (!isset($ta[$i])) { return -1; } if (!isset($tb[$i])) { return 1; }
+        $x = $ta[$i]; $y = $tb[$i];
+        $c = (ctype_digit($x) && ctype_digit($y)) ? ((int)$x <=> (int)$y) : (ctype_digit($x) ? 1 : (ctype_digit($y) ? -1 : strcmp($x, $y)));
+        if ($c !== 0) { return $c; }
+    }
+    return 0;
+}
 function upd_log($line) {
     $f = upd_log_file(); @file_put_contents($f, date('Y-m-d H:i') . ' ' . $line . "\n", FILE_APPEND);
     $l = @file($f, FILE_IGNORE_NEW_LINES); if (is_array($l) && count($l) > 400) { @file_put_contents($f, implode("\n", array_slice($l, -300)) . "\n"); }
@@ -12588,8 +12630,8 @@ function upd_os($cur = null) {   // $cur: tests only
     $key = 'unraid-os|' . $new; $cache = upd_json(upd_cache_file(), []);
     if (!isset($cache[$key]['notes']) && !empty($res['changelog']) && preg_match('#^https://#', (string)$res['changelog'])) {
         [$c, , $b] = upd_http((string)$res['changelog'], [], 30);
-        $cache[$key] = ($cache[$key] ?? []) + ['notes' => $c === 200 ? mb_substr(trim($b), 0, 16000) : '', 'url' => $out['url'], 'from' => $cur, 'to' => $new, 't' => time()];
-        upd_write(upd_cache_file(), $cache);
+        $add = ['notes' => $c === 200 ? mb_substr(trim($b), 0, 16000) : '', 'url' => $out['url'], 'from' => $cur, 'to' => $new, 't' => time()];
+        $cache = upd_cache_edit(function (&$x) use ($key, $add) { $x[$key] = ($x[$key] ?? []) + $add; });
     }
     $notes = (string)($cache[$key]['notes'] ?? '');
     $cx = upd_nums($cur); $nx = upd_nums($new);
@@ -12604,7 +12646,7 @@ function upd_plugins() {
     foreach (glob('/boot/config/plugins/*.plg') ?: [] as $f) {
         $id = basename($f, '.plg'); if ($id === 'unRAIDServer') { continue; }
         $cur = upd_plg_ver($f); $r = '/tmp/plugins/' . $id . '.plg'; $new = is_file($r) ? upd_plg_ver($r) : '';
-        $out[] = ['id' => $id, 'cur' => $cur, 'new' => ($new !== '' && $new !== $cur && strcmp($new, $cur) > 0) ? $new : '', 'ours' => UPD_OURS[$id] ?? ''];
+        $out[] = ['id' => $id, 'cur' => $cur, 'new' => ($new !== '' && $new !== $cur && upd_ver_cmp($new, $cur) > 0) ? $new : '', 'ours' => UPD_OURS[$id] ?? ''];
     }
     usort($out, function ($a, $b) { return strcasecmp($a['id'], $b['id']); });
     return $out;
@@ -12612,7 +12654,7 @@ function upd_plugins() {
 
 // ---- the scan: one row per container ------------------------------------------------------------------------
 function upd_scan($only = null) {
-    $cfg = upd_cfg(); $cache = upd_json(upd_cache_file(), []); $prev = upd_json(upd_scan_file(), []);
+    $cfg = upd_cfg(); $cache = upd_json(upd_cache_file(), []); $prev = upd_json(upd_scan_file(), []); $fresh = [];
     $cts = upd_containers();
     if ($cts === null) { return ['ok' => false, 'error' => 'Docker is not running']; }
     $rows = [];
@@ -12633,7 +12675,8 @@ function upd_scan($only = null) {
         $key = $c['name'] . '|' . $r['id'];
         if (!isset($cache[$key]['notes']) || ($cache[$key]['kind'] ?? '') !== $row['kind']) {   // kind changed (e.g. a commit id first read as a major version): fetch the notes again
             [$t, $pub, $url] = upd_notes($row, $row['kind']);
-            $cache[$key] = ['notes' => $t, 'pub' => $pub, 'url' => $url, 'kind' => $row['kind'], 'from' => $c['ver'], 'to' => $r['ver'], 't' => time()] + ($cache[$key] ?? []);
+            $fresh[$key] = ['notes' => $t, 'pub' => $pub, 'url' => $url, 'kind' => $row['kind'], 'from' => $c['ver'], 'to' => $r['ver'], 't' => time()];
+            $cache[$key] = $fresh[$key] + ($cache[$key] ?? []);
         }
         $n = $cache[$key];
         $pub = $n['pub'] ?: (int)strtotime($r['created']);
@@ -12645,8 +12688,11 @@ function upd_scan($only = null) {
     $rows = array_values(array_filter($rows, function ($r) use ($seen) { return isset($seen[$r['name']]); }));
     // keep the cache small: entries of the current updates and Claude answers of the last 60 days
     $keep = []; foreach ($rows as $r) { if (!empty($r['key'])) { $keep[$r['key']] = 1; } }
-    foreach ($cache as $k => $v) { if (!isset($keep[$k]) && (time() - (int)($v['t'] ?? 0)) > 60 * 86400) { unset($cache[$k]); } }
-    upd_write(upd_cache_file(), $cache);
+    // only the notes this scan fetched go into the cache as it is now (its Claude answers and to-do marks stay)
+    upd_cache_edit(function (&$x) use ($fresh, $keep) {
+        foreach ($fresh as $k => $v) { $x[$k] = $v + ($x[$k] ?? []); }
+        foreach ($x as $k => $v) { if (!isset($keep[$k]) && (time() - (int)($v['t'] ?? 0)) > 60 * 86400) { unset($x[$k]); } }
+    });
     $out = ['ok' => true, 't' => time(), 'rows' => $rows, 'os' => upd_os(), 'plugins' => upd_plugins()];
     upd_write(upd_scan_file(), $out);
     return $out;
@@ -12768,9 +12814,7 @@ function upd_ask($name) {
     $o = []; @exec($cmd, $o, $rc); @unlink($pf);
     $text = trim(implode("\n", $o));
     if ($rc !== 0 || $text === '') { return 'Claude did not answer' . ($rc === 124 ? ' in 10 minutes' : ' (exit ' . $rc . ')') . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : ''); }
-    $cache = upd_json(upd_cache_file(), []);
-    $cache[$key] = ($cache[$key] ?? []) + ['t' => time()]; $cache[$key]['claude'] = ['t' => time(), 'text' => mb_substr($text, 0, 6000)];
-    upd_write(upd_cache_file(), $cache);
+    upd_cache_edit(function (&$x) use ($key, $text) { $x[$key] = ($x[$key] ?? []) + ['t' => time()]; $x[$key]['claude'] = ['t' => time(), 'text' => mb_substr($text, 0, 6000)]; });
     return '';
 }
 
@@ -12799,7 +12843,7 @@ function upd_todo($name) {
     if ($new) { $md = "# Teendők a Sysbox Update managerből\n\nA Sysbox 'Save as a to-do' gombja írja. Claude a munkamenet elején átvezeti az ATADAS.md-be, utána kiüríti.\n" . $md; }
     if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return 'could not write ' . $f; }
     @chown($f, 'nobody'); @chgrp($f, 'users'); @chmod($f, 0664);
-    $cache[$key]['claude']['todo'] = time(); upd_write(upd_cache_file(), $cache);
+    upd_cache_edit(function (&$x) use ($key) { if (isset($x[$key]['claude'])) { $x[$key]['claude']['todo'] = time(); } });
     upd_log('to-do saved: ' . $title);
     return '';
 }
@@ -13991,12 +14035,14 @@ function gd_todo_file() { $f = upd_todo_file(); return $f === '' ? '' : dirname(
 function gd_todo($c, $r, &$st) {
     if (empty($c['todo']) || empty($r['items'])) { return 0; }
     $f = gd_todo_file(); if ($f === '') { return 0; }
-    $told = $st['todo'] ?? []; $md = ''; $n = 0;
+    // an area told in the last 7 days is not told again (unless amber became red); the check looks at the earlier reports only,
+    // so two findings of one area in this report both go in (item 104: the second was dropped)
+    $told0 = $st['todo'] ?? []; $told = $told0; $md = ''; $n = 0; $now = [];
     foreach ($r['items'] as $x) {
         if ($x['level'] === 'green') { continue; }
-        $k = strtolower($x['area']); $prev = $told[$k] ?? null;
+        $k = strtolower($x['area']); $prev = $told0[$k] ?? null;
         if ($prev && time() - (int)$prev['t'] < 7 * 86400 && !($prev['l'] === 'amber' && $x['level'] === 'red')) { continue; }
-        $told[$k] = ['l' => $x['level'], 't' => time()]; $n++;
+        $told[$k] = ['l' => (($now[$k] ?? '') === 'red') ? 'red' : $x['level'], 't' => time()]; $now[$k] = $told[$k]['l']; $n++;   // the higher level of this report stays
         $md .= "\n## " . date('Y-m-d H:i', $r['t']) . ' · Claude Guard · ' . $x['area'] . ' (' . ($x['level'] === 'red' ? 'PIROS' : 'SÁRGA') . ")\n\n" . $x['title'] . "\n\n" . $x['text'] . "\n" .
                ($x['todo'] !== '' ? "\nTeendő: " . $x['todo'] . "\n" : '') . ($x['cmd'] !== '' ? "\nEllenőrzés (csak olvas): `" . $x['cmd'] . "`\n" : '');
     }
@@ -14652,7 +14698,8 @@ function gd_sug_edit_msg($hook, $m, $status) {
     $f = array_values(array_filter((array)($e['fields'] ?? []), function ($x) use ($name) { return ($x['name'] ?? '') !== $name; }));
     $f[] = ['name' => $name, 'value' => mb_substr($status, 0, 1000), 'inline' => false];
     $e['fields'] = array_slice($f, 0, 25);
-    mt_bot_http('PATCH', $hook . '/messages/' . $m['mid'], ['Content-Type: application/json'], json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
+    $hp = explode('?', $hook, 2);   // a webhook with ?thread_id=...: the message path goes before the query (item 104)
+    mt_bot_http('PATCH', $hp[0] . '/messages/' . $m['mid'] . (isset($hp[1]) ? '?' . $hp[1] : ''), ['Content-Type: application/json'], json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
 }
 // who reacted with $em (user ids), null on an error
 function gd_sug_who($m, $em) {

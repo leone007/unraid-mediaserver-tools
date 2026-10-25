@@ -247,7 +247,8 @@ function gd_sug_edit_msg($hook, $m, $status) {
     $f = array_values(array_filter((array)($e['fields'] ?? []), function ($x) use ($name) { return ($x['name'] ?? '') !== $name; }));
     $f[] = ['name' => $name, 'value' => mb_substr($status, 0, 1000), 'inline' => false];
     $e['fields'] = array_slice($f, 0, 25);
-    mt_bot_http('PATCH', $hook . '/messages/' . $m['mid'], ['Content-Type: application/json'], json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
+    $hp = explode('?', $hook, 2);   // a webhook with ?thread_id=...: the message path goes before the query (item 104)
+    mt_bot_http('PATCH', $hp[0] . '/messages/' . $m['mid'] . (isset($hp[1]) ? '?' . $hp[1] : ''), ['Content-Type: application/json'], json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
 }
 // who reacted with $em (user ids), null on an error
 function gd_sug_who($m, $em) {

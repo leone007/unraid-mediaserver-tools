@@ -114,6 +114,8 @@ function snp_containers($ds) {
     usort($out, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
     return $out;
 }
+// the mount table (tests: SX_SNP_MOUNTS)
+function snp_mounts_file() { $t = getenv('SX_SNP_MOUNTS'); return ($t !== false && $t !== '') ? $t : '/proc/mounts'; }
 // where the snapshot copy of a live folder is
 function snp_snapdir($ds, $snap, $dir) { $root = rtrim($ds['mnt'], '/'); return $root . '/.zfs/snapshot/' . $snap . substr($dir, strlen($root)); }
 

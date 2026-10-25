@@ -469,12 +469,14 @@ function gd_todo_file() { $f = upd_todo_file(); return $f === '' ? '' : dirname(
 function gd_todo($c, $r, &$st) {
     if (empty($c['todo']) || empty($r['items'])) { return 0; }
     $f = gd_todo_file(); if ($f === '') { return 0; }
-    $told = $st['todo'] ?? []; $md = ''; $n = 0;
+    // an area told in the last 7 days is not told again (unless amber became red); the check looks at the earlier reports only,
+    // so two findings of one area in this report both go in (item 104: the second was dropped)
+    $told0 = $st['todo'] ?? []; $told = $told0; $md = ''; $n = 0; $now = [];
     foreach ($r['items'] as $x) {
         if ($x['level'] === 'green') { continue; }
-        $k = strtolower($x['area']); $prev = $told[$k] ?? null;
+        $k = strtolower($x['area']); $prev = $told0[$k] ?? null;
         if ($prev && time() - (int)$prev['t'] < 7 * 86400 && !($prev['l'] === 'amber' && $x['level'] === 'red')) { continue; }
-        $told[$k] = ['l' => $x['level'], 't' => time()]; $n++;
+        $told[$k] = ['l' => (($now[$k] ?? '') === 'red') ? 'red' : $x['level'], 't' => time()]; $now[$k] = $told[$k]['l']; $n++;   // the higher level of this report stays
         $md .= "\n## " . date('Y-m-d H:i', $r['t']) . ' · Claude Guard · ' . $x['area'] . ' (' . ($x['level'] === 'red' ? 'PIROS' : 'SÁRGA') . ")\n\n" . $x['title'] . "\n\n" . $x['text'] . "\n" .
                ($x['todo'] !== '' ? "\nTeendő: " . $x['todo'] . "\n" : '') . ($x['cmd'] !== '' ? "\nEllenőrzés (csak olvas): `" . $x['cmd'] . "`\n" : '');
     }

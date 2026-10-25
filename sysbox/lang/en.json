@@ -660,6 +660,10 @@
   "text": "A ZFS snapshot freezes a dataset as it is: it costs almost no space at first and grows only with the changes. A daily one before the container updates lets you bring back any container's data from the last days. The whole dataset is never rolled back; a single container can be restored, with a safety snapshot first.",
   "note": "lead line at the top of the Snapshots page (Settings, Utilities, Snapshots). \"safety snapshot\" is a snapshot of now, made before a restore."
  },
+ "snr.nested": {
+  "text": "restore of {c} refused before anything changed: {d} is a separate dataset or mount, which the {ds} snapshot does not hold (restoring would empty it)",
+  "note": "error of a container restore on the Snapshots page and in Discord."
+ },
  "snp.h.activity": {
   "text": "Activity",
   "note": "band title (upper case on screen)."

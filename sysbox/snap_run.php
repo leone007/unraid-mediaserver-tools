@@ -49,6 +49,12 @@ if ($mode === 'restore') {
     if (!$have) { $end('error', 'restore refused: ' . $dsn . '@' . $snap . ' does not exist'); }
     $ct = null; foreach (snp_containers($ds) as $x) { if ($x['name'] === $ctr) { $ct = $x; } }
     if (!$ct) { $end('error', 'restore refused: ' . $ctr . ' has no folder in ' . $dsn); }
+    // a folder that is (or holds) another mount, e.g. its own child dataset, is not in this snapshot: rsync --delete would empty it
+    // and the safety snapshot would not cover it (item 104). Refused before anything changes.
+    $mnts = []; foreach ((array)@file(snp_mounts_file(), FILE_IGNORE_NEW_LINES) as $l) { $f = explode(' ', $l); if (isset($f[1])) { $mnts[] = stripcslashes($f[1]); } }
+    foreach ($ct['dirs'] as $dir) {
+        foreach ($mnts as $m) { if ($m === $dir || strpos($m, rtrim($dir, '/') . '/') === 0) { $end('error', sx_tr('snr.nested', ['c' => $ctr, 'd' => $m, 'ds' => $dsn])); } }
+    }
     // 1. a safety snapshot of now, so the restore can be undone the same way
     $safe = 'before-restore-' . $ctr . '-' . date('Y-m-d-Hi');
     $e = snp_make($dsn, $safe);

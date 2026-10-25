@@ -495,6 +495,9 @@
  "snp.intro": {
   "text": "A ZFS-pillanatkép (snapshot) a datasetet úgy fagyasztja be, ahogy éppen van: eleinte szinte nem foglal helyet, és csak a változásokkal nő. A konténerfrissítések előtti napi pillanatképből bármelyik konténer adatait visszahozhatod az elmúlt napokból. A teljes datasetet sosem görgeti vissza; egyetlen konténer állítható vissza, előtte egy biztonsági pillanatképpel."
  },
+ "snr.nested": {
+  "text": "A(z) {c} visszaállítása elutasítva, semmi nem változott: a(z) {d} külön dataset vagy csatolás, amit a(z) {ds} snapshot nem tartalmaz (a visszaállítás kiürítené)"
+ },
  "snp.h.activity": {
   "text": "Tevékenység"
  },

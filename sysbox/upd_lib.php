@@ -31,6 +31,26 @@ function upd_write($f, $data) {
     if (@file_put_contents($t, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)) === false) { return false; }
     return @rename($t, $f);
 }
+// read, change and write the cache under one lock: a scan runs for minutes, and an Ask Claude answer or a to-do mark saved
+// meanwhile must not be overwritten by the scan's older copy (item 104)
+function upd_cache_edit(callable $fn) {
+    $lk = @fopen(upd_cache_file() . '.lock', 'c'); if ($lk) { @flock($lk, LOCK_EX); }
+    try { $c = upd_json(upd_cache_file(), []); if ($fn($c) !== false) { upd_write(upd_cache_file(), $c); } return $c; }
+    finally { if ($lk) { @flock($lk, LOCK_UN); @fclose($lk); } }
+}
+// plugin versions (2025.9.30, 2026.10.99zzj, 2026.10.100): number parts compare as numbers, letter parts as text, a longer
+// version is newer (2026.10.99 < 2026.10.99a); strcmp put 2025.10.01 before 2025.9.30 (item 104)
+function upd_ver_cmp($a, $b) {
+    $ta = preg_split('/(\d+)|[.\-_]/', (string)$a, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    $tb = preg_split('/(\d+)|[.\-_]/', (string)$b, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    for ($i = 0; $i < max(count($ta), count($tb)); $i++) {
+        if (!isset($ta[$i])) { return -1; } if (!isset($tb[$i])) { return 1; }
+        $x = $ta[$i]; $y = $tb[$i];
+        $c = (ctype_digit($x) && ctype_digit($y)) ? ((int)$x <=> (int)$y) : (ctype_digit($x) ? 1 : (ctype_digit($y) ? -1 : strcmp($x, $y)));
+        if ($c !== 0) { return $c; }
+    }
+    return 0;
+}
 function upd_log($line) {
     $f = upd_log_file(); @file_put_contents($f, date('Y-m-d H:i') . ' ' . $line . "\n", FILE_APPEND);
     $l = @file($f, FILE_IGNORE_NEW_LINES); if (is_array($l) && count($l) > 400) { @file_put_contents($f, implode("\n", array_slice($l, -300)) . "\n"); }
@@ -256,8 +276,8 @@ function upd_os($cur = null) {   // $cur: tests only
     $key = 'unraid-os|' . $new; $cache = upd_json(upd_cache_file(), []);
     if (!isset($cache[$key]['notes']) && !empty($res['changelog']) && preg_match('#^https://#', (string)$res['changelog'])) {
         [$c, , $b] = upd_http((string)$res['changelog'], [], 30);
-        $cache[$key] = ($cache[$key] ?? []) + ['notes' => $c === 200 ? mb_substr(trim($b), 0, 16000) : '', 'url' => $out['url'], 'from' => $cur, 'to' => $new, 't' => time()];
-        upd_write(upd_cache_file(), $cache);
+        $add = ['notes' => $c === 200 ? mb_substr(trim($b), 0, 16000) : '', 'url' => $out['url'], 'from' => $cur, 'to' => $new, 't' => time()];
+        $cache = upd_cache_edit(function (&$x) use ($key, $add) { $x[$key] = ($x[$key] ?? []) + $add; });
     }
     $notes = (string)($cache[$key]['notes'] ?? '');
     $cx = upd_nums($cur); $nx = upd_nums($new);
@@ -272,7 +292,7 @@ function upd_plugins() {
     foreach (glob('/boot/config/plugins/*.plg') ?: [] as $f) {
         $id = basename($f, '.plg'); if ($id === 'unRAIDServer') { continue; }
         $cur = upd_plg_ver($f); $r = '/tmp/plugins/' . $id . '.plg'; $new = is_file($r) ? upd_plg_ver($r) : '';
-        $out[] = ['id' => $id, 'cur' => $cur, 'new' => ($new !== '' && $new !== $cur && strcmp($new, $cur) > 0) ? $new : '', 'ours' => UPD_OURS[$id] ?? ''];
+        $out[] = ['id' => $id, 'cur' => $cur, 'new' => ($new !== '' && $new !== $cur && upd_ver_cmp($new, $cur) > 0) ? $new : '', 'ours' => UPD_OURS[$id] ?? ''];
     }
     usort($out, function ($a, $b) { return strcasecmp($a['id'], $b['id']); });
     return $out;
@@ -280,7 +300,7 @@ function upd_plugins() {
 
 // ---- the scan: one row per container ------------------------------------------------------------------------
 function upd_scan($only = null) {
-    $cfg = upd_cfg(); $cache = upd_json(upd_cache_file(), []); $prev = upd_json(upd_scan_file(), []);
+    $cfg = upd_cfg(); $cache = upd_json(upd_cache_file(), []); $prev = upd_json(upd_scan_file(), []); $fresh = [];
     $cts = upd_containers();
     if ($cts === null) { return ['ok' => false, 'error' => 'Docker is not running']; }
     $rows = [];
@@ -301,7 +321,8 @@ function upd_scan($only = null) {
         $key = $c['name'] . '|' . $r['id'];
         if (!isset($cache[$key]['notes']) || ($cache[$key]['kind'] ?? '') !== $row['kind']) {   // kind changed (e.g. a commit id first read as a major version): fetch the notes again
             [$t, $pub, $url] = upd_notes($row, $row['kind']);
-            $cache[$key] = ['notes' => $t, 'pub' => $pub, 'url' => $url, 'kind' => $row['kind'], 'from' => $c['ver'], 'to' => $r['ver'], 't' => time()] + ($cache[$key] ?? []);
+            $fresh[$key] = ['notes' => $t, 'pub' => $pub, 'url' => $url, 'kind' => $row['kind'], 'from' => $c['ver'], 'to' => $r['ver'], 't' => time()];
+            $cache[$key] = $fresh[$key] + ($cache[$key] ?? []);
         }
         $n = $cache[$key];
         $pub = $n['pub'] ?: (int)strtotime($r['created']);
@@ -313,8 +334,11 @@ function upd_scan($only = null) {
     $rows = array_values(array_filter($rows, function ($r) use ($seen) { return isset($seen[$r['name']]); }));
     // keep the cache small: entries of the current updates and Claude answers of the last 60 days
     $keep = []; foreach ($rows as $r) { if (!empty($r['key'])) { $keep[$r['key']] = 1; } }
-    foreach ($cache as $k => $v) { if (!isset($keep[$k]) && (time() - (int)($v['t'] ?? 0)) > 60 * 86400) { unset($cache[$k]); } }
-    upd_write(upd_cache_file(), $cache);
+    // only the notes this scan fetched go into the cache as it is now (its Claude answers and to-do marks stay)
+    upd_cache_edit(function (&$x) use ($fresh, $keep) {
+        foreach ($fresh as $k => $v) { $x[$k] = $v + ($x[$k] ?? []); }
+        foreach ($x as $k => $v) { if (!isset($keep[$k]) && (time() - (int)($v['t'] ?? 0)) > 60 * 86400) { unset($x[$k]); } }
+    });
     $out = ['ok' => true, 't' => time(), 'rows' => $rows, 'os' => upd_os(), 'plugins' => upd_plugins()];
     upd_write(upd_scan_file(), $out);
     return $out;
@@ -436,9 +460,7 @@ function upd_ask($name) {
     $o = []; @exec($cmd, $o, $rc); @unlink($pf);
     $text = trim(implode("\n", $o));
     if ($rc !== 0 || $text === '') { return 'Claude did not answer' . ($rc === 124 ? ' in 10 minutes' : ' (exit ' . $rc . ')') . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : ''); }
-    $cache = upd_json(upd_cache_file(), []);
-    $cache[$key] = ($cache[$key] ?? []) + ['t' => time()]; $cache[$key]['claude'] = ['t' => time(), 'text' => mb_substr($text, 0, 6000)];
-    upd_write(upd_cache_file(), $cache);
+    upd_cache_edit(function (&$x) use ($key, $text) { $x[$key] = ($x[$key] ?? []) + ['t' => time()]; $x[$key]['claude'] = ['t' => time(), 'text' => mb_substr($text, 0, 6000)]; });
     return '';
 }
 
@@ -467,7 +489,7 @@ function upd_todo($name) {
     if ($new) { $md = "# Teendők a Sysbox Update managerből\n\nA Sysbox 'Save as a to-do' gombja írja. Claude a munkamenet elején átvezeti az ATADAS.md-be, utána kiüríti.\n" . $md; }
     if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return 'could not write ' . $f; }
     @chown($f, 'nobody'); @chgrp($f, 'users'); @chmod($f, 0664);
-    $cache[$key]['claude']['todo'] = time(); upd_write(upd_cache_file(), $cache);
+    upd_cache_edit(function (&$x) use ($key) { if (isset($x[$key]['claude'])) { $x[$key]['claude']['todo'] = time(); } });
     upd_log('to-do saved: ' . $title);
     return '';
 }

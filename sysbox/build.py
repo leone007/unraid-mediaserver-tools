@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30c">
+<!ENTITY version   "2026.10.30d">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,13 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30d
+- Snapshots: a restore is refused before anything changes when a container folder is a separate dataset or mount, which the snapshot does not hold
+- Update manager: an Ask Claude answer or a to-do mark saved while a check runs is no longer lost when the check ends
+- Update manager: plugin versions compare by their parts (2025.10.01 is newer than 2025.9.30)
+- Claude Guard: two findings of one area in the same report both go to the to-do file
+- Discord: editing the morning brief works with a webhook that has a thread id
+
 ###2026.10.30c
 - Update manager: the self-test runs before the update too; a service that already failed then (stopped, or broken for another reason) no longer makes the update fail or stops Update all
 - Safe shutdown: after a cancelled or failed Stop, a second Stop keeps the containers the first one stopped on the list, so Start them again starts them too
