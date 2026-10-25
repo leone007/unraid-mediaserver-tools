@@ -1576,5 +1576,83 @@
  "bal.stop_now_confirm": {
   "text": "Stop now?\n\nThe title being copied is rolled back: its copy is removed from the target disk and the original stays where it is. The copying done on it so far is lost. Stop after this title keeps it instead.",
   "note": "confirmation box of Stop now. Keep the line breaks (\\n\\n)."
+ },
+ "plan.scanning": {
+  "text": "Scanning {d}...",
+  "note": "status of the plan while a disk is read."
+ },
+ "plan.nofit": {
+  "one": "{n} title does not fit on the other disks and is not ticked.",
+  "other": "{n} titles do not fit on the other disks and are not ticked.",
+  "note": "note under a drain plan."
+ },
+ "dc.bl_start": {
+  "text": "Balance started",
+  "note": "Balance Discord message: title."
+ },
+ "dc.bl_start_d": {
+  "one": "{n} title, {s}",
+  "other": "{n} titles, {s}",
+  "note": "Balance Discord message: text; {s} the size."
+ },
+ "dc.bl_done": {
+  "text": "Balance finished",
+  "note": "Balance Discord message: title."
+ },
+ "dc.bl_stopped": {
+  "text": "Balance stopped",
+  "note": "Balance Discord message: title when the owner stopped it."
+ },
+ "dc.bl_error": {
+  "text": "Balance stopped with an error",
+  "note": "Balance Discord message: title."
+ },
+ "dc.bl_moved": {
+  "text": "Moved: {s}",
+  "note": "Balance Discord message: line; {s} count, size and time (3/5 · 1.2 TB · 2 h)."
+ },
+ "dc.bl_sofar": {
+  "text": "Moved so far: {s}",
+  "note": "Balance Discord message: line after an error; {s} count, size and time."
+ },
+ "dc.bl_skipped": {
+  "text": "Skipped: {n}",
+  "note": "Balance Discord message: line; {n} skipped titles."
+ },
+ "dc.bl_fill": {
+  "text": "Fill now",
+  "note": "Balance Discord message: field name: how full each disk is now."
+ },
+ "save.f_n_fill_warn": {
+  "text": "Fill warning",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_n_fill_crit": {
+  "text": "Fill critical",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_warn_use": {
+  "text": "Warning utilization",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_crit_use": {
+  "text": "Critical utilization",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_hot_temp": {
+  "text": "Hot temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_max_temp": {
+  "text": "Maximum temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_n_remind": {
+  "text": "Repeat interval",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_wk_hour": {
+  "text": "Weekly hour",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
  }
 }

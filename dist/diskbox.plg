@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22t">
+<!ENTITY version   "2026.10.22u">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22u
+- Balance and Remove disks: the remaining English texts (plan status, the note on titles that do not fit, a Remove step 2 error, the Settings field names in save errors) and the Balance Discord messages come from the dictionary, Discord in the Discord language
+
 ###2026.10.22t
 - Balance: a drain plan reads the disk list once instead of once per title (fewer disk wake-ups on a big disk)
 
@@ -1767,23 +1770,23 @@ if ($hook !== '' && !preg_match('#^https://(?:discord|discordapp)\.com/api/webho
 }
 $ping = trim((string)($_POST['dc_ping'] ?? ''));
 if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { db_out(false, ['error' => $dbx_T('save.err_ping')]); }
-$fw = db_req($_POST['n_fill_warn'] ?? '85', 1, 100, 'Fill warning');
-$fc = db_req($_POST['n_fill_crit'] ?? '95', 1, 100, 'Fill critical');
+$fw = db_req($_POST['n_fill_warn'] ?? '85', 1, 100, $dbx_T('save.f_n_fill_warn'));
+$fc = db_req($_POST['n_fill_crit'] ?? '95', 1, 100, $dbx_T('save.f_n_fill_crit'));
 if ((int)$fw > (int)$fc) { db_out(false, ['error' => $dbx_T('save.err_fill')]); }
 
 $new = [
-    'warn_use' => db_num($_POST['warn_use'] ?? '', 0, 100, 'Warning utilization'),
-    'crit_use' => db_num($_POST['crit_use'] ?? '', 0, 100, 'Critical utilization'),
-    'hot_temp' => db_num($_POST['hot_temp'] ?? '', 0, 100, 'Hot temperature'),
-    'max_temp' => db_num($_POST['max_temp'] ?? '', 0, 100, 'Maximum temperature'),
-    'smart'    => in_array(strtolower(trim((string)($_POST['smart'] ?? '1'))), ['1', 'yes', 'true', 'on'], true) ? '1' : '0',
+    'warn_use' => db_num($_POST['warn_use'] ?? '', 0, 100, $dbx_T('save.f_warn_use')),
+    'crit_use' => db_num($_POST['crit_use'] ?? '', 0, 100, $dbx_T('save.f_crit_use')),
+    'hot_temp' => db_num($_POST['hot_temp'] ?? '', 0, 100, $dbx_T('save.f_hot_temp')),
+    'max_temp' => db_num($_POST['max_temp'] ?? '', 0, 100, $dbx_T('save.f_max_temp')),
+    'smart'    => db_bool($_POST['smart'] ?? '1'),
     'dc_hook'  => $hook, 'dc_ping' => $ping,
     'dc_lang'  => (($_POST['dc_lang'] ?? 'hu') === 'en') ? 'en' : 'hu',
     'n_array' => db_bool($_POST['n_array'] ?? '1'), 'n_temp' => db_bool($_POST['n_temp'] ?? '1'), 'n_smart' => db_bool($_POST['n_smart'] ?? '1'),
     'n_fill' => db_bool($_POST['n_fill'] ?? '1'), 'n_fill_warn' => $fw, 'n_fill_crit' => $fc,
     'n_pool' => db_bool($_POST['n_pool'] ?? '1'), 'n_parity' => db_bool($_POST['n_parity'] ?? '1'), 'n_utest' => db_bool($_POST['n_utest'] ?? '1'),
-    'n_remind' => db_req($_POST['n_remind'] ?? '24', 0, 168, 'Repeat interval'),
-    'wk_on' => db_bool($_POST['wk_on'] ?? '1'), 'wk_day' => db_req($_POST['wk_day'] ?? '7', 1, 7, 'Weekly day'), 'wk_hour' => db_req($_POST['wk_hour'] ?? '18', 0, 23, 'Weekly hour'),
+    'n_remind' => db_req($_POST['n_remind'] ?? '24', 0, 168, $dbx_T('save.f_n_remind')),
+    'wk_on' => db_bool($_POST['wk_on'] ?? '1'), 'wk_day' => db_req($_POST['wk_day'] ?? '7', 1, 7, 'Weekly day'), 'wk_hour' => db_req($_POST['wk_hour'] ?? '18', 0, 23, $dbx_T('save.f_wk_hour')),
 ];
 
 $text = '';
@@ -4369,6 +4372,84 @@ function mt_i18n_js($dir, $name, $only = null) {
  "bal.stop_now_confirm": {
   "text": "Stop now?\n\nThe title being copied is rolled back: its copy is removed from the target disk and the original stays where it is. The copying done on it so far is lost. Stop after this title keeps it instead.",
   "note": "confirmation box of Stop now. Keep the line breaks (\\n\\n)."
+ },
+ "plan.scanning": {
+  "text": "Scanning {d}...",
+  "note": "status of the plan while a disk is read."
+ },
+ "plan.nofit": {
+  "one": "{n} title does not fit on the other disks and is not ticked.",
+  "other": "{n} titles do not fit on the other disks and are not ticked.",
+  "note": "note under a drain plan."
+ },
+ "dc.bl_start": {
+  "text": "Balance started",
+  "note": "Balance Discord message: title."
+ },
+ "dc.bl_start_d": {
+  "one": "{n} title, {s}",
+  "other": "{n} titles, {s}",
+  "note": "Balance Discord message: text; {s} the size."
+ },
+ "dc.bl_done": {
+  "text": "Balance finished",
+  "note": "Balance Discord message: title."
+ },
+ "dc.bl_stopped": {
+  "text": "Balance stopped",
+  "note": "Balance Discord message: title when the owner stopped it."
+ },
+ "dc.bl_error": {
+  "text": "Balance stopped with an error",
+  "note": "Balance Discord message: title."
+ },
+ "dc.bl_moved": {
+  "text": "Moved: {s}",
+  "note": "Balance Discord message: line; {s} count, size and time (3/5 · 1.2 TB · 2 h)."
+ },
+ "dc.bl_sofar": {
+  "text": "Moved so far: {s}",
+  "note": "Balance Discord message: line after an error; {s} count, size and time."
+ },
+ "dc.bl_skipped": {
+  "text": "Skipped: {n}",
+  "note": "Balance Discord message: line; {n} skipped titles."
+ },
+ "dc.bl_fill": {
+  "text": "Fill now",
+  "note": "Balance Discord message: field name: how full each disk is now."
+ },
+ "save.f_n_fill_warn": {
+  "text": "Fill warning",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_n_fill_crit": {
+  "text": "Fill critical",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_warn_use": {
+  "text": "Warning utilization",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_crit_use": {
+  "text": "Critical utilization",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_hot_temp": {
+  "text": "Hot temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_max_temp": {
+  "text": "Maximum temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_n_remind": {
+  "text": "Repeat interval",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_wk_hour": {
+  "text": "Weekly hour",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
  }
 }]]></INLINE>
 </FILE>
@@ -5566,6 +5647,65 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "bal.stop_now_confirm": {
   "text": "Leállítod most?\n\nA másolás alatt álló címet visszagörgeti: a másolatát törli a céllemezről, az eredeti a helyén marad. Az eddigi másolás rajta elvész. A Leállítás e cím után gomb ezzel szemben befejezi."
+ },
+ "plan.scanning": {
+  "text": "{d} átnézése..."
+ },
+ "plan.nofit": {
+  "one": "{n} cím nem fér el a többi lemezen, nincs kipipálva.",
+  "other": "{n} cím nem fér el a többi lemezen, nincs kipipálva."
+ },
+ "dc.bl_start": {
+  "text": "Balance indul"
+ },
+ "dc.bl_start_d": {
+  "one": "{n} cím költöztetése, {s}",
+  "other": "{n} cím költöztetése, {s}"
+ },
+ "dc.bl_done": {
+  "text": "Balance kész"
+ },
+ "dc.bl_stopped": {
+  "text": "Balance megállítva"
+ },
+ "dc.bl_error": {
+  "text": "Balance leállt hibával"
+ },
+ "dc.bl_moved": {
+  "text": "Áthelyezve: {s}"
+ },
+ "dc.bl_sofar": {
+  "text": "Áthelyezve addig: {s}"
+ },
+ "dc.bl_skipped": {
+  "text": "Kihagyva: {n}"
+ },
+ "dc.bl_fill": {
+  "text": "Kitöltöttség most"
+ },
+ "save.f_n_fill_warn": {
+  "text": "Telítettség, figyelmeztető"
+ },
+ "save.f_n_fill_crit": {
+  "text": "Telítettség, kritikus"
+ },
+ "save.f_warn_use": {
+  "text": "Figyelmeztető telítettség"
+ },
+ "save.f_crit_use": {
+  "text": "Kritikus telítettség"
+ },
+ "save.f_hot_temp": {
+  "text": "Meleg hőmérséklet"
+ },
+ "save.f_max_temp": {
+  "text": "Maximális hőmérséklet"
+ },
+ "save.f_n_remind": {
+  "text": "Piros riasztás ismétlése"
+ },
+ "save.f_wk_hour": {
+  "text": "Heti összefoglaló órája"
  }
 }]]></INLINE>
 </FILE>
@@ -6098,6 +6238,17 @@ require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/i18n.php';
 // texts the Balance page and the tile show (lang/en.json); the run log stays in English
 function bl_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
+// the same dictionary in the Discord language (Settings, Language: Discord messages), for the Balance Discord messages (item 104)
+function bl_trd($k, $v = []) {
+    static $tab = null;
+    if ($tab === null) {
+        $dir = __DIR__ . '/lang'; $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $read($dir . '/en.json'); $code = function_exists('mt_lang_discord') ? mt_lang_discord() : 'en';
+        $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : []; $tab = [];
+        foreach ($en as $kk => $vv) { if (!is_array($vv)) { continue; } foreach (['text', 'one', 'other'] as $f) { if (isset($vv[$f])) { $t = $tr[$kk][$f] ?? null; $tab[$kk][$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$vv[$f]; } } }
+    }
+    $s = mt_i18n_fmt($tab[$k] ?? null, (array)$v); return $s === null ? $k : $s;
+}
 
 // DBX_BL_DIR (tests only): keep the settings and the /tmp files in that folder instead
 $bl_t = getenv('DBX_BL_DIR'); $bl_t = ($bl_t !== false && $bl_t !== '') ? rtrim($bl_t, '/') : '';
@@ -6413,7 +6564,7 @@ function bl_make_plan() {
     $strategy = ($cfg['strategy'] === 'big') ? 'big' : 'old';
     $dnr = array_keys(array_filter($need, function ($x) { return $x > 0; }));
     foreach ($donors as $dn) {
-        bl_plan_status('running', 'Scanning ' . strtoupper($dn) . '...');
+        bl_plan_status('running', bl_tr('plan.scanning', ['d' => strtoupper($dn)]));
         [$ok, $sk] = bl_scan_disk($dn, $pairs);
         foreach ($sk as $s) { $skipped[] = $s; }
         usort($ok, function ($a, $b) use ($strategy) { return $strategy === 'big' ? ($b['size'] <=> $a['size']) : ($a['mtime'] <=> $b['mtime']); });
@@ -6473,7 +6624,7 @@ function bl_plan_drain($cfg, $disks, $pairs) {
     $T = $sumUsed / $sumSize * 100;
     $units = []; $skipped = []; $left = []; $nofit = 0;
     foreach ($drain as $dn) {
-        bl_plan_status('running', 'Scanning ' . strtoupper($dn) . '...');
+        bl_plan_status('running', bl_tr('plan.scanning', ['d' => strtoupper($dn)]));
         [$ok, $sk, $lo] = bl_scan_disk($dn, $pairs, true);
         foreach ($sk as $x) { $skipped[] = $x; }
         foreach ($lo as $x) { $left[] = $x; }
@@ -6490,7 +6641,7 @@ function bl_plan_drain($cfg, $disks, $pairs) {
         }
     }
     usort($left, function ($a, $b) { return $b['size'] <=> $a['size']; });
-    $note = $nofit ? $nofit . ' title(s) do not fit on the other disks and are not ticked.' : '';
+    $note = $nofit ? bl_tr('plan.nofit', ['n' => $nofit]) : '';
     bl_plan_publish($units, $skipped, $disks, ['mode' => 'drain', 'drain' => $drain, 'target' => min(100, $T), 'avg' => $T, 'req' => null, 'note' => $note,
         'left' => array_slice($left, 0, 300), 'leftSize' => array_sum(array_column($left, 'size'))]);
 }
@@ -6738,7 +6889,7 @@ function rm_op($op) {
     if ($op === 'rm_state') { bl_out(true, ['rm' => $s]); }
     if (!$sel) { bl_out(false, ['error' => bl_tr('rm.err.choose')]); }
     if ($op === 'rm_check') {
-        if ($s['shares']) { bl_out(false, ['error' => 'Step 2 first: ' . count($s['shares']) . ' share(s) can still write to the disks.']); }
+        if ($s['shares']) { bl_out(false, ['error' => bl_tr('rm.err.step2_shares', ['l' => implode(', ', array_column($s['shares'], 0))])]); }
         if ($s['balance']) { bl_out(false, ['error' => bl_tr('rm.err.move_check')]); }
         $res = []; $ok = true;
         foreach ($sel as $d) { $r = rm_scan($d); $res[$d] = $r; if ($r['n'] !== 0) { $ok = false; } }
@@ -6831,7 +6982,6 @@ $cfg = db_cfg();
 $hook = (string)$cfg['dc_hook'];
 $lang = dbn_lang($cfg);
 dbn_ping_set($cfg['dc_ping']);
-$hu = ($lang === 'hu');
 
 $job = bl_json_read(BL_JOB, []);
 $plan = bl_json_read(BL_PLAN, []);
@@ -6897,7 +7047,7 @@ foreach ((array)bl_cfg()['pairs'] as $p) { $stopDirs[] = trim($p['dl'], '/'); $s
 // parents of the roots must stay too
 foreach ($stopDirs as $d) { $x = $d; while (($x = dirname($x)) !== '.' && $x !== '') { $stopDirs[] = $x; } }
 
-bl_say('i', $hu ? 'Balance indul' : 'Balance started', ($hu ? count($S['items']) . ' cím költöztetése, ' : count($S['items']) . ' titles, ') . dbn_fmt_bytes($S['total']));
+bl_say('i', bl_trd('dc.bl_start'), bl_trd('dc.bl_start_d', ['n' => count($S['items']), 's' => dbn_fmt_bytes($S['total'])]));
 bl_s_log('start: ' . count($S['items']) . ' titles, ' . dbn_fmt_bytes($S['total']));
 bl_hist('start ' . count($S['items']) . ' titles ' . dbn_fmt_bytes($S['total']));
 
@@ -7000,12 +7150,12 @@ foreach ($after as $n => $d) { $lines[] = $d['label'] . ' ' . number_format($d['
 $sum = $okN . '/' . count($S['items']) . ' · ' . dbn_fmt_bytes($movedBytes) . ' · ' . dbn_fmt_dur(time() - $S['started']);
 bl_hist($S['state'] . ' ' . $sum . ($fatal !== '' ? ' ' . $fatal : ''));
 if ($S['state'] === 'done') {
-    bl_say($skipN > 0 ? 'a' : 'g', $hu ? 'Balance kész' : 'Balance finished',
-        ($hu ? 'Áthelyezve: ' : 'Moved: ') . $sum . ($skipN > 0 ? "\n" . ($hu ? 'Kihagyva: ' : 'Skipped: ') . $skipN : ''), [[$hu ? 'Kitöltöttség most' : 'Fill now', implode(' · ', $lines)]]);
+    bl_say($skipN > 0 ? 'a' : 'g', bl_trd('dc.bl_done'),
+        bl_trd('dc.bl_moved', ['s' => $sum]) . ($skipN > 0 ? "\n" . bl_trd('dc.bl_skipped', ['n' => $skipN]) : ''), [[bl_trd('dc.bl_fill'), implode(' · ', $lines)]]);
 } elseif ($S['state'] === 'aborted') {
-    bl_say('a', $hu ? 'Balance megállítva' : 'Balance stopped', ($hu ? 'Áthelyezve: ' : 'Moved: ') . $sum, [[$hu ? 'Kitöltöttség most' : 'Fill now', implode(' · ', $lines)]]);
+    bl_say('a', bl_trd('dc.bl_stopped'), bl_trd('dc.bl_moved', ['s' => $sum]), [[bl_trd('dc.bl_fill'), implode(' · ', $lines)]]);
 } else {
-    bl_say('rd', $hu ? 'Balance leállt hibával' : 'Balance stopped with an error', $fatal . "\n" . ($hu ? 'Áthelyezve addig: ' : 'Moved so far: ') . $sum);
+    bl_say('rd', bl_trd('dc.bl_error'), $fatal . "\n" . bl_trd('dc.bl_sofar', ['s' => $sum]));
 }
 ]]></INLINE>
 </FILE>

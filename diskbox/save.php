@@ -49,23 +49,23 @@ if ($hook !== '' && !preg_match('#^https://(?:discord|discordapp)\.com/api/webho
 }
 $ping = trim((string)($_POST['dc_ping'] ?? ''));
 if ($ping !== '' && !preg_match('/^(\d{15,25}|role:\d{15,25}|@here|@everyone)$/', $ping)) { db_out(false, ['error' => $dbx_T('save.err_ping')]); }
-$fw = db_req($_POST['n_fill_warn'] ?? '85', 1, 100, 'Fill warning');
-$fc = db_req($_POST['n_fill_crit'] ?? '95', 1, 100, 'Fill critical');
+$fw = db_req($_POST['n_fill_warn'] ?? '85', 1, 100, $dbx_T('save.f_n_fill_warn'));
+$fc = db_req($_POST['n_fill_crit'] ?? '95', 1, 100, $dbx_T('save.f_n_fill_crit'));
 if ((int)$fw > (int)$fc) { db_out(false, ['error' => $dbx_T('save.err_fill')]); }
 
 $new = [
-    'warn_use' => db_num($_POST['warn_use'] ?? '', 0, 100, 'Warning utilization'),
-    'crit_use' => db_num($_POST['crit_use'] ?? '', 0, 100, 'Critical utilization'),
-    'hot_temp' => db_num($_POST['hot_temp'] ?? '', 0, 100, 'Hot temperature'),
-    'max_temp' => db_num($_POST['max_temp'] ?? '', 0, 100, 'Maximum temperature'),
-    'smart'    => in_array(strtolower(trim((string)($_POST['smart'] ?? '1'))), ['1', 'yes', 'true', 'on'], true) ? '1' : '0',
+    'warn_use' => db_num($_POST['warn_use'] ?? '', 0, 100, $dbx_T('save.f_warn_use')),
+    'crit_use' => db_num($_POST['crit_use'] ?? '', 0, 100, $dbx_T('save.f_crit_use')),
+    'hot_temp' => db_num($_POST['hot_temp'] ?? '', 0, 100, $dbx_T('save.f_hot_temp')),
+    'max_temp' => db_num($_POST['max_temp'] ?? '', 0, 100, $dbx_T('save.f_max_temp')),
+    'smart'    => db_bool($_POST['smart'] ?? '1'),
     'dc_hook'  => $hook, 'dc_ping' => $ping,
     'dc_lang'  => (($_POST['dc_lang'] ?? 'hu') === 'en') ? 'en' : 'hu',
     'n_array' => db_bool($_POST['n_array'] ?? '1'), 'n_temp' => db_bool($_POST['n_temp'] ?? '1'), 'n_smart' => db_bool($_POST['n_smart'] ?? '1'),
     'n_fill' => db_bool($_POST['n_fill'] ?? '1'), 'n_fill_warn' => $fw, 'n_fill_crit' => $fc,
     'n_pool' => db_bool($_POST['n_pool'] ?? '1'), 'n_parity' => db_bool($_POST['n_parity'] ?? '1'), 'n_utest' => db_bool($_POST['n_utest'] ?? '1'),
-    'n_remind' => db_req($_POST['n_remind'] ?? '24', 0, 168, 'Repeat interval'),
-    'wk_on' => db_bool($_POST['wk_on'] ?? '1'), 'wk_day' => db_req($_POST['wk_day'] ?? '7', 1, 7, 'Weekly day'), 'wk_hour' => db_req($_POST['wk_hour'] ?? '18', 0, 23, 'Weekly hour'),
+    'n_remind' => db_req($_POST['n_remind'] ?? '24', 0, 168, $dbx_T('save.f_n_remind')),
+    'wk_on' => db_bool($_POST['wk_on'] ?? '1'), 'wk_day' => db_req($_POST['wk_day'] ?? '7', 1, 7, 'Weekly day'), 'wk_hour' => db_req($_POST['wk_hour'] ?? '18', 0, 23, $dbx_T('save.f_wk_hour')),
 ];
 
 $text = '';

@@ -1187,5 +1187,64 @@
  },
  "bal.stop_now_confirm": {
   "text": "Leállítod most?\n\nA másolás alatt álló címet visszagörgeti: a másolatát törli a céllemezről, az eredeti a helyén marad. Az eddigi másolás rajta elvész. A Leállítás e cím után gomb ezzel szemben befejezi."
+ },
+ "plan.scanning": {
+  "text": "{d} átnézése..."
+ },
+ "plan.nofit": {
+  "one": "{n} cím nem fér el a többi lemezen, nincs kipipálva.",
+  "other": "{n} cím nem fér el a többi lemezen, nincs kipipálva."
+ },
+ "dc.bl_start": {
+  "text": "Balance indul"
+ },
+ "dc.bl_start_d": {
+  "one": "{n} cím költöztetése, {s}",
+  "other": "{n} cím költöztetése, {s}"
+ },
+ "dc.bl_done": {
+  "text": "Balance kész"
+ },
+ "dc.bl_stopped": {
+  "text": "Balance megállítva"
+ },
+ "dc.bl_error": {
+  "text": "Balance leállt hibával"
+ },
+ "dc.bl_moved": {
+  "text": "Áthelyezve: {s}"
+ },
+ "dc.bl_sofar": {
+  "text": "Áthelyezve addig: {s}"
+ },
+ "dc.bl_skipped": {
+  "text": "Kihagyva: {n}"
+ },
+ "dc.bl_fill": {
+  "text": "Kitöltöttség most"
+ },
+ "save.f_n_fill_warn": {
+  "text": "Telítettség, figyelmeztető"
+ },
+ "save.f_n_fill_crit": {
+  "text": "Telítettség, kritikus"
+ },
+ "save.f_warn_use": {
+  "text": "Figyelmeztető telítettség"
+ },
+ "save.f_crit_use": {
+  "text": "Kritikus telítettség"
+ },
+ "save.f_hot_temp": {
+  "text": "Meleg hőmérséklet"
+ },
+ "save.f_max_temp": {
+  "text": "Maximális hőmérséklet"
+ },
+ "save.f_n_remind": {
+  "text": "Piros riasztás ismétlése"
+ },
+ "save.f_wk_hour": {
+  "text": "Heti összefoglaló órája"
  }
 }

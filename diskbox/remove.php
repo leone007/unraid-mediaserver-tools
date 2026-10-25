@@ -106,7 +106,7 @@ function rm_op($op) {
     if ($op === 'rm_state') { bl_out(true, ['rm' => $s]); }
     if (!$sel) { bl_out(false, ['error' => bl_tr('rm.err.choose')]); }
     if ($op === 'rm_check') {
-        if ($s['shares']) { bl_out(false, ['error' => 'Step 2 first: ' . count($s['shares']) . ' share(s) can still write to the disks.']); }
+        if ($s['shares']) { bl_out(false, ['error' => bl_tr('rm.err.step2_shares', ['l' => implode(', ', array_column($s['shares'], 0))])]); }
         if ($s['balance']) { bl_out(false, ['error' => bl_tr('rm.err.move_check')]); }
         $res = []; $ok = true;
         foreach ($sel as $d) { $r = rm_scan($d); $res[$d] = $r; if ($r['n'] !== 0) { $ok = false; } }

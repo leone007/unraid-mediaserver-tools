@@ -23,7 +23,6 @@ $cfg = db_cfg();
 $hook = (string)$cfg['dc_hook'];
 $lang = dbn_lang($cfg);
 dbn_ping_set($cfg['dc_ping']);
-$hu = ($lang === 'hu');
 
 $job = bl_json_read(BL_JOB, []);
 $plan = bl_json_read(BL_PLAN, []);
@@ -89,7 +88,7 @@ foreach ((array)bl_cfg()['pairs'] as $p) { $stopDirs[] = trim($p['dl'], '/'); $s
 // parents of the roots must stay too
 foreach ($stopDirs as $d) { $x = $d; while (($x = dirname($x)) !== '.' && $x !== '') { $stopDirs[] = $x; } }
 
-bl_say('i', $hu ? 'Balance indul' : 'Balance started', ($hu ? count($S['items']) . ' cím költöztetése, ' : count($S['items']) . ' titles, ') . dbn_fmt_bytes($S['total']));
+bl_say('i', bl_trd('dc.bl_start'), bl_trd('dc.bl_start_d', ['n' => count($S['items']), 's' => dbn_fmt_bytes($S['total'])]));
 bl_s_log('start: ' . count($S['items']) . ' titles, ' . dbn_fmt_bytes($S['total']));
 bl_hist('start ' . count($S['items']) . ' titles ' . dbn_fmt_bytes($S['total']));
 
@@ -192,10 +191,10 @@ foreach ($after as $n => $d) { $lines[] = $d['label'] . ' ' . number_format($d['
 $sum = $okN . '/' . count($S['items']) . ' · ' . dbn_fmt_bytes($movedBytes) . ' · ' . dbn_fmt_dur(time() - $S['started']);
 bl_hist($S['state'] . ' ' . $sum . ($fatal !== '' ? ' ' . $fatal : ''));
 if ($S['state'] === 'done') {
-    bl_say($skipN > 0 ? 'a' : 'g', $hu ? 'Balance kész' : 'Balance finished',
-        ($hu ? 'Áthelyezve: ' : 'Moved: ') . $sum . ($skipN > 0 ? "\n" . ($hu ? 'Kihagyva: ' : 'Skipped: ') . $skipN : ''), [[$hu ? 'Kitöltöttség most' : 'Fill now', implode(' · ', $lines)]]);
+    bl_say($skipN > 0 ? 'a' : 'g', bl_trd('dc.bl_done'),
+        bl_trd('dc.bl_moved', ['s' => $sum]) . ($skipN > 0 ? "\n" . bl_trd('dc.bl_skipped', ['n' => $skipN]) : ''), [[bl_trd('dc.bl_fill'), implode(' · ', $lines)]]);
 } elseif ($S['state'] === 'aborted') {
-    bl_say('a', $hu ? 'Balance megállítva' : 'Balance stopped', ($hu ? 'Áthelyezve: ' : 'Moved: ') . $sum, [[$hu ? 'Kitöltöttség most' : 'Fill now', implode(' · ', $lines)]]);
+    bl_say('a', bl_trd('dc.bl_stopped'), bl_trd('dc.bl_moved', ['s' => $sum]), [[bl_trd('dc.bl_fill'), implode(' · ', $lines)]]);
 } else {
-    bl_say('rd', $hu ? 'Balance leállt hibával' : 'Balance stopped with an error', $fatal . "\n" . ($hu ? 'Áthelyezve addig: ' : 'Moved so far: ') . $sum);
+    bl_say('rd', bl_trd('dc.bl_error'), $fatal . "\n" . bl_trd('dc.bl_sofar', ['s' => $sum]));
 }

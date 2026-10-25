@@ -5,6 +5,17 @@ require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/i18n.php';
 // texts the Balance page and the tile show (lang/en.json); the run log stays in English
 function bl_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
+// the same dictionary in the Discord language (Settings, Language: Discord messages), for the Balance Discord messages (item 104)
+function bl_trd($k, $v = []) {
+    static $tab = null;
+    if ($tab === null) {
+        $dir = __DIR__ . '/lang'; $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $read($dir . '/en.json'); $code = function_exists('mt_lang_discord') ? mt_lang_discord() : 'en';
+        $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : []; $tab = [];
+        foreach ($en as $kk => $vv) { if (!is_array($vv)) { continue; } foreach (['text', 'one', 'other'] as $f) { if (isset($vv[$f])) { $t = $tr[$kk][$f] ?? null; $tab[$kk][$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$vv[$f]; } } }
+    }
+    $s = mt_i18n_fmt($tab[$k] ?? null, (array)$v); return $s === null ? $k : $s;
+}
 
 // DBX_BL_DIR (tests only): keep the settings and the /tmp files in that folder instead
 $bl_t = getenv('DBX_BL_DIR'); $bl_t = ($bl_t !== false && $bl_t !== '') ? rtrim($bl_t, '/') : '';
@@ -320,7 +331,7 @@ function bl_make_plan() {
     $strategy = ($cfg['strategy'] === 'big') ? 'big' : 'old';
     $dnr = array_keys(array_filter($need, function ($x) { return $x > 0; }));
     foreach ($donors as $dn) {
-        bl_plan_status('running', 'Scanning ' . strtoupper($dn) . '...');
+        bl_plan_status('running', bl_tr('plan.scanning', ['d' => strtoupper($dn)]));
         [$ok, $sk] = bl_scan_disk($dn, $pairs);
         foreach ($sk as $s) { $skipped[] = $s; }
         usort($ok, function ($a, $b) use ($strategy) { return $strategy === 'big' ? ($b['size'] <=> $a['size']) : ($a['mtime'] <=> $b['mtime']); });
@@ -380,7 +391,7 @@ function bl_plan_drain($cfg, $disks, $pairs) {
     $T = $sumUsed / $sumSize * 100;
     $units = []; $skipped = []; $left = []; $nofit = 0;
     foreach ($drain as $dn) {
-        bl_plan_status('running', 'Scanning ' . strtoupper($dn) . '...');
+        bl_plan_status('running', bl_tr('plan.scanning', ['d' => strtoupper($dn)]));
         [$ok, $sk, $lo] = bl_scan_disk($dn, $pairs, true);
         foreach ($sk as $x) { $skipped[] = $x; }
         foreach ($lo as $x) { $left[] = $x; }
@@ -397,7 +408,7 @@ function bl_plan_drain($cfg, $disks, $pairs) {
         }
     }
     usort($left, function ($a, $b) { return $b['size'] <=> $a['size']; });
-    $note = $nofit ? $nofit . ' title(s) do not fit on the other disks and are not ticked.' : '';
+    $note = $nofit ? bl_tr('plan.nofit', ['n' => $nofit]) : '';
     bl_plan_publish($units, $skipped, $disks, ['mode' => 'drain', 'drain' => $drain, 'target' => min(100, $T), 'avg' => $T, 'req' => null, 'note' => $note,
         'left' => array_slice($left, 0, 300), 'leftSize' => array_sum(array_column($left, 'size'))]);
 }

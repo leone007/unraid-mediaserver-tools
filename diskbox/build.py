@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22t">
+<!ENTITY version   "2026.10.22u">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -27,6 +27,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22u
+- Balance and Remove disks: the remaining English texts (plan status, the note on titles that do not fit, a Remove step 2 error, the Settings field names in save errors) and the Balance Discord messages come from the dictionary, Discord in the Discord language
+
 ###2026.10.22t
 - Balance: a drain plan reads the disk list once instead of once per title (fewer disk wake-ups on a big disk)
 
