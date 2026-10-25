@@ -219,7 +219,7 @@ function bl_scan_disk($disk, $pairs, $drain = false) {
             }
         }
     }
-    $ok = []; $skipped = []; $taken = [];
+    $ok = []; $skipped = []; $taken = []; $dnames = null;   // the disk list once, not per title (item 104: disks.ini and statfs per title)
     foreach ($units as $key => $u) {
         $size = 0.0; $why = '';
         foreach ($u['inodes'] as $ino => $v) {
@@ -238,7 +238,8 @@ function bl_scan_disk($disk, $pairs, $drain = false) {
             $mp = $pairs[$u['pi']]['media'] ?? ''; $rel0 = (string)$u['files'][0][0];
             if ($mp !== '' && strpos($rel0, $mp . '/') === 0) {
                 $topDir = $mp . '/' . bl_split(substr($rel0, strlen($mp) + 1))[0]; $also = [];
-                foreach (array_keys(bl_disks()) as $od) { if ($od !== $disk && is_dir(bl_mnt() . '/' . $od . '/' . $topDir)) { $also[] = $od; } }
+                if ($dnames === null) { $dnames = array_keys(bl_disks()); }
+                foreach ($dnames as $od) { if ($od !== $disk && is_dir(bl_mnt() . '/' . $od . '/' . $topDir)) { $also[] = $od; } }
                 $row['also'] = $also;
             }
         }
