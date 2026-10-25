@@ -357,7 +357,7 @@
   "note": "switch of the Power part: show the socket's name on the band."
  },
  "blk.pow_hint": {
-  "text": "Today counts from midnight with the socket's own energy counter. The socket address and the price are under Smart socket below. UPS figures need a UPS data cable; Unraid sees no UPS now.",
+  "text": "Today counts from midnight with the socket's own energy counter. The socket address and the price are under Smart socket below. The UPS row reads the NUT plugin (Settings, NUT) on this server; it shows only when NUT answers.",
   "note": "hint of the Power part."
  },
  "blk.con_hint": {
@@ -4129,5 +4129,65 @@
  "netp.sp_ev.release_nojf": {
   "text": "Back to full speed · Jellyfin has not answered for 30 minutes",
   "note": "Activity line: the limit was given back because Jellyfin could not be asked for a long time."
+ },
+ "pow.ups": {
+  "text": "UPS",
+  "note": "label at the start of the UPS row in the Power part (upper case on screen)."
+ },
+ "pow.ol": {
+  "text": "On line",
+  "note": "green state pill of the UPS: it runs from the mains."
+ },
+ "pow.chrg": {
+  "text": "Charging",
+  "note": "amber state pill of the UPS: on mains and charging its battery."
+ },
+ "pow.ob": {
+  "text": "On battery",
+  "note": "red, blinking state pill of the UPS: the mains is gone and it runs from its battery."
+ },
+ "pow.lb": {
+  "text": "Low battery",
+  "note": "red, blinking state pill: on battery and the UPS reports a low battery."
+ },
+ "pow.battery": {
+  "text": "Battery",
+  "note": "label of the UPS battery charge cell (percent)."
+ },
+ "pow.runtime": {
+  "text": "Runtime",
+  "note": "label of the cell with the time the battery lasts at the present load (h:mm)."
+ },
+ "pow.load": {
+  "text": "Load",
+  "note": "label of the cell with the power the UPS gives out (W and percent of its rating)."
+ },
+ "pow.input": {
+  "text": "Input",
+  "note": "label of the cell with the mains voltage at the UPS (V)."
+ },
+ "pow.loss": {
+  "text": "UPS loss {w} W",
+  "note": "grey text on the right of the UPS row: wall power (socket) minus the UPS output; {w} is watts."
+ },
+ "pow.vhist": {
+  "text": "input · last 24 h · max {max} V",
+  "note": "caption under the voltage curve; {max} is the highest voltage."
+ },
+ "pow.vlimit": {
+  "text": "battery above {v} V",
+  "note": "caption part: the dashed red line, the voltage above which the UPS switches to battery; {v} is volts."
+ },
+ "pow.vmin": {
+  "text": "min {min} V",
+  "note": "right caption under the voltage curve; {min} is the lowest voltage."
+ },
+ "pow.vwait": {
+  "text": "The voltage curve fills in: one point every 10 minutes.",
+  "note": "grey line in place of the curve before there are two points (also after a reboot)."
+ },
+ "blk.pow_ups": {
+  "text": "UPS (NUT)",
+  "note": "switch of the Power part: show the UPS row read from the NUT plugin."
  }
 }

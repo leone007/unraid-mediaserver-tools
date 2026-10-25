@@ -139,3 +139,55 @@ function sx_energy_days_avg($n = 7) {
     }
     return null;
 }
+
+// ---- UPS over NUT (item 99): upsd answers "LIST VAR <ups>" on port 3493, no login needed for reading ----
+// Returns [values, ''] or [null, reason]. Only reads; never sends an instant command.
+function sx_ups_fetch($host, $port, $name, $timeout = 2) {
+    $fp = @fsockopen($host, (int)$port, $en, $es, $timeout);
+    if (!$fp) { return [null, 'NUT not reachable (' . $host . ':' . (int)$port . ')']; }
+    stream_set_timeout($fp, $timeout);
+    fwrite($fp, 'LIST VAR ' . $name . "\n");
+    $v = []; $err = '';
+    while (($l = fgets($fp, 1024)) !== false) {
+        $l = rtrim($l, "\r\n");
+        if (strpos($l, 'ERR') === 0) { $err = $l; break; }
+        if (strpos($l, 'END LIST') === 0) { break; }
+        if (preg_match('/^VAR \S+ (\S+) "(.*)"$/', $l, $m)) { $v[$m[1]] = $m[2]; }
+    }
+    @fwrite($fp, "LOGOUT\n"); fclose($fp);
+    if ($err !== '' || !$v) { return [null, $err !== '' ? 'NUT: ' . $err : 'NUT gave no values']; }
+    $n = function ($k) use ($v) { return (isset($v[$k]) && is_numeric($v[$k])) ? (float)$v[$k] : null; };
+    $st = strtoupper((string)($v['ups.status'] ?? ''));
+    $real = $n('ups.realpower');
+    if ($real === null && $n('ups.load') !== null && $n('ups.realpower.nominal') !== null) { $real = $n('ups.load') / 100 * $n('ups.realpower.nominal'); }
+    return [[
+        'status' => $st, 'ob' => (bool)preg_match('/\bOB\b/', $st), 'lb' => (bool)preg_match('/\bLB\b/', $st), 'chrg' => (bool)preg_match('/\bCHRG\b/', $st),
+        'charge' => $n('battery.charge'), 'runtime' => $n('battery.runtime'), 'load' => $n('ups.load'), 'watts' => $real,
+        'nominal' => $n('ups.realpower.nominal'), 'vin' => $n('input.voltage'), 'vhigh' => $n('input.transfer.high'), 'vlow' => $n('input.transfer.low'),
+        'model' => (string)($v['ups.model'] ?? ($v['device.model'] ?? '')),
+    ], ''];
+}
+
+// Input voltage history for the tile: one point per 10 minutes (sample.php) with the lowest and highest
+// value seen in between (collect.php, every dashboard refresh). In RAM: starts again after a reboot.
+const SX_UPSV = '/tmp/sysbox_upsv.json';
+function sx_upsv_note($v, $push) {
+    if ($v === null) { return; }
+    $fp = @fopen(SX_UPSV . '.lock', 'c'); if ($fp) { flock($fp, LOCK_EX); }
+    $j = is_file(SX_UPSV) ? json_decode((string)@file_get_contents(SX_UPSV), true) : null;
+    if (!is_array($j)) { $j = ['pts' => [], 'lo' => null, 'hi' => null]; }
+    $j['lo'] = $j['lo'] === null ? $v : min($j['lo'], $v);
+    $j['hi'] = $j['hi'] === null ? $v : max($j['hi'], $v);
+    if ($push) {
+        $j['pts'][] = [time(), $v, $j['lo'], $j['hi']];
+        $cut = time() - 86400;
+        $j['pts'] = array_values(array_filter($j['pts'], function ($p) use ($cut) { return $p[0] >= $cut; }));
+        $j['lo'] = $j['hi'] = null;
+    }
+    @file_put_contents(SX_UPSV . '.tmp', json_encode($j)); @rename(SX_UPSV . '.tmp', SX_UPSV);
+    if ($fp) { flock($fp, LOCK_UN); fclose($fp); }
+}
+function sx_upsv_hist() {
+    $j = is_file(SX_UPSV) ? json_decode((string)@file_get_contents(SX_UPSV), true) : null;
+    return (is_array($j) && !empty($j['pts'])) ? $j['pts'] : [];
+}

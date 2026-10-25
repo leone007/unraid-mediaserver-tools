@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.29a">
+<!ENTITY version   "2026.10.30">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30
+- Power part: a UPS row read from the NUT plugin (only reading): state (on line, charging, on battery, low battery), battery, runtime, load in W, input voltage, the UPS loss (wall power minus UPS output) and a 24 hour input voltage curve with the voltage above which the UPS goes to battery
+- On battery the UPS row turns red and its state blinks
+- Settings: the UPS row can be switched off in the Power part (UPS (NUT))
+
 ###2026.10.29a
 - Morning summary: a waiting plugin update shows its name (for example Unraid Connect), not only the new version
 - Claude Guard: the snapshot it reads lists the waiting plugin updates too, so the report no longer says nothing waits while the summary shows one
@@ -380,6 +385,15 @@ i.f32.sx-ic.sx-inv{filter:invert(1)}
 .sx-cell .d,.sx-cell .l{-webkit-mask:repeating-linear-gradient(to top,#000 0,#000 4px,transparent 4px,transparent 5px);mask:repeating-linear-gradient(to top,#000 0,#000 4px,transparent 4px,transparent 5px)}
 .sx-cell .d{background:rgba(128,128,128,.26)}
 .sx-cell .l{background:linear-gradient(to top,#3fa24a 0%,#3fa24a 38%,#d9921f 68%,#e5534b 100%);clip-path:inset(calc((1 - var(--v)) * 100%) 0 0 0)}
+.sx-ups{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sx-ups .n{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
+.sx-ups .r{margin-left:auto;font-size:11px;opacity:.6;white-space:nowrap}
+.sx-pill{font-size:11px;padding:1px 7px;border-radius:3px;background:rgba(63,162,74,.22);color:#3fa24a}
+.sx-pill.a{background:rgba(217,146,31,.22);color:#d9921f}
+.sx-pill.rd{background:rgba(229,83,75,.25);color:#e5534b;animation:sxblink 1.2s steps(2,start) infinite}
+@keyframes sxblink{to{visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.sx-pill.rd{animation:none}}
+.sx-box.sx-ob{box-shadow:inset 3px 0 0 #e5534b;background:rgba(229,83,75,.10)}
 .sx-cl{font-size:11px;opacity:.6;margin-top:5px;display:flex;justify-content:space-between;gap:8px}
 .sx-gr{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:4px 0}
 .sx-gr .n{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}
@@ -454,7 +468,7 @@ $(function () {
   var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
   var S = { confirm: null, busy: {}, logOpen: null, logs: {}, logErr: {}, logTimer: null, err: null };
   // Dashboard tile settings (item 53): which blocks, in which order, and which figures; all on until the first answer
-  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true };
+  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true, pow_ups: true };
   var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', con: 'sx-con' };
   var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, con: true }, ORDER = '';
   function mx(k) { return MX[k] !== false; }
@@ -681,22 +695,65 @@ $(function () {
   function renderPow(P) {
     var $d = $('#sx-pow').empty();
     if (!P) { return; }
-    if (!P.data) {
-      if (P.pending) { return; }
-      $d.append(band(T('pow.title'), T('pow.socket')));
+    var U = mx('pow_ups') ? P.ups : null, D = P.data;
+    if (!D && !U && (P.pending || !P.has_socket)) { return; }
+    var right = [];
+    if (mx('pow_name') && P.has_socket) { right.push(D && D.name ? D.name : T('pow.socket')); }
+    if (mx('pow_name') && U && U.model) { right.push(U.model.replace(/EPFCLCD$|ELCD$/, '')); }
+    $d.append(band(T('pow.title'), right.join(' · ')));
+    if (P.has_socket && !D && !P.pending) {
       $d.append(el('sx-box').append(txt('div', 'sx-fine sx-a', T('pow.unreachable') + (P.note ? ': ' + P.note : '')).css('margin', 0)));
-      return;
     }
-    var D = P.data;
-    $d.append(band(T('pow.title'), mx('pow_name') ? (D.name || T('pow.socket')) : ''));
-    var items = [];
-    if (mx('pow_w')) items.push(kp(T('pow.wall'), [document.createTextNode(D.power >= 100 ? D.power.toFixed(0) : D.power.toFixed(1)), small(' W')], ''));
-    if (mx('pow_day') && D.day_kwh !== null && D.day_kwh !== undefined) { items.push(kp(T('pow.today'), [document.createTextNode(D.day_kwh.toFixed(1)), small(' kWh')], '')); }
-    if (mx('pow_mon') && D.month_kwh !== null && D.month_kwh !== undefined) { items.push(kp(T('pow.month'), [document.createTextNode(D.month_kwh.toFixed(1)), small(' kWh')], '')); }
-    if (mx('pow_cost') && P.cost !== null && P.cost !== undefined) { items.push(kp(T('pow.cost'), [document.createTextNode(Math.round(P.cost).toLocaleString('en-US').replace(/,/g, ' ')), small(' ' + P.currency)], '')); }
-    var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
+    if (D) {
+      var items = [];
+      if (mx('pow_w')) items.push(kp(T('pow.wall'), [document.createTextNode(D.power >= 100 ? D.power.toFixed(0) : D.power.toFixed(1)), small(' W')], ''));
+      if (mx('pow_day') && D.day_kwh !== null && D.day_kwh !== undefined) { items.push(kp(T('pow.today'), [document.createTextNode(D.day_kwh.toFixed(1)), small(' kWh')], '')); }
+      if (mx('pow_mon') && D.month_kwh !== null && D.month_kwh !== undefined) { items.push(kp(T('pow.month'), [document.createTextNode(D.month_kwh.toFixed(1)), small(' kWh')], '')); }
+      if (mx('pow_cost') && P.cost !== null && P.cost !== undefined) { items.push(kp(T('pow.cost'), [document.createTextNode(Math.round(P.cost).toLocaleString('en-US').replace(/,/g, ' ')), small(' ' + P.currency)], '')); }
+      var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
+      $.each(items, function (i, x) { $k.append(x); });
+      if (items.length) { $d.append(el('sx-box').append($k)); }
+    }
+    if (U) { renderUps($d, U); }
+  }
+
+  // UPS row (item 99): state pill, battery, runtime, load, input voltage and its last 24 hours
+  function renderUps($d, U) {
+    var st = U.ob ? (U.lb ? 'lb' : 'ob') : (U.chrg ? 'chrg' : 'ol');
+    var cls = { ol: '', chrg: 'a', ob: 'rd', lb: 'rd' }[st];
+    var $b = el('sx-box').addClass(U.ob ? 'sx-ob' : '');
+    var $h = el('sx-ups').append(txt('span', 'n', T('pow.ups')), txt('span', 'sx-pill ' + cls, T('pow.' + st)));
+    if (U.loss !== null && U.loss !== undefined && !U.ob) { $h.append(txt('span', 'r', T('pow.loss', { w: Math.round(U.loss) }))); }
+    $b.append($h);
+    function rt(sec) { if (sec === null || sec === undefined) { return '–'; } var m = Math.floor(sec / 60); return Math.floor(m / 60) + ':' + ('0' + (m % 60)).slice(-2); }
+    var ch = U.charge === null ? null : Math.round(U.charge), lv = ch === null ? '' : (ch <= 40 ? 'rd' : (ch <= 70 ? 'a' : ''));
+    var $bat = kp(T('pow.battery'), [document.createTextNode(ch === null ? '–' : ch), small(' %')], LV[lv] || '');
+    if (ch !== null) { $bat.append(el('sx-tr').css('margin-top', '4px').append($('<i>').addClass(lv).css('width', ch + '%'))); }
+    var items = [$bat, kp(T('pow.runtime'), [document.createTextNode(rt(U.runtime)), small(' h')], ''),
+      kp(T('pow.load'), [document.createTextNode(U.watts === null ? '–' : Math.round(U.watts)), small(' W' + (U.load !== null ? ' · ' + Math.round(U.load) + '%' : ''))], ''),
+      kp(T('pow.input'), [document.createTextNode(U.vin === null ? '–' : Math.round(U.vin)), small(' V')], (U.vhigh && U.vin !== null && U.vin >= U.vhigh - 5) ? 'sx-a' : '')];
+    var $k = el('sx-kp').css('grid-template-columns', 'repeat(4,1fr)');
     $.each(items, function (i, x) { $k.append(x); });
-    if (items.length) { $d.append(el('sx-box').append($k)); }
+    $b.append($k);
+    var H = U.hist || [];
+    if (H.length > 1) {
+      var lo = 1e9, hi = 0;
+      $.each(H, function (i, p) { lo = Math.min(lo, p[2]); hi = Math.max(hi, p[3]); });
+      var top = Math.max(hi, U.vhigh || hi) + 3, bot = Math.min(lo, U.vin || lo) - 5, rg = Math.max(5, top - bot);
+      function X(a) { return (400 - a / 86400 * 400).toFixed(1); }
+      function Y(v) { return (52 - (v - bot) / rg * 50).toFixed(1); }
+      var ln = $.map(H, function (p) { return X(p[0]) + ',' + Y(p[1]); }).join(' ');
+      var band2 = $.map(H, function (p) { return X(p[0]) + ',' + Y(p[3]); }).concat($.map(H.slice().reverse(), function (p) { return X(p[0]) + ',' + Y(p[2]); })).join(' ');
+      var g = '<svg class="sx-spark" viewBox="0 0 400 54" preserveAspectRatio="none">'
+        + (U.vhigh ? '<line x1="0" y1="' + Y(U.vhigh) + '" x2="400" y2="' + Y(U.vhigh) + '" stroke="#e5534b" stroke-opacity=".8" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' : '')
+        + '<polygon points="' + band2 + '" fill="#4a90e2" fill-opacity=".18"/>'
+        + '<polyline points="' + ln + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+      $b.append($('<span>').html(g).children());
+      $b.append(el('sx-cl').append(txt('span', '', T('pow.vhist', { max: Math.round(hi) }) + (U.vhigh ? ' · ' + T('pow.vlimit', { v: Math.round(U.vhigh) }) : '')), txt('span', '', T('pow.vmin', { min: Math.round(lo) }))));
+    } else {
+      $b.append(el('sx-cl').append(txt('span', '', T('pow.vwait'))));
+    }
+    $d.append($b);
   }
 
   // ---- network (item 94) ---------------------------------------------------------------------
@@ -1112,7 +1169,7 @@ $sx_blk = [
   'sto' => [$sxs_T('sto.title'), 'show_sto', [], $sxs_T('blk.sto_hint')],
   'cpu' => ['CPU', 'show_cpu', [['cpu_load', $sxs_T('blk.cpu_load')], ['cpu_temp', $sxs_T('blk.cpu_temp')], ['cpu_pow', $sxs_T('blk.cpu_pow')], ['show_clock', $sxs_T('cpu.clock')], ['cpu_hist', $sxs_T('blk.cpu_hist')], ['cpu_per', $sxs_T('blk.cpu_per')], ['cpu_la', $sxs_T('blk.cpu_la')]], ''],
   'gpu' => ['GPU', 'show_gpu', [], $sxs_T('blk.gpu_hint')],
-  'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')]], $sxs_T('blk.pow_hint')],
+  'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')], ['pow_ups', $sxs_T('blk.pow_ups')]], $sxs_T('blk.pow_hint')],
   'net' => [$sxs_T('net.title'), 'show_net', [['net_speed', $sxs_T('blk.net_speed')], ['net_today', $sxs_T('blk.net_today')], ['net_hist', $sxs_T('blk.net_hist')], ['net_inet', $sxs_T('blk.net_inet')], ['net_top', $sxs_T('blk.net_top')]], $sxs_T('blk.net_hint')],
   'con' => [$sxs_T('con.title'), 'show_containers', [], $sxs_T('blk.con_hint')],
 ];
@@ -1313,6 +1370,8 @@ function sx_defaults() {
         'show_net' => '1', 'net_speed' => '1', 'net_today' => '1', 'net_hist' => '1', 'net_inet' => '1', 'net_top' => '1',
         'cpu_load' => '1', 'cpu_temp' => '1', 'cpu_pow' => '1', 'cpu_hist' => '1', 'cpu_per' => '1', 'cpu_la' => '0',
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
+        // UPS row in the Power block (item 99): read from NUT (upsd); host, port and UPS name only in settings.cfg
+        'pow_ups' => '1', 'ups_host' => '127.0.0.1', 'ups_port' => '3493', 'ups_name' => 'ups',
         'ram_warn' => '80', 'ram_crit' => '92', 'log_warn' => '80', 'log_crit' => '92',
         'vd_warn' => '80', 'vd_crit' => '92', 'temp_warn' => '75', 'temp_crit' => '90',
         'socket_host' => '', 'socket_id' => '0', 'kwh_price' => '', 'currency' => 'Ft',
@@ -1540,6 +1599,7 @@ function sx_gpu_name() {
 <FILE Name="&plugdir;/api_fetch.php">
 <INLINE><![CDATA[<?php
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/energy.php';
 require_once __DIR__ . '/i18n.php';
 $sxx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile (lang/en.json)
 header('Content-Type: application/json');
@@ -1667,14 +1727,25 @@ if (sx_on($cfg['show_gpu'])) {
 
 // ---- smart socket --------------------------------------------------------------------------------
 $power = null;
-if (trim((string)$cfg['socket_host']) !== '') {
+$upsOn = sx_on($cfg['pow_ups'] ?? '1');
+if (trim((string)$cfg['socket_host']) !== '' || $upsOn) {
     $sk = (is_array($slow) && isset($slow['socket']) && is_array($slow['socket'])) ? $slow['socket'] : null;
     $price = is_numeric($cfg['kwh_price']) ? (float)$cfg['kwh_price'] : null;
     $power = [
+        'has_socket' => trim((string)$cfg['socket_host']) !== '',
         'data' => $sk, 'note' => is_array($slow) ? (string)($slow['socket_note'] ?? '') : '', 'pending' => !is_array($slow),
         'cost' => ($sk && $price !== null && $sk['month_kwh'] !== null) ? $sk['month_kwh'] * $price : null,
-        'currency' => (string)$cfg['currency'],
+        'currency' => (string)$cfg['currency'], 'ups' => null,
     ];
+    // UPS row (item 99): shown only when NUT answers; the curve is [seconds ago, voltage, low, high]
+    $ud = (is_array($slow) && isset($slow['ups']) && is_array($slow['ups'])) ? $slow['ups'] : null;
+    if ($upsOn && $ud) {
+        $now = time(); $vh = [];
+        foreach (sx_upsv_hist() as $p) { $vh[] = [$now - (int)$p[0], (float)$p[1], (float)$p[2], (float)$p[3]]; }
+        $ud['hist'] = $vh;
+        $ud['loss'] = ($sk && $ud['watts'] !== null && $sk['power'] > $ud['watts']) ? $sk['power'] - $ud['watts'] : null;
+        $power['ups'] = $ud;
+    }
 }
 
 // ---- network (item 94): netmon.php samples in the background ------------------------------------
@@ -1783,7 +1854,7 @@ $attOut = [];
 foreach ($attn as $a) { $attOut[] = ['level' => $a[0], 'name' => $a[1], 'text' => $a[2], 'small' => $a[3]]; }
 
 $sxShow = [];
-foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
+foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name', 'pow_ups'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
 
 sx_json([
     'ok' => true, 'ts' => time(),
@@ -1812,7 +1883,7 @@ $lock = @fopen('/tmp/sysbox_collect.lock', 'c');
 if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
 
 $cfg = sx_cfg();
-$res = ['t' => time(), 'containers' => null, 'gpu' => null, 'gpu_note' => '', 'socket' => null, 'socket_note' => ''];
+$res = ['t' => time(), 'containers' => null, 'gpu' => null, 'gpu_note' => '', 'socket' => null, 'socket_note' => '', 'ups' => null, 'ups_note' => ''];
 
 function sx_bytes($s) {
     if (!preg_match('/^\s*([0-9.]+)\s*([A-Za-z]*)/', (string)$s, $m)) { return null; }
@@ -1885,6 +1956,12 @@ if ($host !== '') {
             'day_kwh' => ($sd['total_wh'] !== null && ($t = sx_energy_today_wh($sd['total_wh'])) !== null) ? $t / 1000 : null,
         ];
     } else { $res['socket_note'] = $se; }
+}
+
+// ---- UPS (item 99): NUT, only reading; also notes the input voltage for the 24 h curve ----
+if (sx_on($cfg['pow_ups'] ?? '1')) {
+    list($ud, $ue) = sx_ups_fetch((string)$cfg['ups_host'], (int)$cfg['ups_port'], (string)$cfg['ups_name']);
+    if ($ud !== null) { $res['ups'] = $ud; sx_upsv_note($ud['vin'], false); } else { $res['ups_note'] = $ue; }
 }
 
 $tmp = '/tmp/sysbox_slow.json.tmp';
@@ -2003,6 +2080,9 @@ if ($price !== '' && (!is_numeric($price) || $price < 0 || $price > 100000)) { s
 $cur = preg_replace('/[^\p{L}\p{N}$€£ .\-]/u', '', (string)($_POST['currency'] ?? ''));
 $cur = function_exists('mb_substr') ? mb_substr($cur, 0, 6) : substr($cur, 0, 6);
 
+// the NUT address has no field on the page: keep what settings.cfg has
+$upsKeep = sx_cfg();
+foreach (['ups_host' => '/^[A-Za-z0-9.\-]+$/', 'ups_port' => '/^[0-9]{1,5}$/', 'ups_name' => '/^[A-Za-z0-9_.\-]+$/'] as $k => $re) { if (!preg_match($re, (string)$upsKeep[$k])) { $upsKeep[$k] = sx_defaults()[$k]; } }
 $new = [
     'top_mode' => $mode, 'top_n' => sx_int($_POST['top_n'] ?? '3', 1, 10, 'Number of rows'),
     'sel' => implode(',', array_values(array_unique($sel))),
@@ -2018,6 +2098,7 @@ $new = [
     'cpu_hist' => sx_bool($_POST['cpu_hist'] ?? '1'), 'cpu_per' => sx_bool($_POST['cpu_per'] ?? '1'), 'cpu_la' => sx_bool($_POST['cpu_la'] ?? '0'),
     'pow_w' => sx_bool($_POST['pow_w'] ?? '1'), 'pow_day' => sx_bool($_POST['pow_day'] ?? '1'), 'pow_mon' => sx_bool($_POST['pow_mon'] ?? '1'),
     'pow_cost' => sx_bool($_POST['pow_cost'] ?? '1'), 'pow_name' => sx_bool($_POST['pow_name'] ?? '1'),
+    'pow_ups' => sx_bool($_POST['pow_ups'] ?? '1'), 'ups_host' => $upsKeep['ups_host'], 'ups_port' => $upsKeep['ups_port'], 'ups_name' => $upsKeep['ups_name'],
     'show_net' => sx_bool($_POST['show_net'] ?? '1'), 'net_speed' => sx_bool($_POST['net_speed'] ?? '1'), 'net_today' => sx_bool($_POST['net_today'] ?? '1'),
     'net_hist' => sx_bool($_POST['net_hist'] ?? '1'), 'net_inet' => sx_bool($_POST['net_inet'] ?? '1'), 'net_top' => sx_bool($_POST['net_top'] ?? '1'),
     'ram_warn' => sx_int($_POST['ram_warn'] ?? '80', 1, 100, 'RAM warning'), 'ram_crit' => sx_int($_POST['ram_crit'] ?? '92', 1, 100, 'RAM critical'),
@@ -2195,6 +2276,58 @@ function sx_energy_days_avg($n = 7) {
     }
     return null;
 }
+
+// ---- UPS over NUT (item 99): upsd answers "LIST VAR <ups>" on port 3493, no login needed for reading ----
+// Returns [values, ''] or [null, reason]. Only reads; never sends an instant command.
+function sx_ups_fetch($host, $port, $name, $timeout = 2) {
+    $fp = @fsockopen($host, (int)$port, $en, $es, $timeout);
+    if (!$fp) { return [null, 'NUT not reachable (' . $host . ':' . (int)$port . ')']; }
+    stream_set_timeout($fp, $timeout);
+    fwrite($fp, 'LIST VAR ' . $name . "\n");
+    $v = []; $err = '';
+    while (($l = fgets($fp, 1024)) !== false) {
+        $l = rtrim($l, "\r\n");
+        if (strpos($l, 'ERR') === 0) { $err = $l; break; }
+        if (strpos($l, 'END LIST') === 0) { break; }
+        if (preg_match('/^VAR \S+ (\S+) "(.*)"$/', $l, $m)) { $v[$m[1]] = $m[2]; }
+    }
+    @fwrite($fp, "LOGOUT\n"); fclose($fp);
+    if ($err !== '' || !$v) { return [null, $err !== '' ? 'NUT: ' . $err : 'NUT gave no values']; }
+    $n = function ($k) use ($v) { return (isset($v[$k]) && is_numeric($v[$k])) ? (float)$v[$k] : null; };
+    $st = strtoupper((string)($v['ups.status'] ?? ''));
+    $real = $n('ups.realpower');
+    if ($real === null && $n('ups.load') !== null && $n('ups.realpower.nominal') !== null) { $real = $n('ups.load') / 100 * $n('ups.realpower.nominal'); }
+    return [[
+        'status' => $st, 'ob' => (bool)preg_match('/\bOB\b/', $st), 'lb' => (bool)preg_match('/\bLB\b/', $st), 'chrg' => (bool)preg_match('/\bCHRG\b/', $st),
+        'charge' => $n('battery.charge'), 'runtime' => $n('battery.runtime'), 'load' => $n('ups.load'), 'watts' => $real,
+        'nominal' => $n('ups.realpower.nominal'), 'vin' => $n('input.voltage'), 'vhigh' => $n('input.transfer.high'), 'vlow' => $n('input.transfer.low'),
+        'model' => (string)($v['ups.model'] ?? ($v['device.model'] ?? '')),
+    ], ''];
+}
+
+// Input voltage history for the tile: one point per 10 minutes (sample.php) with the lowest and highest
+// value seen in between (collect.php, every dashboard refresh). In RAM: starts again after a reboot.
+const SX_UPSV = '/tmp/sysbox_upsv.json';
+function sx_upsv_note($v, $push) {
+    if ($v === null) { return; }
+    $fp = @fopen(SX_UPSV . '.lock', 'c'); if ($fp) { flock($fp, LOCK_EX); }
+    $j = is_file(SX_UPSV) ? json_decode((string)@file_get_contents(SX_UPSV), true) : null;
+    if (!is_array($j)) { $j = ['pts' => [], 'lo' => null, 'hi' => null]; }
+    $j['lo'] = $j['lo'] === null ? $v : min($j['lo'], $v);
+    $j['hi'] = $j['hi'] === null ? $v : max($j['hi'], $v);
+    if ($push) {
+        $j['pts'][] = [time(), $v, $j['lo'], $j['hi']];
+        $cut = time() - 86400;
+        $j['pts'] = array_values(array_filter($j['pts'], function ($p) use ($cut) { return $p[0] >= $cut; }));
+        $j['lo'] = $j['hi'] = null;
+    }
+    @file_put_contents(SX_UPSV . '.tmp', json_encode($j)); @rename(SX_UPSV . '.tmp', SX_UPSV);
+    if ($fp) { flock($fp, LOCK_UN); fclose($fp); }
+}
+function sx_upsv_hist() {
+    $j = is_file(SX_UPSV) ? json_decode((string)@file_get_contents(SX_UPSV), true) : null;
+    return (is_array($j) && !empty($j['pts'])) ? $j['pts'] : [];
+}
 ]]></INLINE>
 </FILE>
 
@@ -2204,17 +2337,23 @@ function sx_energy_days_avg($n = 7) {
 <FILE Name="&plugdir;/sample.php">
 <INLINE><![CDATA[<?php
 // Started by cron every 10 minutes: remember the smart socket's energy counter, so the monthly
-// consumption stays correct even when nobody has the dashboard open.
+// consumption stays correct even when nobody has the dashboard open; and one UPS input voltage point.
 if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/energy.php';
 
 $cfg = sx_cfg();
 $host = trim((string)$cfg['socket_host']);
-if ($host === '') { exit(0); }
+if ($host !== '') {
+    list($s, $err) = sx_socket_fetch($host, (int)$cfg['socket_id']);
+    if ($s !== null && $s['total_wh'] !== null) { sx_energy_month_wh($s['total_wh']); sx_energy_days_update($s['total_wh']); }
+}
 
-list($s, $err) = sx_socket_fetch($host, (int)$cfg['socket_id']);
-if ($s !== null && $s['total_wh'] !== null) { sx_energy_month_wh($s['total_wh']); sx_energy_days_update($s['total_wh']); }
+// UPS input voltage: one point for the 24 h curve on the tile (item 99)
+if (sx_on($cfg['pow_ups'] ?? '1')) {
+    list($u, $ue) = sx_ups_fetch((string)$cfg['ups_host'], (int)$cfg['ups_port'], (string)$cfg['ups_name']);
+    if ($u !== null) { sx_upsv_note($u['vin'], true); }
+}
 ]]></INLINE>
 </FILE>
 
@@ -3514,7 +3653,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "switch of the Power part: show the socket's name on the band."
  },
  "blk.pow_hint": {
-  "text": "Today counts from midnight with the socket's own energy counter. The socket address and the price are under Smart socket below. UPS figures need a UPS data cable; Unraid sees no UPS now.",
+  "text": "Today counts from midnight with the socket's own energy counter. The socket address and the price are under Smart socket below. The UPS row reads the NUT plugin (Settings, NUT) on this server; it shows only when NUT answers.",
   "note": "hint of the Power part."
  },
  "blk.con_hint": {
@@ -7286,9 +7425,68 @@ function mt_i18n_js($dir, $name, $only = null) {
  "netp.sp_ev.release_nojf": {
   "text": "Back to full speed · Jellyfin has not answered for 30 minutes",
   "note": "Activity line: the limit was given back because Jellyfin could not be asked for a long time."
+ },
+ "pow.ups": {
+  "text": "UPS",
+  "note": "label at the start of the UPS row in the Power part (upper case on screen)."
+ },
+ "pow.ol": {
+  "text": "On line",
+  "note": "green state pill of the UPS: it runs from the mains."
+ },
+ "pow.chrg": {
+  "text": "Charging",
+  "note": "amber state pill of the UPS: on mains and charging its battery."
+ },
+ "pow.ob": {
+  "text": "On battery",
+  "note": "red, blinking state pill of the UPS: the mains is gone and it runs from its battery."
+ },
+ "pow.lb": {
+  "text": "Low battery",
+  "note": "red, blinking state pill: on battery and the UPS reports a low battery."
+ },
+ "pow.battery": {
+  "text": "Battery",
+  "note": "label of the UPS battery charge cell (percent)."
+ },
+ "pow.runtime": {
+  "text": "Runtime",
+  "note": "label of the cell with the time the battery lasts at the present load (h:mm)."
+ },
+ "pow.load": {
+  "text": "Load",
+  "note": "label of the cell with the power the UPS gives out (W and percent of its rating)."
+ },
+ "pow.input": {
+  "text": "Input",
+  "note": "label of the cell with the mains voltage at the UPS (V)."
+ },
+ "pow.loss": {
+  "text": "UPS loss {w} W",
+  "note": "grey text on the right of the UPS row: wall power (socket) minus the UPS output; {w} is watts."
+ },
+ "pow.vhist": {
+  "text": "input · last 24 h · max {max} V",
+  "note": "caption under the voltage curve; {max} is the highest voltage."
+ },
+ "pow.vlimit": {
+  "text": "battery above {v} V",
+  "note": "caption part: the dashed red line, the voltage above which the UPS switches to battery; {v} is volts."
+ },
+ "pow.vmin": {
+  "text": "min {min} V",
+  "note": "right caption under the voltage curve; {min} is the lowest voltage."
+ },
+ "pow.vwait": {
+  "text": "The voltage curve fills in: one point every 10 minutes.",
+  "note": "grey line in place of the curve before there are two points (also after a reboot)."
+ },
+ "blk.pow_ups": {
+  "text": "UPS (NUT)",
+  "note": "switch of the Power part: show the UPS row read from the NUT plugin."
  }
-}
-]]></INLINE>
+}]]></INLINE>
 </FILE>
 
 <!-- ========================================================= -->
@@ -7565,7 +7763,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "A konnektor neve"
  },
  "blk.pow_hint": {
-  "text": "A Ma érték éjféltől számol a konnektor saját energiaszámlálójával. A konnektor címe és az ár lent, az Okoskonnektor résznél van. A szünetmentes (UPS) adataihoz UPS-adatkábel kell; az Unraid most nem lát UPS-t."
+  "text": "A Ma érték éjféltől számol a konnektor saját energiaszámlálójával. A konnektor címe és az ár lent, az Okoskonnektor résznél van. Az UPS-sor a NUT pluginból olvas (Settings, NUT) ezen a szerveren; csak akkor látszik, ha a NUT válaszol."
  },
  "blk.con_hint": {
   "text": "melyek, hány sor, gombok és naplók: lent, a Konténerek résznél"
@@ -10400,9 +10598,53 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "netp.sp_ev.release_nojf": {
   "text": "Újra teljes sebesség · a Jellyfin 30 perce nem válaszol"
+ },
+ "pow.ups": {
+  "text": "UPS"
+ },
+ "pow.ol": {
+  "text": "Hálózatról"
+ },
+ "pow.chrg": {
+  "text": "Töltés"
+ },
+ "pow.ob": {
+  "text": "Akkuról"
+ },
+ "pow.lb": {
+  "text": "Akku lemerülőben"
+ },
+ "pow.battery": {
+  "text": "Akku"
+ },
+ "pow.runtime": {
+  "text": "Áthidalás"
+ },
+ "pow.load": {
+  "text": "Terhelés"
+ },
+ "pow.input": {
+  "text": "Bemenet"
+ },
+ "pow.loss": {
+  "text": "UPS-veszteség {w} W"
+ },
+ "pow.vhist": {
+  "text": "bemenet · utolsó 24 óra · max {max} V"
+ },
+ "pow.vlimit": {
+  "text": "{v} V fölött akkuról"
+ },
+ "pow.vmin": {
+  "text": "min {min} V"
+ },
+ "pow.vwait": {
+  "text": "A feszültséggörbe gyűlik: 10 percenként egy pont."
+ },
+ "blk.pow_ups": {
+  "text": "UPS (NUT)"
  }
-}
-]]></INLINE>
+}]]></INLINE>
 </FILE>
 
 <!-- ========================================================= -->

@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.29a">
+<!ENTITY version   "2026.10.30">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,11 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30
+- Power part: a UPS row read from the NUT plugin (only reading): state (on line, charging, on battery, low battery), battery, runtime, load in W, input voltage, the UPS loss (wall power minus UPS output) and a 24 hour input voltage curve with the voltage above which the UPS goes to battery
+- On battery the UPS row turns red and its state blinks
+- Settings: the UPS row can be switched off in the Power part (UPS (NUT))
+
 ###2026.10.29a
 - Morning summary: a waiting plugin update shows its name (for example Unraid Connect), not only the new version
 - Claude Guard: the snapshot it reads lists the waiting plugin updates too, so the report no longer says nothing waits while the summary shows one

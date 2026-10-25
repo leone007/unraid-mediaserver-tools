@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/energy.php';
 require_once __DIR__ . '/i18n.php';
 $sxx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile (lang/en.json)
 header('Content-Type: application/json');
@@ -127,14 +128,25 @@ if (sx_on($cfg['show_gpu'])) {
 
 // ---- smart socket --------------------------------------------------------------------------------
 $power = null;
-if (trim((string)$cfg['socket_host']) !== '') {
+$upsOn = sx_on($cfg['pow_ups'] ?? '1');
+if (trim((string)$cfg['socket_host']) !== '' || $upsOn) {
     $sk = (is_array($slow) && isset($slow['socket']) && is_array($slow['socket'])) ? $slow['socket'] : null;
     $price = is_numeric($cfg['kwh_price']) ? (float)$cfg['kwh_price'] : null;
     $power = [
+        'has_socket' => trim((string)$cfg['socket_host']) !== '',
         'data' => $sk, 'note' => is_array($slow) ? (string)($slow['socket_note'] ?? '') : '', 'pending' => !is_array($slow),
         'cost' => ($sk && $price !== null && $sk['month_kwh'] !== null) ? $sk['month_kwh'] * $price : null,
-        'currency' => (string)$cfg['currency'],
+        'currency' => (string)$cfg['currency'], 'ups' => null,
     ];
+    // UPS row (item 99): shown only when NUT answers; the curve is [seconds ago, voltage, low, high]
+    $ud = (is_array($slow) && isset($slow['ups']) && is_array($slow['ups'])) ? $slow['ups'] : null;
+    if ($upsOn && $ud) {
+        $now = time(); $vh = [];
+        foreach (sx_upsv_hist() as $p) { $vh[] = [$now - (int)$p[0], (float)$p[1], (float)$p[2], (float)$p[3]]; }
+        $ud['hist'] = $vh;
+        $ud['loss'] = ($sk && $ud['watts'] !== null && $sk['power'] > $ud['watts']) ? $sk['power'] - $ud['watts'] : null;
+        $power['ups'] = $ud;
+    }
 }
 
 // ---- network (item 94): netmon.php samples in the background ------------------------------------
@@ -243,7 +255,7 @@ $attOut = [];
 foreach ($attn as $a) { $attOut[] = ['level' => $a[0], 'name' => $a[1], 'text' => $a[2], 'small' => $a[3]]; }
 
 $sxShow = [];
-foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
+foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name', 'pow_ups'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
 
 sx_json([
     'ok' => true, 'ts' => time(),

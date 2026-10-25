@@ -52,7 +52,7 @@ $sx_blk = [
   'sto' => [$sxs_T('sto.title'), 'show_sto', [], $sxs_T('blk.sto_hint')],
   'cpu' => ['CPU', 'show_cpu', [['cpu_load', $sxs_T('blk.cpu_load')], ['cpu_temp', $sxs_T('blk.cpu_temp')], ['cpu_pow', $sxs_T('blk.cpu_pow')], ['show_clock', $sxs_T('cpu.clock')], ['cpu_hist', $sxs_T('blk.cpu_hist')], ['cpu_per', $sxs_T('blk.cpu_per')], ['cpu_la', $sxs_T('blk.cpu_la')]], ''],
   'gpu' => ['GPU', 'show_gpu', [], $sxs_T('blk.gpu_hint')],
-  'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')]], $sxs_T('blk.pow_hint')],
+  'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')], ['pow_ups', $sxs_T('blk.pow_ups')]], $sxs_T('blk.pow_hint')],
   'net' => [$sxs_T('net.title'), 'show_net', [['net_speed', $sxs_T('blk.net_speed')], ['net_today', $sxs_T('blk.net_today')], ['net_hist', $sxs_T('blk.net_hist')], ['net_inet', $sxs_T('blk.net_inet')], ['net_top', $sxs_T('blk.net_top')]], $sxs_T('blk.net_hint')],
   'con' => [$sxs_T('con.title'), 'show_containers', [], $sxs_T('blk.con_hint')],
 ];

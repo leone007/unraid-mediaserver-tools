@@ -9,7 +9,7 @@ $lock = @fopen('/tmp/sysbox_collect.lock', 'c');
 if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
 
 $cfg = sx_cfg();
-$res = ['t' => time(), 'containers' => null, 'gpu' => null, 'gpu_note' => '', 'socket' => null, 'socket_note' => ''];
+$res = ['t' => time(), 'containers' => null, 'gpu' => null, 'gpu_note' => '', 'socket' => null, 'socket_note' => '', 'ups' => null, 'ups_note' => ''];
 
 function sx_bytes($s) {
     if (!preg_match('/^\s*([0-9.]+)\s*([A-Za-z]*)/', (string)$s, $m)) { return null; }
@@ -82,6 +82,12 @@ if ($host !== '') {
             'day_kwh' => ($sd['total_wh'] !== null && ($t = sx_energy_today_wh($sd['total_wh'])) !== null) ? $t / 1000 : null,
         ];
     } else { $res['socket_note'] = $se; }
+}
+
+// ---- UPS (item 99): NUT, only reading; also notes the input voltage for the 24 h curve ----
+if (sx_on($cfg['pow_ups'] ?? '1')) {
+    list($ud, $ue) = sx_ups_fetch((string)$cfg['ups_host'], (int)$cfg['ups_port'], (string)$cfg['ups_name']);
+    if ($ud !== null) { $res['ups'] = $ud; sx_upsv_note($ud['vin'], false); } else { $res['ups_note'] = $ue; }
 }
 
 $tmp = '/tmp/sysbox_slow.json.tmp';

@@ -41,6 +41,9 @@ if ($price !== '' && (!is_numeric($price) || $price < 0 || $price > 100000)) { s
 $cur = preg_replace('/[^\p{L}\p{N}$€£ .\-]/u', '', (string)($_POST['currency'] ?? ''));
 $cur = function_exists('mb_substr') ? mb_substr($cur, 0, 6) : substr($cur, 0, 6);
 
+// the NUT address has no field on the page: keep what settings.cfg has
+$upsKeep = sx_cfg();
+foreach (['ups_host' => '/^[A-Za-z0-9.\-]+$/', 'ups_port' => '/^[0-9]{1,5}$/', 'ups_name' => '/^[A-Za-z0-9_.\-]+$/'] as $k => $re) { if (!preg_match($re, (string)$upsKeep[$k])) { $upsKeep[$k] = sx_defaults()[$k]; } }
 $new = [
     'top_mode' => $mode, 'top_n' => sx_int($_POST['top_n'] ?? '3', 1, 10, 'Number of rows'),
     'sel' => implode(',', array_values(array_unique($sel))),
@@ -56,6 +59,7 @@ $new = [
     'cpu_hist' => sx_bool($_POST['cpu_hist'] ?? '1'), 'cpu_per' => sx_bool($_POST['cpu_per'] ?? '1'), 'cpu_la' => sx_bool($_POST['cpu_la'] ?? '0'),
     'pow_w' => sx_bool($_POST['pow_w'] ?? '1'), 'pow_day' => sx_bool($_POST['pow_day'] ?? '1'), 'pow_mon' => sx_bool($_POST['pow_mon'] ?? '1'),
     'pow_cost' => sx_bool($_POST['pow_cost'] ?? '1'), 'pow_name' => sx_bool($_POST['pow_name'] ?? '1'),
+    'pow_ups' => sx_bool($_POST['pow_ups'] ?? '1'), 'ups_host' => $upsKeep['ups_host'], 'ups_port' => $upsKeep['ups_port'], 'ups_name' => $upsKeep['ups_name'],
     'show_net' => sx_bool($_POST['show_net'] ?? '1'), 'net_speed' => sx_bool($_POST['net_speed'] ?? '1'), 'net_today' => sx_bool($_POST['net_today'] ?? '1'),
     'net_hist' => sx_bool($_POST['net_hist'] ?? '1'), 'net_inet' => sx_bool($_POST['net_inet'] ?? '1'), 'net_top' => sx_bool($_POST['net_top'] ?? '1'),
     'ram_warn' => sx_int($_POST['ram_warn'] ?? '80', 1, 100, 'RAM warning'), 'ram_crit' => sx_int($_POST['ram_crit'] ?? '92', 1, 100, 'RAM critical'),

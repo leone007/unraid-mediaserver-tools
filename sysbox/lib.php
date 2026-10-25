@@ -16,6 +16,8 @@ function sx_defaults() {
         'show_net' => '1', 'net_speed' => '1', 'net_today' => '1', 'net_hist' => '1', 'net_inet' => '1', 'net_top' => '1',
         'cpu_load' => '1', 'cpu_temp' => '1', 'cpu_pow' => '1', 'cpu_hist' => '1', 'cpu_per' => '1', 'cpu_la' => '0',
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
+        // UPS row in the Power block (item 99): read from NUT (upsd); host, port and UPS name only in settings.cfg
+        'pow_ups' => '1', 'ups_host' => '127.0.0.1', 'ups_port' => '3493', 'ups_name' => 'ups',
         'ram_warn' => '80', 'ram_crit' => '92', 'log_warn' => '80', 'log_crit' => '92',
         'vd_warn' => '80', 'vd_crit' => '92', 'temp_warn' => '75', 'temp_crit' => '90',
         'socket_host' => '', 'socket_id' => '0', 'kwh_price' => '', 'currency' => 'Ft',

@@ -268,7 +268,7 @@
   "text": "A konnektor neve"
  },
  "blk.pow_hint": {
-  "text": "A Ma érték éjféltől számol a konnektor saját energiaszámlálójával. A konnektor címe és az ár lent, az Okoskonnektor résznél van. A szünetmentes (UPS) adataihoz UPS-adatkábel kell; az Unraid most nem lát UPS-t."
+  "text": "A Ma érték éjféltől számol a konnektor saját energiaszámlálójával. A konnektor címe és az ár lent, az Okoskonnektor résznél van. Az UPS-sor a NUT pluginból olvas (Settings, NUT) ezen a szerveren; csak akkor látszik, ha a NUT válaszol."
  },
  "blk.con_hint": {
   "text": "melyek, hány sor, gombok és naplók: lent, a Konténerek résznél"
@@ -3103,5 +3103,50 @@
  },
  "netp.sp_ev.release_nojf": {
   "text": "Újra teljes sebesség · a Jellyfin 30 perce nem válaszol"
+ },
+ "pow.ups": {
+  "text": "UPS"
+ },
+ "pow.ol": {
+  "text": "Hálózatról"
+ },
+ "pow.chrg": {
+  "text": "Töltés"
+ },
+ "pow.ob": {
+  "text": "Akkuról"
+ },
+ "pow.lb": {
+  "text": "Akku lemerülőben"
+ },
+ "pow.battery": {
+  "text": "Akku"
+ },
+ "pow.runtime": {
+  "text": "Áthidalás"
+ },
+ "pow.load": {
+  "text": "Terhelés"
+ },
+ "pow.input": {
+  "text": "Bemenet"
+ },
+ "pow.loss": {
+  "text": "UPS-veszteség {w} W"
+ },
+ "pow.vhist": {
+  "text": "bemenet · utolsó 24 óra · max {max} V"
+ },
+ "pow.vlimit": {
+  "text": "{v} V fölött akkuról"
+ },
+ "pow.vmin": {
+  "text": "min {min} V"
+ },
+ "pow.vwait": {
+  "text": "A feszültséggörbe gyűlik: 10 percenként egy pont."
+ },
+ "blk.pow_ups": {
+  "text": "UPS (NUT)"
  }
 }

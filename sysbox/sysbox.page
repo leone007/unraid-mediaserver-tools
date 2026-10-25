@@ -85,6 +85,15 @@ i.f32.sx-ic.sx-inv{filter:invert(1)}
 .sx-cell .d,.sx-cell .l{-webkit-mask:repeating-linear-gradient(to top,#000 0,#000 4px,transparent 4px,transparent 5px);mask:repeating-linear-gradient(to top,#000 0,#000 4px,transparent 4px,transparent 5px)}
 .sx-cell .d{background:rgba(128,128,128,.26)}
 .sx-cell .l{background:linear-gradient(to top,#3fa24a 0%,#3fa24a 38%,#d9921f 68%,#e5534b 100%);clip-path:inset(calc((1 - var(--v)) * 100%) 0 0 0)}
+.sx-ups{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sx-ups .n{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
+.sx-ups .r{margin-left:auto;font-size:11px;opacity:.6;white-space:nowrap}
+.sx-pill{font-size:11px;padding:1px 7px;border-radius:3px;background:rgba(63,162,74,.22);color:#3fa24a}
+.sx-pill.a{background:rgba(217,146,31,.22);color:#d9921f}
+.sx-pill.rd{background:rgba(229,83,75,.25);color:#e5534b;animation:sxblink 1.2s steps(2,start) infinite}
+@keyframes sxblink{to{visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.sx-pill.rd{animation:none}}
+.sx-box.sx-ob{box-shadow:inset 3px 0 0 #e5534b;background:rgba(229,83,75,.10)}
 .sx-cl{font-size:11px;opacity:.6;margin-top:5px;display:flex;justify-content:space-between;gap:8px}
 .sx-gr{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:4px 0}
 .sx-gr .n{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}
@@ -139,7 +148,7 @@ $(function () {
   var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
   var S = { confirm: null, busy: {}, logOpen: null, logs: {}, logErr: {}, logTimer: null, err: null };
   // Dashboard tile settings (item 53): which blocks, in which order, and which figures; all on until the first answer
-  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true };
+  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true, pow_ups: true };
   var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', con: 'sx-con' };
   var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, con: true }, ORDER = '';
   function mx(k) { return MX[k] !== false; }
@@ -366,22 +375,65 @@ $(function () {
   function renderPow(P) {
     var $d = $('#sx-pow').empty();
     if (!P) { return; }
-    if (!P.data) {
-      if (P.pending) { return; }
-      $d.append(band(T('pow.title'), T('pow.socket')));
+    var U = mx('pow_ups') ? P.ups : null, D = P.data;
+    if (!D && !U && (P.pending || !P.has_socket)) { return; }
+    var right = [];
+    if (mx('pow_name') && P.has_socket) { right.push(D && D.name ? D.name : T('pow.socket')); }
+    if (mx('pow_name') && U && U.model) { right.push(U.model.replace(/EPFCLCD$|ELCD$/, '')); }
+    $d.append(band(T('pow.title'), right.join(' · ')));
+    if (P.has_socket && !D && !P.pending) {
       $d.append(el('sx-box').append(txt('div', 'sx-fine sx-a', T('pow.unreachable') + (P.note ? ': ' + P.note : '')).css('margin', 0)));
-      return;
     }
-    var D = P.data;
-    $d.append(band(T('pow.title'), mx('pow_name') ? (D.name || T('pow.socket')) : ''));
-    var items = [];
-    if (mx('pow_w')) items.push(kp(T('pow.wall'), [document.createTextNode(D.power >= 100 ? D.power.toFixed(0) : D.power.toFixed(1)), small(' W')], ''));
-    if (mx('pow_day') && D.day_kwh !== null && D.day_kwh !== undefined) { items.push(kp(T('pow.today'), [document.createTextNode(D.day_kwh.toFixed(1)), small(' kWh')], '')); }
-    if (mx('pow_mon') && D.month_kwh !== null && D.month_kwh !== undefined) { items.push(kp(T('pow.month'), [document.createTextNode(D.month_kwh.toFixed(1)), small(' kWh')], '')); }
-    if (mx('pow_cost') && P.cost !== null && P.cost !== undefined) { items.push(kp(T('pow.cost'), [document.createTextNode(Math.round(P.cost).toLocaleString('en-US').replace(/,/g, ' ')), small(' ' + P.currency)], '')); }
-    var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
+    if (D) {
+      var items = [];
+      if (mx('pow_w')) items.push(kp(T('pow.wall'), [document.createTextNode(D.power >= 100 ? D.power.toFixed(0) : D.power.toFixed(1)), small(' W')], ''));
+      if (mx('pow_day') && D.day_kwh !== null && D.day_kwh !== undefined) { items.push(kp(T('pow.today'), [document.createTextNode(D.day_kwh.toFixed(1)), small(' kWh')], '')); }
+      if (mx('pow_mon') && D.month_kwh !== null && D.month_kwh !== undefined) { items.push(kp(T('pow.month'), [document.createTextNode(D.month_kwh.toFixed(1)), small(' kWh')], '')); }
+      if (mx('pow_cost') && P.cost !== null && P.cost !== undefined) { items.push(kp(T('pow.cost'), [document.createTextNode(Math.round(P.cost).toLocaleString('en-US').replace(/,/g, ' ')), small(' ' + P.currency)], '')); }
+      var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)');
+      $.each(items, function (i, x) { $k.append(x); });
+      if (items.length) { $d.append(el('sx-box').append($k)); }
+    }
+    if (U) { renderUps($d, U); }
+  }
+
+  // UPS row (item 99): state pill, battery, runtime, load, input voltage and its last 24 hours
+  function renderUps($d, U) {
+    var st = U.ob ? (U.lb ? 'lb' : 'ob') : (U.chrg ? 'chrg' : 'ol');
+    var cls = { ol: '', chrg: 'a', ob: 'rd', lb: 'rd' }[st];
+    var $b = el('sx-box').addClass(U.ob ? 'sx-ob' : '');
+    var $h = el('sx-ups').append(txt('span', 'n', T('pow.ups')), txt('span', 'sx-pill ' + cls, T('pow.' + st)));
+    if (U.loss !== null && U.loss !== undefined && !U.ob) { $h.append(txt('span', 'r', T('pow.loss', { w: Math.round(U.loss) }))); }
+    $b.append($h);
+    function rt(sec) { if (sec === null || sec === undefined) { return '–'; } var m = Math.floor(sec / 60); return Math.floor(m / 60) + ':' + ('0' + (m % 60)).slice(-2); }
+    var ch = U.charge === null ? null : Math.round(U.charge), lv = ch === null ? '' : (ch <= 40 ? 'rd' : (ch <= 70 ? 'a' : ''));
+    var $bat = kp(T('pow.battery'), [document.createTextNode(ch === null ? '–' : ch), small(' %')], LV[lv] || '');
+    if (ch !== null) { $bat.append(el('sx-tr').css('margin-top', '4px').append($('<i>').addClass(lv).css('width', ch + '%'))); }
+    var items = [$bat, kp(T('pow.runtime'), [document.createTextNode(rt(U.runtime)), small(' h')], ''),
+      kp(T('pow.load'), [document.createTextNode(U.watts === null ? '–' : Math.round(U.watts)), small(' W' + (U.load !== null ? ' · ' + Math.round(U.load) + '%' : ''))], ''),
+      kp(T('pow.input'), [document.createTextNode(U.vin === null ? '–' : Math.round(U.vin)), small(' V')], (U.vhigh && U.vin !== null && U.vin >= U.vhigh - 5) ? 'sx-a' : '')];
+    var $k = el('sx-kp').css('grid-template-columns', 'repeat(4,1fr)');
     $.each(items, function (i, x) { $k.append(x); });
-    if (items.length) { $d.append(el('sx-box').append($k)); }
+    $b.append($k);
+    var H = U.hist || [];
+    if (H.length > 1) {
+      var lo = 1e9, hi = 0;
+      $.each(H, function (i, p) { lo = Math.min(lo, p[2]); hi = Math.max(hi, p[3]); });
+      var top = Math.max(hi, U.vhigh || hi) + 3, bot = Math.min(lo, U.vin || lo) - 5, rg = Math.max(5, top - bot);
+      function X(a) { return (400 - a / 86400 * 400).toFixed(1); }
+      function Y(v) { return (52 - (v - bot) / rg * 50).toFixed(1); }
+      var ln = $.map(H, function (p) { return X(p[0]) + ',' + Y(p[1]); }).join(' ');
+      var band2 = $.map(H, function (p) { return X(p[0]) + ',' + Y(p[3]); }).concat($.map(H.slice().reverse(), function (p) { return X(p[0]) + ',' + Y(p[2]); })).join(' ');
+      var g = '<svg class="sx-spark" viewBox="0 0 400 54" preserveAspectRatio="none">'
+        + (U.vhigh ? '<line x1="0" y1="' + Y(U.vhigh) + '" x2="400" y2="' + Y(U.vhigh) + '" stroke="#e5534b" stroke-opacity=".8" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' : '')
+        + '<polygon points="' + band2 + '" fill="#4a90e2" fill-opacity=".18"/>'
+        + '<polyline points="' + ln + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+      $b.append($('<span>').html(g).children());
+      $b.append(el('sx-cl').append(txt('span', '', T('pow.vhist', { max: Math.round(hi) }) + (U.vhigh ? ' · ' + T('pow.vlimit', { v: Math.round(U.vhigh) }) : '')), txt('span', '', T('pow.vmin', { min: Math.round(lo) }))));
+    } else {
+      $b.append(el('sx-cl').append(txt('span', '', T('pow.vwait'))));
+    }
+    $d.append($b);
   }
 
   // ---- network (item 94) ---------------------------------------------------------------------
