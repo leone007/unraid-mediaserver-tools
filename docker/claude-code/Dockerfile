@@ -12,6 +12,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         php-cli php-curl php-xml php-mbstring python3 \
     && rm -rf /var/lib/apt/lists/*
 
+# Diagnostics and media tools (owner's list, 2026-10-25): PDF text (poppler, pypdf), images (PIL, ImageMagick, pngquant),
+# media details (mediainfo, ffprobe from ffmpeg, mkvtoolnix), network (dig, mtr, iperf3, netcat), the UPS (upsc),
+# plugin checks (shellcheck, xmllint), sqlite3 databases, pandoc, 7-Zip, strings, the GitHub CLI.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        poppler-utils python3-pil python3-pip \
+        imagemagick pngquant mediainfo ffmpeg mkvtoolnix \
+        dnsutils mtr-tiny iperf3 netcat-openbsd nut-client \
+        shellcheck libxml2-utils sqlite3 pandoc p7zip-full binutils gh \
+    && pip3 install --no-cache-dir --break-system-packages pypdf \
+    && rm -rf /var/lib/apt/lists/*
+
 # Claude Code itself
 RUN npm install -g @anthropic-ai/claude-code && npm cache clean --force
 

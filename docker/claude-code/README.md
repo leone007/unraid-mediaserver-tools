@@ -53,6 +53,8 @@ docker build --no-cache -t claude-code-unraid:local /mnt/user/data/DEV/unraid-me
 ```
 then in the Docker tab restart the container (Force update). The login and settings stay.
 
+The image also has the diagnostic tools the work needs (PDF text, mediainfo/ffprobe, mkvtoolnix, dig, mtr, iperf3, upsc, shellcheck, xmllint, sqlite3, pandoc, ImageMagick); they are part of the image, so a rebuild keeps them. The template mounts /var/log read only at /srv/log (an existing container: add the path in the Docker tab, Edit, Add another Path).
+
 ## Handing work over from a chat session
 
 The repo and `CLAUDE.md` are the shared memory. Chat sessions and the server session do not see each other's messages, so anything worth keeping goes into `NOTES.md` or the repo. After a build the session writes the `.plg` to `/work/...`, and you install it with the command in `CLAUDE.md`.

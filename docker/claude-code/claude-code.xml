@@ -27,4 +27,5 @@
   <Config Name="Plugin config (read only)" Target="/srv/plugins" Default="/boot/config/plugins" Mode="ro" Description="Installed .plg files and plugin settings. Contains API keys: Claude is told never to print them." Type="Path" Display="always" Required="false" Mask="false">/boot/config/plugins</Config>
   <Config Name="Installed plugin code (read only)" Target="/srv/emhttp-plugins" Default="/usr/local/emhttp/plugins" Mode="ro" Description="The plugin files as installed, to compare with the repo." Type="Path" Display="always" Required="false" Mask="false">/usr/local/emhttp/plugins</Config>
   <Config Name="Unraid state (read only)" Target="/srv/emhttp-state" Default="/var/local/emhttp" Mode="ro" Description="disks.ini and var.ini for Diskbox checks." Type="Path" Display="always" Required="false" Mask="false">/var/local/emhttp</Config>
+  <Config Name="System logs (read only)" Target="/srv/log" Default="/var/log" Mode="ro" Description="syslog and plugin logs, so Claude can read them without a paste." Type="Path" Display="always" Required="false" Mask="false">/var/log</Config>
 </Container>
