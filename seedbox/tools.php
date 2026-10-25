@@ -247,8 +247,8 @@ if ($op === 'upd_hide') {
 if ($op === 'upd_search') {
     $h = strtolower((string)($_POST['hash'] ?? ''));
     if (!preg_match('/^[0-9a-f]{40}$/', $h)) { st_out(false, ['error' => st_tr('e.bad')]); }
+    st_res_set($h, ['state' => 'running', 't' => time(), 'rows' => [], 'msg' => st_tr('f.searching'), 'mode' => 'upd']); // before the worker starts
     st_spawn('search ' . escapeshellarg($h));
-    st_res_set($h, ['state' => 'running', 't' => time(), 'rows' => [], 'msg' => st_tr('f.searching'), 'mode' => 'upd']);
     st_out(true);
 }
 if ($op === 'repl_search') {
@@ -257,8 +257,8 @@ if ($op === 'repl_search') {
     $find = st_json_read(ST_FIND, []); $key = '';
     foreach ((array)($find['items'] ?? []) as $it) { if ($it['id'] === $id) { $key = 'f' . substr(md5($it['path']), 0, 12); } }
     if ($key === '') { st_out(false, ['error' => st_tr('e.unknown_item')]); }
-    st_spawn('fsearch ' . escapeshellarg($id));
-    st_res_set($key, ['state' => 'running', 't' => time(), 'rows' => [], 'msg' => st_tr('f.searching'), 'mode' => 'repl']);
+    st_res_set($key, ['state' => 'running', 't' => time(), 'rows' => [], 'msg' => st_tr('f.searching'), 'mode' => 'repl']); // before the worker starts: its answer must not be overwritten
+    st_spawn('fsearch ' . escapeshellarg($id) . ' ' . escapeshellarg($key)); // the key: where the worker answers even when the item is gone
     st_out(true, ['key' => $key]);
 }
 if ($op === 'upd_grab' || $op === 'repl_grab') {

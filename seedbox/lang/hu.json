@@ -750,6 +750,9 @@
  "job.nomatch": {
   "text": "a fájlok nem egyeztek ({p}% található); a torrent törölve, a fájljaid érintetlenek"
  },
+ "job.nometa": {
+  "text": "A qBittorrent 30 perc alatt sem kapta meg a magnet link fájllistáját; a torrent törölve, a fájljaidhoz nem nyúltam"
+ },
  "job.old_kept": {
   "text": "a régi fájlok nem kerültek el: {m}"
  },

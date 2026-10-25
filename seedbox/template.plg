@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzl">
+<!ENTITY version   "2026.10.99zzm">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,14 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzm
+- Find my torrent: a broken or cut .torrent download gives an error at once instead of hanging the Add button
+- Find my torrent: a magnet link runs until qBittorrent has its file list, then stops for the check; a magnet nobody shares is removed after 30 minutes; a low match counts only after the check was seen running
+- Replace search: the row gets an answer even when a new scan dropped the item meanwhile, instead of searching for ever
+- A torrent replaced by Find my torrent no longer stays on the tile as removed from tracker
+- The hourly trash purge empties the trash of every downloads folder, also one set to off
+- Discord: a webhook with a thread id works for the reaction messages too
+
 ###2026.10.99zzl
 - Season pack scan stops with an error when qBittorrent does not answer, instead of listing every season with no old torrents to clean up
 - Replace, Shape up, Find my torrent and season packs: the old files go to the trash first and the old torrent leaves qBittorrent only after that, so a failed move no longer leaves a half-removed item

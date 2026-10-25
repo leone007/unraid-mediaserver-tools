@@ -1,5 +1,5 @@
 <?php
-// Background worker: php tools_run.php find | upd | updbg | search <hash> | fsearch <id> | sp [series] | spab | tick
+// Background worker: php tools_run.php find | upd | updbg | search <hash> | fsearch <id> <key> | sp [series] | spab | tick
 if (PHP_SAPI !== 'cli') { exit(1); }
 require_once __DIR__ . '/tools_ops.php';
 @set_time_limit(0);
@@ -16,12 +16,15 @@ try {
     elseif ($mode === 'search') { st_upd_search((string)($argv[2] ?? '')); }
     elseif ($mode === 'sp') { st_sp_scan((string)($argv[2] ?? '')); }
     elseif ($mode === 'spab') { st_sp_ab_run(); }
-    elseif ($mode === 'fsearch') { st_find_repl_search((string)($argv[2] ?? '')); }
+    elseif ($mode === 'fsearch') { st_find_repl_search((string)($argv[2] ?? ''), (string)($argv[3] ?? '')); }
     else { st_tick(); }
 } catch (Throwable $e) {
     if ($mode === 'sp') { st_json_write(ST_SP, ['state' => 'error', 't' => time(), 'msg' => 'Unexpected error: ' . $e->getMessage(), 'items' => []]); }
     elseif ($mode === 'find') { st_progress(ST_FIND, 'error', 'Unexpected error: ' . $e->getMessage()); }
     elseif ($mode === 'upd') { st_progress(ST_UPD, 'error', 'Unexpected error: ' . $e->getMessage()); }
+    elseif ($mode === 'fsearch' && preg_match('/^f[0-9a-f]{12}$/', (string)($argv[3] ?? ''))) {
+        $r = st_json_read(ST_RES, []); $r[(string)$argv[3]] = ['state' => 'error', 't' => time(), 'rows' => [], 'msg' => 'Unexpected error: ' . $e->getMessage(), 'mode' => 'repl']; st_json_write(ST_RES, $r);
+    }
     elseif ($mode === 'search') {
         $r = st_json_read(ST_RES, []); $r[(string)($argv[2] ?? '')] = ['state' => 'error', 't' => time(), 'rows' => [], 'msg' => 'Unexpected error: ' . $e->getMessage()]; st_json_write(ST_RES, $r);
     }

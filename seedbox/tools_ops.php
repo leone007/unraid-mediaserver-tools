@@ -250,7 +250,8 @@ function st_find_add($itemId, $idx) {
         if ($cnt) { arsort($cnt); $cat = (string)key($cnt); }
     }
     if ($cat !== '') { $post['category'] = $cat; }
-    if ($urls !== '') { $post['urls'] = $urls; }
+    // a stopped magnet never gets its file list: it runs until the metadata is here, then qBittorrent stops it (item 104; qBittorrent 4.6+)
+    if ($urls !== '') { $post['urls'] = $urls; $post['paused'] = 'false'; $post['stopped'] = 'false'; $post['stopCondition'] = 'MetadataReceived'; }
     [$code, $b, $e] = st_qb('/api/v2/torrents/add', $post, $file !== '' ? ['torrents' => $file] : null);
     if ($file) { @unlink($file); }
     if ($code !== 200) { return [false, st_tr('e.qb_refused', ['e' => $e ?: 'HTTP ' . $code])]; }
@@ -420,7 +421,11 @@ function st_tick() {
             $t = $by[$p['hash']] ?? null;
             if (!$t) { if (time() - $p['t'] > 600) { $p['stage'] = 'failed'; $p['msg'] = st_tr('job.gone'); $changed = true; } continue; }
             $st = (string)$t['state'];
-            if (preg_match('/^(checking|allocating|moving|metaDL|forcedMetaDL)/', $st)) { $p['stage'] = 'checking'; $p['msg'] = st_tr('job.checking', ['p' => round(((float)$t['progress']) * 100)]); $changed = true; continue; }
+            if (preg_match('/^(metaDL|forcedMetaDL)/', $st) && time() - $p['t'] > 1800) {   // a magnet nobody shares: no file list after 30 minutes
+                st_qb('/api/v2/torrents/delete', ['hashes' => $p['hash'], 'deleteFiles' => 'false']);
+                $p['stage'] = 'failed'; $p['msg'] = st_tr('job.nometa'); $p['t'] = time(); $changed = true; continue;
+            }
+            if (preg_match('/^(checking|allocating|moving|metaDL|forcedMetaDL|queuedForChecking)/', $st)) { if ($p['rechecked'] && !preg_match('/^(metaDL|forcedMetaDL)/', $st)) { $p['seen'] = 1; } $p['stage'] = 'checking'; $p['msg'] = st_tr('job.checking', ['p' => round(((float)$t['progress']) * 100)]); $changed = true; continue; }
             if (!$p['rechecked'] && (float)$t['progress'] < 1) {
                 // the first check may not have run on a stopped torrent: ask once more, then judge
                 $p['rechecked'] = 1; $p['t'] = time(); st_qb('/api/v2/torrents/recheck', ['hashes' => $p['hash']]); $changed = true; continue;
@@ -432,6 +437,8 @@ function st_tick() {
                 $inc = st_missing_files($p['hash']);
                 if ($inc && count($inc) <= (int)st_cfg()['find_missing_files']) { $okMatch = true; $missing = st_missing_txt($inc); }
             }
+            // a low result counts only after the asked check was seen running (a queued check looks the same as no match), or after 10 minutes
+            if (!$okMatch && empty($p['seen']) && time() - $p['t'] < 600) { continue; }
             if ($okMatch) {
                 st_qb_start($p['hash']);
                 $full = (float)$t['progress'] >= 0.99999; $lack = (1 - (float)$t['progress']) * (float)$t['size'];
@@ -441,7 +448,7 @@ function st_tick() {
                     if ($inc && count($inc) <= 20) { $missing = st_missing_txt($inc); }
                 }
                 $p['stage'] = 'done'; $p['msg'] = $full ? st_tr('job.matched') : st_tr('job.matched_part', ['p' => round(((float)$t['progress']) * 100, 2), 'm' => $missing !== '' ? $missing : st_gb($lack)]); $p['t'] = time(); $p['partial'] = !$full;
-                if ($p['replaces'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $p['replaces'], 'deleteFiles' => 'false']); $p['msg'] .= '; ' . st_tr('job.old_removed'); }
+                if ($p['replaces'] !== '') { st_qb('/api/v2/torrents/delete', ['hashes' => $p['replaces'], 'deleteFiles' => 'false']); st_watch_forget($p['replaces']); $p['msg'] .= '; ' . st_tr('job.old_removed'); } // forget: not 'removed from tracker' on the tile any more (item 104)
                 $pc = round(((float)$t['progress']) * 100, 2);
                 $hu = $full ? 'A hozzáadott torrent minden fájlja egyezett a letöltött fájlokkal, a seedelés elindult.' : $pc . '%-ban egyezett a torrent a fájlokkal, a seedelés elindult, a hiányzó részt a qBittorrent letölti: ' . ($missing !== '' ? str_replace(' files', ' fájl', str_replace(' file ', ' fájl ', $missing)) : st_gb($lack)) . '.';
                 $en = $full ? 'Every file of the added torrent matched the downloaded files, so seeding started.' : $pc . '% of the torrent matched the files, seeding started; qBittorrent downloads the missing ' . ($missing !== '' ? $missing : st_gb($lack)) . '.';
@@ -833,10 +840,11 @@ function st_upd_search($hash) {
 }
 
 // Replacement for a folder or file that nobody seeds (or whose tracker removed the torrent)
-function st_find_repl_search($itemId) {
+// $key: the result key the page waits on (from tools.php); a new scan may have dropped the item meanwhile (item 104: the row kept 'searching')
+function st_find_repl_search($itemId, $key = '') {
     $find = st_json_read(ST_FIND, []);
     $unit = null; foreach ((array)($find['items'] ?? []) as $x) { if ($x['id'] === $itemId) { $unit = $x; } }
-    if (!$unit) { st_search_item('f' . substr(md5($itemId), 0, 12), ['kind' => '', 'note' => st_tr('e.unknown_item')], 'repl'); return; }
+    if (!$unit) { if (preg_match('/^f[0-9a-f]{12}$/', $key)) { st_search_item($key, ['kind' => '', 'note' => st_tr('e.unknown_item')], 'repl'); } return; }
     st_find_repl_unit($unit, st_arr_index());
 }
 function st_find_repl_unit($unit, $index, $quiet = false) {
@@ -1146,10 +1154,8 @@ function st_trash_purge() {
     $cfg = st_cfg(); $days = (int)($cfg['trash_days'] ?? 0);
     if ($days < 1) { return; }
     $purged = [];
-    foreach ((array)$cfg['roots'] as $r) {
-        $tr = rtrim($r, '/') . '/' . ST_TRASH;
-        if (!is_dir($tr)) { continue; }
-        foreach (scandir($tr) as $n) {
+    foreach (st_trash_dirs() as $tr) {   // the same folders as the trash list and Empty: a folder set to off is emptied too (item 104)
+        foreach ((array)@scandir($tr) as $n) {
             if (!preg_match('/^(\d{14})_/', $n, $m)) { continue; }
             $t = DateTime::createFromFormat('YmdHis', $m[1]);
             if ($t && time() - $t->getTimestamp() > $days * 86400) { st_rm_tree($tr . '/' . $n); $purged[] = preg_replace('/^\d{14}_/', '', $n); }

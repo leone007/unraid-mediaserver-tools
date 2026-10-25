@@ -774,7 +774,8 @@ function st_bot_edit($m, $status, $color) {
     $f = array_values(array_filter((array)($e['fields'] ?? []), function ($x) { return ($x['name'] ?? '') !== st_l('Állapot', 'Status'); }));
     $f[] = ['name' => st_l('Állapot', 'Status'), 'value' => mb_substr($status, 0, 1000)];
     $e['fields'] = array_slice($f, 0, 25);
-    st_http('PATCH', $hook . '/messages/' . $m['mid'], ['headers' => ['Content-Type: application/json'], 'post' => json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE), 'timeout' => 15]);
+    $hp = explode('?', $hook, 2);   // a webhook with ?thread_id=...: the message path goes before the query (item 104)
+    st_http('PATCH', $hp[0] . '/messages/' . $m['mid'] . (isset($hp[1]) ? '?' . $hp[1] : ''), ['headers' => ['Content-Type: application/json'], 'post' => json_encode(['embeds' => [$e]], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE), 'timeout' => 15]);
 }
 function st_bot_cand_line($c) {
     // resolution, HDR and HUN as badges (`2160p` `DV` `HDR`), like the episode lines (item 87)

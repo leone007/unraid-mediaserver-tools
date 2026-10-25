@@ -376,24 +376,32 @@ function st_prowlarr_search($q) {
 }
 
 // ---- bencode (only to read the info hash of a .torrent) ---------------------------------------------------
-function st_bdec($s, &$i) {
-    $c = $s[$i] ?? '';
-    if ($c === 'i') { $e = strpos($s, 'e', $i); $v = (int)substr($s, $i + 1, $e - $i - 1); $i = $e + 1; return $v; }
-    if ($c === 'l') { $i++; $a = []; while (($s[$i] ?? 'e') !== 'e') { $a[] = st_bdec($s, $i); } $i++; return $a; }
+// bencode reader; a malformed file (a cut or broken download) throws instead of looping (item 104)
+function st_bdec($s, &$i, $depth = 0) {
+    if ($depth > 64 || $i >= strlen($s)) { throw new Exception('bad bencode'); }
+    $c = $s[$i];
+    if ($c === 'i') {
+        $e = strpos($s, 'e', $i);
+        if ($e === false || !preg_match('/^-?\d+$/', substr($s, $i + 1, $e - $i - 1))) { throw new Exception('bad bencode'); }
+        $v = (int)substr($s, $i + 1, $e - $i - 1); $i = $e + 1; return $v;
+    }
+    if ($c === 'l') { $i++; $a = []; while (($s[$i] ?? 'e') !== 'e') { $a[] = st_bdec($s, $i, $depth + 1); } $i++; return $a; }
     if ($c === 'd') {
         $i++; $a = [];
         while (($s[$i] ?? 'e') !== 'e') {
-            $k = st_bdec($s, $i);
+            $k = st_bdec($s, $i, $depth + 1);
+            if (!is_string($k)) { throw new Exception('bad bencode'); }
             $start = $i;
-            $v = st_bdec($s, $i);
+            $v = st_bdec($s, $i, $depth + 1);
             if ($k === 'info') { $a['__info_raw'] = substr($s, $start, $i - $start); }
             $a[$k] = $v;
         }
         $i++; return $a;
     }
     $col = strpos($s, ':', $i);
-    if ($col === false) { throw new Exception('bad bencode'); }
+    if ($col === false || !preg_match('/^\d+$/', substr($s, $i, $col - $i))) { throw new Exception('bad bencode'); }
     $len = (int)substr($s, $i, $col - $i);
+    if ($col + 1 + $len > strlen($s)) { throw new Exception('bad bencode'); }
     $v = substr($s, $col + 1, $len); $i = $col + 1 + $len;
     return $v;
 }
@@ -469,7 +477,7 @@ function st_notify($level, $title, $desc = '', $fields = [], $force = false, $to
     if ($f) { $e['fields'] = array_slice($f, 0, 24); }
     $json = json_encode(['embeds' => [$e], 'allowed_mentions' => ['parse' => []]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
     for ($try = 0; $try < 2; $try++) {
-        $ch = curl_init($hook . (!empty($opts['wait']) ? '?wait=true' : ''));
+        $ch = curl_init($hook . (!empty($opts['wait']) ? (strpos($hook, '?') === false ? '?' : '&') . 'wait=true' : '')); // a webhook may hold ?thread_id=...
         curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 15, CURLOPT_POSTFIELDS => $json, CURLOPT_HTTPHEADER => ['Content-Type: application/json']]);
         $body = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $er = curl_errno($ch); curl_close($ch);
         if ($code === 200 || $code === 204) { $m = json_decode((string)$body, true); return [true, '', is_array($m) ? $m : null, $e]; }

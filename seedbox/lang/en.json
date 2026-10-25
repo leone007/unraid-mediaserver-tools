@@ -999,6 +999,10 @@
   "text": "the files did not match ({p}% found); the torrent was removed, your files are untouched",
   "note": "failed state of an added torrent."
  },
+ "job.nometa": {
+  "text": "qBittorrent got no file list for the magnet link in 30 minutes; the torrent was removed, your files are untouched",
+  "note": "failed state of an added magnet torrent in Activity."
+ },
  "job.old_kept": {
   "text": "the old files were not removed: {m}",
   "note": "added to a replacement state after a semicolon."
