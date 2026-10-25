@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30">
+<!ENTITY version   "2026.10.30a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30a
+- Security: names with quote marks (container, dataset, snapshot or file names, Claude answers) can no longer break into the Update manager, Claude Guard, Snapshots, Safe shutdown and Network pages as code; they show as plain text
+
 ###2026.10.30
 - Power part: a UPS row read from the NUT plugin (only reading): state (on line, charging, on battery, low battery), battery, runtime, load in W, input voltage, the UPS loss (wall power minus UPS output) and a 24 hour input voltage curve with the voltage above which the UPS goes to battery
 - On battery the UPS row turns red and its state blinks
@@ -10772,7 +10775,7 @@ $sds_tok = is_array($sds_var) ? (string)($sds_var['csrf_token'] ?? '') : '';
 $(function () {
   var T = function (k, v) { return MTL.t('sds', k, v); };
   var URL = '/plugins/sysbox/shutdown.php', S = null, pollT = null, GOPEN = {};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function free() { return S ? S.holders.filter(function (h) { return !h.protected; }) : []; }
@@ -11529,7 +11532,7 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 $(function () {
   var T = function (k, v) { return MTL.t('snp', k, v); };
   var URL = '/plugins/sysbox/snap.php', D = null, OPEN = {}, CTRS = {}, pollT = null, CONF = null;
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return Math.max(0, Math.round(b / 1e3)) + ' KB'; }
@@ -12068,7 +12071,7 @@ $(function () {
   var URL = '/plugins/sysbox/upd.php', D = null, OPEN = {}, DET = {}, CONF = null, pollT = null;
   var RISK = {red: ['r', 's-red', T('risk.red')], amber: ['a', 's-amber', T('risk.amber')], green: ['g', 's-green', T('risk.green')]};
   var KIND = {rebuild: ['g', T('kind.rebuild')], patch: ['g', T('kind.patch')], feature: ['a', T('kind.feature')], major: ['r', T('kind.major')], commit: ['a', T('kind.commit')], unknown: ['a', T('kind.unknown')]};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? T('ago.d', { n: Math.floor(s / 86400) }) : s >= 3600 ? T('ago.h', { n: Math.floor(s / 3600) }) : T('ago.m', { n: Math.max(1, Math.floor(s / 60)) }); }
@@ -13208,7 +13211,7 @@ $(function () {
   var URL = '/plugins/sysbox/guard.php', D = null, OPEN = {}, CONF = null, pollT = null, WAIT = 0;
   var LV = {red: ['r', 's-red', T('lv.red')], amber: ['a', 's-amber', T('lv.amber')], green: ['g', 's-green', T('lv.green')]};
   var LINK = {diskbox: '/Dashboard', updates: '/Settings/SysboxUpdates', docker: '/Docker', seedbox: '/Settings/SeedboxTools', syslog: '/Tools/Syslog'};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? T('ago.d', { n: Math.floor(s / 86400) }) : s >= 3600 ? T('ago.h', { n: Math.floor(s / 3600) }) : T('ago.m', { n: Math.max(1, Math.floor(s / 60)) }); }
@@ -14773,7 +14776,7 @@ $nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k
 $(function () {
   var T = function (k, v) { return MTL.t('nwp', k, v); };
   var URL = '/plugins/sysbox/net.php', pollT = null, D = null, RANGE = '24h', OPEN = false, IP = null, CHK = null, setDrawn = false;
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function fb(b) { b = +b || 0; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return Math.round(b / 1e3) + ' KB'; }
   function unit() { return (D && D.cfg && D.cfg.unit === 'Mbit') ? 'Mbit' : 'MB'; }

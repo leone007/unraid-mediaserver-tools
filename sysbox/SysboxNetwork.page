@@ -112,7 +112,7 @@ $nwp_t = function ($k, $v = []) use ($nwp_T) { return htmlspecialchars($nwp_T($k
 $(function () {
   var T = function (k, v) { return MTL.t('nwp', k, v); };
   var URL = '/plugins/sysbox/net.php', pollT = null, D = null, RANGE = '24h', OPEN = false, IP = null, CHK = null, setDrawn = false;
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function fb(b) { b = +b || 0; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return Math.round(b / 1e3) + ' KB'; }
   function unit() { return (D && D.cfg && D.cfg.unit === 'Mbit') ? 'Mbit' : 'MB'; }

@@ -99,7 +99,7 @@ $sds_tok = is_array($sds_var) ? (string)($sds_var['csrf_token'] ?? '') : '';
 $(function () {
   var T = function (k, v) { return MTL.t('sds', k, v); };
   var URL = '/plugins/sysbox/shutdown.php', S = null, pollT = null, GOPEN = {};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function free() { return S ? S.holders.filter(function (h) { return !h.protected; }) : []; }

@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30">
+<!ENTITY version   "2026.10.30a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30a
+- Security: names with quote marks (container, dataset, snapshot or file names, Claude answers) can no longer break into the Update manager, Claude Guard, Snapshots, Safe shutdown and Network pages as code; they show as plain text
+
 ###2026.10.30
 - Power part: a UPS row read from the NUT plugin (only reading): state (on line, charging, on battery, low battery), battery, runtime, load in W, input voltage, the UPS loss (wall power minus UPS output) and a 24 hour input voltage curve with the voltage above which the UPS goes to battery
 - On battery the UPS row turns red and its state blinks

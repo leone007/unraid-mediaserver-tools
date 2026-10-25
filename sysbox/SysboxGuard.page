@@ -106,7 +106,7 @@ $(function () {
   var URL = '/plugins/sysbox/guard.php', D = null, OPEN = {}, CONF = null, pollT = null, WAIT = 0;
   var LV = {red: ['r', 's-red', T('lv.red')], amber: ['a', 's-amber', T('lv.amber')], green: ['g', 's-green', T('lv.green')]};
   var LINK = {diskbox: '/Dashboard', updates: '/Settings/SysboxUpdates', docker: '/Docker', seedbox: '/Settings/SeedboxTools', syslog: '/Tools/Syslog'};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function ago(t) { var s = Math.max(0, Math.floor(Date.now() / 1000) - t); return s >= 86400 ? T('ago.d', { n: Math.floor(s / 86400) }) : s >= 3600 ? T('ago.h', { n: Math.floor(s / 3600) }) : T('ago.m', { n: Math.max(1, Math.floor(s / 60)) }); }

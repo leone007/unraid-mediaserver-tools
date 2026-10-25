@@ -74,7 +74,7 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 $(function () {
   var T = function (k, v) { return MTL.t('snp', k, v); };
   var URL = '/plugins/sysbox/snap.php', D = null, OPEN = {}, CTRS = {}, pollT = null, CONF = null;
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return Math.max(0, Math.round(b / 1e3)) + ' KB'; }
