@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14ze">
+<!ENTITY version   "2026.10.14zf">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Security: the web folder of the This week page must be a real folder under /mnt: a path with .. in it is refused
+###2026.10.14ze
 - Dashboard csempe This weeks episodes: ugyanannak az evadnak az egy napon erkezo epizodjai (2 vagy tobb) egy soron, mint a Jellyfinben
 ###2026.10.14zd
 - Jellyfin Ezen a heten sor: ugyanannak az evadnak az egy napon erkezo epizodjai (2 vagy tobb) egy kartyan, kozos allapottal; a kartya a sorozat oldalara visz
@@ -1600,7 +1602,7 @@ if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $
 $sonUrl = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['son_url'] ?? ''))), '/');
 if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => $sbx_T('save.err_son_url')]); }
 $wkWebDir = rtrim(trim((string)($_POST['wk_web_dir'] ?? '/mnt/cache/docker/streambox/web')), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir) || preg_match('#(^|/)\.\.?(/|$)#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
 $wkDelay = (string)($_POST['wk_delay'] ?? 'series');
 if (!in_array($wkDelay, ['series', 'idx', 'all'], true)) { $wkDelay = 'series'; }
 
@@ -2157,7 +2159,7 @@ $cfg = wk_cfg();
 $jxOn = (string)($cfg['jx_on'] ?? '1') === '1';
 if ((string)$cfg['wk_web'] !== '1' && !$jxOn) { exit(0); }
 $dir = rtrim(trim((string)$cfg['wk_web_dir']), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir)) { exit(0); }
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir) || preg_match('#(^|/)\.\.?(/|$)#', $dir)) { exit(0); }
 // The pool or share is mounted only while the array runs: never create its top folder (/mnt/cache) ourselves
 $top = '/mnt/' . explode('/', substr($dir, 5))[0];
 if (!is_dir($top)) { exit(0); }

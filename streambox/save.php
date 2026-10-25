@@ -60,7 +60,7 @@ if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $
 $sonUrl = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['son_url'] ?? ''))), '/');
 if ($sonUrl !== '' && !preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?(/[^\s"<>]*)?$#i', $sonUrl)) { sb_out(false, ['error' => $sbx_T('save.err_son_url')]); }
 $wkWebDir = rtrim(trim((string)($_POST['wk_web_dir'] ?? '/mnt/cache/docker/streambox/web')), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $wkWebDir) || preg_match('#(^|/)\.\.?(/|$)#', $wkWebDir)) { sb_out(false, ['error' => $sbx_T('save.err_dir')]); }
 $wkDelay = (string)($_POST['wk_delay'] ?? 'series');
 if (!in_array($wkDelay, ['series', 'idx', 'all'], true)) { $wkDelay = 'series'; }
 

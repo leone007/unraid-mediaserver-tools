@@ -12,7 +12,7 @@ $cfg = wk_cfg();
 $jxOn = (string)($cfg['jx_on'] ?? '1') === '1';
 if ((string)$cfg['wk_web'] !== '1' && !$jxOn) { exit(0); }
 $dir = rtrim(trim((string)$cfg['wk_web_dir']), '/');
-if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir)) { exit(0); }
+if (!preg_match('#^/mnt/[A-Za-z0-9._\-]+(/[A-Za-z0-9._\-]+)+$#', $dir) || preg_match('#(^|/)\.\.?(/|$)#', $dir)) { exit(0); }
 // The pool or share is mounted only while the array runs: never create its top folder (/mnt/cache) ourselves
 $top = '/mnt/' . explode('/', substr($dir, 5))[0];
 if (!is_dir($top)) { exit(0); }
