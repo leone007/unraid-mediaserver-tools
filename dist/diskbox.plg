@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22o">
+<!ENTITY version   "2026.10.22p">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Security: folder and file names with quote marks can no longer break into the Balance page as code; they show as plain text
+###2026.10.22o
 - Alerts (and a parity check that ends with errors) are also handed to the Sysbox Claude Guard, which can explain them when it is switched on; nothing changes when it is not installed
 ###2026.10.22n
 - Hungarian translation (Magyar) of every page and tile: choose Magyar under Pages and tiles in the Language block of any settings page (or set Unraid itself to Hungarian and keep Follow Unraid). Update all the plugins: with an older one installed the choice may fall back to English
@@ -5658,7 +5660,7 @@ $dbb_tok = is_array($dbb_var) ? (string)($dbb_var['csrf_token'] ?? '') : '';
 $(function () {
   var T = function (k, v) { return MTL.t('dbb', k, v); };
   var URL = '/plugins/diskbox/balance.php', P = null, disks = {}, pollT = null, planPoll = null, GOPEN = {}, BUSY = '', busyT = null, LIM = {};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; if (b >= 1e6) return (b / 1e6).toFixed(0) + ' MB'; return (b / 1e3).toFixed(0) + ' KB'; }
   function dur(s) { s = Math.max(0, Math.round(s)); var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? T('dur.hm', { h: h, m: m }) : T('dur.ms', { m: m, s: s % 60 }); }
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
