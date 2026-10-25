@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzi">
+<!ENTITY version   "2026.10.99zzj">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzj
+- Security: names and titles with quote marks (a release title, a folder or torrent name) can no longer break into the Seedbox Tools page as code; they show as plain text
+
 ###2026.10.99zzi
 - Discord bot: the bot token and your user ID moved into a shared Discord bot block (Seedbox Tools settings, and the Claude Guard page of Sysbox): set once, used by both plugins. The saved Seedbox values are taken over, nothing to retype. Test the bot in the block checks the token, the webhook and the reactions without waiting for you
 

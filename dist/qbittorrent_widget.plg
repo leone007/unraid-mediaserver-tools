@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzi">
+<!ENTITY version   "2026.10.99zzj">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzj
+- Security: names and titles with quote marks (a release title, a folder or torrent name) can no longer break into the Seedbox Tools page as code; they show as plain text
+
 ###2026.10.99zzi
 - Discord bot: the bot token and your user ID moved into a shared Discord bot block (Seedbox Tools settings, and the Claude Guard page of Sysbox): set once, used by both plugins. The saved Seedbox values are taken over, nothing to retype. Test the bot in the block checks the token, the webhook and the reactions without waiting for you
 
@@ -1863,7 +1866,7 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 $(function () {
   var T = function (k, v) { return MTL.t('tp', k, v); };
   var lastSig = '', URL_ = '/plugins/qbittorrent_widget/tools.php', cfg = null, fT = null, uT = null, resT = {}, UPD = null, RES = {};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; return (b / 1e6).toFixed(0) + ' MB'; }
   function api(op, d) { return $.post(URL_, $.extend({op: op}, d || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }

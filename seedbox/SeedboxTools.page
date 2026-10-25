@@ -306,7 +306,7 @@ $stt_tok = is_array($stt_var) ? (string)($stt_var['csrf_token'] ?? '') : '';
 $(function () {
   var T = function (k, v) { return MTL.t('tp', k, v); };
   var lastSig = '', URL_ = '/plugins/qbittorrent_widget/tools.php', cfg = null, fT = null, uT = null, resT = {}, UPD = null, RES = {};
-  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function fb(b) { b = +b; if (b >= 1e12) return (b / 1e12).toFixed(2) + ' TB'; if (b >= 1e9) return (b / 1e9).toFixed(b >= 1e11 ? 0 : 1) + ' GB'; return (b / 1e6).toFixed(0) + ' MB'; }
   function api(op, d) { return $.post(URL_, $.extend({op: op}, d || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
