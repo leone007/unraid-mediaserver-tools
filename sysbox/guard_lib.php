@@ -298,11 +298,28 @@ function gd_prompt($kind, $now, $prev, $events, $c = null, $menu = '') {
         "Do not invent problems: a value that did not change and is within normal limits is fine. Write the texts in {$lang}; keep the JSON keys in English.";
     return $p . $menu;
 }
-// a command Claude gives must only read: anything that writes, deletes, restarts or downloads is dropped
+// a command Claude gives must only read: an allow-list of read-only programs (a deny-list let xfs_repair, fsck, find -delete
+// through, item 104). Pipes and ; && || are allowed between allowed programs; redirection, substitution, background are not.
 function gd_cmd_ok($c) {
     $c = trim((string)$c); if ($c === '' || strlen($c) > 300) { return false; }
-    if (preg_match('/[>`]|\$\(|\b(rm|mv|cp|dd|mkfs\w*|wipefs|fdisk|parted|sgdisk|tee|truncate|shred|chmod|chown|kill|pkill|killall|reboot|shutdown|poweroff|halt|systemctl|rc\.\w+|wget|curl|nc|ssh|scp|rsync|sed\s+-i|perl|python\d?|php|bash|sh|zfs\s+(destroy|rollback|set)|zpool\s+(destroy|clear|offline|remove)|mdcmd|emcmd|update_container)\b/i', $c)) { return false; }
-    if (preg_match('/\bdocker\s+(?!logs\b|ps\b|inspect\b|stats\b)/i', $c)) { return false; }
+    if (preg_match('/[>`<\n]|\$\(|(^|[^&])&($|[^&])/', $c)) { return false; }
+    $ro = 'cat|tail|head|grep|egrep|zgrep|zcat|ls|df|du|free|uptime|lsblk|lsusb|lspci|blkid|findmnt|stat|file|wc|sort|uniq|cut|tr|date|uname|ps|top|iostat|vmstat|'
+        . 'dmesg|sensors|upsc|ping|dig|nslookup|ip|ss|netstat|lsof|md5sum|sha256sum|jq|xfs_info|id|which|realpath|basename|dirname|nproc|lscpu|hostname';
+    foreach (preg_split('/\s*(?:\|\||&&|\||;)\s*/', $c) as $seg) {
+        if ($seg === '') { continue; }
+        if (preg_match('/^(?:' . $ro . ')(\s|$)/', $seg)) {
+            if (preg_match('/^dmesg\b.*\s(?:-[a-zA-Z]*[cCD]|--clear|--read-clear|--console)/', $seg) || preg_match('/^ip\s.*\b(?:set|add|del|delete|flush|change|replace|append)\b/', $seg)
+                || preg_match('/^top(?!.*-b)/', $seg)) { return false; }
+            continue;
+        }
+        if (preg_match('/^find\s/', $seg) && !preg_match('/\s-(?:delete|exec|execdir|ok|okdir|fprint\w*|fls)\b/', $seg)) { continue; }
+        if (preg_match('/^smartctl\s/', $seg) && !preg_match('/\s(?:-t|--test|-s|--smart|-o|-S|--saveauto|-X|--abort|--set)\b/', $seg)) { continue; }
+        if (preg_match('/^zpool\s+(?:status|list|iostat|get|history)\b/', $seg) || preg_match('/^zfs\s+(?:list|get)\b/', $seg)) { continue; }
+        if (preg_match('/^btrfs\s+(?:filesystem\s+(?:show|df|usage)|device\s+(?:stats|usage)(?!.*\s-z)|scrub\s+status)\b/', $seg)) { continue; }
+        if (preg_match('/^docker\s+(?:logs|ps|inspect|stats\s+--no-stream|images|version|info)\b/', $seg)) { continue; }
+        if (preg_match('/^nvme\s+(?:list|smart-log|error-log|id-ctrl)\b/', $seg)) { continue; }
+        return false;
+    }
     return true;
 }
 function gd_parse($text) {

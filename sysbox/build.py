@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30a">
+<!ENTITY version   "2026.10.30b">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30b
+- Claude Guard: a command in a finding is shown only when every part of it is a known read-only program (cat, grep, tail, smartctl -a, zpool status, docker logs and similar); repair, unmount, delete or test commands such as xfs_repair, fsck, find -delete or smartctl -t are dropped instead of being shown as a read-only check
+
 ###2026.10.30a
 - Security: names with quote marks (container, dataset, snapshot or file names, Claude answers) can no longer break into the Update manager, Claude Guard, Snapshots, Safe shutdown and Network pages as code; they show as plain text
 
