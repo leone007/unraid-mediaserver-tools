@@ -594,7 +594,7 @@
  },
  "e.unexpected": {
   "text": "unexpected error: {e}",
-  "note": "autobrr watch status line; {e} technical."
+  "note": "error shown in the autobrr watch status line and as the result of a scan or search that broke; {e} technical."
  },
  "e.unknown_item": {
   "text": "unknown item",

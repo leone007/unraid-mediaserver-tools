@@ -19,13 +19,13 @@ try {
     elseif ($mode === 'fsearch') { st_find_repl_search((string)($argv[2] ?? ''), (string)($argv[3] ?? '')); }
     else { st_tick(); }
 } catch (Throwable $e) {
-    if ($mode === 'sp') { st_json_write(ST_SP, ['state' => 'error', 't' => time(), 'msg' => 'Unexpected error: ' . $e->getMessage(), 'items' => []]); }
-    elseif ($mode === 'find') { st_progress(ST_FIND, 'error', 'Unexpected error: ' . $e->getMessage()); }
-    elseif ($mode === 'upd') { st_progress(ST_UPD, 'error', 'Unexpected error: ' . $e->getMessage()); }
+    if ($mode === 'sp') { st_json_write(ST_SP, ['state' => 'error', 't' => time(), 'msg' => st_tr('e.unexpected', ['e' => $e->getMessage()]), 'items' => []]); }
+    elseif ($mode === 'find') { st_progress(ST_FIND, 'error', st_tr('e.unexpected', ['e' => $e->getMessage()])); }
+    elseif ($mode === 'upd') { st_progress(ST_UPD, 'error', st_tr('e.unexpected', ['e' => $e->getMessage()])); }
     elseif ($mode === 'fsearch' && preg_match('/^f[0-9a-f]{12}$/', (string)($argv[3] ?? ''))) {
-        $r = st_json_read(ST_RES, []); $r[(string)$argv[3]] = ['state' => 'error', 't' => time(), 'rows' => [], 'msg' => 'Unexpected error: ' . $e->getMessage(), 'mode' => 'repl']; st_json_write(ST_RES, $r);
+        $r = st_json_read(ST_RES, []); $r[(string)$argv[3]] = ['state' => 'error', 't' => time(), 'rows' => [], 'msg' => st_tr('e.unexpected', ['e' => $e->getMessage()]), 'mode' => 'repl']; st_json_write(ST_RES, $r);
     }
     elseif ($mode === 'search') {
-        $r = st_json_read(ST_RES, []); $r[(string)($argv[2] ?? '')] = ['state' => 'error', 't' => time(), 'rows' => [], 'msg' => 'Unexpected error: ' . $e->getMessage()]; st_json_write(ST_RES, $r);
+        $r = st_json_read(ST_RES, []); $r[(string)($argv[2] ?? '')] = ['state' => 'error', 't' => time(), 'rows' => [], 'msg' => st_tr('e.unexpected', ['e' => $e->getMessage()])]; st_json_write(ST_RES, $r);
     }
 }
