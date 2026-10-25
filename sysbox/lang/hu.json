@@ -3154,5 +3154,165 @@
  },
  "blk.pow_ups": {
   "text": "UPS (NUT)"
+ },
+ "uu.checking_one": {
+  "text": "{n} ellenőrzése"
+ },
+ "uu.checking_all": {
+  "text": "Konténerek, Unraid OS és pluginok ellenőrzése"
+ },
+ "uu.os_avail": {
+  "text": "Elérhető az Unraid {v}"
+ },
+ "uu.selftest": {
+  "text": "A kapcsolataink öntesztje"
+ },
+ "uu.dc_new": {
+  "one": "Update manager: {n} új frissítés",
+  "other": "Update manager: {n} új frissítés"
+ },
+ "uu.dc_where": {
+  "text": "Settings → Utilities → Update manager"
+ },
+ "uu.dc_ok": {
+  "text": "Update manager: {n} frissítve"
+ },
+ "uu.dc_fail": {
+  "text": "Update manager: {n} frissítése nem sikerült"
+ },
+ "uu.no_row": {
+  "text": "{n}: nincs várakozó frissítés (előbb ellenőrizd újra)"
+ },
+ "uu.no_docker": {
+  "text": "{n}: a Docker nem fut"
+ },
+ "uu.no_tpl": {
+  "text": "{n}: nincs Unraid sablon (my-{n}.xml), a Docker oldalon frissítsd"
+ },
+ "uu.no_script": {
+  "text": "{n}: hiányzik az Unraid update_container szkriptje"
+ },
+ "uu.snap_fail": {
+  "text": "{n}: a frissítés leállt, mielőtt bármi változott, a snapshot nem sikerült ({e})"
+ },
+ "uu.snap_made": {
+  "text": "{s} snapshot elkészült"
+ },
+ "uu.no_snap": {
+  "text": "a mappái egyik ZFS datasetben sincsenek: nincs snapshot"
+ },
+ "uu.stopping": {
+  "text": "{n} leállítása (legfeljebb {s} mp)"
+ },
+ "uu.no_stop": {
+  "text": "{n}: nem állt le, semmi nem változott"
+ },
+ "uu.no_stop_snap": {
+  "text": "{n}: nem állt le, semmi nem változott (a(z) {s} snapshot megmaradt)"
+ },
+ "uu.pulling": {
+  "text": "{i} letöltése és {n} újralétrehozása"
+ },
+ "uu.missing": {
+  "text": "{n}: a konténer hiányzik a frissítés után; hozd létre újra a Docker oldalon (Add container, a sablonja)"
+ },
+ "uu.data_snap": {
+  "text": "adat-snapshot: {s}"
+ },
+ "uu.now_on": {
+  "text": "most: {v}"
+ },
+ "uu.same_img": {
+  "text": "az image nem változott ({v})"
+ },
+ "uu.updated": {
+  "text": "{n} frissítve: {a} → {b}"
+ },
+ "uu.same": {
+  "text": "{n}: a frissítés lefutott, de az image ugyanaz"
+ },
+ "uu.test_ok": {
+  "text": "önteszt {ok}/{n} rendben"
+ },
+ "uu.test_bad": {
+  "text": "önteszt {ok}/{n} ({l} HIBÁS)"
+ },
+ "ua.no_row": {
+  "text": "nincs várakozó frissítés: {n}"
+ },
+ "ua.no_docker": {
+  "text": "a Docker nem fut"
+ },
+ "ua.no_claude": {
+  "text": "a claude konténer nem fut"
+ },
+ "ua.timeout": {
+  "text": "Claude 10 perc alatt nem válaszolt"
+ },
+ "ua.exit": {
+  "text": "Claude nem válaszolt (kilépési kód {n})"
+ },
+ "ua.no_answer": {
+  "text": "Claude még nem válaszolt erről a verzióról"
+ },
+ "ua.no_repo": {
+  "text": "a repó mappája nem található (a claude konténer /work csatolása)"
+ },
+ "ua.no_write": {
+  "text": "nem sikerült írni: {f}"
+ },
+ "sr.dc_daily": {
+  "text": "Sysbox: a napi snapshot nem sikerült"
+ },
+ "sr.daily_nf": {
+  "text": "{ds}: nem található"
+ },
+ "sr.daily_full": {
+  "text": "{ds}: a pool {p} %-ban tele"
+ },
+ "sr.dc_restore": {
+  "text": "Sysbox: a konténer visszaállítása leállt"
+ },
+ "sr.bad_args": {
+  "text": "visszaállítás elutasítva: hibás dataset-, snapshot- vagy konténernév"
+ },
+ "sr.no_snap": {
+  "text": "visszaállítás elutasítva: {s} nem létezik"
+ },
+ "sr.no_dir": {
+  "text": "visszaállítás elutasítva: a(z) {c} konténernek nincs mappája ebben: {ds}"
+ },
+ "sr.safe_fail": {
+  "text": "a(z) {c} visszaállítása leállt, mielőtt bármi változott: a biztonsági snapshot nem sikerült ({e})"
+ },
+ "sr.safe_made": {
+  "text": "{s} biztonsági snapshot elkészült"
+ },
+ "sr.no_stop": {
+  "text": "a(z) {c} visszaállítása leállt: a konténer nem állt le; semmi nem változott (a(z) {s} biztonsági snapshot megmaradt)"
+ },
+ "sr.stopped": {
+  "text": "{c} leállítva"
+ },
+ "sr.not_in": {
+  "text": "nincs a snapshotban, változatlanul maradt: {d}"
+ },
+ "sr.restored_dir": {
+  "text": "visszaállítva: {d}"
+ },
+ "sr.failed_dir": {
+  "text": "HIBA {d}: {e}"
+ },
+ "sr.started": {
+  "text": "{c} elindítva"
+ },
+ "sr.not_started": {
+  "text": "{c} NEM indult el"
+ },
+ "sr.part": {
+  "text": "{c} csak részben állt vissza a(z) {s} snapshotból ({l} hibás); visszacsinálás: állítsd vissza a(z) {c} konténert ebből: {u}"
+ },
+ "sr.done": {
+  "text": "{c} visszaállítva ebből: {s}; visszacsinálás: állítsd vissza a(z) {c} konténert ebből: {u}"
  }
 }

@@ -2,6 +2,17 @@
 require_once __DIR__ . '/i18n.php';
 // texts the pages show (lang/en.json, see i18n.php); the Discord texts have their own language (discord.php)
 function sx_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
+// the same dictionary in the Discord language (Settings, Language: Discord messages), for Discord texts (item 104)
+function sx_trd($k, $v = []) {
+    static $tab = null;
+    if ($tab === null) {
+        $dir = __DIR__ . '/lang'; $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $read($dir . '/en.json'); $code = function_exists('mt_lang_discord') ? mt_lang_discord() : 'en';
+        $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : []; $tab = [];
+        foreach ($en as $kk => $vv) { if (!is_array($vv)) { continue; } foreach (['text', 'one', 'other'] as $f) { if (isset($vv[$f])) { $t = $tr[$kk][$f] ?? null; $tab[$kk][$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$vv[$f]; } } }
+    }
+    $s = mt_i18n_fmt($tab[$k] ?? null, (array)$v); return $s === null ? $k : $s;
+}
 // Sysbox helpers: settings, Docker access, small utilities.
 const SX_CFG = '/boot/config/plugins/sysbox/settings.cfg';
 

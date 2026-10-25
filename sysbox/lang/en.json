@@ -4197,5 +4197,218 @@
  "blk.pow_ups": {
   "text": "UPS (NUT)",
   "note": "switch of the Power part: show the UPS row read from the NUT plugin."
+ },
+ "uu.checking_one": {
+  "text": "Checking {n}",
+  "note": "Update manager, Activity: a check of one container is starting."
+ },
+ "uu.checking_all": {
+  "text": "Checking containers, Unraid OS and plugins",
+  "note": "Update manager, Activity: the full check is starting."
+ },
+ "uu.os_avail": {
+  "text": "Unraid {v} available",
+  "note": "Update manager, added to the check result."
+ },
+ "uu.selftest": {
+  "text": "Self-test of our connections",
+  "note": "Update manager, Activity: the self-test is starting."
+ },
+ "uu.dc_new": {
+  "one": "Update manager: {n} new update",
+  "other": "Update manager: {n} new updates",
+  "note": "Update manager Discord message: title after the daily check."
+ },
+ "uu.dc_where": {
+  "text": "Settings → Utilities → Update manager",
+  "note": "Update manager Discord message: where to look (Unraid menu names, keep them in English)."
+ },
+ "uu.dc_ok": {
+  "text": "Update manager: {n} updated",
+  "note": "Update manager Discord message: title; {n} the container."
+ },
+ "uu.dc_fail": {
+  "text": "Update manager: {n} update failed",
+  "note": "Update manager Discord message: title; {n} the container."
+ },
+ "uu.no_row": {
+  "text": "{n}: no waiting update (check again first)",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_docker": {
+  "text": "{n}: Docker is not running",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_tpl": {
+  "text": "{n}: no Unraid template (my-{n}.xml), update it on the Docker page",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_script": {
+  "text": "{n}: Unraid's update_container script is missing",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.snap_fail": {
+  "text": "{n}: update stopped before anything changed, the snapshot failed ({e})",
+  "note": "Update manager, Activity line of an update: error; {e} technical."
+ },
+ "uu.snap_made": {
+  "text": "snapshot {s} made",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.no_snap": {
+  "text": "no ZFS dataset holds its folders: no snapshot",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.stopping": {
+  "text": "stopping {n} (up to {s} s)",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.no_stop": {
+  "text": "{n}: did not stop, nothing was changed",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_stop_snap": {
+  "text": "{n}: did not stop, nothing was changed (snapshot {s} kept)",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.pulling": {
+  "text": "pulling {i} and recreating {n}",
+  "note": "Update manager, Activity line of an update: step; {i} the image."
+ },
+ "uu.missing": {
+  "text": "{n}: the container is missing after the update; recreate it from the Docker page (Add container, its template)",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.data_snap": {
+  "text": "data snapshot {s}",
+  "note": "Update manager, Activity line of an update: added to the result."
+ },
+ "uu.now_on": {
+  "text": "now on {v}",
+  "note": "Update manager, Activity line of an update: step; {v} the new version."
+ },
+ "uu.same_img": {
+  "text": "the image did not change ({v})",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.updated": {
+  "text": "{n} updated: {a} → {b}",
+  "note": "Update manager, Activity line of an update: result."
+ },
+ "uu.same": {
+  "text": "{n}: the update ran but the image is the same",
+  "note": "Update manager, Activity line of an update: result."
+ },
+ "uu.test_ok": {
+  "text": "self-test {ok}/{n} passed",
+  "note": "Update manager, Activity line of an update: added to the result."
+ },
+ "uu.test_bad": {
+  "text": "self-test {ok}/{n} ({l} FAILED)",
+  "note": "Update manager, Activity line of an update: added to the result; {l} the failed services."
+ },
+ "ua.no_row": {
+  "text": "no waiting update for {n}",
+  "note": "Update manager, Ask Claude or Save as a to-do error."
+ },
+ "ua.no_docker": {
+  "text": "Docker is not running",
+  "note": "Update manager, Ask Claude error."
+ },
+ "ua.no_claude": {
+  "text": "the claude container is not running",
+  "note": "Update manager, Ask Claude error."
+ },
+ "ua.timeout": {
+  "text": "Claude did not answer in 10 minutes",
+  "note": "Update manager, Ask Claude error."
+ },
+ "ua.exit": {
+  "text": "Claude did not answer (exit {n})",
+  "note": "Update manager, Ask Claude error; {n} the exit code."
+ },
+ "ua.no_answer": {
+  "text": "Claude has not answered about this version",
+  "note": "Update manager, Save as a to-do error."
+ },
+ "ua.no_repo": {
+  "text": "the repo folder was not found (the claude container's /work mount)",
+  "note": "Update manager, Save as a to-do error."
+ },
+ "ua.no_write": {
+  "text": "could not write {f}",
+  "note": "Update manager, Save as a to-do error."
+ },
+ "sr.dc_daily": {
+  "text": "Sysbox: daily snapshot failed",
+  "note": "Snapshots, Discord title."
+ },
+ "sr.daily_nf": {
+  "text": "{ds}: not found",
+  "note": "Snapshots, Discord line of the daily snapshot."
+ },
+ "sr.daily_full": {
+  "text": "{ds}: pool {p} % full",
+  "note": "Snapshots, Discord line: no snapshot because the pool is too full."
+ },
+ "sr.dc_restore": {
+  "text": "Sysbox: container restore stopped",
+  "note": "Snapshots, Discord title."
+ },
+ "sr.bad_args": {
+  "text": "restore refused: bad dataset, snapshot or container name",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.no_snap": {
+  "text": "restore refused: {s} does not exist",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.no_dir": {
+  "text": "restore refused: {c} has no folder in {ds}",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.safe_fail": {
+  "text": "restore of {c} stopped before anything changed: the safety snapshot failed ({e})",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.safe_made": {
+  "text": "safety snapshot {s} made",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.no_stop": {
+  "text": "restore of {c} stopped: the container did not stop; nothing was changed (safety snapshot {s} kept)",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.stopped": {
+  "text": "{c} stopped",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.not_in": {
+  "text": "not in the snapshot, left as it is: {d}",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.restored_dir": {
+  "text": "restored {d}",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.failed_dir": {
+  "text": "FAILED {d}: {e}",
+  "note": "Snapshots page, container restore log and result (also Discord): step; {e} technical."
+ },
+ "sr.started": {
+  "text": "{c} started",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.not_started": {
+  "text": "{c} did NOT start",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.part": {
+  "text": "{c} restored from {s} only in part ({l} failed); undo: restore {c} from {u}",
+  "note": "Snapshots page, container restore log and result (also Discord): result."
+ },
+ "sr.done": {
+  "text": "{c} restored from {s}; to undo: restore {c} from {u}",
+  "note": "Snapshots page, container restore log and result (also Discord): result."
  }
 }

@@ -60,12 +60,12 @@ if ($mode === 'daily') {
 }
 
 if ($mode === 'scan') {
-    $id = upd_job_start('scan', $arg, $arg !== '' ? 'Checking ' . $arg : 'Checking containers, Unraid OS and plugins');
+    $id = upd_job_start('scan', $arg, $arg !== '' ? sx_tr('uu.checking_one', ['n' => $arg]) : sx_tr('uu.checking_all'));
     $s = upd_scan($arg !== '' ? $arg : null);
     if (empty($s['ok'])) { upd_job($id, ['state' => 'error', 'text' => sx_tr('uj.check_failed', ['e' => ($s['error'] ?? '?')])]); upd_log('check failed: ' . ($s['error'] ?? '?')); exit(0); }
     $n = upd_summary($s); $tot = count($n['green']) + count($n['amber']) + count($n['red']);
     $msg = $tot ? sx_tr('uj.summary', ['n' => $tot, 'g' => count($n['green']), 'a' => count($n['amber']), 'r' => count($n['red'])]) : sx_tr('uj.current');
-    if (!empty($s['os']['new'])) { $msg .= '; Unraid ' . $s['os']['new'] . ' available'; }
+    if (!empty($s['os']['new'])) { $msg .= '; ' . sx_tr('uu.os_avail', ['v' => $s['os']['new']]); }
     upd_job($id, ['state' => 'done', 'text' => ($arg !== '' ? sx_tr('uj.checked_one', ['n' => $arg, 'm' => $msg]) : sx_tr('uj.checked', ['m' => $msg]))]);
     upd_log('check' . ($arg !== '' ? ' ' . $arg : '') . ': ' . $msg);
     // a new Unraid OS version: Claude is asked about it by itself, once per version (owner's rule, 2026-10-15)
@@ -91,14 +91,14 @@ if ($mode === 'scan') {
         if ($new) {
             $lines = []; $lv = 'g';
             foreach ($new as $r) { $lines[] = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$r['risk']] . ' **' . $r['name'] . '** ' . ($r['ver'] ?: '?') . ' → ' . ($r['rver'] ?: '?') . ' (' . $r['kind'] . ($r['deps'] ? '; ' . implode(', ', $r['deps']) : '') . ')'; if ($r['risk'] === 'red') { $lv = 'rd'; } elseif ($r['risk'] === 'amber' && $lv !== 'rd') { $lv = 'a'; } }
-            upd_discord($lv, 'Update manager: ' . count($new) . ' new update' . (count($new) > 1 ? 's' : ''), implode("\n", $lines) . "\n\nSettings → Utilities → Update manager");
+            upd_discord($lv, sx_trd('uu.dc_new', ['n' => count($new)]), implode("\n", $lines) . "\n\n" . sx_trd('uu.dc_where'));
         }
     }
     exit(0);
 }
 
 if ($mode === 'selftest') {
-    $id = upd_job_start('selftest', '', 'Self-test of our connections');
+    $id = upd_job_start('selftest', '', sx_tr('uu.selftest'));
     $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
     upd_job($id, ['state' => $bad ? 'error' : 'done', 'text' => sx_tr('uj.selftest', ['ok' => count($t['tests']) - count($bad), 'n' => count($t['tests'])]) . ($bad ? ' (' . sx_tr('uj.failed_list', ['l' => implode(', ', array_column($bad, 'name'))]) . ')' : '')]);
     exit(0);
@@ -119,17 +119,20 @@ function upd_update_one($name, $dc = true) {
     $scan = upd_json(upd_scan_file(), []); $row = null;
     foreach ($scan['rows'] ?? [] as $r) { if ($r['name'] === $name) { $row = $r; } }
     $id = upd_job_start('update', $name, sx_tr('uj.updating', ['n' => $name]));
-    $end = function ($state, $msg) use ($id, $name, $dc) {
+    // a message is a list of parts [key, vars]: the Activity line in the page language, Discord in the Discord language (item 104)
+    $txt = function ($parts, $dcl = false) { return implode('; ', array_map(function ($p) use ($dcl) { return $dcl ? sx_trd($p[0], $p[1] ?? []) : sx_tr($p[0], $p[1] ?? []); }, $parts)); };
+    $end = function ($state, $parts) use ($id, $name, $dc, $txt) {
+        $msg = $txt($parts); $dmsg = $txt($parts, true);
         upd_job($id, ['state' => $state, 'text' => $msg], $msg); upd_log($msg);
-        if ($dc) { upd_discord($state === 'done' ? 'g' : 'rd', 'Update manager: ' . $name . ($state === 'done' ? ' updated' : ' update failed'), $msg); }
-        return [$state, $msg];
+        if ($dc) { upd_discord($state === 'done' ? 'g' : 'rd', sx_trd($state === 'done' ? 'uu.dc_ok' : 'uu.dc_fail', ['n' => $name]), $dmsg); }
+        return [$state, $msg, $dmsg];
     };
-    if (!$row || $row['state'] !== 'update') { return $end('error', $name . ': no waiting update (check again first)'); }
-    $d = sx_docker(); if ($d === '') { return $end('error', $name . ': Docker is not running'); }
+    if (!$row || $row['state'] !== 'update') { return $end('error', [['uu.no_row', ['n' => $name]]]); }
+    $d = sx_docker(); if ($d === '') { return $end('error', [['uu.no_docker', ['n' => $name]]]); }
     $tpl = '/boot/config/plugins/dockerMan/templates-user/my-' . $name . '.xml';
-    if (!is_file($tpl)) { return $end('error', $name . ': no Unraid template (my-' . $name . '.xml), update it on the Docker page'); }
+    if (!is_file($tpl)) { return $end('error', [['uu.no_tpl', ['n' => $name]]]); }
     $script = '/usr/local/emhttp/plugins/dynamix.docker.manager/scripts/update_container';
-    if (!is_file($script)) { return $end('error', $name . ': Unraid\'s update_container script is missing'); }
+    if (!is_file($script)) { return $end('error', [['uu.no_script', ['n' => $name]]]); }
     // 1. a ZFS snapshot of the dataset that holds its folders (Snapshots page: restore this container from it)
     $snap = '';
     if (!empty($cfg['backup']) && is_file(__DIR__ . '/snap_lib.php')) {
@@ -139,10 +142,10 @@ function upd_update_one($name, $dc = true) {
             if (!$have) { continue; }
             $sn = 'before-update-' . $name . '-' . date('Y-m-d-Hi');
             $e = snp_make($ds['name'], $sn);
-            if ($e !== '') { return $end('error', $name . ': update stopped before anything changed, the snapshot failed (' . $e . ')'); }
-            $snap = $ds['name'] . '@' . $sn; upd_job($id, [], 'snapshot ' . $snap . ' made'); snp_log($snap . ' made before the update');
+            if ($e !== '') { return $end('error', [['uu.snap_fail', ['n' => $name, 'e' => $e]]]); }
+            $snap = $ds['name'] . '@' . $sn; upd_job($id, [], sx_tr('uu.snap_made', ['s' => $snap])); snp_log($snap . ' made before the update');
         }
-        if ($snap === '') { upd_job($id, [], 'no ZFS dataset holds its folders: no snapshot'); }
+        if ($snap === '') { upd_job($id, [], sx_tr('uu.no_snap')); }
     }
     // the self-test before the update: a service that already failed (stopped, not ours) does not count against this update (item 104)
     $pre = [];
@@ -151,20 +154,20 @@ function upd_update_one($name, $dc = true) {
     $was = trim(upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . escapeshellarg($name), 10)) === 'true';
     if ($was) {
         $wait = preg_match('/qbittorrent/i', $row['image']) ? 300 : 60;
-        upd_job($id, [], 'stopping ' . $name . ' (up to ' . $wait . ' s)');
+        upd_job($id, [], sx_tr('uu.stopping', ['n' => $name, 's' => $wait]));
         [$rc] = sx_run(escapeshellarg($d) . ' stop -t ' . $wait . ' ' . escapeshellarg($name), $wait + 30);
-        if ($rc !== 0) { return $end('error', $name . ': did not stop, nothing was changed' . ($snap ? ' (snapshot ' . $snap . ' kept)' : '')); }
+        if ($rc !== 0) { return $end('error', $snap ? [['uu.no_stop_snap', ['n' => $name, 's' => $snap]]] : [['uu.no_stop', ['n' => $name]]]); }
     }
     // 3. Unraid's own update: pull, recreate from the template, start again when it was running
-    upd_job($id, [], 'pulling ' . $row['image'] . ' and recreating ' . $name);
+    upd_job($id, [], sx_tr('uu.pulling', ['i' => $row['image'], 'n' => $name]));
     [$rc, $o] = sx_run(escapeshellarg(sx_php()) . ' ' . escapeshellarg($script) . ' ' . escapeshellarg(rawurlencode($name)) . ($was ? ' ca_docker_run_override' : ''), 1800);
     $now = upd_containers(); $c = null; foreach ((array)$now as $x) { if ($x['name'] === $name) { $c = $x; } }
-    if (!$c) { return $end('error', $name . ': the container is missing after the update; recreate it from the Docker page (Add container, its template)' . ($snap ? '; data snapshot ' . $snap : '')); }
+    if (!$c) { return $end('error', array_merge([['uu.missing', ['n' => $name]]], $snap ? [['uu.data_snap', ['s' => $snap]]] : [])); }
     if ($was && !$c['running']) { sx_run(escapeshellarg($d) . ' start ' . escapeshellarg($name), 60); }
     $new = in_array($c['id'], $row['rids'] ?? [$row['rid']], true) || $c['id'] !== $row['id'];
-    upd_job($id, [], $new ? 'now on ' . ($c['ver'] ?: substr($c['id'], 7, 12)) : 'the image did not change (' . ($c['ver'] ?: '?') . ')');
+    upd_job($id, [], $new ? sx_tr('uu.now_on', ['v' => $c['ver'] ?: substr($c['id'], 7, 12)]) : sx_tr('uu.same_img', ['v' => $c['ver'] ?: '?']));
     // 4. self-test of our connections, then a fresh check of this container
-    $tmsg = '';
+    $tparts = []; $tbad = false;
     if (!empty($cfg['selftest'])) {
         if ($was) { sleep(20); }   // the program needs a moment after the start
         $newBad = function ($t) use ($pre) { return array_filter($t['tests'], function ($x) use ($pre) { return !$x['ok'] && !in_array($x['name'], $pre, true); }); };
@@ -177,12 +180,13 @@ function upd_update_one($name, $dc = true) {
             $t = upd_selftest(); $bad = $newBad($t);
         }
         $was0 = array_values(array_filter(array_column(array_filter($t['tests'], function ($x) { return !$x['ok']; }), 'name'), function ($n) use ($pre) { return in_array($n, $pre, true); }));
-        $tmsg = '; self-test ' . (count($t['tests']) - count($bad) - count($was0)) . '/' . count($t['tests']) . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' FAILED)' : ' passed')
-              . ($was0 ? '; ' . sx_tr('uj.test_before', ['l' => implode(', ', $was0)]) : '');
+        $okN = count($t['tests']) - count($bad) - count($was0); $tbad = (bool)$bad;
+        $tparts[] = $bad ? ['uu.test_bad', ['ok' => $okN, 'n' => count($t['tests']), 'l' => implode(', ', array_column($bad, 'name'))]] : ['uu.test_ok', ['ok' => $okN, 'n' => count($t['tests'])]];
+        if ($was0) { $tparts[] = ['uj.test_before', ['l' => implode(', ', $was0)]]; }
     }
     upd_scan($name);
-    $msg = $name . ' ' . ($new ? 'updated: ' . ($row['ver'] ?: '?') . ' → ' . ($c['ver'] ?: '?') : 'update ran but the image is the same') . $tmsg . ($snap ? '; data snapshot ' . $snap : '');
-    return $end($new && strpos($tmsg, 'FAILED') === false ? 'done' : 'error', $msg);
+    $parts = array_merge([$new ? ['uu.updated', ['n' => $name, 'a' => $row['ver'] ?: '?', 'b' => $c['ver'] ?: '?']] : ['uu.same', ['n' => $name]]], $tparts, $snap ? [['uu.data_snap', ['s' => $snap]]] : []);
+    return $end($new && !$tbad ? 'done' : 'error', $parts);
 }
 
 if ($mode === 'update') { upd_update_one($arg); exit(0); }
@@ -200,12 +204,13 @@ if ($mode === 'updall') {
     $done = [];
     foreach ($names as $k => $name) {
         upd_job($id, ['text' => sx_tr('uj.all_now', ['n' => $n, 'i' => $k + 1, 'c' => $name]), 'now' => $name, 'ok' => $done]);
-        [$state, $msg] = upd_update_one($name, false);
+        [$state, $msg, $dmsg] = upd_update_one($name, false);
         if ($state !== 'done') {
             $left = array_slice($names, $k + 1);
-            $txt = sx_tr('uj.all_stopped', ['c' => $name, 'i' => $k + 1, 'n' => $n, 'ok' => count($done), 'left' => count($left)]) . ' ' . $msg;
+            $sv = ['c' => $name, 'i' => $k + 1, 'n' => $n, 'ok' => count($done), 'left' => count($left)];
+            $txt = sx_tr('uj.all_stopped', $sv) . ' ' . $msg;
             upd_job($id, ['state' => 'error', 'text' => $txt, 'now' => '', 'ok' => $done, 'failed' => $name, 'left' => $left], $txt); upd_log($txt);
-            upd_discord('rd', sx_tr('uj.all_dc_title', ['c' => $name]), $txt . ($left ? "\n" . sx_tr('uj.all_dc_left', ['l' => implode(', ', $left)]) : ''));
+            upd_discord('rd', sx_trd('uj.all_dc_title', ['c' => $name]), sx_trd('uj.all_stopped', $sv) . ' ' . $dmsg . ($left ? "\n" . sx_trd('uj.all_dc_left', ['l' => implode(', ', $left)]) : ''));
             exit(0);
         }
         $done[] = $name;

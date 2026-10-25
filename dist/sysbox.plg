@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30e">
+<!ENTITY version   "2026.10.30f">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30f
+- Update manager and Snapshots: every Activity, error and Discord text comes from the dictionary (Hungarian too); Discord messages use the Discord language, also the one of Update all
+
 ###2026.10.30e
 - Inside: the memory and disk usage reading of the tile and of the alerts is one shared function (no change in what is shown)
 
@@ -1377,6 +1380,17 @@ $(function () {
 require_once __DIR__ . '/i18n.php';
 // texts the pages show (lang/en.json, see i18n.php); the Discord texts have their own language (discord.php)
 function sx_tr($k, $v = []) { static $t = null; if ($t === null) { $t = mt_i18n_t(__DIR__ . '/lang'); } return $t($k, $v); }
+// the same dictionary in the Discord language (Settings, Language: Discord messages), for Discord texts (item 104)
+function sx_trd($k, $v = []) {
+    static $tab = null;
+    if ($tab === null) {
+        $dir = __DIR__ . '/lang'; $read = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $read($dir . '/en.json'); $code = function_exists('mt_lang_discord') ? mt_lang_discord() : 'en';
+        $tr = $code !== 'en' && preg_match('/^[a-z]{2}$/', $code) ? $read($dir . '/' . $code . '.json') : []; $tab = [];
+        foreach ($en as $kk => $vv) { if (!is_array($vv)) { continue; } foreach (['text', 'one', 'other'] as $f) { if (isset($vv[$f])) { $t = $tr[$kk][$f] ?? null; $tab[$kk][$f] = (is_string($t) && trim($t) !== '') ? $t : (string)$vv[$f]; } } }
+    }
+    $s = mt_i18n_fmt($tab[$k] ?? null, (array)$v); return $s === null ? $k : $s;
+}
 // Sysbox helpers: settings, Docker access, small utilities.
 const SX_CFG = '/boot/config/plugins/sysbox/settings.cfg';
 
@@ -7494,6 +7508,219 @@ function mt_i18n_js($dir, $name, $only = null) {
  "blk.pow_ups": {
   "text": "UPS (NUT)",
   "note": "switch of the Power part: show the UPS row read from the NUT plugin."
+ },
+ "uu.checking_one": {
+  "text": "Checking {n}",
+  "note": "Update manager, Activity: a check of one container is starting."
+ },
+ "uu.checking_all": {
+  "text": "Checking containers, Unraid OS and plugins",
+  "note": "Update manager, Activity: the full check is starting."
+ },
+ "uu.os_avail": {
+  "text": "Unraid {v} available",
+  "note": "Update manager, added to the check result."
+ },
+ "uu.selftest": {
+  "text": "Self-test of our connections",
+  "note": "Update manager, Activity: the self-test is starting."
+ },
+ "uu.dc_new": {
+  "one": "Update manager: {n} new update",
+  "other": "Update manager: {n} new updates",
+  "note": "Update manager Discord message: title after the daily check."
+ },
+ "uu.dc_where": {
+  "text": "Settings → Utilities → Update manager",
+  "note": "Update manager Discord message: where to look (Unraid menu names, keep them in English)."
+ },
+ "uu.dc_ok": {
+  "text": "Update manager: {n} updated",
+  "note": "Update manager Discord message: title; {n} the container."
+ },
+ "uu.dc_fail": {
+  "text": "Update manager: {n} update failed",
+  "note": "Update manager Discord message: title; {n} the container."
+ },
+ "uu.no_row": {
+  "text": "{n}: no waiting update (check again first)",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_docker": {
+  "text": "{n}: Docker is not running",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_tpl": {
+  "text": "{n}: no Unraid template (my-{n}.xml), update it on the Docker page",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_script": {
+  "text": "{n}: Unraid's update_container script is missing",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.snap_fail": {
+  "text": "{n}: update stopped before anything changed, the snapshot failed ({e})",
+  "note": "Update manager, Activity line of an update: error; {e} technical."
+ },
+ "uu.snap_made": {
+  "text": "snapshot {s} made",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.no_snap": {
+  "text": "no ZFS dataset holds its folders: no snapshot",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.stopping": {
+  "text": "stopping {n} (up to {s} s)",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.no_stop": {
+  "text": "{n}: did not stop, nothing was changed",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.no_stop_snap": {
+  "text": "{n}: did not stop, nothing was changed (snapshot {s} kept)",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.pulling": {
+  "text": "pulling {i} and recreating {n}",
+  "note": "Update manager, Activity line of an update: step; {i} the image."
+ },
+ "uu.missing": {
+  "text": "{n}: the container is missing after the update; recreate it from the Docker page (Add container, its template)",
+  "note": "Update manager, Activity line of an update: error."
+ },
+ "uu.data_snap": {
+  "text": "data snapshot {s}",
+  "note": "Update manager, Activity line of an update: added to the result."
+ },
+ "uu.now_on": {
+  "text": "now on {v}",
+  "note": "Update manager, Activity line of an update: step; {v} the new version."
+ },
+ "uu.same_img": {
+  "text": "the image did not change ({v})",
+  "note": "Update manager, Activity line of an update: step."
+ },
+ "uu.updated": {
+  "text": "{n} updated: {a} → {b}",
+  "note": "Update manager, Activity line of an update: result."
+ },
+ "uu.same": {
+  "text": "{n}: the update ran but the image is the same",
+  "note": "Update manager, Activity line of an update: result."
+ },
+ "uu.test_ok": {
+  "text": "self-test {ok}/{n} passed",
+  "note": "Update manager, Activity line of an update: added to the result."
+ },
+ "uu.test_bad": {
+  "text": "self-test {ok}/{n} ({l} FAILED)",
+  "note": "Update manager, Activity line of an update: added to the result; {l} the failed services."
+ },
+ "ua.no_row": {
+  "text": "no waiting update for {n}",
+  "note": "Update manager, Ask Claude or Save as a to-do error."
+ },
+ "ua.no_docker": {
+  "text": "Docker is not running",
+  "note": "Update manager, Ask Claude error."
+ },
+ "ua.no_claude": {
+  "text": "the claude container is not running",
+  "note": "Update manager, Ask Claude error."
+ },
+ "ua.timeout": {
+  "text": "Claude did not answer in 10 minutes",
+  "note": "Update manager, Ask Claude error."
+ },
+ "ua.exit": {
+  "text": "Claude did not answer (exit {n})",
+  "note": "Update manager, Ask Claude error; {n} the exit code."
+ },
+ "ua.no_answer": {
+  "text": "Claude has not answered about this version",
+  "note": "Update manager, Save as a to-do error."
+ },
+ "ua.no_repo": {
+  "text": "the repo folder was not found (the claude container's /work mount)",
+  "note": "Update manager, Save as a to-do error."
+ },
+ "ua.no_write": {
+  "text": "could not write {f}",
+  "note": "Update manager, Save as a to-do error."
+ },
+ "sr.dc_daily": {
+  "text": "Sysbox: daily snapshot failed",
+  "note": "Snapshots, Discord title."
+ },
+ "sr.daily_nf": {
+  "text": "{ds}: not found",
+  "note": "Snapshots, Discord line of the daily snapshot."
+ },
+ "sr.daily_full": {
+  "text": "{ds}: pool {p} % full",
+  "note": "Snapshots, Discord line: no snapshot because the pool is too full."
+ },
+ "sr.dc_restore": {
+  "text": "Sysbox: container restore stopped",
+  "note": "Snapshots, Discord title."
+ },
+ "sr.bad_args": {
+  "text": "restore refused: bad dataset, snapshot or container name",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.no_snap": {
+  "text": "restore refused: {s} does not exist",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.no_dir": {
+  "text": "restore refused: {c} has no folder in {ds}",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.safe_fail": {
+  "text": "restore of {c} stopped before anything changed: the safety snapshot failed ({e})",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.safe_made": {
+  "text": "safety snapshot {s} made",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.no_stop": {
+  "text": "restore of {c} stopped: the container did not stop; nothing was changed (safety snapshot {s} kept)",
+  "note": "Snapshots page, container restore log and result (also Discord): error."
+ },
+ "sr.stopped": {
+  "text": "{c} stopped",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.not_in": {
+  "text": "not in the snapshot, left as it is: {d}",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.restored_dir": {
+  "text": "restored {d}",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.failed_dir": {
+  "text": "FAILED {d}: {e}",
+  "note": "Snapshots page, container restore log and result (also Discord): step; {e} technical."
+ },
+ "sr.started": {
+  "text": "{c} started",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.not_started": {
+  "text": "{c} did NOT start",
+  "note": "Snapshots page, container restore log and result (also Discord): step."
+ },
+ "sr.part": {
+  "text": "{c} restored from {s} only in part ({l} failed); undo: restore {c} from {u}",
+  "note": "Snapshots page, container restore log and result (also Discord): result."
+ },
+ "sr.done": {
+  "text": "{c} restored from {s}; to undo: restore {c} from {u}",
+  "note": "Snapshots page, container restore log and result (also Discord): result."
  }
 }]]></INLINE>
 </FILE>
@@ -10658,6 +10885,166 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "blk.pow_ups": {
   "text": "UPS (NUT)"
+ },
+ "uu.checking_one": {
+  "text": "{n} ellenőrzése"
+ },
+ "uu.checking_all": {
+  "text": "Konténerek, Unraid OS és pluginok ellenőrzése"
+ },
+ "uu.os_avail": {
+  "text": "Elérhető az Unraid {v}"
+ },
+ "uu.selftest": {
+  "text": "A kapcsolataink öntesztje"
+ },
+ "uu.dc_new": {
+  "one": "Update manager: {n} új frissítés",
+  "other": "Update manager: {n} új frissítés"
+ },
+ "uu.dc_where": {
+  "text": "Settings → Utilities → Update manager"
+ },
+ "uu.dc_ok": {
+  "text": "Update manager: {n} frissítve"
+ },
+ "uu.dc_fail": {
+  "text": "Update manager: {n} frissítése nem sikerült"
+ },
+ "uu.no_row": {
+  "text": "{n}: nincs várakozó frissítés (előbb ellenőrizd újra)"
+ },
+ "uu.no_docker": {
+  "text": "{n}: a Docker nem fut"
+ },
+ "uu.no_tpl": {
+  "text": "{n}: nincs Unraid sablon (my-{n}.xml), a Docker oldalon frissítsd"
+ },
+ "uu.no_script": {
+  "text": "{n}: hiányzik az Unraid update_container szkriptje"
+ },
+ "uu.snap_fail": {
+  "text": "{n}: a frissítés leállt, mielőtt bármi változott, a snapshot nem sikerült ({e})"
+ },
+ "uu.snap_made": {
+  "text": "{s} snapshot elkészült"
+ },
+ "uu.no_snap": {
+  "text": "a mappái egyik ZFS datasetben sincsenek: nincs snapshot"
+ },
+ "uu.stopping": {
+  "text": "{n} leállítása (legfeljebb {s} mp)"
+ },
+ "uu.no_stop": {
+  "text": "{n}: nem állt le, semmi nem változott"
+ },
+ "uu.no_stop_snap": {
+  "text": "{n}: nem állt le, semmi nem változott (a(z) {s} snapshot megmaradt)"
+ },
+ "uu.pulling": {
+  "text": "{i} letöltése és {n} újralétrehozása"
+ },
+ "uu.missing": {
+  "text": "{n}: a konténer hiányzik a frissítés után; hozd létre újra a Docker oldalon (Add container, a sablonja)"
+ },
+ "uu.data_snap": {
+  "text": "adat-snapshot: {s}"
+ },
+ "uu.now_on": {
+  "text": "most: {v}"
+ },
+ "uu.same_img": {
+  "text": "az image nem változott ({v})"
+ },
+ "uu.updated": {
+  "text": "{n} frissítve: {a} → {b}"
+ },
+ "uu.same": {
+  "text": "{n}: a frissítés lefutott, de az image ugyanaz"
+ },
+ "uu.test_ok": {
+  "text": "önteszt {ok}/{n} rendben"
+ },
+ "uu.test_bad": {
+  "text": "önteszt {ok}/{n} ({l} HIBÁS)"
+ },
+ "ua.no_row": {
+  "text": "nincs várakozó frissítés: {n}"
+ },
+ "ua.no_docker": {
+  "text": "a Docker nem fut"
+ },
+ "ua.no_claude": {
+  "text": "a claude konténer nem fut"
+ },
+ "ua.timeout": {
+  "text": "Claude 10 perc alatt nem válaszolt"
+ },
+ "ua.exit": {
+  "text": "Claude nem válaszolt (kilépési kód {n})"
+ },
+ "ua.no_answer": {
+  "text": "Claude még nem válaszolt erről a verzióról"
+ },
+ "ua.no_repo": {
+  "text": "a repó mappája nem található (a claude konténer /work csatolása)"
+ },
+ "ua.no_write": {
+  "text": "nem sikerült írni: {f}"
+ },
+ "sr.dc_daily": {
+  "text": "Sysbox: a napi snapshot nem sikerült"
+ },
+ "sr.daily_nf": {
+  "text": "{ds}: nem található"
+ },
+ "sr.daily_full": {
+  "text": "{ds}: a pool {p} %-ban tele"
+ },
+ "sr.dc_restore": {
+  "text": "Sysbox: a konténer visszaállítása leállt"
+ },
+ "sr.bad_args": {
+  "text": "visszaállítás elutasítva: hibás dataset-, snapshot- vagy konténernév"
+ },
+ "sr.no_snap": {
+  "text": "visszaállítás elutasítva: {s} nem létezik"
+ },
+ "sr.no_dir": {
+  "text": "visszaállítás elutasítva: a(z) {c} konténernek nincs mappája ebben: {ds}"
+ },
+ "sr.safe_fail": {
+  "text": "a(z) {c} visszaállítása leállt, mielőtt bármi változott: a biztonsági snapshot nem sikerült ({e})"
+ },
+ "sr.safe_made": {
+  "text": "{s} biztonsági snapshot elkészült"
+ },
+ "sr.no_stop": {
+  "text": "a(z) {c} visszaállítása leállt: a konténer nem állt le; semmi nem változott (a(z) {s} biztonsági snapshot megmaradt)"
+ },
+ "sr.stopped": {
+  "text": "{c} leállítva"
+ },
+ "sr.not_in": {
+  "text": "nincs a snapshotban, változatlanul maradt: {d}"
+ },
+ "sr.restored_dir": {
+  "text": "visszaállítva: {d}"
+ },
+ "sr.failed_dir": {
+  "text": "HIBA {d}: {e}"
+ },
+ "sr.started": {
+  "text": "{c} elindítva"
+ },
+ "sr.not_started": {
+  "text": "{c} NEM indult el"
+ },
+ "sr.part": {
+  "text": "{c} csak részben állt vissza a(z) {s} snapshotból ({l} hibás); visszacsinálás: állítsd vissza a(z) {c} konténert ebből: {u}"
+ },
+ "sr.done": {
+  "text": "{c} visszaállítva ebből: {s}; visszacsinálás: állítsd vissza a(z) {c} konténert ebből: {u}"
  }
 }]]></INLINE>
 </FILE>
@@ -11895,9 +12282,9 @@ if ($mode === 'daily') {
     $st['day'] = $today; snp_json_write(snp_state_file(), $st); // once a day, also when something below fails
     $name = 'auto-' . $today; $bad = [];
     foreach ($c['datasets'] as $ds) {
-        if (!snp_dataset($ds)) { $bad[] = $ds . ': not found'; snp_log($ds . ': not found, no snapshot'); continue; }
+        if (!snp_dataset($ds)) { $bad[] = sx_trd('sr.daily_nf', ['ds' => $ds]); snp_log($ds . ': not found, no snapshot'); continue; }
         $fill = snp_pool_fill($ds);
-        if ($fill >= 0 && $fill > (int)$c['maxfill']) { $bad[] = $ds . ': pool ' . $fill . ' % full'; snp_log($ds . ': pool ' . $fill . ' % full (limit ' . (int)$c['maxfill'] . ' %), no snapshot today'); }
+        if ($fill >= 0 && $fill > (int)$c['maxfill']) { $bad[] = sx_trd('sr.daily_full', ['ds' => $ds, 'p' => $fill]); snp_log($ds . ': pool ' . $fill . ' % full (limit ' . (int)$c['maxfill'] . ' %), no snapshot today'); }
         else {
             $e = snp_make($ds, $name);
             if ($e === '' || $e === 'already exists') { snp_log($ds . '@' . $name . ($e === '' ? ' made' : ' already exists')); } else { $bad[] = $ds . ': ' . $e; snp_log($ds . '@' . $name . ' FAILED: ' . $e); }
@@ -11909,52 +12296,53 @@ if ($mode === 'daily') {
             snp_log($ds . '@' . $autos[$i]['name'] . ($e === '' ? ' removed (older than ' . (int)$c['keep'] . ' days)' : ' could not be removed: ' . $e));
         }
     }
-    if ($bad) { snp_discord('rd', 'Sysbox: daily snapshot failed', implode("\n", $bad)); }
+    if ($bad) { snp_discord('rd', sx_trd('sr.dc_daily'), implode("\n", $bad)); }
     exit(0);
 }
 
 if ($mode === 'restore') {
     [$dsn, $snap, $ctr] = [$argv[2] ?? '', $argv[3] ?? '', $argv[4] ?? ''];
     $S = ['state' => 'running', 'ds' => $dsn, 'snap' => $snap, 'ctr' => $ctr, 'started' => time(), 'log' => [], 'msg' => ''];
-    $say = function ($m) use (&$S) { $S['log'][] = date('H:i:s') . ' ' . $m; snp_json_write(snp_run_file(), $S); };
-    $end = function ($state, $msg) use (&$S, $say) { $S['state'] = $state; $S['msg'] = $msg; $S['finished'] = time(); $say($msg); snp_log($msg); if ($state !== 'done') { snp_discord('a', 'Sysbox: container restore stopped', $msg); } exit(0); };
+    // texts from the dictionary: the page in its language, Discord in the Discord language (item 104)
+    $say = function ($k, $v = []) use (&$S) { $S['log'][] = date('H:i:s') . ' ' . sx_tr($k, $v); snp_json_write(snp_run_file(), $S); };
+    $end = function ($state, $k, $v = []) use (&$S, $say) { $msg = sx_tr($k, $v); $S['state'] = $state; $S['msg'] = $msg; $S['finished'] = time(); $say($k, $v); snp_log($msg); if ($state !== 'done') { snp_discord('a', sx_trd('sr.dc_restore'), sx_trd($k, $v)); } exit(0); };
     $ds = snp_dataset($dsn);
-    if (!$ds || !snp_name_ok($snap) || !sx_valid_name($ctr)) { $end('error', 'restore refused: bad dataset, snapshot or container name'); }
+    if (!$ds || !snp_name_ok($snap) || !sx_valid_name($ctr)) { $end('error', 'sr.bad_args'); }
     $have = false; foreach (snp_snaps($dsn) as $s) { if ($s['name'] === $snap) { $have = true; } }
-    if (!$have) { $end('error', 'restore refused: ' . $dsn . '@' . $snap . ' does not exist'); }
+    if (!$have) { $end('error', 'sr.no_snap', ['s' => $dsn . '@' . $snap]); }
     $ct = null; foreach (snp_containers($ds) as $x) { if ($x['name'] === $ctr) { $ct = $x; } }
-    if (!$ct) { $end('error', 'restore refused: ' . $ctr . ' has no folder in ' . $dsn); }
+    if (!$ct) { $end('error', 'sr.no_dir', ['c' => $ctr, 'ds' => $dsn]); }
     // a folder that is (or holds) another mount, e.g. its own child dataset, is not in this snapshot: rsync --delete would empty it
     // and the safety snapshot would not cover it (item 104). Refused before anything changes.
     $mnts = []; foreach ((array)@file(snp_mounts_file(), FILE_IGNORE_NEW_LINES) as $l) { $f = explode(' ', $l); if (isset($f[1])) { $mnts[] = stripcslashes($f[1]); } }
     foreach ($ct['dirs'] as $dir) {
-        foreach ($mnts as $m) { if ($m === $dir || strpos($m, rtrim($dir, '/') . '/') === 0) { $end('error', sx_tr('snr.nested', ['c' => $ctr, 'd' => $m, 'ds' => $dsn])); } }
+        foreach ($mnts as $m) { if ($m === $dir || strpos($m, rtrim($dir, '/') . '/') === 0) { $end('error', 'snr.nested', ['c' => $ctr, 'd' => $m, 'ds' => $dsn]); } }
     }
     // 1. a safety snapshot of now, so the restore can be undone the same way
     $safe = 'before-restore-' . $ctr . '-' . date('Y-m-d-Hi');
     $e = snp_make($dsn, $safe);
-    if ($e !== '') { $end('error', 'restore of ' . $ctr . ' stopped before anything changed: the safety snapshot failed (' . $e . ')'); }
-    $say('safety snapshot ' . $dsn . '@' . $safe . ' made');
+    if ($e !== '') { $end('error', 'sr.safe_fail', ['c' => $ctr, 'e' => $e]); }
+    $say('sr.safe_made', ['s' => $dsn . '@' . $safe]);
     // 2. stop only this container
     $d = sx_docker(); $wasRunning = $ct['state'] === 'running';
     if ($wasRunning) {
         snp_run(escapeshellarg($d) . ' stop -t 60 ' . escapeshellarg($ctr), $rc);
-        if ($rc !== 0) { $end('error', 'restore of ' . $ctr . ' stopped: the container did not stop; nothing was changed (safety snapshot ' . $safe . ' kept)'); }
-        $say($ctr . ' stopped');
+        if ($rc !== 0) { $end('error', 'sr.no_stop', ['c' => $ctr, 's' => $safe]); }
+        $say('sr.stopped', ['c' => $ctr]);
     }
     // 3. each folder exactly as in the snapshot (newer files removed)
     $r = snp_bin('rsync'); $fail = [];
     foreach ($ct['dirs'] as $dir) {
         $from = snp_snapdir($ds, $snap, $dir);
-        if (!is_dir($from)) { $say('not in the snapshot, left as it is: ' . $dir); continue; }
+        if (!is_dir($from)) { $say('sr.not_in', ['d' => $dir]); continue; }
         $o = snp_run(escapeshellarg($r) . ' -aHAX --checksum --delete ' . // checksum: a file changed within the same second at the same size is caught too
              escapeshellarg($from . '/') . ' ' . escapeshellarg($dir . '/'), $rc);
-        if ($rc === 0) { $say('restored ' . $dir); } else { $fail[] = $dir; $say('FAILED ' . $dir . ': ' . substr(trim(implode(' ', $o)), 0, 200)); }
+        if ($rc === 0) { $say('sr.restored_dir', ['d' => $dir]); } else { $fail[] = $dir; $say('sr.failed_dir', ['d' => $dir, 'e' => substr(trim(implode(' ', $o)), 0, 200)]); }
     }
     // 4. start it again
-    if ($wasRunning) { snp_run(escapeshellarg($d) . ' start ' . escapeshellarg($ctr), $rc); $say($rc === 0 ? $ctr . ' started' : $ctr . ' did NOT start'); }
-    if ($fail) { $end('error', $ctr . ' restored from ' . $snap . ' only in part (' . implode(', ', $fail) . ' failed); undo: restore ' . $ctr . ' from ' . $safe); }
-    $end('done', $ctr . ' restored from ' . $dsn . '@' . $snap . '; to undo: restore ' . $ctr . ' from ' . $safe);
+    if ($wasRunning) { snp_run(escapeshellarg($d) . ' start ' . escapeshellarg($ctr), $rc); $say($rc === 0 ? 'sr.started' : 'sr.not_started', ['c' => $ctr]); }
+    if ($fail) { $end('error', 'sr.part', ['c' => $ctr, 's' => $snap, 'l' => implode(', ', $fail), 'u' => $safe]); }
+    $end('done', 'sr.done', ['c' => $ctr, 's' => $dsn . '@' . $snap, 'u' => $safe]);
 }
 exit(1);
 ]]></INLINE>
@@ -12787,16 +13175,16 @@ function upd_ask($name) {
     $scan = upd_json(upd_scan_file(), []); $row = null;
     foreach ($scan['rows'] ?? [] as $r) { if ($r['name'] === $name && $r['state'] === 'update') { $row = $r; } }
     if ($name === 'unraid-os' && !empty($scan['os']['new'])) { $row = ['key' => $scan['os']['key'], 'os' => $scan['os']]; }
-    if (!$row) { return 'no waiting update for ' . $name; }
+    if (!$row) { return sx_tr('ua.no_row', ['n' => $name]); }
     $cache = upd_json(upd_cache_file(), []); $key = $row['key']; $notes = (string)($cache[$key]['notes'] ?? '');
-    $d = sx_docker(); if ($d === '') { return 'Docker is not running'; }
-    if (trim((string)upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} claude', 10)) !== 'true') { return 'the claude container is not running'; }
+    $d = sx_docker(); if ($d === '') { return sx_tr('ua.no_docker'); }
+    if (trim((string)upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} claude', 10)) !== 'true') { return sx_tr('ua.no_claude'); }
     $pf = tempnam(upd_tmp(), 'sxq'); file_put_contents($pf, isset($row['os']) ? upd_claude_prompt_os($row['os'], $notes) : upd_claude_prompt($row, $notes, upd_deps($row['image'])));
     $cmd = 'timeout 600 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w ' . escapeshellarg(UPD_REPO) .
            ' claude claude -p --tools Read,Grep --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
     $o = []; @exec($cmd, $o, $rc); @unlink($pf);
     $text = trim(implode("\n", $o));
-    if ($rc !== 0 || $text === '') { return 'Claude did not answer' . ($rc === 124 ? ' in 10 minutes' : ' (exit ' . $rc . ')') . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : ''); }
+    if ($rc !== 0 || $text === '') { return ($rc === 124 ? sx_tr('ua.timeout') : sx_tr('ua.exit', ['n' => $rc])) . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : ''); }
     upd_cache_edit(function (&$x) use ($key, $text) { $x[$key] = ($x[$key] ?? []) + ['t' => time()]; $x[$key]['claude'] = ['t' => time(), 'text' => mb_substr($text, 0, 6000)]; });
     return '';
 }
@@ -12815,16 +13203,16 @@ function upd_todo($name) {
     $scan = upd_json(upd_scan_file(), []); $row = null; $title = '';
     foreach ($scan['rows'] ?? [] as $r) { if ($r['name'] === $name && !empty($r['key'])) { $row = $r; $title = $r['name'] . ' ' . ($r['ver'] ?: '?') . ' -> ' . ($r['rver'] ?: '?') . ' (' . ($r['risk'] ?? '?') . ', ' . ($r['kind'] ?? '?') . ')'; } }
     if ($name === 'unraid-os' && !empty($scan['os']['key'])) { $o = $scan['os']; $row = $o; $title = 'Unraid OS ' . $o['cur'] . ' -> ' . $o['new'] . ' (' . ($o['risk'] ?? '?') . ', ' . ($o['kind'] ?? '?') . ')'; }
-    if (!$row) { return 'no waiting update for ' . $name; }
+    if (!$row) { return sx_tr('ua.no_row', ['n' => $name]); }
     $cache = upd_json(upd_cache_file(), []); $key = $row['key']; $cl = $cache[$key]['claude'] ?? null;
-    if (empty($cl['text'])) { return 'Claude has not answered about this version'; }
-    $f = upd_todo_file(); if ($f === '') { return 'the repo folder was not found (the claude container\'s /work mount)'; }
+    if (empty($cl['text'])) { return sx_tr('ua.no_answer'); }
+    $f = upd_todo_file(); if ($f === '') { return sx_tr('ua.no_repo'); }
     $url = (string)($row['url'] ?? ($cache[$key]['url'] ?? ''));
     $md = "\n## " . date('Y-m-d H:i') . ' · ' . $title . "\n\n" . ($url !== '' ? 'Source: ' . $url . "\n" : '') .
           'Claude answered ' . date('Y-m-d H:i', (int)$cl['t']) . " (Sysbox Update manager, Ask Claude):\n\n" . trim((string)$cl['text']) . "\n";
     $new = !is_file($f);
     if ($new) { $md = "# Teendők a Sysbox Update managerből\n\nA Sysbox 'Save as a to-do' gombja írja. Claude a munkamenet elején átvezeti az ATADAS.md-be, utána kiüríti.\n" . $md; }
-    if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return 'could not write ' . $f; }
+    if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return sx_tr('ua.no_write', ['f' => $f]); }
     @chown($f, 'nobody'); @chgrp($f, 'users'); @chmod($f, 0664);
     upd_cache_edit(function (&$x) use ($key) { if (isset($x[$key]['claude'])) { $x[$key]['claude']['todo'] = time(); } });
     upd_log('to-do saved: ' . $title);
@@ -12988,12 +13376,12 @@ if ($mode === 'daily') {
 }
 
 if ($mode === 'scan') {
-    $id = upd_job_start('scan', $arg, $arg !== '' ? 'Checking ' . $arg : 'Checking containers, Unraid OS and plugins');
+    $id = upd_job_start('scan', $arg, $arg !== '' ? sx_tr('uu.checking_one', ['n' => $arg]) : sx_tr('uu.checking_all'));
     $s = upd_scan($arg !== '' ? $arg : null);
     if (empty($s['ok'])) { upd_job($id, ['state' => 'error', 'text' => sx_tr('uj.check_failed', ['e' => ($s['error'] ?? '?')])]); upd_log('check failed: ' . ($s['error'] ?? '?')); exit(0); }
     $n = upd_summary($s); $tot = count($n['green']) + count($n['amber']) + count($n['red']);
     $msg = $tot ? sx_tr('uj.summary', ['n' => $tot, 'g' => count($n['green']), 'a' => count($n['amber']), 'r' => count($n['red'])]) : sx_tr('uj.current');
-    if (!empty($s['os']['new'])) { $msg .= '; Unraid ' . $s['os']['new'] . ' available'; }
+    if (!empty($s['os']['new'])) { $msg .= '; ' . sx_tr('uu.os_avail', ['v' => $s['os']['new']]); }
     upd_job($id, ['state' => 'done', 'text' => ($arg !== '' ? sx_tr('uj.checked_one', ['n' => $arg, 'm' => $msg]) : sx_tr('uj.checked', ['m' => $msg]))]);
     upd_log('check' . ($arg !== '' ? ' ' . $arg : '') . ': ' . $msg);
     // a new Unraid OS version: Claude is asked about it by itself, once per version (owner's rule, 2026-10-15)
@@ -13019,14 +13407,14 @@ if ($mode === 'scan') {
         if ($new) {
             $lines = []; $lv = 'g';
             foreach ($new as $r) { $lines[] = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$r['risk']] . ' **' . $r['name'] . '** ' . ($r['ver'] ?: '?') . ' → ' . ($r['rver'] ?: '?') . ' (' . $r['kind'] . ($r['deps'] ? '; ' . implode(', ', $r['deps']) : '') . ')'; if ($r['risk'] === 'red') { $lv = 'rd'; } elseif ($r['risk'] === 'amber' && $lv !== 'rd') { $lv = 'a'; } }
-            upd_discord($lv, 'Update manager: ' . count($new) . ' new update' . (count($new) > 1 ? 's' : ''), implode("\n", $lines) . "\n\nSettings → Utilities → Update manager");
+            upd_discord($lv, sx_trd('uu.dc_new', ['n' => count($new)]), implode("\n", $lines) . "\n\n" . sx_trd('uu.dc_where'));
         }
     }
     exit(0);
 }
 
 if ($mode === 'selftest') {
-    $id = upd_job_start('selftest', '', 'Self-test of our connections');
+    $id = upd_job_start('selftest', '', sx_tr('uu.selftest'));
     $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
     upd_job($id, ['state' => $bad ? 'error' : 'done', 'text' => sx_tr('uj.selftest', ['ok' => count($t['tests']) - count($bad), 'n' => count($t['tests'])]) . ($bad ? ' (' . sx_tr('uj.failed_list', ['l' => implode(', ', array_column($bad, 'name'))]) . ')' : '')]);
     exit(0);
@@ -13047,17 +13435,20 @@ function upd_update_one($name, $dc = true) {
     $scan = upd_json(upd_scan_file(), []); $row = null;
     foreach ($scan['rows'] ?? [] as $r) { if ($r['name'] === $name) { $row = $r; } }
     $id = upd_job_start('update', $name, sx_tr('uj.updating', ['n' => $name]));
-    $end = function ($state, $msg) use ($id, $name, $dc) {
+    // a message is a list of parts [key, vars]: the Activity line in the page language, Discord in the Discord language (item 104)
+    $txt = function ($parts, $dcl = false) { return implode('; ', array_map(function ($p) use ($dcl) { return $dcl ? sx_trd($p[0], $p[1] ?? []) : sx_tr($p[0], $p[1] ?? []); }, $parts)); };
+    $end = function ($state, $parts) use ($id, $name, $dc, $txt) {
+        $msg = $txt($parts); $dmsg = $txt($parts, true);
         upd_job($id, ['state' => $state, 'text' => $msg], $msg); upd_log($msg);
-        if ($dc) { upd_discord($state === 'done' ? 'g' : 'rd', 'Update manager: ' . $name . ($state === 'done' ? ' updated' : ' update failed'), $msg); }
-        return [$state, $msg];
+        if ($dc) { upd_discord($state === 'done' ? 'g' : 'rd', sx_trd($state === 'done' ? 'uu.dc_ok' : 'uu.dc_fail', ['n' => $name]), $dmsg); }
+        return [$state, $msg, $dmsg];
     };
-    if (!$row || $row['state'] !== 'update') { return $end('error', $name . ': no waiting update (check again first)'); }
-    $d = sx_docker(); if ($d === '') { return $end('error', $name . ': Docker is not running'); }
+    if (!$row || $row['state'] !== 'update') { return $end('error', [['uu.no_row', ['n' => $name]]]); }
+    $d = sx_docker(); if ($d === '') { return $end('error', [['uu.no_docker', ['n' => $name]]]); }
     $tpl = '/boot/config/plugins/dockerMan/templates-user/my-' . $name . '.xml';
-    if (!is_file($tpl)) { return $end('error', $name . ': no Unraid template (my-' . $name . '.xml), update it on the Docker page'); }
+    if (!is_file($tpl)) { return $end('error', [['uu.no_tpl', ['n' => $name]]]); }
     $script = '/usr/local/emhttp/plugins/dynamix.docker.manager/scripts/update_container';
-    if (!is_file($script)) { return $end('error', $name . ': Unraid\'s update_container script is missing'); }
+    if (!is_file($script)) { return $end('error', [['uu.no_script', ['n' => $name]]]); }
     // 1. a ZFS snapshot of the dataset that holds its folders (Snapshots page: restore this container from it)
     $snap = '';
     if (!empty($cfg['backup']) && is_file(__DIR__ . '/snap_lib.php')) {
@@ -13067,10 +13458,10 @@ function upd_update_one($name, $dc = true) {
             if (!$have) { continue; }
             $sn = 'before-update-' . $name . '-' . date('Y-m-d-Hi');
             $e = snp_make($ds['name'], $sn);
-            if ($e !== '') { return $end('error', $name . ': update stopped before anything changed, the snapshot failed (' . $e . ')'); }
-            $snap = $ds['name'] . '@' . $sn; upd_job($id, [], 'snapshot ' . $snap . ' made'); snp_log($snap . ' made before the update');
+            if ($e !== '') { return $end('error', [['uu.snap_fail', ['n' => $name, 'e' => $e]]]); }
+            $snap = $ds['name'] . '@' . $sn; upd_job($id, [], sx_tr('uu.snap_made', ['s' => $snap])); snp_log($snap . ' made before the update');
         }
-        if ($snap === '') { upd_job($id, [], 'no ZFS dataset holds its folders: no snapshot'); }
+        if ($snap === '') { upd_job($id, [], sx_tr('uu.no_snap')); }
     }
     // the self-test before the update: a service that already failed (stopped, not ours) does not count against this update (item 104)
     $pre = [];
@@ -13079,20 +13470,20 @@ function upd_update_one($name, $dc = true) {
     $was = trim(upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . escapeshellarg($name), 10)) === 'true';
     if ($was) {
         $wait = preg_match('/qbittorrent/i', $row['image']) ? 300 : 60;
-        upd_job($id, [], 'stopping ' . $name . ' (up to ' . $wait . ' s)');
+        upd_job($id, [], sx_tr('uu.stopping', ['n' => $name, 's' => $wait]));
         [$rc] = sx_run(escapeshellarg($d) . ' stop -t ' . $wait . ' ' . escapeshellarg($name), $wait + 30);
-        if ($rc !== 0) { return $end('error', $name . ': did not stop, nothing was changed' . ($snap ? ' (snapshot ' . $snap . ' kept)' : '')); }
+        if ($rc !== 0) { return $end('error', $snap ? [['uu.no_stop_snap', ['n' => $name, 's' => $snap]]] : [['uu.no_stop', ['n' => $name]]]); }
     }
     // 3. Unraid's own update: pull, recreate from the template, start again when it was running
-    upd_job($id, [], 'pulling ' . $row['image'] . ' and recreating ' . $name);
+    upd_job($id, [], sx_tr('uu.pulling', ['i' => $row['image'], 'n' => $name]));
     [$rc, $o] = sx_run(escapeshellarg(sx_php()) . ' ' . escapeshellarg($script) . ' ' . escapeshellarg(rawurlencode($name)) . ($was ? ' ca_docker_run_override' : ''), 1800);
     $now = upd_containers(); $c = null; foreach ((array)$now as $x) { if ($x['name'] === $name) { $c = $x; } }
-    if (!$c) { return $end('error', $name . ': the container is missing after the update; recreate it from the Docker page (Add container, its template)' . ($snap ? '; data snapshot ' . $snap : '')); }
+    if (!$c) { return $end('error', array_merge([['uu.missing', ['n' => $name]]], $snap ? [['uu.data_snap', ['s' => $snap]]] : [])); }
     if ($was && !$c['running']) { sx_run(escapeshellarg($d) . ' start ' . escapeshellarg($name), 60); }
     $new = in_array($c['id'], $row['rids'] ?? [$row['rid']], true) || $c['id'] !== $row['id'];
-    upd_job($id, [], $new ? 'now on ' . ($c['ver'] ?: substr($c['id'], 7, 12)) : 'the image did not change (' . ($c['ver'] ?: '?') . ')');
+    upd_job($id, [], $new ? sx_tr('uu.now_on', ['v' => $c['ver'] ?: substr($c['id'], 7, 12)]) : sx_tr('uu.same_img', ['v' => $c['ver'] ?: '?']));
     // 4. self-test of our connections, then a fresh check of this container
-    $tmsg = '';
+    $tparts = []; $tbad = false;
     if (!empty($cfg['selftest'])) {
         if ($was) { sleep(20); }   // the program needs a moment after the start
         $newBad = function ($t) use ($pre) { return array_filter($t['tests'], function ($x) use ($pre) { return !$x['ok'] && !in_array($x['name'], $pre, true); }); };
@@ -13105,12 +13496,13 @@ function upd_update_one($name, $dc = true) {
             $t = upd_selftest(); $bad = $newBad($t);
         }
         $was0 = array_values(array_filter(array_column(array_filter($t['tests'], function ($x) { return !$x['ok']; }), 'name'), function ($n) use ($pre) { return in_array($n, $pre, true); }));
-        $tmsg = '; self-test ' . (count($t['tests']) - count($bad) - count($was0)) . '/' . count($t['tests']) . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' FAILED)' : ' passed')
-              . ($was0 ? '; ' . sx_tr('uj.test_before', ['l' => implode(', ', $was0)]) : '');
+        $okN = count($t['tests']) - count($bad) - count($was0); $tbad = (bool)$bad;
+        $tparts[] = $bad ? ['uu.test_bad', ['ok' => $okN, 'n' => count($t['tests']), 'l' => implode(', ', array_column($bad, 'name'))]] : ['uu.test_ok', ['ok' => $okN, 'n' => count($t['tests'])]];
+        if ($was0) { $tparts[] = ['uj.test_before', ['l' => implode(', ', $was0)]]; }
     }
     upd_scan($name);
-    $msg = $name . ' ' . ($new ? 'updated: ' . ($row['ver'] ?: '?') . ' → ' . ($c['ver'] ?: '?') : 'update ran but the image is the same') . $tmsg . ($snap ? '; data snapshot ' . $snap : '');
-    return $end($new && strpos($tmsg, 'FAILED') === false ? 'done' : 'error', $msg);
+    $parts = array_merge([$new ? ['uu.updated', ['n' => $name, 'a' => $row['ver'] ?: '?', 'b' => $c['ver'] ?: '?']] : ['uu.same', ['n' => $name]]], $tparts, $snap ? [['uu.data_snap', ['s' => $snap]]] : []);
+    return $end($new && !$tbad ? 'done' : 'error', $parts);
 }
 
 if ($mode === 'update') { upd_update_one($arg); exit(0); }
@@ -13128,12 +13520,13 @@ if ($mode === 'updall') {
     $done = [];
     foreach ($names as $k => $name) {
         upd_job($id, ['text' => sx_tr('uj.all_now', ['n' => $n, 'i' => $k + 1, 'c' => $name]), 'now' => $name, 'ok' => $done]);
-        [$state, $msg] = upd_update_one($name, false);
+        [$state, $msg, $dmsg] = upd_update_one($name, false);
         if ($state !== 'done') {
             $left = array_slice($names, $k + 1);
-            $txt = sx_tr('uj.all_stopped', ['c' => $name, 'i' => $k + 1, 'n' => $n, 'ok' => count($done), 'left' => count($left)]) . ' ' . $msg;
+            $sv = ['c' => $name, 'i' => $k + 1, 'n' => $n, 'ok' => count($done), 'left' => count($left)];
+            $txt = sx_tr('uj.all_stopped', $sv) . ' ' . $msg;
             upd_job($id, ['state' => 'error', 'text' => $txt, 'now' => '', 'ok' => $done, 'failed' => $name, 'left' => $left], $txt); upd_log($txt);
-            upd_discord('rd', sx_tr('uj.all_dc_title', ['c' => $name]), $txt . ($left ? "\n" . sx_tr('uj.all_dc_left', ['l' => implode(', ', $left)]) : ''));
+            upd_discord('rd', sx_trd('uj.all_dc_title', ['c' => $name]), sx_trd('uj.all_stopped', $sv) . ' ' . $dmsg . ($left ? "\n" . sx_trd('uj.all_dc_left', ['l' => implode(', ', $left)]) : ''));
             exit(0);
         }
         $done[] = $name;

@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30e">
+<!ENTITY version   "2026.10.30f">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30f
+- Update manager and Snapshots: every Activity, error and Discord text comes from the dictionary (Hungarian too); Discord messages use the Discord language, also the one of Update all
+
 ###2026.10.30e
 - Inside: the memory and disk usage reading of the tile and of the alerts is one shared function (no change in what is shown)
 

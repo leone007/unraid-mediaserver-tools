@@ -450,16 +450,16 @@ function upd_ask($name) {
     $scan = upd_json(upd_scan_file(), []); $row = null;
     foreach ($scan['rows'] ?? [] as $r) { if ($r['name'] === $name && $r['state'] === 'update') { $row = $r; } }
     if ($name === 'unraid-os' && !empty($scan['os']['new'])) { $row = ['key' => $scan['os']['key'], 'os' => $scan['os']]; }
-    if (!$row) { return 'no waiting update for ' . $name; }
+    if (!$row) { return sx_tr('ua.no_row', ['n' => $name]); }
     $cache = upd_json(upd_cache_file(), []); $key = $row['key']; $notes = (string)($cache[$key]['notes'] ?? '');
-    $d = sx_docker(); if ($d === '') { return 'Docker is not running'; }
-    if (trim((string)upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} claude', 10)) !== 'true') { return 'the claude container is not running'; }
+    $d = sx_docker(); if ($d === '') { return sx_tr('ua.no_docker'); }
+    if (trim((string)upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} claude', 10)) !== 'true') { return sx_tr('ua.no_claude'); }
     $pf = tempnam(upd_tmp(), 'sxq'); file_put_contents($pf, isset($row['os']) ? upd_claude_prompt_os($row['os'], $notes) : upd_claude_prompt($row, $notes, upd_deps($row['image'])));
     $cmd = 'timeout 600 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w ' . escapeshellarg(UPD_REPO) .
            ' claude claude -p --tools Read,Grep --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
     $o = []; @exec($cmd, $o, $rc); @unlink($pf);
     $text = trim(implode("\n", $o));
-    if ($rc !== 0 || $text === '') { return 'Claude did not answer' . ($rc === 124 ? ' in 10 minutes' : ' (exit ' . $rc . ')') . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : ''); }
+    if ($rc !== 0 || $text === '') { return ($rc === 124 ? sx_tr('ua.timeout') : sx_tr('ua.exit', ['n' => $rc])) . ($text !== '' ? ': ' . mb_substr($text, 0, 200) : ''); }
     upd_cache_edit(function (&$x) use ($key, $text) { $x[$key] = ($x[$key] ?? []) + ['t' => time()]; $x[$key]['claude'] = ['t' => time(), 'text' => mb_substr($text, 0, 6000)]; });
     return '';
 }
@@ -478,16 +478,16 @@ function upd_todo($name) {
     $scan = upd_json(upd_scan_file(), []); $row = null; $title = '';
     foreach ($scan['rows'] ?? [] as $r) { if ($r['name'] === $name && !empty($r['key'])) { $row = $r; $title = $r['name'] . ' ' . ($r['ver'] ?: '?') . ' -> ' . ($r['rver'] ?: '?') . ' (' . ($r['risk'] ?? '?') . ', ' . ($r['kind'] ?? '?') . ')'; } }
     if ($name === 'unraid-os' && !empty($scan['os']['key'])) { $o = $scan['os']; $row = $o; $title = 'Unraid OS ' . $o['cur'] . ' -> ' . $o['new'] . ' (' . ($o['risk'] ?? '?') . ', ' . ($o['kind'] ?? '?') . ')'; }
-    if (!$row) { return 'no waiting update for ' . $name; }
+    if (!$row) { return sx_tr('ua.no_row', ['n' => $name]); }
     $cache = upd_json(upd_cache_file(), []); $key = $row['key']; $cl = $cache[$key]['claude'] ?? null;
-    if (empty($cl['text'])) { return 'Claude has not answered about this version'; }
-    $f = upd_todo_file(); if ($f === '') { return 'the repo folder was not found (the claude container\'s /work mount)'; }
+    if (empty($cl['text'])) { return sx_tr('ua.no_answer'); }
+    $f = upd_todo_file(); if ($f === '') { return sx_tr('ua.no_repo'); }
     $url = (string)($row['url'] ?? ($cache[$key]['url'] ?? ''));
     $md = "\n## " . date('Y-m-d H:i') . ' · ' . $title . "\n\n" . ($url !== '' ? 'Source: ' . $url . "\n" : '') .
           'Claude answered ' . date('Y-m-d H:i', (int)$cl['t']) . " (Sysbox Update manager, Ask Claude):\n\n" . trim((string)$cl['text']) . "\n";
     $new = !is_file($f);
     if ($new) { $md = "# Teendők a Sysbox Update managerből\n\nA Sysbox 'Save as a to-do' gombja írja. Claude a munkamenet elején átvezeti az ATADAS.md-be, utána kiüríti.\n" . $md; }
-    if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return 'could not write ' . $f; }
+    if (@file_put_contents($f, $md, FILE_APPEND | LOCK_EX) === false) { return sx_tr('ua.no_write', ['f' => $f]); }
     @chown($f, 'nobody'); @chgrp($f, 'users'); @chmod($f, 0664);
     upd_cache_edit(function (&$x) use ($key) { if (isset($x[$key]['claude'])) { $x[$key]['claude']['todo'] = time(); } });
     upd_log('to-do saved: ' . $title);
