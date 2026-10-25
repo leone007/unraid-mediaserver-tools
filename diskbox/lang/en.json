@@ -1513,6 +1513,14 @@
   "text": "verification failed: {p}",
   "note": "why a title failed: the copy of a file differs ({p} the file)."
  },
+ "run.verify_src": {
+  "text": "{p} changed on the source during the copy (a new hardlink or a replaced file); the copy was removed, the source is untouched",
+  "note": "Balance error after a copy; {p} a file path."
+ },
+ "run.rsync_fail": {
+  "text": "rsync failed ({n}) {e}",
+  "note": "Balance error; {n} exit code, {e} the end of rsync's error output (not translated)."
+ },
  "run.verify_link": {
   "text": "verification failed: the hardlink was not kept ({p})",
   "note": "why a title failed."

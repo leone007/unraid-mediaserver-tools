@@ -1140,6 +1140,12 @@
  "run.verify": {
   "text": "az ellenőrzés hibát talált: {p}"
  },
+ "run.verify_src": {
+  "text": "A(z) {p} megváltozott a forráson másolás közben (új hardlink vagy lecserélt fájl); a másolat törölve, a forrás érintetlen"
+ },
+ "run.rsync_fail": {
+  "text": "Az rsync hibát adott ({n}) {e}"
+ },
  "run.verify_link": {
   "text": "az ellenőrzés hibát talált: a hardlink nem maradt meg ({p})"
  },

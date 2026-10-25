@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22q">
+<!ENTITY version   "2026.10.22r">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22r
+- Balance: after the copy the source is checked too; a file that got a new hardlink or was replaced on the source during the copy stops the move (the copy is removed, the source stays) instead of leaving a full copy behind
+
 ###2026.10.22q
 - Remove disks: Clear can no longer start a second clearing of the same disk (a double click, a click while the disk is being unmounted, or a click after the disk was fully cleared); a clearing that stopped can still be started again
 - Remove disks: the step 5 error texts come from the dictionary (Hungarian too)
@@ -4295,6 +4298,14 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "verification failed: {p}",
   "note": "why a title failed: the copy of a file differs ({p} the file)."
  },
+ "run.verify_src": {
+  "text": "{p} changed on the source during the copy (a new hardlink or a replaced file); the copy was removed, the source is untouched",
+  "note": "Balance error after a copy; {p} a file path."
+ },
+ "run.rsync_fail": {
+  "text": "rsync failed ({n}) {e}",
+  "note": "Balance error; {n} exit code, {e} the end of rsync's error output (not translated)."
+ },
  "run.verify_link": {
   "text": "verification failed: the hardlink was not kept ({p})",
   "note": "why a title failed."
@@ -5487,6 +5498,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "run.verify": {
   "text": "az ellenőrzés hibát talált: {p}"
+ },
+ "run.verify_src": {
+  "text": "A(z) {p} megváltozott a forráson másolás közben (új hardlink vagy lecserélt fájl); a másolat törölve, a forrás érintetlen"
+ },
+ "run.rsync_fail": {
+  "text": "Az rsync hibát adott ({n}) {e}"
  },
  "run.verify_link": {
   "text": "az ellenőrzés hibát talált: a hardlink nem maradt meg ({p})"
@@ -6893,13 +6910,15 @@ foreach ($S['items'] as $i => &$item) {
     // verify: size, and every group of hardlinks on the source is the same inode group on the target
     $vbad = '';
     if ($aborted) { $vbad = 'stopped'; }
-    elseif ($exit !== 0) { $vbad = 'rsync failed (' . $exit . ') ' . trim(preg_replace('/\s+/', ' ', $err)); }
+    elseif ($exit !== 0) { $vbad = bl_tr('run.rsync_fail', ['n' => $exit, 'e' => trim(preg_replace('/\s+/', ' ', $err))]); }
     else {
         foreach ($groups as $k => $g) {
             $ino0 = null;
             foreach ($g as $p) {
                 $a = @stat($sroot . '/' . $p); $b = @stat($droot . '/' . $p);
                 if ($b === false || $a === false || $a['size'] !== $b['size']) { $vbad = bl_tr('run.verify', ['p' => $p]); break 2; }
+                // the source too: a hardlink made (or the file replaced) on the source during the copy would stay behind as a full copy (item 104)
+                if ($a['ino'] !== $k || $a['nlink'] != count($g)) { $vbad = bl_tr('run.verify_src', ['p' => $p]); break 2; }
                 if ($ino0 === null) { $ino0 = $b['ino']; } elseif ($b['ino'] !== $ino0) { $vbad = bl_tr('run.verify_link', ['p' => $p]); break 2; }
                 if ($b['nlink'] != count($g)) { $vbad = bl_tr('run.verify_count', ['p' => $p]); break 2; }
             }

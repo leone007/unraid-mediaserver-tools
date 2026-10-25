@@ -151,13 +151,15 @@ foreach ($S['items'] as $i => &$item) {
     // verify: size, and every group of hardlinks on the source is the same inode group on the target
     $vbad = '';
     if ($aborted) { $vbad = 'stopped'; }
-    elseif ($exit !== 0) { $vbad = 'rsync failed (' . $exit . ') ' . trim(preg_replace('/\s+/', ' ', $err)); }
+    elseif ($exit !== 0) { $vbad = bl_tr('run.rsync_fail', ['n' => $exit, 'e' => trim(preg_replace('/\s+/', ' ', $err))]); }
     else {
         foreach ($groups as $k => $g) {
             $ino0 = null;
             foreach ($g as $p) {
                 $a = @stat($sroot . '/' . $p); $b = @stat($droot . '/' . $p);
                 if ($b === false || $a === false || $a['size'] !== $b['size']) { $vbad = bl_tr('run.verify', ['p' => $p]); break 2; }
+                // the source too: a hardlink made (or the file replaced) on the source during the copy would stay behind as a full copy (item 104)
+                if ($a['ino'] !== $k || $a['nlink'] != count($g)) { $vbad = bl_tr('run.verify_src', ['p' => $p]); break 2; }
                 if ($ino0 === null) { $ino0 = $b['ino']; } elseif ($b['ino'] !== $ino0) { $vbad = bl_tr('run.verify_link', ['p' => $p]); break 2; }
                 if ($b['nlink'] != count($g)) { $vbad = bl_tr('run.verify_count', ['p' => $p]); break 2; }
             }
