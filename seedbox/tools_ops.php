@@ -1049,6 +1049,8 @@ function st_under_roots($path, $cfg) {
     }
     return false;
 }
+// device:inode of a file ('' when it cannot be read, which never matches a real one)
+function st_dev_ino($p) { $st = @stat($p); return $st ? $st['dev'] . ':' . $st['ino'] : ''; }
 function st_rm_tree($p) {
     if (is_link($p) || is_file($p)) { return @unlink($p); }
     if (!is_dir($p)) { return true; }
@@ -1075,7 +1077,8 @@ function st_cleanup_old($j) {
             if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0)) { return [false, st_tr('e.norm_seed', ['p' => $p, 't' => $t['name']])]; }
         }
         // inodes of the old files: a media link is only removed if it still points at one of them (never the freshly imported file)
-        if (is_file($rp)) { $oldIno[(int)@fileinode($rp)] = true; } else { foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rp, FilesystemIterator::SKIP_DOTS)) as $f) { if ($f->isFile()) { $oldIno[(int)$f->getInode()] = true; } } }
+        // keyed by device and inode: two array disks can hold the same inode number (item 104)
+        if (is_file($rp)) { $oldIno[st_dev_ino($rp)] = true; } else { foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rp, FilesystemIterator::SKIP_DOTS)) as $f) { if ($f->isFile()) { $oldIno[st_dev_ino($f->getPathname())] = true; } } }
         $days = (int)($cfg['trash_days'] ?? 0);
         if ($days > 0) {
             $tr = $root . '/' . ST_TRASH; @mkdir($tr, 0777, true);
@@ -1088,9 +1091,9 @@ function st_cleanup_old($j) {
         }
     }
     // the old hardlink in the media folder (Radarr/Sonarr normally removes it when it upgrades)
-    $gone = 0;
+    $gone = 0; unset($oldIno['']);
     foreach ((array)($j['media_paths'] ?? []) as $mp) {
-        if ($mp !== '' && is_file($mp) && strpos(realpath($mp), rtrim($cfg['map_host'], '/') . '/') === 0 && isset($oldIno[(int)@fileinode($mp)])) { if (@unlink($mp)) { $gone++; } }
+        if ($mp !== '' && is_file($mp) && strpos(realpath($mp), rtrim($cfg['map_host'], '/') . '/') === 0 && isset($oldIno[st_dev_ino($mp)])) { if (@unlink($mp)) { $gone++; } }
     }
     if ($gone) { $add($gone . ' régi hardlink törölve a média mappából', $gone . ' old media link(s) removed', 'cl.links', ['n' => $gone]); }
     return [true, implode('; ', $msg), implode('; ', $msgL)];
@@ -1221,9 +1224,20 @@ function st_job_remove_old_do($id) {
             [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
         return [true, ''];
     }
-    [$c, $b, $e] = st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => $share === '' ? 'true' : 'false']);
+    // with the trash on, files that cannot go to the trash (outside the watched folders, path not found) stay: qBittorrent
+    // must not delete them for good (item 104); only with trash_days 0 does qBittorrent delete them
+    $out = $share === '' && (int)(st_cfg()['trash_days'] ?? 0) > 0;
+    [$c, $b, $e] = st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => ($share === '' && !$out) ? 'true' : 'false']);
     if ($c !== 200) { return [false, st_tr('e.qb_refused', ['e' => $e ?: 'HTTP ' . $c])]; }
+    st_watch_forget((string)$j['hash']);
     st_upd_drop((string)$j['hash']);
+    if ($out) {
+        $pp = $cp !== '' ? $cp : (string)$j['old_name'];
+        $set('removed', st_tr('job.rm_outside', ['p' => $pp]), st_trd('job.rm_outside', ['p' => $pp]));
+        st_notify('g', st_l('Seedbox: a régi torrent törölve, a fájlok maradtak', 'Seedbox: the old torrent was deleted, the files stay'), st_trd('job.rm_outside', ['p' => $pp]),
+            [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
+        return [true, ''];
+    }
     $set('removed', $share === '' ? st_tr('job.rm_all') : st_tr('job.rm_kept', ['t' => $share]), $share === '' ? st_trd('job.rm_all') : st_trd('job.rm_kept', ['t' => $share]));
     st_notify('g', $share === '' ? st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted') : st_l('Seedbox: a régi torrent törölve, a fájlok maradtak', 'Seedbox: the old torrent was deleted, the files stay'), st_l('A jóváhagyásod után, mert az új kiadás már importálva van.', 'After your approval, because the new release is already imported.') . ($share === '' ? '' : ' ' . st_l('A fájlokat egy másik torrent is seedeli: ' . $share, 'Another torrent seeds the same files: ' . $share)),
         [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));

@@ -1015,6 +1015,10 @@
   "text": "the old torrent was removed; its files were kept because torrent \"{t}\" seeds them too",
   "note": "state of a finished replacement in Activity."
  },
+ "job.rm_outside": {
+  "text": "the old torrent was removed; its files were kept at {p} because they are outside the watched downloads folders and cannot go to the trash",
+  "note": "state of a finished replacement in Activity and Discord text; {p} the folder or file that stays."
+ },
  "job.sent": {
   "text": "sent to {k}",
   "note": "state of a replacement in Activity; {k} Radarr or Sonarr."

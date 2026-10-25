@@ -58,13 +58,22 @@ function st_sp_rank($rel, $cur_res, $need_hun, $season = 0) {
     return [array_slice($rows, 0, 6), $drop];
 }
 
+// does a torrent name belong to this series? The name must start with the series and go on with a year, a season, a
+// quality or nothing (a plain prefix test took Star.Trek.Discovery for Star Trek, item 104); a year in the name must be the
+// series' year when the title has one (Doctor Who (2005) is not Doctor.Who.1963)
+function st_sp_name_is($title, $name) {
+    $sn = st_norm(preg_replace('/\s*\(\d{4}\)\s*$/', '', $title)); $nn = st_norm($name);
+    if ($sn === '' || strpos($nn, $sn) !== 0) { return false; }
+    if (!preg_match('/^((?:19|20)\d{2})?(?:s\d{1,2}|season|(?:the)?complete|\d{3,4}p|$)/', substr($nn, strlen($sn)), $m)) { return false; }
+    return !(($m[1] ?? '') !== '' && preg_match('/\((\d{4})\)\s*$/', $title, $y) && $y[1] !== $m[1]);
+}
+
 // qBittorrent torrents that hold single episodes of this season of this series (by name)
 function st_sp_old_torrents($title, $season, $epnums, $tor) {
-    $sn = st_norm(preg_replace('/\s*\(\d{4}\)\s*$/', '', $title)); $out = [];
-    if ($sn === '') { return $out; }
+    $out = [];
     foreach ((array)$tor as $t) {
         $name = (string)($t['name'] ?? '');
-        if (strpos(st_norm($name), $sn) !== 0) { continue; }
+        if (!st_sp_name_is($title, $name)) { continue; }
         if (!preg_match('/S(\d{1,2})E(\d{1,3})/i', $name, $m) || (int)$m[1] !== (int)$season || !in_array((int)$m[2], $epnums, true)) { continue; }
         if (preg_match('/S\d{1,2}E\d{1,3}[-_.]?E\d{1,3}/i', $name)) { continue; } // multi-episode: not handled
         $out[] = ['hash' => strtolower((string)$t['hash']), 'name' => $name, 'size' => (float)($t['size'] ?? 0), 'ep' => (int)$m[2], 'path' => (string)($t['content_path'] ?? ''), 'state' => (string)($t['state'] ?? '')];
@@ -73,14 +82,14 @@ function st_sp_old_torrents($title, $season, $epnums, $tor) {
     return $out;
 }
 
-// is a season of this series seeded as one torrent already? A torrent counts when its name starts with the series (no single episode) and its file list
+// is a season of this series seeded as one torrent already? A torrent counts when its name is the series' (st_sp_name_is, no single episode) and its file list
 // holds at least 80 % of the episode numbers we have
 function st_sp_seeded_pack($title, $season, $epnums, $tor) {
-    $sn = st_norm(preg_replace('/\s*\(\d{4}\)\s*$/', '', $title)); if ($sn === '' || !$tor) { return ''; }
+    if (!$tor) { return ''; }
     $need = max(2, (int)ceil(count($epnums) * 0.8)); $n = 0;
     foreach ((array)$tor as $t) {
         $name = (string)($t['name'] ?? '');
-        if (strpos(st_norm($name), $sn) !== 0) { continue; }
+        if (!st_sp_name_is($title, $name)) { continue; }
         if (preg_match('/S\d{1,2}E\d{1,3}/i', $name) && !preg_match('/S\d{1,2}E\d{1,3}[-_.]?E\d{1,3}/i', $name)) { continue; } // a single episode
         if (++$n > 12) { break; }
         // the name may not name the season (a whole-series torrent like "The Shield 1080p"): the file list decides; fetched once per torrent

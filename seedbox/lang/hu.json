@@ -762,6 +762,9 @@
  "job.rm_kept": {
   "text": "a régi torrent eltávolítva; a fájljai megmaradtak, mert a(z) „{t}” torrent is seedeli őket"
  },
+ "job.rm_outside": {
+  "text": "a régi torrent eltávolítva; a fájljai megmaradtak itt: {p}, mert a figyelt letöltési mappákon kívül vannak, és nem kerülhetnek a kukába"
+ },
  "job.sent": {
   "text": "elküldve ide: {k}"
  },

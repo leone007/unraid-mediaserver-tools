@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzj">
+<!ENTITY version   "2026.10.99zzk">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzk
+- Season pack: old single-episode torrents and an already seeded pack are matched by the whole series name, so another series whose name starts with the same words (Star Trek Discovery for Star Trek, Doctor Who 1963 for Doctor Who 2005) is never cleaned up with it
+- Shape up: when the trash is on and the old files cannot go to the trash (outside the watched folders), they now stay where they are instead of being deleted by qBittorrent for good
+- Replace: the old media hardlink is only removed when both the disk and the inode match an old file
+
 ###2026.10.99zzj
 - Security: names and titles with quote marks (a release title, a folder or torrent name) can no longer break into the Seedbox Tools page as code; they show as plain text
 

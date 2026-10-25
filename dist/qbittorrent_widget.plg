@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzj">
+<!ENTITY version   "2026.10.99zzk">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzk
+- Season pack: old single-episode torrents and an already seeded pack are matched by the whole series name, so another series whose name starts with the same words (Star Trek Discovery for Star Trek, Doctor Who 1963 for Doctor Who 2005) is never cleaned up with it
+- Shape up: when the trash is on and the old files cannot go to the trash (outside the watched folders), they now stay where they are instead of being deleted by qBittorrent for good
+- Replace: the old media hardlink is only removed when both the disk and the inode match an old file
+
 ###2026.10.99zzj
 - Security: names and titles with quote marks (a release title, a folder or torrent name) can no longer break into the Seedbox Tools page as code; they show as plain text
 
@@ -3133,13 +3138,22 @@ function st_sp_rank($rel, $cur_res, $need_hun, $season = 0) {
     return [array_slice($rows, 0, 6), $drop];
 }
 
+// does a torrent name belong to this series? The name must start with the series and go on with a year, a season, a
+// quality or nothing (a plain prefix test took Star.Trek.Discovery for Star Trek, item 104); a year in the name must be the
+// series' year when the title has one (Doctor Who (2005) is not Doctor.Who.1963)
+function st_sp_name_is($title, $name) {
+    $sn = st_norm(preg_replace('/\s*\(\d{4}\)\s*$/', '', $title)); $nn = st_norm($name);
+    if ($sn === '' || strpos($nn, $sn) !== 0) { return false; }
+    if (!preg_match('/^((?:19|20)\d{2})?(?:s\d{1,2}|season|(?:the)?complete|\d{3,4}p|$)/', substr($nn, strlen($sn)), $m)) { return false; }
+    return !(($m[1] ?? '') !== '' && preg_match('/\((\d{4})\)\s*$/', $title, $y) && $y[1] !== $m[1]);
+}
+
 // qBittorrent torrents that hold single episodes of this season of this series (by name)
 function st_sp_old_torrents($title, $season, $epnums, $tor) {
-    $sn = st_norm(preg_replace('/\s*\(\d{4}\)\s*$/', '', $title)); $out = [];
-    if ($sn === '') { return $out; }
+    $out = [];
     foreach ((array)$tor as $t) {
         $name = (string)($t['name'] ?? '');
-        if (strpos(st_norm($name), $sn) !== 0) { continue; }
+        if (!st_sp_name_is($title, $name)) { continue; }
         if (!preg_match('/S(\d{1,2})E(\d{1,3})/i', $name, $m) || (int)$m[1] !== (int)$season || !in_array((int)$m[2], $epnums, true)) { continue; }
         if (preg_match('/S\d{1,2}E\d{1,3}[-_.]?E\d{1,3}/i', $name)) { continue; } // multi-episode: not handled
         $out[] = ['hash' => strtolower((string)$t['hash']), 'name' => $name, 'size' => (float)($t['size'] ?? 0), 'ep' => (int)$m[2], 'path' => (string)($t['content_path'] ?? ''), 'state' => (string)($t['state'] ?? '')];
@@ -3148,14 +3162,14 @@ function st_sp_old_torrents($title, $season, $epnums, $tor) {
     return $out;
 }
 
-// is a season of this series seeded as one torrent already? A torrent counts when its name starts with the series (no single episode) and its file list
+// is a season of this series seeded as one torrent already? A torrent counts when its name is the series' (st_sp_name_is, no single episode) and its file list
 // holds at least 80 % of the episode numbers we have
 function st_sp_seeded_pack($title, $season, $epnums, $tor) {
-    $sn = st_norm(preg_replace('/\s*\(\d{4}\)\s*$/', '', $title)); if ($sn === '' || !$tor) { return ''; }
+    if (!$tor) { return ''; }
     $need = max(2, (int)ceil(count($epnums) * 0.8)); $n = 0;
     foreach ((array)$tor as $t) {
         $name = (string)($t['name'] ?? '');
-        if (strpos(st_norm($name), $sn) !== 0) { continue; }
+        if (!st_sp_name_is($title, $name)) { continue; }
         if (preg_match('/S\d{1,2}E\d{1,3}/i', $name) && !preg_match('/S\d{1,2}E\d{1,3}[-_.]?E\d{1,3}/i', $name)) { continue; } // a single episode
         if (++$n > 12) { break; }
         // the name may not name the season (a whole-series torrent like "The Shield 1080p"): the file list decides; fetched once per torrent
@@ -4992,6 +5006,8 @@ function st_under_roots($path, $cfg) {
     }
     return false;
 }
+// device:inode of a file ('' when it cannot be read, which never matches a real one)
+function st_dev_ino($p) { $st = @stat($p); return $st ? $st['dev'] . ':' . $st['ino'] : ''; }
 function st_rm_tree($p) {
     if (is_link($p) || is_file($p)) { return @unlink($p); }
     if (!is_dir($p)) { return true; }
@@ -5018,7 +5034,8 @@ function st_cleanup_old($j) {
             if ($cp !== '' && ($cp === $rp || strpos($cp, $rp . '/') === 0)) { return [false, st_tr('e.norm_seed', ['p' => $p, 't' => $t['name']])]; }
         }
         // inodes of the old files: a media link is only removed if it still points at one of them (never the freshly imported file)
-        if (is_file($rp)) { $oldIno[(int)@fileinode($rp)] = true; } else { foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rp, FilesystemIterator::SKIP_DOTS)) as $f) { if ($f->isFile()) { $oldIno[(int)$f->getInode()] = true; } } }
+        // keyed by device and inode: two array disks can hold the same inode number (item 104)
+        if (is_file($rp)) { $oldIno[st_dev_ino($rp)] = true; } else { foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rp, FilesystemIterator::SKIP_DOTS)) as $f) { if ($f->isFile()) { $oldIno[st_dev_ino($f->getPathname())] = true; } } }
         $days = (int)($cfg['trash_days'] ?? 0);
         if ($days > 0) {
             $tr = $root . '/' . ST_TRASH; @mkdir($tr, 0777, true);
@@ -5031,9 +5048,9 @@ function st_cleanup_old($j) {
         }
     }
     // the old hardlink in the media folder (Radarr/Sonarr normally removes it when it upgrades)
-    $gone = 0;
+    $gone = 0; unset($oldIno['']);
     foreach ((array)($j['media_paths'] ?? []) as $mp) {
-        if ($mp !== '' && is_file($mp) && strpos(realpath($mp), rtrim($cfg['map_host'], '/') . '/') === 0 && isset($oldIno[(int)@fileinode($mp)])) { if (@unlink($mp)) { $gone++; } }
+        if ($mp !== '' && is_file($mp) && strpos(realpath($mp), rtrim($cfg['map_host'], '/') . '/') === 0 && isset($oldIno[st_dev_ino($mp)])) { if (@unlink($mp)) { $gone++; } }
     }
     if ($gone) { $add($gone . ' régi hardlink törölve a média mappából', $gone . ' old media link(s) removed', 'cl.links', ['n' => $gone]); }
     return [true, implode('; ', $msg), implode('; ', $msgL)];
@@ -5164,9 +5181,20 @@ function st_job_remove_old_do($id) {
             [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
         return [true, ''];
     }
-    [$c, $b, $e] = st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => $share === '' ? 'true' : 'false']);
+    // with the trash on, files that cannot go to the trash (outside the watched folders, path not found) stay: qBittorrent
+    // must not delete them for good (item 104); only with trash_days 0 does qBittorrent delete them
+    $out = $share === '' && (int)(st_cfg()['trash_days'] ?? 0) > 0;
+    [$c, $b, $e] = st_qb('/api/v2/torrents/delete', ['hashes' => $j['hash'], 'deleteFiles' => ($share === '' && !$out) ? 'true' : 'false']);
     if ($c !== 200) { return [false, st_tr('e.qb_refused', ['e' => $e ?: 'HTTP ' . $c])]; }
+    st_watch_forget((string)$j['hash']);
     st_upd_drop((string)$j['hash']);
+    if ($out) {
+        $pp = $cp !== '' ? $cp : (string)$j['old_name'];
+        $set('removed', st_tr('job.rm_outside', ['p' => $pp]), st_trd('job.rm_outside', ['p' => $pp]));
+        st_notify('g', st_l('Seedbox: a régi torrent törölve, a fájlok maradtak', 'Seedbox: the old torrent was deleted, the files stay'), st_trd('job.rm_outside', ['p' => $pp]),
+            [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
+        return [true, ''];
+    }
     $set('removed', $share === '' ? st_tr('job.rm_all') : st_tr('job.rm_kept', ['t' => $share]), $share === '' ? st_trd('job.rm_all') : st_trd('job.rm_kept', ['t' => $share]));
     st_notify('g', $share === '' ? st_l('Seedbox: a régi torrent és fájljai törölve', 'Seedbox: the old torrent and its files were deleted') : st_l('Seedbox: a régi torrent törölve, a fájlok maradtak', 'Seedbox: the old torrent was deleted, the files stay'), st_l('A jóváhagyásod után, mert az új kiadás már importálva van.', 'After your approval, because the new release is already imported.') . ($share === '' ? '' : ' ' . st_l('A fájlokat egy másik torrent is seedeli: ' . $share, 'Another torrent seeds the same files: ' . $share)),
         [[st_l('Cím', 'Title'), $j['title']], [st_l('Régi', 'Old'), $j['old_name'] . ' (' . st_gb($j['old_size']) . ')'], [st_l('Új', 'New'), $j['new']]], false, st_ntool($j));
@@ -6836,6 +6864,10 @@ function mt_i18n_js($dir, $name, $only = null) {
  "job.rm_kept": {
   "text": "the old torrent was removed; its files were kept because torrent \"{t}\" seeds them too",
   "note": "state of a finished replacement in Activity."
+ },
+ "job.rm_outside": {
+  "text": "the old torrent was removed; its files were kept at {p} because they are outside the watched downloads folders and cannot go to the trash",
+  "note": "state of a finished replacement in Activity and Discord text; {p} the folder or file that stays."
  },
  "job.sent": {
   "text": "sent to {k}",
@@ -8606,7 +8638,8 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Remove this stuck job from Processing and from the tile's STUCK badge. Nothing is deleted; the season can be started again.",
   "note": "tooltip of the Dismiss button on a stuck season pack job."
  }
-}]]></INLINE>
+}
+]]></INLINE>
 </FILE>
 
 <FILE Name="&plugdir;/lang/hu.json">
@@ -9373,6 +9406,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "job.rm_kept": {
   "text": "a régi torrent eltávolítva; a fájljai megmaradtak, mert a(z) „{t}” torrent is seedeli őket"
+ },
+ "job.rm_outside": {
+  "text": "a régi torrent eltávolítva; a fájljai megmaradtak itt: {p}, mert a figyelt letöltési mappákon kívül vannak, és nem kerülhetnek a kukába"
  },
  "job.sent": {
   "text": "elküldve ide: {k}"
@@ -10706,7 +10742,8 @@ function mt_i18n_js($dir, $name, $only = null) {
  "act.sp_dismiss_tip": {
   "text": "Az elakadt feladat kikerül a Folyamatban részből és a csempe STUCK jelzéséből. Semmi nem törlődik; az évad újra indítható."
  }
-}]]></INLINE>
+}
+]]></INLINE>
 </FILE>
 
 <FILE Name="&plugdir;/bot.php">
