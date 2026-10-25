@@ -1528,6 +1528,9 @@
  "uj.test_retry": {
   "text": "önteszt: {l} még nem áll készen, 3 percig újrapróbálom"
  },
+ "uj.test_before": {
+  "text": "{l} már a frissítés előtt is hibás volt, nem számít"
+ },
  "uj.claude_ok": {
   "text": "Claude válaszolt ezzel kapcsolatban: {n}"
  },

@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30b">
+<!ENTITY version   "2026.10.30c">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,11 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30c
+- Update manager: the self-test runs before the update too; a service that already failed then (stopped, or broken for another reason) no longer makes the update fail or stops Update all
+- Safe shutdown: after a cancelled or failed Stop, a second Stop keeps the containers the first one stopped on the list, so Start them again starts them too
+- A redirect to another host never gets an API key
+
 ###2026.10.30b
 - Claude Guard: a command in a finding is shown only when every part of it is a known read-only program (cat, grep, tail, smartctl -a, zpool status, docker logs and similar); repair, unmount, delete or test commands such as xfs_repair, fsck, find -delete or smartctl -t are dropped instead of being shown as a read-only check
 

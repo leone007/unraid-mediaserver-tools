@@ -72,16 +72,30 @@ function upd_app_repo($image, $src) {
 }
 
 // ---- HTTP -----------------------------------------------------------------------------------------------------
+// a GET follows up to 5 redirects; on a hop to another host (or from https to http) the key headers are dropped first: curl keeps
+// a custom X-Api-Key header there (item 104). Registry blobs redirect to a CDN, so the hop itself is needed.
 function upd_http($url, $hdr = [], $timeout = 20, $post = null) {
+    $r = upd_http_once($url, $hdr, $timeout, $post);
+    for ($hop = 0; $post === null && $r[0] >= 300 && $r[0] < 400 && $r[4] !== '' && $hop < 5; $hop++) {
+        $a = parse_url($url); $b = parse_url($r[4]);
+        $same = $a && $b && strcasecmp((string)($a['host'] ?? ''), (string)($b['host'] ?? '')) === 0
+             && !(strtolower((string)($a['scheme'] ?? '')) === 'https' && strtolower((string)($b['scheme'] ?? '')) !== 'https');
+        if (!$same) { $hdr = array_values(array_filter($hdr, function ($x) { return !preg_match('/^\s*(x-api-key|x-api-token|authorization|cookie)\s*:/i', $x); })); }
+        $url = $r[4]; $r = upd_http_once($url, $hdr, $timeout, null);
+    }
+    return array_slice($r, 0, 4);
+}
+function upd_http_once($url, $hdr, $timeout, $post) {
     $ch = curl_init($url);
-    $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5, CURLOPT_HEADER => true,
+    $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_HEADER => true,
           CURLOPT_CONNECTTIMEOUT => 6, CURLOPT_TIMEOUT => $timeout, CURLOPT_HTTPHEADER => array_merge(['User-Agent: Sysbox-Update-manager'], $hdr)];
     if ($post !== null) { $o[CURLOPT_POST] = true; $o[CURLOPT_POSTFIELDS] = $post; }
     curl_setopt_array($ch, $o);
     $raw = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $hs = (int)curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $next = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
     $err = curl_errno($ch) ? curl_error($ch) : ''; curl_close($ch);
-    if ($raw === false) { return [0, '', '', $err ?: 'request failed']; }
-    return [$code, substr($raw, 0, $hs), substr($raw, $hs), ''];
+    if ($raw === false) { return [0, '', '', $err ?: 'request failed', '']; }
+    return [$code, substr($raw, 0, $hs), substr($raw, $hs), '', $next];
 }
 
 // ---- registry: the remote image of a tag (anonymous pull token), its config digest = the image ID after a pull ------

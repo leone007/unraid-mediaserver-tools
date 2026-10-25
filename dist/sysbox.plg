@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30b">
+<!ENTITY version   "2026.10.30c">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.30c
+- Update manager: the self-test runs before the update too; a service that already failed then (stopped, or broken for another reason) no longer makes the update fail or stops Update all
+- Safe shutdown: after a cancelled or failed Stop, a second Stop keeps the containers the first one stopped on the list, so Start them again starts them too
+- A redirect to another host never gets an API key
+
 ###2026.10.30b
 - Claude Guard: a command in a finding is shown only when every part of it is a known read-only program (cat, grep, tail, smartctl -a, zpool status, docker logs and similar); repair, unmount, delete or test commands such as xfs_repair, fsck, find -delete or smartctl -t are dropped instead of being shown as a read-only check
 
@@ -5331,6 +5336,10 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "self-test: {l} not ready yet, trying again for up to 3 minutes",
   "note": "Activity log line after an update: a test failed right after the start, the worker tries again (the program may still be starting)."
  },
+ "uj.test_before": {
+  "text": "{l} failed before the update too, not counted",
+  "note": "added to the result of an update in Activity and Discord: a service whose self-test failed already before the update (stopped or broken for another reason) does not make the update fail."
+ },
  "uj.claude_ok": {
   "text": "Claude answered about {n}",
   "note": "Activity row."
@@ -9029,6 +9038,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  "uj.test_retry": {
   "text": "önteszt: {l} még nem áll készen, 3 percig újrapróbálom"
  },
+ "uj.test_before": {
+  "text": "{l} már a frissítés előtt is hibás volt, nem számít"
+ },
  "uj.claude_ok": {
   "text": "Claude válaszolt ezzel kapcsolatban: {n}"
  },
@@ -11202,8 +11214,12 @@ if ($mode === 'start') {
 
 // ---- stop -----------------------------------------------------------------------------------------
 sd_log('start');
-$cts = [];
-if ($d !== '') { foreach (sx_ps(true) as $c) { if ($c['state'] === 'running') { $cts[] = $c; } } }
+$cts = []; $ps = $d !== '' ? sx_ps(true) : [];
+foreach ($ps as $c) { if ($c['state'] === 'running') { $cts[] = $c; } }
+// an earlier stop run that was cancelled or failed: what it stopped and is still stopped stays on the list, so Start them again
+// starts it too (item 104: a second Stop forgot qBittorrent)
+foreach ((array)($prev['stopped'] ?? []) as $n) { if (sx_valid_name($n) && isset($ps[$n]) && $ps[$n]['state'] !== 'running') { $S['stopped'][] = $n; } }
+if ($S['stopped']) { sd_log('still stopped from the earlier run: ' . implode(', ', $S['stopped'])); }
 $qb = array_values(array_filter($cts, 'sd_is_qb'));
 $rest = array_values(array_filter($cts, function ($c) { return !sd_is_qb($c); }));
 $err = [];
@@ -12388,16 +12404,30 @@ function upd_app_repo($image, $src) {
 }
 
 // ---- HTTP -----------------------------------------------------------------------------------------------------
+// a GET follows up to 5 redirects; on a hop to another host (or from https to http) the key headers are dropped first: curl keeps
+// a custom X-Api-Key header there (item 104). Registry blobs redirect to a CDN, so the hop itself is needed.
 function upd_http($url, $hdr = [], $timeout = 20, $post = null) {
+    $r = upd_http_once($url, $hdr, $timeout, $post);
+    for ($hop = 0; $post === null && $r[0] >= 300 && $r[0] < 400 && $r[4] !== '' && $hop < 5; $hop++) {
+        $a = parse_url($url); $b = parse_url($r[4]);
+        $same = $a && $b && strcasecmp((string)($a['host'] ?? ''), (string)($b['host'] ?? '')) === 0
+             && !(strtolower((string)($a['scheme'] ?? '')) === 'https' && strtolower((string)($b['scheme'] ?? '')) !== 'https');
+        if (!$same) { $hdr = array_values(array_filter($hdr, function ($x) { return !preg_match('/^\s*(x-api-key|x-api-token|authorization|cookie)\s*:/i', $x); })); }
+        $url = $r[4]; $r = upd_http_once($url, $hdr, $timeout, null);
+    }
+    return array_slice($r, 0, 4);
+}
+function upd_http_once($url, $hdr, $timeout, $post) {
     $ch = curl_init($url);
-    $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5, CURLOPT_HEADER => true,
+    $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_HEADER => true,
           CURLOPT_CONNECTTIMEOUT => 6, CURLOPT_TIMEOUT => $timeout, CURLOPT_HTTPHEADER => array_merge(['User-Agent: Sysbox-Update-manager'], $hdr)];
     if ($post !== null) { $o[CURLOPT_POST] = true; $o[CURLOPT_POSTFIELDS] = $post; }
     curl_setopt_array($ch, $o);
     $raw = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $hs = (int)curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $next = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
     $err = curl_errno($ch) ? curl_error($ch) : ''; curl_close($ch);
-    if ($raw === false) { return [0, '', '', $err ?: 'request failed']; }
-    return [$code, substr($raw, 0, $hs), substr($raw, $hs), ''];
+    if ($raw === false) { return [0, '', '', $err ?: 'request failed', '']; }
+    return [$code, substr($raw, 0, $hs), substr($raw, $hs), '', $next];
 }
 
 // ---- registry: the remote image of a tag (anonymous pull token), its config digest = the image ID after a pull ------
@@ -13015,6 +13045,9 @@ function upd_update_one($name, $dc = true) {
         }
         if ($snap === '') { upd_job($id, [], 'no ZFS dataset holds its folders: no snapshot'); }
     }
+    // the self-test before the update: a service that already failed (stopped, not ours) does not count against this update (item 104)
+    $pre = [];
+    if (!empty($cfg['selftest'])) { foreach (upd_selftest()['tests'] as $x) { if (!$x['ok']) { $pre[] = $x['name']; } } }
     // 2. stop it with enough time (qBittorrent writes its resume data; the Unraid script would give 10 seconds)
     $was = trim(upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . escapeshellarg($name), 10)) === 'true';
     if ($was) {
@@ -13035,15 +13068,18 @@ function upd_update_one($name, $dc = true) {
     $tmsg = '';
     if (!empty($cfg['selftest'])) {
         if ($was) { sleep(20); }   // the program needs a moment after the start
-        $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
+        $newBad = function ($t) use ($pre) { return array_filter($t['tests'], function ($x) use ($pre) { return !$x['ok'] && !in_array($x['name'], $pre, true); }); };
+        $t = upd_selftest(); $bad = $newBad($t);
         // a program still starting fails the first try (Jellyfin with a Docker mod that installs packages at every start,
         // a database migration: 12.2 -> 12.3 on 2026-10-23 failed after 20 s): try again every 15 s for up to 3 minutes
         for ($i = 0; $bad && $was && $i < 12; $i++) {
             if ($i === 0) { upd_job($id, [], sx_tr('uj.test_retry', ['l' => implode(', ', array_column($bad, 'name'))])); }
             sleep(15);
-            $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
+            $t = upd_selftest(); $bad = $newBad($t);
         }
-        $tmsg = '; self-test ' . (count($t['tests']) - count($bad)) . '/' . count($t['tests']) . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' FAILED)' : ' passed');
+        $was0 = array_values(array_filter(array_column(array_filter($t['tests'], function ($x) { return !$x['ok']; }), 'name'), function ($n) use ($pre) { return in_array($n, $pre, true); }));
+        $tmsg = '; self-test ' . (count($t['tests']) - count($bad) - count($was0)) . '/' . count($t['tests']) . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' FAILED)' : ' passed')
+              . ($was0 ? '; ' . sx_tr('uj.test_before', ['l' => implode(', ', $was0)]) : '');
     }
     upd_scan($name);
     $msg = $name . ' ' . ($new ? 'updated: ' . ($row['ver'] ?: '?') . ' → ' . ($c['ver'] ?: '?') : 'update ran but the image is the same') . $tmsg . ($snap ? '; data snapshot ' . $snap : '');

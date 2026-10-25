@@ -2029,6 +2029,10 @@
   "text": "self-test: {l} not ready yet, trying again for up to 3 minutes",
   "note": "Activity log line after an update: a test failed right after the start, the worker tries again (the program may still be starting)."
  },
+ "uj.test_before": {
+  "text": "{l} failed before the update too, not counted",
+  "note": "added to the result of an update in Activity and Discord: a service whose self-test failed already before the update (stopped or broken for another reason) does not make the update fail."
+ },
  "uj.claude_ok": {
   "text": "Claude answered about {n}",
   "note": "Activity row."

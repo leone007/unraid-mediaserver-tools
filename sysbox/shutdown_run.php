@@ -52,8 +52,12 @@ if ($mode === 'start') {
 
 // ---- stop -----------------------------------------------------------------------------------------
 sd_log('start');
-$cts = [];
-if ($d !== '') { foreach (sx_ps(true) as $c) { if ($c['state'] === 'running') { $cts[] = $c; } } }
+$cts = []; $ps = $d !== '' ? sx_ps(true) : [];
+foreach ($ps as $c) { if ($c['state'] === 'running') { $cts[] = $c; } }
+// an earlier stop run that was cancelled or failed: what it stopped and is still stopped stays on the list, so Start them again
+// starts it too (item 104: a second Stop forgot qBittorrent)
+foreach ((array)($prev['stopped'] ?? []) as $n) { if (sx_valid_name($n) && isset($ps[$n]) && $ps[$n]['state'] !== 'running') { $S['stopped'][] = $n; } }
+if ($S['stopped']) { sd_log('still stopped from the earlier run: ' . implode(', ', $S['stopped'])); }
 $qb = array_values(array_filter($cts, 'sd_is_qb'));
 $rest = array_values(array_filter($cts, function ($c) { return !sd_is_qb($c); }));
 $err = [];

@@ -144,6 +144,9 @@ function upd_update_one($name, $dc = true) {
         }
         if ($snap === '') { upd_job($id, [], 'no ZFS dataset holds its folders: no snapshot'); }
     }
+    // the self-test before the update: a service that already failed (stopped, not ours) does not count against this update (item 104)
+    $pre = [];
+    if (!empty($cfg['selftest'])) { foreach (upd_selftest()['tests'] as $x) { if (!$x['ok']) { $pre[] = $x['name']; } } }
     // 2. stop it with enough time (qBittorrent writes its resume data; the Unraid script would give 10 seconds)
     $was = trim(upd_sh(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . escapeshellarg($name), 10)) === 'true';
     if ($was) {
@@ -164,15 +167,18 @@ function upd_update_one($name, $dc = true) {
     $tmsg = '';
     if (!empty($cfg['selftest'])) {
         if ($was) { sleep(20); }   // the program needs a moment after the start
-        $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
+        $newBad = function ($t) use ($pre) { return array_filter($t['tests'], function ($x) use ($pre) { return !$x['ok'] && !in_array($x['name'], $pre, true); }); };
+        $t = upd_selftest(); $bad = $newBad($t);
         // a program still starting fails the first try (Jellyfin with a Docker mod that installs packages at every start,
         // a database migration: 12.2 -> 12.3 on 2026-10-23 failed after 20 s): try again every 15 s for up to 3 minutes
         for ($i = 0; $bad && $was && $i < 12; $i++) {
             if ($i === 0) { upd_job($id, [], sx_tr('uj.test_retry', ['l' => implode(', ', array_column($bad, 'name'))])); }
             sleep(15);
-            $t = upd_selftest(); $bad = array_filter($t['tests'], function ($x) { return !$x['ok']; });
+            $t = upd_selftest(); $bad = $newBad($t);
         }
-        $tmsg = '; self-test ' . (count($t['tests']) - count($bad)) . '/' . count($t['tests']) . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' FAILED)' : ' passed');
+        $was0 = array_values(array_filter(array_column(array_filter($t['tests'], function ($x) { return !$x['ok']; }), 'name'), function ($n) use ($pre) { return in_array($n, $pre, true); }));
+        $tmsg = '; self-test ' . (count($t['tests']) - count($bad) - count($was0)) . '/' . count($t['tests']) . ($bad ? ' (' . implode(', ', array_column($bad, 'name')) . ' FAILED)' : ' passed')
+              . ($was0 ? '; ' . sx_tr('uj.test_before', ['l' => implode(', ', $was0)]) : '');
     }
     upd_scan($name);
     $msg = $name . ' ' . ($new ? 'updated: ' . ($row['ver'] ?: '?') . ' → ' . ($c['ver'] ?: '?') : 'update ran but the image is the same') . $tmsg . ($snap ? '; data snapshot ' . $snap : '');
