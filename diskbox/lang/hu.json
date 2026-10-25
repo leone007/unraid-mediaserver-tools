@@ -1035,6 +1035,15 @@
  "run.died": {
   "text": "A háttérfolyamat váratlanul leállt."
  },
+ "plan.died": {
+  "text": "A tervező váratlanul leállt (talán elfogyott a memória egy nagyon teli lemezen). Nyomd meg újra a Terv készítése gombot."
+ },
+ "plan.starting": {
+  "text": "Indul..."
+ },
+ "err.no_space": {
+  "text": "A(z) {d} lemezen nincs elég szabad hely a kiválasztott címekhez."
+ },
  "err.bad_line": {
   "text": "Érvénytelen mappasor: {line} (a lemez gyökeréhez képesti útvonalat adj meg, például data/downloads/FILM = data/media/film)"
  },

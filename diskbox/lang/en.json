@@ -1373,6 +1373,18 @@
   "text": "The worker stopped unexpectedly.",
   "note": "red text in Activity when the background move died."
  },
+ "plan.died": {
+  "text": "The planner stopped unexpectedly (perhaps out of memory on a very full disk). Press Make a plan again.",
+  "note": "red text of the plan when its background worker died."
+ },
+ "plan.starting": {
+  "text": "Starting...",
+  "note": "status of the plan right after Plan was pressed."
+ },
+ "err.no_space": {
+  "text": "{d} does not have enough free space for the selected titles.",
+  "note": "error of Start on the Balance page."
+ },
  "err.bad_line": {
   "text": "Invalid folder line: {line} (use paths relative to the disk root, for example data/downloads/FILM = data/media/film)",
   "note": "error next to Make a plan. Keep the example path as it is."

@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22r">
+<!ENTITY version   "2026.10.22s">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22s
+- Balance: file names in another encoding than UTF-8 (older Latin-1 accents) are kept exactly in the plan, so those titles move too
+- Balance: a planner that died (for example out of memory) shows an error after 20 seconds instead of Scanning for ever
+- Balance: Start accepts only the disks of the plan (the Setup choice)
+
 ###2026.10.22r
 - Balance: after the copy the source is checked too; a file that got a new hardlink or was replaced on the source during the copy stops the move (the copy is removed, the source stays) instead of leaving a full copy behind
 
@@ -4158,6 +4163,18 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "The worker stopped unexpectedly.",
   "note": "red text in Activity when the background move died."
  },
+ "plan.died": {
+  "text": "The planner stopped unexpectedly (perhaps out of memory on a very full disk). Press Make a plan again.",
+  "note": "red text of the plan when its background worker died."
+ },
+ "plan.starting": {
+  "text": "Starting...",
+  "note": "status of the plan right after Plan was pressed."
+ },
+ "err.no_space": {
+  "text": "{d} does not have enough free space for the selected titles.",
+  "note": "error of Start on the Balance page."
+ },
  "err.bad_line": {
   "text": "Invalid folder line: {line} (use paths relative to the disk root, for example data/downloads/FILM = data/media/film)",
   "note": "error next to Make a plan. Keep the example path as it is."
@@ -5394,6 +5411,15 @@ function mt_i18n_js($dir, $name, $only = null) {
  "run.died": {
   "text": "A háttérfolyamat váratlanul leállt."
  },
+ "plan.died": {
+  "text": "A tervező váratlanul leállt (talán elfogyott a memória egy nagyon teli lemezen). Nyomd meg újra a Terv készítése gombot."
+ },
+ "plan.starting": {
+  "text": "Indul..."
+ },
+ "err.no_space": {
+  "text": "A(z) {d} lemezen nincs elég szabad hely a kiválasztott címekhez."
+ },
  "err.bad_line": {
   "text": "Érvénytelen mappasor: {line} (a lemez gyökeréhez képesti útvonalat adj meg, például data/downloads/FILM = data/media/film)"
  },
@@ -6158,6 +6184,18 @@ function bl_busy_reason($plan = false) {
     return '';
 }
 
+// the planner holds its own lock while it scans; a plan left 'running' without it died (out of memory, killed; item 104)
+function bl_plan_running() {
+    $f = @fopen(dirname(BL_PLAN) . '/diskbox_balance_plan.lock', 'c');
+    if (!$f) { return false; }
+    if (flock($f, LOCK_EX | LOCK_NB)) { flock($f, LOCK_UN); fclose($f); return false; }
+    fclose($f);
+    return true;
+}
+function bl_plan_died($p) {
+    if (($p['state'] ?? '') === 'running' && time() - (int)($p['t'] ?? 0) > 20 && !bl_plan_running()) { $p['state'] = 'error'; $p['msg'] = bl_tr('plan.died'); }
+    return $p;
+}
 function bl_running() {
     $f = @fopen(BL_LOCK, 'c');
     if (!$f) { return false; }
@@ -6395,6 +6433,10 @@ function bl_make_plan() {
     bl_plan_publish($units, $skipped, $disks, ['target' => $T, 'avg' => $avg, 'req' => $req, 'note' => $note, 'strategy' => $strategy]);
 }
 
+// a path in BL_PLANF: JSON holds only UTF-8, so a name in another encoding (Latin-1, CP1250 accents) is kept as b64:<base64>
+// (item 104: it was saved with U+FFFD and never found again)
+function bl_path_enc($p) { return mb_check_encoding($p, 'UTF-8') && strpos($p, 'b64:') !== 0 ? $p : 'b64:' . base64_encode($p); }
+function bl_path_dec($p) { return strpos((string)$p, 'b64:') === 0 ? (string)base64_decode(substr($p, 4)) : (string)$p; }
 // writes BL_PLANF (file lists, server side only) and BL_PLAN (what the page shows)
 function bl_plan_publish($units, $skipped, $disks, $extra) {
     usort($units, function ($a, $b) { return ($b['sel'] <=> $a['sel']); });
@@ -6402,7 +6444,7 @@ function bl_plan_publish($units, $skipped, $disks, $extra) {
     $pub = []; $filesById = [];
     foreach ($units as $i => $u) {
         $id = 'u' . $i;
-        $filesById[$id] = $u['files']; unset($u['files']);
+        $filesById[$id] = array_map(function ($f) { $f[0] = bl_path_enc($f[0]); return $f; }, $u['files']); unset($u['files']);
         if ($u['dst'] === '') {
             $bn = -1; foreach ($disks as $rn => $d) { if ($rn !== $u['src'] && empty($d['drain']) && $d['pct'] < ($bn < 0 ? 1000 : $bn)) { $bn = $d['pct']; $u['dst'] = $rn; } }
         }
@@ -6480,7 +6522,7 @@ function bl_spawn($mode) {
 $op = (string)($_POST['op'] ?? 'state');
 
 if ($op === 'state') {
-    $plan = bl_json_read(BL_PLAN, ['state' => 'none']);
+    $plan = bl_plan_died(bl_json_read(BL_PLAN, ['state' => 'none']));
     unset($plan['units'], $plan['skipped']);
     $st = bl_json_read(BL_STATUS, ['state' => 'idle']);
     $running = bl_running();
@@ -6520,19 +6562,19 @@ if ($op === 'plan') {
     $why = bl_busy_reason(true);
     if ($why !== '') { bl_out(false, ['error' => bl_tr('err.cannot_plan', ['why' => $why])]); }
     $p = bl_json_read(BL_PLAN, []);
-    if (($p['state'] ?? '') === 'running' && time() - (int)($p['t'] ?? 0) < 120) { bl_out(true); }
+    if (($p['state'] ?? '') === 'running' && bl_plan_running()) { bl_out(true); }
     if ((bl_cfg()['mode'] ?? '') === 'remove') { // Remove disks: emptying (step 3) only after the shares keep new files off them (step 2)
         require_once __DIR__ . '/remove.php';
         $sh = rm_shares(rm_sel());
         if ($sh) { bl_out(false, ['error' => bl_tr('rm.err.step2_shares', ['l' => implode(', ', array_column($sh, 0))])]); }
     }
-    bl_plan_status('running', 'Starting...');
+    bl_plan_status('running', bl_tr('plan.starting'));
     bl_spawn('plan');
     bl_out(true);
 }
 
 if ($op === 'getplan') {
-    $p = bl_json_read(BL_PLAN, ['state' => 'none']);
+    $p = bl_plan_died(bl_json_read(BL_PLAN, ['state' => 'none']));
     bl_out(true, ['plan' => $p, 'busy' => bl_busy_reason()]);
 }
 
@@ -6545,16 +6587,19 @@ if ($op === 'start') {
     $sel = json_decode((string)($_POST['sel'] ?? ''), true);
     if (!is_array($sel) || !$sel) { bl_out(false, ['error' => bl_tr('err.nothing')]); }
     $disks = bl_disks();
+    // only the disks of the plan (the Setup's choice): an older page or a hand-made request cannot send titles elsewhere (item 104)
+    $inPlan = array_column((array)($plan['disks'] ?? []), 'name');
     $byId = [];
     foreach ($plan['units'] as $u) { $byId[$u['id']] = $u; }
     $items = []; $perDst = [];
     foreach ($sel as $id => $dst) {
-        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)) { bl_out(false, ['error' => bl_tr('err.bad_sel')]); }
+        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)
+            || ($inPlan && !in_array($dst, $inPlan, true))) { bl_out(false, ['error' => bl_tr('err.bad_sel')]); }
         $items[] = ['id' => (string)$id, 'dst' => $dst];
         $perDst[$dst] = ($perDst[$dst] ?? 0) + $byId[$id]['size'];
     }
     foreach ($perDst as $d => $b) {
-        if ($b + max(5e9, 0.01 * $disks[$d]['size']) > $disks[$d]['free']) { bl_out(false, ['error' => strtoupper($d) . ' does not have enough free space for the selected titles.']); }
+        if ($b + max(5e9, 0.01 * $disks[$d]['size']) > $disks[$d]['free']) { bl_out(false, ['error' => bl_tr('err.no_space', ['d' => strtoupper($d)])]); }
     }
     @unlink(BL_STATUS);
     bl_json_write(BL_JOB, ['items' => $items, 't' => time()], 0600);
@@ -6858,7 +6903,7 @@ foreach ($S['items'] as $i => &$item) {
     $why = bl_busy_reason();
     if ($why !== '') { $fatal = bl_tr('run.fatal_why', ['why' => $why]); break; }
     if (is_file(BL_STOP)) { $aborted = true; break; }
-    $files = $planf[$item['id']];
+    $files = array_map(function ($f) { $f[0] = bl_path_dec($f[0]); return $f; }, $planf[$item['id']]);
     $src = $item['src']; $dst = $item['dst'];
     $sroot = bl_mnt() . '/' . $src; $droot = bl_mnt() . '/' . $dst;
     $item['state'] = 'run'; bl_s_write(true); bl_s_log($item['pair'] . '/' . $item['title'] . ' ' . strtoupper($src) . ' -> ' . strtoupper($dst));

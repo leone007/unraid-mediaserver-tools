@@ -99,7 +99,7 @@ foreach ($S['items'] as $i => &$item) {
     $why = bl_busy_reason();
     if ($why !== '') { $fatal = bl_tr('run.fatal_why', ['why' => $why]); break; }
     if (is_file(BL_STOP)) { $aborted = true; break; }
-    $files = $planf[$item['id']];
+    $files = array_map(function ($f) { $f[0] = bl_path_dec($f[0]); return $f; }, $planf[$item['id']]);
     $src = $item['src']; $dst = $item['dst'];
     $sroot = bl_mnt() . '/' . $src; $droot = bl_mnt() . '/' . $dst;
     $item['state'] = 'run'; bl_s_write(true); bl_s_log($item['pair'] . '/' . $item['title'] . ' ' . strtoupper($src) . ' -> ' . strtoupper($dst));

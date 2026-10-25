@@ -94,6 +94,18 @@ function bl_busy_reason($plan = false) {
     return '';
 }
 
+// the planner holds its own lock while it scans; a plan left 'running' without it died (out of memory, killed; item 104)
+function bl_plan_running() {
+    $f = @fopen(dirname(BL_PLAN) . '/diskbox_balance_plan.lock', 'c');
+    if (!$f) { return false; }
+    if (flock($f, LOCK_EX | LOCK_NB)) { flock($f, LOCK_UN); fclose($f); return false; }
+    fclose($f);
+    return true;
+}
+function bl_plan_died($p) {
+    if (($p['state'] ?? '') === 'running' && time() - (int)($p['t'] ?? 0) > 20 && !bl_plan_running()) { $p['state'] = 'error'; $p['msg'] = bl_tr('plan.died'); }
+    return $p;
+}
 function bl_running() {
     $f = @fopen(BL_LOCK, 'c');
     if (!$f) { return false; }
@@ -331,6 +343,10 @@ function bl_make_plan() {
     bl_plan_publish($units, $skipped, $disks, ['target' => $T, 'avg' => $avg, 'req' => $req, 'note' => $note, 'strategy' => $strategy]);
 }
 
+// a path in BL_PLANF: JSON holds only UTF-8, so a name in another encoding (Latin-1, CP1250 accents) is kept as b64:<base64>
+// (item 104: it was saved with U+FFFD and never found again)
+function bl_path_enc($p) { return mb_check_encoding($p, 'UTF-8') && strpos($p, 'b64:') !== 0 ? $p : 'b64:' . base64_encode($p); }
+function bl_path_dec($p) { return strpos((string)$p, 'b64:') === 0 ? (string)base64_decode(substr($p, 4)) : (string)$p; }
 // writes BL_PLANF (file lists, server side only) and BL_PLAN (what the page shows)
 function bl_plan_publish($units, $skipped, $disks, $extra) {
     usort($units, function ($a, $b) { return ($b['sel'] <=> $a['sel']); });
@@ -338,7 +354,7 @@ function bl_plan_publish($units, $skipped, $disks, $extra) {
     $pub = []; $filesById = [];
     foreach ($units as $i => $u) {
         $id = 'u' . $i;
-        $filesById[$id] = $u['files']; unset($u['files']);
+        $filesById[$id] = array_map(function ($f) { $f[0] = bl_path_enc($f[0]); return $f; }, $u['files']); unset($u['files']);
         if ($u['dst'] === '') {
             $bn = -1; foreach ($disks as $rn => $d) { if ($rn !== $u['src'] && empty($d['drain']) && $d['pct'] < ($bn < 0 ? 1000 : $bn)) { $bn = $d['pct']; $u['dst'] = $rn; } }
         }

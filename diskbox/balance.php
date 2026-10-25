@@ -23,7 +23,7 @@ function bl_spawn($mode) {
 $op = (string)($_POST['op'] ?? 'state');
 
 if ($op === 'state') {
-    $plan = bl_json_read(BL_PLAN, ['state' => 'none']);
+    $plan = bl_plan_died(bl_json_read(BL_PLAN, ['state' => 'none']));
     unset($plan['units'], $plan['skipped']);
     $st = bl_json_read(BL_STATUS, ['state' => 'idle']);
     $running = bl_running();
@@ -63,19 +63,19 @@ if ($op === 'plan') {
     $why = bl_busy_reason(true);
     if ($why !== '') { bl_out(false, ['error' => bl_tr('err.cannot_plan', ['why' => $why])]); }
     $p = bl_json_read(BL_PLAN, []);
-    if (($p['state'] ?? '') === 'running' && time() - (int)($p['t'] ?? 0) < 120) { bl_out(true); }
+    if (($p['state'] ?? '') === 'running' && bl_plan_running()) { bl_out(true); }
     if ((bl_cfg()['mode'] ?? '') === 'remove') { // Remove disks: emptying (step 3) only after the shares keep new files off them (step 2)
         require_once __DIR__ . '/remove.php';
         $sh = rm_shares(rm_sel());
         if ($sh) { bl_out(false, ['error' => bl_tr('rm.err.step2_shares', ['l' => implode(', ', array_column($sh, 0))])]); }
     }
-    bl_plan_status('running', 'Starting...');
+    bl_plan_status('running', bl_tr('plan.starting'));
     bl_spawn('plan');
     bl_out(true);
 }
 
 if ($op === 'getplan') {
-    $p = bl_json_read(BL_PLAN, ['state' => 'none']);
+    $p = bl_plan_died(bl_json_read(BL_PLAN, ['state' => 'none']));
     bl_out(true, ['plan' => $p, 'busy' => bl_busy_reason()]);
 }
 
@@ -88,16 +88,19 @@ if ($op === 'start') {
     $sel = json_decode((string)($_POST['sel'] ?? ''), true);
     if (!is_array($sel) || !$sel) { bl_out(false, ['error' => bl_tr('err.nothing')]); }
     $disks = bl_disks();
+    // only the disks of the plan (the Setup's choice): an older page or a hand-made request cannot send titles elsewhere (item 104)
+    $inPlan = array_column((array)($plan['disks'] ?? []), 'name');
     $byId = [];
     foreach ($plan['units'] as $u) { $byId[$u['id']] = $u; }
     $items = []; $perDst = [];
     foreach ($sel as $id => $dst) {
-        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)) { bl_out(false, ['error' => bl_tr('err.bad_sel')]); }
+        if (!isset($byId[$id]) || !is_string($dst) || !isset($disks[$dst]) || $dst === $byId[$id]['src'] || in_array($dst, (array)($plan['drain'] ?? []), true)
+            || ($inPlan && !in_array($dst, $inPlan, true))) { bl_out(false, ['error' => bl_tr('err.bad_sel')]); }
         $items[] = ['id' => (string)$id, 'dst' => $dst];
         $perDst[$dst] = ($perDst[$dst] ?? 0) + $byId[$id]['size'];
     }
     foreach ($perDst as $d => $b) {
-        if ($b + max(5e9, 0.01 * $disks[$d]['size']) > $disks[$d]['free']) { bl_out(false, ['error' => strtoupper($d) . ' does not have enough free space for the selected titles.']); }
+        if ($b + max(5e9, 0.01 * $disks[$d]['size']) > $disks[$d]['free']) { bl_out(false, ['error' => bl_tr('err.no_space', ['d' => strtoupper($d)])]); }
     }
     @unlink(BL_STATUS);
     bl_json_write(BL_JOB, ['items' => $items, 't' => time()], 0600);

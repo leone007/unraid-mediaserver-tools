@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22r">
+<!ENTITY version   "2026.10.22s">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -27,6 +27,11 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22s
+- Balance: file names in another encoding than UTF-8 (older Latin-1 accents) are kept exactly in the plan, so those titles move too
+- Balance: a planner that died (for example out of memory) shows an error after 20 seconds instead of Scanning for ever
+- Balance: Start accepts only the disks of the plan (the Setup choice)
+
 ###2026.10.22r
 - Balance: after the copy the source is checked too; a file that got a new hardlink or was replaced on the source during the copy stops the move (the copy is removed, the source stays) instead of leaving a full copy behind
 
