@@ -54,7 +54,19 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 #snp .snp-ctl label{display:inline-flex;align-items:center;gap:6px}
 #snp .snp-ctl input[type=checkbox]{margin:0}
 #snp .snp-hint{flex:1 1 100%;opacity:.55;font-size:12px}
-@media (max-width:760px){#snp .snp-snap,#snp .snp-ct{grid-template-columns:22px minmax(0,1fr);padding-left:12px}#snp .snp-snap>:nth-child(n+3),#snp .snp-ct>:nth-child(n+3){grid-column:2}#snp .snp-set{grid-template-columns:1fr}}
+/* copies (item 105) */
+#snp .s-purple{background:rgba(150,120,230,.10);box-shadow:inset 3px 0 0 #9a7de6}
+#snp .snp-cpr{grid-template-columns:22px minmax(0,1fr) auto}
+#snp .snp-pill{font-size:11px;padding:1px 7px;background:rgba(63,162,74,.22);color:#3fa24a;white-space:nowrap}
+#snp .snp-pill.r{background:rgba(229,83,75,.25);color:#e5534b}#snp .snp-pill.a{background:rgba(217,146,31,.22);color:#d9921f}
+#snp .snp-pbar{height:5px;background:rgba(128,128,128,.3);margin-top:5px;max-width:520px}#snp .snp-pbar i{display:block;height:100%;background:#4a90e2}
+#snp .snp-cl{grid-template-columns:22px minmax(0,1fr) 110px 90px;padding-left:46px}
+#snp .snp-ov{grid-template-columns:22px minmax(0,1fr) 110px auto;padding-left:46px}
+#snp .snp-ctl input.snp-wide{width:min(100%,340px)!important;margin:0}
+#snp .snp-ctl select{margin:0;min-width:0}
+#snp code.snp-key{display:block;font-size:11px;overflow-wrap:anywhere;opacity:.8;padding:4px 0}
+#snp .snp-pw{font-family:monospace;font-size:14px;letter-spacing:.04em}
+@media (max-width:760px){#snp .snp-cl,#snp .snp-ov{grid-template-columns:22px minmax(0,1fr);padding-left:12px}#snp .snp-cl>:nth-child(n+3),#snp .snp-ov>:nth-child(n+3){grid-column:2}#snp .snp-snap,#snp .snp-ct{grid-template-columns:22px minmax(0,1fr);padding-left:12px}#snp .snp-snap>:nth-child(n+3),#snp .snp-ct>:nth-child(n+3){grid-column:2}#snp .snp-set{grid-template-columns:1fr}}
 </style>
 <div id="snp">
 <p class="snp-sub"><?=$snp_t('snp.intro')?></p>
@@ -65,6 +77,9 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 <div class="mt-band"><span><?=$snp_t('snp.h.datasets')?></span><b id="snp-dband"></b></div>
 <div class="mt-box" id="snp-ds"></div>
 
+<div class="mt-band"><span><?=$snp_t('cp.h')?></span><b id="snp-cband"></b></div>
+<div class="mt-box" id="snp-cp"></div>
+
 <div class="mt-band"><span><?=$snp_t('snp.h.settings')?></span><b><?=$snp_t('snp.h.settings_sub')?></b></div>
 <div class="mt-box" id="snp-set"></div>
 </div>
@@ -73,7 +88,7 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 <script>
 $(function () {
   var T = function (k, v) { return MTL.t('snp', k, v); };
-  var URL = '/plugins/sysbox/snap.php', D = null, OPEN = {}, CTRS = {}, pollT = null, CONF = null;
+  var URL = '/plugins/sysbox/snap.php', D = null, OPEN = {}, CTRS = {}, pollT = null, CONF = null, SEL = {}, OV = null, OVERR = '';
   function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
@@ -83,7 +98,8 @@ $(function () {
   function grp(g, inner) { return '<div class="snp-grp" data-g="' + esc(g) + '"' + (OPEN[g] ? '' : ' hidden') + '>' + inner + '</div>'; }
   $(document).on('click', '#snp .snp-gbar', function () {
     var g = String($(this).data('g')); OPEN[g] = !OPEN[g]; $(this).find('.pm').first().html(OPEN[g] ? '&minus;' : '+'); $('#snp .snp-grp').filter(function () { return String($(this).data('g')) === g; }).prop('hidden', !OPEN[g]);
-    var m = /^rs\|(.+)\|(.+)$/.exec(g); if (OPEN[g] && m && !CTRS[m[1]]) { loadCtrs(m[1]); }
+    var m = /^rs\|(.+)\|(.+)$/.exec(g) || /^cr\|(.+)$/.exec(g); if (OPEN[g] && m && !CTRS[m[1]]) { loadCtrs(m[1]); }
+    if (OPEN[g] && g === 'ov') { loadOv(); }
   });
 
   // ---- Activity: a running restore, the last line of the log, the log folded
@@ -93,10 +109,16 @@ $(function () {
       var cls = run.state === 'running' ? 's-blue' : run.state === 'done' ? 's-green' : 's-red';
       h += '<div class="snp-row snp-log1 ' + cls + '"><span class="snp-ico">' + (run.state === 'running' ? '&#8635;' : run.state === 'done' ? '&#10003;' : '!') + '</span><span><b>' + (run.state === 'running' ? esc(T('snp.restoring', { c: run.ctr, s: run.snap })) : esc(run.msg)) + '</b><small>' + esc((run.log || []).slice(-3).join(' · ')) + '</small></span></div>';
     }
+    var j = (r.copies && r.copies.job) || {state: 'idle'};
+    if (j.state && j.state !== 'idle' && (j.state === 'running' || Date.now() / 1000 - (j.finished || 0) < 3600)) {
+      var jc = j.state === 'running' ? 's-blue' : j.state === 'done' ? 's-green' : 's-red';
+      h += '<div class="snp-row snp-log1 ' + jc + '"><span class="snp-ico">' + (j.state === 'running' ? '&#8635;' : j.state === 'done' ? '&#10003;' : '!') + '</span><span><b>' + esc(j.state === 'running' ? (j.title || '') + ' · ' + (+j.pct || 0) + ' %' : j.msg) + '</b>' +
+        (j.state === 'running' ? '<div class="snp-pbar"><i style="width:' + (+j.pct || 0) + '%"></i></div>' : '<small>' + esc(j.title || '') + '</small>') + '</span></div>';
+    }
     if (last) { var bad = / FAILED|could not| full | not found/.test(last); h += '<div class="snp-row snp-log1 ' + (bad ? 's-amber' : 's-green') + '"><span class="snp-ico ' + (bad ? 'snp-am">!' : 'snp-ok">&#10003;') + '</span><span>' + esc(last) + '</span></div>'; }
     if (log.length > 1) { h += gbar('log', 's-grey', esc(T('snp.earlier')), esc(T('snp.lines', { n: log.length - 1 }))) + grp('log', '<div class="snp-log">' + esc(log.slice(0, -1).reverse().join('\n')) + '</div>'); }
     $('#snp-act').html(h || '<div class="snp-status snp-mut">' + esc(T('snp.nothing', { t: ('0' + r.cfg.hour).slice(-2) + ':' + ('0' + r.cfg.min).slice(-2) })) + '</div>');
-    $('#snp-aband').text(run.state === 'running' ? T('snp.ab_restoring', { c: run.ctr }) : last ? T('snp.ab_last', { t: last.slice(0, 16) }) : T('snp.ab_nothing'));
+    $('#snp-aband').text(run.state === 'running' ? T('snp.ab_restoring', { c: run.ctr }) : j.state === 'running' ? T('cp.ab_job') : last ? T('snp.ab_last', { t: last.slice(0, 16) }) : T('snp.ab_nothing'));
   }
 
   // ---- the datasets and their snapshots
@@ -119,6 +141,66 @@ $(function () {
     $('#snp-ds').html(h || '<div class="snp-status snp-mut">' + esc(T('snp.no_ds')) + '</div>');
     $('#snp-dband').text(free);
   }
+  // ---- copies (item 105): the array copy, the off-site copy, a restore from either
+  function days(t) { return t ? Math.floor((Date.now() / 1000 - t) / 86400) : -1; }
+  var DAYS = ['cp.d1', 'cp.d2', 'cp.d3', 'cp.d4', 'cp.d5', 'cp.d6', 'cp.d7'];
+  function dayName(n) { return T(DAYS[(+n || 7) - 1]); }
+  function drawCp(r) {
+    var C = r.copies, c = r.cfg, h = '', off = c.off !== 'off', band = [];
+    h += '<div class="snp-lead"><p>' + esc(T('cp.lead')) + '</p><span style="display:flex;gap:6px;flex-wrap:wrap"><input type="button" id="cp-now" value="' + esc(T('cp.copy_now')) + '">' + (off ? '<input type="button" id="cp-off" class="snp-ghost" value="' + esc(T('cp.off_now')) + '">' : '') + '</span></div>';
+    $.each(C.ds, function (i, d) {
+      var nw = d.copies[0], age = days(C.ok), cls = 's-grey', ico = '&ndash;', pill = '', sub;
+      if (!+c.copy) { sub = T('cp.arr_off'); }
+      else if (d.err) { cls = 's-red'; ico = '!'; sub = d.err; pill = '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>'; }
+      else if (C.err && (!nw || age > 0)) { cls = 's-red'; ico = '!'; sub = C.err; pill = '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>'; }
+      else if (!nw) { sub = T('cp.arr_none'); }
+      else { var st = +c.stale > 0 && age > +c.stale; cls = st ? 's-amber' : 's-green'; ico = st ? '!' : '&#10003;'; pill = st ? '<span class="snp-pill a">' + esc(T('cp.st_old', { n: age })) + '</span>' : '<span class="snp-pill">' + esc(T('cp.st_ok')) + '</span>'; sub = T('cp.arr_sub', { n: d.copies.length, d: nw.date, s: fb(d.free), disk: d.disk }); }
+      h += '<div class="snp-row snp-cpr ' + cls + '"><span class="snp-ico">' + ico + '</span><div><b>' + esc(T('cp.arr_t')) + '</b> <span class="snp-mut">' + esc(d.name) + '</span>' + (d.disk ? '<span class="snp-chip">' + esc(d.disk) + '</span>' : '') + (d.dir ? '<span class="snp-path">' + esc(d.dir) + '/</span>' : '') + '<small>' + esc(sub) + '</small></div><span>' + pill + '</span></div>';
+      if (+c.copy) { band.push(T('cp.band_arr', { n: d.copies.length })); }
+    });
+    if (off) {
+      var oa = days(C.off_ok), ost = C.off_err ? 'r' : (oa < 0 || oa > 7 + (+c.stale || 0)) ? 'a' : '';
+      var last = []; $.each(C.off_last || {}, function (k, v) { last.push(T('cp.off_sent', { s: fb(v.sent) })); });
+      h += '<div class="snp-row snp-cpr ' + (ost === 'r' ? 's-red' : ost === 'a' ? 's-amber' : 's-purple') + '"><span class="snp-ico">' + (ost ? '!' : '&#8679;') + '</span><div><b>' + esc(T('cp.off_t')) + '</b><span class="snp-chip">restic</span><span class="snp-path">' + esc(C.off_label) + '</span><small>' +
+        esc(T('cp.off_sub', { w: dayName(c.off_day) + ' ' + ('0' + c.off_hour).slice(-2) + ':' + ('0' + c.off_min).slice(-2), k: c.off_keep, t: C.off_ok ? ago(C.off_ok) : T('cp.never') }) + (last.length ? ' · ' + last.join(' · ') : '')) + (C.off_err ? '<br><span class="snp-er">' + esc(C.off_err) + '</span>' : '') + '</small></div><span>' +
+        (ost === 'r' ? '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>' : ost === 'a' ? '<span class="snp-pill a">' + esc(C.off_ok ? T('cp.st_old', { n: oa }) : T('cp.never')) + '</span>' : '<span class="snp-pill">' + esc(T('cp.st_ok')) + '</span>') + '</span></div>';
+      band.push(T('cp.band_off', { t: C.off_ok ? ago(C.off_ok) : T('cp.never') }));
+    } else { h += '<div class="snp-row snp-cpr s-grey"><span class="snp-ico">&ndash;</span><div><b>' + esc(T('cp.off_t')) + '</b><small>' + esc(T('cp.off_off')) + '</small></div><span></span></div>'; }
+    $.each(C.ds, function (i, d) {
+      var g = 'cl|' + d.name, rows = '';
+      $.each(d.copies, function (k, x) { rows += '<div class="snp-row snp-cl s-green"><span class="snp-ico snp-ok">A</span><div><b>' + esc(x.date) + '</b><span class="snp-path">' + esc(d.dir + '/' + x.date) + '/</span></div><span class="snp-num">' + (x.new != null ? esc(T('cp.new', { s: fb(x.new) })) : '') + '</span><span class="snp-num">' + (x.secs != null ? esc(T('cp.files', { n: x.files })) : '') + '</span></div>'; });
+      if (d.copies.length) { h += gbar(g, 's-grey', esc(T('cp.list', { ds: d.name })), esc(d.copies.length)) + grp(g, rows); }
+      // restore from a copy: pick the source, then the container
+      var src = []; $.each(d.copies, function (k, x) { src.push(['copy:' + x.date, T('cp.src_copy', { d: x.date })]); }); $.each(d.fetched, function (k, n) { src.push(['off:' + n, T('cp.src_off', { n: n })]); });
+      if (!src.length) { return; }
+      var ref = SEL[d.name]; if (!ref || !src.some(function (x) { return x[0] === ref; })) { ref = SEL[d.name] = src[0][0]; }
+      var opt = $.map(src, function (x) { return '<option value="' + esc(x[0]) + '"' + (x[0] === ref ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join('');
+      var rg = 'cr|' + d.name, fd = '';
+      $.each(d.fetched, function (k, n) { fd += '<div class="snp-row snp-ov s-purple"><span class="snp-ico">&#8681;</span><div><b>' + esc(n) + '</b><span class="snp-path">' + esc(d.dir.replace(/\/[^\/]+$/, '') + '/restore/' + d.name.replace(/\//g, '_') + '/' + n) + '/</span></div><span class="snp-num">' + esc(T('cp.fetched')) + '</span><span><input type="button" class="cp-fdel snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(n) + '" value="' + esc(T('snp.delete')) + '"></span></div>'; });
+      h += gbar(rg, 's-grey', esc(T('cp.restore_bar', { ds: d.name })), esc(src.length)) + grp(rg, '<div class="snp-status" style="padding-left:46px"><label>' + esc(T('cp.from')) + ' <select class="cp-src" data-ds="' + esc(d.name) + '">' + opt + '</select></label></div>' + fd + ctrRows(d.name, ref));
+    });
+    if (off) {
+      var ov = '';
+      if (OVERR) { ov = '<div class="snp-status snp-er" style="padding-left:46px">' + esc(OVERR) + '</div>'; }
+      else if (!OV) { ov = '<div class="snp-status snp-mut" style="padding-left:46px">' + esc(T('cp.ov_loading')) + '</div>'; }
+      else if (!OV.length) { ov = '<div class="snp-status snp-mut" style="padding-left:46px">' + esc(T('cp.ov_none')) + '</div>'; }
+      else { ov = '<div class="snp-status snp-mut" style="padding-left:46px;font-size:12px">' + esc(T('cp.ov_hint')) + '</div>'; $.each(OV, function (k, v) { ov += '<div class="snp-row snp-ov s-grey"><span class="snp-ico">&#8679;</span><div><b>' + esc(new Date(v.time * 1000).toISOString().slice(0, 10)) + '</b> <span class="snp-mut">' + esc(v.ds) + ' · ' + esc(v.id) + '</span></div><span class="snp-num">' + fb(v.size) + '</span><span><input type="button" class="cp-fetch snp-sm" data-id="' + esc(v.id) + '" value="' + esc(T('cp.download')) + '"></span></div>'; }); }
+      h += gbar('ov', 's-purple', esc(T('cp.ov_bar')), OV ? esc(OV.length) : '') + grp('ov', ov);
+    }
+    $('#snp-cp').html(h);
+    $('#snp-cband').text(band.join(' · ') || T('cp.band_none'));
+  }
+  function loadOv() { OV = null; OVERR = ''; if (D) { drawCp(D); } api('off_list').done(function (r) { if (r.ok) { OV = r.list; } else { OVERR = r.error; } if (D) { drawCp(D); } }).fail(function (x) { OVERR = err(x); if (D) { drawCp(D); } }); }
+  $(document).on('change', '#snp .cp-src', function () { SEL[$(this).data('ds')] = $(this).val(); drawCp(D); });
+  $(document).on('click', '#cp-now', function () { var $b = $(this).prop('disabled', true); api('copy_now').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); });
+  $(document).on('click', '#cp-off', function () { var $b = $(this).prop('disabled', true); api('off_now').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); });
+  $(document).on('click', '#snp .cp-fetch', function () { var $b = $(this).prop('disabled', true); api('off_fetch', {id: $b.data('id')}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); });
+  $(document).on('click', '#snp .cp-fdel', function () {
+    var $b = $(this), n = String($b.data('name'));
+    if (!window.confirm(T('cp.fdel_confirm', { n: n }))) return;
+    $b.prop('disabled', true); api('fetched_del', {ds: $b.data('ds'), name: n}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
+  });
+
   function ctrRows(ds, snap) {
     var L = CTRS[ds];
     if (!L) { return '<div class="snp-status snp-mut" style="padding-left:46px">' + esc(T('snp.loading_ctr')) + '</div>'; }
@@ -158,24 +240,47 @@ $(function () {
   });
 
   // ---- settings
+  function offRows() { var m = $('#cps-off').val(); $('#snp .cps-sftp').toggle(m === 'sftp'); $('#snp .cps-s3').toggle(m === 's3'); $('#snp .cps-any').toggle(m !== 'off'); }
+  $(document).on('change', '#cps-off', offRows);
+  $(document).on('click', '#cps-pw', function () { api('off_pw').done(function (r) { $('#cps-pwv').text(r.ok ? r.pw : r.error); }); });
+  $(document).on('click', '#cps-test', function () {
+    var $m = $('#cps-tmsg').attr('class', '').text(T('cps.testing')), $b = $(this).prop('disabled', true);
+    api('off_test').done(function (r) { $m.attr('class', r.ok ? 'snp-ok' : 'snp-er').text(r.ok ? r.msg : r.error); }).fail(function (x) { $m.attr('class', 'snp-er').text(err(x)); }).always(function () { $b.prop('disabled', false); });
+  });
   function drawSet(r) {
-    var c = r.cfg, ds = '';
+    var c = r.cfg, C = r.copies, ds = '';
     $.each(r.datasets, function (i, d) { ds += '<label><input type="checkbox" class="snp-dsel" value="' + esc(d.name) + '"' + (c.datasets.indexOf(d.name) >= 0 ? ' checked' : '') + '> ' + esc(d.name) + '</label>'; });
     $('#snp-set').html(
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.daily')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="snp-on"' + (+c.on ? ' checked' : '') + '> ' + esc(T('snp.s.on')) + '</label></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.h.datasets')) + '</span><div class="snp-ctl">' + (ds || '<span class="snp-mut">' + esc(T('snp.s.none')) + '</span>') + '<span class="snp-hint">' + esc(T('snp.s.ds_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.time')) + '</span><div class="snp-ctl">' + esc(T('snp.s.every')) + ' <input type="number" id="snp-h" min="0" max="23" value="' + c.hour + '"> : <input type="number" id="snp-m" min="0" max="59" value="' + c.min + '"> ' + esc(T('snp.s.keep')) + ' <input type="number" id="snp-k" min="1" max="90" value="' + c.keep + '"> ' + esc(T('snp.s.days_stop')) + ' <input type="number" id="snp-f" min="10" max="99" value="' + c.maxfill + '"> ' + esc(T('snp.s.pool_fill')) + '<span class="snp-hint">' + esc(T('snp.s.time_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">Discord</span><div class="snp-ctl"><label><input type="checkbox" id="snp-dc"' + (+c.discord ? ' checked' : '') + '> ' + esc(T('snp.s.dc')) + '</label></div></div>' +
+      // copies (item 105)
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.copy')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="cps-copy"' + (+c.copy ? ' checked' : '') + '> ' + esc(T('cps.copy_on')) + '</label></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.dir')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-dir" value="' + esc(c.copy_dir) + '"><span class="snp-hint">' + esc(T('cps.dir_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.keep')) + '</span><div class="snp-ctl"><input type="number" id="cps-kd" min="1" max="90" value="' + c.keep_d + '"> ' + esc(T('cps.daily')) + ' <input type="number" id="cps-kw" min="0" max="104" value="' + c.keep_w + '"> ' + esc(T('cps.weekly')) + '<span class="snp-hint">' + esc(T('cps.keep_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.skip')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-skip" value="' + esc(c.skip) + '"><span class="snp-hint">' + esc(T('cps.skip_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.off')) + '</span><div class="snp-ctl"><select id="cps-off">' + $.map([['off', 'cps.off_off'], ['sftp', 'cps.off_sftp'], ['s3', 'cps.off_s3']], function (o) { return '<option value="' + o[0] + '"' + (c.off === o[0] ? ' selected' : '') + '>' + esc(T(o[1])) + '</option>'; }).join('') + '</select><span class="snp-hint">' + esc(T('cps.off_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set cps-sftp"><span class="lb">' + esc(T('cps.sftp')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-sftp" placeholder="backup@192.168.50.40:/backup/jellynas" value="' + esc(c.off_sftp) + '"> ' + esc(T('cps.port')) + ' <input type="number" id="cps-port" min="1" max="65535" value="' + c.off_port + '"><span class="snp-hint">' + esc(T('cps.sftp_hint')) + '</span>' + (C.pub ? '<code class="snp-key">' + esc(C.pub) + '</code>' : '') + '</div></div>' +
+      '<div class="snp-row snp-set cps-s3"><span class="lb">' + esc(T('cps.s3')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-s3" placeholder="https://s3.eu-central-003.backblazeb2.com/bucket/jellynas" value="' + esc(c.off_s3) + '"><input type="text" id="cps-s3id" placeholder="' + esc(T(C.s3_set ? 'cps.s3_saved' : 'cps.s3_id')) + '" autocomplete="off"><input type="password" id="cps-s3key" placeholder="' + esc(T(C.s3_set ? 'cps.s3_saved' : 'cps.s3_key')) + '" autocomplete="new-password"><span class="snp-hint">' + esc(T('cps.s3_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.when')) + '</span><div class="snp-ctl"><select id="cps-day">' + $.map([1, 2, 3, 4, 5, 6, 7], function (n) { return '<option value="' + n + '"' + (+c.off_day === n ? ' selected' : '') + '>' + esc(dayName(n)) + '</option>'; }).join('') + '</select> <input type="number" id="cps-h" min="0" max="23" value="' + c.off_hour + '"> : <input type="number" id="cps-m" min="0" max="59" value="' + c.off_min + '"> ' + esc(T('cps.keep_l')) + ' <input type="number" id="cps-ok" min="1" max="520" value="' + c.off_keep + '"> ' + esc(T('cps.weeks')) + '</div></div>' +
+      '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.pw')) + '</span><div class="snp-ctl"><input type="button" id="cps-pw" class="snp-ghost snp-sm" value="' + esc(T('cps.pw_show')) + '"' + (C.has_pw ? '' : ' disabled') + '><span id="cps-pwv" class="snp-pw"></span><span class="snp-hint">' + esc(T(C.has_pw ? 'cps.pw_hint' : 'cps.pw_none')) + '</span></div></div>' +
+      '<div class="snp-row snp-set cps-any"><span class="lb"></span><div class="snp-ctl"><input type="button" id="cps-test" class="snp-sm" value="' + esc(T('cps.test')) + '"><span id="cps-tmsg"></span><span class="snp-hint">' + esc(T('cps.test_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.stale')) + '</span><div class="snp-ctl"><input type="number" id="cps-stale" min="0" max="30" value="' + c.stale + '"> ' + esc(T('cps.days')) + '<span class="snp-hint">' + esc(T('cps.stale_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span></span><div class="snp-ctl"><input type="button" id="snp-save" value="' + esc(T('snp.save')) + '"><span id="snp-smsg"></span></div></div>');
+    offRows();
   }
   $(document).on('click', '#snp-save', function () {
     var d = []; $('.snp-dsel:checked').each(function () { d.push($(this).val()); });
     var $m = $('#snp-smsg').attr('class', '').text(T('snp.saving'));
-    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0})
-      .done(function (r) { if (r.ok) { $m.attr('class', 'snp-ok').text(T('snp.saved')); load(); } else { $m.attr('class', 'snp-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'snp-er').text(err(x)); });
+    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0,
+      copy: $('#cps-copy').prop('checked') ? 1 : 0, copy_dir: $('#cps-dir').val(), keep_d: $('#cps-kd').val(), keep_w: $('#cps-kw').val(), skip: $('#cps-skip').val(), stale: $('#cps-stale').val(),
+      off: $('#cps-off').val(), off_sftp: $('#cps-sftp').val(), off_port: $('#cps-port').val(), off_s3: $('#cps-s3').val(), s3_id: $('#cps-s3id').val(), s3_key: $('#cps-s3key').val(),
+      off_day: $('#cps-day').val(), off_hour: $('#cps-h').val(), off_min: $('#cps-m').val(), off_keep: $('#cps-ok').val()})
+      .done(function (r) { if (r.ok) { $m.attr('class', 'snp-ok').text(T('snp.saved')); $('#cps-s3id,#cps-s3key').val(''); CONF = null; OV = null; load(); } else { $m.attr('class', 'snp-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'snp-er').text(err(x)); });
   });
 
-  function draw(r) { D = r; drawAct(r); drawDs(r); if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); } clearTimeout(pollT); if (r.running || (r.run && r.run.state === 'running')) { pollT = setTimeout(load, 2500); } }
+  function draw(r) { D = r; drawAct(r); drawDs(r); drawCp(r); if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); } clearTimeout(pollT); if (r.running || (r.run && r.run.state === 'running') || (r.copies && r.copies.job && r.copies.job.state === 'running')) { pollT = setTimeout(load, 2500); } }
   function load() { api('state').done(draw).fail(function (x) { $('#snp-act').html('<div class="snp-status snp-er">' + esc(err(x)) + '</div>'); }); }
   load();
 });

@@ -11,7 +11,7 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/lang.php','common/lang.php','SHARED LANGUAGE SETTING'),('&plugdir;/lang_block.php','common/lang_block.php','LANGUAGE BLOCK OF THE SETTINGS PAGE'),('&plugdir;/lang_save.php','common/lang_save.php','LANGUAGE SAVE'),('&plugdir;/i18n.php','common/i18n.php','DICTIONARIES'),('&plugdir;/lang/en.json','sysbox/lang/en.json','ENGLISH DICTIONARY (the source of translations)'),('&plugdir;/lang/hu.json','sysbox/lang/hu.json','HUNGARIAN DICTIONARY'),
  ('&plugdir;/SysboxShutdown.page','sysbox/SysboxShutdown.page','SAFE SHUTDOWN PAGE'),('&plugdir;/shutdown_lib.php','sysbox/shutdown_lib.php','SAFE SHUTDOWN LIBRARY'),('&plugdir;/shutdown.php','sysbox/shutdown.php','SAFE SHUTDOWN ENDPOINT'),('&plugdir;/shutdown_run.php','sysbox/shutdown_run.php','SAFE SHUTDOWN WORKER'),
  ('&plugdir;/ClaudeButton.page','sysbox/ClaudeButton.page','CLAUDE HEADER BUTTON'),('&plugdir;/claude.php','sysbox/claude.php','CLAUDE BUTTON ENDPOINT'),
- ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
+ ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),('&plugdir;/copy_lib.php','sysbox/copy_lib.php','SNAPSHOTS COPIES LIBRARY'),
  ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
  ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),('&plugdir;/brief_lib.php','sysbox/brief_lib.php','CLAUDE GUARD MORNING BRIEF'),('&plugdir;/sugg_lib.php','sysbox/sugg_lib.php','CLAUDE GUARD SUGGESTIONS'),
  ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),('&plugdir;/sp_tick.php','sysbox/sp_tick.php','STREAM PRIORITY CHECK'),('&plugdir;/ups_lib.php','sysbox/ups_lib.php','POWER OUTAGE LIBRARY'),('&plugdir;/ups_tick.php','sysbox/ups_tick.php','POWER OUTAGE CHECK'),
@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.31">
+<!ENTITY version   "2026.10.32">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,11 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.32
+- Snapshots: copies. After the daily snapshot the containers' data is copied to a share on the array (one browsable folder per day, unchanged files hardlinked, so a copy only takes the space of what changed); keeps 14 daily and 8 weekly copies by default and removes only the date folders it made; names to skip (Docker image, Jellyfin transcodes and cache); Copy now
+- Snapshots: an encrypted copy off the server once a week (restic, to another computer over SFTP or to S3 storage such as Backblaze B2); the password is made once and shown on a click so it can be written down; Test and set up makes the repository; only the changes are sent; keeps a set number of weekly versions
+- Snapshots: restore a container from an array copy or from a downloaded off-site version, the same way as from a snapshot (dry run, safety snapshot, only that container stopped); the skipped names are left as they are
+- Snapshots: Activity shows a running copy with its progress; Discord when a copy fails or the newest one is older than a set number of days
 ###2026.10.31
 - Power outage on Discord: when the UPS runs on battery for a minute a message goes out (also at night) with battery, runtime and load, updated every minute
 - Shutdown from Discord: the owner's stop sign reaction under it asks for a check mark, then Safe shutdown runs (qBittorrent first) and the server powers off

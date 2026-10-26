@@ -4787,5 +4787,443 @@
  "ups.d.back_lb": {
   "text": "The NUT plugin had already started its shutdown: it goes on, the server powers off.",
   "note": "Discord text."
+ },
+ "cp.h": {
+  "text": "Copies",
+  "note": "band title (upper case on screen): copies of the daily snapshot on an array disk and off the server."
+ },
+ "cp.lead": {
+  "text": "Every night after the snapshot, the snapshot is copied to an array disk. If the cache SSD fails, the containers' data is there. Every copy is a full folder you can browse; unchanged files are hardlinks, so a copy only takes the space of what changed. Once a week an encrypted copy can go off the server too (restic).",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: lead line."
+ },
+ "cp.copy_now": {
+  "text": "Copy now",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: button: copies the newest snapshot to the array now."
+ },
+ "cp.off_now": {
+  "text": "Off-site now",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: button: makes the off-site (restic) copy now."
+ },
+ "cp.arr_t": {
+  "text": "On the array",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row title: the copies on an array disk."
+ },
+ "cp.arr_sub": {
+  "one": "{n} copy · newest {d} · {s} free on {disk}",
+  "other": "{n} copies · newest {d} · {s} free on {disk}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail. {d} a date, {s} a size, {disk} an array disk name like disk2."
+ },
+ "cp.arr_off": {
+  "text": "Copy to the array is off. Turn it on in the settings below.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail when the copy is off."
+ },
+ "cp.arr_none": {
+  "text": "No copy yet. The first one is made after the next daily snapshot, or with Copy now.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail before the first copy."
+ },
+ "cp.st_ok": {
+  "text": "OK",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: state chip."
+ },
+ "cp.st_fail": {
+  "text": "failed",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: state chip."
+ },
+ "cp.st_old": {
+  "one": "{n} day old",
+  "other": "{n} days old",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: state chip: the newest copy is older than the set days."
+ },
+ "cp.never": {
+  "text": "never",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: no off-site copy yet."
+ },
+ "cp.off_t": {
+  "text": "Off-site, encrypted",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row title: the restic copy off the server."
+ },
+ "cp.off_sub": {
+  "text": "weekly, {w} · keeps {k} weekly versions · last {t}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail. {w} a day and time like 'Sunday 04:30', {t} like '2 days ago' or 'never'."
+ },
+ "cp.off_sent": {
+  "text": "{s} sent",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: how much the last off-site copy sent (after deduplication and compression)."
+ },
+ "cp.off_off": {
+  "text": "Off. Choose SFTP or S3 in the settings below.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail when the off-site copy is off."
+ },
+ "cp.band_arr": {
+  "one": "array: {n} copy",
+  "other": "array: {n} copies",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: band text on the right."
+ },
+ "cp.band_off": {
+  "text": "off-site: {t}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: band text on the right, {t} like '2 days ago'."
+ },
+ "cp.band_none": {
+  "text": "off",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: band text when nothing is copied."
+ },
+ "cp.ab_job": {
+  "text": "copy running",
+  "note": "Snapshots page, Activity band text on the right while a copy, off-site copy or download runs."
+ },
+ "cp.list": {
+  "text": "Copies of {ds} on the array",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: foldable bar title; {ds} a dataset like cache/docker."
+ },
+ "cp.new": {
+  "text": "{s} new",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: size the copy added."
+ },
+ "cp.files": {
+  "one": "{n} file changed",
+  "other": "{n} files changed",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: files the copy wrote."
+ },
+ "cp.restore_bar": {
+  "text": "Restore a container of {ds} from a copy",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: foldable bar title."
+ },
+ "cp.from": {
+  "text": "From",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: label of the source list (a copy or an off-site download)."
+ },
+ "cp.src_copy": {
+  "text": "array copy {d}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: source list item, {d} a date."
+ },
+ "cp.src_off": {
+  "text": "off-site download {n}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: source list item, {n} like 2026-10-19-1a2b3c4d."
+ },
+ "cp.fetched": {
+  "text": "downloaded",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: an off-site version downloaded to the array, waiting for a restore."
+ },
+ "cp.fdel_confirm": {
+  "text": "Delete the downloaded off-site version {n} from the array? The off-site copy itself stays.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: confirm text."
+ },
+ "cp.ov_bar": {
+  "text": "Off-site versions",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: foldable bar title: the versions in the restic repository."
+ },
+ "cp.ov_loading": {
+  "text": "Asking the off-site storage...",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: while the list loads."
+ },
+ "cp.ov_none": {
+  "text": "No off-site version yet.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: empty list."
+ },
+ "cp.ov_hint": {
+  "text": "Download puts a version next to the array copies (folder restore); then it can be restored like an array copy, from the bar above.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: hint above the versions."
+ },
+ "cp.download": {
+  "text": "Download",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: button: downloads one off-site version to the array."
+ },
+ "cp.d1": {
+  "text": "Monday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d2": {
+  "text": "Tuesday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d3": {
+  "text": "Wednesday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d4": {
+  "text": "Thursday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d5": {
+  "text": "Friday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d6": {
+  "text": "Saturday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d7": {
+  "text": "Sunday",
+  "note": "day name (off-site copy day)."
+ },
+ "cps.copy": {
+  "text": "Copy to the array",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.copy_on": {
+  "text": "after every daily snapshot",
+  "note": "Snapshots page, Settings band, copy settings: checkbox."
+ },
+ "cps.dir": {
+  "text": "Target folder",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.dir_hint": {
+  "text": "A folder in a share that is only on the array (Primary storage: Array), for example /mnt/user/backup/sysbox. Make the share on the Shares page first; Sysbox does not make shares. A share on a pool is refused.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.keep": {
+  "text": "Keep",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.daily": {
+  "text": "daily",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.weekly": {
+  "text": "weekly",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.keep_hint": {
+  "text": "Older copies are removed by themselves; only the date folders Sysbox made in the target folder.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.skip": {
+  "text": "Skip",
+  "note": "Snapshots page, Settings band, copy settings: label: names of files and folders left out of the copies."
+ },
+ "cps.skip_hint": {
+  "text": "Names left out of every copy, comma separated (* allowed). They come back by themselves (the Docker image, Jellyfin transcodes and cache). A restore from a copy leaves them as they are.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.off": {
+  "text": "Off-site copy",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.off_off": {
+  "text": "off",
+  "note": "Snapshots page, Settings band, copy settings: option."
+ },
+ "cps.off_sftp": {
+  "text": "SFTP (another computer)",
+  "note": "Snapshots page, Settings band, copy settings: option."
+ },
+ "cps.off_s3": {
+  "text": "S3 (Backblaze B2 and others)",
+  "note": "Snapshots page, Settings band, copy settings: option."
+ },
+ "cps.off_hint": {
+  "text": "Weekly, encrypted with restic: the storage cannot read it. Only the changes are sent.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.sftp": {
+  "text": "SFTP target",
+  "note": "Snapshots page, Settings band, copy settings: label: user@host:/path."
+ },
+ "cps.port": {
+  "text": "port",
+  "note": "Snapshots page, Settings band, copy settings: after the SFTP target."
+ },
+ "cps.sftp_hint": {
+  "text": "user@host:/path. Add this public key to that user's ~/.ssh/authorized_keys on the other computer, then Test and set up.",
+  "note": "Snapshots page, Settings band, copy settings: hint above the public key."
+ },
+ "cps.s3": {
+  "text": "S3 address and key",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.s3_id": {
+  "text": "Key ID",
+  "note": "Snapshots page, Settings band, copy settings: placeholder."
+ },
+ "cps.s3_key": {
+  "text": "Application key",
+  "note": "Snapshots page, Settings band, copy settings: placeholder."
+ },
+ "cps.s3_saved": {
+  "text": "saved (empty keeps it)",
+  "note": "Snapshots page, Settings band, copy settings: placeholder when a key is saved."
+ },
+ "cps.s3_hint": {
+  "text": "Endpoint, bucket and folder, for example https://s3.eu-central-003.backblazeb2.com/my-bucket/jellynas. The key is saved on the flash and never shown again.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.when": {
+  "text": "When",
+  "note": "Snapshots page, Settings band, copy settings: label: day and time of the weekly off-site copy."
+ },
+ "cps.keep_l": {
+  "text": "keep",
+  "note": "Snapshots page, Settings band, copy settings: before the number of weekly versions."
+ },
+ "cps.weeks": {
+  "text": "weekly versions",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.pw": {
+  "text": "Password",
+  "note": "Snapshots page, Settings band, copy settings: label: the restic repository password."
+ },
+ "cps.pw_show": {
+  "text": "Show password",
+  "note": "Snapshots page, Settings band, copy settings: button."
+ },
+ "cps.pw_hint": {
+  "text": "Made once by Sysbox. Write it down and keep it outside the server: without it the off-site copy cannot be read.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.pw_none": {
+  "text": "Made when you save an off-site setting.",
+  "note": "Snapshots page, Settings band, copy settings: hint before a password exists."
+ },
+ "cps.test": {
+  "text": "Test and set up",
+  "note": "Snapshots page, Settings band, copy settings: button: reaches the storage and makes the repository there when it does not exist."
+ },
+ "cps.test_hint": {
+  "text": "Save first. The first test downloads restic (about 10 MB, checked) and makes the repository.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.testing": {
+  "text": "Testing...",
+  "note": "Snapshots page, Settings band, copy settings: while the test runs."
+ },
+ "cps.stale": {
+  "text": "Discord when a copy is older than",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.days": {
+  "text": "days",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.stale_hint": {
+  "text": "0 = never. The off-site copy gets 7 more days (it is weekly). A failed copy always goes to Discord.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cpe.dir_bad": {
+  "text": "The target folder must be a folder of a share: /mnt/user/<share>/...",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.no_share": {
+  "text": "The share {s} does not exist. Make it on the Shares page (Primary storage: Array).",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.on_pool": {
+  "text": "The share {s} lives on a pool; the copies have to be on the array (Primary storage: Array, no mover to the pool).",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.no_disk": {
+  "text": "No array disk is mounted.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.restic_dl": {
+  "text": "restic could not be downloaded or its checksum is wrong.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.off_addr": {
+  "text": "The off-site address is not complete (SFTP: user@host:/path, S3: https://endpoint/bucket/folder).",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.ssh_key": {
+  "text": "The SSH key for SFTP could not be made.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.s3_keys": {
+  "text": "The S3 key ID and application key are missing or not valid.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.repo": {
+  "text": "The off-site storage answered with an error: {e}",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run). {e} is restic's own English text."
+ },
+ "cpe.no_version": {
+  "text": "No such off-site version.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpm.repo_ok": {
+  "text": "Reached; the repository is there.",
+  "note": "Snapshots page: result of Test and set up."
+ },
+ "cpm.repo_made": {
+  "text": "Reached; the repository was made. The first copy goes at the set time, or with Off-site now.",
+  "note": "Snapshots page: result of Test and set up."
+ },
+ "cpj.starting": {
+  "text": "Starting...",
+  "note": "Snapshots page, Activity: a copy job just started."
+ },
+ "cpj.copying": {
+  "text": "Copying {s} to {d}",
+  "note": "Snapshots page, Activity: running copy; {s} like cache/docker@auto-2026-10-26, {d} an array disk."
+ },
+ "cpj.off": {
+  "text": "Off-site copy of {s}",
+  "note": "Snapshots page, Activity: running off-site copy."
+ },
+ "cpj.fetch": {
+  "text": "Downloading the off-site version {v} of {ds}",
+  "note": "Snapshots page, Activity: running download."
+ },
+ "cpj.done_copy": {
+  "text": "Copy to the array finished",
+  "note": "Snapshots page, Activity: finished copy."
+ },
+ "cpj.done_off": {
+  "text": "Off-site copy finished",
+  "note": "Snapshots page, Activity: finished off-site copy."
+ },
+ "cpj.done_fetch": {
+  "text": "Off-site version downloaded; restore it from the Copies band",
+  "note": "Snapshots page, Activity: finished download."
+ },
+ "cpd.ds_nf": {
+  "text": "{ds}: the dataset was not found",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.no_src": {
+  "text": "{s}: the snapshot folder cannot be read",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.full": {
+  "text": "{d} has less than 20 GB free; no copy",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error; {d} an array disk."
+ },
+ "cpd.rsync": {
+  "text": "rsync stopped with code {c}: {e}",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error; {e} is rsync's English text."
+ },
+ "cpd.rename": {
+  "text": "The finished copy could not be named {d}",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.no_snap": {
+  "text": "{ds}: no snapshot to copy",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.off_fail": {
+  "text": "{ds}: the off-site copy failed: {e}",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error; {e} is restic's English text."
+ },
+ "cpd.dc_copy": {
+  "text": "Snapshots: the copy to the array failed",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): title."
+ },
+ "cpd.dc_off": {
+  "text": "Snapshots: the off-site copy failed",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): title."
+ },
+ "cpd.dc_stale": {
+  "text": "Snapshots: a copy is getting old",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): title."
+ },
+ "cpd.stale_copy": {
+  "one": "The newest array copy is {n} day old.",
+  "other": "The newest array copy is {n} days old.",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): line."
+ },
+ "cpd.stale_off": {
+  "one": "The newest off-site copy is {n} day old.",
+  "other": "The newest off-site copy is {n} days old.",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): line."
  }
 }

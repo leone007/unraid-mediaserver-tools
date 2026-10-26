@@ -3597,5 +3597,335 @@
  },
  "ups.d.back_lb": {
   "text": "A NUT már elindította a leállítást: ez folytatódik, a szerver kikapcsol."
+ },
+ "cp.h": {
+  "text": "Másolatok"
+ },
+ "cp.lead": {
+  "text": "Minden éjjel, a pillanatkép után a pillanatkép átmásolódik egy tömblemezre. Ha a cache SSD tönkremegy, a konténerek adatai ott megvannak. Minden másolat egy teljes, böngészhető mappa; a változatlan fájlok hardlinkek, így egy másolat csak a változás helyét foglalja. Hetente egy titkosított másolat a szerveren kívülre is mehet (restic)."
+ },
+ "cp.copy_now": {
+  "text": "Másolás most"
+ },
+ "cp.off_now": {
+  "text": "Gépen kívülre most"
+ },
+ "cp.arr_t": {
+  "text": "A tömbön"
+ },
+ "cp.arr_sub": {
+  "one": "{n} másolat · legújabb {d} · {s} szabad ezen: {disk}",
+  "other": "{n} másolat · legújabb {d} · {s} szabad ezen: {disk}"
+ },
+ "cp.arr_off": {
+  "text": "A tömbre másolás ki van kapcsolva. Lent, a beállításokban kapcsolható be."
+ },
+ "cp.arr_none": {
+  "text": "Még nincs másolat. Az első a következő napi pillanatkép után készül, vagy a Másolás most gombbal."
+ },
+ "cp.st_ok": {
+  "text": "OK"
+ },
+ "cp.st_fail": {
+  "text": "hiba"
+ },
+ "cp.st_old": {
+  "one": "{n} napos",
+  "other": "{n} napos"
+ },
+ "cp.never": {
+  "text": "még soha"
+ },
+ "cp.off_t": {
+  "text": "Gépen kívül, titkosítva"
+ },
+ "cp.off_sub": {
+  "text": "hetente, {w} · {k} heti változatot tart meg · utoljára {t}"
+ },
+ "cp.off_sent": {
+  "text": "{s} elküldve"
+ },
+ "cp.off_off": {
+  "text": "Kikapcsolva. Lent, a beállításokban választható SFTP vagy S3."
+ },
+ "cp.band_arr": {
+  "one": "tömb: {n} másolat",
+  "other": "tömb: {n} másolat"
+ },
+ "cp.band_off": {
+  "text": "gépen kívül: {t}"
+ },
+ "cp.band_none": {
+  "text": "kikapcsolva"
+ },
+ "cp.ab_job": {
+  "text": "másolás fut"
+ },
+ "cp.list": {
+  "text": "{ds} másolatai a tömbön"
+ },
+ "cp.new": {
+  "text": "{s} új"
+ },
+ "cp.files": {
+  "one": "{n} fájl változott",
+  "other": "{n} fájl változott"
+ },
+ "cp.restore_bar": {
+  "text": "{ds} egy konténerének visszaállítása másolatból"
+ },
+ "cp.from": {
+  "text": "Forrás:"
+ },
+ "cp.src_copy": {
+  "text": "tömbös másolat: {d}"
+ },
+ "cp.src_off": {
+  "text": "gépen kívüli letöltés: {n}"
+ },
+ "cp.fetched": {
+  "text": "letöltve"
+ },
+ "cp.fdel_confirm": {
+  "text": "Törlöd a tömbről a letöltött gépen kívüli változatot ({n})? Maga a gépen kívüli másolat megmarad."
+ },
+ "cp.ov_bar": {
+  "text": "Gépen kívüli változatok"
+ },
+ "cp.ov_loading": {
+  "text": "A gépen kívüli tároló lekérdezése…"
+ },
+ "cp.ov_none": {
+  "text": "Még nincs gépen kívüli változat."
+ },
+ "cp.ov_hint": {
+  "text": "A Letöltés a tömbös másolatok mellé teszi a változatot (restore mappa); utána a fenti sávból ugyanúgy visszaállítható, mint egy tömbös másolat."
+ },
+ "cp.download": {
+  "text": "Letöltés"
+ },
+ "cp.d1": {
+  "text": "hétfő"
+ },
+ "cp.d2": {
+  "text": "kedd"
+ },
+ "cp.d3": {
+  "text": "szerda"
+ },
+ "cp.d4": {
+  "text": "csütörtök"
+ },
+ "cp.d5": {
+  "text": "péntek"
+ },
+ "cp.d6": {
+  "text": "szombat"
+ },
+ "cp.d7": {
+  "text": "vasárnap"
+ },
+ "cps.copy": {
+  "text": "Másolat a tömbre"
+ },
+ "cps.copy_on": {
+  "text": "minden napi pillanatkép után"
+ },
+ "cps.dir": {
+  "text": "Célmappa"
+ },
+ "cps.dir_hint": {
+  "text": "Egy csak a tömbön lévő share mappája (Primary storage: Array), pl. /mnt/user/backup/sysbox. A share-t előbb a Shares oldalon hozd létre; a Sysbox nem készít share-t. Poolon lévő share-t nem fogad el."
+ },
+ "cps.keep": {
+  "text": "Megőrzés"
+ },
+ "cps.daily": {
+  "text": "napi"
+ },
+ "cps.weekly": {
+  "text": "heti"
+ },
+ "cps.keep_hint": {
+  "text": "A régebbi másolatok maguktól törlődnek; csak a Sysbox által a célmappában létrehozott dátumos mappák."
+ },
+ "cps.skip": {
+  "text": "Kihagyás"
+ },
+ "cps.skip_hint": {
+  "text": "Minden másolatból kimaradó nevek, vesszővel elválasztva (* használható). Ezek maguktól újra létrejönnek (Docker image, Jellyfin transcodes és cache). A másolatból visszaállítás ezeket érintetlenül hagyja."
+ },
+ "cps.off": {
+  "text": "Gépen kívüli másolat"
+ },
+ "cps.off_off": {
+  "text": "ki"
+ },
+ "cps.off_sftp": {
+  "text": "SFTP (másik gép)"
+ },
+ "cps.off_s3": {
+  "text": "S3 (Backblaze B2 és mások)"
+ },
+ "cps.off_hint": {
+  "text": "Hetente, resticcel titkosítva: a tároló nem tud beleolvasni. Csak a változás megy ki."
+ },
+ "cps.sftp": {
+  "text": "SFTP cél"
+ },
+ "cps.port": {
+  "text": "port"
+ },
+ "cps.sftp_hint": {
+  "text": "felhasználó@gép:/útvonal. Ezt a nyilvános kulcsot tedd a másik gépen a felhasználó ~/.ssh/authorized_keys fájljába, utána Teszt és beállítás."
+ },
+ "cps.s3": {
+  "text": "S3 cím és kulcs"
+ },
+ "cps.s3_id": {
+  "text": "Kulcsazonosító (Key ID)"
+ },
+ "cps.s3_key": {
+  "text": "Alkalmazáskulcs (Application key)"
+ },
+ "cps.s3_saved": {
+  "text": "elmentve (üresen marad)"
+ },
+ "cps.s3_hint": {
+  "text": "Végpont, bucket és mappa, pl. https://s3.eu-central-003.backblazeb2.com/sajat-bucket/jellynas. A kulcs a flashre mentődik, és többé nem látszik."
+ },
+ "cps.when": {
+  "text": "Mikor"
+ },
+ "cps.keep_l": {
+  "text": "megőriz"
+ },
+ "cps.weeks": {
+  "text": "heti változatot"
+ },
+ "cps.pw": {
+  "text": "Jelszó"
+ },
+ "cps.pw_show": {
+  "text": "Jelszó mutatása"
+ },
+ "cps.pw_hint": {
+  "text": "A Sysbox egyszer generálja. Írd le, és tartsd a szerveren kívül is: nélküle a gépen kívüli másolat nem olvasható."
+ },
+ "cps.pw_none": {
+  "text": "Egy gépen kívüli beállítás mentésekor jön létre."
+ },
+ "cps.test": {
+  "text": "Teszt és beállítás"
+ },
+ "cps.test_hint": {
+  "text": "Előbb ments. Az első teszt letölti a resticet (kb. 10 MB, ellenőrizve), és létrehozza a tárolót."
+ },
+ "cps.testing": {
+  "text": "Tesztelés…"
+ },
+ "cps.stale": {
+  "text": "Discord, ha egy másolat régebbi, mint"
+ },
+ "cps.days": {
+  "text": "nap"
+ },
+ "cps.stale_hint": {
+  "text": "0 = soha. A gépen kívüli másolat 7 nappal többet kap (heti). A sikertelen másolás mindig megy Discordra."
+ },
+ "cpe.dir_bad": {
+  "text": "A célmappa egy share mappája legyen: /mnt/user/<share>/..."
+ },
+ "cpe.no_share": {
+  "text": "A(z) {s} share nem létezik. Hozd létre a Shares oldalon (Primary storage: Array)."
+ },
+ "cpe.on_pool": {
+  "text": "A(z) {s} share poolon van; a másolatoknak a tömbön kell lenniük (Primary storage: Array, mover nélkül a pool felé)."
+ },
+ "cpe.no_disk": {
+  "text": "Nincs csatolt tömblemez."
+ },
+ "cpe.restic_dl": {
+  "text": "A restic nem tölthető le, vagy hibás az ellenőrzőösszege."
+ },
+ "cpe.off_addr": {
+  "text": "A gépen kívüli cím hiányos (SFTP: felhasználó@gép:/útvonal, S3: https://végpont/bucket/mappa)."
+ },
+ "cpe.ssh_key": {
+  "text": "Az SFTP-hez szükséges SSH-kulcs nem hozható létre."
+ },
+ "cpe.s3_keys": {
+  "text": "Az S3 kulcsazonosító és alkalmazáskulcs hiányzik vagy érvénytelen."
+ },
+ "cpe.repo": {
+  "text": "A gépen kívüli tároló hibát adott: {e}"
+ },
+ "cpe.no_version": {
+  "text": "Nincs ilyen gépen kívüli változat."
+ },
+ "cpm.repo_ok": {
+  "text": "Elérhető; a tároló megvan."
+ },
+ "cpm.repo_made": {
+  "text": "Elérhető; a tároló létrejött. Az első másolat a beállított időben megy, vagy a Gépen kívülre most gombbal."
+ },
+ "cpj.starting": {
+  "text": "Indítás…"
+ },
+ "cpj.copying": {
+  "text": "{s} másolása ide: {d}"
+ },
+ "cpj.off": {
+  "text": "{s} gépen kívüli másolása"
+ },
+ "cpj.fetch": {
+  "text": "{ds} gépen kívüli változatának letöltése ({v})"
+ },
+ "cpj.done_copy": {
+  "text": "A tömbre másolás kész"
+ },
+ "cpj.done_off": {
+  "text": "A gépen kívüli másolás kész"
+ },
+ "cpj.done_fetch": {
+  "text": "A gépen kívüli változat letöltve; a Másolatok sávból visszaállítható"
+ },
+ "cpd.ds_nf": {
+  "text": "{ds}: a dataset nem található"
+ },
+ "cpd.no_src": {
+  "text": "{s}: a pillanatkép mappája nem olvasható"
+ },
+ "cpd.full": {
+  "text": "{d} lemezen 20 GB-nál kevesebb a hely; nincs másolat"
+ },
+ "cpd.rsync": {
+  "text": "Az rsync {c} kóddal leállt: {e}"
+ },
+ "cpd.rename": {
+  "text": "A kész másolat nem nevezhető át erre: {d}"
+ },
+ "cpd.no_snap": {
+  "text": "{ds}: nincs másolható pillanatkép"
+ },
+ "cpd.off_fail": {
+  "text": "{ds}: a gépen kívüli másolás sikertelen: {e}"
+ },
+ "cpd.dc_copy": {
+  "text": "Snapshots: a tömbre másolás sikertelen"
+ },
+ "cpd.dc_off": {
+  "text": "Snapshots: a gépen kívüli másolás sikertelen"
+ },
+ "cpd.dc_stale": {
+  "text": "Snapshots: egy másolat elöregedett"
+ },
+ "cpd.stale_copy": {
+  "one": "A legújabb tömbös másolat {n} napos.",
+  "other": "A legújabb tömbös másolat {n} napos."
+ },
+ "cpd.stale_off": {
+  "one": "A legújabb gépen kívüli másolat {n} napos.",
+  "other": "A legújabb gépen kívüli másolat {n} napos."
  }
 }

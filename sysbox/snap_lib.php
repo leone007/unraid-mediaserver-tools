@@ -23,7 +23,12 @@ function snp_run($cmd, &$rc = null) { $o = []; @exec($cmd . ' 2>&1', $o, $rc); r
 function snp_name_ok($n) { return (bool)preg_match('/^[A-Za-z0-9_.:\-]{1,100}$/', (string)$n); }
 function snp_ds_ok($d) { return (bool)preg_match('#^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]+)*$#', (string)$d); }
 
-function snp_defaults() { return ['on' => 1, 'datasets' => [], 'hour' => 3, 'min' => 30, 'keep' => 7, 'maxfill' => 85, 'discord' => 1]; }
+function snp_defaults() {
+    return ['on' => 1, 'datasets' => [], 'hour' => 3, 'min' => 30, 'keep' => 7, 'maxfill' => 85, 'discord' => 1,
+        // copies (item 105): to an array share after the daily snapshot, and weekly off the server (restic)
+        'copy' => 0, 'copy_dir' => '/mnt/user/backup/sysbox', 'keep_d' => 14, 'keep_w' => 8, 'skip' => 'docker.img, transcodes, cache', 'stale' => 2,
+        'off' => 'off', 'off_sftp' => '', 'off_port' => 22, 'off_s3' => '', 'off_day' => 7, 'off_hour' => 4, 'off_min' => 30, 'off_keep' => 26];
+}
 function snp_cfg() {
     $c = snp_defaults();
     $x = is_file(snp_cfg_file()) ? json_decode((string)@file_get_contents(snp_cfg_file()), true) : null;
@@ -119,13 +124,14 @@ function snp_mounts_file() { $t = getenv('SX_SNP_MOUNTS'); return ($t !== false 
 // where the snapshot copy of a live folder is
 function snp_snapdir($ds, $snap, $dir) { $root = rtrim($ds['mnt'], '/'); return $root . '/.zfs/snapshot/' . $snap . substr($dir, strlen($root)); }
 
-// rsync dry run: how many files differ from the snapshot (shown before a restore)
+// rsync dry run: how many files differ from the snapshot or copy (shown before a restore)
 function snp_diff_count($ds, $snap, $dirs) {
-    $r = snp_bin('rsync'); $n = 0;
+    require_once __DIR__ . '/copy_lib.php';
+    $r = snp_bin('rsync'); $n = 0; $skip = cp_is_copy($snap) ? cp_skip_args(snp_cfg()) : '';
     foreach ($dirs as $dir) {
-        $from = snp_snapdir($ds, $snap, $dir);
-        if (!is_dir($from)) { continue; }
-        $o = snp_run(escapeshellarg($r) . ' -anHAX --checksum --delete --out-format=%n ' . escapeshellarg($from . '/') . ' ' . escapeshellarg($dir . '/'));
+        $from = cp_src_dir($ds, $snap, $dir);
+        if ($from === '' || !is_dir($from)) { continue; }
+        $o = snp_run(escapeshellarg($r) . ' -anHAX --checksum --delete' . $skip . ' --out-format=%n ' . escapeshellarg($from . '/') . ' ' . escapeshellarg($dir . '/'));
         foreach ($o as $l) { if ($l !== '' && $l !== './' && substr($l, -1) !== '/') { $n++; } }
     }
     return $n;

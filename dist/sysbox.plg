@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.31">
+<!ENTITY version   "2026.10.32">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.32
+- Snapshots: copies. After the daily snapshot the containers' data is copied to a share on the array (one browsable folder per day, unchanged files hardlinked, so a copy only takes the space of what changed); keeps 14 daily and 8 weekly copies by default and removes only the date folders it made; names to skip (Docker image, Jellyfin transcodes and cache); Copy now
+- Snapshots: an encrypted copy off the server once a week (restic, to another computer over SFTP or to S3 storage such as Backblaze B2); the password is made once and shown on a click so it can be written down; Test and set up makes the repository; only the changes are sent; keeps a set number of weekly versions
+- Snapshots: restore a container from an array copy or from a downloaded off-site version, the same way as from a snapshot (dry run, safety snapshot, only that container stopped); the skipped names are left as they are
+- Snapshots: Activity shows a running copy with its progress; Discord when a copy fails or the newest one is older than a set number of days
 ###2026.10.31
 - Power outage on Discord: when the UPS runs on battery for a minute a message goes out (also at night) with battery, runtime and load, updated every minute
 - Shutdown from Discord: the owner's stop sign reaction under it asks for a check mark, then Safe shutdown runs (qBittorrent first) and the server powers off
@@ -8174,6 +8179,444 @@ function mt_i18n_js($dir, $name, $only = null) {
  "ups.d.back_lb": {
   "text": "The NUT plugin had already started its shutdown: it goes on, the server powers off.",
   "note": "Discord text."
+ },
+ "cp.h": {
+  "text": "Copies",
+  "note": "band title (upper case on screen): copies of the daily snapshot on an array disk and off the server."
+ },
+ "cp.lead": {
+  "text": "Every night after the snapshot, the snapshot is copied to an array disk. If the cache SSD fails, the containers' data is there. Every copy is a full folder you can browse; unchanged files are hardlinks, so a copy only takes the space of what changed. Once a week an encrypted copy can go off the server too (restic).",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: lead line."
+ },
+ "cp.copy_now": {
+  "text": "Copy now",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: button: copies the newest snapshot to the array now."
+ },
+ "cp.off_now": {
+  "text": "Off-site now",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: button: makes the off-site (restic) copy now."
+ },
+ "cp.arr_t": {
+  "text": "On the array",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row title: the copies on an array disk."
+ },
+ "cp.arr_sub": {
+  "one": "{n} copy · newest {d} · {s} free on {disk}",
+  "other": "{n} copies · newest {d} · {s} free on {disk}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail. {d} a date, {s} a size, {disk} an array disk name like disk2."
+ },
+ "cp.arr_off": {
+  "text": "Copy to the array is off. Turn it on in the settings below.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail when the copy is off."
+ },
+ "cp.arr_none": {
+  "text": "No copy yet. The first one is made after the next daily snapshot, or with Copy now.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail before the first copy."
+ },
+ "cp.st_ok": {
+  "text": "OK",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: state chip."
+ },
+ "cp.st_fail": {
+  "text": "failed",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: state chip."
+ },
+ "cp.st_old": {
+  "one": "{n} day old",
+  "other": "{n} days old",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: state chip: the newest copy is older than the set days."
+ },
+ "cp.never": {
+  "text": "never",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: no off-site copy yet."
+ },
+ "cp.off_t": {
+  "text": "Off-site, encrypted",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row title: the restic copy off the server."
+ },
+ "cp.off_sub": {
+  "text": "weekly, {w} · keeps {k} weekly versions · last {t}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail. {w} a day and time like 'Sunday 04:30', {t} like '2 days ago' or 'never'."
+ },
+ "cp.off_sent": {
+  "text": "{s} sent",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: how much the last off-site copy sent (after deduplication and compression)."
+ },
+ "cp.off_off": {
+  "text": "Off. Choose SFTP or S3 in the settings below.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail when the off-site copy is off."
+ },
+ "cp.band_arr": {
+  "one": "array: {n} copy",
+  "other": "array: {n} copies",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: band text on the right."
+ },
+ "cp.band_off": {
+  "text": "off-site: {t}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: band text on the right, {t} like '2 days ago'."
+ },
+ "cp.band_none": {
+  "text": "off",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: band text when nothing is copied."
+ },
+ "cp.ab_job": {
+  "text": "copy running",
+  "note": "Snapshots page, Activity band text on the right while a copy, off-site copy or download runs."
+ },
+ "cp.list": {
+  "text": "Copies of {ds} on the array",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: foldable bar title; {ds} a dataset like cache/docker."
+ },
+ "cp.new": {
+  "text": "{s} new",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: size the copy added."
+ },
+ "cp.files": {
+  "one": "{n} file changed",
+  "other": "{n} files changed",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: files the copy wrote."
+ },
+ "cp.restore_bar": {
+  "text": "Restore a container of {ds} from a copy",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: foldable bar title."
+ },
+ "cp.from": {
+  "text": "From",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: label of the source list (a copy or an off-site download)."
+ },
+ "cp.src_copy": {
+  "text": "array copy {d}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: source list item, {d} a date."
+ },
+ "cp.src_off": {
+  "text": "off-site download {n}",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: source list item, {n} like 2026-10-19-1a2b3c4d."
+ },
+ "cp.fetched": {
+  "text": "downloaded",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: an off-site version downloaded to the array, waiting for a restore."
+ },
+ "cp.fdel_confirm": {
+  "text": "Delete the downloaded off-site version {n} from the array? The off-site copy itself stays.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: confirm text."
+ },
+ "cp.ov_bar": {
+  "text": "Off-site versions",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: foldable bar title: the versions in the restic repository."
+ },
+ "cp.ov_loading": {
+  "text": "Asking the off-site storage...",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: while the list loads."
+ },
+ "cp.ov_none": {
+  "text": "No off-site version yet.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: empty list."
+ },
+ "cp.ov_hint": {
+  "text": "Download puts a version next to the array copies (folder restore); then it can be restored like an array copy, from the bar above.",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: hint above the versions."
+ },
+ "cp.download": {
+  "text": "Download",
+  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: button: downloads one off-site version to the array."
+ },
+ "cp.d1": {
+  "text": "Monday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d2": {
+  "text": "Tuesday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d3": {
+  "text": "Wednesday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d4": {
+  "text": "Thursday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d5": {
+  "text": "Friday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d6": {
+  "text": "Saturday",
+  "note": "day name (off-site copy day)."
+ },
+ "cp.d7": {
+  "text": "Sunday",
+  "note": "day name (off-site copy day)."
+ },
+ "cps.copy": {
+  "text": "Copy to the array",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.copy_on": {
+  "text": "after every daily snapshot",
+  "note": "Snapshots page, Settings band, copy settings: checkbox."
+ },
+ "cps.dir": {
+  "text": "Target folder",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.dir_hint": {
+  "text": "A folder in a share that is only on the array (Primary storage: Array), for example /mnt/user/backup/sysbox. Make the share on the Shares page first; Sysbox does not make shares. A share on a pool is refused.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.keep": {
+  "text": "Keep",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.daily": {
+  "text": "daily",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.weekly": {
+  "text": "weekly",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.keep_hint": {
+  "text": "Older copies are removed by themselves; only the date folders Sysbox made in the target folder.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.skip": {
+  "text": "Skip",
+  "note": "Snapshots page, Settings band, copy settings: label: names of files and folders left out of the copies."
+ },
+ "cps.skip_hint": {
+  "text": "Names left out of every copy, comma separated (* allowed). They come back by themselves (the Docker image, Jellyfin transcodes and cache). A restore from a copy leaves them as they are.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.off": {
+  "text": "Off-site copy",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.off_off": {
+  "text": "off",
+  "note": "Snapshots page, Settings band, copy settings: option."
+ },
+ "cps.off_sftp": {
+  "text": "SFTP (another computer)",
+  "note": "Snapshots page, Settings band, copy settings: option."
+ },
+ "cps.off_s3": {
+  "text": "S3 (Backblaze B2 and others)",
+  "note": "Snapshots page, Settings band, copy settings: option."
+ },
+ "cps.off_hint": {
+  "text": "Weekly, encrypted with restic: the storage cannot read it. Only the changes are sent.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.sftp": {
+  "text": "SFTP target",
+  "note": "Snapshots page, Settings band, copy settings: label: user@host:/path."
+ },
+ "cps.port": {
+  "text": "port",
+  "note": "Snapshots page, Settings band, copy settings: after the SFTP target."
+ },
+ "cps.sftp_hint": {
+  "text": "user@host:/path. Add this public key to that user's ~/.ssh/authorized_keys on the other computer, then Test and set up.",
+  "note": "Snapshots page, Settings band, copy settings: hint above the public key."
+ },
+ "cps.s3": {
+  "text": "S3 address and key",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.s3_id": {
+  "text": "Key ID",
+  "note": "Snapshots page, Settings band, copy settings: placeholder."
+ },
+ "cps.s3_key": {
+  "text": "Application key",
+  "note": "Snapshots page, Settings band, copy settings: placeholder."
+ },
+ "cps.s3_saved": {
+  "text": "saved (empty keeps it)",
+  "note": "Snapshots page, Settings band, copy settings: placeholder when a key is saved."
+ },
+ "cps.s3_hint": {
+  "text": "Endpoint, bucket and folder, for example https://s3.eu-central-003.backblazeb2.com/my-bucket/jellynas. The key is saved on the flash and never shown again.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.when": {
+  "text": "When",
+  "note": "Snapshots page, Settings band, copy settings: label: day and time of the weekly off-site copy."
+ },
+ "cps.keep_l": {
+  "text": "keep",
+  "note": "Snapshots page, Settings band, copy settings: before the number of weekly versions."
+ },
+ "cps.weeks": {
+  "text": "weekly versions",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.pw": {
+  "text": "Password",
+  "note": "Snapshots page, Settings band, copy settings: label: the restic repository password."
+ },
+ "cps.pw_show": {
+  "text": "Show password",
+  "note": "Snapshots page, Settings band, copy settings: button."
+ },
+ "cps.pw_hint": {
+  "text": "Made once by Sysbox. Write it down and keep it outside the server: without it the off-site copy cannot be read.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.pw_none": {
+  "text": "Made when you save an off-site setting.",
+  "note": "Snapshots page, Settings band, copy settings: hint before a password exists."
+ },
+ "cps.test": {
+  "text": "Test and set up",
+  "note": "Snapshots page, Settings band, copy settings: button: reaches the storage and makes the repository there when it does not exist."
+ },
+ "cps.test_hint": {
+  "text": "Save first. The first test downloads restic (about 10 MB, checked) and makes the repository.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cps.testing": {
+  "text": "Testing...",
+  "note": "Snapshots page, Settings band, copy settings: while the test runs."
+ },
+ "cps.stale": {
+  "text": "Discord when a copy is older than",
+  "note": "Snapshots page, Settings band, copy settings: label."
+ },
+ "cps.days": {
+  "text": "days",
+  "note": "Snapshots page, Settings band, copy settings: after a number."
+ },
+ "cps.stale_hint": {
+  "text": "0 = never. The off-site copy gets 7 more days (it is weekly). A failed copy always goes to Discord.",
+  "note": "Snapshots page, Settings band, copy settings: hint."
+ },
+ "cpe.dir_bad": {
+  "text": "The target folder must be a folder of a share: /mnt/user/<share>/...",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.no_share": {
+  "text": "The share {s} does not exist. Make it on the Shares page (Primary storage: Array).",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.on_pool": {
+  "text": "The share {s} lives on a pool; the copies have to be on the array (Primary storage: Array, no mover to the pool).",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.no_disk": {
+  "text": "No array disk is mounted.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.restic_dl": {
+  "text": "restic could not be downloaded or its checksum is wrong.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.off_addr": {
+  "text": "The off-site address is not complete (SFTP: user@host:/path, S3: https://endpoint/bucket/folder).",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.ssh_key": {
+  "text": "The SSH key for SFTP could not be made.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.s3_keys": {
+  "text": "The S3 key ID and application key are missing or not valid.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpe.repo": {
+  "text": "The off-site storage answered with an error: {e}",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run). {e} is restic's own English text."
+ },
+ "cpe.no_version": {
+  "text": "No such off-site version.",
+  "note": "error text of the Snapshots copies (page, and Discord when it comes from the nightly run)."
+ },
+ "cpm.repo_ok": {
+  "text": "Reached; the repository is there.",
+  "note": "Snapshots page: result of Test and set up."
+ },
+ "cpm.repo_made": {
+  "text": "Reached; the repository was made. The first copy goes at the set time, or with Off-site now.",
+  "note": "Snapshots page: result of Test and set up."
+ },
+ "cpj.starting": {
+  "text": "Starting...",
+  "note": "Snapshots page, Activity: a copy job just started."
+ },
+ "cpj.copying": {
+  "text": "Copying {s} to {d}",
+  "note": "Snapshots page, Activity: running copy; {s} like cache/docker@auto-2026-10-26, {d} an array disk."
+ },
+ "cpj.off": {
+  "text": "Off-site copy of {s}",
+  "note": "Snapshots page, Activity: running off-site copy."
+ },
+ "cpj.fetch": {
+  "text": "Downloading the off-site version {v} of {ds}",
+  "note": "Snapshots page, Activity: running download."
+ },
+ "cpj.done_copy": {
+  "text": "Copy to the array finished",
+  "note": "Snapshots page, Activity: finished copy."
+ },
+ "cpj.done_off": {
+  "text": "Off-site copy finished",
+  "note": "Snapshots page, Activity: finished off-site copy."
+ },
+ "cpj.done_fetch": {
+  "text": "Off-site version downloaded; restore it from the Copies band",
+  "note": "Snapshots page, Activity: finished download."
+ },
+ "cpd.ds_nf": {
+  "text": "{ds}: the dataset was not found",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.no_src": {
+  "text": "{s}: the snapshot folder cannot be read",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.full": {
+  "text": "{d} has less than 20 GB free; no copy",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error; {d} an array disk."
+ },
+ "cpd.rsync": {
+  "text": "rsync stopped with code {c}: {e}",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error; {e} is rsync's English text."
+ },
+ "cpd.rename": {
+  "text": "The finished copy could not be named {d}",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.no_snap": {
+  "text": "{ds}: no snapshot to copy",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.off_fail": {
+  "text": "{ds}: the off-site copy failed: {e}",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error; {e} is restic's English text."
+ },
+ "cpd.dc_copy": {
+  "text": "Snapshots: the copy to the array failed",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): title."
+ },
+ "cpd.dc_off": {
+  "text": "Snapshots: the off-site copy failed",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): title."
+ },
+ "cpd.dc_stale": {
+  "text": "Snapshots: a copy is getting old",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): title."
+ },
+ "cpd.stale_copy": {
+  "one": "The newest array copy is {n} day old.",
+  "other": "The newest array copy is {n} days old.",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): line."
+ },
+ "cpd.stale_off": {
+  "one": "The newest off-site copy is {n} day old.",
+  "other": "The newest off-site copy is {n} days old.",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): line."
  }
 }]]></INLINE>
 </FILE>
@@ -11781,6 +12224,336 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "ups.d.back_lb": {
   "text": "A NUT már elindította a leállítást: ez folytatódik, a szerver kikapcsol."
+ },
+ "cp.h": {
+  "text": "Másolatok"
+ },
+ "cp.lead": {
+  "text": "Minden éjjel, a pillanatkép után a pillanatkép átmásolódik egy tömblemezre. Ha a cache SSD tönkremegy, a konténerek adatai ott megvannak. Minden másolat egy teljes, böngészhető mappa; a változatlan fájlok hardlinkek, így egy másolat csak a változás helyét foglalja. Hetente egy titkosított másolat a szerveren kívülre is mehet (restic)."
+ },
+ "cp.copy_now": {
+  "text": "Másolás most"
+ },
+ "cp.off_now": {
+  "text": "Gépen kívülre most"
+ },
+ "cp.arr_t": {
+  "text": "A tömbön"
+ },
+ "cp.arr_sub": {
+  "one": "{n} másolat · legújabb {d} · {s} szabad ezen: {disk}",
+  "other": "{n} másolat · legújabb {d} · {s} szabad ezen: {disk}"
+ },
+ "cp.arr_off": {
+  "text": "A tömbre másolás ki van kapcsolva. Lent, a beállításokban kapcsolható be."
+ },
+ "cp.arr_none": {
+  "text": "Még nincs másolat. Az első a következő napi pillanatkép után készül, vagy a Másolás most gombbal."
+ },
+ "cp.st_ok": {
+  "text": "OK"
+ },
+ "cp.st_fail": {
+  "text": "hiba"
+ },
+ "cp.st_old": {
+  "one": "{n} napos",
+  "other": "{n} napos"
+ },
+ "cp.never": {
+  "text": "még soha"
+ },
+ "cp.off_t": {
+  "text": "Gépen kívül, titkosítva"
+ },
+ "cp.off_sub": {
+  "text": "hetente, {w} · {k} heti változatot tart meg · utoljára {t}"
+ },
+ "cp.off_sent": {
+  "text": "{s} elküldve"
+ },
+ "cp.off_off": {
+  "text": "Kikapcsolva. Lent, a beállításokban választható SFTP vagy S3."
+ },
+ "cp.band_arr": {
+  "one": "tömb: {n} másolat",
+  "other": "tömb: {n} másolat"
+ },
+ "cp.band_off": {
+  "text": "gépen kívül: {t}"
+ },
+ "cp.band_none": {
+  "text": "kikapcsolva"
+ },
+ "cp.ab_job": {
+  "text": "másolás fut"
+ },
+ "cp.list": {
+  "text": "{ds} másolatai a tömbön"
+ },
+ "cp.new": {
+  "text": "{s} új"
+ },
+ "cp.files": {
+  "one": "{n} fájl változott",
+  "other": "{n} fájl változott"
+ },
+ "cp.restore_bar": {
+  "text": "{ds} egy konténerének visszaállítása másolatból"
+ },
+ "cp.from": {
+  "text": "Forrás:"
+ },
+ "cp.src_copy": {
+  "text": "tömbös másolat: {d}"
+ },
+ "cp.src_off": {
+  "text": "gépen kívüli letöltés: {n}"
+ },
+ "cp.fetched": {
+  "text": "letöltve"
+ },
+ "cp.fdel_confirm": {
+  "text": "Törlöd a tömbről a letöltött gépen kívüli változatot ({n})? Maga a gépen kívüli másolat megmarad."
+ },
+ "cp.ov_bar": {
+  "text": "Gépen kívüli változatok"
+ },
+ "cp.ov_loading": {
+  "text": "A gépen kívüli tároló lekérdezése…"
+ },
+ "cp.ov_none": {
+  "text": "Még nincs gépen kívüli változat."
+ },
+ "cp.ov_hint": {
+  "text": "A Letöltés a tömbös másolatok mellé teszi a változatot (restore mappa); utána a fenti sávból ugyanúgy visszaállítható, mint egy tömbös másolat."
+ },
+ "cp.download": {
+  "text": "Letöltés"
+ },
+ "cp.d1": {
+  "text": "hétfő"
+ },
+ "cp.d2": {
+  "text": "kedd"
+ },
+ "cp.d3": {
+  "text": "szerda"
+ },
+ "cp.d4": {
+  "text": "csütörtök"
+ },
+ "cp.d5": {
+  "text": "péntek"
+ },
+ "cp.d6": {
+  "text": "szombat"
+ },
+ "cp.d7": {
+  "text": "vasárnap"
+ },
+ "cps.copy": {
+  "text": "Másolat a tömbre"
+ },
+ "cps.copy_on": {
+  "text": "minden napi pillanatkép után"
+ },
+ "cps.dir": {
+  "text": "Célmappa"
+ },
+ "cps.dir_hint": {
+  "text": "Egy csak a tömbön lévő share mappája (Primary storage: Array), pl. /mnt/user/backup/sysbox. A share-t előbb a Shares oldalon hozd létre; a Sysbox nem készít share-t. Poolon lévő share-t nem fogad el."
+ },
+ "cps.keep": {
+  "text": "Megőrzés"
+ },
+ "cps.daily": {
+  "text": "napi"
+ },
+ "cps.weekly": {
+  "text": "heti"
+ },
+ "cps.keep_hint": {
+  "text": "A régebbi másolatok maguktól törlődnek; csak a Sysbox által a célmappában létrehozott dátumos mappák."
+ },
+ "cps.skip": {
+  "text": "Kihagyás"
+ },
+ "cps.skip_hint": {
+  "text": "Minden másolatból kimaradó nevek, vesszővel elválasztva (* használható). Ezek maguktól újra létrejönnek (Docker image, Jellyfin transcodes és cache). A másolatból visszaállítás ezeket érintetlenül hagyja."
+ },
+ "cps.off": {
+  "text": "Gépen kívüli másolat"
+ },
+ "cps.off_off": {
+  "text": "ki"
+ },
+ "cps.off_sftp": {
+  "text": "SFTP (másik gép)"
+ },
+ "cps.off_s3": {
+  "text": "S3 (Backblaze B2 és mások)"
+ },
+ "cps.off_hint": {
+  "text": "Hetente, resticcel titkosítva: a tároló nem tud beleolvasni. Csak a változás megy ki."
+ },
+ "cps.sftp": {
+  "text": "SFTP cél"
+ },
+ "cps.port": {
+  "text": "port"
+ },
+ "cps.sftp_hint": {
+  "text": "felhasználó@gép:/útvonal. Ezt a nyilvános kulcsot tedd a másik gépen a felhasználó ~/.ssh/authorized_keys fájljába, utána Teszt és beállítás."
+ },
+ "cps.s3": {
+  "text": "S3 cím és kulcs"
+ },
+ "cps.s3_id": {
+  "text": "Kulcsazonosító (Key ID)"
+ },
+ "cps.s3_key": {
+  "text": "Alkalmazáskulcs (Application key)"
+ },
+ "cps.s3_saved": {
+  "text": "elmentve (üresen marad)"
+ },
+ "cps.s3_hint": {
+  "text": "Végpont, bucket és mappa, pl. https://s3.eu-central-003.backblazeb2.com/sajat-bucket/jellynas. A kulcs a flashre mentődik, és többé nem látszik."
+ },
+ "cps.when": {
+  "text": "Mikor"
+ },
+ "cps.keep_l": {
+  "text": "megőriz"
+ },
+ "cps.weeks": {
+  "text": "heti változatot"
+ },
+ "cps.pw": {
+  "text": "Jelszó"
+ },
+ "cps.pw_show": {
+  "text": "Jelszó mutatása"
+ },
+ "cps.pw_hint": {
+  "text": "A Sysbox egyszer generálja. Írd le, és tartsd a szerveren kívül is: nélküle a gépen kívüli másolat nem olvasható."
+ },
+ "cps.pw_none": {
+  "text": "Egy gépen kívüli beállítás mentésekor jön létre."
+ },
+ "cps.test": {
+  "text": "Teszt és beállítás"
+ },
+ "cps.test_hint": {
+  "text": "Előbb ments. Az első teszt letölti a resticet (kb. 10 MB, ellenőrizve), és létrehozza a tárolót."
+ },
+ "cps.testing": {
+  "text": "Tesztelés…"
+ },
+ "cps.stale": {
+  "text": "Discord, ha egy másolat régebbi, mint"
+ },
+ "cps.days": {
+  "text": "nap"
+ },
+ "cps.stale_hint": {
+  "text": "0 = soha. A gépen kívüli másolat 7 nappal többet kap (heti). A sikertelen másolás mindig megy Discordra."
+ },
+ "cpe.dir_bad": {
+  "text": "A célmappa egy share mappája legyen: /mnt/user/<share>/..."
+ },
+ "cpe.no_share": {
+  "text": "A(z) {s} share nem létezik. Hozd létre a Shares oldalon (Primary storage: Array)."
+ },
+ "cpe.on_pool": {
+  "text": "A(z) {s} share poolon van; a másolatoknak a tömbön kell lenniük (Primary storage: Array, mover nélkül a pool felé)."
+ },
+ "cpe.no_disk": {
+  "text": "Nincs csatolt tömblemez."
+ },
+ "cpe.restic_dl": {
+  "text": "A restic nem tölthető le, vagy hibás az ellenőrzőösszege."
+ },
+ "cpe.off_addr": {
+  "text": "A gépen kívüli cím hiányos (SFTP: felhasználó@gép:/útvonal, S3: https://végpont/bucket/mappa)."
+ },
+ "cpe.ssh_key": {
+  "text": "Az SFTP-hez szükséges SSH-kulcs nem hozható létre."
+ },
+ "cpe.s3_keys": {
+  "text": "Az S3 kulcsazonosító és alkalmazáskulcs hiányzik vagy érvénytelen."
+ },
+ "cpe.repo": {
+  "text": "A gépen kívüli tároló hibát adott: {e}"
+ },
+ "cpe.no_version": {
+  "text": "Nincs ilyen gépen kívüli változat."
+ },
+ "cpm.repo_ok": {
+  "text": "Elérhető; a tároló megvan."
+ },
+ "cpm.repo_made": {
+  "text": "Elérhető; a tároló létrejött. Az első másolat a beállított időben megy, vagy a Gépen kívülre most gombbal."
+ },
+ "cpj.starting": {
+  "text": "Indítás…"
+ },
+ "cpj.copying": {
+  "text": "{s} másolása ide: {d}"
+ },
+ "cpj.off": {
+  "text": "{s} gépen kívüli másolása"
+ },
+ "cpj.fetch": {
+  "text": "{ds} gépen kívüli változatának letöltése ({v})"
+ },
+ "cpj.done_copy": {
+  "text": "A tömbre másolás kész"
+ },
+ "cpj.done_off": {
+  "text": "A gépen kívüli másolás kész"
+ },
+ "cpj.done_fetch": {
+  "text": "A gépen kívüli változat letöltve; a Másolatok sávból visszaállítható"
+ },
+ "cpd.ds_nf": {
+  "text": "{ds}: a dataset nem található"
+ },
+ "cpd.no_src": {
+  "text": "{s}: a pillanatkép mappája nem olvasható"
+ },
+ "cpd.full": {
+  "text": "{d} lemezen 20 GB-nál kevesebb a hely; nincs másolat"
+ },
+ "cpd.rsync": {
+  "text": "Az rsync {c} kóddal leállt: {e}"
+ },
+ "cpd.rename": {
+  "text": "A kész másolat nem nevezhető át erre: {d}"
+ },
+ "cpd.no_snap": {
+  "text": "{ds}: nincs másolható pillanatkép"
+ },
+ "cpd.off_fail": {
+  "text": "{ds}: a gépen kívüli másolás sikertelen: {e}"
+ },
+ "cpd.dc_copy": {
+  "text": "Snapshots: a tömbre másolás sikertelen"
+ },
+ "cpd.dc_off": {
+  "text": "Snapshots: a gépen kívüli másolás sikertelen"
+ },
+ "cpd.dc_stale": {
+  "text": "Snapshots: egy másolat elöregedett"
+ },
+ "cpd.stale_copy": {
+  "one": "A legújabb tömbös másolat {n} napos.",
+  "other": "A legújabb tömbös másolat {n} napos."
+ },
+ "cpd.stale_off": {
+  "one": "A legújabb gépen kívüli másolat {n} napos.",
+  "other": "A legújabb gépen kívüli másolat {n} napos."
  }
 }]]></INLINE>
 </FILE>
@@ -12664,7 +13437,19 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 #snp .snp-ctl label{display:inline-flex;align-items:center;gap:6px}
 #snp .snp-ctl input[type=checkbox]{margin:0}
 #snp .snp-hint{flex:1 1 100%;opacity:.55;font-size:12px}
-@media (max-width:760px){#snp .snp-snap,#snp .snp-ct{grid-template-columns:22px minmax(0,1fr);padding-left:12px}#snp .snp-snap>:nth-child(n+3),#snp .snp-ct>:nth-child(n+3){grid-column:2}#snp .snp-set{grid-template-columns:1fr}}
+/* copies (item 105) */
+#snp .s-purple{background:rgba(150,120,230,.10);box-shadow:inset 3px 0 0 #9a7de6}
+#snp .snp-cpr{grid-template-columns:22px minmax(0,1fr) auto}
+#snp .snp-pill{font-size:11px;padding:1px 7px;background:rgba(63,162,74,.22);color:#3fa24a;white-space:nowrap}
+#snp .snp-pill.r{background:rgba(229,83,75,.25);color:#e5534b}#snp .snp-pill.a{background:rgba(217,146,31,.22);color:#d9921f}
+#snp .snp-pbar{height:5px;background:rgba(128,128,128,.3);margin-top:5px;max-width:520px}#snp .snp-pbar i{display:block;height:100%;background:#4a90e2}
+#snp .snp-cl{grid-template-columns:22px minmax(0,1fr) 110px 90px;padding-left:46px}
+#snp .snp-ov{grid-template-columns:22px minmax(0,1fr) 110px auto;padding-left:46px}
+#snp .snp-ctl input.snp-wide{width:min(100%,340px)!important;margin:0}
+#snp .snp-ctl select{margin:0;min-width:0}
+#snp code.snp-key{display:block;font-size:11px;overflow-wrap:anywhere;opacity:.8;padding:4px 0}
+#snp .snp-pw{font-family:monospace;font-size:14px;letter-spacing:.04em}
+@media (max-width:760px){#snp .snp-cl,#snp .snp-ov{grid-template-columns:22px minmax(0,1fr);padding-left:12px}#snp .snp-cl>:nth-child(n+3),#snp .snp-ov>:nth-child(n+3){grid-column:2}#snp .snp-snap,#snp .snp-ct{grid-template-columns:22px minmax(0,1fr);padding-left:12px}#snp .snp-snap>:nth-child(n+3),#snp .snp-ct>:nth-child(n+3){grid-column:2}#snp .snp-set{grid-template-columns:1fr}}
 </style>
 <div id="snp">
 <p class="snp-sub"><?=$snp_t('snp.intro')?></p>
@@ -12675,6 +13460,9 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 <div class="mt-band"><span><?=$snp_t('snp.h.datasets')?></span><b id="snp-dband"></b></div>
 <div class="mt-box" id="snp-ds"></div>
 
+<div class="mt-band"><span><?=$snp_t('cp.h')?></span><b id="snp-cband"></b></div>
+<div class="mt-box" id="snp-cp"></div>
+
 <div class="mt-band"><span><?=$snp_t('snp.h.settings')?></span><b><?=$snp_t('snp.h.settings_sub')?></b></div>
 <div class="mt-box" id="snp-set"></div>
 </div>
@@ -12683,7 +13471,7 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 <script>
 $(function () {
   var T = function (k, v) { return MTL.t('snp', k, v); };
-  var URL = '/plugins/sysbox/snap.php', D = null, OPEN = {}, CTRS = {}, pollT = null, CONF = null;
+  var URL = '/plugins/sysbox/snap.php', D = null, OPEN = {}, CTRS = {}, pollT = null, CONF = null, SEL = {}, OV = null, OVERR = '';
   function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }   // quotes too: esc() also fills attributes
   function api(op, data) { return $.post(URL, $.extend({op: op}, data || {}), null, 'json'); }
   function err(x) { return (x && x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : (x && x.error) ? x.error : 'HTTP ' + (x && x.status); }
@@ -12693,7 +13481,8 @@ $(function () {
   function grp(g, inner) { return '<div class="snp-grp" data-g="' + esc(g) + '"' + (OPEN[g] ? '' : ' hidden') + '>' + inner + '</div>'; }
   $(document).on('click', '#snp .snp-gbar', function () {
     var g = String($(this).data('g')); OPEN[g] = !OPEN[g]; $(this).find('.pm').first().html(OPEN[g] ? '&minus;' : '+'); $('#snp .snp-grp').filter(function () { return String($(this).data('g')) === g; }).prop('hidden', !OPEN[g]);
-    var m = /^rs\|(.+)\|(.+)$/.exec(g); if (OPEN[g] && m && !CTRS[m[1]]) { loadCtrs(m[1]); }
+    var m = /^rs\|(.+)\|(.+)$/.exec(g) || /^cr\|(.+)$/.exec(g); if (OPEN[g] && m && !CTRS[m[1]]) { loadCtrs(m[1]); }
+    if (OPEN[g] && g === 'ov') { loadOv(); }
   });
 
   // ---- Activity: a running restore, the last line of the log, the log folded
@@ -12703,10 +13492,16 @@ $(function () {
       var cls = run.state === 'running' ? 's-blue' : run.state === 'done' ? 's-green' : 's-red';
       h += '<div class="snp-row snp-log1 ' + cls + '"><span class="snp-ico">' + (run.state === 'running' ? '&#8635;' : run.state === 'done' ? '&#10003;' : '!') + '</span><span><b>' + (run.state === 'running' ? esc(T('snp.restoring', { c: run.ctr, s: run.snap })) : esc(run.msg)) + '</b><small>' + esc((run.log || []).slice(-3).join(' · ')) + '</small></span></div>';
     }
+    var j = (r.copies && r.copies.job) || {state: 'idle'};
+    if (j.state && j.state !== 'idle' && (j.state === 'running' || Date.now() / 1000 - (j.finished || 0) < 3600)) {
+      var jc = j.state === 'running' ? 's-blue' : j.state === 'done' ? 's-green' : 's-red';
+      h += '<div class="snp-row snp-log1 ' + jc + '"><span class="snp-ico">' + (j.state === 'running' ? '&#8635;' : j.state === 'done' ? '&#10003;' : '!') + '</span><span><b>' + esc(j.state === 'running' ? (j.title || '') + ' · ' + (+j.pct || 0) + ' %' : j.msg) + '</b>' +
+        (j.state === 'running' ? '<div class="snp-pbar"><i style="width:' + (+j.pct || 0) + '%"></i></div>' : '<small>' + esc(j.title || '') + '</small>') + '</span></div>';
+    }
     if (last) { var bad = / FAILED|could not| full | not found/.test(last); h += '<div class="snp-row snp-log1 ' + (bad ? 's-amber' : 's-green') + '"><span class="snp-ico ' + (bad ? 'snp-am">!' : 'snp-ok">&#10003;') + '</span><span>' + esc(last) + '</span></div>'; }
     if (log.length > 1) { h += gbar('log', 's-grey', esc(T('snp.earlier')), esc(T('snp.lines', { n: log.length - 1 }))) + grp('log', '<div class="snp-log">' + esc(log.slice(0, -1).reverse().join('\n')) + '</div>'); }
     $('#snp-act').html(h || '<div class="snp-status snp-mut">' + esc(T('snp.nothing', { t: ('0' + r.cfg.hour).slice(-2) + ':' + ('0' + r.cfg.min).slice(-2) })) + '</div>');
-    $('#snp-aband').text(run.state === 'running' ? T('snp.ab_restoring', { c: run.ctr }) : last ? T('snp.ab_last', { t: last.slice(0, 16) }) : T('snp.ab_nothing'));
+    $('#snp-aband').text(run.state === 'running' ? T('snp.ab_restoring', { c: run.ctr }) : j.state === 'running' ? T('cp.ab_job') : last ? T('snp.ab_last', { t: last.slice(0, 16) }) : T('snp.ab_nothing'));
   }
 
   // ---- the datasets and their snapshots
@@ -12729,6 +13524,66 @@ $(function () {
     $('#snp-ds').html(h || '<div class="snp-status snp-mut">' + esc(T('snp.no_ds')) + '</div>');
     $('#snp-dband').text(free);
   }
+  // ---- copies (item 105): the array copy, the off-site copy, a restore from either
+  function days(t) { return t ? Math.floor((Date.now() / 1000 - t) / 86400) : -1; }
+  var DAYS = ['cp.d1', 'cp.d2', 'cp.d3', 'cp.d4', 'cp.d5', 'cp.d6', 'cp.d7'];
+  function dayName(n) { return T(DAYS[(+n || 7) - 1]); }
+  function drawCp(r) {
+    var C = r.copies, c = r.cfg, h = '', off = c.off !== 'off', band = [];
+    h += '<div class="snp-lead"><p>' + esc(T('cp.lead')) + '</p><span style="display:flex;gap:6px;flex-wrap:wrap"><input type="button" id="cp-now" value="' + esc(T('cp.copy_now')) + '">' + (off ? '<input type="button" id="cp-off" class="snp-ghost" value="' + esc(T('cp.off_now')) + '">' : '') + '</span></div>';
+    $.each(C.ds, function (i, d) {
+      var nw = d.copies[0], age = days(C.ok), cls = 's-grey', ico = '&ndash;', pill = '', sub;
+      if (!+c.copy) { sub = T('cp.arr_off'); }
+      else if (d.err) { cls = 's-red'; ico = '!'; sub = d.err; pill = '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>'; }
+      else if (C.err && (!nw || age > 0)) { cls = 's-red'; ico = '!'; sub = C.err; pill = '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>'; }
+      else if (!nw) { sub = T('cp.arr_none'); }
+      else { var st = +c.stale > 0 && age > +c.stale; cls = st ? 's-amber' : 's-green'; ico = st ? '!' : '&#10003;'; pill = st ? '<span class="snp-pill a">' + esc(T('cp.st_old', { n: age })) + '</span>' : '<span class="snp-pill">' + esc(T('cp.st_ok')) + '</span>'; sub = T('cp.arr_sub', { n: d.copies.length, d: nw.date, s: fb(d.free), disk: d.disk }); }
+      h += '<div class="snp-row snp-cpr ' + cls + '"><span class="snp-ico">' + ico + '</span><div><b>' + esc(T('cp.arr_t')) + '</b> <span class="snp-mut">' + esc(d.name) + '</span>' + (d.disk ? '<span class="snp-chip">' + esc(d.disk) + '</span>' : '') + (d.dir ? '<span class="snp-path">' + esc(d.dir) + '/</span>' : '') + '<small>' + esc(sub) + '</small></div><span>' + pill + '</span></div>';
+      if (+c.copy) { band.push(T('cp.band_arr', { n: d.copies.length })); }
+    });
+    if (off) {
+      var oa = days(C.off_ok), ost = C.off_err ? 'r' : (oa < 0 || oa > 7 + (+c.stale || 0)) ? 'a' : '';
+      var last = []; $.each(C.off_last || {}, function (k, v) { last.push(T('cp.off_sent', { s: fb(v.sent) })); });
+      h += '<div class="snp-row snp-cpr ' + (ost === 'r' ? 's-red' : ost === 'a' ? 's-amber' : 's-purple') + '"><span class="snp-ico">' + (ost ? '!' : '&#8679;') + '</span><div><b>' + esc(T('cp.off_t')) + '</b><span class="snp-chip">restic</span><span class="snp-path">' + esc(C.off_label) + '</span><small>' +
+        esc(T('cp.off_sub', { w: dayName(c.off_day) + ' ' + ('0' + c.off_hour).slice(-2) + ':' + ('0' + c.off_min).slice(-2), k: c.off_keep, t: C.off_ok ? ago(C.off_ok) : T('cp.never') }) + (last.length ? ' · ' + last.join(' · ') : '')) + (C.off_err ? '<br><span class="snp-er">' + esc(C.off_err) + '</span>' : '') + '</small></div><span>' +
+        (ost === 'r' ? '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>' : ost === 'a' ? '<span class="snp-pill a">' + esc(C.off_ok ? T('cp.st_old', { n: oa }) : T('cp.never')) + '</span>' : '<span class="snp-pill">' + esc(T('cp.st_ok')) + '</span>') + '</span></div>';
+      band.push(T('cp.band_off', { t: C.off_ok ? ago(C.off_ok) : T('cp.never') }));
+    } else { h += '<div class="snp-row snp-cpr s-grey"><span class="snp-ico">&ndash;</span><div><b>' + esc(T('cp.off_t')) + '</b><small>' + esc(T('cp.off_off')) + '</small></div><span></span></div>'; }
+    $.each(C.ds, function (i, d) {
+      var g = 'cl|' + d.name, rows = '';
+      $.each(d.copies, function (k, x) { rows += '<div class="snp-row snp-cl s-green"><span class="snp-ico snp-ok">A</span><div><b>' + esc(x.date) + '</b><span class="snp-path">' + esc(d.dir + '/' + x.date) + '/</span></div><span class="snp-num">' + (x.new != null ? esc(T('cp.new', { s: fb(x.new) })) : '') + '</span><span class="snp-num">' + (x.secs != null ? esc(T('cp.files', { n: x.files })) : '') + '</span></div>'; });
+      if (d.copies.length) { h += gbar(g, 's-grey', esc(T('cp.list', { ds: d.name })), esc(d.copies.length)) + grp(g, rows); }
+      // restore from a copy: pick the source, then the container
+      var src = []; $.each(d.copies, function (k, x) { src.push(['copy:' + x.date, T('cp.src_copy', { d: x.date })]); }); $.each(d.fetched, function (k, n) { src.push(['off:' + n, T('cp.src_off', { n: n })]); });
+      if (!src.length) { return; }
+      var ref = SEL[d.name]; if (!ref || !src.some(function (x) { return x[0] === ref; })) { ref = SEL[d.name] = src[0][0]; }
+      var opt = $.map(src, function (x) { return '<option value="' + esc(x[0]) + '"' + (x[0] === ref ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join('');
+      var rg = 'cr|' + d.name, fd = '';
+      $.each(d.fetched, function (k, n) { fd += '<div class="snp-row snp-ov s-purple"><span class="snp-ico">&#8681;</span><div><b>' + esc(n) + '</b><span class="snp-path">' + esc(d.dir.replace(/\/[^\/]+$/, '') + '/restore/' + d.name.replace(/\//g, '_') + '/' + n) + '/</span></div><span class="snp-num">' + esc(T('cp.fetched')) + '</span><span><input type="button" class="cp-fdel snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(n) + '" value="' + esc(T('snp.delete')) + '"></span></div>'; });
+      h += gbar(rg, 's-grey', esc(T('cp.restore_bar', { ds: d.name })), esc(src.length)) + grp(rg, '<div class="snp-status" style="padding-left:46px"><label>' + esc(T('cp.from')) + ' <select class="cp-src" data-ds="' + esc(d.name) + '">' + opt + '</select></label></div>' + fd + ctrRows(d.name, ref));
+    });
+    if (off) {
+      var ov = '';
+      if (OVERR) { ov = '<div class="snp-status snp-er" style="padding-left:46px">' + esc(OVERR) + '</div>'; }
+      else if (!OV) { ov = '<div class="snp-status snp-mut" style="padding-left:46px">' + esc(T('cp.ov_loading')) + '</div>'; }
+      else if (!OV.length) { ov = '<div class="snp-status snp-mut" style="padding-left:46px">' + esc(T('cp.ov_none')) + '</div>'; }
+      else { ov = '<div class="snp-status snp-mut" style="padding-left:46px;font-size:12px">' + esc(T('cp.ov_hint')) + '</div>'; $.each(OV, function (k, v) { ov += '<div class="snp-row snp-ov s-grey"><span class="snp-ico">&#8679;</span><div><b>' + esc(new Date(v.time * 1000).toISOString().slice(0, 10)) + '</b> <span class="snp-mut">' + esc(v.ds) + ' · ' + esc(v.id) + '</span></div><span class="snp-num">' + fb(v.size) + '</span><span><input type="button" class="cp-fetch snp-sm" data-id="' + esc(v.id) + '" value="' + esc(T('cp.download')) + '"></span></div>'; }); }
+      h += gbar('ov', 's-purple', esc(T('cp.ov_bar')), OV ? esc(OV.length) : '') + grp('ov', ov);
+    }
+    $('#snp-cp').html(h);
+    $('#snp-cband').text(band.join(' · ') || T('cp.band_none'));
+  }
+  function loadOv() { OV = null; OVERR = ''; if (D) { drawCp(D); } api('off_list').done(function (r) { if (r.ok) { OV = r.list; } else { OVERR = r.error; } if (D) { drawCp(D); } }).fail(function (x) { OVERR = err(x); if (D) { drawCp(D); } }); }
+  $(document).on('change', '#snp .cp-src', function () { SEL[$(this).data('ds')] = $(this).val(); drawCp(D); });
+  $(document).on('click', '#cp-now', function () { var $b = $(this).prop('disabled', true); api('copy_now').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); });
+  $(document).on('click', '#cp-off', function () { var $b = $(this).prop('disabled', true); api('off_now').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); });
+  $(document).on('click', '#snp .cp-fetch', function () { var $b = $(this).prop('disabled', true); api('off_fetch', {id: $b.data('id')}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); });
+  $(document).on('click', '#snp .cp-fdel', function () {
+    var $b = $(this), n = String($b.data('name'));
+    if (!window.confirm(T('cp.fdel_confirm', { n: n }))) return;
+    $b.prop('disabled', true); api('fetched_del', {ds: $b.data('ds'), name: n}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
+  });
+
   function ctrRows(ds, snap) {
     var L = CTRS[ds];
     if (!L) { return '<div class="snp-status snp-mut" style="padding-left:46px">' + esc(T('snp.loading_ctr')) + '</div>'; }
@@ -12768,24 +13623,47 @@ $(function () {
   });
 
   // ---- settings
+  function offRows() { var m = $('#cps-off').val(); $('#snp .cps-sftp').toggle(m === 'sftp'); $('#snp .cps-s3').toggle(m === 's3'); $('#snp .cps-any').toggle(m !== 'off'); }
+  $(document).on('change', '#cps-off', offRows);
+  $(document).on('click', '#cps-pw', function () { api('off_pw').done(function (r) { $('#cps-pwv').text(r.ok ? r.pw : r.error); }); });
+  $(document).on('click', '#cps-test', function () {
+    var $m = $('#cps-tmsg').attr('class', '').text(T('cps.testing')), $b = $(this).prop('disabled', true);
+    api('off_test').done(function (r) { $m.attr('class', r.ok ? 'snp-ok' : 'snp-er').text(r.ok ? r.msg : r.error); }).fail(function (x) { $m.attr('class', 'snp-er').text(err(x)); }).always(function () { $b.prop('disabled', false); });
+  });
   function drawSet(r) {
-    var c = r.cfg, ds = '';
+    var c = r.cfg, C = r.copies, ds = '';
     $.each(r.datasets, function (i, d) { ds += '<label><input type="checkbox" class="snp-dsel" value="' + esc(d.name) + '"' + (c.datasets.indexOf(d.name) >= 0 ? ' checked' : '') + '> ' + esc(d.name) + '</label>'; });
     $('#snp-set').html(
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.daily')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="snp-on"' + (+c.on ? ' checked' : '') + '> ' + esc(T('snp.s.on')) + '</label></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.h.datasets')) + '</span><div class="snp-ctl">' + (ds || '<span class="snp-mut">' + esc(T('snp.s.none')) + '</span>') + '<span class="snp-hint">' + esc(T('snp.s.ds_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.time')) + '</span><div class="snp-ctl">' + esc(T('snp.s.every')) + ' <input type="number" id="snp-h" min="0" max="23" value="' + c.hour + '"> : <input type="number" id="snp-m" min="0" max="59" value="' + c.min + '"> ' + esc(T('snp.s.keep')) + ' <input type="number" id="snp-k" min="1" max="90" value="' + c.keep + '"> ' + esc(T('snp.s.days_stop')) + ' <input type="number" id="snp-f" min="10" max="99" value="' + c.maxfill + '"> ' + esc(T('snp.s.pool_fill')) + '<span class="snp-hint">' + esc(T('snp.s.time_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">Discord</span><div class="snp-ctl"><label><input type="checkbox" id="snp-dc"' + (+c.discord ? ' checked' : '') + '> ' + esc(T('snp.s.dc')) + '</label></div></div>' +
+      // copies (item 105)
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.copy')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="cps-copy"' + (+c.copy ? ' checked' : '') + '> ' + esc(T('cps.copy_on')) + '</label></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.dir')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-dir" value="' + esc(c.copy_dir) + '"><span class="snp-hint">' + esc(T('cps.dir_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.keep')) + '</span><div class="snp-ctl"><input type="number" id="cps-kd" min="1" max="90" value="' + c.keep_d + '"> ' + esc(T('cps.daily')) + ' <input type="number" id="cps-kw" min="0" max="104" value="' + c.keep_w + '"> ' + esc(T('cps.weekly')) + '<span class="snp-hint">' + esc(T('cps.keep_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.skip')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-skip" value="' + esc(c.skip) + '"><span class="snp-hint">' + esc(T('cps.skip_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.off')) + '</span><div class="snp-ctl"><select id="cps-off">' + $.map([['off', 'cps.off_off'], ['sftp', 'cps.off_sftp'], ['s3', 'cps.off_s3']], function (o) { return '<option value="' + o[0] + '"' + (c.off === o[0] ? ' selected' : '') + '>' + esc(T(o[1])) + '</option>'; }).join('') + '</select><span class="snp-hint">' + esc(T('cps.off_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set cps-sftp"><span class="lb">' + esc(T('cps.sftp')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-sftp" placeholder="backup@192.168.50.40:/backup/jellynas" value="' + esc(c.off_sftp) + '"> ' + esc(T('cps.port')) + ' <input type="number" id="cps-port" min="1" max="65535" value="' + c.off_port + '"><span class="snp-hint">' + esc(T('cps.sftp_hint')) + '</span>' + (C.pub ? '<code class="snp-key">' + esc(C.pub) + '</code>' : '') + '</div></div>' +
+      '<div class="snp-row snp-set cps-s3"><span class="lb">' + esc(T('cps.s3')) + '</span><div class="snp-ctl"><input type="text" class="snp-wide" id="cps-s3" placeholder="https://s3.eu-central-003.backblazeb2.com/bucket/jellynas" value="' + esc(c.off_s3) + '"><input type="text" id="cps-s3id" placeholder="' + esc(T(C.s3_set ? 'cps.s3_saved' : 'cps.s3_id')) + '" autocomplete="off"><input type="password" id="cps-s3key" placeholder="' + esc(T(C.s3_set ? 'cps.s3_saved' : 'cps.s3_key')) + '" autocomplete="new-password"><span class="snp-hint">' + esc(T('cps.s3_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.when')) + '</span><div class="snp-ctl"><select id="cps-day">' + $.map([1, 2, 3, 4, 5, 6, 7], function (n) { return '<option value="' + n + '"' + (+c.off_day === n ? ' selected' : '') + '>' + esc(dayName(n)) + '</option>'; }).join('') + '</select> <input type="number" id="cps-h" min="0" max="23" value="' + c.off_hour + '"> : <input type="number" id="cps-m" min="0" max="59" value="' + c.off_min + '"> ' + esc(T('cps.keep_l')) + ' <input type="number" id="cps-ok" min="1" max="520" value="' + c.off_keep + '"> ' + esc(T('cps.weeks')) + '</div></div>' +
+      '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.pw')) + '</span><div class="snp-ctl"><input type="button" id="cps-pw" class="snp-ghost snp-sm" value="' + esc(T('cps.pw_show')) + '"' + (C.has_pw ? '' : ' disabled') + '><span id="cps-pwv" class="snp-pw"></span><span class="snp-hint">' + esc(T(C.has_pw ? 'cps.pw_hint' : 'cps.pw_none')) + '</span></div></div>' +
+      '<div class="snp-row snp-set cps-any"><span class="lb"></span><div class="snp-ctl"><input type="button" id="cps-test" class="snp-sm" value="' + esc(T('cps.test')) + '"><span id="cps-tmsg"></span><span class="snp-hint">' + esc(T('cps.test_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.stale')) + '</span><div class="snp-ctl"><input type="number" id="cps-stale" min="0" max="30" value="' + c.stale + '"> ' + esc(T('cps.days')) + '<span class="snp-hint">' + esc(T('cps.stale_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span></span><div class="snp-ctl"><input type="button" id="snp-save" value="' + esc(T('snp.save')) + '"><span id="snp-smsg"></span></div></div>');
+    offRows();
   }
   $(document).on('click', '#snp-save', function () {
     var d = []; $('.snp-dsel:checked').each(function () { d.push($(this).val()); });
     var $m = $('#snp-smsg').attr('class', '').text(T('snp.saving'));
-    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0})
-      .done(function (r) { if (r.ok) { $m.attr('class', 'snp-ok').text(T('snp.saved')); load(); } else { $m.attr('class', 'snp-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'snp-er').text(err(x)); });
+    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0,
+      copy: $('#cps-copy').prop('checked') ? 1 : 0, copy_dir: $('#cps-dir').val(), keep_d: $('#cps-kd').val(), keep_w: $('#cps-kw').val(), skip: $('#cps-skip').val(), stale: $('#cps-stale').val(),
+      off: $('#cps-off').val(), off_sftp: $('#cps-sftp').val(), off_port: $('#cps-port').val(), off_s3: $('#cps-s3').val(), s3_id: $('#cps-s3id').val(), s3_key: $('#cps-s3key').val(),
+      off_day: $('#cps-day').val(), off_hour: $('#cps-h').val(), off_min: $('#cps-m').val(), off_keep: $('#cps-ok').val()})
+      .done(function (r) { if (r.ok) { $m.attr('class', 'snp-ok').text(T('snp.saved')); $('#cps-s3id,#cps-s3key').val(''); CONF = null; OV = null; load(); } else { $m.attr('class', 'snp-er').text(r.error); } }).fail(function (x) { $m.attr('class', 'snp-er').text(err(x)); });
   });
 
-  function draw(r) { D = r; drawAct(r); drawDs(r); if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); } clearTimeout(pollT); if (r.running || (r.run && r.run.state === 'running')) { pollT = setTimeout(load, 2500); } }
+  function draw(r) { D = r; drawAct(r); drawDs(r); drawCp(r); if (!CONF || JSON.stringify(CONF) !== JSON.stringify(r.cfg)) { CONF = r.cfg; drawSet(r); } clearTimeout(pollT); if (r.running || (r.run && r.run.state === 'running') || (r.copies && r.copies.job && r.copies.job.state === 'running')) { pollT = setTimeout(load, 2500); } }
   function load() { api('state').done(draw).fail(function (x) { $('#snp-act').html('<div class="snp-status snp-er">' + esc(err(x)) + '</div>'); }); }
   load();
 });
@@ -12822,7 +13700,12 @@ function snp_run($cmd, &$rc = null) { $o = []; @exec($cmd . ' 2>&1', $o, $rc); r
 function snp_name_ok($n) { return (bool)preg_match('/^[A-Za-z0-9_.:\-]{1,100}$/', (string)$n); }
 function snp_ds_ok($d) { return (bool)preg_match('#^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]+)*$#', (string)$d); }
 
-function snp_defaults() { return ['on' => 1, 'datasets' => [], 'hour' => 3, 'min' => 30, 'keep' => 7, 'maxfill' => 85, 'discord' => 1]; }
+function snp_defaults() {
+    return ['on' => 1, 'datasets' => [], 'hour' => 3, 'min' => 30, 'keep' => 7, 'maxfill' => 85, 'discord' => 1,
+        // copies (item 105): to an array share after the daily snapshot, and weekly off the server (restic)
+        'copy' => 0, 'copy_dir' => '/mnt/user/backup/sysbox', 'keep_d' => 14, 'keep_w' => 8, 'skip' => 'docker.img, transcodes, cache', 'stale' => 2,
+        'off' => 'off', 'off_sftp' => '', 'off_port' => 22, 'off_s3' => '', 'off_day' => 7, 'off_hour' => 4, 'off_min' => 30, 'off_keep' => 26];
+}
 function snp_cfg() {
     $c = snp_defaults();
     $x = is_file(snp_cfg_file()) ? json_decode((string)@file_get_contents(snp_cfg_file()), true) : null;
@@ -12918,13 +13801,14 @@ function snp_mounts_file() { $t = getenv('SX_SNP_MOUNTS'); return ($t !== false 
 // where the snapshot copy of a live folder is
 function snp_snapdir($ds, $snap, $dir) { $root = rtrim($ds['mnt'], '/'); return $root . '/.zfs/snapshot/' . $snap . substr($dir, strlen($root)); }
 
-// rsync dry run: how many files differ from the snapshot (shown before a restore)
+// rsync dry run: how many files differ from the snapshot or copy (shown before a restore)
 function snp_diff_count($ds, $snap, $dirs) {
-    $r = snp_bin('rsync'); $n = 0;
+    require_once __DIR__ . '/copy_lib.php';
+    $r = snp_bin('rsync'); $n = 0; $skip = cp_is_copy($snap) ? cp_skip_args(snp_cfg()) : '';
     foreach ($dirs as $dir) {
-        $from = snp_snapdir($ds, $snap, $dir);
-        if (!is_dir($from)) { continue; }
-        $o = snp_run(escapeshellarg($r) . ' -anHAX --checksum --delete --out-format=%n ' . escapeshellarg($from . '/') . ' ' . escapeshellarg($dir . '/'));
+        $from = cp_src_dir($ds, $snap, $dir);
+        if ($from === '' || !is_dir($from)) { continue; }
+        $o = snp_run(escapeshellarg($r) . ' -anHAX --checksum --delete' . $skip . ' --out-format=%n ' . escapeshellarg($from . '/') . ' ' . escapeshellarg($dir . '/'));
         foreach ($o as $l) { if ($l !== '' && $l !== './' && substr($l, -1) !== '/') { $n++; } }
     }
     return $n;
@@ -12945,7 +13829,9 @@ function snp_discord($level, $title, $desc) {
 <FILE Name="&plugdir;/snap.php">
 <INLINE><![CDATA[<?php
 // Web endpoint of the Snapshots page (Sysbox). POST op=state|make|delete|preview|restore|save
+//   copies (item 105): copy_now|off_now|off_test|off_list|off_fetch|off_pw|fetched_del
 require_once __DIR__ . '/snap_lib.php';
+require_once __DIR__ . '/copy_lib.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
 sx_guard();
 $op = (string)($_POST['op'] ?? 'state');
@@ -12963,7 +13849,7 @@ if ($op === 'state') {
     }
     $log = is_file(snp_log_file()) ? array_slice(file(snp_log_file(), FILE_IGNORE_NEW_LINES), -60) : [];
     $run = json_decode((string)@file_get_contents(snp_run_file()), true) ?: ['state' => 'idle'];
-    sx_json(['ok' => true, 'cfg' => $c, 'datasets' => $out, 'log' => $log, 'run' => $run, 'running' => snp_running(), 'zfs' => snp_bin('zfs') !== '']);
+    sx_json(['ok' => true, 'cfg' => $c, 'datasets' => $out, 'log' => $log, 'run' => $run, 'running' => snp_running(), 'zfs' => snp_bin('zfs') !== '', 'copies' => cp_view($c)]);
 }
 if ($op === 'make') {
     $ds = snp_ds_arg(); $n = trim((string)($_POST['name'] ?? '')); if ($n === '') { $n = 'manual-' . date('Y-m-d-Hi'); }
@@ -12991,12 +13877,50 @@ if ($op === 'restore') {
     @exec('setsid nohup ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/snap_run.php') . ' restore ' . escapeshellarg($ds) . ' ' . escapeshellarg($snap) . ' ' . escapeshellarg($ctr) . ' >/dev/null 2>&1 &');
     sx_json(['ok' => true]);
 }
+// the background jobs of the copies (one at a time, with the daily run and a restore)
+function cp_spawn($args) {
+    if (snp_running()) { sx_json(['ok' => false, 'error' => sx_tr('snpe.busy')]); }
+    cp_job(['kind' => $args[0] === 'offsite' ? 'off' : $args[0], 'state' => 'running', 'started' => time(), 'finished' => 0, 'pct' => 0, 'msg' => '', 'title' => sx_tr('cpj.starting')]);
+    @exec('setsid nohup ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/snap_run.php') . ' ' . implode(' ', array_map('escapeshellarg', $args)) . ' >/dev/null 2>&1 &');
+    sx_json(['ok' => true]);
+}
+if ($op === 'copy_now') { cp_spawn(['copy']); }
+if ($op === 'off_now') { if (!cp_off_ok(snp_cfg())) { sx_json(['ok' => false, 'error' => sx_tr('cpe.off_addr')]); } cp_spawn(['offsite']); }
+if ($op === 'off_fetch') { $id = (string)($_POST['id'] ?? ''); if (!preg_match('/^[0-9a-f]{8}$/', $id)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.no_version')]); } cp_spawn(['fetch', $id]); }
+if ($op === 'off_test') { if (snp_running()) { sx_json(['ok' => false, 'error' => sx_tr('snpe.busy')]); } $r = cp_off_test(snp_cfg()); foreach (['msg', 'error'] as $k) { if (isset($r[$k])) { $r[$k] = cp_t($r[$k]); } } sx_json($r); }
+if ($op === 'off_list') { $r = cp_off_list(snp_cfg()); if (isset($r['error'])) { $r['error'] = cp_t($r['error']); } sx_json($r); }
+// the password is shown only on this click, so it can be written down
+if ($op === 'off_pw') { snp_log('off-site password shown on the page'); sx_json(['ok' => true, 'pw' => cp_password()]); }
+// removes one downloaded off-site version (a click with a confirm); nothing else can be named here
+if ($op === 'fetched_del') {
+    $ds = snp_ds_arg(); $n = (string)($_POST['name'] ?? ''); $c = snp_cfg();
+    if (!in_array($n, cp_fetched($c, $ds), true)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.no_version')]); }
+    $t = cp_target($c, $ds); snp_run('rm -rf ' . escapeshellarg(dirname($t['dir']) . '/restore/' . cp_tag($ds) . '/' . $n), $rc);
+    snp_log("off-site download $ds/$n deleted by hand");
+    sx_json(['ok' => $rc === 0, 'error' => $rc === 0 ? '' : 'rm ' . $rc]);
+}
 if ($op === 'save') {
     $c = snp_cfg(); $known = array_column(snp_datasets(), 'name');
     $c['datasets'] = array_values(array_intersect(array_filter((array)($_POST['datasets'] ?? []), 'snp_ds_ok'), $known));
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'keep' => [1, 90], 'maxfill' => [10, 99]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
+    foreach (['keep_d' => [1, 90], 'keep_w' => [0, 104], 'stale' => [0, 30], 'off_port' => [1, 65535], 'off_day' => [1, 7], 'off_hour' => [0, 23], 'off_min' => [0, 59], 'off_keep' => [1, 520]] as $k => [$lo, $hi]) {
+        $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
+    }
+    $c['copy'] = !empty($_POST['copy']) && $_POST['copy'] !== '0' ? 1 : 0;
+    $dir = rtrim(trim((string)($_POST['copy_dir'] ?? $c['copy_dir'])), '/'); if (!cp_dir_ok($dir)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.dir_bad')]); } $c['copy_dir'] = $dir;
+    $c['skip'] = implode(', ', cp_skip_list((string)($_POST['skip'] ?? $c['skip'])));
+    $c['off'] = in_array($_POST['off'] ?? '', ['off', 'sftp', 's3'], true) ? $_POST['off'] : 'off';
+    $c['off_sftp'] = trim((string)($_POST['off_sftp'] ?? $c['off_sftp'])); $c['off_s3'] = rtrim(trim((string)($_POST['off_s3'] ?? $c['off_s3'])), '/');
+    if ($c['off'] !== 'off' && !cp_off_ok($c)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.off_addr')]); }
+    // S3 keys: empty keeps the saved ones (the page never gets them back)
+    $sec = cp_secret(); $id = trim((string)($_POST['s3_id'] ?? '')); $key = trim((string)($_POST['s3_key'] ?? ''));
+    if ($id !== '' || $key !== '') {
+        if (!preg_match('/^[A-Za-z0-9+\/=_\-]{8,128}$/', $id) || !preg_match('/^[A-Za-z0-9+\/=_\-]{8,128}$/', $key)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.s3_keys')]); }
+        $sec['s3_id'] = $id; $sec['s3_key'] = $key; cp_secret_write($sec);
+    }
+    if ($c['off'] !== 'off') { cp_password(); if ($c['off'] === 'sftp') { cp_ssh_key(); } }
     $c['on'] = !empty($_POST['on']) && $_POST['on'] !== '0' ? 1 : 0;
     $c['discord'] = !empty($_POST['discord']) && $_POST['discord'] !== '0' ? 1 : 0;
     sx_json(['ok' => snp_json_write(snp_cfg_file(), $c), 'cfg' => $c]);
@@ -13011,9 +13935,11 @@ sx_json(['ok' => false, 'error' => 'unknown action'], 400);
 <FILE Name="&plugdir;/snap_run.php">
 <INLINE><![CDATA[<?php
 // Snapshots worker (Sysbox). php snap_run.php daily   (cron every 5 minutes: makes the day's snapshots once, after the set time)
-//                           php snap_run.php restore <dataset> <snapshot> <container>   (started by snap.php after a click)
+//                           php snap_run.php restore <dataset> <snapshot|copy:date|off:date-id> <container>   (started by snap.php after a click)
+//                           php snap_run.php copy | offsite | fetch <id>   (Copy now, Off-site now, Download: clicks on the page)
 if (PHP_SAPI !== 'cli') { exit(1); } // cron and the page's worker only, not a web page
 require_once __DIR__ . '/snap_lib.php';
+require_once __DIR__ . '/copy_lib.php';
 require_once __DIR__ . '/discord.php';
 @set_time_limit(0);
 
@@ -13021,13 +13947,66 @@ $lk = @fopen(snp_lock_file(), 'c');
 if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) { exit(0); }
 $mode = $argv[1] ?? '';
 
+// a copy, off-site copy or download as a job the page's Activity follows
+function cp_jobrun($kind, $fn) {
+    cp_job(['kind' => $kind, 'state' => 'running', 'started' => time(), 'finished' => 0, 'pct' => 0, 'msg' => '', 'title' => '']);
+    $msg = ''; $ok = $fn($msg);
+    cp_job(['state' => $ok ? 'done' : 'error', 'finished' => time(), 'pct' => 100, 'msg' => $ok ? sx_tr(['copy' => 'cpj.done_copy', 'off' => 'cpj.done_off', 'fetch' => 'cpj.done_fetch'][$kind]) : cp_t($msg)]);
+    return [$ok, $msg];
+}
+// the array copy of every chosen dataset from its newest snapshot (daily: the one just made)
+function cp_copy_all($c) {
+    return cp_jobrun('copy', function (&$msg) use ($c) {
+        $bad = [];
+        foreach ($c['datasets'] as $ds) {
+            $sn = snp_snaps($ds); $snap = $sn ? end($sn) : null;
+            if (!$snap) { $bad[] = ['cpd.no_snap', ['ds' => $ds]]; continue; }
+            $m = ''; if (!cp_copy_one($c, $ds, $snap, $m)) { $bad[] = $m; }
+        }
+        if ($bad) { $msg = $bad; cp_state_set('err', cp_t($bad)); snp_log('copy FAILED: ' . str_replace("\n", '; ', cp_t($bad))); return false; }
+        return true;
+    });
+}
+function cp_off_all($c) {
+    cp_state_set('off_try', time());
+    return cp_jobrun('off', function (&$msg) use ($c) { return cp_off_run($c, $msg); });
+}
+
+if ($mode === 'copy' || $mode === 'offsite') {
+    $c = snp_cfg();
+    [$ok, $msg] = $mode === 'copy' ? cp_copy_all($c) : cp_off_all($c);
+    if (!$ok) { snp_discord('rd', sx_trd($mode === 'copy' ? 'cpd.dc_copy' : 'cpd.dc_off'), cp_t($msg, true)); }
+    exit(0);
+}
+if ($mode === 'fetch') {
+    $c = snp_cfg(); $id = (string)($argv[2] ?? '');
+    if (!preg_match('/^[0-9a-f]{8}$/', $id)) { exit(1); }
+    cp_jobrun('fetch', function (&$msg) use ($c, $id) { return cp_off_fetch($c, $id, $msg); });
+    exit(0);
+}
+
 if ($mode === 'daily') {
     $c = snp_cfg();
     if (empty($c['on']) || !$c['datasets']) { exit(0); }
     $st = json_decode((string)@file_get_contents(snp_state_file()), true) ?: [];
-    $today = date('Y-m-d');
-    if (($st['day'] ?? '') === $today) { exit(0); }
-    if ((int)date('G') * 60 + (int)date('i') < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
+    $today = date('Y-m-d'); $now = (int)date('G') * 60 + (int)date('i');
+    if (($st['day'] ?? '') === $today) {
+        // after the day's snapshot: the off-site copy when it is due (the set day and time, or more than 8 days since the last try)
+        $cs = cp_state();
+        if ($c['off'] !== 'off' && cp_off_ok($c) && $now >= (int)$c['off_hour'] * 60 + (int)$c['off_min'] && ($cs['off_week'] ?? '') !== date('o-W')
+            && ((int)date('N') === (int)$c['off_day'] || time() - (int)($cs['off_try'] ?? 0) > 8 * 86400)) {
+            cp_state_set('off_week', date('o-W'));
+            [$ok, $msg] = cp_off_all($c);
+            if (!$ok) { snp_discord('rd', sx_trd('cpd.dc_off'), cp_t($msg, true)); }
+        }
+        // a copy older than the set days: one Discord message a day
+        $cs = cp_state(); $old = [];
+        if (!empty($c['copy']) && (int)$c['stale'] > 0 && time() - (int)($cs['ok'] ?? time()) > (int)$c['stale'] * 86400) { $old[] = sx_trd('cpd.stale_copy', ['n' => (int)floor((time() - (int)$cs['ok']) / 86400)]); }
+        if ($c['off'] !== 'off' && (int)$c['stale'] > 0 && !empty($cs['off_ok']) && time() - (int)$cs['off_ok'] > (7 + (int)$c['stale']) * 86400) { $old[] = sx_trd('cpd.stale_off', ['n' => (int)floor((time() - (int)$cs['off_ok']) / 86400)]); }
+        if ($old && ($cs['stale_day'] ?? '') !== $today && $now >= (int)$c['hour'] * 60 + (int)$c['min'] + 120) { cp_state_set('stale_day', $today); snp_discord('a', sx_trd('cpd.dc_stale'), implode("\n", $old)); }
+        exit(0);
+    }
+    if ($now < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
     $st['day'] = $today; snp_json_write(snp_state_file(), $st); // once a day, also when something below fails
     $name = 'auto-' . $today; $bad = [];
     foreach ($c['datasets'] as $ds) {
@@ -13046,6 +14025,8 @@ if ($mode === 'daily') {
         }
     }
     if ($bad) { snp_discord('rd', sx_trd('sr.dc_daily'), implode("\n", $bad)); }
+    // then the copy to the array (item 105)
+    if (!empty($c['copy'])) { [$ok, $msg] = cp_copy_all($c); if (!$ok) { snp_discord('rd', sx_trd('cpd.dc_copy'), cp_t($msg, true)); } }
     exit(0);
 }
 
@@ -13057,8 +14038,9 @@ if ($mode === 'restore') {
     $end = function ($state, $k, $v = []) use (&$S, $say) { $msg = sx_tr($k, $v); $S['state'] = $state; $S['msg'] = $msg; $S['finished'] = time(); $say($k, $v); snp_log($msg); if ($state !== 'done') { snp_discord('a', sx_trd('sr.dc_restore'), sx_trd($k, $v)); } exit(0); };
     $ds = snp_dataset($dsn);
     if (!$ds || !snp_name_ok($snap) || !sx_valid_name($ctr)) { $end('error', 'sr.bad_args'); }
-    $have = false; foreach (snp_snaps($dsn) as $s) { if ($s['name'] === $snap) { $have = true; } }
-    if (!$have) { $end('error', 'sr.no_snap', ['s' => $dsn . '@' . $snap]); }
+    $isCopy = cp_is_copy($snap); $root = $isCopy ? cp_src_root($ds, $snap) : '';
+    if ($isCopy) { if ($root === '' || !is_dir($root)) { $end('error', 'sr.no_snap', ['s' => $snap]); } }
+    else { $have = false; foreach (snp_snaps($dsn) as $s) { if ($s['name'] === $snap) { $have = true; } } if (!$have) { $end('error', 'sr.no_snap', ['s' => $dsn . '@' . $snap]); } }
     $ct = null; foreach (snp_containers($ds) as $x) { if ($x['name'] === $ctr) { $ct = $x; } }
     if (!$ct) { $end('error', 'sr.no_dir', ['c' => $ctr, 'ds' => $dsn]); }
     // a folder that is (or holds) another mount, e.g. its own child dataset, is not in this snapshot: rsync --delete would empty it
@@ -13079,12 +14061,12 @@ if ($mode === 'restore') {
         if ($rc !== 0) { $end('error', 'sr.no_stop', ['c' => $ctr, 's' => $safe]); }
         $say('sr.stopped', ['c' => $ctr]);
     }
-    // 3. each folder exactly as in the snapshot (newer files removed)
-    $r = snp_bin('rsync'); $fail = [];
+    // 3. each folder exactly as in the snapshot or copy (newer files removed; what the copies skip is left as it is)
+    $r = snp_bin('rsync'); $fail = []; $skip = $isCopy ? cp_skip_args(snp_cfg()) : '';
     foreach ($ct['dirs'] as $dir) {
-        $from = snp_snapdir($ds, $snap, $dir);
-        if (!is_dir($from)) { $say('sr.not_in', ['d' => $dir]); continue; }
-        $o = snp_run(escapeshellarg($r) . ' -aHAX --checksum --delete ' . // checksum: a file changed within the same second at the same size is caught too
+        $from = cp_src_dir($ds, $snap, $dir);
+        if ($from === '' || !is_dir($from)) { $say('sr.not_in', ['d' => $dir]); continue; }
+        $o = snp_run(escapeshellarg($r) . ' -aHAX --checksum --delete' . $skip . ' ' . // checksum: a file changed within the same second at the same size is caught too
              escapeshellarg($from . '/') . ' ' . escapeshellarg($dir . '/'), $rc);
         if ($rc === 0) { $say('sr.restored_dir', ['d' => $dir]); } else { $fail[] = $dir; $say('sr.failed_dir', ['d' => $dir, 'e' => substr(trim(implode(' ', $o)), 0, 200)]); }
     }
@@ -13094,6 +14076,324 @@ if ($mode === 'restore') {
     $end('done', 'sr.done', ['c' => $ctr, 's' => $dsn . '@' . $snap, 'u' => $safe]);
 }
 exit(1);
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- SNAPSHOTS COPIES LIBRARY -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/copy_lib.php">
+<INLINE><![CDATA[<?php
+// Snapshots copies (Sysbox, item 105): the daily snapshot copied to an array disk (rsync, one browsable folder per day,
+// unchanged files hardlinked to the day before) and, weekly, an encrypted copy off the server (restic, SFTP or S3).
+// Only folders this code made are removed (date names inside the dataset folder); a restore is a click on the page.
+require_once __DIR__ . '/snap_lib.php';
+
+const CP_RESTIC_VER = '0.19.1';
+const CP_RESTIC_SHA = 'f415415624dcc452f2a02b8c33641791a8c6d6d3b65bbb3543fcf9a25151585c';   // restic_0.19.1_linux_amd64.bz2 (SHA256SUMS of the release)
+
+// a message is [dictionary key, values] (or a list of them): cp_t() renders it for the page, cp_t(.., true) for Discord
+function cp_t($m, $dc = false) {
+    if (is_string($m)) { return $m; }
+    if (isset($m[0]) && is_string($m[0])) { return $dc ? sx_trd($m[0], (array)($m[1] ?? [])) : sx_tr($m[0], (array)($m[1] ?? [])); }
+    return implode("\n", array_map(function ($x) use ($dc) { return cp_t($x, $dc); }, (array)$m));
+}
+function cp_env($n, $def) { $v = getenv($n); return ($v !== false && $v !== '') ? rtrim($v, '/') : $def; }
+function cp_disks_root() { return cp_env('SX_SNAP_DISKS', '/mnt'); }          // tests: a fake /mnt with disk1.. folders
+function cp_user_root() { return cp_env('SX_SNAP_USER', '/mnt/user'); }
+function cp_shares_ini() { return cp_env('SX_SHARES_INI', '/usr/local/emhttp/state/shares.ini'); }
+function cp_state_file() { return snp_dir() . '/copies_state.json'; }
+function cp_secret_file() { return snp_dir() . '/offsite_secret.json'; }
+function cp_key_file() { return snp_dir() . '/offsite_ssh_ed25519'; }
+function cp_known_file() { return snp_dir() . '/offsite_known_hosts'; }
+function cp_job_file() { return snp_tmp() . '/sysbox_snap_job.json'; }
+
+function cp_state() { $s = json_decode((string)@file_get_contents(cp_state_file()), true); return is_array($s) ? $s : []; }
+function cp_state_set($k, $v) { $s = cp_state(); $s[$k] = $v; snp_json_write(cp_state_file(), $s); }
+function cp_secret() { $s = json_decode((string)@file_get_contents(cp_secret_file()), true); return is_array($s) ? $s : []; }
+function cp_secret_write($s) { $ok = snp_json_write(cp_secret_file(), $s); @chmod(cp_secret_file(), 0600); return $ok; }
+// the restic password: made once, never changed (the off-site copies cannot be read without it)
+function cp_password() {
+    $s = cp_secret();
+    if (empty($s['pw'])) {
+        $a = 'abcdefghjkmnpqrstuvwxyz23456789'; $p = [];
+        for ($g = 0; $g < 6; $g++) { $w = ''; for ($i = 0; $i < 5; $i++) { $w .= $a[random_int(0, strlen($a) - 1)]; } $p[] = $w; }
+        $s['pw'] = implode('-', $p); $s['pw_made'] = time(); cp_secret_write($s);
+    }
+    return (string)$s['pw'];
+}
+
+// one dataset's folder name inside the target: cache/docker -> cache_docker
+function cp_tag($ds) { return str_replace('/', '_', $ds); }
+function cp_date_ok($d) { return (bool)preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$d); }
+function cp_dir_ok($p) { return (bool)preg_match('#^/mnt/user/[A-Za-z0-9_.\- ]+(?:/[A-Za-z0-9_.\- ]+)*$#', (string)$p) && strpos($p, '..') === false; }
+// the folder names to leave out, as rsync and restic patterns (names only: transcodes, docker.img, *.tmp)
+function cp_skip_list($s) {
+    $out = [];
+    foreach (preg_split('/[,\n]+/', (string)$s) as $x) { $x = trim($x); if ($x !== '' && preg_match('/^[A-Za-z0-9_.*?\-]{1,64}$/', $x)) { $out[] = $x; } }
+    return array_values(array_unique($out));
+}
+function cp_skip_args($cfg) { $a = ''; foreach (cp_skip_list($cfg['skip']) as $x) { $a .= ' --exclude=' . escapeshellarg($x); } return $a; }
+
+// the share of the target and the array disk the copies go to. The copies of one dataset stay on one disk (hardlinks);
+// a share that lives on a pool is refused (the copy would sit next to what it protects).
+function cp_target($cfg, $ds) {
+    $p = rtrim((string)$cfg['copy_dir'], '/');
+    if (!cp_dir_ok($p)) { return ['err' => ['cpe.dir_bad', []]]; }
+    $rel = substr($p, strlen('/mnt/user/')); $share = explode('/', $rel)[0];
+    if (!is_dir(cp_user_root() . '/' . $share)) { return ['err' => ['cpe.no_share', ['s' => $share]]]; }
+    $ini = is_file(cp_shares_ini()) ? @parse_ini_file(cp_shares_ini(), true) : [];
+    $use = strtolower((string)($ini[$share]['useCache'] ?? 'no'));
+    if (in_array($use, ['only', 'prefer'], true)) { return ['err' => ['cpe.on_pool', ['s' => $share]]]; }
+    $best = null; $have = null;
+    foreach (glob(cp_disks_root() . '/disk[0-9]*', GLOB_ONLYDIR) ?: [] as $d) {
+        if (!getenv('SX_SNAP_DISKS') && !snp_is_mount($d)) { continue; }
+        $free = (float)@disk_free_space($d);
+        $dir = $d . '/' . $rel . '/' . cp_tag($ds);
+        if (is_dir($dir) && cp_list_dir($dir)) { $have = ['disk' => basename($d), 'dir' => $dir, 'free' => $free]; }
+        if (!$best || $free > $best['free']) { $best = ['disk' => basename($d), 'dir' => $dir, 'free' => $free]; }
+    }
+    $t = $have ?: $best;
+    if (!$t) { return ['err' => ['cpe.no_disk', []]]; }
+    return $t + ['err' => '', 'share' => $share, 'rel' => $rel];
+}
+function snp_is_mount($d) { foreach ((array)@file(snp_mounts_file(), FILE_IGNORE_NEW_LINES) as $l) { $f = explode(' ', $l); if (isset($f[1]) && stripcslashes($f[1]) === $d) { return true; } } return false; }
+// the finished copies in a dataset folder, oldest first
+function cp_list_dir($dir) {
+    $out = [];
+    foreach (scandir($dir) ?: [] as $n) { if (cp_date_ok($n) && is_dir("$dir/$n")) { $out[] = $n; } }
+    sort($out); return $out;
+}
+// the off-site downloads waiting for a restore
+function cp_fetched($cfg, $ds) {
+    $t = cp_target($cfg, $ds); if ($t['err'] !== '') { return []; }
+    $dir = dirname($t['dir']) . '/restore/' . cp_tag($ds); $out = [];
+    foreach (is_dir($dir) ? (scandir($dir) ?: []) : [] as $n) { if (preg_match('/^\d{4}-\d{2}-\d{2}-[0-9a-f]{8}$/', $n) && is_dir("$dir/$n")) { $out[] = $n; } }
+    rsort($out); return $out;
+}
+
+// where a restore reads from: a snapshot name, copy:<date> (array copy) or off:<date>-<id> (off-site download)
+function cp_src_root($ds, $ref) {
+    if (strpos($ref, 'copy:') === 0 || strpos($ref, 'off:') === 0) {
+        [$kind, $name] = explode(':', $ref, 2);
+        $t = cp_target(snp_cfg(), $ds['name']); if ($t['err'] !== '') { return ''; }
+        if ($kind === 'copy') { return cp_date_ok($name) ? $t['dir'] . '/' . $name : ''; }
+        return preg_match('/^\d{4}-\d{2}-\d{2}-[0-9a-f]{8}$/', $name) ? dirname($t['dir']) . '/restore/' . cp_tag($ds['name']) . '/' . $name : '';
+    }
+    return rtrim($ds['mnt'], '/') . '/.zfs/snapshot/' . $ref;
+}
+function cp_src_dir($ds, $ref, $dir) { $r = cp_src_root($ds, $ref); return $r === '' ? '' : $r . substr($dir, strlen(rtrim($ds['mnt'], '/'))); }
+function cp_is_copy($ref) { return strpos($ref, 'copy:') === 0 || strpos($ref, 'off:') === 0; }
+
+// the running copy, off-site copy or download (the page's Activity shows it)
+function cp_job($a) { $j = json_decode((string)@file_get_contents(cp_job_file()), true) ?: []; $j = array_merge($j, $a); snp_json_write(cp_job_file(), $j); return $j; }
+// runs a command and calls $line for every output line (rsync progress ends its lines with \r); returns the exit code
+function cp_stream($cmd, $env, $line) {
+    $p = proc_open($cmd . ' 2>&1', [1 => ['pipe', 'w']], $pp, null, $env);
+    if (!is_resource($p)) { return 127; }
+    $buf = '';
+    while (!feof($pp[1])) {
+        $c = fread($pp[1], 8192); if ($c === false || $c === '') { if (feof($pp[1])) { break; } usleep(100000); continue; }
+        $buf .= $c;
+        while (preg_match('/^(.*?)[\r\n]/s', $buf, $m)) { $buf = substr($buf, strlen($m[0])); if (trim($m[1]) !== '') { $line(trim($m[1])); } }
+    }
+    if (trim($buf) !== '') { $line(trim($buf)); }
+    fclose($pp[1]); return proc_close($p);
+}
+function cp_env_base() { $e = []; foreach (['PATH', 'HOME', 'LANG', 'TZ'] as $k) { if (getenv($k) !== false) { $e[$k] = getenv($k); } } $e['PATH'] = $e['PATH'] ?? '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'; return $e; }
+
+// ---- the array copy of one dataset from one snapshot
+function cp_copy_one($cfg, $ds, $snap, &$msg) {
+    $d = snp_dataset($ds); if (!$d) { $msg = ['cpd.ds_nf', ['ds' => $ds]]; return false; }
+    $t = cp_target($cfg, $ds); if ($t['err'] !== '') { $msg = $t['err']; return false; }
+    $src = rtrim($d['mnt'], '/') . '/.zfs/snapshot/' . $snap['name'];
+    if (!is_dir($src)) { $msg = ['cpd.no_src', ['s' => $ds . '@' . $snap['name']]]; return false; }
+    $free = (float)@disk_free_space(dirname($t['dir']) ?: '/');
+    if ($free > 0 && $free < 20e9) { $msg = ['cpd.full', ['d' => $t['disk']]]; return false; }
+    @mkdir($t['dir'], 0775, true);
+    $date = date('Y-m-d', $snap['t']); $have = cp_list_dir($t['dir']);
+    $prev = ''; foreach ($have as $h) { if ($h < $date) { $prev = $h; } }
+    $dest = $t['dir'] . '/' . $date; $work = in_array($date, $have, true) ? $dest : $dest . '.partial';
+    $cmd = escapeshellarg(snp_bin('rsync')) . ' -aHAX --numeric-ids --delete --info=progress2,stats2 --no-inc-recursive' . cp_skip_args($cfg)
+         . ($prev !== '' ? ' --link-dest=' . escapeshellarg($t['dir'] . '/' . $prev) : '') . ' ' . escapeshellarg($src . '/') . ' ' . escapeshellarg($work . '/');
+    $t0 = time(); $last = 0; $st = ['files' => 0, 'bytes' => 0, 'total' => 0]; $tail = [];
+    cp_job(['title' => sx_tr('cpj.copying', ['s' => $ds . '@' . $snap['name'], 'd' => $t['disk']]), 'pct' => 0]);
+    $rc = cp_stream($cmd, cp_env_base(), function ($l) use (&$last, &$st, &$tail) {
+        if (preg_match('/^\s*[\d,.]+\s+(\d+)%/', $l, $m)) { if (time() - $last >= 3) { $last = time(); cp_job(['pct' => (int)$m[1]]); } return; }
+        if (preg_match('/^Number of regular files transferred: ([\d,.]+)/', $l, $m)) { $st['files'] = (int)str_replace([',', '.'], '', $m[1]); }
+        if (preg_match('/^Total transferred file size: ([\d,.]+)/', $l, $m)) { $st['bytes'] = (float)str_replace([',', '.'], '', $m[1]); }
+        if (preg_match('/^Total file size: ([\d,.]+)/', $l, $m)) { $st['total'] = (float)str_replace([',', '.'], '', $m[1]); }
+        $tail[] = $l; $tail = array_slice($tail, -4);
+    });
+    if ($rc !== 0 && $rc !== 24) { $msg = ['cpd.rsync', ['c' => $rc, 'e' => substr(implode(' ', $tail), 0, 200)]]; snp_log("copy $ds@{$snap['name']} FAILED (rsync $rc): " . implode(' ', $tail)); return false; }   // 24: a file vanished, normal
+    if ($work !== $dest && !@rename($work, $dest)) { $msg = ['cpd.rename', ['d' => $dest]]; return false; }
+    $s = cp_state(); $s['copies'][$ds][$date] = ['files' => $st['files'], 'new' => $st['bytes'], 'total' => $st['total'], 'secs' => time() - $t0, 'disk' => $t['disk'], 'snap' => $snap['name']];
+    $s['ok'] = time(); $s['err'] = ''; snp_json_write(cp_state_file(), $s);
+    snp_log("copy $ds@{$snap['name']} to {$t['disk']}: {$st['files']} files changed, " . round($st['bytes'] / 1e9, 2) . ' GB written, ' . (time() - $t0) . ' s');
+    cp_prune($cfg, $ds, $t['dir']);
+    return true;
+}
+// keep the newest keep_d copies, then the newest one of each week for keep_w weeks; only date-named folders are removed
+function cp_prune($cfg, $ds, $dir) {
+    $all = cp_list_dir($dir); $keep = array_slice($all, -max(1, (int)$cfg['keep_d'])); $weeks = [];
+    foreach (array_reverse($all) as $n) {
+        if (in_array($n, $keep, true)) { continue; }
+        $w = date('o-W', strtotime($n));
+        if (!isset($weeks[$w]) && count($weeks) < (int)$cfg['keep_w']) { $weeks[$w] = $n; $keep[] = $n; }
+    }
+    foreach ($all as $n) {
+        if (in_array($n, $keep, true)) { continue; }
+        snp_run('rm -rf ' . escapeshellarg($dir . '/' . $n), $rc);
+        snp_log("copy $ds/$n removed (older than kept)" . ($rc ? " FAILED rc $rc" : ''));
+        $s = cp_state(); unset($s['copies'][$ds][$n]); snp_json_write(cp_state_file(), $s);
+    }
+    foreach (glob($dir . '/*.partial', GLOB_ONLYDIR) ?: [] as $p) { if (basename($p) !== date('Y-m-d') . '.partial' && filemtime($p) < time() - 3 * 86400) { snp_run('rm -rf ' . escapeshellarg($p)); } }
+}
+
+// ---- restic (off-site)
+// the pinned restic: downloaded once to the flash (checked against its SHA256), unpacked to RAM
+function cp_restic(&$err) {
+    $t = getenv('SX_RESTIC_BIN'); if ($t !== false && $t !== '') { return $t; }
+    $bin = '/tmp/sysbox_restic/restic-' . CP_RESTIC_VER;
+    if (is_executable($bin)) { return $bin; }
+    $bz = snp_dir() . '/restic_' . CP_RESTIC_VER . '_linux_amd64.bz2';
+    if (!is_file($bz) || hash_file('sha256', $bz) !== CP_RESTIC_SHA) {
+        $url = 'https://github.com/restic/restic/releases/download/v' . CP_RESTIC_VER . '/restic_' . CP_RESTIC_VER . '_linux_amd64.bz2';
+        snp_run('curl -fsSL -m 120 -o ' . escapeshellarg($bz . '.tmp') . ' ' . escapeshellarg($url), $rc);
+        if ($rc !== 0 || hash_file('sha256', $bz . '.tmp') !== CP_RESTIC_SHA) { @unlink($bz . '.tmp'); $err = ['cpe.restic_dl', []]; return ''; }
+        @rename($bz . '.tmp', $bz);
+    }
+    @mkdir(dirname($bin), 0700, true);
+    snp_run('bunzip2 -c ' . escapeshellarg($bz) . ' > ' . escapeshellarg($bin . '.tmp') . ' && chmod 700 ' . escapeshellarg($bin . '.tmp') . ' && mv ' . escapeshellarg($bin . '.tmp') . ' ' . escapeshellarg($bin), $rc);
+    if ($rc !== 0) { $err = ['cpe.restic_dl', []]; return ''; }
+    return $bin;
+}
+function cp_off_ok($cfg) {
+    if ($cfg['off'] === 'sftp') { return (bool)preg_match('#^[A-Za-z0-9_.\-]+@[A-Za-z0-9.\-]+:/?[A-Za-z0-9_.\-/ ]*$#', (string)$cfg['off_sftp']); }
+    if ($cfg['off'] === 's3') { return (bool)preg_match('#^https://[A-Za-z0-9.\-]+(?::\d+)?/[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]+)*$#', (string)$cfg['off_s3']); }
+    return false;
+}
+// the repository address shown on the page (no keys)
+function cp_off_label($cfg) { return $cfg['off'] === 'sftp' ? 'sftp:' . $cfg['off_sftp'] : ($cfg['off'] === 's3' ? 's3:' . $cfg['off_s3'] : ''); }
+// the private SSH key for SFTP: made on the flash once, copied to RAM with 0600 for ssh
+function cp_ssh_key() {
+    $k = cp_key_file();
+    if (!is_file($k)) {
+        $tmp = snp_tmp() . '/sysbox_k' . getmypid(); @unlink($tmp); @unlink($tmp . '.pub');
+        snp_run('ssh-keygen -q -t ed25519 -N "" -C sysbox-offsite@' . escapeshellarg(php_uname('n')) . ' -f ' . escapeshellarg($tmp), $rc);
+        if ($rc !== 0) { return ''; }
+        @copy($tmp, $k); @copy($tmp . '.pub', $k . '.pub'); @unlink($tmp); @unlink($tmp . '.pub'); @chmod($k, 0600);
+    }
+    $run = snp_tmp() . '/sysbox_offsite_key'; @copy($k, $run); @chmod($run, 0600);
+    return $run;
+}
+function cp_ssh_pub() { return is_file(cp_key_file() . '.pub') ? trim((string)file_get_contents(cp_key_file() . '.pub')) : ''; }
+// restic command line and environment (password and keys only in the environment, never on the command line)
+function cp_restic_cmd($cfg, $args, &$env, &$err) {
+    $r = cp_restic($err); if ($r === '') { return ''; }
+    if (!cp_off_ok($cfg)) { $err = ['cpe.off_addr', []]; return ''; }
+    $env = cp_env_base(); $env['RESTIC_PASSWORD'] = cp_password(); $sec = cp_secret(); $o = '';
+    if ($cfg['off'] === 'sftp') {
+        $key = cp_ssh_key(); if ($key === '') { $err = ['cpe.ssh_key', []]; return ''; }
+        [$uh] = explode(':', $cfg['off_sftp'], 2);
+        $ssh = 'ssh -p ' . (int)$cfg['off_port'] . ' -i ' . $key . ' -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=' . cp_known_file() . ' ' . $uh . ' -s sftp';
+        $o = ' -o ' . escapeshellarg('sftp.command=' . $ssh);
+    } else {
+        if (empty($sec['s3_id']) || empty($sec['s3_key'])) { $err = ['cpe.s3_keys', []]; return ''; }
+        $env['AWS_ACCESS_KEY_ID'] = $sec['s3_id']; $env['AWS_SECRET_ACCESS_KEY'] = $sec['s3_key'];
+    }
+    return escapeshellarg($r) . ' -r ' . escapeshellarg(cp_off_label($cfg)) . $o . ' --no-cache ' . $args;
+}
+// Test and set up (a click): reach the repository; make it when it does not exist yet
+function cp_off_test($cfg) {
+    $cmd = cp_restic_cmd($cfg, 'cat config', $env, $err); if ($cmd === '') { return ['ok' => false, 'error' => $err]; }
+    $out = []; $rc = cp_stream($cmd, $env, function ($l) use (&$out) { $out[] = $l; });
+    if ($rc === 0) { return ['ok' => true, 'msg' => ['cpm.repo_ok', []]]; }
+    if ($rc !== 10) { return ['ok' => false, 'error' => ['cpe.repo', ['e' => substr(implode(' ', array_slice($out, -3)), 0, 300)]]]; }   // 10: no repository there yet
+    $cmd = cp_restic_cmd($cfg, 'init', $env, $err); $out = [];
+    $rc = cp_stream($cmd, $env, function ($l) use (&$out) { $out[] = $l; });
+    if ($rc !== 0) { return ['ok' => false, 'error' => ['cpe.repo', ['e' => substr(implode(' ', array_slice($out, -3)), 0, 300)]]]; }
+    snp_log('off-site repository made at ' . cp_off_label($cfg));
+    return ['ok' => true, 'msg' => ['cpm.repo_made', []]];
+}
+// the off-site versions (newest first)
+function cp_off_list($cfg) {
+    $cmd = cp_restic_cmd($cfg, 'snapshots --json --tag sysbox', $env, $err); if ($cmd === '') { return ['ok' => false, 'error' => $err]; }
+    $out = []; $rc = cp_stream($cmd, $env, function ($l) use (&$out) { $out[] = $l; });
+    $j = null; foreach ($out as $l) { if ($l !== '' && $l[0] === '[') { $j = json_decode($l, true); } }
+    if ($rc !== 0 || !is_array($j)) { return ['ok' => false, 'error' => ['cpe.repo', ['e' => substr(implode(' ', array_slice($out, -3)), 0, 300)]]]; }
+    $L = [];
+    foreach ($j as $s) {
+        $ds = ''; foreach ((array)($s['tags'] ?? []) as $tg) { if (strpos($tg, 'ds:') === 0) { $ds = substr($tg, 3); } }
+        $L[] = ['id' => substr((string)$s['id'], 0, 8), 'time' => strtotime((string)$s['time']), 'ds' => $ds, 'path' => (string)($s['paths'][0] ?? ''), 'size' => (float)($s['summary']['total_bytes_processed'] ?? 0)];
+    }
+    usort($L, function ($a, $b) { return $b['time'] <=> $a['time']; });
+    return ['ok' => true, 'list' => $L];
+}
+// the weekly off-site copy of each dataset's newest snapshot, then the old versions forgotten
+function cp_off_run($cfg, &$msg) {
+    $bad = [];
+    foreach ($cfg['datasets'] as $ds) {
+        $d = snp_dataset($ds); $sn = $d ? snp_snaps($ds) : []; $snap = $sn ? end($sn) : null;
+        if (!$snap) { $bad[] = ['cpd.no_snap', ['ds' => $ds]]; continue; }
+        $src = rtrim($d['mnt'], '/') . '/.zfs/snapshot/' . $snap['name'];
+        $cmd = cp_restic_cmd($cfg, 'backup --json --host ' . escapeshellarg(php_uname('n')) . ' --tag sysbox --tag ' . escapeshellarg('ds:' . $ds) . cp_skip_args($cfg) . ' ' . escapeshellarg($src), $env, $err);
+        if ($cmd === '') { $bad[] = $err; break; }
+        cp_job(['title' => sx_tr('cpj.off', ['s' => $ds . '@' . $snap['name']]), 'pct' => 0]);
+        $last = 0; $sum = null; $tail = []; $t0 = time();
+        $rc = cp_stream($cmd, $env, function ($l) use (&$last, &$sum, &$tail) {
+            $j = ($l !== '' && $l[0] === '{') ? json_decode($l, true) : null;
+            if (is_array($j) && ($j['message_type'] ?? '') === 'status') { if (time() - $last >= 3) { $last = time(); cp_job(['pct' => (int)round(100 * (float)($j['percent_done'] ?? 0))]); } return; }
+            if (is_array($j) && ($j['message_type'] ?? '') === 'summary') { $sum = $j; return; }
+            $tail[] = $l; $tail = array_slice($tail, -3);
+        });
+        if ($rc !== 0 && $rc !== 3) { $bad[] = ['cpd.off_fail', ['ds' => $ds, 'e' => substr(implode(' ', $tail), 0, 200)]]; snp_log("off-site $ds FAILED (restic $rc): " . implode(' ', $tail)); continue; }   // 3: some files unreadable, the rest is saved
+        $sent = (float)($sum['data_added_packed'] ?? $sum['data_added'] ?? 0);
+        $s = cp_state(); $s['off_ok'] = time(); $s['off_err'] = ''; $s['off_last'][$ds] = ['sent' => $sent, 'files' => (int)($sum['total_files_processed'] ?? 0), 'secs' => time() - $t0, 'snap' => $snap['name']]; snp_json_write(cp_state_file(), $s);
+        snp_log("off-site $ds@{$snap['name']}: " . round($sent / 1e9, 2) . ' GB sent, ' . (time() - $t0) . ' s');
+        $cmd = cp_restic_cmd($cfg, 'forget --prune --host ' . escapeshellarg(php_uname('n')) . ' --tag ' . escapeshellarg('ds:' . $ds) . ' --keep-weekly ' . max(1, (int)$cfg['off_keep']), $env, $err);
+        $tail = []; $rc = cp_stream($cmd, $env, function ($l) use (&$tail) { $tail[] = $l; $tail = array_slice($tail, -3); });
+        if ($rc !== 0) { snp_log("off-site $ds forget FAILED (restic $rc): " . implode(' ', $tail)); }
+    }
+    if ($bad) { cp_state_set('off_err', cp_t($bad)); $msg = $bad; return false; }
+    return true;
+}
+// downloads one off-site version next to the array copies (restore/<dataset>/<date>-<id>), for a restore from the page
+function cp_off_fetch($cfg, $id, &$msg) {
+    $L = cp_off_list($cfg); if (!$L['ok']) { $msg = $L['error']; return false; }
+    $v = null; foreach ($L['list'] as $x) { if ($x['id'] === $id) { $v = $x; } }
+    if (!$v || $v['ds'] === '' || !in_array($v['ds'], $cfg['datasets'], true)) { $msg = ['cpe.no_version', []]; return false; }
+    $t = cp_target($cfg, $v['ds']); if ($t['err'] !== '') { $msg = $t['err']; return false; }
+    $dest = dirname($t['dir']) . '/restore/' . cp_tag($v['ds']) . '/' . date('Y-m-d', $v['time']) . '-' . $id;
+    @mkdir($dest, 0775, true);
+    $cmd = cp_restic_cmd($cfg, 'restore --json ' . escapeshellarg($id . ':' . $v['path']) . ' --target ' . escapeshellarg($dest), $env, $err);
+    if ($cmd === '') { $msg = $err; return false; }
+    cp_job(['title' => sx_tr('cpj.fetch', ['v' => date('Y-m-d', $v['time']), 'ds' => $v['ds']]), 'pct' => 0]);
+    $last = 0; $tail = [];
+    $rc = cp_stream($cmd, $env, function ($l) use (&$last, &$tail) {
+        $j = ($l !== '' && $l[0] === '{') ? json_decode($l, true) : null;
+        if (is_array($j) && ($j['message_type'] ?? '') === 'status') { if (time() - $last >= 3) { $last = time(); cp_job(['pct' => (int)round(100 * (float)($j['percent_done'] ?? 0))]); } return; }
+        if (!is_array($j)) { $tail[] = $l; $tail = array_slice($tail, -3); }
+    });
+    if ($rc !== 0) { $msg = ['cpe.repo', ['e' => substr(implode(' ', $tail), 0, 300)]]; snp_log("off-site download $id FAILED (restic $rc)"); return false; }
+    snp_log("off-site version $id ({$v['ds']}) downloaded to $dest");
+    return true;
+}
+
+// the page's view of the copies (no keys; the password only through its own click)
+function cp_view($cfg) {
+    $s = cp_state(); $ds = [];
+    foreach ($cfg['datasets'] as $n) {
+        $t = cp_target($cfg, $n); $L = [];
+        foreach ($t['err'] === '' && is_dir($t['dir']) ? array_reverse(cp_list_dir($t['dir'])) : [] as $dt) { $L[] = ['date' => $dt] + (array)($s['copies'][$n][$dt] ?? []); }
+        $ds[] = ['name' => $n, 'err' => $t['err'] === '' ? '' : cp_t($t['err']), 'disk' => $t['disk'] ?? '', 'dir' => $t['err'] === '' ? '/mnt/user/' . $t['rel'] . '/' . cp_tag($n) : '', 'free' => $t['free'] ?? 0, 'copies' => $L, 'fetched' => cp_fetched($cfg, $n)];
+    }
+    $sec = cp_secret();
+    return ['ds' => $ds, 'ok' => (int)($s['ok'] ?? 0), 'err' => (string)($s['err'] ?? ''), 'off_ok' => (int)($s['off_ok'] ?? 0), 'off_err' => (string)($s['off_err'] ?? ''),
+            'off_last' => $s['off_last'] ?? new stdClass(), 'off_label' => cp_off_label($cfg), 'pub' => $cfg['off'] === 'sftp' ? cp_ssh_pub() : '',
+            'has_pw' => !empty($sec['pw']), 's3_set' => !empty($sec['s3_id']) && !empty($sec['s3_key']),
+            'job' => json_decode((string)@file_get_contents(cp_job_file()), true) ?: ['state' => 'idle']];
+}
 ]]></INLINE>
 </FILE>
 
