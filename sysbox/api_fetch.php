@@ -125,6 +125,8 @@ if (trim((string)$cfg['socket_host']) !== '' || $upsOn) {
         foreach (sx_upsv_hist() as $p) { $vh[] = [$now - (int)$p[0], (float)$p[1], (float)$p[2], (float)$p[3]]; }
         $ud['hist'] = $vh;
         $ud['loss'] = ($sk && $ud['watts'] !== null && $sk['power'] > $ud['watts']) ? $sk['power'] - $ud['watts'] : null;
+        require_once __DIR__ . '/ups_lib.php';
+        $ud['ev'] = ups_tile();   // power outage line (item 99)
         $power['ups'] = $ud;
     }
 }

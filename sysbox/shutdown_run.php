@@ -2,19 +2,24 @@
 // Background worker of Safe shutdown (started by shutdown.php):
 //   php shutdown_run.php stop    stop the running containers (qBittorrent first, with a long wait) and the VMs
 //   php shutdown_run.php start   start again the containers the stop run stopped (if you change your mind)
-// It never shuts the server down: that is a separate button that calls Unraid's own shutdown.
+//   php shutdown_run.php stopqb  stop only qBittorrent (the UPS does it before the NUT plugin's shutdown, item 99)
+// From the page it never shuts the server down: that is a separate button that calls Unraid's own shutdown. A stop
+// started from Discord during a power outage (argument 2 = off, item 99) powers the server off when it ends, unless it
+// was cancelled on the page. Argument 3 says who started it (page, discord, ups).
 if (PHP_SAPI !== 'cli') { exit(1); }
 require_once __DIR__ . '/shutdown_lib.php';
 @set_time_limit(0);
 $mode = $argv[1] ?? '';
-if (!in_array($mode, ['stop', 'start'], true)) { exit(1); }
+if (!in_array($mode, ['stop', 'start', 'stopqb'], true)) { exit(1); }
+$off = $mode === 'stop' && ($argv[2] ?? '') === 'off';
+$by = in_array($argv[3] ?? '', ['discord', 'ups'], true) ? $argv[3] : 'page';
 
 $lock = @fopen(SD_LOCK, 'c');
 if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
 @unlink(SD_CANCEL);
 
 $prev = sd_status();
-$S = ['state' => 'running', 'mode' => $mode, 'started' => time(), 'finished' => 0, 'log' => [], 'stopped' => [], 'vms' => [], 'msg' => ''];
+$S = ['state' => 'running', 'mode' => $mode, 'by' => $by, 'off' => $off, 'started' => time(), 'finished' => 0, 'log' => [], 'stopped' => [], 'vms' => [], 'msg' => ''];
 if ($mode === 'start') { $S['stopped'] = (array)($prev['stopped'] ?? []); }
 function sd_log($m) {
     global $S;
@@ -51,7 +56,7 @@ if ($mode === 'start') {
 }
 
 // ---- stop -----------------------------------------------------------------------------------------
-sd_log('start');
+sd_log($by === 'page' ? 'start' : 'start (' . ($by === 'discord' ? 'from Discord, power outage' : 'UPS: before the NUT shutdown') . ')');
 $cts = []; $ps = $d !== '' ? sx_ps(true) : [];
 foreach ($ps as $c) { if ($c['state'] === 'running') { $cts[] = $c; } }
 // an earlier stop run that was cancelled or failed: what it stopped and is still stopped stays on the list, so Start them again
@@ -59,7 +64,7 @@ foreach ($ps as $c) { if ($c['state'] === 'running') { $cts[] = $c; } }
 foreach ((array)($prev['stopped'] ?? []) as $n) { if (sx_valid_name($n) && isset($ps[$n]) && $ps[$n]['state'] !== 'running') { $S['stopped'][] = $n; } }
 if ($S['stopped']) { sd_log('still stopped from the earlier run: ' . implode(', ', $S['stopped'])); }
 $qb = array_values(array_filter($cts, 'sd_is_qb'));
-$rest = array_values(array_filter($cts, function ($c) { return !sd_is_qb($c); }));
+$rest = $mode === 'stopqb' ? [] : array_values(array_filter($cts, function ($c) { return !sd_is_qb($c); }));
 $err = [];
 
 foreach ($qb as $c) {
@@ -86,7 +91,7 @@ if ($rest && !sd_cancelled()) {
 }
 @unlink('/tmp/sysbox_ps.json');
 
-$vms = sd_cancelled() ? [] : sd_vms();
+$vms = (sd_cancelled() || $mode === 'stopqb') ? [] : sd_vms();
 if ($vms) {
     $v = sd_virsh();
     foreach ($vms as $vm) { sd_log('shutting down the VM ' . $vm); sx_run(escapeshellarg($v) . ' shutdown ' . escapeshellarg($vm), 20); }
@@ -107,4 +112,11 @@ if (sd_cancelled()) { $S['state'] = 'cancelled'; $S['msg'] = sx_tr('sdr.cancelle
 elseif ($err) { $S['state'] = 'error'; $S['msg'] = sx_tr('sdr.not_stopped', ['l' => implode(', ', $err)]); }
 else { $S['state'] = 'done'; $S['msg'] = $S['vms'] ? sx_tr('sdr.done_vm', ['n' => count($S['stopped']), 'v' => count($S['vms'])]) : sx_tr('sdr.done', ['n' => count($S['stopped'])]); }
 sd_log($S['msg']);
+// a stop from Discord during an outage: the server goes off now, the way the NUT plugin does it (Unraid stops the array)
+if ($off && $S['state'] !== 'cancelled') {
+    sd_log('powering off');
+    $S['state'] = 'off'; $S['msg'] = sx_tr('sdr.off'); sd_status_write($S);
+    $po = getenv('SX_SD_POWEROFF');
+    @exec(($po !== false && $po !== '' ? $po : '/sbin/poweroff') . ' >/dev/null 2>&1');
+}
 @unlink(SD_CANCEL);

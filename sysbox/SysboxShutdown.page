@@ -121,11 +121,12 @@ $(function () {
       $('#sds-arows').empty(); $('#sds-alog').hide();
     } else {
       var start = run.mode === 'start', el = (run.finished || r.now || Math.floor(Date.now() / 1000)) - (run.started || 0);
-      var tot = stopped.length + (busy && !start ? r.containers.length : 0), qbRun = busy && !start && r.containers.some(function (c) { return c.qb; });
-      var t = {done: T('sd.st.done'), error: T('sd.st.error'), cancelled: T('sd.st.cancelled')}[run.state] || (start ? T('sd.st.starting') : T('sd.st.stopping'));
-      var cls = {done: 'sds-ok', error: 'sds-er', cancelled: 'sds-am'}[run.state] || '';
+      var left = run.mode === 'stopqb' ? r.containers.filter(function (c) { return c.qb; }).length : r.containers.length;
+      var tot = stopped.length + (busy && !start ? left : 0), qbRun = busy && !start && r.containers.some(function (c) { return c.qb; });
+      var t = {done: T('sd.st.done'), error: T('sd.st.error'), cancelled: T('sd.st.cancelled'), off: T('sd.st.off')}[run.state] || (start ? T('sd.st.starting') : T('sd.st.stopping'));
+      var cls = {done: 'sds-ok', error: 'sds-er', cancelled: 'sds-am', off: 'sds-am'}[run.state] || '';
       $('#sds-aband').text(busy ? (start ? T('sd.ab_starting') : T('sd.ab_stopping')) + ' · ' + dur(el) : t.toLowerCase() + ' · ' + hm(run.finished || run.started));
-      var h = '<b class="' + cls + '">' + esc(t) + '</b> ';
+      var h = '<b class="' + cls + '">' + esc(t) + '</b> ' + (run.by === 'discord' || run.by === 'ups' ? '<span class="sds-chip a">' + esc(T(run.by === 'discord' ? 'sd.by_discord' : 'sd.by_ups')) + '</span> ' : '');
       if (busy && !start) { h += esc(T('sd.n_of_stopped', { n: stopped.length, tot: tot })); }
       else if (run.msg) { h += '<span class="' + cls + '">' + esc(run.msg) + '</span>'; }
       var back = (!busy && run.back) || [], gone = (!busy && run.gone) || [];

@@ -29,6 +29,9 @@ function sx_defaults() {
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
         // UPS row in the Power block (item 99): read from NUT (upsd); host, port and UPS name only in settings.cfg
         'pow_ups' => '1', 'ups_host' => '127.0.0.1', 'ups_port' => '3493', 'ups_name' => 'ups',
+        // power outage on Discord (item 99): wait before the first message (s), live values, 🛑 shutdown with ✅, qBittorrent
+        // this many percent before the NUT plugin's shutdown level (0 = off)
+        'ups_dc' => '1', 'ups_wait' => '60', 'ups_live' => '1', 'ups_sd' => '1', 'ups_confirm' => '1', 'ups_qb' => '5',
         'ram_warn' => '80', 'ram_crit' => '92', 'log_warn' => '80', 'log_crit' => '92',
         'vd_warn' => '80', 'vd_crit' => '92', 'temp_warn' => '75', 'temp_crit' => '90',
         'socket_host' => '', 'socket_id' => '0', 'kwh_price' => '', 'currency' => 'Ft',

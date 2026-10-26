@@ -14,7 +14,7 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/SysboxSnapshots.page','sysbox/SysboxSnapshots.page','SNAPSHOTS PAGE'),('&plugdir;/snap_lib.php','sysbox/snap_lib.php','SNAPSHOTS LIBRARY'),('&plugdir;/snap.php','sysbox/snap.php','SNAPSHOTS ENDPOINT'),('&plugdir;/snap_run.php','sysbox/snap_run.php','SNAPSHOTS WORKER'),
  ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
  ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),('&plugdir;/brief_lib.php','sysbox/brief_lib.php','CLAUDE GUARD MORNING BRIEF'),('&plugdir;/sugg_lib.php','sysbox/sugg_lib.php','CLAUDE GUARD SUGGESTIONS'),
- ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),('&plugdir;/sp_tick.php','sysbox/sp_tick.php','STREAM PRIORITY CHECK'),
+ ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),('&plugdir;/sp_tick.php','sysbox/sp_tick.php','STREAM PRIORITY CHECK'),('&plugdir;/ups_lib.php','sysbox/ups_lib.php','POWER OUTAGE LIBRARY'),('&plugdir;/ups_tick.php','sysbox/ups_tick.php','POWER OUTAGE CHECK'),
  ('&plugdir;/bot.php','common/bot.php','SHARED DISCORD BOT SETTING'),('&plugdir;/bot_block.php','common/bot_block.php','DISCORD BOT BLOCK'),('&plugdir;/bot_save.php','common/bot_save.php','DISCORD BOT SAVE AND TEST'),('&plugdir;/mtlang/en.json','common/lang/en.json','SHARED BLOCKS ENGLISH DICTIONARY'),('&plugdir;/mtlang/hu.json','common/lang/hu.json','SHARED BLOCKS HUNGARIAN DICTIONARY')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30f">
+<!ENTITY version   "2026.10.31">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,13 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.31
+- Power outage on Discord: when the UPS runs on battery for a minute a message goes out (also at night) with battery, runtime and load, updated every minute
+- Shutdown from Discord: the owner's stop sign reaction under it asks for a check mark, then Safe shutdown runs (qBittorrent first) and the server powers off
+- qBittorrent stops by itself a few percent (default 5) before the NUT plugin's own shutdown level
+- Messages when the power is back and when the server is up again after an outage (the array does not start by itself)
+- Tile: a line under the UPS figures (on battery, the shutdown, the last outage); Settings: a new Power outage part with a test message
+
 ###2026.10.30f
 - Update manager and Snapshots: every Activity, error and Discord text comes from the dictionary (Hungarian too); Discord messages use the Discord language, also the one of Update all
 
@@ -321,6 +328,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 * * * * * flock -n -E 0 /tmp/sysbox_sp.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/sp_tick.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
 * * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/notify.php >/dev/null 2>&1
+# Sysbox: power outage (UPS on battery), checked every minute, every 15 seconds while on battery
+* * * * * flock -n -E 0 /tmp/sysbox_ups.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/ups_tick.php >/dev/null 2>&1
 # Sysbox: weekly summary, checked hourly (day and hour are settings)
 12 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/weekly.php >/dev/null 2>&1
 # Sysbox: daily ZFS snapshots, checked every 5 minutes (made once a day after the set time; see Settings, Utilities, Snapshots)

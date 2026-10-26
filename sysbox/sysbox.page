@@ -94,6 +94,8 @@ i.f32.sx-ic.sx-inv{filter:invert(1)}
 @keyframes sxblink{to{visibility:hidden}}
 @media (prefers-reduced-motion:reduce){.sx-pill.rd{animation:none}}
 .sx-box.sx-ob{box-shadow:inset 3px 0 0 #e5534b;background:rgba(229,83,75,.10)}
+.sx-uev{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:5px 8px;font-size:12px;border-radius:3px;background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.sx-uev a{white-space:nowrap}.sx-uev-rd{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}.sx-uev-a{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
 .sx-cl{font-size:11px;opacity:.6;margin-top:5px;display:flex;justify-content:space-between;gap:8px}
 .sx-gr{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:4px 0}
 .sx-gr .n{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}
@@ -433,7 +435,26 @@ $(function () {
     } else {
       $b.append(el('sx-cl').append(txt('span', '', T('pow.vwait'))));
     }
+    if (U.ev) { $b.append(upsEvent(U.ev)); }
     $d.append($b);
+  }
+  // the power outage line under the UPS figures (item 99): now on battery, the shutdown, or the last outage
+  function upsEvent(E) {
+    function hm(t) { var d = new Date(t * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+    function dur(s) { s = Math.max(0, Math.round(s)); return s < 60 ? s + ' s' : (s < 3600 ? Math.round(s / 60) + ' min' : Math.floor(s / 3600) + ' h ' + Math.round(s % 3600 / 60) + ' min'); }
+    function day(t) { var d = new Date(t * 1000); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + ' ' + hm(t); }
+    var m = {
+      ob: ['rd', E.sent ? T('pow.ev_ob_sent', { d: dur(E.d), t: hm(E.sent) }) : T('pow.ev_ob', { d: dur(E.d) }), ['/Settings/SysboxShutdown', T('pow.ev_sd_link')]],
+      qb: ['rd', T('pow.ev_qb', { d: dur(E.d), t: hm(E.t) }), ['/Settings/SysboxShutdown', T('pow.ev_sd_link')]],
+      sd: ['a', T('pow.ev_sd', { t: hm(E.t) }), ['/Settings/SysboxShutdown', T('pow.ev_sd_link')]],
+      boot: ['a', T(E.off === 'discord' ? 'pow.ev_boot_dc' : (E.off === 'nut' ? 'pow.ev_boot_nut' : 'pow.ev_boot')), ['/Main', T('pow.ev_main_link')]],
+      last: ['', T('pow.ev_last', { t: day(E.since), d: dur(E.d), a: E.a === null ? '–' : Math.round(E.a), b: E.b === null ? '–' : Math.round(E.b) }), null],
+      blip: ['', T('pow.ev_blip', { t: day(E.since), d: dur(E.d) }), null]
+    }[E.k];
+    if (!m) { return $(); }
+    var $r = el('sx-uev ' + (m[0] ? 'sx-uev-' + m[0] : '')).append(txt('span', '', m[1]));
+    if (m[2]) { $r.append($('<a>').attr('href', m[2][0]).text(m[2][1] + ' ›')); }
+    return $r;
   }
 
   // ---- network (item 94) ---------------------------------------------------------------------

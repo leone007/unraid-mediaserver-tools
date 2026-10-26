@@ -169,7 +169,37 @@ foreach (sx_order($sx) as $sx_k):
  <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=sx_h($sx['wk_hour'])?>"> <?=$sxs_t('set.oclock')?></dd>
 
 <dt><?=$sxs_t('set.try')?></dt>
-<dd><input type="button" id="sx-test" value="<?=$sxs_t('set.btn.test')?>"> <input type="button" id="sx-sample" value="<?=$sxs_t('set.btn.sample')?>"> <input type="button" id="sx-weekly" value="<?=$sxs_t('set.btn.weekly')?>"> <span id="sx-tmsg" style="margin-left:12px"></span></dd>
+<dd><input type="button" id="sx-test" value="<?=$sxs_t('set.btn.test')?>"> <input type="button" id="sx-sample" value="<?=$sxs_t('set.btn.sample')?>"> <input type="button" id="sx-weekly" value="<?=$sxs_t('set.btn.weekly')?>"> <span class="sx-tmsg" style="margin-left:12px"></span></dd>
+</dl>
+
+<?php
+// power outage on Discord (item 99); the shutdown level is the NUT plugin's own setting, shown here only
+require_once '/usr/local/emhttp/plugins/sysbox/ups_lib.php';
+$sx_rule = ups_nut_rule();
+$sx_bot = mt_bot_ready();
+?>
+<h3><?=$sxs_t('set.h.ups')?></h3>
+<dl>
+<dt><?=$sxs_t('set.ups_dc')?></dt>
+<dd><span><input type="hidden" name="ups_dc" value="0"><input type="checkbox" name="ups_dc" value="1" <?=sx_chk($sx['ups_dc'])?>> <?=$sxs_t('set.ups_after')?>
+ <select name="ups_wait"><?php foreach (['0' => $sxs_T('set.ups_w0'), '60' => '1 min', '120' => '2 min', '300' => '5 min'] as $sx_wv => $sx_wl) { echo '<option value="' . $sx_wv . '"' . ((string)$sx['ups_wait'] === (string)$sx_wv ? ' selected' : '') . '>' . sx_h($sx_wl) . '</option>'; } ?></select></span>
+ <span class="sx-attn-note"><?=$sxs_t('set.ups_dc_hint')?></span></dd>
+
+<dt><?=$sxs_t('set.ups_live')?></dt>
+<dd><span><input type="hidden" name="ups_live" value="0"><input type="checkbox" name="ups_live" value="1" <?=sx_chk($sx['ups_live'])?>> <?=$sxs_t('set.ups_live_l')?></span>
+ <span class="sx-attn-note"><?=$sxs_t('set.ups_live_hint')?></span></dd>
+
+<dt><?=$sxs_t('set.ups_sd')?></dt>
+<dd><span><input type="hidden" name="ups_sd" value="0"><input type="checkbox" name="ups_sd" value="1" <?=sx_chk($sx['ups_sd'])?>> <?=$sxs_t('set.ups_sd_l')?>
+ &nbsp; <input type="hidden" name="ups_confirm" value="0"><input type="checkbox" name="ups_confirm" value="1" <?=sx_chk($sx['ups_confirm'])?>> <?=$sxs_t('set.ups_confirm_l')?></span>
+ <span class="sx-attn-note"><?=$sxs_t($sx_bot ? 'set.ups_sd_hint' : 'set.ups_sd_nobot')?></span></dd>
+
+<dt><?=$sxs_t('set.ups_qb')?></dt>
+<dd><span><select name="ups_qb"><?php foreach (['0' => $sxs_T('set.ups_qb0'), '3' => '3 %', '5' => '5 %', '10' => '10 %'] as $sx_qv => $sx_ql) { echo '<option value="' . $sx_qv . '"' . ((string)$sx['ups_qb'] === (string)$sx_qv ? ' selected' : '') . '>' . sx_h($sx_ql) . '</option>'; } ?></select> <?=$sxs_t('set.ups_qb_l')?></span>
+ <span class="sx-attn-note"><?=$sx_rule['level'] !== null ? $sxs_t('set.ups_nut_lv', ['l' => $sx_rule['level']]) : $sxs_t($sx_rule['mode'] === '' ? 'set.ups_nut_none' : 'set.ups_nut_mode')?></span></dd>
+
+<dt><?=$sxs_t('set.try')?></dt>
+<dd><input type="button" id="sx-uptest" value="<?=$sxs_t('set.btn.ups_test')?>"> <span class="sx-tmsg" style="margin-left:12px"></span></dd>
 </dl>
 
 <dl class="uset-save">
@@ -200,10 +230,9 @@ $(function () {
     sxOrder();
   }).on('change', '.sx-sw input', sxOff);
   sxOff();
-  var $tm = $('#sx-tmsg');
-  $.each({test: '#sx-test', sample: '#sx-sample', weekly: '#sx-weekly'}, function (op, sel) {
+  $.each({test: '#sx-test', sample: '#sx-sample', weekly: '#sx-weekly', ups: '#sx-uptest'}, function (op, sel) {
     $(sel).on('click', function () {
-      var $b = $(this).prop('disabled', true);
+      var $b = $(this).prop('disabled', true), $tm = $b.siblings('.sx-tmsg');
       $tm.css('color', '').text(T('set.sending'));
       $.post('/plugins/sysbox/test.php', {op: op}, null, 'json')
         .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text(T('set.sent')); } else { $tm.css('color', '#e5534b').text(T('set.not_sent', { e: (r && r.error) ? r.error : T('set.unknown_error') })); } })

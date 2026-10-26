@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.30f">
+<!ENTITY version   "2026.10.31">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,13 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.31
+- Power outage on Discord: when the UPS runs on battery for a minute a message goes out (also at night) with battery, runtime and load, updated every minute
+- Shutdown from Discord: the owner's stop sign reaction under it asks for a check mark, then Safe shutdown runs (qBittorrent first) and the server powers off
+- qBittorrent stops by itself a few percent (default 5) before the NUT plugin's own shutdown level
+- Messages when the power is back and when the server is up again after an outage (the array does not start by itself)
+- Tile: a line under the UPS figures (on battery, the shutdown, the last outage); Settings: a new Power outage part with a test message
+
 ###2026.10.30f
 - Update manager and Snapshots: every Activity, error and Discord text comes from the dictionary (Hungarian too); Discord messages use the Discord language, also the one of Update all
 
@@ -418,6 +425,8 @@ i.f32.sx-ic.sx-inv{filter:invert(1)}
 @keyframes sxblink{to{visibility:hidden}}
 @media (prefers-reduced-motion:reduce){.sx-pill.rd{animation:none}}
 .sx-box.sx-ob{box-shadow:inset 3px 0 0 #e5534b;background:rgba(229,83,75,.10)}
+.sx-uev{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:5px 8px;font-size:12px;border-radius:3px;background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.sx-uev a{white-space:nowrap}.sx-uev-rd{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}.sx-uev-a{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
 .sx-cl{font-size:11px;opacity:.6;margin-top:5px;display:flex;justify-content:space-between;gap:8px}
 .sx-gr{display:grid;grid-template-columns:70px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:4px 0}
 .sx-gr .n{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.65}
@@ -777,7 +786,26 @@ $(function () {
     } else {
       $b.append(el('sx-cl').append(txt('span', '', T('pow.vwait'))));
     }
+    if (U.ev) { $b.append(upsEvent(U.ev)); }
     $d.append($b);
+  }
+  // the power outage line under the UPS figures (item 99): now on battery, the shutdown, or the last outage
+  function upsEvent(E) {
+    function hm(t) { var d = new Date(t * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+    function dur(s) { s = Math.max(0, Math.round(s)); return s < 60 ? s + ' s' : (s < 3600 ? Math.round(s / 60) + ' min' : Math.floor(s / 3600) + ' h ' + Math.round(s % 3600 / 60) + ' min'); }
+    function day(t) { var d = new Date(t * 1000); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + ' ' + hm(t); }
+    var m = {
+      ob: ['rd', E.sent ? T('pow.ev_ob_sent', { d: dur(E.d), t: hm(E.sent) }) : T('pow.ev_ob', { d: dur(E.d) }), ['/Settings/SysboxShutdown', T('pow.ev_sd_link')]],
+      qb: ['rd', T('pow.ev_qb', { d: dur(E.d), t: hm(E.t) }), ['/Settings/SysboxShutdown', T('pow.ev_sd_link')]],
+      sd: ['a', T('pow.ev_sd', { t: hm(E.t) }), ['/Settings/SysboxShutdown', T('pow.ev_sd_link')]],
+      boot: ['a', T(E.off === 'discord' ? 'pow.ev_boot_dc' : (E.off === 'nut' ? 'pow.ev_boot_nut' : 'pow.ev_boot')), ['/Main', T('pow.ev_main_link')]],
+      last: ['', T('pow.ev_last', { t: day(E.since), d: dur(E.d), a: E.a === null ? '–' : Math.round(E.a), b: E.b === null ? '–' : Math.round(E.b) }), null],
+      blip: ['', T('pow.ev_blip', { t: day(E.since), d: dur(E.d) }), null]
+    }[E.k];
+    if (!m) { return $(); }
+    var $r = el('sx-uev ' + (m[0] ? 'sx-uev-' + m[0] : '')).append(txt('span', '', m[1]));
+    if (m[2]) { $r.append($('<a>').attr('href', m[2][0]).text(m[2][1] + ' ›')); }
+    return $r;
   }
 
   // ---- network (item 94) ---------------------------------------------------------------------
@@ -1310,7 +1338,37 @@ foreach (sx_order($sx) as $sx_k):
  <input type="number" name="wk_hour" min="0" max="23" class="narrow" value="<?=sx_h($sx['wk_hour'])?>"> <?=$sxs_t('set.oclock')?></dd>
 
 <dt><?=$sxs_t('set.try')?></dt>
-<dd><input type="button" id="sx-test" value="<?=$sxs_t('set.btn.test')?>"> <input type="button" id="sx-sample" value="<?=$sxs_t('set.btn.sample')?>"> <input type="button" id="sx-weekly" value="<?=$sxs_t('set.btn.weekly')?>"> <span id="sx-tmsg" style="margin-left:12px"></span></dd>
+<dd><input type="button" id="sx-test" value="<?=$sxs_t('set.btn.test')?>"> <input type="button" id="sx-sample" value="<?=$sxs_t('set.btn.sample')?>"> <input type="button" id="sx-weekly" value="<?=$sxs_t('set.btn.weekly')?>"> <span class="sx-tmsg" style="margin-left:12px"></span></dd>
+</dl>
+
+<?php
+// power outage on Discord (item 99); the shutdown level is the NUT plugin's own setting, shown here only
+require_once '/usr/local/emhttp/plugins/sysbox/ups_lib.php';
+$sx_rule = ups_nut_rule();
+$sx_bot = mt_bot_ready();
+?>
+<h3><?=$sxs_t('set.h.ups')?></h3>
+<dl>
+<dt><?=$sxs_t('set.ups_dc')?></dt>
+<dd><span><input type="hidden" name="ups_dc" value="0"><input type="checkbox" name="ups_dc" value="1" <?=sx_chk($sx['ups_dc'])?>> <?=$sxs_t('set.ups_after')?>
+ <select name="ups_wait"><?php foreach (['0' => $sxs_T('set.ups_w0'), '60' => '1 min', '120' => '2 min', '300' => '5 min'] as $sx_wv => $sx_wl) { echo '<option value="' . $sx_wv . '"' . ((string)$sx['ups_wait'] === (string)$sx_wv ? ' selected' : '') . '>' . sx_h($sx_wl) . '</option>'; } ?></select></span>
+ <span class="sx-attn-note"><?=$sxs_t('set.ups_dc_hint')?></span></dd>
+
+<dt><?=$sxs_t('set.ups_live')?></dt>
+<dd><span><input type="hidden" name="ups_live" value="0"><input type="checkbox" name="ups_live" value="1" <?=sx_chk($sx['ups_live'])?>> <?=$sxs_t('set.ups_live_l')?></span>
+ <span class="sx-attn-note"><?=$sxs_t('set.ups_live_hint')?></span></dd>
+
+<dt><?=$sxs_t('set.ups_sd')?></dt>
+<dd><span><input type="hidden" name="ups_sd" value="0"><input type="checkbox" name="ups_sd" value="1" <?=sx_chk($sx['ups_sd'])?>> <?=$sxs_t('set.ups_sd_l')?>
+ &nbsp; <input type="hidden" name="ups_confirm" value="0"><input type="checkbox" name="ups_confirm" value="1" <?=sx_chk($sx['ups_confirm'])?>> <?=$sxs_t('set.ups_confirm_l')?></span>
+ <span class="sx-attn-note"><?=$sxs_t($sx_bot ? 'set.ups_sd_hint' : 'set.ups_sd_nobot')?></span></dd>
+
+<dt><?=$sxs_t('set.ups_qb')?></dt>
+<dd><span><select name="ups_qb"><?php foreach (['0' => $sxs_T('set.ups_qb0'), '3' => '3 %', '5' => '5 %', '10' => '10 %'] as $sx_qv => $sx_ql) { echo '<option value="' . $sx_qv . '"' . ((string)$sx['ups_qb'] === (string)$sx_qv ? ' selected' : '') . '>' . sx_h($sx_ql) . '</option>'; } ?></select> <?=$sxs_t('set.ups_qb_l')?></span>
+ <span class="sx-attn-note"><?=$sx_rule['level'] !== null ? $sxs_t('set.ups_nut_lv', ['l' => $sx_rule['level']]) : $sxs_t($sx_rule['mode'] === '' ? 'set.ups_nut_none' : 'set.ups_nut_mode')?></span></dd>
+
+<dt><?=$sxs_t('set.try')?></dt>
+<dd><input type="button" id="sx-uptest" value="<?=$sxs_t('set.btn.ups_test')?>"> <span class="sx-tmsg" style="margin-left:12px"></span></dd>
 </dl>
 
 <dl class="uset-save">
@@ -1341,10 +1399,9 @@ $(function () {
     sxOrder();
   }).on('change', '.sx-sw input', sxOff);
   sxOff();
-  var $tm = $('#sx-tmsg');
-  $.each({test: '#sx-test', sample: '#sx-sample', weekly: '#sx-weekly'}, function (op, sel) {
+  $.each({test: '#sx-test', sample: '#sx-sample', weekly: '#sx-weekly', ups: '#sx-uptest'}, function (op, sel) {
     $(sel).on('click', function () {
-      var $b = $(this).prop('disabled', true);
+      var $b = $(this).prop('disabled', true), $tm = $b.siblings('.sx-tmsg');
       $tm.css('color', '').text(T('set.sending'));
       $.post('/plugins/sysbox/test.php', {op: op}, null, 'json')
         .done(function (r) { if (r && r.ok) { $tm.css('color', '#3fa24a').text(T('set.sent')); } else { $tm.css('color', '#e5534b').text(T('set.not_sent', { e: (r && r.error) ? r.error : T('set.unknown_error') })); } })
@@ -1407,6 +1464,9 @@ function sx_defaults() {
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
         // UPS row in the Power block (item 99): read from NUT (upsd); host, port and UPS name only in settings.cfg
         'pow_ups' => '1', 'ups_host' => '127.0.0.1', 'ups_port' => '3493', 'ups_name' => 'ups',
+        // power outage on Discord (item 99): wait before the first message (s), live values, 🛑 shutdown with ✅, qBittorrent
+        // this many percent before the NUT plugin's shutdown level (0 = off)
+        'ups_dc' => '1', 'ups_wait' => '60', 'ups_live' => '1', 'ups_sd' => '1', 'ups_confirm' => '1', 'ups_qb' => '5',
         'ram_warn' => '80', 'ram_crit' => '92', 'log_warn' => '80', 'log_crit' => '92',
         'vd_warn' => '80', 'vd_crit' => '92', 'temp_warn' => '75', 'temp_crit' => '90',
         'socket_host' => '', 'socket_id' => '0', 'kwh_price' => '', 'currency' => 'Ft',
@@ -1780,6 +1840,8 @@ if (trim((string)$cfg['socket_host']) !== '' || $upsOn) {
         foreach (sx_upsv_hist() as $p) { $vh[] = [$now - (int)$p[0], (float)$p[1], (float)$p[2], (float)$p[3]]; }
         $ud['hist'] = $vh;
         $ud['loss'] = ($sk && $ud['watts'] !== null && $sk['power'] > $ud['watts']) ? $sk['power'] - $ud['watts'] : null;
+        require_once __DIR__ . '/ups_lib.php';
+        $ud['ev'] = ups_tile();   // power outage line (item 99)
         $power['ups'] = $ud;
     }
 }
@@ -2135,6 +2197,9 @@ $new = [
     'pow_w' => sx_bool($_POST['pow_w'] ?? '1'), 'pow_day' => sx_bool($_POST['pow_day'] ?? '1'), 'pow_mon' => sx_bool($_POST['pow_mon'] ?? '1'),
     'pow_cost' => sx_bool($_POST['pow_cost'] ?? '1'), 'pow_name' => sx_bool($_POST['pow_name'] ?? '1'),
     'pow_ups' => sx_bool($_POST['pow_ups'] ?? '1'), 'ups_host' => $upsKeep['ups_host'], 'ups_port' => $upsKeep['ups_port'], 'ups_name' => $upsKeep['ups_name'],
+    'ups_dc' => sx_bool($_POST['ups_dc'] ?? '1'), 'ups_wait' => sx_choice($_POST['ups_wait'] ?? '60', ['0', '60', '120', '300'], 'Power outage wait'),
+    'ups_live' => sx_bool($_POST['ups_live'] ?? '1'), 'ups_sd' => sx_bool($_POST['ups_sd'] ?? '1'), 'ups_confirm' => sx_bool($_POST['ups_confirm'] ?? '1'),
+    'ups_qb' => sx_choice($_POST['ups_qb'] ?? '5', ['0', '3', '5', '10'], 'qBittorrent before the NUT shutdown'),
     'show_net' => sx_bool($_POST['show_net'] ?? '1'), 'net_speed' => sx_bool($_POST['net_speed'] ?? '1'), 'net_today' => sx_bool($_POST['net_today'] ?? '1'),
     'net_hist' => sx_bool($_POST['net_hist'] ?? '1'), 'net_inet' => sx_bool($_POST['net_inet'] ?? '1'), 'net_top' => sx_bool($_POST['net_top'] ?? '1'),
     'ram_warn' => sx_int($_POST['ram_warn'] ?? '80', 1, 100, 'RAM warning'), 'ram_crit' => sx_int($_POST['ram_crit'] ?? '92', 1, 100, 'RAM critical'),
@@ -2984,7 +3049,7 @@ sxn_write(SXN_STATE, $st);
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/test.php">
 <INLINE><![CDATA[<?php
-// Test and sample messages for the Discord alerts. POST op=test|sample|weekly (uses the saved settings).
+// Test and sample messages for the Discord alerts. POST op=test|sample|weekly|ups (uses the saved settings).
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/discord.php';
 require_once __DIR__ . '/alerts.php';
@@ -3020,6 +3085,17 @@ if ($op === 'sample') {
         if ($r[0] !== 'ok') { sx_json(['ok' => false, 'error' => $r[1]]); }
     }
     sx_json(['ok' => true]);
+}
+// power outage (item 99): what the first message will show, with the UPS values of now
+if ($op === 'ups') {
+    require_once __DIR__ . '/ups_lib.php';
+    [$U, $ue] = sx_ups_fetch((string)$cfg['ups_host'], (int)$cfg['ups_port'], (string)$cfg['ups_name']);
+    if ($U === null) { sx_json(['ok' => false, 'error' => sx_tr('test.no_nut', ['e' => $ue])]); }
+    $rule = ups_nut_rule();
+    $foot = (ups_bot_on($cfg) ? sx_trd(sx_on($cfg['ups_confirm']) ? 'ups.d.how_stop_ok' : 'ups.d.how_stop') : sx_trd('ups.d.how_page')) . ($rule['level'] !== null ? ' · ' . sx_trd('ups.d.nut_at', ['l' => $rule['level']]) : '');
+    $f = ups_fields($U, null); $f[] = [sx_trd('ups.d.input'), $U['vin'] === null ? '–' : round($U['vin']) . ' V', true];
+    $r = sxn_post($hook, [sxn_embed('i', '🧪 ' . sx_trd('ups.d.test_t'), sx_trd('ups.d.test_d', ['m' => $U['model'] !== '' ? $U['model'] : 'UPS']), $f, $foot)]);
+    sx_json($r[0] === 'ok' ? ['ok' => true] : ['ok' => false, 'error' => $r[1]]);
 }
 $r = sxn_post($hook, [sxn_embed('i', '✅ ' . sxn_t($lang, 'test_t'), sxn_t($lang, 'test_d'))], sxn_ping_text($cfg['dc_ping']));
 sx_json($r[0] === 'ok' ? ['ok' => true] : ['ok' => false, 'error' => $r[1]]);
@@ -7721,6 +7797,383 @@ function mt_i18n_js($dir, $name, $only = null) {
  "sr.done": {
   "text": "{c} restored from {s}; to undo: restore {c} from {u}",
   "note": "Snapshots page, container restore log and result (also Discord): result."
+ },
+ "pow.ev_ob": {
+  "text": "On battery for {d}",
+  "note": "tile line under the UPS figures while the mains is gone; {d} = duration like \"3 min\"."
+ },
+ "pow.ev_ob_sent": {
+  "text": "On battery for {d} · Discord alert sent {t}",
+  "note": "tile line while on battery; {t} = time like 21:15."
+ },
+ "pow.ev_qb": {
+  "text": "On battery for {d} · qBittorrent stopped at {t} before the NUT shutdown",
+  "note": "tile line; {t} = time."
+ },
+ "pow.ev_sd": {
+  "text": "Safe shutdown started from Discord at {t}",
+  "note": "tile line; {t} = time."
+ },
+ "pow.ev_sd_link": {
+  "text": "Safe shutdown",
+  "note": "link to the Safe shutdown page (page name)."
+ },
+ "pow.ev_boot": {
+  "text": "Restarted after a power outage · the array is not started",
+  "note": "tile line after a restart."
+ },
+ "pow.ev_boot_dc": {
+  "text": "Restarted after a power outage (shut down from Discord) · the array is not started",
+  "note": "tile line after a restart."
+ },
+ "pow.ev_boot_nut": {
+  "text": "Restarted after a power outage (NUT shutdown) · the array is not started",
+  "note": "tile line after a restart."
+ },
+ "pow.ev_main_link": {
+  "text": "Main",
+  "note": "link to the Unraid Main page (page name)."
+ },
+ "pow.ev_last": {
+  "text": "Last power outage {t} · {d} · battery {a} → {b} %",
+  "note": "grey tile line for 7 days; {t} = date and time, {d} = duration, {a} {b} = battery percent before and lowest."
+ },
+ "pow.ev_blip": {
+  "text": "Last power blip {t} · {d} (no Discord message)",
+  "note": "grey tile line; a blip shorter than the wait before the message."
+ },
+ "sd.st.off": {
+  "text": "Powering off",
+  "note": "state of the Safe shutdown run after a stop started from Discord."
+ },
+ "sd.by_discord": {
+  "text": "from Discord",
+  "note": "chip next to the run state: who started it."
+ },
+ "sd.by_ups": {
+  "text": "UPS: before the NUT shutdown",
+  "note": "chip next to the run state: the UPS stopped qBittorrent by itself."
+ },
+ "sdr.off": {
+  "text": "Containers stopped; the server is powering off.",
+  "note": "result text in Activity."
+ },
+ "test.no_nut": {
+  "text": "NUT does not answer: {e}",
+  "note": "error of the test button; {e} = technical reason."
+ },
+ "set.h.ups": {
+  "text": "Power outage (UPS)",
+  "note": "section heading."
+ },
+ "set.ups_dc": {
+  "text": "Discord message on battery:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.ups_after": {
+  "text": "after",
+  "note": "word before the wait select (1 min, 2 min...)."
+ },
+ "set.ups_w0": {
+  "text": "the first reading",
+  "note": "option of the wait select: no wait."
+ },
+ "set.ups_dc_hint": {
+  "text": "Shorter power blips stay silent and only show on the tile. Quiet hours do not apply. A second message comes when the power is back, and one when the server is up again after an outage.",
+  "note": "hint under the setting."
+ },
+ "set.ups_live": {
+  "text": "Live values:",
+  "note": "label of a setting."
+ },
+ "set.ups_live_l": {
+  "text": "update the message every minute",
+  "note": "checkbox text."
+ },
+ "set.ups_live_hint": {
+  "text": "Edits do not notify you; a new message pings you when the NUT plugin shuts the server down.",
+  "note": "hint under the setting."
+ },
+ "set.ups_sd": {
+  "text": "Shutdown from Discord:",
+  "note": "label of a setting."
+ },
+ "set.ups_sd_l": {
+  "text": "🛑 starts Safe shutdown and powers off",
+  "note": "checkbox text."
+ },
+ "set.ups_confirm_l": {
+  "text": "ask for ✅ first",
+  "note": "checkbox text."
+ },
+ "set.ups_sd_hint": {
+  "text": "Only your own reactions count (the Discord bot block). The order is the Safe shutdown page's: qBittorrent first with the long wait, then the other containers and the VMs, then power off.",
+  "note": "hint under the setting."
+ },
+ "set.ups_sd_nobot": {
+  "text": "The Discord bot is not set (Discord bot block): the message comes, but shutdown from Discord needs the bot.",
+  "note": "hint when the shared bot has no token or user."
+ },
+ "set.ups_qb": {
+  "text": "qBittorrent before the NUT shutdown:",
+  "note": "label of a setting."
+ },
+ "set.ups_qb0": {
+  "text": "off",
+  "note": "option: the step is off."
+ },
+ "set.ups_qb_l": {
+  "text": "above the NUT shutdown level it stops by itself",
+  "note": "text after the percent select."
+ },
+ "set.ups_nut_lv": {
+  "text": "The NUT plugin shuts the server down at {l} % battery. qBittorrent stops this much earlier, with the long wait, without a click.",
+  "note": "hint; {l} = the NUT plugin battery level."
+ },
+ "set.ups_nut_mode": {
+  "text": "The NUT plugin's shutdown mode is not Battery Level, so qBittorrent cannot stop before it.",
+  "note": "hint."
+ },
+ "set.ups_nut_none": {
+  "text": "The NUT plugin's settings were not found.",
+  "note": "hint."
+ },
+ "set.btn.ups_test": {
+  "text": "Send a test message",
+  "note": "button."
+ },
+ "ups.d.ob_t": {
+  "text": "Power outage: {h} runs on battery",
+  "note": "Discord title; {h} = server name."
+ },
+ "ups.d.since": {
+  "text": "Started {t} · {d} ago",
+  "note": "Discord line; {t} = time, {d} = duration."
+ },
+ "ups.d.battery": {
+  "text": "Battery",
+  "note": "Discord field name."
+ },
+ "ups.d.runtime": {
+  "text": "Runtime left",
+  "note": "Discord field name."
+ },
+ "ups.d.load": {
+  "text": "Load",
+  "note": "Discord field name."
+ },
+ "ups.d.input": {
+  "text": "Input",
+  "note": "Discord field name: input voltage."
+ },
+ "ups.d.socket": {
+  "text": "Wall socket (Shelly)",
+  "note": "Discord field name."
+ },
+ "ups.d.sock_up": {
+  "text": "reachable",
+  "note": "Discord field value."
+ },
+ "ups.d.sock_down": {
+  "text": "not reachable",
+  "note": "Discord field value."
+ },
+ "ups.d.how_stop_ok": {
+  "text": "🛑 = safe shutdown (asks for ✅)",
+  "note": "Discord footer part."
+ },
+ "ups.d.how_stop": {
+  "text": "🛑 = safe shutdown",
+  "note": "Discord footer part."
+ },
+ "ups.d.how_page": {
+  "text": "Shutdown: the Safe shutdown page (LAN or Tailscale)",
+  "note": "Discord footer part."
+ },
+ "ups.d.nut_eta": {
+  "text": "the NUT plugin shuts down at {l} %, about {t}",
+  "note": "Discord footer part; {l} = percent, {t} = estimated time."
+ },
+ "ups.d.nut_at": {
+  "text": "the NUT plugin shuts down at {l} %",
+  "note": "Discord footer part."
+ },
+ "ups.d.ask_t": {
+  "text": "Shut {h} down?",
+  "note": "Discord title of the confirmation question."
+ },
+ "ups.d.ask_d": {
+  "text": "React with ✅ within {s} min. Without ✅ nothing happens.",
+  "note": "Discord text; {s} = minutes."
+ },
+ "ups.d.ask_gone": {
+  "text": "The shutdown question expired",
+  "note": "Discord title."
+ },
+ "ups.d.ask_again": {
+  "text": "Nothing happened. To ask again, take back your 🛑 and add it again.",
+  "note": "Discord text."
+ },
+ "ups.d.sd_t": {
+  "text": "Safe shutdown started ({by})",
+  "note": "Discord title; {by} = Discord."
+ },
+ "ups.d.sd_off": {
+  "text": "Containers stopped, the server is powering off ({by})",
+  "note": "Discord title."
+ },
+ "ups.d.sd_cancel": {
+  "text": "Safe shutdown was cancelled on the page",
+  "note": "Discord title."
+ },
+ "ups.d.sd_page": {
+  "text": "Same as the Stop button of the Safe shutdown page; it can be cancelled there",
+  "note": "Discord footer."
+ },
+ "ups.d.closed_sd": {
+  "text": "Closed {t} · Safe shutdown started from Discord",
+  "note": "Discord footer of the closed first message."
+ },
+ "ups.d.closed_nut": {
+  "text": "Closed {t} · the NUT plugin shuts the server down",
+  "note": "Discord footer."
+ },
+ "ups.d.closed_back": {
+  "text": "Closed {t} · the power is back",
+  "note": "Discord footer."
+ },
+ "ups.d.qb_t": {
+  "text": "{p} %: qBittorrent is stopping before the NUT shutdown",
+  "note": "Discord title; {p} = battery percent."
+ },
+ "ups.d.qb_d": {
+  "text": "It gets up to 5 minutes to close its files. The NUT plugin shuts the server down at {l} %.",
+  "note": "Discord text."
+ },
+ "ups.d.lb_t": {
+  "text": "{p} %: the NUT plugin is shutting the server down now",
+  "note": "Discord title."
+ },
+ "ups.d.lb_d": {
+  "text": "On battery for {d}. Unraid stops the array, then the UPS turns off.",
+  "note": "Discord text."
+ },
+ "ups.d.back_t": {
+  "text": "Power is back ({t})",
+  "note": "Discord title."
+ },
+ "ups.d.back_d": {
+  "text": "The outage lasted {d}; battery {a} → {b} %, now charging.",
+  "note": "Discord text."
+ },
+ "ups.d.back_sd": {
+  "text": "The safe shutdown that was started goes on: the server powers off.",
+  "note": "Discord text."
+ },
+ "ups.d.back_qb": {
+  "text": "qBittorrent was stopped before the NUT shutdown: start it again on the Safe shutdown page (Start them again).",
+  "note": "Discord text."
+ },
+ "ups.d.boot_t": {
+  "text": "{h} is up again ({t}) after a power outage",
+  "note": "Discord title."
+ },
+ "ups.d.outage": {
+  "text": "Outage began",
+  "note": "Discord field name."
+ },
+ "ups.d.off": {
+  "text": "Shutdown",
+  "note": "Discord field name."
+ },
+ "ups.d.off_dc": {
+  "text": "{t}, from Discord",
+  "note": "Discord field value."
+ },
+ "ups.d.off_nut": {
+  "text": "{t}, the NUT plugin at {l} %",
+  "note": "Discord field value."
+ },
+ "ups.d.off_unknown": {
+  "text": "unknown (last seen on battery {t})",
+  "note": "Discord field value."
+ },
+ "ups.d.clean": {
+  "text": "Shutdown type",
+  "note": "Discord field name."
+ },
+ "ups.d.clean_y": {
+  "text": "clean",
+  "note": "Discord field value."
+ },
+ "ups.d.unclean": {
+  "text": "unclean: a parity check starts with the array",
+  "note": "Discord field value."
+ },
+ "ups.d.battery_now": {
+  "text": "Battery now",
+  "note": "Discord field name."
+ },
+ "ups.d.still_ob": {
+  "text": "still on battery",
+  "note": "Discord field value."
+ },
+ "ups.d.charging": {
+  "text": "charging",
+  "note": "Discord field value."
+ },
+ "ups.d.arr_t": {
+  "text": "The array is not started",
+  "note": "Discord field name."
+ },
+ "ups.d.arr_d": {
+  "text": "Start it on the Main page (the automatic start is off). The containers start with it.",
+  "note": "Discord field value."
+ },
+ "ups.d.cts": {
+  "text": "Containers",
+  "note": "Discord field name."
+ },
+ "ups.d.cts_d": {
+  "text": "The ones with autostart start with the array; any other: Safe shutdown page, Start them again.",
+  "note": "Discord field value."
+ },
+ "ups.d.test_t": {
+  "text": "Test: power outage message",
+  "note": "Discord title."
+ },
+ "ups.d.test_d": {
+  "text": "This is how the first message looks during an outage ({m}, values of now).",
+  "note": "Discord text; {m} = UPS model."
+ },
+ "ups.d.p_qb_wait": {
+  "text": "qBittorrent is closing its files (up to 5 minutes)",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_qb_ok": {
+  "text": "qBittorrent stopped",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_err": {
+  "text": "Something did not stop: Unraid stops it while shutting down",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_off": {
+  "text": "The server is powering off",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_n": {
+  "one": "{n} other container stopped",
+  "other": "{n} other containers stopped",
+  "note": "Discord progress line."
+ },
+ "ups.d.back_ran": {
+  "text": "The server ran through.",
+  "note": "Discord text after the power-back line."
+ },
+ "ups.d.back_lb": {
+  "text": "The NUT plugin had already started its shutdown: it goes on, the server powers off.",
+  "note": "Discord text."
  }
 }]]></INLINE>
 </FILE>
@@ -11045,6 +11498,289 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "sr.done": {
   "text": "{c} visszaállítva ebből: {s}; visszacsinálás: állítsd vissza a(z) {c} konténert ebből: {u}"
+ },
+ "pow.ev_ob": {
+  "text": "Akkuról megy: {d}"
+ },
+ "pow.ev_ob_sent": {
+  "text": "Akkuról megy: {d} · Discord-üzenet elment {t}"
+ },
+ "pow.ev_qb": {
+  "text": "Akkuról megy: {d} · a qBittorrent {t}-kor leállt a NUT leállítása előtt"
+ },
+ "pow.ev_sd": {
+  "text": "Biztonságos leállítás indult a Discordról, {t}"
+ },
+ "pow.ev_sd_link": {
+  "text": "Safe shutdown"
+ },
+ "pow.ev_boot": {
+  "text": "Újraindult egy áramszünet után · a tömb nem indult el"
+ },
+ "pow.ev_boot_dc": {
+  "text": "Újraindult egy áramszünet után (leállítás a Discordról) · a tömb nem indult el"
+ },
+ "pow.ev_boot_nut": {
+  "text": "Újraindult egy áramszünet után (a NUT állította le) · a tömb nem indult el"
+ },
+ "pow.ev_main_link": {
+  "text": "Main"
+ },
+ "pow.ev_last": {
+  "text": "Utolsó áramszünet {t} · {d} · akku {a} → {b} %"
+ },
+ "pow.ev_blip": {
+  "text": "Utolsó rövid kimaradás {t} · {d} (Discord-üzenet nélkül)"
+ },
+ "sd.st.off": {
+  "text": "Kikapcsolás"
+ },
+ "sd.by_discord": {
+  "text": "Discordról"
+ },
+ "sd.by_ups": {
+  "text": "UPS: a NUT leállítása előtt"
+ },
+ "sdr.off": {
+  "text": "A konténerek leálltak, a szerver kikapcsol."
+ },
+ "test.no_nut": {
+  "text": "A NUT nem válaszol: {e}"
+ },
+ "set.h.ups": {
+  "text": "Áramszünet (UPS)"
+ },
+ "set.ups_dc": {
+  "text": "Discord-üzenet akkuról menéskor:"
+ },
+ "set.ups_after": {
+  "text": "várakozás:"
+ },
+ "set.ups_w0": {
+  "text": "az első olvasáskor"
+ },
+ "set.ups_dc_hint": {
+  "text": "A rövidebb kimaradásokról nincs üzenet, csak a csempén látszanak. A csendes órák itt nem számítanak. Újabb üzenet jön, amikor visszajön az áram, és amikor a szerver egy áramszünet után újra elindul."
+ },
+ "set.ups_live": {
+  "text": "Élő értékek:"
+ },
+ "set.ups_live_l": {
+  "text": "percenként frissíti az üzenetet"
+ },
+ "set.ups_live_hint": {
+  "text": "A szerkesztés nem küld értesítést; új, jelző üzenet jön, amikor a NUT leállítja a szervert."
+ },
+ "set.ups_sd": {
+  "text": "Leállítás a Discordról:"
+ },
+ "set.ups_sd_l": {
+  "text": "a 🛑 elindítja a Safe shutdownt, utána kikapcsol"
+ },
+ "set.ups_confirm_l": {
+  "text": "előbb ✅-tel megerősíttet"
+ },
+ "set.ups_sd_hint": {
+  "text": "Csak a te reakcióid számítanak (Discord-bot blokk). A sorrend a Safe shutdown oldalé: előbb a qBittorrent hosszú várakozással, aztán a többi konténer és a VM-ek, végül a kikapcsolás."
+ },
+ "set.ups_sd_nobot": {
+  "text": "A Discord-bot nincs beállítva (Discord-bot blokk): az üzenet kimegy, de a Discordról leállításhoz kell a bot."
+ },
+ "set.ups_qb": {
+  "text": "qBittorrent a NUT leállítása előtt:"
+ },
+ "set.ups_qb0": {
+  "text": "ki"
+ },
+ "set.ups_qb_l": {
+  "text": "értékkel a NUT szintje fölött magától leáll"
+ },
+ "set.ups_nut_lv": {
+  "text": "A NUT plugin {l} %-os akkunál állítja le a szervert. A qBittorrent ennyivel előbb leáll, hosszú várakozással, kattintás nélkül."
+ },
+ "set.ups_nut_mode": {
+  "text": "A NUT plugin leállítási módja nem Battery Level, ezért a qBittorrent nem tud előtte leállni."
+ },
+ "set.ups_nut_none": {
+  "text": "A NUT plugin beállításai nem találhatók."
+ },
+ "set.btn.ups_test": {
+  "text": "Próbaüzenet küldése"
+ },
+ "ups.d.ob_t": {
+  "text": "Áramszünet: {h} akkuról megy"
+ },
+ "ups.d.since": {
+  "text": "Kezdete {t} · eltelt {d}"
+ },
+ "ups.d.battery": {
+  "text": "Akku"
+ },
+ "ups.d.runtime": {
+  "text": "Hátralévő idő"
+ },
+ "ups.d.load": {
+  "text": "Terhelés"
+ },
+ "ups.d.input": {
+  "text": "Bemenet"
+ },
+ "ups.d.socket": {
+  "text": "Fali aljzat (Shelly)"
+ },
+ "ups.d.sock_up": {
+  "text": "elérhető"
+ },
+ "ups.d.sock_down": {
+  "text": "nem elérhető"
+ },
+ "ups.d.how_stop_ok": {
+  "text": "🛑 = biztonságos leállítás (✅ megerősítéssel)"
+ },
+ "ups.d.how_stop": {
+  "text": "🛑 = biztonságos leállítás"
+ },
+ "ups.d.how_page": {
+  "text": "Leállítás: a Safe shutdown oldal (LAN vagy Tailscale)"
+ },
+ "ups.d.nut_eta": {
+  "text": "a NUT {l} %-nál leállít, kb. {t}-kor"
+ },
+ "ups.d.nut_at": {
+  "text": "a NUT {l} %-nál leállít"
+ },
+ "ups.d.ask_t": {
+  "text": "Leállítsam a szervert ({h})?"
+ },
+ "ups.d.ask_d": {
+  "text": "Erősítsd meg ✅ reakcióval {s} percen belül. ✅ nélkül nem történik semmi."
+ },
+ "ups.d.ask_gone": {
+  "text": "A leállítási kérdés lejárt"
+ },
+ "ups.d.ask_again": {
+  "text": "Nem történt semmi. Újra kérdezéshez vedd le a 🛑-et, és tedd fel újra."
+ },
+ "ups.d.sd_t": {
+  "text": "Biztonságos leállítás indult ({by})"
+ },
+ "ups.d.sd_off": {
+  "text": "A konténerek leálltak, a szerver kikapcsol ({by})"
+ },
+ "ups.d.sd_cancel": {
+  "text": "A biztonságos leállítást megszakították az oldalon"
+ },
+ "ups.d.sd_page": {
+  "text": "Ugyanaz, mint a Safe shutdown oldal Stop gombja; ott megszakítható"
+ },
+ "ups.d.closed_sd": {
+  "text": "Lezárva {t} · biztonságos leállítás indult a Discordról"
+ },
+ "ups.d.closed_nut": {
+  "text": "Lezárva {t} · a NUT leállítja a szervert"
+ },
+ "ups.d.closed_back": {
+  "text": "Lezárva {t} · visszajött az áram"
+ },
+ "ups.d.qb_t": {
+  "text": "{p} %: a qBittorrent leáll a NUT leállítása előtt"
+ },
+ "ups.d.qb_d": {
+  "text": "Legfeljebb 5 percet kap a fájljai lezárására. A NUT {l} %-nál állítja le a szervert."
+ },
+ "ups.d.lb_t": {
+  "text": "{p} %: a NUT most leállítja a szervert"
+ },
+ "ups.d.lb_d": {
+  "text": "{d} ment akkuról. Az Unraid leállítja a tömböt, utána az UPS kikapcsol."
+ },
+ "ups.d.back_t": {
+  "text": "Visszajött az áram ({t})"
+ },
+ "ups.d.back_d": {
+  "text": "Az áramszünet {d} volt; akku {a} → {b} %, most töltődik."
+ },
+ "ups.d.back_sd": {
+  "text": "Az elindított biztonságos leállítás folytatódik: a szerver kikapcsol."
+ },
+ "ups.d.back_qb": {
+  "text": "A qBittorrent leállt a NUT leállítása előtt: a Safe shutdown oldalon indíthatod újra (Start them again)."
+ },
+ "ups.d.boot_t": {
+  "text": "{h} újraindult ({t}) egy áramszünet után"
+ },
+ "ups.d.outage": {
+  "text": "Az áramszünet kezdete"
+ },
+ "ups.d.off": {
+  "text": "Leállás"
+ },
+ "ups.d.off_dc": {
+  "text": "{t}, a Discordról"
+ },
+ "ups.d.off_nut": {
+  "text": "{t}, a NUT {l} %-nál"
+ },
+ "ups.d.off_unknown": {
+  "text": "ismeretlen (utoljára akkuról látva {t})"
+ },
+ "ups.d.clean": {
+  "text": "Leállás módja"
+ },
+ "ups.d.clean_y": {
+  "text": "tiszta"
+ },
+ "ups.d.unclean": {
+  "text": "nem tiszta: a tömb indításakor paritásellenőrzés indul"
+ },
+ "ups.d.battery_now": {
+  "text": "Akku most"
+ },
+ "ups.d.still_ob": {
+  "text": "még akkuról megy"
+ },
+ "ups.d.charging": {
+  "text": "töltődik"
+ },
+ "ups.d.arr_t": {
+  "text": "A tömb nem indult el"
+ },
+ "ups.d.arr_d": {
+  "text": "Indítsd a Main oldalon (az automatikus indítás ki van kapcsolva). A konténerek vele indulnak."
+ },
+ "ups.d.cts": {
+  "text": "Konténerek"
+ },
+ "ups.d.cts_d": {
+  "text": "Az automatikus indításúak a tömbbel indulnak; a többi: Safe shutdown oldal, Start them again."
+ },
+ "ups.d.test_t": {
+  "text": "Teszt: áramszünet-üzenet"
+ },
+ "ups.d.test_d": {
+  "text": "Így néz ki az első üzenet áramszünetkor ({m}, a mostani értékekkel)."
+ },
+ "ups.d.p_qb_wait": {
+  "text": "a qBittorrent lezárja a fájljait (legfeljebb 5 perc)"
+ },
+ "ups.d.p_qb_ok": {
+  "text": "a qBittorrent leállt"
+ },
+ "ups.d.p_err": {
+  "text": "Valami nem állt le: az Unraid a leállításkor leállítja"
+ },
+ "ups.d.p_off": {
+  "text": "A szerver kikapcsol"
+ },
+ "ups.d.p_n": {
+  "one": "{n} további konténer leállt",
+  "other": "{n} további konténer leállt"
+ },
+ "ups.d.back_ran": {
+  "text": "A szerver végig futott."
+ },
+ "ups.d.back_lb": {
+  "text": "A NUT már elindította a leállítást: ez folytatódik, a szerver kikapcsol."
  }
 }]]></INLINE>
 </FILE>
@@ -11196,11 +11932,12 @@ $(function () {
       $('#sds-arows').empty(); $('#sds-alog').hide();
     } else {
       var start = run.mode === 'start', el = (run.finished || r.now || Math.floor(Date.now() / 1000)) - (run.started || 0);
-      var tot = stopped.length + (busy && !start ? r.containers.length : 0), qbRun = busy && !start && r.containers.some(function (c) { return c.qb; });
-      var t = {done: T('sd.st.done'), error: T('sd.st.error'), cancelled: T('sd.st.cancelled')}[run.state] || (start ? T('sd.st.starting') : T('sd.st.stopping'));
-      var cls = {done: 'sds-ok', error: 'sds-er', cancelled: 'sds-am'}[run.state] || '';
+      var left = run.mode === 'stopqb' ? r.containers.filter(function (c) { return c.qb; }).length : r.containers.length;
+      var tot = stopped.length + (busy && !start ? left : 0), qbRun = busy && !start && r.containers.some(function (c) { return c.qb; });
+      var t = {done: T('sd.st.done'), error: T('sd.st.error'), cancelled: T('sd.st.cancelled'), off: T('sd.st.off')}[run.state] || (start ? T('sd.st.starting') : T('sd.st.stopping'));
+      var cls = {done: 'sds-ok', error: 'sds-er', cancelled: 'sds-am', off: 'sds-am'}[run.state] || '';
       $('#sds-aband').text(busy ? (start ? T('sd.ab_starting') : T('sd.ab_stopping')) + ' · ' + dur(el) : t.toLowerCase() + ' · ' + hm(run.finished || run.started));
-      var h = '<b class="' + cls + '">' + esc(t) + '</b> ';
+      var h = '<b class="' + cls + '">' + esc(t) + '</b> ' + (run.by === 'discord' || run.by === 'ups' ? '<span class="sds-chip a">' + esc(T(run.by === 'discord' ? 'sd.by_discord' : 'sd.by_ups')) + '</span> ' : '');
       if (busy && !start) { h += esc(T('sd.n_of_stopped', { n: stopped.length, tot: tot })); }
       else if (run.msg) { h += '<span class="' + cls + '">' + esc(run.msg) + '</span>'; }
       var back = (!busy && run.back) || [], gone = (!busy && run.gone) || [];
@@ -11548,19 +12285,24 @@ sx_json(['ok' => false, 'error' => 'unknown action'], 400);
 // Background worker of Safe shutdown (started by shutdown.php):
 //   php shutdown_run.php stop    stop the running containers (qBittorrent first, with a long wait) and the VMs
 //   php shutdown_run.php start   start again the containers the stop run stopped (if you change your mind)
-// It never shuts the server down: that is a separate button that calls Unraid's own shutdown.
+//   php shutdown_run.php stopqb  stop only qBittorrent (the UPS does it before the NUT plugin's shutdown, item 99)
+// From the page it never shuts the server down: that is a separate button that calls Unraid's own shutdown. A stop
+// started from Discord during a power outage (argument 2 = off, item 99) powers the server off when it ends, unless it
+// was cancelled on the page. Argument 3 says who started it (page, discord, ups).
 if (PHP_SAPI !== 'cli') { exit(1); }
 require_once __DIR__ . '/shutdown_lib.php';
 @set_time_limit(0);
 $mode = $argv[1] ?? '';
-if (!in_array($mode, ['stop', 'start'], true)) { exit(1); }
+if (!in_array($mode, ['stop', 'start', 'stopqb'], true)) { exit(1); }
+$off = $mode === 'stop' && ($argv[2] ?? '') === 'off';
+$by = in_array($argv[3] ?? '', ['discord', 'ups'], true) ? $argv[3] : 'page';
 
 $lock = @fopen(SD_LOCK, 'c');
 if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) { exit(0); }
 @unlink(SD_CANCEL);
 
 $prev = sd_status();
-$S = ['state' => 'running', 'mode' => $mode, 'started' => time(), 'finished' => 0, 'log' => [], 'stopped' => [], 'vms' => [], 'msg' => ''];
+$S = ['state' => 'running', 'mode' => $mode, 'by' => $by, 'off' => $off, 'started' => time(), 'finished' => 0, 'log' => [], 'stopped' => [], 'vms' => [], 'msg' => ''];
 if ($mode === 'start') { $S['stopped'] = (array)($prev['stopped'] ?? []); }
 function sd_log($m) {
     global $S;
@@ -11597,7 +12339,7 @@ if ($mode === 'start') {
 }
 
 // ---- stop -----------------------------------------------------------------------------------------
-sd_log('start');
+sd_log($by === 'page' ? 'start' : 'start (' . ($by === 'discord' ? 'from Discord, power outage' : 'UPS: before the NUT shutdown') . ')');
 $cts = []; $ps = $d !== '' ? sx_ps(true) : [];
 foreach ($ps as $c) { if ($c['state'] === 'running') { $cts[] = $c; } }
 // an earlier stop run that was cancelled or failed: what it stopped and is still stopped stays on the list, so Start them again
@@ -11605,7 +12347,7 @@ foreach ($ps as $c) { if ($c['state'] === 'running') { $cts[] = $c; } }
 foreach ((array)($prev['stopped'] ?? []) as $n) { if (sx_valid_name($n) && isset($ps[$n]) && $ps[$n]['state'] !== 'running') { $S['stopped'][] = $n; } }
 if ($S['stopped']) { sd_log('still stopped from the earlier run: ' . implode(', ', $S['stopped'])); }
 $qb = array_values(array_filter($cts, 'sd_is_qb'));
-$rest = array_values(array_filter($cts, function ($c) { return !sd_is_qb($c); }));
+$rest = $mode === 'stopqb' ? [] : array_values(array_filter($cts, function ($c) { return !sd_is_qb($c); }));
 $err = [];
 
 foreach ($qb as $c) {
@@ -11632,7 +12374,7 @@ if ($rest && !sd_cancelled()) {
 }
 @unlink('/tmp/sysbox_ps.json');
 
-$vms = sd_cancelled() ? [] : sd_vms();
+$vms = (sd_cancelled() || $mode === 'stopqb') ? [] : sd_vms();
 if ($vms) {
     $v = sd_virsh();
     foreach ($vms as $vm) { sd_log('shutting down the VM ' . $vm); sx_run(escapeshellarg($v) . ' shutdown ' . escapeshellarg($vm), 20); }
@@ -11653,6 +12395,13 @@ if (sd_cancelled()) { $S['state'] = 'cancelled'; $S['msg'] = sx_tr('sdr.cancelle
 elseif ($err) { $S['state'] = 'error'; $S['msg'] = sx_tr('sdr.not_stopped', ['l' => implode(', ', $err)]); }
 else { $S['state'] = 'done'; $S['msg'] = $S['vms'] ? sx_tr('sdr.done_vm', ['n' => count($S['stopped']), 'v' => count($S['vms'])]) : sx_tr('sdr.done', ['n' => count($S['stopped'])]); }
 sd_log($S['msg']);
+// a stop from Discord during an outage: the server goes off now, the way the NUT plugin does it (Unraid stops the array)
+if ($off && $S['state'] !== 'cancelled') {
+    sd_log('powering off');
+    $S['state'] = 'off'; $S['msg'] = sx_tr('sdr.off'); sd_status_write($S);
+    $po = getenv('SX_SD_POWEROFF');
+    @exec(($po !== false && $po !== '' ? $po : '/sbin/poweroff') . ' >/dev/null 2>&1');
+}
 @unlink(SD_CANCEL);
 ]]></INLINE>
 </FILE>
@@ -16078,6 +16827,300 @@ sxsp_run('tick');
 </FILE>
 
 <!-- ========================================================= -->
+<!-- POWER OUTAGE LIBRARY -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/ups_lib.php">
+<INLINE><![CDATA[<?php
+// Sysbox power outage on Discord (item 99). The UPS runs on battery for the set wait -> a message (it pings, also at
+// night), its values updated every minute; the owner's 🛑 under it asks for ✅, and the ✅ runs Safe shutdown (qBittorrent
+// first) and then powers the server off. qBittorrent stops by itself a few percent before the NUT plugin's own shutdown
+// level (the owner allowed this one step without a click, 2026-10-26). A message when the power is back, or when the
+// server is up again after an outage. NUT is read directly (upsd, port 3493): the NUT plugin keeps doing its own shutdown
+// and nothing here changes it. The outage record lives on the flash drive (it has to outlive a shutdown) and is written
+// only when something happens (the last-seen time at most every 5 minutes); short-lived things are in /tmp.
+require_once __DIR__ . '/lib.php';
+require_once __DIR__ . '/energy.php';
+require_once __DIR__ . '/discord.php';
+require_once __DIR__ . '/shutdown_lib.php';
+require_once __DIR__ . '/bot.php';
+
+const UPS_STOP = "\u{1F6D1}";
+const UPS_OK = "\u{2705}";
+const UPS_CONFIRM_TTL = 120;   // seconds the ✅ question waits
+
+function ups_file() { return getenv('SX_UPS_FILE') ?: '/boot/config/plugins/sysbox/ups_event.json'; }
+function ups_tmp_file() { return getenv('SX_UPS_TMP') ?: '/tmp/sysbox_ups_tmp.json'; }
+function ups_load() { $j = is_file(ups_file()) ? json_decode((string)@file_get_contents(ups_file()), true) : null; return (is_array($j) ? $j : []) + ['ev' => null, 'last' => null]; }
+function ups_tmp() { $j = is_file(ups_tmp_file()) ? json_decode((string)@file_get_contents(ups_tmp_file()), true) : null; return is_array($j) ? $j : []; }
+function ups_boot_id() { $b = getenv('SX_UPS_BOOT'); return $b !== false ? $b : trim((string)@file_get_contents('/proc/sys/kernel/random/boot_id')); }
+
+// The NUT plugin's shutdown rule: ['mode' => batt_level|batt_timer|sec_timer|none|'', 'level' => percent or null]
+function ups_nut_rule() {
+    $c = @parse_ini_file(getenv('SX_NUT_CFG') ?: '/boot/config/plugins/nut-dw/nut-dw.cfg', false, INI_SCANNER_RAW);
+    if (!is_array($c)) { return ['mode' => '', 'level' => null]; }
+    $mode = trim((string)($c['SHUTDOWN'] ?? 'sec_timer'), "\"' "); $lv = trim((string)($c['BATTERYLEVEL'] ?? ''), "\"' ");
+    return ['mode' => $mode, 'level' => ($mode === 'batt_level' && is_numeric($lv)) ? (int)$lv : null];
+}
+
+function ups_rt($sec) { if ($sec === null) { return '–'; } $m = (int)floor($sec / 60); return intdiv($m, 60) . ':' . str_pad((string)($m % 60), 2, '0', STR_PAD_LEFT); }
+function ups_pct($v) { return $v === null ? '–' : (string)round($v); }
+
+// ---- Discord over the webhook (?wait=true gives the message id the bot reacts under) ---------------------------------
+function ups_hook_url($hook, $msg = '') {
+    $p = explode('?', $hook, 2);   // a webhook with ?thread_id=...: the message path goes before the query
+    return $p[0] . ($msg !== '' ? '/messages/' . $msg : '') . (isset($p[1]) ? '?' . $p[1] : '');
+}
+function ups_ping($cfg) {
+    $p = sxn_ping_text($cfg['dc_ping'] ?? '');
+    if ($p === '' && preg_match('/^\d{15,25}$/', mt_bot_cfg()['user'])) { $p = '<@' . mt_bot_cfg()['user'] . '>'; }
+    return $p;
+}
+function ups_payload($embed, $ping) {
+    $am = ['parse' => []];
+    if (preg_match('/^<@(\d+)>$/', $ping, $m)) { $am['users'] = [$m[1]]; } elseif (preg_match('/^<@&(\d+)>$/', $ping, $m)) { $am['roles'] = [$m[1]]; } elseif ($ping !== '') { $am['parse'] = ['everyone']; }
+    $pl = ['embeds' => [$embed], 'allowed_mentions' => $am];
+    if ($ping !== '') { $pl['content'] = $ping; }
+    return json_encode($pl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+}
+// [message id, channel id, error]; an empty id with an error means try again on the next step
+function ups_post($hook, $embed, $ping = '') {
+    $u = ups_hook_url($hook); $u .= (strpos($u, '?') === false ? '?' : '&') . 'wait=true';
+    [$code, $b, $err] = mt_bot_http('POST', $u, ['Content-Type: application/json'], ups_payload($embed, $ping));
+    $m = json_decode($b, true);
+    if ($err !== '' || $code >= 400 || !is_array($m) || empty($m['id'])) { return ['', '', $err !== '' ? $err : 'Discord HTTP ' . $code]; }
+    return [(string)$m['id'], (string)($m['channel_id'] ?? ''), ''];
+}
+function ups_edit($hook, $mid, $embed) {
+    if ($mid === '') { return; }
+    $pl = json_encode(['embeds' => [$embed]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+    mt_bot_http('PATCH', ups_hook_url($hook, $mid), ['Content-Type: application/json'], $pl);
+}
+function ups_react($ch, $mid, $em) { if ($ch !== '' && $mid !== '') { mt_bot_api('PUT', '/channels/' . $ch . '/messages/' . $mid . '/reactions/' . rawurlencode($em) . '/@me'); } }
+// did the owner react with $em? null when the bot could not tell
+function ups_owner_reacted($ch, $mid, $em) {
+    $me = mt_bot_cfg()['user'];
+    if ($ch === '' || $mid === '' || !preg_match('/^\d{15,25}$/', $me)) { return null; }
+    [$c, $j, $e] = mt_bot_api('GET', '/channels/' . $ch . '/messages/' . $mid . '/reactions/' . rawurlencode($em) . '?limit=100');
+    if ($e !== '' || !is_array($j)) { return null; }
+    return in_array($me, array_map(function ($u) { return (string)($u['id'] ?? ''); }, $j), true);
+}
+function ups_bot_on($cfg) { return sx_on($cfg['ups_sd']) && mt_bot_ready(); }
+
+// ---- the messages (Discord language) -----------------------------------------------------------------------------------
+function ups_fields($U, $sock) {
+    $f = [[sx_trd('ups.d.battery'), ups_pct($U['charge']) . ' %', true], [sx_trd('ups.d.runtime'), '~' . ups_rt($U['runtime']), true],
+          [sx_trd('ups.d.load'), ($U['watts'] === null ? '–' : round($U['watts']) . ' W') . ($U['load'] !== null ? ' (' . round($U['load']) . ' %)' : ''), true]];
+    if ($sock !== null) { $f[] = [sx_trd('ups.d.socket'), sx_trd($sock ? 'ups.d.sock_up' : 'ups.d.sock_down'), true]; }
+    return $f;
+}
+// the first message: live while on battery, grey when closed ($closed = the footer text)
+function ups_e_main($ev, $U, $cfg, $rule, $sock, $closed = '', $now = null) {
+    $now = $now ?? time();
+    $desc = sx_trd('ups.d.since', ['t' => date('H:i:s', (int)$ev['since']), 'd' => sxn_fmt_dur(max(60, $now - (int)$ev['since']))]);
+    if ($closed !== '') { $foot = $closed; }
+    else {
+        $foot = ups_bot_on($cfg) ? sx_trd(sx_on($cfg['ups_confirm']) ? 'ups.d.how_stop_ok' : 'ups.d.how_stop') : sx_trd('ups.d.how_page');
+        if ($rule['level'] !== null && $U['charge'] !== null && $U['runtime'] !== null && $U['charge'] > $rule['level']) {
+            $eta = $now + (int)($U['runtime'] * ($U['charge'] - $rule['level']) / max(1, $U['charge']));
+            $foot .= ' · ' . sx_trd('ups.d.nut_eta', ['l' => $rule['level'], 't' => date('H:i', $eta)]);
+        } elseif ($rule['level'] !== null) { $foot .= ' · ' . sx_trd('ups.d.nut_at', ['l' => $rule['level']]); }
+    }
+    $e = sxn_embed('rd', '⚡ ' . sx_trd('ups.d.ob_t', ['h' => (string)@gethostname()]), $desc, ups_fields($U, $sock), $foot);
+    if ($closed !== '') { $e['color'] = 0x80848E; }
+    return $e;
+}
+// Safe shutdown progress, from its status file (Discord language; the page keeps the technical log)
+function ups_e_sd($by) {
+    $r = sd_status(); $st = (string)($r['state'] ?? ''); $stopped = (array)($r['stopped'] ?? []);
+    $qb = count(array_filter($stopped, function ($n) { return stripos((string)$n, 'qbittorrent') !== false; }));
+    $l = [];
+    if ($qb) { $l[] = '✅ ' . sx_trd('ups.d.p_qb_ok'); } elseif ($st === 'running') { $l[] = '⏳ ' . sx_trd('ups.d.p_qb_wait'); }
+    if (count($stopped) > $qb) { $l[] = '✅ ' . sx_trd('ups.d.p_n', ['n' => count($stopped) - $qb]); }
+    if ($st === 'error' || ($st === 'off' && preg_match('/^FAILED|^still running/m', implode("\n", (array)($r['log'] ?? []))))) { $l[] = '⚠️ ' . sx_trd('ups.d.p_err'); }
+    if ($st === 'off') { $l[] = '⏻ ' . sx_trd('ups.d.p_off'); }
+    $t = $st === 'off' ? 'ups.d.sd_off' : ($st === 'cancelled' ? 'ups.d.sd_cancel' : 'ups.d.sd_t');
+    $e = sxn_embed($st === 'cancelled' ? 'i' : 'a', '🛑 ' . sx_trd($t, ['by' => $by]), implode("\n", $l), [], sx_trd('ups.d.sd_page'));
+    return [$e, $st . '|' . count($stopped)];
+}
+function ups_array_started() { $v = @parse_ini_file(getenv('SX_UPS_VAR') ?: '/var/local/emhttp/var.ini'); return is_array($v) && strtoupper((string)($v['mdState'] ?? '')) === 'STARTED'; }
+
+// what the tile and the Discord summary keep of a finished outage
+function ups_summary($ev, $end, $how, $minch) {
+    return ['since' => (int)$ev['since'], 'end' => (int)$end, 'ch0' => $ev['ch0'], 'min' => $minch, 'how' => $how,
+            'sent' => !empty($ev['sent']), 'off' => !empty($ev['sd']) ? 'discord' : (!empty($ev['lb']) ? 'nut' : ''), 'qb' => (int)($ev['qb'] ?? 0)];
+}
+
+function ups_spawn($mode, $off, $by) {
+    $cmd = escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/shutdown_run.php') . ' ' . $mode . ' ' . ($off ? 'off' : 'keep') . ' ' . $by;
+    @exec('setsid nohup ' . $cmd . ' >/dev/null 2>&1 &');
+}
+
+// One look at the UPS. Returns true while it runs on battery (the tick then looks again in 15 seconds).
+function ups_step($cfg, $now = null) {
+    $now = $now ?? time();
+    $S = ups_load(); $S0 = json_encode($S); $T = ups_tmp(); $T0 = json_encode($T);
+    $hook = (string)$cfg['dc_hook'];
+    $dc = sx_on($cfg['ups_dc']) && sxn_hook_ok($hook);
+    $bid = ups_boot_id(); $ping = $dc ? ups_ping($cfg) : '';
+    [$U, ] = sx_ups_fetch((string)$cfg['ups_host'], (int)$cfg['ups_port'], (string)$cfg['ups_name']);
+    $rule = ups_nut_rule();
+    $done = function () use (&$S, $S0, &$T, $T0) {
+        if (json_encode($S) !== $S0) { sxn_write(ups_file(), $S); }
+        if (json_encode($T) !== $T0) { @file_put_contents(ups_tmp_file(), json_encode($T)); }
+    };
+
+    // the server is up again after an outage it did not see the end of (it was shut down, or it crashed)
+    $ev = $S['ev'];
+    if ($ev && (string)($ev['boot'] ?? '') !== $bid) {
+        if (!empty($ev['sent']) && $dc) {
+            $how = !empty($ev['sd']) ? sx_trd('ups.d.off_dc', ['t' => date('H:i', (int)$ev['sd'])]) : (!empty($ev['lb']) ? sx_trd('ups.d.off_nut', ['t' => date('H:i', (int)$ev['lb']), 'l' => $rule['level'] ?? '?']) : sx_trd('ups.d.off_unknown', ['t' => date('H:i', (int)($ev['seen'] ?? $ev['since']))]));
+            $f = [[sx_trd('ups.d.outage'), date('Y-m-d H:i', (int)$ev['since']), true], [sx_trd('ups.d.off'), $how, true],
+                  [sx_trd('ups.d.clean'), sx_trd(is_file(getenv('SX_UPS_FORCESYNC') ?: '/boot/config/forcesync') ? 'ups.d.unclean' : 'ups.d.clean_y'), false]];
+            if ($U !== null) { $f[] = [sx_trd('ups.d.battery_now'), ups_pct($U['charge']) . ' % · ' . sx_trd($U['ob'] ? 'ups.d.still_ob' : 'ups.d.charging'), true]; }
+            if (!ups_array_started()) { $f[] = ['⚠️ ' . sx_trd('ups.d.arr_t'), sx_trd('ups.d.arr_d'), false]; }
+            if (!empty($ev['qb']) || !empty($ev['sd'])) { $f[] = [sx_trd('ups.d.cts'), sx_trd('ups.d.cts_d'), false]; }
+            [$mid, , $err] = ups_post($hook, sxn_embed('a', '🔌 ' . sx_trd('ups.d.boot_t', ['h' => (string)@gethostname(), 't' => date('H:i', $now - (int)((float)@file_get_contents('/proc/uptime')))]), '', $f), $ping);
+            if ($mid === '') { $done(); return false; }   // no network yet: the next minute tries again
+        }
+        $S['last'] = ups_summary($ev, (int)($ev['seen'] ?? $ev['since']), 'boot', $ev['min'] ?? $ev['ch0']); $S['ev'] = null; $ev = null; $T = [];
+    }
+    if ($U === null) { $done(); return false; }   // NUT does not answer: nothing to decide on
+
+    $sock = null;
+    if (trim((string)$cfg['socket_host']) !== '' && $U['ob']) {
+        if (!isset($T['sock_t']) || $now - (int)$T['sock_t'] >= 60) { [$sk, ] = sx_socket_fetch((string)$cfg['socket_host'], (int)$cfg['socket_id']); $T['sock'] = $sk !== null; $T['sock_t'] = $now; }
+        $sock = (bool)$T['sock'];
+    }
+
+    if ($U['ob']) {
+        if (!$ev) { $ev = ['since' => $now, 'ch0' => $U['charge'], 'min' => $U['charge'], 'boot' => $bid, 'seen' => $now, 'sent' => 0]; $T = []; }
+        if ($U['charge'] !== null && ($ev['min'] === null || $U['charge'] < $ev['min'] - 4)) { $ev['min'] = $U['charge']; }   // in 5 % steps on the flash
+        if ($now - (int)($ev['seen'] ?? 0) >= 300) { $ev['seen'] = $now; }
+        $T['min'] = min((float)($T['min'] ?? 100), (float)($U['charge'] ?? 100));
+
+        // the first message after the wait
+        if (empty($ev['sent']) && $now - (int)$ev['since'] >= (int)$cfg['ups_wait'] && $dc) {
+            [$mid, $ch, $err] = ups_post($hook, ups_e_main($ev, $U, $cfg, $rule, $sock, '', $now), $ping);
+            if ($mid !== '') {
+                $ev['sent'] = $now; $ev['mid'] = $mid; $ev['ch'] = $ch; $T['edit'] = $now;
+                if (ups_bot_on($cfg)) { ups_react($ch, $mid, UPS_STOP); }
+                sxn_guard_event('ups', 'rd', ups_e_main($ev, $U, $cfg, $rule, $sock, '', $now));
+            }
+        } elseif (!empty($ev['sent']) && sx_on($cfg['ups_live']) && $now - (int)($T['edit'] ?? 0) >= 60 && empty($ev['sd'])) {
+            ups_edit($hook, (string)$ev['mid'], ups_e_main($ev, $U, $cfg, $rule, $sock, '', $now)); $T['edit'] = $now;
+        }
+
+        // 🛑 -> (✅) -> Safe shutdown with power off
+        if (!empty($ev['sent']) && $dc && ups_bot_on($cfg) && empty($ev['sd'])) {
+            if (empty($ev['want'])) {
+                if (!empty($ev['cmid'])) {
+                    if ($now - (int)$ev['ct'] > UPS_CONFIRM_TTL) {
+                        ups_edit($hook, (string)$ev['cmid'], sxn_embed('i', sx_trd('ups.d.ask_gone'), sx_trd('ups.d.ask_again')));
+                        $ev['cmid'] = ''; $T['hold'] = true;
+                    } elseif (ups_owner_reacted((string)$ev['ch'], (string)$ev['cmid'], UPS_OK) === true) { $ev['want'] = $now; }
+                } else {
+                    $r = ups_owner_reacted((string)$ev['ch'], (string)$ev['mid'], UPS_STOP);
+                    if ($r === false) { $T['hold'] = false; }   // the 🛑 was taken back: a new one asks again
+                    elseif ($r === true && empty($T['hold'])) {
+                        if (sx_on($cfg['ups_confirm'])) {
+                            [$cm, , ] = ups_post($hook, sxn_embed('a', sx_trd('ups.d.ask_t', ['h' => (string)@gethostname()]), sx_trd('ups.d.ask_d', ['s' => UPS_CONFIRM_TTL / 60])), $ping);
+                            if ($cm !== '') { $ev['cmid'] = $cm; $ev['ct'] = $now; ups_react((string)$ev['ch'], $cm, UPS_OK); }
+                        } else { $ev['want'] = $now; }
+                    }
+                }
+            }
+            // a qBittorrent stop of the UPS may still run: the shutdown starts after it
+            if (!empty($ev['want']) && !sd_running()) {
+                ups_spawn('stop', true, 'discord');
+                $ev['sd'] = $now;
+                [$pe, $pk] = ups_e_sd('Discord');
+                [$pm, , ] = ups_post($hook, $pe);
+                $ev['pmid'] = $pm; $T['sdk'] = $pk;
+                ups_edit($hook, (string)$ev['mid'], ups_e_main($ev, $U, $cfg, $rule, $sock, sx_trd('ups.d.closed_sd', ['t' => date('H:i', $now)]), $now));
+            }
+        }
+        if (!empty($ev['sd']) && !empty($ev['pmid']) && $dc) {
+            [$e, $k] = ups_e_sd('Discord');
+            if ($k !== ($T['sdk'] ?? '')) { ups_edit($hook, (string)$ev['pmid'], $e); $T['sdk'] = $k; }
+        }
+
+        // qBittorrent stops a few percent before the NUT plugin shuts the server down (needs its Battery Level mode)
+        $gap = (int)$cfg['ups_qb'];
+        if ($gap > 0 && $rule['level'] !== null && $U['charge'] !== null && $U['charge'] <= $rule['level'] + $gap && empty($ev['qb']) && empty($ev['sd']) && empty($ev['want'])) {
+            if (!sd_running()) {
+                $qbs = array_filter(sx_ps(true), function ($c) { return $c['state'] === 'running' && sd_is_qb($c); });
+                $ev['qb'] = $now;
+                if ($qbs) {
+                    ups_spawn('stopqb', false, 'ups');
+                    if ($dc) { [$qm, , ] = ups_post($hook, sxn_embed('a', '⚙️ ' . sx_trd('ups.d.qb_t', ['p' => ups_pct($U['charge'])]), sx_trd('ups.d.qb_d', ['l' => $rule['level']]))); $ev['qmid'] = $qm; }
+                }
+            }
+        }
+        // the NUT plugin shuts down now (its level, or the UPS says low battery, or upsmon set forced shutdown)
+        if (empty($ev['lb']) && ($U['lb'] || preg_match('/\bFSD\b/', $U['status']) || ($rule['level'] !== null && $U['charge'] !== null && $U['charge'] <= $rule['level']))) {
+            $ev['lb'] = $now;
+            if ($dc) {
+                ups_post($hook, sxn_embed('rd', '🔋 ' . sx_trd('ups.d.lb_t', ['p' => ups_pct($U['charge'])]), sx_trd('ups.d.lb_d', ['d' => sxn_fmt_dur(max(60, $now - (int)$ev['since']))])), $ping);
+                if (!empty($ev['sent']) && empty($ev['sd'])) { ups_edit($hook, (string)$ev['mid'], ups_e_main($ev, $U, $cfg, $rule, $sock, sx_trd('ups.d.closed_nut', ['t' => date('H:i', $now)]), $now)); }
+            }
+        }
+        $S['ev'] = $ev; $done();
+        return true;
+    }
+
+    // on line again
+    if ($ev) {
+        $min = min((float)($ev['min'] ?? 100), (float)($T['min'] ?? 100));
+        if (!empty($ev['sent']) && $dc) {
+            $d = sx_trd('ups.d.back_d', ['d' => sxn_fmt_dur(max(60, $now - (int)$ev['since'])), 'a' => ups_pct($ev['ch0']), 'b' => ups_pct($min)]);
+            if (!empty($ev['sd'])) { $d .= "\n" . sx_trd('ups.d.back_sd'); }
+            elseif (!empty($ev['lb'])) { $d .= "\n" . sx_trd('ups.d.back_lb'); }
+            else { $d .= ' ' . sx_trd('ups.d.back_ran') . (!empty($ev['qb']) ? "\n" . sx_trd('ups.d.back_qb') : ''); }
+            [$mid, , $err] = ups_post($hook, sxn_embed('g', '✅ ' . sx_trd('ups.d.back_t', ['t' => date('H:i', $now)]), $d), '');
+            if ($mid === '') { $done(); return false; }
+            if (empty($ev['sd'])) { ups_edit($hook, (string)$ev['mid'], ups_e_main($ev, $U, $cfg, $rule, null, sx_trd('ups.d.closed_back', ['t' => date('H:i', $now)]), $now)); }
+            if (!empty($ev['cmid'])) { ups_edit($hook, (string)$ev['cmid'], sxn_embed('i', sx_trd('ups.d.ask_gone'), sx_trd('ups.d.back_t', ['t' => date('H:i', $now)]))); }
+        }
+        $S['last'] = ups_summary($ev, $now, empty($ev['sent']) ? 'blip' : 'back', $min);
+        $S['ev'] = null; $T = [];
+    }
+    $done();
+    return false;
+}
+
+// The tile's line under the UPS figures: [kind, values] or null. ob/sd/qb while on battery, boot after a restart
+// (the array not started yet), last for 7 days after an outage.
+function ups_tile($now = null) {
+    $now = $now ?? time(); $S = ups_load(); $ev = $S['ev']; $l = $S['last'];
+    if ($ev && (string)($ev['boot'] ?? '') === ups_boot_id()) {
+        if (!empty($ev['sd'])) { return ['k' => 'sd', 't' => (int)$ev['sd']]; }
+        if (!empty($ev['qb'])) { return ['k' => 'qb', 't' => (int)$ev['qb'], 'd' => $now - (int)$ev['since']]; }
+        return ['k' => 'ob', 'd' => $now - (int)$ev['since'], 'sent' => (int)($ev['sent'] ?? 0)];
+    }
+    if (!is_array($l) || $now - (int)$l['end'] > 7 * 86400) { return null; }
+    if ($l['how'] === 'boot' && !ups_array_started() && $now - (int)$l['end'] < 86400) { return ['k' => 'boot', 'off' => (string)$l['off']]; }
+    return ['k' => $l['how'] === 'blip' ? 'blip' : 'last', 'since' => (int)$l['since'], 'd' => max(1, (int)$l['end'] - (int)$l['since']), 'a' => $l['ch0'], 'b' => $l['min']];
+}
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- POWER OUTAGE CHECK -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/ups_tick.php">
+<INLINE><![CDATA[<?php
+// Started by cron every minute (item 99): looks at the UPS; while it runs on battery, again every 15 seconds within
+// the minute, so the owner's reactions and the shutdown levels are seen quickly.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/ups_lib.php';
+
+$cfg = sx_cfg();
+$t0 = time();
+while (ups_step($cfg) && time() - $t0 < 40) { sleep(15); }
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
 <!-- SHARED DISCORD BOT SETTING -->
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/bot.php">
@@ -16575,6 +17618,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 * * * * * flock -n -E 0 /tmp/sysbox_sp.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/sp_tick.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
 * * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/notify.php >/dev/null 2>&1
+# Sysbox: power outage (UPS on battery), checked every minute, every 15 seconds while on battery
+* * * * * flock -n -E 0 /tmp/sysbox_ups.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/ups_tick.php >/dev/null 2>&1
 # Sysbox: weekly summary, checked hourly (day and hour are settings)
 12 * * * * $PHPBIN /usr/local/emhttp/plugins/sysbox/weekly.php >/dev/null 2>&1
 # Sysbox: daily ZFS snapshots, checked every 5 minutes (made once a day after the set time; see Settings, Utilities, Snapshots)

@@ -3314,5 +3314,288 @@
  },
  "sr.done": {
   "text": "{c} visszaállítva ebből: {s}; visszacsinálás: állítsd vissza a(z) {c} konténert ebből: {u}"
+ },
+ "pow.ev_ob": {
+  "text": "Akkuról megy: {d}"
+ },
+ "pow.ev_ob_sent": {
+  "text": "Akkuról megy: {d} · Discord-üzenet elment {t}"
+ },
+ "pow.ev_qb": {
+  "text": "Akkuról megy: {d} · a qBittorrent {t}-kor leállt a NUT leállítása előtt"
+ },
+ "pow.ev_sd": {
+  "text": "Biztonságos leállítás indult a Discordról, {t}"
+ },
+ "pow.ev_sd_link": {
+  "text": "Safe shutdown"
+ },
+ "pow.ev_boot": {
+  "text": "Újraindult egy áramszünet után · a tömb nem indult el"
+ },
+ "pow.ev_boot_dc": {
+  "text": "Újraindult egy áramszünet után (leállítás a Discordról) · a tömb nem indult el"
+ },
+ "pow.ev_boot_nut": {
+  "text": "Újraindult egy áramszünet után (a NUT állította le) · a tömb nem indult el"
+ },
+ "pow.ev_main_link": {
+  "text": "Main"
+ },
+ "pow.ev_last": {
+  "text": "Utolsó áramszünet {t} · {d} · akku {a} → {b} %"
+ },
+ "pow.ev_blip": {
+  "text": "Utolsó rövid kimaradás {t} · {d} (Discord-üzenet nélkül)"
+ },
+ "sd.st.off": {
+  "text": "Kikapcsolás"
+ },
+ "sd.by_discord": {
+  "text": "Discordról"
+ },
+ "sd.by_ups": {
+  "text": "UPS: a NUT leállítása előtt"
+ },
+ "sdr.off": {
+  "text": "A konténerek leálltak, a szerver kikapcsol."
+ },
+ "test.no_nut": {
+  "text": "A NUT nem válaszol: {e}"
+ },
+ "set.h.ups": {
+  "text": "Áramszünet (UPS)"
+ },
+ "set.ups_dc": {
+  "text": "Discord-üzenet akkuról menéskor:"
+ },
+ "set.ups_after": {
+  "text": "várakozás:"
+ },
+ "set.ups_w0": {
+  "text": "az első olvasáskor"
+ },
+ "set.ups_dc_hint": {
+  "text": "A rövidebb kimaradásokról nincs üzenet, csak a csempén látszanak. A csendes órák itt nem számítanak. Újabb üzenet jön, amikor visszajön az áram, és amikor a szerver egy áramszünet után újra elindul."
+ },
+ "set.ups_live": {
+  "text": "Élő értékek:"
+ },
+ "set.ups_live_l": {
+  "text": "percenként frissíti az üzenetet"
+ },
+ "set.ups_live_hint": {
+  "text": "A szerkesztés nem küld értesítést; új, jelző üzenet jön, amikor a NUT leállítja a szervert."
+ },
+ "set.ups_sd": {
+  "text": "Leállítás a Discordról:"
+ },
+ "set.ups_sd_l": {
+  "text": "a 🛑 elindítja a Safe shutdownt, utána kikapcsol"
+ },
+ "set.ups_confirm_l": {
+  "text": "előbb ✅-tel megerősíttet"
+ },
+ "set.ups_sd_hint": {
+  "text": "Csak a te reakcióid számítanak (Discord-bot blokk). A sorrend a Safe shutdown oldalé: előbb a qBittorrent hosszú várakozással, aztán a többi konténer és a VM-ek, végül a kikapcsolás."
+ },
+ "set.ups_sd_nobot": {
+  "text": "A Discord-bot nincs beállítva (Discord-bot blokk): az üzenet kimegy, de a Discordról leállításhoz kell a bot."
+ },
+ "set.ups_qb": {
+  "text": "qBittorrent a NUT leállítása előtt:"
+ },
+ "set.ups_qb0": {
+  "text": "ki"
+ },
+ "set.ups_qb_l": {
+  "text": "értékkel a NUT szintje fölött magától leáll"
+ },
+ "set.ups_nut_lv": {
+  "text": "A NUT plugin {l} %-os akkunál állítja le a szervert. A qBittorrent ennyivel előbb leáll, hosszú várakozással, kattintás nélkül."
+ },
+ "set.ups_nut_mode": {
+  "text": "A NUT plugin leállítási módja nem Battery Level, ezért a qBittorrent nem tud előtte leállni."
+ },
+ "set.ups_nut_none": {
+  "text": "A NUT plugin beállításai nem találhatók."
+ },
+ "set.btn.ups_test": {
+  "text": "Próbaüzenet küldése"
+ },
+ "ups.d.ob_t": {
+  "text": "Áramszünet: {h} akkuról megy"
+ },
+ "ups.d.since": {
+  "text": "Kezdete {t} · eltelt {d}"
+ },
+ "ups.d.battery": {
+  "text": "Akku"
+ },
+ "ups.d.runtime": {
+  "text": "Hátralévő idő"
+ },
+ "ups.d.load": {
+  "text": "Terhelés"
+ },
+ "ups.d.input": {
+  "text": "Bemenet"
+ },
+ "ups.d.socket": {
+  "text": "Fali aljzat (Shelly)"
+ },
+ "ups.d.sock_up": {
+  "text": "elérhető"
+ },
+ "ups.d.sock_down": {
+  "text": "nem elérhető"
+ },
+ "ups.d.how_stop_ok": {
+  "text": "🛑 = biztonságos leállítás (✅ megerősítéssel)"
+ },
+ "ups.d.how_stop": {
+  "text": "🛑 = biztonságos leállítás"
+ },
+ "ups.d.how_page": {
+  "text": "Leállítás: a Safe shutdown oldal (LAN vagy Tailscale)"
+ },
+ "ups.d.nut_eta": {
+  "text": "a NUT {l} %-nál leállít, kb. {t}-kor"
+ },
+ "ups.d.nut_at": {
+  "text": "a NUT {l} %-nál leállít"
+ },
+ "ups.d.ask_t": {
+  "text": "Leállítsam a szervert ({h})?"
+ },
+ "ups.d.ask_d": {
+  "text": "Erősítsd meg ✅ reakcióval {s} percen belül. ✅ nélkül nem történik semmi."
+ },
+ "ups.d.ask_gone": {
+  "text": "A leállítási kérdés lejárt"
+ },
+ "ups.d.ask_again": {
+  "text": "Nem történt semmi. Újra kérdezéshez vedd le a 🛑-et, és tedd fel újra."
+ },
+ "ups.d.sd_t": {
+  "text": "Biztonságos leállítás indult ({by})"
+ },
+ "ups.d.sd_off": {
+  "text": "A konténerek leálltak, a szerver kikapcsol ({by})"
+ },
+ "ups.d.sd_cancel": {
+  "text": "A biztonságos leállítást megszakították az oldalon"
+ },
+ "ups.d.sd_page": {
+  "text": "Ugyanaz, mint a Safe shutdown oldal Stop gombja; ott megszakítható"
+ },
+ "ups.d.closed_sd": {
+  "text": "Lezárva {t} · biztonságos leállítás indult a Discordról"
+ },
+ "ups.d.closed_nut": {
+  "text": "Lezárva {t} · a NUT leállítja a szervert"
+ },
+ "ups.d.closed_back": {
+  "text": "Lezárva {t} · visszajött az áram"
+ },
+ "ups.d.qb_t": {
+  "text": "{p} %: a qBittorrent leáll a NUT leállítása előtt"
+ },
+ "ups.d.qb_d": {
+  "text": "Legfeljebb 5 percet kap a fájljai lezárására. A NUT {l} %-nál állítja le a szervert."
+ },
+ "ups.d.lb_t": {
+  "text": "{p} %: a NUT most leállítja a szervert"
+ },
+ "ups.d.lb_d": {
+  "text": "{d} ment akkuról. Az Unraid leállítja a tömböt, utána az UPS kikapcsol."
+ },
+ "ups.d.back_t": {
+  "text": "Visszajött az áram ({t})"
+ },
+ "ups.d.back_d": {
+  "text": "Az áramszünet {d} volt; akku {a} → {b} %, most töltődik."
+ },
+ "ups.d.back_sd": {
+  "text": "Az elindított biztonságos leállítás folytatódik: a szerver kikapcsol."
+ },
+ "ups.d.back_qb": {
+  "text": "A qBittorrent leállt a NUT leállítása előtt: a Safe shutdown oldalon indíthatod újra (Start them again)."
+ },
+ "ups.d.boot_t": {
+  "text": "{h} újraindult ({t}) egy áramszünet után"
+ },
+ "ups.d.outage": {
+  "text": "Az áramszünet kezdete"
+ },
+ "ups.d.off": {
+  "text": "Leállás"
+ },
+ "ups.d.off_dc": {
+  "text": "{t}, a Discordról"
+ },
+ "ups.d.off_nut": {
+  "text": "{t}, a NUT {l} %-nál"
+ },
+ "ups.d.off_unknown": {
+  "text": "ismeretlen (utoljára akkuról látva {t})"
+ },
+ "ups.d.clean": {
+  "text": "Leállás módja"
+ },
+ "ups.d.clean_y": {
+  "text": "tiszta"
+ },
+ "ups.d.unclean": {
+  "text": "nem tiszta: a tömb indításakor paritásellenőrzés indul"
+ },
+ "ups.d.battery_now": {
+  "text": "Akku most"
+ },
+ "ups.d.still_ob": {
+  "text": "még akkuról megy"
+ },
+ "ups.d.charging": {
+  "text": "töltődik"
+ },
+ "ups.d.arr_t": {
+  "text": "A tömb nem indult el"
+ },
+ "ups.d.arr_d": {
+  "text": "Indítsd a Main oldalon (az automatikus indítás ki van kapcsolva). A konténerek vele indulnak."
+ },
+ "ups.d.cts": {
+  "text": "Konténerek"
+ },
+ "ups.d.cts_d": {
+  "text": "Az automatikus indításúak a tömbbel indulnak; a többi: Safe shutdown oldal, Start them again."
+ },
+ "ups.d.test_t": {
+  "text": "Teszt: áramszünet-üzenet"
+ },
+ "ups.d.test_d": {
+  "text": "Így néz ki az első üzenet áramszünetkor ({m}, a mostani értékekkel)."
+ },
+ "ups.d.p_qb_wait": {
+  "text": "a qBittorrent lezárja a fájljait (legfeljebb 5 perc)"
+ },
+ "ups.d.p_qb_ok": {
+  "text": "a qBittorrent leállt"
+ },
+ "ups.d.p_err": {
+  "text": "Valami nem állt le: az Unraid a leállításkor leállítja"
+ },
+ "ups.d.p_off": {
+  "text": "A szerver kikapcsol"
+ },
+ "ups.d.p_n": {
+  "one": "{n} további konténer leállt",
+  "other": "{n} további konténer leállt"
+ },
+ "ups.d.back_ran": {
+  "text": "A szerver végig futott."
+ },
+ "ups.d.back_lb": {
+  "text": "A NUT már elindította a leállítást: ez folytatódik, a szerver kikapcsol."
  }
 }

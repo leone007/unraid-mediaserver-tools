@@ -4410,5 +4410,382 @@
  "sr.done": {
   "text": "{c} restored from {s}; to undo: restore {c} from {u}",
   "note": "Snapshots page, container restore log and result (also Discord): result."
+ },
+ "pow.ev_ob": {
+  "text": "On battery for {d}",
+  "note": "tile line under the UPS figures while the mains is gone; {d} = duration like \"3 min\"."
+ },
+ "pow.ev_ob_sent": {
+  "text": "On battery for {d} · Discord alert sent {t}",
+  "note": "tile line while on battery; {t} = time like 21:15."
+ },
+ "pow.ev_qb": {
+  "text": "On battery for {d} · qBittorrent stopped at {t} before the NUT shutdown",
+  "note": "tile line; {t} = time."
+ },
+ "pow.ev_sd": {
+  "text": "Safe shutdown started from Discord at {t}",
+  "note": "tile line; {t} = time."
+ },
+ "pow.ev_sd_link": {
+  "text": "Safe shutdown",
+  "note": "link to the Safe shutdown page (page name)."
+ },
+ "pow.ev_boot": {
+  "text": "Restarted after a power outage · the array is not started",
+  "note": "tile line after a restart."
+ },
+ "pow.ev_boot_dc": {
+  "text": "Restarted after a power outage (shut down from Discord) · the array is not started",
+  "note": "tile line after a restart."
+ },
+ "pow.ev_boot_nut": {
+  "text": "Restarted after a power outage (NUT shutdown) · the array is not started",
+  "note": "tile line after a restart."
+ },
+ "pow.ev_main_link": {
+  "text": "Main",
+  "note": "link to the Unraid Main page (page name)."
+ },
+ "pow.ev_last": {
+  "text": "Last power outage {t} · {d} · battery {a} → {b} %",
+  "note": "grey tile line for 7 days; {t} = date and time, {d} = duration, {a} {b} = battery percent before and lowest."
+ },
+ "pow.ev_blip": {
+  "text": "Last power blip {t} · {d} (no Discord message)",
+  "note": "grey tile line; a blip shorter than the wait before the message."
+ },
+ "sd.st.off": {
+  "text": "Powering off",
+  "note": "state of the Safe shutdown run after a stop started from Discord."
+ },
+ "sd.by_discord": {
+  "text": "from Discord",
+  "note": "chip next to the run state: who started it."
+ },
+ "sd.by_ups": {
+  "text": "UPS: before the NUT shutdown",
+  "note": "chip next to the run state: the UPS stopped qBittorrent by itself."
+ },
+ "sdr.off": {
+  "text": "Containers stopped; the server is powering off.",
+  "note": "result text in Activity."
+ },
+ "test.no_nut": {
+  "text": "NUT does not answer: {e}",
+  "note": "error of the test button; {e} = technical reason."
+ },
+ "set.h.ups": {
+  "text": "Power outage (UPS)",
+  "note": "section heading."
+ },
+ "set.ups_dc": {
+  "text": "Discord message on battery:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.ups_after": {
+  "text": "after",
+  "note": "word before the wait select (1 min, 2 min...)."
+ },
+ "set.ups_w0": {
+  "text": "the first reading",
+  "note": "option of the wait select: no wait."
+ },
+ "set.ups_dc_hint": {
+  "text": "Shorter power blips stay silent and only show on the tile. Quiet hours do not apply. A second message comes when the power is back, and one when the server is up again after an outage.",
+  "note": "hint under the setting."
+ },
+ "set.ups_live": {
+  "text": "Live values:",
+  "note": "label of a setting."
+ },
+ "set.ups_live_l": {
+  "text": "update the message every minute",
+  "note": "checkbox text."
+ },
+ "set.ups_live_hint": {
+  "text": "Edits do not notify you; a new message pings you when the NUT plugin shuts the server down.",
+  "note": "hint under the setting."
+ },
+ "set.ups_sd": {
+  "text": "Shutdown from Discord:",
+  "note": "label of a setting."
+ },
+ "set.ups_sd_l": {
+  "text": "🛑 starts Safe shutdown and powers off",
+  "note": "checkbox text."
+ },
+ "set.ups_confirm_l": {
+  "text": "ask for ✅ first",
+  "note": "checkbox text."
+ },
+ "set.ups_sd_hint": {
+  "text": "Only your own reactions count (the Discord bot block). The order is the Safe shutdown page's: qBittorrent first with the long wait, then the other containers and the VMs, then power off.",
+  "note": "hint under the setting."
+ },
+ "set.ups_sd_nobot": {
+  "text": "The Discord bot is not set (Discord bot block): the message comes, but shutdown from Discord needs the bot.",
+  "note": "hint when the shared bot has no token or user."
+ },
+ "set.ups_qb": {
+  "text": "qBittorrent before the NUT shutdown:",
+  "note": "label of a setting."
+ },
+ "set.ups_qb0": {
+  "text": "off",
+  "note": "option: the step is off."
+ },
+ "set.ups_qb_l": {
+  "text": "above the NUT shutdown level it stops by itself",
+  "note": "text after the percent select."
+ },
+ "set.ups_nut_lv": {
+  "text": "The NUT plugin shuts the server down at {l} % battery. qBittorrent stops this much earlier, with the long wait, without a click.",
+  "note": "hint; {l} = the NUT plugin battery level."
+ },
+ "set.ups_nut_mode": {
+  "text": "The NUT plugin's shutdown mode is not Battery Level, so qBittorrent cannot stop before it.",
+  "note": "hint."
+ },
+ "set.ups_nut_none": {
+  "text": "The NUT plugin's settings were not found.",
+  "note": "hint."
+ },
+ "set.btn.ups_test": {
+  "text": "Send a test message",
+  "note": "button."
+ },
+ "ups.d.ob_t": {
+  "text": "Power outage: {h} runs on battery",
+  "note": "Discord title; {h} = server name."
+ },
+ "ups.d.since": {
+  "text": "Started {t} · {d} ago",
+  "note": "Discord line; {t} = time, {d} = duration."
+ },
+ "ups.d.battery": {
+  "text": "Battery",
+  "note": "Discord field name."
+ },
+ "ups.d.runtime": {
+  "text": "Runtime left",
+  "note": "Discord field name."
+ },
+ "ups.d.load": {
+  "text": "Load",
+  "note": "Discord field name."
+ },
+ "ups.d.input": {
+  "text": "Input",
+  "note": "Discord field name: input voltage."
+ },
+ "ups.d.socket": {
+  "text": "Wall socket (Shelly)",
+  "note": "Discord field name."
+ },
+ "ups.d.sock_up": {
+  "text": "reachable",
+  "note": "Discord field value."
+ },
+ "ups.d.sock_down": {
+  "text": "not reachable",
+  "note": "Discord field value."
+ },
+ "ups.d.how_stop_ok": {
+  "text": "🛑 = safe shutdown (asks for ✅)",
+  "note": "Discord footer part."
+ },
+ "ups.d.how_stop": {
+  "text": "🛑 = safe shutdown",
+  "note": "Discord footer part."
+ },
+ "ups.d.how_page": {
+  "text": "Shutdown: the Safe shutdown page (LAN or Tailscale)",
+  "note": "Discord footer part."
+ },
+ "ups.d.nut_eta": {
+  "text": "the NUT plugin shuts down at {l} %, about {t}",
+  "note": "Discord footer part; {l} = percent, {t} = estimated time."
+ },
+ "ups.d.nut_at": {
+  "text": "the NUT plugin shuts down at {l} %",
+  "note": "Discord footer part."
+ },
+ "ups.d.ask_t": {
+  "text": "Shut {h} down?",
+  "note": "Discord title of the confirmation question."
+ },
+ "ups.d.ask_d": {
+  "text": "React with ✅ within {s} min. Without ✅ nothing happens.",
+  "note": "Discord text; {s} = minutes."
+ },
+ "ups.d.ask_gone": {
+  "text": "The shutdown question expired",
+  "note": "Discord title."
+ },
+ "ups.d.ask_again": {
+  "text": "Nothing happened. To ask again, take back your 🛑 and add it again.",
+  "note": "Discord text."
+ },
+ "ups.d.sd_t": {
+  "text": "Safe shutdown started ({by})",
+  "note": "Discord title; {by} = Discord."
+ },
+ "ups.d.sd_off": {
+  "text": "Containers stopped, the server is powering off ({by})",
+  "note": "Discord title."
+ },
+ "ups.d.sd_cancel": {
+  "text": "Safe shutdown was cancelled on the page",
+  "note": "Discord title."
+ },
+ "ups.d.sd_page": {
+  "text": "Same as the Stop button of the Safe shutdown page; it can be cancelled there",
+  "note": "Discord footer."
+ },
+ "ups.d.closed_sd": {
+  "text": "Closed {t} · Safe shutdown started from Discord",
+  "note": "Discord footer of the closed first message."
+ },
+ "ups.d.closed_nut": {
+  "text": "Closed {t} · the NUT plugin shuts the server down",
+  "note": "Discord footer."
+ },
+ "ups.d.closed_back": {
+  "text": "Closed {t} · the power is back",
+  "note": "Discord footer."
+ },
+ "ups.d.qb_t": {
+  "text": "{p} %: qBittorrent is stopping before the NUT shutdown",
+  "note": "Discord title; {p} = battery percent."
+ },
+ "ups.d.qb_d": {
+  "text": "It gets up to 5 minutes to close its files. The NUT plugin shuts the server down at {l} %.",
+  "note": "Discord text."
+ },
+ "ups.d.lb_t": {
+  "text": "{p} %: the NUT plugin is shutting the server down now",
+  "note": "Discord title."
+ },
+ "ups.d.lb_d": {
+  "text": "On battery for {d}. Unraid stops the array, then the UPS turns off.",
+  "note": "Discord text."
+ },
+ "ups.d.back_t": {
+  "text": "Power is back ({t})",
+  "note": "Discord title."
+ },
+ "ups.d.back_d": {
+  "text": "The outage lasted {d}; battery {a} → {b} %, now charging.",
+  "note": "Discord text."
+ },
+ "ups.d.back_sd": {
+  "text": "The safe shutdown that was started goes on: the server powers off.",
+  "note": "Discord text."
+ },
+ "ups.d.back_qb": {
+  "text": "qBittorrent was stopped before the NUT shutdown: start it again on the Safe shutdown page (Start them again).",
+  "note": "Discord text."
+ },
+ "ups.d.boot_t": {
+  "text": "{h} is up again ({t}) after a power outage",
+  "note": "Discord title."
+ },
+ "ups.d.outage": {
+  "text": "Outage began",
+  "note": "Discord field name."
+ },
+ "ups.d.off": {
+  "text": "Shutdown",
+  "note": "Discord field name."
+ },
+ "ups.d.off_dc": {
+  "text": "{t}, from Discord",
+  "note": "Discord field value."
+ },
+ "ups.d.off_nut": {
+  "text": "{t}, the NUT plugin at {l} %",
+  "note": "Discord field value."
+ },
+ "ups.d.off_unknown": {
+  "text": "unknown (last seen on battery {t})",
+  "note": "Discord field value."
+ },
+ "ups.d.clean": {
+  "text": "Shutdown type",
+  "note": "Discord field name."
+ },
+ "ups.d.clean_y": {
+  "text": "clean",
+  "note": "Discord field value."
+ },
+ "ups.d.unclean": {
+  "text": "unclean: a parity check starts with the array",
+  "note": "Discord field value."
+ },
+ "ups.d.battery_now": {
+  "text": "Battery now",
+  "note": "Discord field name."
+ },
+ "ups.d.still_ob": {
+  "text": "still on battery",
+  "note": "Discord field value."
+ },
+ "ups.d.charging": {
+  "text": "charging",
+  "note": "Discord field value."
+ },
+ "ups.d.arr_t": {
+  "text": "The array is not started",
+  "note": "Discord field name."
+ },
+ "ups.d.arr_d": {
+  "text": "Start it on the Main page (the automatic start is off). The containers start with it.",
+  "note": "Discord field value."
+ },
+ "ups.d.cts": {
+  "text": "Containers",
+  "note": "Discord field name."
+ },
+ "ups.d.cts_d": {
+  "text": "The ones with autostart start with the array; any other: Safe shutdown page, Start them again.",
+  "note": "Discord field value."
+ },
+ "ups.d.test_t": {
+  "text": "Test: power outage message",
+  "note": "Discord title."
+ },
+ "ups.d.test_d": {
+  "text": "This is how the first message looks during an outage ({m}, values of now).",
+  "note": "Discord text; {m} = UPS model."
+ },
+ "ups.d.p_qb_wait": {
+  "text": "qBittorrent is closing its files (up to 5 minutes)",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_qb_ok": {
+  "text": "qBittorrent stopped",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_err": {
+  "text": "Something did not stop: Unraid stops it while shutting down",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_off": {
+  "text": "The server is powering off",
+  "note": "Discord progress line."
+ },
+ "ups.d.p_n": {
+  "one": "{n} other container stopped",
+  "other": "{n} other containers stopped",
+  "note": "Discord progress line."
+ },
+ "ups.d.back_ran": {
+  "text": "The server ran through.",
+  "note": "Discord text after the power-back line."
+ },
+ "ups.d.back_lb": {
+  "text": "The NUT plugin had already started its shutdown: it goes on, the server powers off.",
+  "note": "Discord text."
  }
 }
