@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzn">
+<!ENTITY version   "2026.10.99zzo">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzo
+- Discord: a torrent the tracker removed that already has its own message with replacement choices is left out of the daily summary message; no summary when every such torrent has its own message
+
 ###2026.10.99zzn
 - The error of a scan or search that broke comes from the dictionary (Hungarian too)
 
@@ -4149,7 +4152,11 @@ function st_find_scan($auto = false) {
     st_state_update(function (&$ws) use ($gone, $n) { $ws['watch'] = array_merge((array)($ws['watch'] ?? []), ['t' => time(), 'removed' => $gone, 'unseeded' => $n]); });
     $nsd = 0; $npw = 0; foreach ($items as $it) { if (!empty($it['pass'])) { $npw++; } elseif (empty($it['old'])) { $nsd++; } }
     st_sum_set('find', ['removed' => count($gone), 'nosd' => $nsd, 'pass' => $npw]);
-    if ($auto && $dead > 0 && st_bot_on('find')) { st_find_bot($items); }
+    // a torrent with its own BoxBot message (now or in the last 7 days) is left out of the summary; no summary when none is left
+    $botted = ($auto && $dead > 0 && st_bot_on('find')) ? st_find_bot($items) : [];
+    $gone = array_values(array_filter($gone, function ($g) use ($botted) { return !isset($botted[$g['hash']]); }));
+    if ($auto && $dead > 0 && !$gone) { return; }
+    $dead = count($gone);
     if ($auto && $dead > 0) {
         $names = array_slice(array_map(function ($g) { return $g['name']; }, $gone), 0, 8);
         st_notify('a', st_l('Seedbox: a tracker törölt torrenteket', 'Seedbox: the tracker removed torrents'),
@@ -4181,22 +4188,24 @@ function st_ep_suffix($name) {
     return preg_match('/S\d{1,2}E(\d{1,3})(?!\d)/i', (string)$name, $m) ? 'E' . str_pad((string)(int)$m[1], 2, '0', STR_PAD_LEFT) : '';
 }
 // BoxBot (item 72): one message with choices per torrent the tracker removed, when the replacement search found releases;
-// at most 5 per scan, and a torrent is offered again only after 7 days
+// at most 5 per scan, and a torrent is offered again only after 7 days. Returns the old hashes that have a message (sent now or still within the 7 days)
 function st_find_bot($items) {
-    $res = st_json_read(ST_RES, []); $sent = 0;
+    $res = st_json_read(ST_RES, []); $sent = 0; $has = [];
     $old = []; foreach ((array)(st_json_read(st_bot_file(), [])['msgs'] ?? []) as $m) { if ($m['kind'] === 'find' && time() - (int)$m['t'] < 7 * 86400) { $old[$m['key'] . ':' . ($m['old'] ?? '')] = 1; } }
     foreach ($items as $it) {
-        if (empty($it['old']) || !empty($it['pass']) || $sent >= 5) { continue; }
+        if (empty($it['old']) || !empty($it['pass'])) { continue; }
         $r = $res[$it['key']] ?? null;
-        if (!is_array($r) || ($r['state'] ?? '') !== 'ready' || empty($r['rows']) || isset($old[$it['key'] . ':' . $it['old']])) { continue; }
+        if (isset($old[$it['key'] . ':' . $it['old']])) { $has[(string)$it['old']] = 1; continue; }
+        if ($sent >= 5 || !is_array($r) || ($r['state'] ?? '') !== 'ready' || empty($r['rows'])) { continue; }
         $ri = (array)($r['item'] ?? []);
         $now = trim(((int)($ri['cur_res'] ?? 0) > 0 ? $ri['cur_res'] . 'p ' : '') . st_hdr_label((int)($ri['cur_hdr'] ?? 1))) . ', ' . st_gb((float)$it['size']);
         [$ok] = st_bot_post('find', $it['key'], st_l('🗑️ Lekerült a trackerről · ', '🗑️ Removed from the tracker · ') . (string)($ri['title'] ?? $it['name']),
             st_l('A torrent már nem seedel. Csere-jelöltek a ' . ucfirst((string)($ri['kind'] ?? 'arr')) . ' keresése szerint; a régi mappa a csere után a kukába kerül.', 'The torrent no longer seeds. Replacement releases from the ' . ucfirst((string)($ri['kind'] ?? 'arr')) . ' search; the old folder goes to the trash after the replacement.'),
             [[st_l('Most', 'Now'), (string)$it['name'] . "
 " . $now]], $r['rows'], ['old' => (string)$it['old']]);
-        if ($ok) { $sent++; }
+        if ($ok) { $sent++; $has[(string)$it['old']] = 1; }
     }
+    return $has;
 }
 
 // Adds a candidate to qBittorrent: stopped, with a recheck; tick finishes it (starts it only when it is 100%).
