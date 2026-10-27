@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.32">
+<!ENTITY version   "2026.10.32a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.32a
+- Claude Guard: the morning brief shows each amber or red finding once (the summary only when everything is green); the summary asked from Claude does not repeat the findings
+
 ###2026.10.32
 - Snapshots: copies. After the daily snapshot the containers' data is copied to a share on the array (one browsable folder per day, unchanged files hardlinked, so a copy only takes the space of what changed); keeps 14 daily and 8 weekly copies by default and removes only the date folders it made; names to skip (Docker image, Jellyfin transcodes and cache); Copy now
 - Snapshots: an encrypted copy off the server once a week (restic, to another computer over SFTP or to S3 storage such as Backblaze B2); the password is made once and shown on a click so it can be written down; Test and set up makes the repository; only the changes are sent; keeps a set number of weekly versions

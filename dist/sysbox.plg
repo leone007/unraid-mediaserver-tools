@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.32">
+<!ENTITY version   "2026.10.32a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.32a
+- Claude Guard: the morning brief shows each amber or red finding once (the summary only when everything is green); the summary asked from Claude does not repeat the findings
+
 ###2026.10.32
 - Snapshots: copies. After the daily snapshot the containers' data is copied to a share on the array (one browsable folder per day, unchanged files hardlinked, so a copy only takes the space of what changed); keeps 14 daily and 8 weekly copies by default and removes only the date folders it made; names to skip (Docker image, Jellyfin transcodes and cache); Copy now
 - Snapshots: an encrypted copy off the server once a week (restic, to another computer over SFTP or to S3 storage such as Backblaze B2); the password is made once and shown on a click so it can be written down; Test and set up makes the repository; only the changes are sent; keeps a set number of weekly versions
@@ -16280,7 +16283,7 @@ function gd_prompt($kind, $now, $prev, $events, $c = null, $menu = '') {
     $p .= "<snapshot_now>\n" . json_encode($now, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_now>\n";
     if ($prev) { unset($prev['logs']); $p .= "<snapshot_previous>\n" . json_encode($prev, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_previous>\n"; }
     $p .= "\nAnswer with ONE JSON object and nothing else, in this shape:\n" .
-        '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services",' .
+        '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner: the overall state; do not repeat what the items say","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services",' .
         '"level":"green|amber|red","title":"what happened, one short sentence","text":"what it means, 1-3 sentences","todo":"what to do, 1-2 sentences, or empty",' .
         '"cmd":"one read-only command for the Unraid terminal, or empty","link":"diskbox|updates|docker|seedbox|sonarr|radarr|prowlarr|jellyfin|syslog or empty"}],' .
         '"noise":"one sentence on the log lines that are harmless, with counts, or empty"' . ($menu !== '' ? ',"suggest":[]' : '') . '}' . "\n" .
@@ -16830,9 +16833,10 @@ function gd_brief_embed($c, $r, $now = null) {
     $title = '☀️ ' . gd_bt('brief.hello') . ' ' . gd_bt('brief.dow_' . date('w', $now)) . ', ' . gd_bt('brief.date', ['m' => gd_bt('brief.mon_' . date('n', $now)), 'd' => date('j', $now)]);
     if ($bad) { $title .= ' · ' . ($v === 'red' ? '🔴' : '🟡') . ' ' . gd_bt('brief.look', ['n' => count($bad)]); }
     if ($claude) {
-        $desc = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$v] ?? '🟢';
-        $desc .= ' ' . trim((string)($r['summary'] ?? ''));
-        foreach ($bad as $x) { $desc .= "\n" . ($x['level'] === 'red' ? '🔴' : '🟡') . ' **' . $x['area'] . '**: ' . $x['title'] . ($x['todo'] !== '' ? ' ' . $x['todo'] : ''); }
+        // with amber or red findings only the findings (the summary tells the same once more); all green: the summary
+        $lines = [];
+        foreach ($bad as $x) { $lines[] = ($x['level'] === 'red' ? '🔴' : '🟡') . ' **' . $x['area'] . '**: ' . $x['title'] . ($x['todo'] !== '' ? ' ' . $x['todo'] : ''); }
+        $desc = $lines ? implode("\n", $lines) : '🟢 ' . trim((string)($r['summary'] ?? ''));
     } else {
         $desc = '⚪ ' . (!empty($r['skipped']) ? (string)$r['skipped'] : gd_bt('brief.no_claude', ['e' => mb_substr((string)$r['error'], 0, 300)]));
     }

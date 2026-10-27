@@ -289,7 +289,7 @@ function gd_prompt($kind, $now, $prev, $events, $c = null, $menu = '') {
     $p .= "<snapshot_now>\n" . json_encode($now, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_now>\n";
     if ($prev) { unset($prev['logs']); $p .= "<snapshot_previous>\n" . json_encode($prev, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_previous>\n"; }
     $p .= "\nAnswer with ONE JSON object and nothing else, in this shape:\n" .
-        '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services",' .
+        '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner: the overall state; do not repeat what the items say","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services",' .
         '"level":"green|amber|red","title":"what happened, one short sentence","text":"what it means, 1-3 sentences","todo":"what to do, 1-2 sentences, or empty",' .
         '"cmd":"one read-only command for the Unraid terminal, or empty","link":"diskbox|updates|docker|seedbox|sonarr|radarr|prowlarr|jellyfin|syslog or empty"}],' .
         '"noise":"one sentence on the log lines that are harmless, with counts, or empty"' . ($menu !== '' ? ',"suggest":[]' : '') . '}' . "\n" .

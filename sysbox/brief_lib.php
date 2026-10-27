@@ -138,9 +138,10 @@ function gd_brief_embed($c, $r, $now = null) {
     $title = '☀️ ' . gd_bt('brief.hello') . ' ' . gd_bt('brief.dow_' . date('w', $now)) . ', ' . gd_bt('brief.date', ['m' => gd_bt('brief.mon_' . date('n', $now)), 'd' => date('j', $now)]);
     if ($bad) { $title .= ' · ' . ($v === 'red' ? '🔴' : '🟡') . ' ' . gd_bt('brief.look', ['n' => count($bad)]); }
     if ($claude) {
-        $desc = ['green' => '🟢', 'amber' => '🟡', 'red' => '🔴'][$v] ?? '🟢';
-        $desc .= ' ' . trim((string)($r['summary'] ?? ''));
-        foreach ($bad as $x) { $desc .= "\n" . ($x['level'] === 'red' ? '🔴' : '🟡') . ' **' . $x['area'] . '**: ' . $x['title'] . ($x['todo'] !== '' ? ' ' . $x['todo'] : ''); }
+        // with amber or red findings only the findings (the summary tells the same once more); all green: the summary
+        $lines = [];
+        foreach ($bad as $x) { $lines[] = ($x['level'] === 'red' ? '🔴' : '🟡') . ' **' . $x['area'] . '**: ' . $x['title'] . ($x['todo'] !== '' ? ' ' . $x['todo'] : ''); }
+        $desc = $lines ? implode("\n", $lines) : '🟢 ' . trim((string)($r['summary'] ?? ''));
     } else {
         $desc = '⚪ ' . (!empty($r['skipped']) ? (string)$r['skipped'] : gd_bt('brief.no_claude', ['e' => mb_substr((string)$r['error'], 0, 300)]));
     }
