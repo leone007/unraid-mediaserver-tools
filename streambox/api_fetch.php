@@ -316,13 +316,24 @@ foreach ($sessions as $s) {
         'paused'      => !empty($ps['IsPaused']),
         'live'        => $live,
         'epg'         => $epg,
+        'sid'         => (string)($s['Id'] ?? ''),
     ];
 }
 
+// Order: playing before paused, then by when the stream was first seen (oldest on top). Jellyfin lists the sessions by their last
+// activity, which changes with every progress report, so the rows used to swap places (owner, 2026-10-28).
+$ff = '/tmp/streambox_first_seen.json';
+$seen = is_file($ff) ? json_decode((string)@file_get_contents($ff), true) : [];
+if (!is_array($seen)) { $seen = []; }
+$now0 = time(); $keep = [];
+foreach ($streams as $x) { if ($x['sid'] !== '') { $keep[$x['sid']] = (int)($seen[$x['sid']] ?? $now0); } }
+if ($keep != $seen) { @file_put_contents($ff, json_encode($keep)); }
+foreach ($streams as $i => $x) { $streams[$i]['_o'] = [$keep[$x['sid']] ?? $now0, $i]; unset($streams[$i]['sid']); }
 usort($streams, function ($a, $b) {
     if ($a['paused'] !== $b['paused']) { return $a['paused'] ? 1 : -1; }
-    return 0;
+    return $a['_o'] <=> $b['_o'];
 });
+foreach ($streams as $i => $x) { unset($streams[$i]['_o']); }
 $total   = count($streams);
 $more    = max(0, $total - $maxStream);
 $streams = array_slice($streams, 0, $maxStream);
