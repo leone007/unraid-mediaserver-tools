@@ -43,6 +43,12 @@ function st_move_info($t) {
     foreach ($h as $s) {
         if ($now - $s[0] >= 25 && $now - $s[0] <= 300 && $have > $s[1]) { $rate = ($have - $s[1]) / ($now - $s[0]); if ($rate > 0) { $eta = (int)round(max(0, $total - $have) / $rate); } break; }
     }
+    // the tile was closed for more than five minutes (samples are taken only while it is open): the newest sample of the last 15 minutes
+    if ($eta < 0) {
+        foreach (array_reverse($h) as $s) {
+            if ($now - $s[0] > 300 && $have > $s[1]) { $rate = ($have - $s[1]) / ($now - $s[0]); if ($rate > 0) { $eta = (int)round(max(0, $total - $have) / $rate); } break; }
+        }
+    }
     @file_put_contents($f, json_encode(['s' => $h, 'r' => [$now, $frac, $eta]]));
     return [$frac, $eta, false];
 }

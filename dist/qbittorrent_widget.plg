@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzo">
+<!ENTITY version   "2026.10.99zzp">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzp
+- Dashboard tile: a torrent that is Moving shows its time left right after you open the Dashboard again, also when the tile was closed for more than five minutes (it used to show a dash for the first minute)
+
 ###2026.10.99zzo
 - Discord: a torrent the tracker removed that already has its own message with replacement choices is left out of the daily summary message; no summary when every such torrent has its own message
 
@@ -3110,6 +3113,12 @@ function st_move_info($t) {
     $eta = -1; // speed over the last five minutes: steady, and it follows a change
     foreach ($h as $s) {
         if ($now - $s[0] >= 25 && $now - $s[0] <= 300 && $have > $s[1]) { $rate = ($have - $s[1]) / ($now - $s[0]); if ($rate > 0) { $eta = (int)round(max(0, $total - $have) / $rate); } break; }
+    }
+    // the tile was closed for more than five minutes (samples are taken only while it is open): the newest sample of the last 15 minutes
+    if ($eta < 0) {
+        foreach (array_reverse($h) as $s) {
+            if ($now - $s[0] > 300 && $have > $s[1]) { $rate = ($have - $s[1]) / ($now - $s[0]); if ($rate > 0) { $eta = (int)round(max(0, $total - $have) / $rate); } break; }
+        }
     }
     @file_put_contents($f, json_encode(['s' => $h, 'r' => [$now, $frac, $eta]]));
     return [$frac, $eta, false];
