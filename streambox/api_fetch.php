@@ -328,7 +328,8 @@ if (!is_array($seen)) { $seen = []; }
 $now0 = time(); $keep = [];
 foreach ($streams as $x) { if ($x['sid'] !== '') { $keep[$x['sid']] = (int)($seen[$x['sid']] ?? $now0); } }
 if ($keep != $seen) { @file_put_contents($ff, json_encode($keep)); }
-foreach ($streams as $i => $x) { $streams[$i]['_o'] = [$keep[$x['sid']] ?? $now0, $i]; unset($streams[$i]['sid']); }
+// a tie (streams first seen in the same poll, e.g. after an install) is broken by the session id, which does not change
+foreach ($streams as $i => $x) { $streams[$i]['_o'] = [$keep[$x['sid']] ?? $now0, $x['sid'], $i]; unset($streams[$i]['sid']); }
 usort($streams, function ($a, $b) {
     if ($a['paused'] !== $b['paused']) { return $a['paused'] ? 1 : -1; }
     return $a['_o'] <=> $b['_o'];

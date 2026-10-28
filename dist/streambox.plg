@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zk">
+<!ENTITY version   "2026.10.14zl">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Dashboard tile: Now playing order also stays steady for streams first seen at the same moment (after an install both took turns on top)
+###2026.10.14zk
 - Dashboard tile: Now playing keeps a steady order, the stream started first on top and a new one at the bottom; paused streams stay below the playing ones (the rows used to swap places at every progress report)
 ###2026.10.14zj
 - Jellyfin This week row: the texts follow Jellyfin's language (English or Hungarian), day and month names come from the browser; the Live TV Program line on the tile is translated
@@ -1380,7 +1382,8 @@ if (!is_array($seen)) { $seen = []; }
 $now0 = time(); $keep = [];
 foreach ($streams as $x) { if ($x['sid'] !== '') { $keep[$x['sid']] = (int)($seen[$x['sid']] ?? $now0); } }
 if ($keep != $seen) { @file_put_contents($ff, json_encode($keep)); }
-foreach ($streams as $i => $x) { $streams[$i]['_o'] = [$keep[$x['sid']] ?? $now0, $i]; unset($streams[$i]['sid']); }
+// a tie (streams first seen in the same poll, e.g. after an install) is broken by the session id, which does not change
+foreach ($streams as $i => $x) { $streams[$i]['_o'] = [$keep[$x['sid']] ?? $now0, $x['sid'], $i]; unset($streams[$i]['sid']); }
 usort($streams, function ($a, $b) {
     if ($a['paused'] !== $b['paused']) { return $a['paused'] ? 1 : -1; }
     return $a['_o'] <=> $b['_o'];
