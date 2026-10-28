@@ -19,8 +19,14 @@ if ($op === 'state') {
     // a job whose worker died stays "running" for ever: after 2 hours it is shown as stuck
     foreach ($run['jobs'] as $k => $j) { if ($j['state'] === 'running' && time() - (int)$j['started'] > 7200) { $run['jobs'][$k]['state'] = 'error'; $run['jobs'][$k]['text'] .= ' (stopped answering)'; } }
     $log = is_file(upd_log_file()) ? array_slice(file(upd_log_file(), FILE_IGNORE_NEW_LINES), -40) : [];
+    // item 119: a pool above the Snapshots fill limit; the snapshot before an update would hold what changes there until it expires
+    $pool = [];
+    if (!empty(upd_cfg()['backup']) && is_file(__DIR__ . '/snap_lib.php')) {
+        require_once __DIR__ . '/snap_lib.php'; $sc = snp_cfg();
+        foreach ($sc['datasets'] as $ds) { $f = snp_pool_fill($ds); if ($f >= 0 && $f > (int)$sc['maxfill']) { $pool[] = ['ds' => $ds, 'p' => $f, 'max' => (int)$sc['maxfill']]; } }
+    }
     sx_json(['ok' => true, 'cfg' => upd_cfg(), 'scan' => $scan ?: null, 'jobs' => array_values($run['jobs']), 'test' => upd_json(upd_test_file(), []) ?: null,
-             'log' => $log, 'busy' => ['scan' => !empty($autoscan) || upd_running('scan'), 'ask' => upd_running('ask'), 'update' => upd_running('update'), 'selftest' => upd_running('selftest')],
+             'log' => $log, 'pool' => $pool, 'busy' => ['scan' => !empty($autoscan) || upd_running('scan'), 'ask' => upd_running('ask'), 'update' => upd_running('update'), 'selftest' => upd_running('selftest')],
              'claude' => is_file('/tmp/sysbox_claude_ct') || trim(upd_sh(escapeshellarg(sx_docker()) . ' inspect -f {{.Name}} claude', 10)) !== '']);
 }
 if ($op === 'detail') {

@@ -49,7 +49,7 @@ function gd_sug_cands($c) {
             ($r['flags'] ? ', release notes mention: ' . implode(', ', array_keys(array_filter((array)$r['flags']))) : '') .
             ($cl !== '' ? '; Claude read the notes earlier: ' . mb_substr(preg_replace('/\s+/', ' ', $cl), 0, 300) : '; nobody asked Claude about it'));
     }
-    if (!empty($c['s_snap'])) {
+    if (!empty($c['s_snap']) && empty(snp_cfg()['bu_on'])) {   // with item 119 on they are removed by themselves
         foreach (snp_datasets() as $ds) {
             foreach (snp_snaps($ds['name']) as $s) {
                 if (!preg_match('/^before-update-(.+)-\d{4}-\d{2}-\d{2}-\d{4}$/', $s['name'], $m) || time() - $s['t'] < 86400) { continue; }

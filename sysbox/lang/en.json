@@ -766,6 +766,50 @@
   "text": "manual: never removed by itself",
   "note": "chip after a manual snapshot."
  },
+ "snp.bu_exp": {
+  "text": "before-update: removed on {d}",
+  "note": "chip after a before-update snapshot: the date (MM-DD) it is removed by itself."
+ },
+ "snp.bu_exp_last": {
+  "text": "newest of {c} · removed on {d}",
+  "note": "chip after the newest before-update snapshot of a container ({c}); {d} is the date (MM-DD) it is removed."
+ },
+ "snp.bu_hand": {
+  "text": "before-update: removed only by hand",
+  "note": "chip after a before-update snapshot when automatic removal is off."
+ },
+ "snp.keep": {
+  "text": "Keep",
+  "note": "button on a before-update snapshot row."
+ },
+ "snp.keep_tip": {
+  "text": "Turn it into a manual snapshot, which is never removed by itself",
+  "note": "tooltip of the Keep button."
+ },
+ "snp.keep_confirm": {
+  "text": "Keep {s}? It becomes a manual snapshot and stays until you delete it.",
+  "note": "confirmation of the Keep button; {s} is dataset@snapshot."
+ },
+ "snp.s.bu": {
+  "text": "Before-update snapshots",
+  "note": "label of a setting (left column)."
+ },
+ "snp.s.bu_on": {
+  "text": "remove by themselves after",
+  "note": "checkbox text; a number of days follows."
+ },
+ "snp.s.bu_newest": {
+  "text": "days, the newest of each container after",
+  "note": "text between the two numbers of days."
+ },
+ "snp.s.bu_days": {
+  "text": "days",
+  "note": "text after the second number."
+ },
+ "snp.s.bu_hint": {
+  "text": "made by the Update manager before a container update; removed in the daily round. Keep turns one into a manual snapshot, which stays until you delete it",
+  "note": "hint under the before-update setting."
+ },
  "snp.delete": {
   "text": "Delete",
   "note": "small button on a snapshot row. Short."
@@ -868,7 +912,7 @@
   "note": "after the pool fill field."
  },
  "snp.s.time_hint": {
-  "text": "set CA Auto Update after this time, so the snapshot is made before the updates. Only the daily auto- snapshots are removed by themselves; a manual one stays until you delete it",
+  "text": "set CA Auto Update after this time, so the snapshot is made before the updates. The daily auto- snapshots and the before-update ones (see below) are removed by themselves; a manual one stays until you delete it",
   "note": "hint under the time setting. CA Auto Update is a plugin name; auto- is the name prefix of the daily snapshots."
  },
  "snp.s.dc": {
@@ -898,6 +942,14 @@
  "snpe.bad_name": {
   "text": "bad name",
   "note": "error: a dataset, snapshot or container name is not valid."
+ },
+ "snpe.bu_last": {
+  "text": "The newest of each container has to be kept at least as long as the others.",
+  "note": "error when saving the settings."
+ },
+ "snpe.not_bu": {
+  "text": "Only a before-update snapshot can be kept this way.",
+  "note": "error of the Keep button."
  },
  "snpe.no_folder": {
   "text": "this container has no folder in {ds}",
@@ -1674,6 +1726,22 @@
   "text": "qBittorrent is moving {n} torrent(s) now (at the last self-test): the move is interrupted.",
   "note": "amber warning when qBittorrent is moving data."
  },
+ "upm.pool_full": {
+  "text": "The pool of {ds} is {p} % full (limit {max} %).",
+  "note": "warning above the container updates; the limit comes from the Snapshots settings."
+ },
+ "upm.pool_full_d": {
+  "text": "The snapshot before an update holds everything that changes in this dataset until it expires, downloads kept there too. Free some space first, or update anyway.",
+  "note": "explanation under the pool warning, also in the confirmation."
+ },
+ "upm.pool_look": {
+  "text": "look first",
+  "note": "chip on the pool warning row."
+ },
+ "upm.pool_go": {
+  "text": "Update the safe ones anyway",
+  "note": "button in the confirmation shown when a pool is above the limit."
+ },
  "upm.c.claude": {
   "text": "The Claude session stops.",
   "note": "added for the claude container."
@@ -1825,7 +1893,7 @@
   "note": "checkbox."
  },
  "set.bk_hint": {
-  "text": "the snapshot is named before-update-<name>-<date> and stays until you delete it on the Snapshots page",
+  "text": "the snapshot is named before-update-<name>-<date>; the Snapshots page removes it after the days set there (Keep makes it stay)",
   "note": "hint. Keep before-update-<name>-<date> as it is."
  },
  "set.cl": {
@@ -4342,6 +4410,14 @@
  "sr.dc_daily": {
   "text": "Sysbox: daily snapshot failed",
   "note": "Snapshots, Discord title."
+ },
+ "sr.dc_bu": {
+  "text": "Sysbox: expired before-update snapshots removed",
+  "note": "Snapshots, Discord title."
+ },
+ "sr.bu_removed": {
+  "text": "{ds}: {n} removed ({l}), about {s} freed",
+  "note": "Snapshots, Discord line; {l} is a list like 'qbittorrent 10-19, sonarr 10-21', {s} a size like 4.1 GB."
  },
  "sr.daily_nf": {
   "text": "{ds}: not found",

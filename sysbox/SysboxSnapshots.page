@@ -35,6 +35,7 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 #snp .snp-snap{grid-template-columns:22px minmax(0,1fr) 110px 90px auto}
 #snp .snp-ct{grid-template-columns:22px minmax(0,1fr) 90px auto;padding-left:46px}
 #snp .snp-num{font-family:monospace;text-align:right}
+#snp .snp-acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
 #snp .snp-path{display:block;font-family:monospace;font-size:12px;opacity:.6;overflow-wrap:anywhere}
 #snp .snp-chip{display:inline-block;font-size:11px;padding:1px 6px;margin-left:6px;background:rgba(128,128,128,.25);font-weight:normal}
 #snp .snp-chip.b{background:rgba(74,144,226,.25);color:#8fbdf0}#snp .snp-chip.a{background:rgba(217,146,31,.25);color:#d9921f}
@@ -122,6 +123,13 @@ $(function () {
   }
 
   // ---- the datasets and their snapshots
+  // a before-update snapshot (item 119): when it is removed by itself; amber within 7 days
+  function mmdd(t) { var x = new Date(t * 1000); return ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
+  function buChip(b) {
+    if (!b.exp) { return '<span class="snp-chip">' + esc(T('snp.bu_hand')) + '</span>'; }
+    var soon = b.exp - Date.now() / 1000 < 7 * 86400;
+    return '<span class="snp-chip' + (soon ? ' a' : '') + '">' + esc(b.last ? T('snp.bu_exp_last', { c: b.ctr, d: mmdd(b.exp) }) : T('snp.bu_exp', { d: mmdd(b.exp) })) + '</span>';
+  }
   function drawDs(r) {
     var h = '', free = '';
     if (!r.zfs) { $('#snp-ds').html('<div class="snp-status snp-er">' + esc(T('snp.no_zfs')) + '</div>'); return; }
@@ -132,7 +140,7 @@ $(function () {
       var inner = '<div class="snp-lead"><p>' + T('snp.browse', { path: '<code>' + esc(d.mnt) + '/.zfs/snapshot/&lt;name&gt;/</code>' }) + '</p><input type="button" class="snp-make" data-ds="' + esc(d.name) + '" value="' + esc(T('snp.make')) + '"></div>';
       if (!snaps.length) { inner += '<div class="snp-status snp-mut">' + esc(T('snp.none')) + '</div>'; }
       $.each(snaps, function (j, s) {
-        inner += '<div class="snp-row snp-snap ' + (s.auto ? 's-green' : 's-blue') + '"><span class="snp-ico ' + (s.auto ? 'snp-ok">A' : '">M') + '</span><div><b>' + esc(s.name) + '</b>' + (s.auto ? '' : '<span class="snp-chip">' + esc(T('snp.manual')) + '</span>') + '<span class="snp-path">' + esc(d.mnt) + '/.zfs/snapshot/' + esc(s.name) + '/</span></div><span class="snp-num">' + esc(ago(s.t)) + '</span><span class="snp-num">' + fb(s.used) + '</span><span><input type="button" class="snp-del snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(s.name) + '" value="' + esc(T('snp.delete')) + '"></span></div>';
+        inner += '<div class="snp-row snp-snap ' + (s.auto ? 's-green' : 's-blue') + '"><span class="snp-ico ' + (s.auto ? 'snp-ok">A' : s.bu ? '">U' : '">M') + '</span><div><b>' + esc(s.name) + '</b>' + (s.auto ? '' : s.bu ? buChip(s.bu) : '<span class="snp-chip">' + esc(T('snp.manual')) + '</span>') + '<span class="snp-path">' + esc(d.mnt) + '/.zfs/snapshot/' + esc(s.name) + '/</span></div><span class="snp-num">' + esc(ago(s.t)) + '</span><span class="snp-num">' + fb(s.used) + '</span><span class="snp-acts">' + (s.bu ? '<input type="button" class="snp-keep snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(s.name) + '" value="' + esc(T('snp.keep')) + '" title="' + esc(T('snp.keep_tip')) + '">' : '') + '<input type="button" class="snp-del snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(s.name) + '" value="' + esc(T('snp.delete')) + '"></span></div>';
         var rg = 'rs|' + d.name + '|' + s.name;
         inner += gbar(rg, 's-grey', esc(T('snp.restore_from', { s: s.name })), esc(T('snp.restore_sub')), true) + grp(rg, ctrRows(d.name, s.name));
       });
@@ -224,6 +232,12 @@ $(function () {
     $b.prop('disabled', true);
     api('delete', {ds: ds, name: n}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
   });
+  $(document).on('click', '.snp-keep', function () {
+    var $b = $(this), ds = $b.data('ds'), n = $b.data('name');
+    if (!window.confirm(T('snp.keep_confirm', { s: ds + '@' + n }))) return;
+    $b.prop('disabled', true);
+    api('keep', {ds: ds, name: n}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
+  });
   // Restore: first a dry run shows how many files differ, then the confirm row
   $(document).on('click', '.snp-pre', function () {
     var $b = $(this).prop('disabled', true), ds = $b.data('ds'), snap = $b.data('snap'), ctr = $b.data('ctr'), key = ds + '|' + snap + '|' + ctr;
@@ -254,6 +268,7 @@ $(function () {
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.daily')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="snp-on"' + (+c.on ? ' checked' : '') + '> ' + esc(T('snp.s.on')) + '</label></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.h.datasets')) + '</span><div class="snp-ctl">' + (ds || '<span class="snp-mut">' + esc(T('snp.s.none')) + '</span>') + '<span class="snp-hint">' + esc(T('snp.s.ds_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.time')) + '</span><div class="snp-ctl">' + esc(T('snp.s.every')) + ' <input type="number" id="snp-h" min="0" max="23" value="' + c.hour + '"> : <input type="number" id="snp-m" min="0" max="59" value="' + c.min + '"> ' + esc(T('snp.s.keep')) + ' <input type="number" id="snp-k" min="1" max="90" value="' + c.keep + '"> ' + esc(T('snp.s.days_stop')) + ' <input type="number" id="snp-f" min="10" max="99" value="' + c.maxfill + '"> ' + esc(T('snp.s.pool_fill')) + '<span class="snp-hint">' + esc(T('snp.s.time_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.bu')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="snp-bu"' + (+c.bu_on ? ' checked' : '') + '> ' + esc(T('snp.s.bu_on')) + '</label> <input type="number" id="snp-bk" min="1" max="365" value="' + c.bu_keep + '"> ' + esc(T('snp.s.bu_newest')) + ' <input type="number" id="snp-bl" min="1" max="365" value="' + c.bu_last + '"> ' + esc(T('snp.s.bu_days')) + '<span class="snp-hint">' + esc(T('snp.s.bu_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">Discord</span><div class="snp-ctl"><label><input type="checkbox" id="snp-dc"' + (+c.discord ? ' checked' : '') + '> ' + esc(T('snp.s.dc')) + '</label></div></div>' +
       // copies (item 105)
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.copy')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="cps-copy"' + (+c.copy ? ' checked' : '') + '> ' + esc(T('cps.copy_on')) + '</label></div></div>' +
@@ -273,7 +288,7 @@ $(function () {
   $(document).on('click', '#snp-save', function () {
     var d = []; $('.snp-dsel:checked').each(function () { d.push($(this).val()); });
     var $m = $('#snp-smsg').attr('class', '').text(T('snp.saving'));
-    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0,
+    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), bu_on: $('#snp-bu').prop('checked') ? 1 : 0, bu_keep: $('#snp-bk').val(), bu_last: $('#snp-bl').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0,
       copy: $('#cps-copy').prop('checked') ? 1 : 0, copy_dir: $('#cps-dir').val(), keep_d: $('#cps-kd').val(), keep_w: $('#cps-kw').val(), skip: $('#cps-skip').val(), stale: $('#cps-stale').val(),
       off: $('#cps-off').val(), off_sftp: $('#cps-sftp').val(), off_port: $('#cps-port').val(), off_s3: $('#cps-s3').val(), s3_id: $('#cps-s3id').val(), s3_key: $('#cps-s3key').val(),
       off_day: $('#cps-day').val(), off_hour: $('#cps-h').val(), off_min: $('#cps-m').val(), off_keep: $('#cps-ok').val()})

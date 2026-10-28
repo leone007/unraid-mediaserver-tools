@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.32a">
+<!ENTITY version   "2026.10.33">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,12 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.33
+- Snapshots: the before-update snapshots of the Update manager are removed by themselves in the daily round, after 14 days, the newest of each container after 30 days (both can be set, or turned off); each row shows when it goes, and Keep turns one into a manual snapshot that stays
+- Snapshots: a line in Activity and on Discord when expired before-update snapshots are removed, with the space freed
+- Update manager: a warning above the container updates and in the confirmation when a pool is above the Snapshots fill limit; Update all safe then asks first too
+- The Guard no longer suggests deleting before-update snapshots while they are removed by themselves
+
 ###2026.10.32a
 - Claude Guard: the morning brief shows each amber or red finding once (the summary only when everything is green); the summary asked from Claude does not repeat the findings
 

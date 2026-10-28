@@ -73,7 +73,7 @@ if ($mode === 'daily') {
     }
     if ($now < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
     $st['day'] = $today; snp_json_write(snp_state_file(), $st); // once a day, also when something below fails
-    $name = 'auto-' . $today; $bad = [];
+    $name = 'auto-' . $today; $bad = []; $bu_dc = [];
     foreach ($c['datasets'] as $ds) {
         if (!snp_dataset($ds)) { $bad[] = sx_trd('sr.daily_nf', ['ds' => $ds]); snp_log($ds . ': not found, no snapshot'); continue; }
         $fill = snp_pool_fill($ds);
@@ -88,8 +88,25 @@ if ($mode === 'daily') {
             $e = snp_destroy($ds, $autos[$i]['name']);
             snp_log($ds . '@' . $autos[$i]['name'] . ($e === '' ? ' removed (older than ' . (int)$c['keep'] . ' days)' : ' could not be removed: ' . $e));
         }
+        // the expired before-update snapshots go too (item 119); freed = the dataset's used space before minus after
+        if (!empty($c['bu_on'])) {
+            $gone = []; $d0 = snp_dataset($ds);
+            foreach (snp_bu_info(snp_snaps($ds), $c) as $n => $b) {
+                if ($b['exp'] <= 0 || $b['exp'] > time()) { continue; }
+                $e = snp_destroy($ds, $n);
+                snp_log($ds . '@' . $n . ($e === '' ? ' removed (before-update, older than ' . (int)($b['last'] ? $c['bu_last'] : $c['bu_keep']) . ' days)' : ' could not be removed: ' . $e));
+                if ($e === '') { $gone[] = $b['ctr'] . ' ' . date('m-d', (int)strtotime(substr($n, -15, 10))); }
+            }
+            if ($gone) {
+                $d1 = snp_dataset($ds); $freed = ($d0 && $d1) ? max(0, $d0['used'] - $d1['used']) : 0;
+                $fs = $freed >= 1e9 ? round($freed / 1e9, 1) . ' GB' : round($freed / 1e6) . ' MB';
+                snp_log($ds . ': ' . count($gone) . ' expired before-update snapshot(s) removed (' . implode(', ', $gone) . '), ' . $fs . ' freed');
+                $bu_dc[] = sx_trd('sr.bu_removed', ['ds' => $ds, 'n' => count($gone), 'l' => implode(', ', $gone), 's' => $fs]);
+            }
+        }
     }
     if ($bad) { snp_discord('rd', sx_trd('sr.dc_daily'), implode("\n", $bad)); }
+    if (!empty($bu_dc)) { snp_discord('g', sx_trd('sr.dc_bu'), implode("\n", $bu_dc)); }
     // then the copy to the array (item 105)
     if (!empty($c['copy'])) { [$ok, $msg] = cp_copy_all($c); if (!$ok) { snp_discord('rd', sx_trd('cpd.dc_copy'), cp_t($msg, true)); } }
     exit(0);

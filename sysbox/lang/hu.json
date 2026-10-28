@@ -575,6 +575,39 @@
  "snp.manual": {
   "text": "kézi: magától sosem törlődik"
  },
+ "snp.bu_exp": {
+  "text": "frissítés előtti: törlődik {d}-én"
+ },
+ "snp.bu_exp_last": {
+  "text": "a(z) {c} legutolsója · törlődik {d}-én"
+ },
+ "snp.bu_hand": {
+  "text": "frissítés előtti: csak kézzel törlődik"
+ },
+ "snp.keep": {
+  "text": "Megtartom"
+ },
+ "snp.keep_tip": {
+  "text": "Kézi pillanatképpé alakítja, ami magától sosem törlődik"
+ },
+ "snp.keep_confirm": {
+  "text": "Megtartod: {s}? Kézi pillanatkép lesz belőle, és addig marad, amíg nem törlöd."
+ },
+ "snp.s.bu": {
+  "text": "Frissítés előtti pillanatképek"
+ },
+ "snp.s.bu_on": {
+  "text": "törlődjenek maguktól:"
+ },
+ "snp.s.bu_newest": {
+  "text": "nap után, konténerenként a legutolsó"
+ },
+ "snp.s.bu_days": {
+  "text": "nap után"
+ },
+ "snp.s.bu_hint": {
+  "text": "az Update manager készíti egy konténer frissítése előtt; a napi körben törlődnek. A Megtartom gomb kézi pillanatképpé alakítja, ami addig marad, amíg nem törlöd"
+ },
  "snp.delete": {
   "text": "Törlés"
  },
@@ -652,7 +685,7 @@
   "text": "% pooltelítettség felett"
  },
  "snp.s.time_hint": {
-  "text": "a CA Auto Update-et erre az időpont utánra állítsd, hogy a pillanatkép a frissítések előtt készüljön. Csak a napi auto- pillanatképek törlődnek maguktól; a kézi addig marad, amíg nem törlöd"
+  "text": "a CA Auto Update-et erre az időpont utánra állítsd, hogy a pillanatkép a frissítések előtt készüljön. A napi auto- és a frissítés előtti pillanatképek (lásd lent) maguktól törlődnek; a kézi addig marad, amíg nem törlöd"
  },
  "snp.s.dc": {
   "text": "szólj, ha egy napi pillanatkép nem sikerül vagy egy visszaállítás leáll (a Sysbox webhookja)"
@@ -674,6 +707,12 @@
  },
  "snpe.bad_name": {
   "text": "hibás név"
+ },
+ "snpe.bu_last": {
+  "text": "Konténerenként a legutolsót legalább addig kell megtartani, mint a többit."
+ },
+ "snpe.not_bu": {
+  "text": "Így csak frissítés előtti pillanatképet lehet megtartani."
  },
  "snpe.no_folder": {
   "text": "ennek a konténernek nincs mappája itt: {ds}"
@@ -1261,6 +1300,18 @@
  "upm.c.moving": {
   "text": "A qBittorrent most {n} torrentet helyez át (a legutóbbi öntesztkor): az áthelyezés megszakad."
  },
+ "upm.pool_full": {
+  "text": "A(z) {ds} poolja {p} %-ig tele van (határ: {max} %)."
+ },
+ "upm.pool_full_d": {
+  "text": "A frissítés előtti pillanatkép a lejáratáig megtart mindent, ami ebben az adatkészletben változik, az itt tárolt letöltéseket is. Előbb szabadíts fel helyet, vagy frissíts mégis."
+ },
+ "upm.pool_look": {
+  "text": "előbb nézd meg"
+ },
+ "upm.pool_go": {
+  "text": "A biztonságosak frissítése mégis"
+ },
  "upm.c.claude": {
   "text": "A Claude-munkamenet leáll."
  },
@@ -1375,7 +1426,7 @@
   "text": "utána önteszt"
  },
  "set.bk_hint": {
-  "text": "a pillanatkép neve before-update-<name>-<date>, és addig marad, amíg a Snapshots oldalon nem törlöd"
+  "text": "a pillanatkép neve before-update-<name>-<date>; a Snapshots oldal az ott beállított napok után törli (a Megtartom gombbal marad)"
  },
  "set.cl": {
   "text": "a gomb mutatása"
@@ -3263,6 +3314,12 @@
  },
  "sr.dc_daily": {
   "text": "Sysbox: a napi snapshot nem sikerült"
+ },
+ "sr.dc_bu": {
+  "text": "Sysbox: lejárt frissítés előtti pillanatképek törölve"
+ },
+ "sr.bu_removed": {
+  "text": "{ds}: {n} törölve ({l}), kb. {s} szabadult fel"
  },
  "sr.daily_nf": {
   "text": "{ds}: nem található"

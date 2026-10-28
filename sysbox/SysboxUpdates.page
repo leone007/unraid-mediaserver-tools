@@ -161,7 +161,15 @@ $(function () {
     return L;
   }
   function startAll(set) { api('updall', {set: set}).done(function (r) { if (!r.ok) { window.alert(r.error); } else { KICK = Date.now() + 15000; } load(); }).fail(function (x) { window.alert(err(x)); }); }
-  $(document).on('click', '#upm .upm-all-safe', function () { $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe'); });   // owner: no confirmation for the safe ones
+  $(document).on('click', '#upm .upm-all-safe', function () {   // owner: no confirmation for the safe ones, only when a pool is above the limit (item 119)
+    if ((D.pool || []).length) {
+      if ($('#upm-sum .upm-conf').length) { return; }
+      $('#upm-sum').append('<div class="upm-conf upm-col" style="margin:0 12px 12px"><span class="upm-am">' + esc(poolTxt(D) + ' ' + T('upm.pool_full_d')) + '</span><span class="upm-acts" style="justify-content:flex-start"><input type="button" class="upm-safe-go upm-sm" value="' + esc(T('upm.pool_go')) + '"><input type="button" class="upm-all-no upm-ghost upm-sm" value="' + esc(T('upm.c.cancel')) + '"></span></div>');
+      return;
+    }
+    $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe');
+  });
+  $(document).on('click', '#upm .upm-safe-go', function () { $(this).prop('disabled', true); $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe'); });
   $(document).on('click', '#upm .upm-all', function () {
     if ($('#upm-sum .upm-conf').length) { return; }
     var L = allList(D.scan), out = $.map($.grep(D.scan.rows || [], function (x) { return x.state === 'update' && (x.risk === 'red' || x.name === 'claude'); }), function (x) { return x.name; });
@@ -191,6 +199,9 @@ $(function () {
     if (DET[c.name]) { h += '<div class="upm-det" data-for="' + esc(c.name) + '">' + DET[c.name] + '</div>'; }
     return h + ansHtml(c.claude) + '</div>';
   }
+  // item 119: a pool above the Snapshots fill limit (an update still works, after a confirmation)
+  function poolTxt(r) { return $.map(r.pool || [], function (p) { return T('upm.pool_full', { ds: p.ds, p: p.p, max: p.max }); }).join(' '); }
+  function poolRow(r) { return (r.pool || []).length ? '<div class="upm-row s-amber" style="grid-template-columns:minmax(0,1fr) auto"><span><b>' + esc(poolTxt(r)) + '</b><small>' + esc(T('upm.pool_full_d')) + '</small></span><span class="upm-chip a">' + esc(T('upm.pool_look')) + '</span></div>' : ''; }
   function drawCt(r) {
     var s = r.scan; if (!s) { $('#upm-ct').html('<div class="upm-status upm-mut">' + esc(T('upm.no_check_short')) + '</div>'); $('#upm-dband').text(''); return; }
     var up = updating(r), ask = asking(r), G = {red: [], amber: [], green: [], current: [], other: []};
@@ -198,7 +209,7 @@ $(function () {
       if (up[c.name]) { return; }   // its update runs: it is in Activity, back here only if it fails
       if (c.state === 'update') { G[c.risk || 'amber'].push(c); } else if (c.state === 'current') { G.current.push(c); } else { G.other.push(c); }
     });
-    var h = '';
+    var h = poolRow(r);
     $.each(['red', 'amber', 'green'], function (i, k) {
       var L = G[k], rk = RISK[k], g = 'ct|' + k, inner = '';
       $.each(L, function (j, c) { inner += ctRow(c, r, ask); });
@@ -258,6 +269,7 @@ $(function () {
       esc((D.cfg.backup ? T('upm.c.s1_snap') : T('upm.c.s1_nosnap')) + ' ' + (qb ? T('upm.c.s2_qb') : T('upm.c.s2')) + ' ' + T('upm.c.s3') + ' ' + (D.cfg.selftest ? T('upm.c.s4_test') : T('upm.c.s4'))) +
       (c.risk !== 'green' ? ' <span class="upm-er">' + esc(T(c.risk === 'red' ? 'upm.c.red' : 'upm.c.amber')) + '</span>' : '') +
       (mv ? ' <span class="upm-am">' + esc(T('upm.c.moving', { n: mv[1] })) + '</span>' : '') +
+      ((D.pool || []).length ? ' <span class="upm-am">' + esc(poolTxt(D) + ' ' + T('upm.pool_full_d')) + '</span>' : '') +
       (name === 'claude' ? ' ' + esc(T('upm.c.claude')) : '');
     $row.append('<div class="upm-conf"><span>' + txt + '</span><input type="button" class="upm-go upm-sm" value="' + esc(T('upm.c.yes')) + '"><input type="button" class="upm-no upm-ghost upm-sm" value="' + esc(T('upm.c.cancel')) + '"></div>');
   });

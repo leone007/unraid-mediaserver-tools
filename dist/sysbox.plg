@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.32a">
+<!ENTITY version   "2026.10.33">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,12 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.33
+- Snapshots: the before-update snapshots of the Update manager are removed by themselves in the daily round, after 14 days, the newest of each container after 30 days (both can be set, or turned off); each row shows when it goes, and Keep turns one into a manual snapshot that stays
+- Snapshots: a line in Activity and on Discord when expired before-update snapshots are removed, with the space freed
+- Update manager: a warning above the container updates and in the confirmation when a pool is above the Snapshots fill limit; Update all safe then asks first too
+- The Guard no longer suggests deleting before-update snapshots while they are removed by themselves
+
 ###2026.10.32a
 - Claude Guard: the morning brief shows each amber or red finding once (the summary only when everything is green); the summary asked from Claude does not repeat the findings
 
@@ -4161,6 +4167,50 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "manual: never removed by itself",
   "note": "chip after a manual snapshot."
  },
+ "snp.bu_exp": {
+  "text": "before-update: removed on {d}",
+  "note": "chip after a before-update snapshot: the date (MM-DD) it is removed by itself."
+ },
+ "snp.bu_exp_last": {
+  "text": "newest of {c} · removed on {d}",
+  "note": "chip after the newest before-update snapshot of a container ({c}); {d} is the date (MM-DD) it is removed."
+ },
+ "snp.bu_hand": {
+  "text": "before-update: removed only by hand",
+  "note": "chip after a before-update snapshot when automatic removal is off."
+ },
+ "snp.keep": {
+  "text": "Keep",
+  "note": "button on a before-update snapshot row."
+ },
+ "snp.keep_tip": {
+  "text": "Turn it into a manual snapshot, which is never removed by itself",
+  "note": "tooltip of the Keep button."
+ },
+ "snp.keep_confirm": {
+  "text": "Keep {s}? It becomes a manual snapshot and stays until you delete it.",
+  "note": "confirmation of the Keep button; {s} is dataset@snapshot."
+ },
+ "snp.s.bu": {
+  "text": "Before-update snapshots",
+  "note": "label of a setting (left column)."
+ },
+ "snp.s.bu_on": {
+  "text": "remove by themselves after",
+  "note": "checkbox text; a number of days follows."
+ },
+ "snp.s.bu_newest": {
+  "text": "days, the newest of each container after",
+  "note": "text between the two numbers of days."
+ },
+ "snp.s.bu_days": {
+  "text": "days",
+  "note": "text after the second number."
+ },
+ "snp.s.bu_hint": {
+  "text": "made by the Update manager before a container update; removed in the daily round. Keep turns one into a manual snapshot, which stays until you delete it",
+  "note": "hint under the before-update setting."
+ },
  "snp.delete": {
   "text": "Delete",
   "note": "small button on a snapshot row. Short."
@@ -4263,7 +4313,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "after the pool fill field."
  },
  "snp.s.time_hint": {
-  "text": "set CA Auto Update after this time, so the snapshot is made before the updates. Only the daily auto- snapshots are removed by themselves; a manual one stays until you delete it",
+  "text": "set CA Auto Update after this time, so the snapshot is made before the updates. The daily auto- snapshots and the before-update ones (see below) are removed by themselves; a manual one stays until you delete it",
   "note": "hint under the time setting. CA Auto Update is a plugin name; auto- is the name prefix of the daily snapshots."
  },
  "snp.s.dc": {
@@ -4293,6 +4343,14 @@ function mt_i18n_js($dir, $name, $only = null) {
  "snpe.bad_name": {
   "text": "bad name",
   "note": "error: a dataset, snapshot or container name is not valid."
+ },
+ "snpe.bu_last": {
+  "text": "The newest of each container has to be kept at least as long as the others.",
+  "note": "error when saving the settings."
+ },
+ "snpe.not_bu": {
+  "text": "Only a before-update snapshot can be kept this way.",
+  "note": "error of the Keep button."
  },
  "snpe.no_folder": {
   "text": "this container has no folder in {ds}",
@@ -5069,6 +5127,22 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "qBittorrent is moving {n} torrent(s) now (at the last self-test): the move is interrupted.",
   "note": "amber warning when qBittorrent is moving data."
  },
+ "upm.pool_full": {
+  "text": "The pool of {ds} is {p} % full (limit {max} %).",
+  "note": "warning above the container updates; the limit comes from the Snapshots settings."
+ },
+ "upm.pool_full_d": {
+  "text": "The snapshot before an update holds everything that changes in this dataset until it expires, downloads kept there too. Free some space first, or update anyway.",
+  "note": "explanation under the pool warning, also in the confirmation."
+ },
+ "upm.pool_look": {
+  "text": "look first",
+  "note": "chip on the pool warning row."
+ },
+ "upm.pool_go": {
+  "text": "Update the safe ones anyway",
+  "note": "button in the confirmation shown when a pool is above the limit."
+ },
  "upm.c.claude": {
   "text": "The Claude session stops.",
   "note": "added for the claude container."
@@ -5220,7 +5294,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "checkbox."
  },
  "set.bk_hint": {
-  "text": "the snapshot is named before-update-<name>-<date> and stays until you delete it on the Snapshots page",
+  "text": "the snapshot is named before-update-<name>-<date>; the Snapshots page removes it after the days set there (Keep makes it stay)",
   "note": "hint. Keep before-update-<name>-<date> as it is."
  },
  "set.cl": {
@@ -7738,6 +7812,14 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Sysbox: daily snapshot failed",
   "note": "Snapshots, Discord title."
  },
+ "sr.dc_bu": {
+  "text": "Sysbox: expired before-update snapshots removed",
+  "note": "Snapshots, Discord title."
+ },
+ "sr.bu_removed": {
+  "text": "{ds}: {n} removed ({l}), about {s} freed",
+  "note": "Snapshots, Discord line; {l} is a list like 'qbittorrent 10-19, sonarr 10-21', {s} a size like 4.1 GB."
+ },
  "sr.daily_nf": {
   "text": "{ds}: not found",
   "note": "Snapshots, Discord line of the daily snapshot."
@@ -9205,6 +9287,39 @@ function mt_i18n_js($dir, $name, $only = null) {
  "snp.manual": {
   "text": "kézi: magától sosem törlődik"
  },
+ "snp.bu_exp": {
+  "text": "frissítés előtti: törlődik {d}-én"
+ },
+ "snp.bu_exp_last": {
+  "text": "a(z) {c} legutolsója · törlődik {d}-én"
+ },
+ "snp.bu_hand": {
+  "text": "frissítés előtti: csak kézzel törlődik"
+ },
+ "snp.keep": {
+  "text": "Megtartom"
+ },
+ "snp.keep_tip": {
+  "text": "Kézi pillanatképpé alakítja, ami magától sosem törlődik"
+ },
+ "snp.keep_confirm": {
+  "text": "Megtartod: {s}? Kézi pillanatkép lesz belőle, és addig marad, amíg nem törlöd."
+ },
+ "snp.s.bu": {
+  "text": "Frissítés előtti pillanatképek"
+ },
+ "snp.s.bu_on": {
+  "text": "törlődjenek maguktól:"
+ },
+ "snp.s.bu_newest": {
+  "text": "nap után, konténerenként a legutolsó"
+ },
+ "snp.s.bu_days": {
+  "text": "nap után"
+ },
+ "snp.s.bu_hint": {
+  "text": "az Update manager készíti egy konténer frissítése előtt; a napi körben törlődnek. A Megtartom gomb kézi pillanatképpé alakítja, ami addig marad, amíg nem törlöd"
+ },
  "snp.delete": {
   "text": "Törlés"
  },
@@ -9282,7 +9397,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "% pooltelítettség felett"
  },
  "snp.s.time_hint": {
-  "text": "a CA Auto Update-et erre az időpont utánra állítsd, hogy a pillanatkép a frissítések előtt készüljön. Csak a napi auto- pillanatképek törlődnek maguktól; a kézi addig marad, amíg nem törlöd"
+  "text": "a CA Auto Update-et erre az időpont utánra állítsd, hogy a pillanatkép a frissítések előtt készüljön. A napi auto- és a frissítés előtti pillanatképek (lásd lent) maguktól törlődnek; a kézi addig marad, amíg nem törlöd"
  },
  "snp.s.dc": {
   "text": "szólj, ha egy napi pillanatkép nem sikerül vagy egy visszaállítás leáll (a Sysbox webhookja)"
@@ -9304,6 +9419,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "snpe.bad_name": {
   "text": "hibás név"
+ },
+ "snpe.bu_last": {
+  "text": "Konténerenként a legutolsót legalább addig kell megtartani, mint a többit."
+ },
+ "snpe.not_bu": {
+  "text": "Így csak frissítés előtti pillanatképet lehet megtartani."
  },
  "snpe.no_folder": {
   "text": "ennek a konténernek nincs mappája itt: {ds}"
@@ -9891,6 +10012,18 @@ function mt_i18n_js($dir, $name, $only = null) {
  "upm.c.moving": {
   "text": "A qBittorrent most {n} torrentet helyez át (a legutóbbi öntesztkor): az áthelyezés megszakad."
  },
+ "upm.pool_full": {
+  "text": "A(z) {ds} poolja {p} %-ig tele van (határ: {max} %)."
+ },
+ "upm.pool_full_d": {
+  "text": "A frissítés előtti pillanatkép a lejáratáig megtart mindent, ami ebben az adatkészletben változik, az itt tárolt letöltéseket is. Előbb szabadíts fel helyet, vagy frissíts mégis."
+ },
+ "upm.pool_look": {
+  "text": "előbb nézd meg"
+ },
+ "upm.pool_go": {
+  "text": "A biztonságosak frissítése mégis"
+ },
  "upm.c.claude": {
   "text": "A Claude-munkamenet leáll."
  },
@@ -10005,7 +10138,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "utána önteszt"
  },
  "set.bk_hint": {
-  "text": "a pillanatkép neve before-update-<name>-<date>, és addig marad, amíg a Snapshots oldalon nem törlöd"
+  "text": "a pillanatkép neve before-update-<name>-<date>; a Snapshots oldal az ott beállított napok után törli (a Megtartom gombbal marad)"
  },
  "set.cl": {
   "text": "a gomb mutatása"
@@ -11894,6 +12027,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  "sr.dc_daily": {
   "text": "Sysbox: a napi snapshot nem sikerült"
  },
+ "sr.dc_bu": {
+  "text": "Sysbox: lejárt frissítés előtti pillanatképek törölve"
+ },
+ "sr.bu_removed": {
+  "text": "{ds}: {n} törölve ({l}), kb. {s} szabadult fel"
+ },
  "sr.daily_nf": {
   "text": "{ds}: nem található"
  },
@@ -13421,6 +13560,7 @@ $snp_t = function ($k, $v = []) use ($snp_T) { return htmlspecialchars($snp_T($k
 #snp .snp-snap{grid-template-columns:22px minmax(0,1fr) 110px 90px auto}
 #snp .snp-ct{grid-template-columns:22px minmax(0,1fr) 90px auto;padding-left:46px}
 #snp .snp-num{font-family:monospace;text-align:right}
+#snp .snp-acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
 #snp .snp-path{display:block;font-family:monospace;font-size:12px;opacity:.6;overflow-wrap:anywhere}
 #snp .snp-chip{display:inline-block;font-size:11px;padding:1px 6px;margin-left:6px;background:rgba(128,128,128,.25);font-weight:normal}
 #snp .snp-chip.b{background:rgba(74,144,226,.25);color:#8fbdf0}#snp .snp-chip.a{background:rgba(217,146,31,.25);color:#d9921f}
@@ -13508,6 +13648,13 @@ $(function () {
   }
 
   // ---- the datasets and their snapshots
+  // a before-update snapshot (item 119): when it is removed by itself; amber within 7 days
+  function mmdd(t) { var x = new Date(t * 1000); return ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
+  function buChip(b) {
+    if (!b.exp) { return '<span class="snp-chip">' + esc(T('snp.bu_hand')) + '</span>'; }
+    var soon = b.exp - Date.now() / 1000 < 7 * 86400;
+    return '<span class="snp-chip' + (soon ? ' a' : '') + '">' + esc(b.last ? T('snp.bu_exp_last', { c: b.ctr, d: mmdd(b.exp) }) : T('snp.bu_exp', { d: mmdd(b.exp) })) + '</span>';
+  }
   function drawDs(r) {
     var h = '', free = '';
     if (!r.zfs) { $('#snp-ds').html('<div class="snp-status snp-er">' + esc(T('snp.no_zfs')) + '</div>'); return; }
@@ -13518,7 +13665,7 @@ $(function () {
       var inner = '<div class="snp-lead"><p>' + T('snp.browse', { path: '<code>' + esc(d.mnt) + '/.zfs/snapshot/&lt;name&gt;/</code>' }) + '</p><input type="button" class="snp-make" data-ds="' + esc(d.name) + '" value="' + esc(T('snp.make')) + '"></div>';
       if (!snaps.length) { inner += '<div class="snp-status snp-mut">' + esc(T('snp.none')) + '</div>'; }
       $.each(snaps, function (j, s) {
-        inner += '<div class="snp-row snp-snap ' + (s.auto ? 's-green' : 's-blue') + '"><span class="snp-ico ' + (s.auto ? 'snp-ok">A' : '">M') + '</span><div><b>' + esc(s.name) + '</b>' + (s.auto ? '' : '<span class="snp-chip">' + esc(T('snp.manual')) + '</span>') + '<span class="snp-path">' + esc(d.mnt) + '/.zfs/snapshot/' + esc(s.name) + '/</span></div><span class="snp-num">' + esc(ago(s.t)) + '</span><span class="snp-num">' + fb(s.used) + '</span><span><input type="button" class="snp-del snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(s.name) + '" value="' + esc(T('snp.delete')) + '"></span></div>';
+        inner += '<div class="snp-row snp-snap ' + (s.auto ? 's-green' : 's-blue') + '"><span class="snp-ico ' + (s.auto ? 'snp-ok">A' : s.bu ? '">U' : '">M') + '</span><div><b>' + esc(s.name) + '</b>' + (s.auto ? '' : s.bu ? buChip(s.bu) : '<span class="snp-chip">' + esc(T('snp.manual')) + '</span>') + '<span class="snp-path">' + esc(d.mnt) + '/.zfs/snapshot/' + esc(s.name) + '/</span></div><span class="snp-num">' + esc(ago(s.t)) + '</span><span class="snp-num">' + fb(s.used) + '</span><span class="snp-acts">' + (s.bu ? '<input type="button" class="snp-keep snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(s.name) + '" value="' + esc(T('snp.keep')) + '" title="' + esc(T('snp.keep_tip')) + '">' : '') + '<input type="button" class="snp-del snp-ghost snp-sm" data-ds="' + esc(d.name) + '" data-name="' + esc(s.name) + '" value="' + esc(T('snp.delete')) + '"></span></div>';
         var rg = 'rs|' + d.name + '|' + s.name;
         inner += gbar(rg, 's-grey', esc(T('snp.restore_from', { s: s.name })), esc(T('snp.restore_sub')), true) + grp(rg, ctrRows(d.name, s.name));
       });
@@ -13610,6 +13757,12 @@ $(function () {
     $b.prop('disabled', true);
     api('delete', {ds: ds, name: n}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
   });
+  $(document).on('click', '.snp-keep', function () {
+    var $b = $(this), ds = $b.data('ds'), n = $b.data('name');
+    if (!window.confirm(T('snp.keep_confirm', { s: ds + '@' + n }))) return;
+    $b.prop('disabled', true);
+    api('keep', {ds: ds, name: n}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); });
+  });
   // Restore: first a dry run shows how many files differ, then the confirm row
   $(document).on('click', '.snp-pre', function () {
     var $b = $(this).prop('disabled', true), ds = $b.data('ds'), snap = $b.data('snap'), ctr = $b.data('ctr'), key = ds + '|' + snap + '|' + ctr;
@@ -13640,6 +13793,7 @@ $(function () {
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.daily')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="snp-on"' + (+c.on ? ' checked' : '') + '> ' + esc(T('snp.s.on')) + '</label></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.h.datasets')) + '</span><div class="snp-ctl">' + (ds || '<span class="snp-mut">' + esc(T('snp.s.none')) + '</span>') + '<span class="snp-hint">' + esc(T('snp.s.ds_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.time')) + '</span><div class="snp-ctl">' + esc(T('snp.s.every')) + ' <input type="number" id="snp-h" min="0" max="23" value="' + c.hour + '"> : <input type="number" id="snp-m" min="0" max="59" value="' + c.min + '"> ' + esc(T('snp.s.keep')) + ' <input type="number" id="snp-k" min="1" max="90" value="' + c.keep + '"> ' + esc(T('snp.s.days_stop')) + ' <input type="number" id="snp-f" min="10" max="99" value="' + c.maxfill + '"> ' + esc(T('snp.s.pool_fill')) + '<span class="snp-hint">' + esc(T('snp.s.time_hint')) + '</span></div></div>' +
+      '<div class="snp-row snp-set"><span class="lb">' + esc(T('snp.s.bu')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="snp-bu"' + (+c.bu_on ? ' checked' : '') + '> ' + esc(T('snp.s.bu_on')) + '</label> <input type="number" id="snp-bk" min="1" max="365" value="' + c.bu_keep + '"> ' + esc(T('snp.s.bu_newest')) + ' <input type="number" id="snp-bl" min="1" max="365" value="' + c.bu_last + '"> ' + esc(T('snp.s.bu_days')) + '<span class="snp-hint">' + esc(T('snp.s.bu_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set"><span class="lb">Discord</span><div class="snp-ctl"><label><input type="checkbox" id="snp-dc"' + (+c.discord ? ' checked' : '') + '> ' + esc(T('snp.s.dc')) + '</label></div></div>' +
       // copies (item 105)
       '<div class="snp-row snp-set"><span class="lb">' + esc(T('cps.copy')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="cps-copy"' + (+c.copy ? ' checked' : '') + '> ' + esc(T('cps.copy_on')) + '</label></div></div>' +
@@ -13659,7 +13813,7 @@ $(function () {
   $(document).on('click', '#snp-save', function () {
     var d = []; $('.snp-dsel:checked').each(function () { d.push($(this).val()); });
     var $m = $('#snp-smsg').attr('class', '').text(T('snp.saving'));
-    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0,
+    api('save', {datasets: d, on: $('#snp-on').prop('checked') ? 1 : 0, hour: $('#snp-h').val(), min: $('#snp-m').val(), keep: $('#snp-k').val(), maxfill: $('#snp-f').val(), bu_on: $('#snp-bu').prop('checked') ? 1 : 0, bu_keep: $('#snp-bk').val(), bu_last: $('#snp-bl').val(), discord: $('#snp-dc').prop('checked') ? 1 : 0,
       copy: $('#cps-copy').prop('checked') ? 1 : 0, copy_dir: $('#cps-dir').val(), keep_d: $('#cps-kd').val(), keep_w: $('#cps-kw').val(), skip: $('#cps-skip').val(), stale: $('#cps-stale').val(),
       off: $('#cps-off').val(), off_sftp: $('#cps-sftp').val(), off_port: $('#cps-port').val(), off_s3: $('#cps-s3').val(), s3_id: $('#cps-s3id').val(), s3_key: $('#cps-s3key').val(),
       off_day: $('#cps-day').val(), off_hour: $('#cps-h').val(), off_min: $('#cps-m').val(), off_keep: $('#cps-ok').val()})
@@ -13680,8 +13834,9 @@ $(function () {
 <FILE Name="&plugdir;/snap_lib.php">
 <INLINE><![CDATA[<?php
 // Snapshots (Sysbox): daily ZFS snapshots of the pool datasets that hold the containers' data, and the restore of one container
-// from a snapshot. The whole dataset is never rolled back. Only the daily "auto-" snapshots are removed by themselves (beyond
-// "keep" days); a manual one stays until it is deleted with a click.
+// from a snapshot. The whole dataset is never rolled back. The daily "auto-" snapshots are removed by themselves (beyond
+// "keep" days), and so are the Update manager's "before-update-" ones (item 119: after "bu_keep" days, the newest of each
+// container after "bu_last" days; the owner's choice, 2026-10-28); a manual one stays until it is deleted with a click.
 require_once __DIR__ . '/lib.php';
 
 function snp_dir() { $d = getenv('SX_SNAP_DIR'); return ($d !== false && $d !== '') ? rtrim($d, '/') : '/boot/config/plugins/sysbox'; }  // tests: SX_SNAP_DIR
@@ -13705,6 +13860,7 @@ function snp_ds_ok($d) { return (bool)preg_match('#^[A-Za-z0-9_.\-]+(?:/[A-Za-z0
 
 function snp_defaults() {
     return ['on' => 1, 'datasets' => [], 'hour' => 3, 'min' => 30, 'keep' => 7, 'maxfill' => 85, 'discord' => 1,
+        'bu_on' => 1, 'bu_keep' => 14, 'bu_last' => 30,   // before-update snapshots (item 119)
         // copies (item 105): to an array share after the daily snapshot, and weekly off the server (restic)
         'copy' => 0, 'copy_dir' => '/mnt/user/backup/sysbox', 'keep_d' => 14, 'keep_w' => 8, 'skip' => 'docker.img, transcodes, cache', 'stale' => 2,
         'off' => 'off', 'off_sftp' => '', 'off_port' => 22, 'off_s3' => '', 'off_day' => 7, 'off_hour' => 4, 'off_min' => 30, 'off_keep' => 26];
@@ -13763,6 +13919,28 @@ function snp_make($ds, $name) {
     foreach (snp_snaps($ds) as $s) { if ($s['name'] === $name) { return 'already exists'; } }
     $o = snp_run(escapeshellarg(snp_bin('zfs')) . ' snapshot ' . escapeshellarg($ds . '@' . $name), $rc);
     return $rc === 0 ? '' : (trim(implode(' ', $o)) ?: 'zfs snapshot failed');
+}
+// before-update snapshots (item 119): the container's name, or '' for any other snapshot
+function snp_bu_ctr($n) { return preg_match('/^before-update-(.+)-\d{4}-\d{2}-\d{2}-\d{4}$/', (string)$n, $m) ? $m[1] : ''; }
+// name => [container, newest of that container, expiry time (0 when they are not removed by themselves)]
+function snp_bu_info($snaps, $c) {
+    $newest = [];
+    foreach ($snaps as $s) { $k = snp_bu_ctr($s['name']); if ($k !== '' && (!isset($newest[$k]) || $s['t'] >= $newest[$k])) { $newest[$k] = $s['t']; } }
+    $out = [];
+    foreach ($snaps as $s) {
+        $k = snp_bu_ctr($s['name']); if ($k === '') { continue; }
+        $last = $s['t'] === $newest[$k];
+        $out[$s['name']] = ['ctr' => $k, 'last' => $last, 'exp' => empty($c['bu_on']) ? 0 : $s['t'] + max(1, (int)($last ? $c['bu_last'] : $c['bu_keep'])) * 86400];
+    }
+    return $out;
+}
+// Keep: a before-update snapshot becomes a manual one (manual-<container>-<date>), which is never removed by itself
+function snp_rename($ds, $from, $to) {
+    if (!snp_ds_ok($ds) || !snp_name_ok($from) || !snp_name_ok($to)) { return 'bad name'; }
+    $have = false; foreach (snp_snaps($ds) as $s) { if ($s['name'] === $to) { return 'already exists'; } if ($s['name'] === $from) { $have = true; } }
+    if (!$have) { return 'no such snapshot'; }
+    $o = snp_run(escapeshellarg(snp_bin('zfs')) . ' rename ' . escapeshellarg($ds . '@' . $from) . ' ' . escapeshellarg($ds . '@' . $to), $rc);
+    return $rc === 0 ? '' : (trim(implode(' ', $o)) ?: 'zfs rename failed');
 }
 function snp_destroy($ds, $name) {
     if (!snp_ds_ok($ds) || !snp_name_ok($name)) { return 'bad name'; }
@@ -13831,7 +14009,7 @@ function snp_discord($level, $title, $desc) {
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/snap.php">
 <INLINE><![CDATA[<?php
-// Web endpoint of the Snapshots page (Sysbox). POST op=state|make|delete|preview|restore|save
+// Web endpoint of the Snapshots page (Sysbox). POST op=state|make|delete|keep|preview|restore|save
 //   copies (item 105): copy_now|off_now|off_test|off_list|off_fetch|off_pw|fetched_del
 require_once __DIR__ . '/snap_lib.php';
 require_once __DIR__ . '/copy_lib.php';
@@ -13847,6 +14025,7 @@ if ($op === 'state') {
     foreach (snp_datasets() as $d) {
         $row = $d + ['on' => in_array($d['name'], $c['datasets'], true), 'snaps' => snp_snaps($d['name']), 'fill' => snp_pool_fill($d['name'])];
         $row['held'] = array_sum(array_column($row['snaps'], 'used'));
+        $bu = snp_bu_info($row['snaps'], $c); foreach ($row['snaps'] as $i => $s) { if (isset($bu[$s['name']])) { $row['snaps'][$i]['bu'] = $bu[$s['name']]; } }
         if (!empty($_POST['ctr']) && $_POST['ctr'] === $d['name']) { $row['containers'] = snp_containers($d); }
         $out[] = $row;
     }
@@ -13864,6 +14043,14 @@ if ($op === 'delete') {
     $ds = snp_ds_arg(); $n = (string)($_POST['name'] ?? '');
     $e = snp_destroy($ds, $n); if ($e === '') { snp_log($ds . '@' . $n . ' deleted by hand'); }
     sx_json(['ok' => $e === '', 'error' => $e]);
+}
+// Keep (item 119): a before-update snapshot becomes manual-<container>-<date>, removed only with a click
+if ($op === 'keep') {
+    $ds = snp_ds_arg(); $n = (string)($_POST['name'] ?? ''); $ctr = snp_bu_ctr($n);
+    if ($ctr === '') { sx_json(['ok' => false, 'error' => sx_tr('snpe.not_bu')]); }
+    $to = 'manual-' . $ctr . '-' . substr($n, -15);
+    $e = snp_rename($ds, $n, $to); if ($e === '') { snp_log($ds . '@' . $n . ' kept as ' . $to . ' by hand'); }
+    sx_json(['ok' => $e === '', 'error' => $e, 'name' => $to]);
 }
 if ($op === 'preview') {
     $ds = snp_ds_arg(); $snap = (string)($_POST['snap'] ?? ''); $ctr = (string)($_POST['ctr_name'] ?? '');
@@ -13905,12 +14092,14 @@ if ($op === 'fetched_del') {
 if ($op === 'save') {
     $c = snp_cfg(); $known = array_column(snp_datasets(), 'name');
     $c['datasets'] = array_values(array_intersect(array_filter((array)($_POST['datasets'] ?? []), 'snp_ds_ok'), $known));
-    foreach (['hour' => [0, 23], 'min' => [0, 59], 'keep' => [1, 90], 'maxfill' => [10, 99]] as $k => [$lo, $hi]) {
+    foreach (['hour' => [0, 23], 'min' => [0, 59], 'keep' => [1, 90], 'maxfill' => [10, 99], 'bu_keep' => [1, 365], 'bu_last' => [1, 365]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
     foreach (['keep_d' => [1, 90], 'keep_w' => [0, 104], 'stale' => [0, 30], 'off_port' => [1, 65535], 'off_day' => [1, 7], 'off_hour' => [0, 23], 'off_min' => [0, 59], 'off_keep' => [1, 520]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
+    if ($c['bu_last'] < $c['bu_keep']) { sx_json(['ok' => false, 'error' => sx_tr('snpe.bu_last')]); }
+    $c['bu_on'] = !empty($_POST['bu_on']) && $_POST['bu_on'] !== '0' ? 1 : 0;
     $c['copy'] = !empty($_POST['copy']) && $_POST['copy'] !== '0' ? 1 : 0;
     $dir = rtrim(trim((string)($_POST['copy_dir'] ?? $c['copy_dir'])), '/'); if (!cp_dir_ok($dir)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.dir_bad')]); } $c['copy_dir'] = $dir;
     $c['skip'] = implode(', ', cp_skip_list((string)($_POST['skip'] ?? $c['skip'])));
@@ -14011,7 +14200,7 @@ if ($mode === 'daily') {
     }
     if ($now < (int)$c['hour'] * 60 + (int)$c['min']) { exit(0); }
     $st['day'] = $today; snp_json_write(snp_state_file(), $st); // once a day, also when something below fails
-    $name = 'auto-' . $today; $bad = [];
+    $name = 'auto-' . $today; $bad = []; $bu_dc = [];
     foreach ($c['datasets'] as $ds) {
         if (!snp_dataset($ds)) { $bad[] = sx_trd('sr.daily_nf', ['ds' => $ds]); snp_log($ds . ': not found, no snapshot'); continue; }
         $fill = snp_pool_fill($ds);
@@ -14026,8 +14215,25 @@ if ($mode === 'daily') {
             $e = snp_destroy($ds, $autos[$i]['name']);
             snp_log($ds . '@' . $autos[$i]['name'] . ($e === '' ? ' removed (older than ' . (int)$c['keep'] . ' days)' : ' could not be removed: ' . $e));
         }
+        // the expired before-update snapshots go too (item 119); freed = the dataset's used space before minus after
+        if (!empty($c['bu_on'])) {
+            $gone = []; $d0 = snp_dataset($ds);
+            foreach (snp_bu_info(snp_snaps($ds), $c) as $n => $b) {
+                if ($b['exp'] <= 0 || $b['exp'] > time()) { continue; }
+                $e = snp_destroy($ds, $n);
+                snp_log($ds . '@' . $n . ($e === '' ? ' removed (before-update, older than ' . (int)($b['last'] ? $c['bu_last'] : $c['bu_keep']) . ' days)' : ' could not be removed: ' . $e));
+                if ($e === '') { $gone[] = $b['ctr'] . ' ' . date('m-d', (int)strtotime(substr($n, -15, 10))); }
+            }
+            if ($gone) {
+                $d1 = snp_dataset($ds); $freed = ($d0 && $d1) ? max(0, $d0['used'] - $d1['used']) : 0;
+                $fs = $freed >= 1e9 ? round($freed / 1e9, 1) . ' GB' : round($freed / 1e6) . ' MB';
+                snp_log($ds . ': ' . count($gone) . ' expired before-update snapshot(s) removed (' . implode(', ', $gone) . '), ' . $fs . ' freed');
+                $bu_dc[] = sx_trd('sr.bu_removed', ['ds' => $ds, 'n' => count($gone), 'l' => implode(', ', $gone), 's' => $fs]);
+            }
+        }
     }
     if ($bad) { snp_discord('rd', sx_trd('sr.dc_daily'), implode("\n", $bad)); }
+    if (!empty($bu_dc)) { snp_discord('g', sx_trd('sr.dc_bu'), implode("\n", $bu_dc)); }
     // then the copy to the array (item 105)
     if (!empty($c['copy'])) { [$ok, $msg] = cp_copy_all($c); if (!$ok) { snp_discord('rd', sx_trd('cpd.dc_copy'), cp_t($msg, true)); } }
     exit(0);
@@ -14587,7 +14793,15 @@ $(function () {
     return L;
   }
   function startAll(set) { api('updall', {set: set}).done(function (r) { if (!r.ok) { window.alert(r.error); } else { KICK = Date.now() + 15000; } load(); }).fail(function (x) { window.alert(err(x)); }); }
-  $(document).on('click', '#upm .upm-all-safe', function () { $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe'); });   // owner: no confirmation for the safe ones
+  $(document).on('click', '#upm .upm-all-safe', function () {   // owner: no confirmation for the safe ones, only when a pool is above the limit (item 119)
+    if ((D.pool || []).length) {
+      if ($('#upm-sum .upm-conf').length) { return; }
+      $('#upm-sum').append('<div class="upm-conf upm-col" style="margin:0 12px 12px"><span class="upm-am">' + esc(poolTxt(D) + ' ' + T('upm.pool_full_d')) + '</span><span class="upm-acts" style="justify-content:flex-start"><input type="button" class="upm-safe-go upm-sm" value="' + esc(T('upm.pool_go')) + '"><input type="button" class="upm-all-no upm-ghost upm-sm" value="' + esc(T('upm.c.cancel')) + '"></span></div>');
+      return;
+    }
+    $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe');
+  });
+  $(document).on('click', '#upm .upm-safe-go', function () { $(this).prop('disabled', true); $('#upm .upm-all-safe,#upm .upm-all').prop('disabled', true); startAll('safe'); });
   $(document).on('click', '#upm .upm-all', function () {
     if ($('#upm-sum .upm-conf').length) { return; }
     var L = allList(D.scan), out = $.map($.grep(D.scan.rows || [], function (x) { return x.state === 'update' && (x.risk === 'red' || x.name === 'claude'); }), function (x) { return x.name; });
@@ -14617,6 +14831,9 @@ $(function () {
     if (DET[c.name]) { h += '<div class="upm-det" data-for="' + esc(c.name) + '">' + DET[c.name] + '</div>'; }
     return h + ansHtml(c.claude) + '</div>';
   }
+  // item 119: a pool above the Snapshots fill limit (an update still works, after a confirmation)
+  function poolTxt(r) { return $.map(r.pool || [], function (p) { return T('upm.pool_full', { ds: p.ds, p: p.p, max: p.max }); }).join(' '); }
+  function poolRow(r) { return (r.pool || []).length ? '<div class="upm-row s-amber" style="grid-template-columns:minmax(0,1fr) auto"><span><b>' + esc(poolTxt(r)) + '</b><small>' + esc(T('upm.pool_full_d')) + '</small></span><span class="upm-chip a">' + esc(T('upm.pool_look')) + '</span></div>' : ''; }
   function drawCt(r) {
     var s = r.scan; if (!s) { $('#upm-ct').html('<div class="upm-status upm-mut">' + esc(T('upm.no_check_short')) + '</div>'); $('#upm-dband').text(''); return; }
     var up = updating(r), ask = asking(r), G = {red: [], amber: [], green: [], current: [], other: []};
@@ -14624,7 +14841,7 @@ $(function () {
       if (up[c.name]) { return; }   // its update runs: it is in Activity, back here only if it fails
       if (c.state === 'update') { G[c.risk || 'amber'].push(c); } else if (c.state === 'current') { G.current.push(c); } else { G.other.push(c); }
     });
-    var h = '';
+    var h = poolRow(r);
     $.each(['red', 'amber', 'green'], function (i, k) {
       var L = G[k], rk = RISK[k], g = 'ct|' + k, inner = '';
       $.each(L, function (j, c) { inner += ctRow(c, r, ask); });
@@ -14684,6 +14901,7 @@ $(function () {
       esc((D.cfg.backup ? T('upm.c.s1_snap') : T('upm.c.s1_nosnap')) + ' ' + (qb ? T('upm.c.s2_qb') : T('upm.c.s2')) + ' ' + T('upm.c.s3') + ' ' + (D.cfg.selftest ? T('upm.c.s4_test') : T('upm.c.s4'))) +
       (c.risk !== 'green' ? ' <span class="upm-er">' + esc(T(c.risk === 'red' ? 'upm.c.red' : 'upm.c.amber')) + '</span>' : '') +
       (mv ? ' <span class="upm-am">' + esc(T('upm.c.moving', { n: mv[1] })) + '</span>' : '') +
+      ((D.pool || []).length ? ' <span class="upm-am">' + esc(poolTxt(D) + ' ' + T('upm.pool_full_d')) + '</span>' : '') +
       (name === 'claude' ? ' ' + esc(T('upm.c.claude')) : '');
     $row.append('<div class="upm-conf"><span>' + txt + '</span><input type="button" class="upm-go upm-sm" value="' + esc(T('upm.c.yes')) + '"><input type="button" class="upm-no upm-ghost upm-sm" value="' + esc(T('upm.c.cancel')) + '"></div>');
   });
@@ -15306,8 +15524,14 @@ if ($op === 'state') {
     // a job whose worker died stays "running" for ever: after 2 hours it is shown as stuck
     foreach ($run['jobs'] as $k => $j) { if ($j['state'] === 'running' && time() - (int)$j['started'] > 7200) { $run['jobs'][$k]['state'] = 'error'; $run['jobs'][$k]['text'] .= ' (stopped answering)'; } }
     $log = is_file(upd_log_file()) ? array_slice(file(upd_log_file(), FILE_IGNORE_NEW_LINES), -40) : [];
+    // item 119: a pool above the Snapshots fill limit; the snapshot before an update would hold what changes there until it expires
+    $pool = [];
+    if (!empty(upd_cfg()['backup']) && is_file(__DIR__ . '/snap_lib.php')) {
+        require_once __DIR__ . '/snap_lib.php'; $sc = snp_cfg();
+        foreach ($sc['datasets'] as $ds) { $f = snp_pool_fill($ds); if ($f >= 0 && $f > (int)$sc['maxfill']) { $pool[] = ['ds' => $ds, 'p' => $f, 'max' => (int)$sc['maxfill']]; } }
+    }
     sx_json(['ok' => true, 'cfg' => upd_cfg(), 'scan' => $scan ?: null, 'jobs' => array_values($run['jobs']), 'test' => upd_json(upd_test_file(), []) ?: null,
-             'log' => $log, 'busy' => ['scan' => !empty($autoscan) || upd_running('scan'), 'ask' => upd_running('ask'), 'update' => upd_running('update'), 'selftest' => upd_running('selftest')],
+             'log' => $log, 'pool' => $pool, 'busy' => ['scan' => !empty($autoscan) || upd_running('scan'), 'ask' => upd_running('ask'), 'update' => upd_running('update'), 'selftest' => upd_running('selftest')],
              'claude' => is_file('/tmp/sysbox_claude_ct') || trim(upd_sh(escapeshellarg(sx_docker()) . ' inspect -f {{.Name}} claude', 10)) !== '']);
 }
 if ($op === 'detail') {
@@ -16929,7 +17153,7 @@ function gd_sug_cands($c) {
             ($r['flags'] ? ', release notes mention: ' . implode(', ', array_keys(array_filter((array)$r['flags']))) : '') .
             ($cl !== '' ? '; Claude read the notes earlier: ' . mb_substr(preg_replace('/\s+/', ' ', $cl), 0, 300) : '; nobody asked Claude about it'));
     }
-    if (!empty($c['s_snap'])) {
+    if (!empty($c['s_snap']) && empty(snp_cfg()['bu_on'])) {   // with item 119 on they are removed by themselves
         foreach (snp_datasets() as $ds) {
             foreach (snp_snaps($ds['name']) as $s) {
                 if (!preg_match('/^before-update-(.+)-\d{4}-\d{2}-\d{2}-\d{4}$/', $s['name'], $m) || time() - $s['t'] < 86400) { continue; }

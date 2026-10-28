@@ -1,7 +1,8 @@
 <?php
 // Snapshots (Sysbox): daily ZFS snapshots of the pool datasets that hold the containers' data, and the restore of one container
-// from a snapshot. The whole dataset is never rolled back. Only the daily "auto-" snapshots are removed by themselves (beyond
-// "keep" days); a manual one stays until it is deleted with a click.
+// from a snapshot. The whole dataset is never rolled back. The daily "auto-" snapshots are removed by themselves (beyond
+// "keep" days), and so are the Update manager's "before-update-" ones (item 119: after "bu_keep" days, the newest of each
+// container after "bu_last" days; the owner's choice, 2026-10-28); a manual one stays until it is deleted with a click.
 require_once __DIR__ . '/lib.php';
 
 function snp_dir() { $d = getenv('SX_SNAP_DIR'); return ($d !== false && $d !== '') ? rtrim($d, '/') : '/boot/config/plugins/sysbox'; }  // tests: SX_SNAP_DIR
@@ -25,6 +26,7 @@ function snp_ds_ok($d) { return (bool)preg_match('#^[A-Za-z0-9_.\-]+(?:/[A-Za-z0
 
 function snp_defaults() {
     return ['on' => 1, 'datasets' => [], 'hour' => 3, 'min' => 30, 'keep' => 7, 'maxfill' => 85, 'discord' => 1,
+        'bu_on' => 1, 'bu_keep' => 14, 'bu_last' => 30,   // before-update snapshots (item 119)
         // copies (item 105): to an array share after the daily snapshot, and weekly off the server (restic)
         'copy' => 0, 'copy_dir' => '/mnt/user/backup/sysbox', 'keep_d' => 14, 'keep_w' => 8, 'skip' => 'docker.img, transcodes, cache', 'stale' => 2,
         'off' => 'off', 'off_sftp' => '', 'off_port' => 22, 'off_s3' => '', 'off_day' => 7, 'off_hour' => 4, 'off_min' => 30, 'off_keep' => 26];
@@ -83,6 +85,28 @@ function snp_make($ds, $name) {
     foreach (snp_snaps($ds) as $s) { if ($s['name'] === $name) { return 'already exists'; } }
     $o = snp_run(escapeshellarg(snp_bin('zfs')) . ' snapshot ' . escapeshellarg($ds . '@' . $name), $rc);
     return $rc === 0 ? '' : (trim(implode(' ', $o)) ?: 'zfs snapshot failed');
+}
+// before-update snapshots (item 119): the container's name, or '' for any other snapshot
+function snp_bu_ctr($n) { return preg_match('/^before-update-(.+)-\d{4}-\d{2}-\d{2}-\d{4}$/', (string)$n, $m) ? $m[1] : ''; }
+// name => [container, newest of that container, expiry time (0 when they are not removed by themselves)]
+function snp_bu_info($snaps, $c) {
+    $newest = [];
+    foreach ($snaps as $s) { $k = snp_bu_ctr($s['name']); if ($k !== '' && (!isset($newest[$k]) || $s['t'] >= $newest[$k])) { $newest[$k] = $s['t']; } }
+    $out = [];
+    foreach ($snaps as $s) {
+        $k = snp_bu_ctr($s['name']); if ($k === '') { continue; }
+        $last = $s['t'] === $newest[$k];
+        $out[$s['name']] = ['ctr' => $k, 'last' => $last, 'exp' => empty($c['bu_on']) ? 0 : $s['t'] + max(1, (int)($last ? $c['bu_last'] : $c['bu_keep'])) * 86400];
+    }
+    return $out;
+}
+// Keep: a before-update snapshot becomes a manual one (manual-<container>-<date>), which is never removed by itself
+function snp_rename($ds, $from, $to) {
+    if (!snp_ds_ok($ds) || !snp_name_ok($from) || !snp_name_ok($to)) { return 'bad name'; }
+    $have = false; foreach (snp_snaps($ds) as $s) { if ($s['name'] === $to) { return 'already exists'; } if ($s['name'] === $from) { $have = true; } }
+    if (!$have) { return 'no such snapshot'; }
+    $o = snp_run(escapeshellarg(snp_bin('zfs')) . ' rename ' . escapeshellarg($ds . '@' . $from) . ' ' . escapeshellarg($ds . '@' . $to), $rc);
+    return $rc === 0 ? '' : (trim(implode(' ', $o)) ?: 'zfs rename failed');
 }
 function snp_destroy($ds, $name) {
     if (!snp_ds_ok($ds) || !snp_name_ok($name)) { return 'bad name'; }

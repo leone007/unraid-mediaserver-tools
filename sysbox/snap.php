@@ -1,5 +1,5 @@
 <?php
-// Web endpoint of the Snapshots page (Sysbox). POST op=state|make|delete|preview|restore|save
+// Web endpoint of the Snapshots page (Sysbox). POST op=state|make|delete|keep|preview|restore|save
 //   copies (item 105): copy_now|off_now|off_test|off_list|off_fetch|off_pw|fetched_del
 require_once __DIR__ . '/snap_lib.php';
 require_once __DIR__ . '/copy_lib.php';
@@ -15,6 +15,7 @@ if ($op === 'state') {
     foreach (snp_datasets() as $d) {
         $row = $d + ['on' => in_array($d['name'], $c['datasets'], true), 'snaps' => snp_snaps($d['name']), 'fill' => snp_pool_fill($d['name'])];
         $row['held'] = array_sum(array_column($row['snaps'], 'used'));
+        $bu = snp_bu_info($row['snaps'], $c); foreach ($row['snaps'] as $i => $s) { if (isset($bu[$s['name']])) { $row['snaps'][$i]['bu'] = $bu[$s['name']]; } }
         if (!empty($_POST['ctr']) && $_POST['ctr'] === $d['name']) { $row['containers'] = snp_containers($d); }
         $out[] = $row;
     }
@@ -32,6 +33,14 @@ if ($op === 'delete') {
     $ds = snp_ds_arg(); $n = (string)($_POST['name'] ?? '');
     $e = snp_destroy($ds, $n); if ($e === '') { snp_log($ds . '@' . $n . ' deleted by hand'); }
     sx_json(['ok' => $e === '', 'error' => $e]);
+}
+// Keep (item 119): a before-update snapshot becomes manual-<container>-<date>, removed only with a click
+if ($op === 'keep') {
+    $ds = snp_ds_arg(); $n = (string)($_POST['name'] ?? ''); $ctr = snp_bu_ctr($n);
+    if ($ctr === '') { sx_json(['ok' => false, 'error' => sx_tr('snpe.not_bu')]); }
+    $to = 'manual-' . $ctr . '-' . substr($n, -15);
+    $e = snp_rename($ds, $n, $to); if ($e === '') { snp_log($ds . '@' . $n . ' kept as ' . $to . ' by hand'); }
+    sx_json(['ok' => $e === '', 'error' => $e, 'name' => $to]);
 }
 if ($op === 'preview') {
     $ds = snp_ds_arg(); $snap = (string)($_POST['snap'] ?? ''); $ctr = (string)($_POST['ctr_name'] ?? '');
@@ -73,12 +82,14 @@ if ($op === 'fetched_del') {
 if ($op === 'save') {
     $c = snp_cfg(); $known = array_column(snp_datasets(), 'name');
     $c['datasets'] = array_values(array_intersect(array_filter((array)($_POST['datasets'] ?? []), 'snp_ds_ok'), $known));
-    foreach (['hour' => [0, 23], 'min' => [0, 59], 'keep' => [1, 90], 'maxfill' => [10, 99]] as $k => [$lo, $hi]) {
+    foreach (['hour' => [0, 23], 'min' => [0, 59], 'keep' => [1, 90], 'maxfill' => [10, 99], 'bu_keep' => [1, 365], 'bu_last' => [1, 365]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
     foreach (['keep_d' => [1, 90], 'keep_w' => [0, 104], 'stale' => [0, 30], 'off_port' => [1, 65535], 'off_day' => [1, 7], 'off_hour' => [0, 23], 'off_min' => [0, 59], 'off_keep' => [1, 520]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
+    if ($c['bu_last'] < $c['bu_keep']) { sx_json(['ok' => false, 'error' => sx_tr('snpe.bu_last')]); }
+    $c['bu_on'] = !empty($_POST['bu_on']) && $_POST['bu_on'] !== '0' ? 1 : 0;
     $c['copy'] = !empty($_POST['copy']) && $_POST['copy'] !== '0' ? 1 : 0;
     $dir = rtrim(trim((string)($_POST['copy_dir'] ?? $c['copy_dir'])), '/'); if (!cp_dir_ok($dir)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.dir_bad')]); } $c['copy_dir'] = $dir;
     $c['skip'] = implode(', ', cp_skip_list((string)($_POST['skip'] ?? $c['skip'])));
