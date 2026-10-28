@@ -480,6 +480,14 @@
   "text": "Maximum temperature (°C):",
   "note": "label of a setting (left column, ends with a colon)."
  },
+ "set.hot_ssd": {
+  "text": "SSD hot temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon); SSD and NVMe disks, cache pools too."
+ },
+ "set.max_ssd": {
+  "text": "SSD maximum temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon); SSD and NVMe disks, cache pools too."
+ },
  "set.smart": {
   "text": "Read SMART health in the background:",
   "note": "label of a setting (left column, ends with a colon)."
@@ -547,6 +555,14 @@
  "set.max_hint": {
   "text": "hard disks, red; empty = Unraid's value ({v}°C)",
   "note": "text next to the maximum temperature field."
+ },
+ "set.hot_ssd_hint": {
+  "text": "SSD and NVMe, amber; empty = Unraid's value ({v}°C)",
+  "note": "text next to the SSD hot temperature field."
+ },
+ "set.max_ssd_hint": {
+  "text": "SSD and NVMe, red; empty = Unraid's value ({v}°C)",
+  "note": "text next to the SSD maximum temperature field."
  },
  "set.acked_at": {
   "text": "acknowledged {t}",
@@ -1645,6 +1661,14 @@
  },
  "save.f_max_temp": {
   "text": "Maximum temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_hot_ssd": {
+  "text": "SSD hot temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_max_ssd": {
+  "text": "SSD maximum temperature",
   "note": "field name inside the {name} of a Settings save error (a number out of range)."
  },
  "save.f_n_remind": {

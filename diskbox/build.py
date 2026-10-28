@@ -14,7 +14,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22u">
+<!ENTITY version   "2026.10.22v">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -27,6 +27,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22v
+- Settings: own hot and maximum temperature for SSD and NVMe disks (cache pools too), next to the hard disk ones; empty keeps Unraid's SSD values (60 and 70 °C by default)
+
 ###2026.10.22u
 - Balance and Remove disks: the remaining English texts (plan status, the note on titles that do not fit, a Remove step 2 error, the Settings field names in save errors) and the Balance Discord messages come from the dictionary, Discord in the Discord language
 

@@ -3,7 +3,7 @@
 <!ENTITY name      "diskbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Diskbox">
-<!ENTITY version   "2026.10.22u">
+<!ENTITY version   "2026.10.22v">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.22v
+- Settings: own hot and maximum temperature for SSD and NVMe disks (cache pools too), next to the hard disk ones; empty keeps Unraid's SSD values (60 and 70 °C by default)
+
 ###2026.10.22u
 - Balance and Remove disks: the remaining English texts (plan status, the note on titles that do not fit, a Remove step 2 error, the Settings field names in save errors) and the Balance Discord messages come from the dictionary, Discord in the Discord language
 
@@ -636,7 +639,7 @@ $dbs_lang = '/usr/local/emhttp/plugins/diskbox/lang';
 $dbs_T = mt_i18n_t($dbs_lang);
 $dbs_t = function ($k, $v = []) use ($dbs_T) { return htmlspecialchars($dbs_T($k, $v), ENT_QUOTES); };
 $dbx = db_cfg();
-$dbx_thr = db_thr(['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '']);
+$dbx_thr = db_thr(['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '', 'hot_ssd' => '', 'max_ssd' => '']);
 $dbx_var = @parse_ini_file('/var/local/emhttp/var.ini');
 $dbx_tok = is_array($dbx_var) ? (string)($dbx_var['csrf_token'] ?? '') : '';
 if (!function_exists('dbx_h')) {
@@ -692,6 +695,12 @@ if (!function_exists('dbx_n')) {
 
 <dt><?=$dbs_t('set.max_temp')?></dt>
 <dd><input type="number" name="max_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['max']))?>" value="<?=dbx_h($dbx['max_temp'])?>"> <?=$dbs_t('set.max_hint', ['v' => dbx_n($dbx_thr['max'])])?></dd>
+
+<dt><?=$dbs_t('set.hot_ssd')?></dt>
+<dd><input type="number" name="hot_ssd" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['hotssd']))?>" value="<?=dbx_h($dbx['hot_ssd'])?>"> <?=$dbs_t('set.hot_ssd_hint', ['v' => dbx_n($dbx_thr['hotssd'])])?></dd>
+
+<dt><?=$dbs_t('set.max_ssd')?></dt>
+<dd><input type="number" name="max_ssd" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['maxssd']))?>" value="<?=dbx_h($dbx['max_ssd'])?>"> <?=$dbs_t('set.max_ssd_hint', ['v' => dbx_n($dbx_thr['maxssd'])])?></dd>
 </dl>
 
 <h3><?=$dbs_t('set.h.health')?></h3>
@@ -820,7 +829,7 @@ const DB_CFG = '/boot/config/plugins/diskbox/settings.cfg';
 const DB_SMART = '/tmp/diskbox_smart.json';
 
 function db_cfg() {
-    $c = ['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '', 'smart' => '1',
+    $c = ['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '', 'hot_ssd' => '', 'max_ssd' => '', 'smart' => '1',
           'dc_hook' => '', 'dc_lang' => 'hu', 'dc_ping' => '', 'n_array' => '1', 'n_temp' => '1', 'n_smart' => '1', 'n_fill' => '1', 'n_fill_warn' => '85', 'n_fill_crit' => '95',
           'n_pool' => '1', 'n_parity' => '1', 'n_utest' => '1', 'n_remind' => '24', 'wk_on' => '1', 'wk_day' => '7', 'wk_hour' => '18'];
     if (is_file(DB_CFG)) {
@@ -887,8 +896,8 @@ function db_thr($cfg) {
         'crit'   => $pick($cfg['crit_use'], 'critical', 90),
         'hot'    => $pick($cfg['hot_temp'], 'hot', 45),
         'max'    => $pick($cfg['max_temp'], 'max', 55),
-        'hotssd' => $pick('', 'hotssd', 60),
-        'maxssd' => $pick('', 'maxssd', 70),
+        'hotssd' => $pick($cfg['hot_ssd'] ?? '', 'hotssd', 60),
+        'maxssd' => $pick($cfg['max_ssd'] ?? '', 'maxssd', 70),
     ];
 }
 
@@ -1779,6 +1788,8 @@ $new = [
     'crit_use' => db_num($_POST['crit_use'] ?? '', 0, 100, $dbx_T('save.f_crit_use')),
     'hot_temp' => db_num($_POST['hot_temp'] ?? '', 0, 100, $dbx_T('save.f_hot_temp')),
     'max_temp' => db_num($_POST['max_temp'] ?? '', 0, 100, $dbx_T('save.f_max_temp')),
+    'hot_ssd'  => db_num($_POST['hot_ssd'] ?? '', 0, 100, $dbx_T('save.f_hot_ssd')),
+    'max_ssd'  => db_num($_POST['max_ssd'] ?? '', 0, 100, $dbx_T('save.f_max_ssd')),
     'smart'    => db_bool($_POST['smart'] ?? '1'),
     'dc_hook'  => $hook, 'dc_ping' => $ping,
     'dc_lang'  => (($_POST['dc_lang'] ?? 'hu') === 'en') ? 'en' : 'hu',
@@ -3276,6 +3287,14 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Maximum temperature (°C):",
   "note": "label of a setting (left column, ends with a colon)."
  },
+ "set.hot_ssd": {
+  "text": "SSD hot temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon); SSD and NVMe disks, cache pools too."
+ },
+ "set.max_ssd": {
+  "text": "SSD maximum temperature (°C):",
+  "note": "label of a setting (left column, ends with a colon); SSD and NVMe disks, cache pools too."
+ },
  "set.smart": {
   "text": "Read SMART health in the background:",
   "note": "label of a setting (left column, ends with a colon)."
@@ -3343,6 +3362,14 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.max_hint": {
   "text": "hard disks, red; empty = Unraid's value ({v}°C)",
   "note": "text next to the maximum temperature field."
+ },
+ "set.hot_ssd_hint": {
+  "text": "SSD and NVMe, amber; empty = Unraid's value ({v}°C)",
+  "note": "text next to the SSD hot temperature field."
+ },
+ "set.max_ssd_hint": {
+  "text": "SSD and NVMe, red; empty = Unraid's value ({v}°C)",
+  "note": "text next to the SSD maximum temperature field."
  },
  "set.acked_at": {
   "text": "acknowledged {t}",
@@ -4443,6 +4470,14 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Maximum temperature",
   "note": "field name inside the {name} of a Settings save error (a number out of range)."
  },
+ "save.f_hot_ssd": {
+  "text": "SSD hot temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
+ "save.f_max_ssd": {
+  "text": "SSD maximum temperature",
+  "note": "field name inside the {name} of a Settings save error (a number out of range)."
+ },
  "save.f_n_remind": {
   "text": "Repeat interval",
   "note": "field name inside the {name} of a Settings save error (a number out of range)."
@@ -4822,6 +4857,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.max_temp": {
   "text": "Maximális hőmérséklet (°C):"
  },
+ "set.hot_ssd": {
+  "text": "SSD meleg hőmérséklet (°C):"
+ },
+ "set.max_ssd": {
+  "text": "SSD maximális hőmérséklet (°C):"
+ },
  "set.smart": {
   "text": "SMART-állapot olvasása a háttérben:"
  },
@@ -4872,6 +4913,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "set.max_hint": {
   "text": "merevlemezek, piros; üres = az Unraid értéke ({v}°C)"
+ },
+ "set.hot_ssd_hint": {
+  "text": "SSD és NVMe, sárga; üres = az Unraid értéke ({v}°C)"
+ },
+ "set.max_ssd_hint": {
+  "text": "SSD és NVMe, piros; üres = az Unraid értéke ({v}°C)"
  },
  "set.acked_at": {
   "text": "nyugtázva: {t}"
@@ -5700,6 +5747,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "save.f_max_temp": {
   "text": "Maximális hőmérséklet"
+ },
+ "save.f_hot_ssd": {
+  "text": "SSD meleg hőmérséklet"
+ },
+ "save.f_max_ssd": {
+  "text": "SSD maximális hőmérséklet"
  },
  "save.f_n_remind": {
   "text": "Piros riasztás ismétlése"

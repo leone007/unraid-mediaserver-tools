@@ -362,6 +362,12 @@
  "set.max_temp": {
   "text": "Maximális hőmérséklet (°C):"
  },
+ "set.hot_ssd": {
+  "text": "SSD meleg hőmérséklet (°C):"
+ },
+ "set.max_ssd": {
+  "text": "SSD maximális hőmérséklet (°C):"
+ },
  "set.smart": {
   "text": "SMART-állapot olvasása a háttérben:"
  },
@@ -412,6 +418,12 @@
  },
  "set.max_hint": {
   "text": "merevlemezek, piros; üres = az Unraid értéke ({v}°C)"
+ },
+ "set.hot_ssd_hint": {
+  "text": "SSD és NVMe, sárga; üres = az Unraid értéke ({v}°C)"
+ },
+ "set.max_ssd_hint": {
+  "text": "SSD és NVMe, piros; üres = az Unraid értéke ({v}°C)"
  },
  "set.acked_at": {
   "text": "nyugtázva: {t}"
@@ -1240,6 +1252,12 @@
  },
  "save.f_max_temp": {
   "text": "Maximális hőmérséklet"
+ },
+ "save.f_hot_ssd": {
+  "text": "SSD meleg hőmérséklet"
+ },
+ "save.f_max_ssd": {
+  "text": "SSD maximális hőmérséklet"
  },
  "save.f_n_remind": {
   "text": "Piros riasztás ismétlése"

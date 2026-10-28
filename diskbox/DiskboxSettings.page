@@ -12,7 +12,7 @@ $dbs_lang = '/usr/local/emhttp/plugins/diskbox/lang';
 $dbs_T = mt_i18n_t($dbs_lang);
 $dbs_t = function ($k, $v = []) use ($dbs_T) { return htmlspecialchars($dbs_T($k, $v), ENT_QUOTES); };
 $dbx = db_cfg();
-$dbx_thr = db_thr(['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '']);
+$dbx_thr = db_thr(['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '', 'hot_ssd' => '', 'max_ssd' => '']);
 $dbx_var = @parse_ini_file('/var/local/emhttp/var.ini');
 $dbx_tok = is_array($dbx_var) ? (string)($dbx_var['csrf_token'] ?? '') : '';
 if (!function_exists('dbx_h')) {
@@ -44,6 +44,12 @@ if (!function_exists('dbx_n')) {
 
 <dt><?=$dbs_t('set.max_temp')?></dt>
 <dd><input type="number" name="max_temp" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['max']))?>" value="<?=dbx_h($dbx['max_temp'])?>"> <?=$dbs_t('set.max_hint', ['v' => dbx_n($dbx_thr['max'])])?></dd>
+
+<dt><?=$dbs_t('set.hot_ssd')?></dt>
+<dd><input type="number" name="hot_ssd" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['hotssd']))?>" value="<?=dbx_h($dbx['hot_ssd'])?>"> <?=$dbs_t('set.hot_ssd_hint', ['v' => dbx_n($dbx_thr['hotssd'])])?></dd>
+
+<dt><?=$dbs_t('set.max_ssd')?></dt>
+<dd><input type="number" name="max_ssd" min="0" max="100" class="narrow" placeholder="<?=dbx_h(dbx_n($dbx_thr['maxssd']))?>" value="<?=dbx_h($dbx['max_ssd'])?>"> <?=$dbs_t('set.max_ssd_hint', ['v' => dbx_n($dbx_thr['maxssd'])])?></dd>
 </dl>
 
 <h3><?=$dbs_t('set.h.health')?></h3>

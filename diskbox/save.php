@@ -58,6 +58,8 @@ $new = [
     'crit_use' => db_num($_POST['crit_use'] ?? '', 0, 100, $dbx_T('save.f_crit_use')),
     'hot_temp' => db_num($_POST['hot_temp'] ?? '', 0, 100, $dbx_T('save.f_hot_temp')),
     'max_temp' => db_num($_POST['max_temp'] ?? '', 0, 100, $dbx_T('save.f_max_temp')),
+    'hot_ssd'  => db_num($_POST['hot_ssd'] ?? '', 0, 100, $dbx_T('save.f_hot_ssd')),
+    'max_ssd'  => db_num($_POST['max_ssd'] ?? '', 0, 100, $dbx_T('save.f_max_ssd')),
     'smart'    => db_bool($_POST['smart'] ?? '1'),
     'dc_hook'  => $hook, 'dc_ping' => $ping,
     'dc_lang'  => (($_POST['dc_lang'] ?? 'hu') === 'en') ? 'en' : 'hu',

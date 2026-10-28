@@ -4,7 +4,7 @@ const DB_CFG = '/boot/config/plugins/diskbox/settings.cfg';
 const DB_SMART = '/tmp/diskbox_smart.json';
 
 function db_cfg() {
-    $c = ['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '', 'smart' => '1',
+    $c = ['warn_use' => '', 'crit_use' => '', 'hot_temp' => '', 'max_temp' => '', 'hot_ssd' => '', 'max_ssd' => '', 'smart' => '1',
           'dc_hook' => '', 'dc_lang' => 'hu', 'dc_ping' => '', 'n_array' => '1', 'n_temp' => '1', 'n_smart' => '1', 'n_fill' => '1', 'n_fill_warn' => '85', 'n_fill_crit' => '95',
           'n_pool' => '1', 'n_parity' => '1', 'n_utest' => '1', 'n_remind' => '24', 'wk_on' => '1', 'wk_day' => '7', 'wk_hour' => '18'];
     if (is_file(DB_CFG)) {
@@ -71,8 +71,8 @@ function db_thr($cfg) {
         'crit'   => $pick($cfg['crit_use'], 'critical', 90),
         'hot'    => $pick($cfg['hot_temp'], 'hot', 45),
         'max'    => $pick($cfg['max_temp'], 'max', 55),
-        'hotssd' => $pick('', 'hotssd', 60),
-        'maxssd' => $pick('', 'maxssd', 70),
+        'hotssd' => $pick($cfg['hot_ssd'] ?? '', 'hotssd', 60),
+        'maxssd' => $pick($cfg['max_ssd'] ?? '', 'maxssd', 70),
     ];
 }
 
