@@ -395,7 +395,7 @@
   "text": "nincs megadva"
  },
  "info.no_details": {
-  "text": "A Jellyfin nem adott átkódolási részleteket ehhez a lejátszáshoz"
+  "text": "A szerver nem küldött átkódolási részleteket ehhez a lejátszáshoz"
  },
  "info.client": {
   "text": "Kliens: {c}"
@@ -939,7 +939,7 @@
  "set.btn.test_emby": {
   "text": "Emby teszt"
  },
- "set.asking_emby": {
+ "set.asking_em": {
   "text": "Kérdezem az Embyt…"
  },
  "set.em_test_ok": {
@@ -956,5 +956,65 @@
  },
  "save.err_em_key": {
   "text": "Az Emby API-kulcsban csak betű, szám, pont, kötőjel és aláhúzás lehet."
+ },
+ "now.srv_notoken": {
+  "text": "{s}: nincs token, nézd meg a beállításokat"
+ },
+ "set.h.plex": {
+  "text": "Plex"
+ },
+ "set.h.plex_sub": {
+  "text": "Lejátszások a Plex Media Serverről"
+ },
+ "set.px_on": {
+  "text": "Plex lejátszások mutatása:"
+ },
+ "set.px_on_hint": {
+  "text": "a csempe a Plex lejátszásait is mutatja, minden soron a szerver jelvényével"
+ },
+ "set.px_host": {
+  "text": "Plex cím és port:"
+ },
+ "set.px_host_hint": {
+  "text": "az Unraid felől nézve; a hivatalos Plex konténer host hálózaton fut, a 32400-as porton"
+ },
+ "set.px_dir": {
+  "text": "Plex config mappa:"
+ },
+ "set.px_dir_hint": {
+  "text": "a Plex konténer /config mappájának host oldali helye; a Streambox az itteni Preferences.xml-ből olvassa a szerver tokenjét"
+ },
+ "set.px_token": {
+  "text": "Plex token (nem kötelező):"
+ },
+ "set.px_token_hint": {
+  "text": "hagyd üresen, akkor a fenti config mappából olvassa; csak akkor írd be, ha a Plex másik gépen fut. A Test előtt nyomj Apply-t."
+ },
+ "set.btn.test_plex": {
+  "text": "Plex teszt"
+ },
+ "set.asking_px": {
+  "text": "Kérdezem a Plexet…"
+ },
+ "set.px_test_ok": {
+  "text": "A Plex válaszol, a lejátszásai megjelennek a csempén"
+ },
+ "set.px_test_auth": {
+  "text": "A Plex nem fogadja el a tokent"
+ },
+ "set.px_test_fail": {
+  "text": "A Plex nem válaszol ({e})"
+ },
+ "set.px_test_off": {
+  "text": "A Plex ki van kapcsolva: pipáld be, Apply"
+ },
+ "set.px_test_notoken": {
+  "text": "Nincs Plex token: a config mappában nincs Preferences.xml, vagy nincs benne PlexOnlineToken (előbb jelentkezz be a szerverre)"
+ },
+ "save.err_px_token": {
+  "text": "A Plex tokenben csak betű, szám, kötőjel és aláhúzás lehet (8-64 karakter)."
+ },
+ "save.err_px_dir": {
+  "text": "A Plex config mappának a /mnt/ alatt kell lennie."
  }
 }

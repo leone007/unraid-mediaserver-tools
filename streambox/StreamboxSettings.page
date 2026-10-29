@@ -14,6 +14,7 @@ $sb_file = '/boot/config/plugins/streambox/settings.cfg';
 $sb = [
   'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
   'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
+  'px_on' => '0', 'px_host' => '127.0.0.1', 'px_port' => '32400', 'px_token' => '', 'px_dir' => '/mnt/cache/docker/plex',
   'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
@@ -141,6 +142,21 @@ if (!function_exists('sb_auto')) {
 
 <dt><?=$sbs_t('set.em_key')?></dt>
 <dd><input type="password" name="em_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['em_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <input type="button" id="sb-etest" value="<?=$sbs_t('set.btn.test_emby')?>"> <span id="sb-emsg"></span> <span class="uset-hint"><?=$sbs_t('set.em_key_hint')?></span></dd>
+</dl>
+
+<h3><?=$sbs_t('set.h.plex')?> <small><?=$sbs_t('set.h.plex_sub')?></small></h3>
+<dl>
+<dt><?=$sbs_t('set.px_on')?></dt>
+<dd><input type="hidden" name="px_on" value="0"><input type="checkbox" name="px_on" value="1" <?=sb_chk($sb['px_on'])?>> <?=$sbs_t('set.px_on_hint')?></dd>
+
+<dt><?=$sbs_t('set.px_host')?></dt>
+<dd><input type="text" name="px_host" class="narrow" value="<?=sb_h($sb['px_host'])?>"> <input type="number" name="px_port" min="1" max="65535" class="narrow" value="<?=sb_h($sb['px_port'])?>"> <span class="uset-hint"><?=$sbs_t('set.px_host_hint')?></span></dd>
+
+<dt><?=$sbs_t('set.px_dir')?></dt>
+<dd><input type="text" name="px_dir" value="<?=sb_h($sb['px_dir'])?>"> <span class="uset-hint"><?=$sbs_t('set.px_dir_hint')?></span></dd>
+
+<dt><?=$sbs_t('set.px_token')?></dt>
+<dd><input type="password" name="px_token" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['px_token'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <input type="button" id="sb-ptest" value="<?=$sbs_t('set.btn.test_plex')?>"> <span id="sb-pmsg"></span> <span class="uset-hint"><?=$sbs_t('set.px_token_hint')?></span></dd>
 </dl>
 
 <h3><?=$sbs_t('week.title')?> <small><?=$sbs_t('set.h.week_sub')?></small></h3>
@@ -303,20 +319,26 @@ $(function () {
       })
       .always(function () { $b.prop('disabled', false); });
   });
-  // Emby test: the tile endpoint with the saved settings, its answer for this one server
-  $('#sb-etest').on('click', function () {
-    var $b = $(this).prop('disabled', true), $m = $('#sb-emsg').css('color', '').text(T('set.asking_emby'));
-    $.getJSON('/plugins/streambox/api_fetch.php', { _: Date.now() })
-      .done(function (r) {
-        var x = null;
-        $.each((r && r.servers) || [], function (i, v) { if (v.id === 'em') { x = v; } });
-        if (!x && r && !r.ok && r.error !== 'nokey') { x = { ok: false, error: r.error }; }   // every server failed
-        if (!x) { $m.css('color', '#d9921f').text(T('set.em_test_off')); return; }
-        $m.css('color', x.ok ? '#3fa24a' : '#e5534b').text(x.ok ? T('set.em_test_ok') : (x.error === 'auth' ? T('set.em_test_auth') : T('set.em_test_fail', { e: x.error })));
-      })
-      .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
-      .always(function () { $b.prop('disabled', false); });
-  });
+  // Emby and Plex tests: the tile endpoint with the saved settings, its answer for that one server
+  function srvTest(id, btn, msg, p) {
+    $(btn).on('click', function () {
+      var $b = $(this).prop('disabled', true), $m = $(msg).css('color', '').text(T('set.asking_' + p));
+      $.getJSON('/plugins/streambox/api_fetch.php', { _: Date.now() })
+        .done(function (r) {
+          var x = null;
+          $.each((r && r.servers) || [], function (i, v) { if (v.id === id) { x = v; } });
+          if (!x && r && !r.ok && r.error !== 'nokey') { x = { ok: false, error: r.error }; }   // every server failed
+          if (!x) { $m.css('color', '#d9921f').text(T('set.' + p + '_test_off')); return; }
+          var t = x.ok ? T('set.' + p + '_test_ok') : (x.error === 'auth' ? T('set.' + p + '_test_auth')
+                : (x.error === 'notoken' ? T('set.px_test_notoken') : T('set.' + p + '_test_fail', { e: x.error })));
+          $m.css('color', x.ok ? '#3fa24a' : '#e5534b').text(t);
+        })
+        .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
+        .always(function () { $b.prop('disabled', false); });
+    });
+  }
+  srvTest('em', '#sb-etest', '#sb-emsg', 'em');
+  srvTest('px', '#sb-ptest', '#sb-pmsg', 'px');
   $('#sb-wtest').on('click', function () {
     var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text(T('set.asking_sonarr'));
     $.getJSON('/plugins/streambox/week.php', { test: 1, _: Date.now() })

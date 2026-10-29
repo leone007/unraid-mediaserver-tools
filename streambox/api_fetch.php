@@ -7,6 +7,7 @@ $sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the sett
 $cfg = [
     'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
     'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
+    'px_on' => '0', 'px_host' => '127.0.0.1', 'px_port' => '32400', 'px_token' => '', 'px_dir' => '/mnt/cache/docker/plex',
     'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
 ];
 $file = '/boot/config/plugins/streambox/settings.cfg';
@@ -44,6 +45,28 @@ if (sb_flag($cfg['em_on']) && $emKey !== '') {
     if ($emPort < 1 || $emPort > 65535) { $emPort = 8097; }
     $srv['em'] = ['base' => "http://$emHost:$emPort", 'pre' => '/emby', 'hdr' => 'X-Emby-Token: ' . $emKey];
 }
+// Plex: its own API (/status/sessions), turned into Jellyfin-shaped sessions by sb_plex_sessions(). Without a saved token the
+// server owner's token is read from Plex's Preferences.xml in its config folder, so nobody has to copy it.
+$preState = [];
+if (sb_flag($cfg['px_on'])) {
+    $pxTok = sb_plex_token($cfg);
+    if ($pxTok === '') { $preState['px'] = 'notoken'; }
+    else {
+        $pxHost = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['px_host']) ? $cfg['px_host'] : '127.0.0.1';
+        $pxPort = (int)$cfg['px_port'];
+        if ($pxPort < 1 || $pxPort > 65535) { $pxPort = 32400; }
+        $srv['px'] = ['base' => "http://$pxHost:$pxPort", 'pre' => '', 'hdr' => 'X-Plex-Token: ' . $pxTok];
+    }
+}
+
+function sb_plex_token($cfg) {
+    $t = trim((string)($cfg['px_token'] ?? ''));
+    if ($t !== '') { return preg_match('/^[A-Za-z0-9_\-]{8,64}$/', $t) ? $t : ''; }
+    $dir = rtrim((string)($cfg['px_dir'] ?? ''), '/');
+    if (!preg_match('#^/mnt/[^\0]+$#', $dir) || strpos($dir, '..') !== false) { return ''; }
+    $x = @file_get_contents($dir . '/Library/Application Support/Plex Media Server/Preferences.xml');
+    return ($x !== false && preg_match('/\sPlexOnlineToken="([A-Za-z0-9_\-]{8,64})"/', $x, $m)) ? $m[1] : '';
+}
 
 function out($arr) {
     global $ui;
@@ -52,7 +75,7 @@ function out($arr) {
     exit;
 }
 
-if (!$srv) { out(['ok' => false, 'error' => 'nokey']); }
+if (!$srv && !$preState) { out(['ok' => false, 'error' => 'nokey']); }
 
 function sb_get($path, $sv = 'jf') {
     global $srv;
@@ -174,6 +197,110 @@ function sb_video($it) {
     return null;
 }
 
+// Plex /status/sessions -> the Jellyfin session shape the loop below reads. Plex gives times in ms, bitrates in kbps.
+// Video and audio decisions come from TranscodeSession; the source file is the library item (one cached call per title).
+function sb_plex_sessions($j) {
+    $list = $j['MediaContainer']['Metadata'] ?? [];
+    if (!is_array($list)) { return null; }
+    $cf = '/tmp/streambox_px_meta.json';
+    $cache = is_file($cf) ? json_decode((string)@file_get_contents($cf), true) : [];
+    if (!is_array($cache)) { $cache = []; }
+    $dirty = false;
+    $out = [];
+    foreach ($list as $m) {
+        if (!is_array($m)) { continue; }
+        $media = $m['Media'][0] ?? [];
+        $ts = is_array($m['TranscodeSession'] ?? null) ? $m['TranscodeSession'] : null;
+        $rk = (string)($m['ratingKey'] ?? '');
+        // during a transcode the session's Media describes the output: take the source from the library item
+        if ($ts !== null && $rk !== '' && ctype_digit($rk)) {
+            if (!isset($cache[$rk]) || (time() - (int)($cache[$rk]['t'] ?? 0)) > 3600) {
+                list($b, $code, $err) = sb_get('/library/metadata/' . $rk, 'px');
+                $md = (!$err && $code === 200) ? json_decode((string)$b, true) : null;
+                $src = $md['MediaContainer']['Metadata'][0]['Media'] ?? null;
+                if (is_array($src)) { $cache[$rk] = ['t' => time(), 'm' => $src]; $dirty = true; }
+            }
+            // the version being played (same Media id), else the first one
+            $srcList = array_values(array_filter((array)($cache[$rk]['m'] ?? []), 'is_array'));
+            $hit = $srcList ? $srcList[0] : null;
+            foreach ($srcList as $cm) {
+                if ((string)($cm['id'] ?? '') !== '' && (string)($cm['id'] ?? '') === (string)($media['id'] ?? '')) { $hit = $cm; break; }
+            }
+            if ($hit !== null) { $media = $hit; }
+        }
+        $vs = null; $as = null;
+        foreach ((array)($media['Part'][0]['Stream'] ?? []) as $st) {
+            if (!is_array($st)) { continue; }
+            $t = (int)($st['streamType'] ?? 0);
+            if ($t === 1 && $vs === null) { $vs = $st; }
+            if ($t === 2 && ($as === null || !empty($st['selected']))) { $as = $st; }
+        }
+        $w = (int)($vs['width'] ?? $media['width'] ?? 0);
+        $h = (int)($vs['height'] ?? $media['height'] ?? 0);
+        $ms = [];
+        $ms[] = ['Type' => 'Video', 'Codec' => (string)($vs['codec'] ?? $media['videoCodec'] ?? ''), 'Width' => $w, 'Height' => $h,
+                 'BitRate' => 1000 * (int)($vs['bitrate'] ?? $media['bitrate'] ?? 0),
+                 'IsInterlaced' => (($vs['scanType'] ?? '') === 'interlaced')];
+        $ms[] = ['Type' => 'Audio', 'Codec' => (string)($as['codec'] ?? $media['audioCodec'] ?? ''),
+                 'Channels' => (int)($as['channels'] ?? $media['audioChannels'] ?? 0), 'IsDefault' => true];
+        $type = (string)($m['type'] ?? '');
+        $live = !empty($m['live']);
+        $np = [
+            'Name' => (string)($m['title'] ?? '?'),
+            'Type' => $live ? 'TvChannel' : ($type === 'episode' ? 'Episode' : ($type === 'movie' ? 'Movie' : ucfirst($type))),
+            'SeriesName' => (string)($m['grandparentTitle'] ?? ''),
+            'ParentIndexNumber' => isset($m['parentIndex']) ? (int)$m['parentIndex'] : null,
+            'IndexNumber' => isset($m['index']) ? (int)$m['index'] : null,
+            'ProductionYear' => isset($m['year']) ? (int)$m['year'] : null,
+            'RunTimeTicks' => $live ? 0 : 10000 * (int)($m['duration'] ?? 0),
+            'Container' => (string)($media['container'] ?? ''),
+            'MediaStreams' => $ms,
+        ];
+        if ($live) {
+            // live TV: Plex names the programme; the channel is the source title when given
+            $ch = trim((string)($m['sourceTitle'] ?? $m['grandparentTitle'] ?? ''));
+            $np['Name'] = ($ch !== '') ? $ch : $np['Name'];
+            $np['CurrentProgram'] = ['Name' => (string)($m['title'] ?? '')];
+        }
+        $vd = (string)($ts['videoDecision'] ?? '');
+        $ad = (string)($ts['audioDecision'] ?? '');
+        $method = ($ts === null) ? 'DirectPlay' : ($vd === 'transcode' ? 'Transcode' : 'DirectStream');
+        $ti = null;
+        if ($ts !== null) {
+            $ti = [
+                'IsVideoDirect' => ($vd !== 'transcode'),
+                'IsAudioDirect' => ($ad !== 'transcode'),
+                'VideoCodec' => (string)($ts['videoCodec'] ?? ''),
+                'AudioCodec' => (string)($ts['audioCodec'] ?? ''),
+                'Width' => (int)($ts['width'] ?? 0),
+                'Height' => (int)($ts['height'] ?? 0),
+                'Container' => (string)($ts['container'] ?? ''),
+                'Bitrate' => 1000 * (int)($m['Session']['bandwidth'] ?? 0),
+                // Plex names the hardware encoder (qsv, vaapi ...) when the GPU encodes
+                'HardwareAccelerationType' => (string)($ts['transcodeHwEncoding'] ?? ''),
+                'TranscodeReasons' => [],
+            ];
+        }
+        $pl = is_array($m['Player'] ?? null) ? $m['Player'] : [];
+        $out[] = [
+            'Id' => (string)($m['Session']['id'] ?? $m['sessionKey'] ?? ''),
+            'UserId' => (string)($m['User']['id'] ?? ''),
+            'UserName' => (string)($m['User']['title'] ?? '?'),
+            'DeviceName' => (string)($pl['title'] ?? $pl['device'] ?? '?'),
+            'Client' => trim((string)($pl['product'] ?? '') . ((string)($pl['platform'] ?? '') !== '' ? ' (' . $pl['platform'] . ')' : '')),
+            'ApplicationVersion' => (string)($pl['version'] ?? ''),
+            'NowPlayingItem' => $np,
+            'PlayState' => ['PositionTicks' => 10000 * (int)($m['viewOffset'] ?? 0), 'IsPaused' => (($pl['state'] ?? '') === 'paused'), 'PlayMethod' => $method],
+            'TranscodingInfo' => $ti,
+        ];
+    }
+    if ($dirty) {
+        foreach ($cache as $k => $v) { if ((time() - (int)($v['t'] ?? 0)) > 86400) { unset($cache[$k]); } }
+        @file_put_contents($cf, json_encode($cache));
+    }
+    return $out;
+}
+
 $nick = [];
 $nf = '/boot/config/plugins/streambox/nicknames.json';
 if (is_file($nf)) {
@@ -190,13 +317,14 @@ $trans   = 0;
 $state   = [];   // per server: '' = answered, else the error code
 
 foreach ($srv as $sv => $_) {
-    list($b, $code, $err) = sb_get('/Sessions', $sv);
+    list($b, $code, $err) = sb_get($sv === 'px' ? '/status/sessions' : '/Sessions', $sv);
     $sessions = null;
     if ($err) { $state[$sv] = 'unreachable'; }
     elseif ($code === 401 || $code === 403) { $state[$sv] = 'auth'; }
     elseif ($code !== 200) { $state[$sv] = 'http_' . $code; }
     else {
         $sessions = json_decode((string)$b, true);
+        if ($sv === 'px' && is_array($sessions)) { $sessions = sb_plex_sessions($sessions); }
         $state[$sv] = is_array($sessions) ? '' : 'bad_response';
     }
     if (!is_array($sessions)) { continue; }
@@ -350,6 +478,7 @@ foreach ($srv as $sv => $_) {
     }
 }
 
+$state += $preState;
 // every server failed: the tile shows the error of the first one, as before
 $okSrv = array_keys(array_filter($state, function ($e) { return $e === ''; }));
 if (!$okSrv) { out(['ok' => false, 'error' => (string)reset($state)]); }

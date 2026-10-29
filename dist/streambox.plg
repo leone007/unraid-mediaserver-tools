@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zo">
+<!ENTITY version   "2026.10.14zp">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Plex as a third media server: its streams in Now playing with a PLEX badge (direct play, direct stream, transcode with HW or SW, source quality from the library). The token is read from Plex's own config folder, no copying needed. New Plex block in Settings with a Test button.
+###2026.10.14zo
 - Tile header: every media server in its own compartment with its badge and state dot, Offline or API key next to a server with a problem.
 ###2026.10.14zn
 - Emby transcodes on Quick Sync now show HW instead of SW (Emby tells it per pipeline step, not in the field read before).
@@ -386,6 +388,7 @@ $(function () {
   function chip(id) { var s = SRV[id] || ['', String(id).toUpperCase(), id]; return $('<span class="sb-sv">').addClass(s[0]).text(s[1]); }
   function srvErr(x) {
     var n = (SRV[x.id] || [0, 0, x.id])[2];
+    if (x.error === 'notoken') { return T('now.srv_notoken', { s: n }); }
     return x.error === 'auth' ? T('now.srv_auth', { s: n }) : (x.error === 'unreachable' ? T('now.srv_down', { s: n }) : T('now.srv_err', { s: n, e: x.error }));
   }
   var MODE = {
@@ -449,9 +452,9 @@ $(function () {
     if (multi(r)) {
       // every server in its own compartment: state dot, the same badge as on the rows, and what is wrong (owner's pick A, 2026-10-29)
       $.each(r.servers, function (i, x) {
-        var bad = x.error === 'auth' ? COLOR.amber : COLOR.red;
+        var bad = (x.error === 'auth' || x.error === 'notoken') ? COLOR.amber : COLOR.red;
         var $s = $('<span class="sb-srv">').append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : bad)).append(chip(x.id).css('margin-right', 0));
-        if (!x.ok) { $s.attr('title', srvErr(x)).append($('<span>').css('color', bad).text(x.error === 'auth' ? T('pill.api_key') : T('pill.offline'))); }
+        if (!x.ok) { $s.attr('title', srvErr(x)).append($('<span>').css('color', bad).text((x.error === 'auth' || x.error === 'notoken') ? T('pill.api_key') : T('pill.offline'))); }
         $p.append($s);
       });
     } else {
@@ -494,8 +497,9 @@ $(function () {
       if (!multi(r)) { return; }
       $.each(r.servers, function (i, x) {
         if (x.ok) { return; }
-        $box.append($('<div class="mt-r">').addClass(x.error === 'auth' ? 'mt-s-amber' : 'mt-s-red').css('grid-template-columns', 'auto minmax(0,1fr)')
-          .append(chip(x.id)).append($('<div>').css('color', x.error === 'auth' ? COLOR.amber : COLOR.red).text(srvErr(x))));
+        var key = (x.error === 'auth' || x.error === 'notoken');
+        $box.append($('<div class="mt-r">').addClass(key ? 'mt-s-amber' : 'mt-s-red').css('grid-template-columns', 'auto minmax(0,1fr)')
+          .append(chip(x.id)).append($('<div>').css('color', key ? COLOR.amber : COLOR.red).text(srvErr(x))));
       });
     }
     if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); downRows(); return; }
@@ -791,6 +795,7 @@ $sb_file = '/boot/config/plugins/streambox/settings.cfg';
 $sb = [
   'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
   'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
+  'px_on' => '0', 'px_host' => '127.0.0.1', 'px_port' => '32400', 'px_token' => '', 'px_dir' => '/mnt/cache/docker/plex',
   'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
@@ -918,6 +923,21 @@ if (!function_exists('sb_auto')) {
 
 <dt><?=$sbs_t('set.em_key')?></dt>
 <dd><input type="password" name="em_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['em_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <input type="button" id="sb-etest" value="<?=$sbs_t('set.btn.test_emby')?>"> <span id="sb-emsg"></span> <span class="uset-hint"><?=$sbs_t('set.em_key_hint')?></span></dd>
+</dl>
+
+<h3><?=$sbs_t('set.h.plex')?> <small><?=$sbs_t('set.h.plex_sub')?></small></h3>
+<dl>
+<dt><?=$sbs_t('set.px_on')?></dt>
+<dd><input type="hidden" name="px_on" value="0"><input type="checkbox" name="px_on" value="1" <?=sb_chk($sb['px_on'])?>> <?=$sbs_t('set.px_on_hint')?></dd>
+
+<dt><?=$sbs_t('set.px_host')?></dt>
+<dd><input type="text" name="px_host" class="narrow" value="<?=sb_h($sb['px_host'])?>"> <input type="number" name="px_port" min="1" max="65535" class="narrow" value="<?=sb_h($sb['px_port'])?>"> <span class="uset-hint"><?=$sbs_t('set.px_host_hint')?></span></dd>
+
+<dt><?=$sbs_t('set.px_dir')?></dt>
+<dd><input type="text" name="px_dir" value="<?=sb_h($sb['px_dir'])?>"> <span class="uset-hint"><?=$sbs_t('set.px_dir_hint')?></span></dd>
+
+<dt><?=$sbs_t('set.px_token')?></dt>
+<dd><input type="password" name="px_token" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['px_token'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <input type="button" id="sb-ptest" value="<?=$sbs_t('set.btn.test_plex')?>"> <span id="sb-pmsg"></span> <span class="uset-hint"><?=$sbs_t('set.px_token_hint')?></span></dd>
 </dl>
 
 <h3><?=$sbs_t('week.title')?> <small><?=$sbs_t('set.h.week_sub')?></small></h3>
@@ -1080,20 +1100,26 @@ $(function () {
       })
       .always(function () { $b.prop('disabled', false); });
   });
-  // Emby test: the tile endpoint with the saved settings, its answer for this one server
-  $('#sb-etest').on('click', function () {
-    var $b = $(this).prop('disabled', true), $m = $('#sb-emsg').css('color', '').text(T('set.asking_emby'));
-    $.getJSON('/plugins/streambox/api_fetch.php', { _: Date.now() })
-      .done(function (r) {
-        var x = null;
-        $.each((r && r.servers) || [], function (i, v) { if (v.id === 'em') { x = v; } });
-        if (!x && r && !r.ok && r.error !== 'nokey') { x = { ok: false, error: r.error }; }   // every server failed
-        if (!x) { $m.css('color', '#d9921f').text(T('set.em_test_off')); return; }
-        $m.css('color', x.ok ? '#3fa24a' : '#e5534b').text(x.ok ? T('set.em_test_ok') : (x.error === 'auth' ? T('set.em_test_auth') : T('set.em_test_fail', { e: x.error })));
-      })
-      .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
-      .always(function () { $b.prop('disabled', false); });
-  });
+  // Emby and Plex tests: the tile endpoint with the saved settings, its answer for that one server
+  function srvTest(id, btn, msg, p) {
+    $(btn).on('click', function () {
+      var $b = $(this).prop('disabled', true), $m = $(msg).css('color', '').text(T('set.asking_' + p));
+      $.getJSON('/plugins/streambox/api_fetch.php', { _: Date.now() })
+        .done(function (r) {
+          var x = null;
+          $.each((r && r.servers) || [], function (i, v) { if (v.id === id) { x = v; } });
+          if (!x && r && !r.ok && r.error !== 'nokey') { x = { ok: false, error: r.error }; }   // every server failed
+          if (!x) { $m.css('color', '#d9921f').text(T('set.' + p + '_test_off')); return; }
+          var t = x.ok ? T('set.' + p + '_test_ok') : (x.error === 'auth' ? T('set.' + p + '_test_auth')
+                : (x.error === 'notoken' ? T('set.px_test_notoken') : T('set.' + p + '_test_fail', { e: x.error })));
+          $m.css('color', x.ok ? '#3fa24a' : '#e5534b').text(t);
+        })
+        .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
+        .always(function () { $b.prop('disabled', false); });
+    });
+  }
+  srvTest('em', '#sb-etest', '#sb-emsg', 'em');
+  srvTest('px', '#sb-ptest', '#sb-pmsg', 'px');
   $('#sb-wtest').on('click', function () {
     var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text(T('set.asking_sonarr'));
     $.getJSON('/plugins/streambox/week.php', { test: 1, _: Date.now() })
@@ -1132,6 +1158,7 @@ $sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the sett
 $cfg = [
     'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
     'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
+    'px_on' => '0', 'px_host' => '127.0.0.1', 'px_port' => '32400', 'px_token' => '', 'px_dir' => '/mnt/cache/docker/plex',
     'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
 ];
 $file = '/boot/config/plugins/streambox/settings.cfg';
@@ -1169,6 +1196,28 @@ if (sb_flag($cfg['em_on']) && $emKey !== '') {
     if ($emPort < 1 || $emPort > 65535) { $emPort = 8097; }
     $srv['em'] = ['base' => "http://$emHost:$emPort", 'pre' => '/emby', 'hdr' => 'X-Emby-Token: ' . $emKey];
 }
+// Plex: its own API (/status/sessions), turned into Jellyfin-shaped sessions by sb_plex_sessions(). Without a saved token the
+// server owner's token is read from Plex's Preferences.xml in its config folder, so nobody has to copy it.
+$preState = [];
+if (sb_flag($cfg['px_on'])) {
+    $pxTok = sb_plex_token($cfg);
+    if ($pxTok === '') { $preState['px'] = 'notoken'; }
+    else {
+        $pxHost = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['px_host']) ? $cfg['px_host'] : '127.0.0.1';
+        $pxPort = (int)$cfg['px_port'];
+        if ($pxPort < 1 || $pxPort > 65535) { $pxPort = 32400; }
+        $srv['px'] = ['base' => "http://$pxHost:$pxPort", 'pre' => '', 'hdr' => 'X-Plex-Token: ' . $pxTok];
+    }
+}
+
+function sb_plex_token($cfg) {
+    $t = trim((string)($cfg['px_token'] ?? ''));
+    if ($t !== '') { return preg_match('/^[A-Za-z0-9_\-]{8,64}$/', $t) ? $t : ''; }
+    $dir = rtrim((string)($cfg['px_dir'] ?? ''), '/');
+    if (!preg_match('#^/mnt/[^\0]+$#', $dir) || strpos($dir, '..') !== false) { return ''; }
+    $x = @file_get_contents($dir . '/Library/Application Support/Plex Media Server/Preferences.xml');
+    return ($x !== false && preg_match('/\sPlexOnlineToken="([A-Za-z0-9_\-]{8,64})"/', $x, $m)) ? $m[1] : '';
+}
 
 function out($arr) {
     global $ui;
@@ -1177,7 +1226,7 @@ function out($arr) {
     exit;
 }
 
-if (!$srv) { out(['ok' => false, 'error' => 'nokey']); }
+if (!$srv && !$preState) { out(['ok' => false, 'error' => 'nokey']); }
 
 function sb_get($path, $sv = 'jf') {
     global $srv;
@@ -1299,6 +1348,110 @@ function sb_video($it) {
     return null;
 }
 
+// Plex /status/sessions -> the Jellyfin session shape the loop below reads. Plex gives times in ms, bitrates in kbps.
+// Video and audio decisions come from TranscodeSession; the source file is the library item (one cached call per title).
+function sb_plex_sessions($j) {
+    $list = $j['MediaContainer']['Metadata'] ?? [];
+    if (!is_array($list)) { return null; }
+    $cf = '/tmp/streambox_px_meta.json';
+    $cache = is_file($cf) ? json_decode((string)@file_get_contents($cf), true) : [];
+    if (!is_array($cache)) { $cache = []; }
+    $dirty = false;
+    $out = [];
+    foreach ($list as $m) {
+        if (!is_array($m)) { continue; }
+        $media = $m['Media'][0] ?? [];
+        $ts = is_array($m['TranscodeSession'] ?? null) ? $m['TranscodeSession'] : null;
+        $rk = (string)($m['ratingKey'] ?? '');
+        // during a transcode the session's Media describes the output: take the source from the library item
+        if ($ts !== null && $rk !== '' && ctype_digit($rk)) {
+            if (!isset($cache[$rk]) || (time() - (int)($cache[$rk]['t'] ?? 0)) > 3600) {
+                list($b, $code, $err) = sb_get('/library/metadata/' . $rk, 'px');
+                $md = (!$err && $code === 200) ? json_decode((string)$b, true) : null;
+                $src = $md['MediaContainer']['Metadata'][0]['Media'] ?? null;
+                if (is_array($src)) { $cache[$rk] = ['t' => time(), 'm' => $src]; $dirty = true; }
+            }
+            // the version being played (same Media id), else the first one
+            $srcList = array_values(array_filter((array)($cache[$rk]['m'] ?? []), 'is_array'));
+            $hit = $srcList ? $srcList[0] : null;
+            foreach ($srcList as $cm) {
+                if ((string)($cm['id'] ?? '') !== '' && (string)($cm['id'] ?? '') === (string)($media['id'] ?? '')) { $hit = $cm; break; }
+            }
+            if ($hit !== null) { $media = $hit; }
+        }
+        $vs = null; $as = null;
+        foreach ((array)($media['Part'][0]['Stream'] ?? []) as $st) {
+            if (!is_array($st)) { continue; }
+            $t = (int)($st['streamType'] ?? 0);
+            if ($t === 1 && $vs === null) { $vs = $st; }
+            if ($t === 2 && ($as === null || !empty($st['selected']))) { $as = $st; }
+        }
+        $w = (int)($vs['width'] ?? $media['width'] ?? 0);
+        $h = (int)($vs['height'] ?? $media['height'] ?? 0);
+        $ms = [];
+        $ms[] = ['Type' => 'Video', 'Codec' => (string)($vs['codec'] ?? $media['videoCodec'] ?? ''), 'Width' => $w, 'Height' => $h,
+                 'BitRate' => 1000 * (int)($vs['bitrate'] ?? $media['bitrate'] ?? 0),
+                 'IsInterlaced' => (($vs['scanType'] ?? '') === 'interlaced')];
+        $ms[] = ['Type' => 'Audio', 'Codec' => (string)($as['codec'] ?? $media['audioCodec'] ?? ''),
+                 'Channels' => (int)($as['channels'] ?? $media['audioChannels'] ?? 0), 'IsDefault' => true];
+        $type = (string)($m['type'] ?? '');
+        $live = !empty($m['live']);
+        $np = [
+            'Name' => (string)($m['title'] ?? '?'),
+            'Type' => $live ? 'TvChannel' : ($type === 'episode' ? 'Episode' : ($type === 'movie' ? 'Movie' : ucfirst($type))),
+            'SeriesName' => (string)($m['grandparentTitle'] ?? ''),
+            'ParentIndexNumber' => isset($m['parentIndex']) ? (int)$m['parentIndex'] : null,
+            'IndexNumber' => isset($m['index']) ? (int)$m['index'] : null,
+            'ProductionYear' => isset($m['year']) ? (int)$m['year'] : null,
+            'RunTimeTicks' => $live ? 0 : 10000 * (int)($m['duration'] ?? 0),
+            'Container' => (string)($media['container'] ?? ''),
+            'MediaStreams' => $ms,
+        ];
+        if ($live) {
+            // live TV: Plex names the programme; the channel is the source title when given
+            $ch = trim((string)($m['sourceTitle'] ?? $m['grandparentTitle'] ?? ''));
+            $np['Name'] = ($ch !== '') ? $ch : $np['Name'];
+            $np['CurrentProgram'] = ['Name' => (string)($m['title'] ?? '')];
+        }
+        $vd = (string)($ts['videoDecision'] ?? '');
+        $ad = (string)($ts['audioDecision'] ?? '');
+        $method = ($ts === null) ? 'DirectPlay' : ($vd === 'transcode' ? 'Transcode' : 'DirectStream');
+        $ti = null;
+        if ($ts !== null) {
+            $ti = [
+                'IsVideoDirect' => ($vd !== 'transcode'),
+                'IsAudioDirect' => ($ad !== 'transcode'),
+                'VideoCodec' => (string)($ts['videoCodec'] ?? ''),
+                'AudioCodec' => (string)($ts['audioCodec'] ?? ''),
+                'Width' => (int)($ts['width'] ?? 0),
+                'Height' => (int)($ts['height'] ?? 0),
+                'Container' => (string)($ts['container'] ?? ''),
+                'Bitrate' => 1000 * (int)($m['Session']['bandwidth'] ?? 0),
+                // Plex names the hardware encoder (qsv, vaapi ...) when the GPU encodes
+                'HardwareAccelerationType' => (string)($ts['transcodeHwEncoding'] ?? ''),
+                'TranscodeReasons' => [],
+            ];
+        }
+        $pl = is_array($m['Player'] ?? null) ? $m['Player'] : [];
+        $out[] = [
+            'Id' => (string)($m['Session']['id'] ?? $m['sessionKey'] ?? ''),
+            'UserId' => (string)($m['User']['id'] ?? ''),
+            'UserName' => (string)($m['User']['title'] ?? '?'),
+            'DeviceName' => (string)($pl['title'] ?? $pl['device'] ?? '?'),
+            'Client' => trim((string)($pl['product'] ?? '') . ((string)($pl['platform'] ?? '') !== '' ? ' (' . $pl['platform'] . ')' : '')),
+            'ApplicationVersion' => (string)($pl['version'] ?? ''),
+            'NowPlayingItem' => $np,
+            'PlayState' => ['PositionTicks' => 10000 * (int)($m['viewOffset'] ?? 0), 'IsPaused' => (($pl['state'] ?? '') === 'paused'), 'PlayMethod' => $method],
+            'TranscodingInfo' => $ti,
+        ];
+    }
+    if ($dirty) {
+        foreach ($cache as $k => $v) { if ((time() - (int)($v['t'] ?? 0)) > 86400) { unset($cache[$k]); } }
+        @file_put_contents($cf, json_encode($cache));
+    }
+    return $out;
+}
+
 $nick = [];
 $nf = '/boot/config/plugins/streambox/nicknames.json';
 if (is_file($nf)) {
@@ -1315,13 +1468,14 @@ $trans   = 0;
 $state   = [];   // per server: '' = answered, else the error code
 
 foreach ($srv as $sv => $_) {
-    list($b, $code, $err) = sb_get('/Sessions', $sv);
+    list($b, $code, $err) = sb_get($sv === 'px' ? '/status/sessions' : '/Sessions', $sv);
     $sessions = null;
     if ($err) { $state[$sv] = 'unreachable'; }
     elseif ($code === 401 || $code === 403) { $state[$sv] = 'auth'; }
     elseif ($code !== 200) { $state[$sv] = 'http_' . $code; }
     else {
         $sessions = json_decode((string)$b, true);
+        if ($sv === 'px' && is_array($sessions)) { $sessions = sb_plex_sessions($sessions); }
         $state[$sv] = is_array($sessions) ? '' : 'bad_response';
     }
     if (!is_array($sessions)) { continue; }
@@ -1475,6 +1629,7 @@ foreach ($srv as $sv => $_) {
     }
 }
 
+$state += $preState;
 // every server failed: the tile shows the error of the first one, as before
 $okSrv = array_keys(array_filter($state, function ($e) { return $e === ''; }));
 if (!$okSrv) { out(['ok' => false, 'error' => (string)reset($state)]); }
@@ -1720,6 +1875,13 @@ if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $emKey)) { sb_out(false, ['error' 
 $emHost = trim((string)($_POST['em_host'] ?? '127.0.0.1'));
 if (!preg_match('/^[A-Za-z0-9.\-]+$/', $emHost)) { $emHost = '127.0.0.1'; }
 
+$pxTok = sb_keep('px_token', $old);
+if ($pxTok !== '' && !preg_match('/^[A-Za-z0-9_\-]{8,64}$/', $pxTok)) { sb_out(false, ['error' => $sbx_T('save.err_px_token')]); }
+$pxHost = trim((string)($_POST['px_host'] ?? '127.0.0.1'));
+if (!preg_match('/^[A-Za-z0-9.\-]+$/', $pxHost)) { $pxHost = '127.0.0.1'; }
+$pxDir = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['px_dir'] ?? '/mnt/cache/docker/plex'))), '/');
+if (!preg_match('#^/mnt/.+#', $pxDir) || strpos($pxDir, '..') !== false) { sb_out(false, ['error' => $sbx_T('save.err_px_dir')]); }
+
 $url = trim(str_replace(["\r", "\n", "\0"], '', (string)($_POST['jf_url'] ?? '')));
 if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => $sbx_T('save.err_url')]); }
 
@@ -1756,6 +1918,11 @@ $new = [
     'em_host'     => $emHost,
     'em_port'     => (string)sb_int($_POST['em_port'] ?? 8097, 1, 65535, 8097),
     'em_key'      => $emKey,
+    'px_on'       => sb_bool($_POST['px_on'] ?? '0'),
+    'px_host'     => $pxHost,
+    'px_port'     => (string)sb_int($_POST['px_port'] ?? 32400, 1, 65535, 32400),
+    'px_token'    => $pxTok,
+    'px_dir'      => $pxDir,
     'streams_max' => (string)sb_int($_POST['streams_max'] ?? 8, 1, 30, 8),
     'added_rows'  => (string)sb_int($_POST['added_rows'] ?? 5, 0, 20, 5),
     'show_load'   => sb_bool($_POST['show_load'] ?? '1'),
@@ -1822,13 +1989,14 @@ if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UN
     sb_out(false, ['error' => $sbx_T('save.err_nick')]);
 }
 @unlink('/tmp/streambox_added.json');
+@unlink('/tmp/streambox_px_meta.json');
 @unlink('/tmp/streambox_week.json');
 @unlink('/tmp/streambox_delay.json');
 // switched on again: start counting from now, do not announce what was added while it was off
 if ($oldNotify !== '1' && $newNotify === '1') { @unlink($dir . '/notify_state.json'); }
 
 $shown = $new;
-unset($shown['jf_key'], $shown['em_key'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
+unset($shown['jf_key'], $shown['em_key'], $shown['px_token'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
 sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);
 ]]></INLINE>
 </FILE>
@@ -3598,7 +3766,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "tooltip: Jellyfin gave no reason."
  },
  "info.no_details": {
-  "text": "Jellyfin reported no transcoding details for this stream",
+  "text": "The server reported no transcoding details for this stream",
   "note": "tooltip line."
  },
  "info.client": {
@@ -4322,7 +4490,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Test Emby",
   "note": "button that asks Emby with the saved settings."
  },
- "set.asking_emby": {
+ "set.asking_em": {
   "text": "Asking Emby…",
   "note": "text next to the Test Emby button while waiting."
  },
@@ -4344,6 +4512,86 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "save.err_em_key": {
   "text": "The Emby API key may only contain letters, digits, dots, dashes and underscores.",
+  "note": "error text when saving the settings."
+ },
+ "now.srv_notoken": {
+  "text": "{s}: no token, check Settings",
+  "note": "row at the end of the Now playing list when Plex is switched on but no token was found ({s} = Plex)."
+ },
+ "set.h.plex": {
+  "text": "Plex",
+  "note": "band title of the Plex settings block (product name)."
+ },
+ "set.h.plex_sub": {
+  "text": "Now playing from Plex Media Server",
+  "note": "small grey text on the right of the Plex band."
+ },
+ "set.px_on": {
+  "text": "Show Plex streams:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.px_on_hint": {
+  "text": "the tile lists Plex's streams with a server badge on each row",
+  "note": "hint next to the checkbox."
+ },
+ "set.px_host": {
+  "text": "Plex host and port:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.px_host_hint": {
+  "text": "as seen from Unraid; the official Plex container runs on the host network on port 32400",
+  "note": "hint line under the host and port fields."
+ },
+ "set.px_dir": {
+  "text": "Plex config folder:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.px_dir_hint": {
+  "text": "the host folder mapped to /config of the Plex container; Streambox reads the server's token from Preferences.xml in it",
+  "note": "hint line under the folder field."
+ },
+ "set.px_token": {
+  "text": "Plex token (optional):",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.px_token_hint": {
+  "text": "leave empty to use the token from the config folder above; enter one only if Plex runs on another machine. Apply before you press Test.",
+  "note": "hint line under the token field and the Test button."
+ },
+ "set.btn.test_plex": {
+  "text": "Test Plex",
+  "note": "button that asks Plex with the saved settings."
+ },
+ "set.asking_px": {
+  "text": "Asking Plex…",
+  "note": "text next to the Test Plex button while waiting."
+ },
+ "set.px_test_ok": {
+  "text": "Plex answers, its streams will show on the tile",
+  "note": "result of the Plex test, success."
+ },
+ "set.px_test_auth": {
+  "text": "Plex refuses the token",
+  "note": "result of the Plex test when the token is wrong."
+ },
+ "set.px_test_fail": {
+  "text": "Plex does not answer ({e})",
+  "note": "result of the Plex test; {e} is a short code such as unreachable or http_404."
+ },
+ "set.px_test_off": {
+  "text": "Plex is off: tick Show Plex streams, Apply",
+  "note": "result of the Plex test when Plex is not switched on."
+ },
+ "set.px_test_notoken": {
+  "text": "No Plex token: Preferences.xml was not found in the config folder, or it has no PlexOnlineToken (sign in to the server first)",
+  "note": "result of the Plex test when no token could be read."
+ },
+ "save.err_px_token": {
+  "text": "The Plex token may only contain letters, digits, dashes and underscores (8 to 64 characters).",
+  "note": "error text when saving the settings."
+ },
+ "save.err_px_dir": {
+  "text": "The Plex config folder must be a folder under /mnt/.",
   "note": "error text when saving the settings."
  }
 }
@@ -4748,7 +4996,7 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "nincs megadva"
  },
  "info.no_details": {
-  "text": "A Jellyfin nem adott átkódolási részleteket ehhez a lejátszáshoz"
+  "text": "A szerver nem küldött átkódolási részleteket ehhez a lejátszáshoz"
  },
  "info.client": {
   "text": "Kliens: {c}"
@@ -5292,7 +5540,7 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.btn.test_emby": {
   "text": "Emby teszt"
  },
- "set.asking_emby": {
+ "set.asking_em": {
   "text": "Kérdezem az Embyt…"
  },
  "set.em_test_ok": {
@@ -5309,6 +5557,66 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "save.err_em_key": {
   "text": "Az Emby API-kulcsban csak betű, szám, pont, kötőjel és aláhúzás lehet."
+ },
+ "now.srv_notoken": {
+  "text": "{s}: nincs token, nézd meg a beállításokat"
+ },
+ "set.h.plex": {
+  "text": "Plex"
+ },
+ "set.h.plex_sub": {
+  "text": "Lejátszások a Plex Media Serverről"
+ },
+ "set.px_on": {
+  "text": "Plex lejátszások mutatása:"
+ },
+ "set.px_on_hint": {
+  "text": "a csempe a Plex lejátszásait is mutatja, minden soron a szerver jelvényével"
+ },
+ "set.px_host": {
+  "text": "Plex cím és port:"
+ },
+ "set.px_host_hint": {
+  "text": "az Unraid felől nézve; a hivatalos Plex konténer host hálózaton fut, a 32400-as porton"
+ },
+ "set.px_dir": {
+  "text": "Plex config mappa:"
+ },
+ "set.px_dir_hint": {
+  "text": "a Plex konténer /config mappájának host oldali helye; a Streambox az itteni Preferences.xml-ből olvassa a szerver tokenjét"
+ },
+ "set.px_token": {
+  "text": "Plex token (nem kötelező):"
+ },
+ "set.px_token_hint": {
+  "text": "hagyd üresen, akkor a fenti config mappából olvassa; csak akkor írd be, ha a Plex másik gépen fut. A Test előtt nyomj Apply-t."
+ },
+ "set.btn.test_plex": {
+  "text": "Plex teszt"
+ },
+ "set.asking_px": {
+  "text": "Kérdezem a Plexet…"
+ },
+ "set.px_test_ok": {
+  "text": "A Plex válaszol, a lejátszásai megjelennek a csempén"
+ },
+ "set.px_test_auth": {
+  "text": "A Plex nem fogadja el a tokent"
+ },
+ "set.px_test_fail": {
+  "text": "A Plex nem válaszol ({e})"
+ },
+ "set.px_test_off": {
+  "text": "A Plex ki van kapcsolva: pipáld be, Apply"
+ },
+ "set.px_test_notoken": {
+  "text": "Nincs Plex token: a config mappában nincs Preferences.xml, vagy nincs benne PlexOnlineToken (előbb jelentkezz be a szerverre)"
+ },
+ "save.err_px_token": {
+  "text": "A Plex tokenben csak betű, szám, kötőjel és aláhúzás lehet (8-64 karakter)."
+ },
+ "save.err_px_dir": {
+  "text": "A Plex config mappának a /mnt/ alatt kell lennie."
  }
 }
 ]]></INLINE>

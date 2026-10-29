@@ -46,6 +46,13 @@ if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $emKey)) { sb_out(false, ['error' 
 $emHost = trim((string)($_POST['em_host'] ?? '127.0.0.1'));
 if (!preg_match('/^[A-Za-z0-9.\-]+$/', $emHost)) { $emHost = '127.0.0.1'; }
 
+$pxTok = sb_keep('px_token', $old);
+if ($pxTok !== '' && !preg_match('/^[A-Za-z0-9_\-]{8,64}$/', $pxTok)) { sb_out(false, ['error' => $sbx_T('save.err_px_token')]); }
+$pxHost = trim((string)($_POST['px_host'] ?? '127.0.0.1'));
+if (!preg_match('/^[A-Za-z0-9.\-]+$/', $pxHost)) { $pxHost = '127.0.0.1'; }
+$pxDir = rtrim(trim(str_replace(["\r", "\n", "\0", '"'], '', (string)($_POST['px_dir'] ?? '/mnt/cache/docker/plex'))), '/');
+if (!preg_match('#^/mnt/.+#', $pxDir) || strpos($pxDir, '..') !== false) { sb_out(false, ['error' => $sbx_T('save.err_px_dir')]); }
+
 $url = trim(str_replace(["\r", "\n", "\0"], '', (string)($_POST['jf_url'] ?? '')));
 if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => $sbx_T('save.err_url')]); }
 
@@ -82,6 +89,11 @@ $new = [
     'em_host'     => $emHost,
     'em_port'     => (string)sb_int($_POST['em_port'] ?? 8097, 1, 65535, 8097),
     'em_key'      => $emKey,
+    'px_on'       => sb_bool($_POST['px_on'] ?? '0'),
+    'px_host'     => $pxHost,
+    'px_port'     => (string)sb_int($_POST['px_port'] ?? 32400, 1, 65535, 32400),
+    'px_token'    => $pxTok,
+    'px_dir'      => $pxDir,
     'streams_max' => (string)sb_int($_POST['streams_max'] ?? 8, 1, 30, 8),
     'added_rows'  => (string)sb_int($_POST['added_rows'] ?? 5, 0, 20, 5),
     'show_load'   => sb_bool($_POST['show_load'] ?? '1'),
@@ -148,11 +160,12 @@ if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UN
     sb_out(false, ['error' => $sbx_T('save.err_nick')]);
 }
 @unlink('/tmp/streambox_added.json');
+@unlink('/tmp/streambox_px_meta.json');
 @unlink('/tmp/streambox_week.json');
 @unlink('/tmp/streambox_delay.json');
 // switched on again: start counting from now, do not announce what was added while it was off
 if ($oldNotify !== '1' && $newNotify === '1') { @unlink($dir . '/notify_state.json'); }
 
 $shown = $new;
-unset($shown['jf_key'], $shown['em_key'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
+unset($shown['jf_key'], $shown['em_key'], $shown['px_token'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
 sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);

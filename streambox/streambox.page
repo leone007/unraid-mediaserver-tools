@@ -114,6 +114,7 @@ $(function () {
   function chip(id) { var s = SRV[id] || ['', String(id).toUpperCase(), id]; return $('<span class="sb-sv">').addClass(s[0]).text(s[1]); }
   function srvErr(x) {
     var n = (SRV[x.id] || [0, 0, x.id])[2];
+    if (x.error === 'notoken') { return T('now.srv_notoken', { s: n }); }
     return x.error === 'auth' ? T('now.srv_auth', { s: n }) : (x.error === 'unreachable' ? T('now.srv_down', { s: n }) : T('now.srv_err', { s: n, e: x.error }));
   }
   var MODE = {
@@ -177,9 +178,9 @@ $(function () {
     if (multi(r)) {
       // every server in its own compartment: state dot, the same badge as on the rows, and what is wrong (owner's pick A, 2026-10-29)
       $.each(r.servers, function (i, x) {
-        var bad = x.error === 'auth' ? COLOR.amber : COLOR.red;
+        var bad = (x.error === 'auth' || x.error === 'notoken') ? COLOR.amber : COLOR.red;
         var $s = $('<span class="sb-srv">').append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : bad)).append(chip(x.id).css('margin-right', 0));
-        if (!x.ok) { $s.attr('title', srvErr(x)).append($('<span>').css('color', bad).text(x.error === 'auth' ? T('pill.api_key') : T('pill.offline'))); }
+        if (!x.ok) { $s.attr('title', srvErr(x)).append($('<span>').css('color', bad).text((x.error === 'auth' || x.error === 'notoken') ? T('pill.api_key') : T('pill.offline'))); }
         $p.append($s);
       });
     } else {
@@ -222,8 +223,9 @@ $(function () {
       if (!multi(r)) { return; }
       $.each(r.servers, function (i, x) {
         if (x.ok) { return; }
-        $box.append($('<div class="mt-r">').addClass(x.error === 'auth' ? 'mt-s-amber' : 'mt-s-red').css('grid-template-columns', 'auto minmax(0,1fr)')
-          .append(chip(x.id)).append($('<div>').css('color', x.error === 'auth' ? COLOR.amber : COLOR.red).text(srvErr(x))));
+        var key = (x.error === 'auth' || x.error === 'notoken');
+        $box.append($('<div class="mt-r">').addClass(key ? 'mt-s-amber' : 'mt-s-red').css('grid-template-columns', 'auto minmax(0,1fr)')
+          .append(chip(x.id)).append($('<div>').css('color', key ? COLOR.amber : COLOR.red).text(srvErr(x))));
       });
     }
     if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); downRows(); return; }
