@@ -902,5 +902,59 @@
  },
  "ww.program": {
   "text": "Műsor: {t}"
+ },
+ "now.srv_down": {
+  "text": "{s}: nem érhető el"
+ },
+ "now.srv_auth": {
+  "text": "{s}: elutasítja az API-kulcsot, nézd meg a beállításokat"
+ },
+ "now.srv_err": {
+  "text": "{s}: hiba ({e})"
+ },
+ "set.h.emby": {
+  "text": "Emby"
+ },
+ "set.h.emby_sub": {
+  "text": "Lejátszások egy második médiaszerverről"
+ },
+ "set.em_on": {
+  "text": "Emby lejátszások mutatása:"
+ },
+ "set.em_on_hint": {
+  "text": "a csempe a Jellyfiné mellett az Emby lejátszásait is mutatja, minden soron a szerver jelvényével"
+ },
+ "set.em_host": {
+  "text": "Emby cím és port:"
+ },
+ "set.em_host_hint": {
+  "text": "az Unraid felől nézve; az Emby konténer 8096-os portját általában a 8097-re tesszük, mert a 8096 a Jellyfiné"
+ },
+ "set.em_key": {
+  "text": "Emby API-kulcs:"
+ },
+ "set.em_key_hint": {
+  "text": "Emby: Settings, Advanced, API Keys, New API Key. A Test előtt nyomj Apply-t."
+ },
+ "set.btn.test_emby": {
+  "text": "Emby teszt"
+ },
+ "set.asking_emby": {
+  "text": "Kérdezem az Embyt…"
+ },
+ "set.em_test_ok": {
+  "text": "Az Emby válaszol, a lejátszásai megjelennek a csempén"
+ },
+ "set.em_test_auth": {
+  "text": "Az Emby nem fogadja el ezt az API-kulcsot"
+ },
+ "set.em_test_fail": {
+  "text": "Az Emby nem válaszol ({e})"
+ },
+ "set.em_test_off": {
+  "text": "Az Emby ki van kapcsolva, vagy nincs mentett kulcs: pipáld be, írd be a kulcsot, Apply"
+ },
+ "save.err_em_key": {
+  "text": "Az Emby API-kulcsban csak betű, szám, pont, kötőjel és aláhúzás lehet."
  }
 }

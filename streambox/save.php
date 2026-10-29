@@ -41,6 +41,11 @@ function sb_keep($name, $old) { $v = trim((string)($_POST[$name] ?? '')); return
 $key = sb_keep('jf_key', $old);
 if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $key)) { sb_out(false, ['error' => $sbx_T('save.err_key')]); }
 
+$emKey = sb_keep('em_key', $old);
+if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $emKey)) { sb_out(false, ['error' => $sbx_T('save.err_em_key')]); }
+$emHost = trim((string)($_POST['em_host'] ?? '127.0.0.1'));
+if (!preg_match('/^[A-Za-z0-9.\-]+$/', $emHost)) { $emHost = '127.0.0.1'; }
+
 $url = trim(str_replace(["\r", "\n", "\0"], '', (string)($_POST['jf_url'] ?? '')));
 if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => $sbx_T('save.err_url')]); }
 
@@ -73,6 +78,10 @@ $new = [
     'jf_port'     => (string)sb_int($_POST['jf_port'] ?? 8096, 1, 65535, 8096),
     'jf_key'      => $key,
     'jf_url'      => $url,
+    'em_on'       => sb_bool($_POST['em_on'] ?? '0'),
+    'em_host'     => $emHost,
+    'em_port'     => (string)sb_int($_POST['em_port'] ?? 8097, 1, 65535, 8097),
+    'em_key'      => $emKey,
     'streams_max' => (string)sb_int($_POST['streams_max'] ?? 8, 1, 30, 8),
     'added_rows'  => (string)sb_int($_POST['added_rows'] ?? 5, 0, 20, 5),
     'show_load'   => sb_bool($_POST['show_load'] ?? '1'),
@@ -145,5 +154,5 @@ if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UN
 if ($oldNotify !== '1' && $newNotify === '1') { @unlink($dir . '/notify_state.json'); }
 
 $shown = $new;
-unset($shown['jf_key'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
+unset($shown['jf_key'], $shown['em_key'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
 sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);

@@ -88,6 +88,9 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-t-amber{background:rgba(224,160,48,.22);color:#d9921f}
 .sb-t-red{background:rgba(229,83,75,.22);color:#e5534b}
 .sb-t-grey{background:rgba(128,128,128,.2);color:inherit;opacity:.8}
+.sb-sv{display:inline-block;vertical-align:1px;font-size:10px;font-weight:600;letter-spacing:.06em;padding:0 5px;border-radius:3px;border:1px solid currentColor;line-height:1.5;margin-right:5px;white-space:nowrap}
+.sb-sv-jf{color:#b57de0}.sb-sv-em{color:#5cc451}.sb-sv-px{color:#e5b40d}
+.sb-pill i.sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
 .sb-v{font-family:bitstream,monospace;font-size:18px;margin:4px 0 6px}
 </style>
 <script>
@@ -100,6 +103,14 @@ $(function () {
   var COLOR = { red: '#e5534b', amber: '#d9921f', green: '#3fa24a', blue: '#4a90e2', grey: '#8a8a8a', orange: '#f5a524' };
   var TYPE_ICON = { Movie: 'fa-film', Episode: 'fa-television', Season: 'fa-television', Audio: 'fa-music',
     TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
+  // media servers (item 92): the badge text is the product name, not translated
+  var SRV = { jf: ['sb-sv-jf', 'JELLYFIN', 'Jellyfin'], em: ['sb-sv-em', 'EMBY', 'Emby'], px: ['sb-sv-px', 'PLEX', 'Plex'] };
+  function multi(r) { return !!(r && r.servers && r.servers.length > 1); }
+  function chip(id) { var s = SRV[id] || ['', String(id).toUpperCase(), id]; return $('<span class="sb-sv">').addClass(s[0]).text(s[1]); }
+  function srvErr(x) {
+    var n = (SRV[x.id] || [0, 0, x.id])[2];
+    return x.error === 'auth' ? T('now.srv_auth', { s: n }) : (x.error === 'unreachable' ? T('now.srv_down', { s: n }) : T('now.srv_err', { s: n, e: x.error }));
+  }
   var MODE = {
     DirectPlay:   ['sb-play', T('mode.direct_play')],
     DirectStream: ['sb-stream', T('mode.direct_stream')],
@@ -158,7 +169,18 @@ $(function () {
     var st = ok ? [COLOR.green, 'fa-server', T('pill.online')]
          : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', T('pill.api_key')]
          : [COLOR.red, 'fa-chain-broken', T('pill.offline')];
-    $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
+    if (multi(r)) {
+      // one dot per server instead of the single online state
+      var $s = $('<span>');
+      $.each(r.servers, function (i, x) {
+        $s.append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : (x.error === 'auth' ? COLOR.amber : COLOR.red)))
+          .append(document.createTextNode((SRV[x.id] || [0, x.id])[1] + ' '));
+        if (!x.ok) { $s.attr('title', ($s.attr('title') ? $s.attr('title') + '\n' : '') + srvErr(x)); }
+      });
+      $p.append($s);
+    } else {
+      $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
+    }
     if (ok) {
       var n = r.streams_total || 0;
       if (n > 0) {
@@ -191,7 +213,16 @@ $(function () {
     var t = '18px minmax(0,1fr) 64px 84px 120px';
     $n.append(band(T('now.title') + ' \u00B7 ' + r.streams_total, '', true));
     var $box = $('<div class="mt-box">').appendTo($n);
-    if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); return; }
+    // a server that does not answer gets a quiet row at the end of the list; the other servers' streams stay
+    function downRows() {
+      if (!multi(r)) { return; }
+      $.each(r.servers, function (i, x) {
+        if (x.ok) { return; }
+        $box.append($('<div class="mt-r">').addClass(x.error === 'auth' ? 'mt-s-amber' : 'mt-s-red').css('grid-template-columns', 'auto minmax(0,1fr)')
+          .append(chip(x.id)).append($('<div>').css('color', x.error === 'auth' ? COLOR.amber : COLOR.red).text(srvErr(x))));
+      });
+    }
+    if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); downRows(); return; }
     $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
       .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.user'))).append($('<div>').text(T('col.device')))
       .append($('<div>').css('color', COLOR.orange).text(T('col.mode'))));
@@ -219,7 +250,9 @@ $(function () {
         if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
         else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
       }
-      $row.append($('<div>').append($('<div class="sb-nm">').attr('title', x.title).text(x.title)).append($pl));
+      var $nm = $('<div class="sb-nm">').attr('title', x.title);
+      if (multi(r)) { $nm.append(chip(x.srv)); }
+      $row.append($('<div>').append($nm.append(document.createTextNode(x.title))).append($pl));
 
       $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
       $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
@@ -227,6 +260,7 @@ $(function () {
         .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
       $box.append($row);
     });
+    downRows();
   }
 
   function renderAdded(r, href) {

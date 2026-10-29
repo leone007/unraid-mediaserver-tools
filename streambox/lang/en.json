@@ -1200,5 +1200,77 @@
  "ww.program": {
   "text": "Program: {t}",
   "note": "Dashboard tile, Live TV stream tooltip: the programme time."
+ },
+ "now.srv_down": {
+  "text": "{s}: not reachable",
+  "note": "row at the end of the Now playing list when one media server ({s} = Jellyfin, Emby or Plex) does not answer; the other servers' streams are still shown."
+ },
+ "now.srv_auth": {
+  "text": "{s}: API key rejected, check Settings",
+  "note": "row at the end of the Now playing list when a media server ({s}) refuses the saved API key."
+ },
+ "now.srv_err": {
+  "text": "{s}: error ({e})",
+  "note": "row at the end of the Now playing list; {e} is a short technical code such as http_500."
+ },
+ "set.h.emby": {
+  "text": "Emby",
+  "note": "band title of the Emby settings block (product name)."
+ },
+ "set.h.emby_sub": {
+  "text": "Now playing from a second media server",
+  "note": "small grey text on the right of the Emby band."
+ },
+ "set.em_on": {
+  "text": "Show Emby streams:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.em_on_hint": {
+  "text": "the tile lists Emby's streams next to Jellyfin's, with a server badge on each row",
+  "note": "hint next to the checkbox."
+ },
+ "set.em_host": {
+  "text": "Emby host and port:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.em_host_hint": {
+  "text": "as seen from Unraid; the Emby container usually maps its 8096 to 8097 on the host, because Jellyfin uses 8096",
+  "note": "hint line under the host and port fields."
+ },
+ "set.em_key": {
+  "text": "Emby API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.em_key_hint": {
+  "text": "Emby: Settings, Advanced, API Keys, New API Key. Apply before you press Test.",
+  "note": "hint line under the API key field and the Test button."
+ },
+ "set.btn.test_emby": {
+  "text": "Test Emby",
+  "note": "button that asks Emby with the saved settings."
+ },
+ "set.asking_emby": {
+  "text": "Asking Emby…",
+  "note": "text next to the Test Emby button while waiting."
+ },
+ "set.em_test_ok": {
+  "text": "Emby answers, its streams will show on the tile",
+  "note": "result of the Emby test, success."
+ },
+ "set.em_test_auth": {
+  "text": "Emby refuses this API key",
+  "note": "result of the Emby test when the key is wrong."
+ },
+ "set.em_test_fail": {
+  "text": "Emby does not answer ({e})",
+  "note": "result of the Emby test; {e} is a short code such as unreachable or http_404."
+ },
+ "set.em_test_off": {
+  "text": "Emby is off or has no saved API key: tick Show Emby streams, enter the key, Apply",
+  "note": "result of the Emby test when Emby is not set up."
+ },
+ "save.err_em_key": {
+  "text": "The Emby API key may only contain letters, digits, dots, dashes and underscores.",
+  "note": "error text when saving the settings."
  }
 }

@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zl">
+<!ENTITY version   "2026.10.14zm">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Emby as a second media server: its streams show in Now playing with a server badge (JELLYFIN, EMBY), the header shows one dot per server, and a server that does not answer gets a quiet row instead of an error on the whole tile. New Emby block in Settings with a Test button. Recently added stays from Jellyfin.
+###2026.10.14zl
 - Dashboard tile: Now playing order also stays steady for streams first seen at the same moment (after an install both took turns on top)
 ###2026.10.14zk
 - Dashboard tile: Now playing keeps a steady order, the stream started first on top and a new one at the bottom; paused streams stay below the playing ones (the rows used to swap places at every progress report)
@@ -354,6 +356,9 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-t-amber{background:rgba(224,160,48,.22);color:#d9921f}
 .sb-t-red{background:rgba(229,83,75,.22);color:#e5534b}
 .sb-t-grey{background:rgba(128,128,128,.2);color:inherit;opacity:.8}
+.sb-sv{display:inline-block;vertical-align:1px;font-size:10px;font-weight:600;letter-spacing:.06em;padding:0 5px;border-radius:3px;border:1px solid currentColor;line-height:1.5;margin-right:5px;white-space:nowrap}
+.sb-sv-jf{color:#b57de0}.sb-sv-em{color:#5cc451}.sb-sv-px{color:#e5b40d}
+.sb-pill i.sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
 .sb-v{font-family:bitstream,monospace;font-size:18px;margin:4px 0 6px}
 </style>
 <script>
@@ -366,6 +371,14 @@ $(function () {
   var COLOR = { red: '#e5534b', amber: '#d9921f', green: '#3fa24a', blue: '#4a90e2', grey: '#8a8a8a', orange: '#f5a524' };
   var TYPE_ICON = { Movie: 'fa-film', Episode: 'fa-television', Season: 'fa-television', Audio: 'fa-music',
     TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
+  // media servers (item 92): the badge text is the product name, not translated
+  var SRV = { jf: ['sb-sv-jf', 'JELLYFIN', 'Jellyfin'], em: ['sb-sv-em', 'EMBY', 'Emby'], px: ['sb-sv-px', 'PLEX', 'Plex'] };
+  function multi(r) { return !!(r && r.servers && r.servers.length > 1); }
+  function chip(id) { var s = SRV[id] || ['', String(id).toUpperCase(), id]; return $('<span class="sb-sv">').addClass(s[0]).text(s[1]); }
+  function srvErr(x) {
+    var n = (SRV[x.id] || [0, 0, x.id])[2];
+    return x.error === 'auth' ? T('now.srv_auth', { s: n }) : (x.error === 'unreachable' ? T('now.srv_down', { s: n }) : T('now.srv_err', { s: n, e: x.error }));
+  }
   var MODE = {
     DirectPlay:   ['sb-play', T('mode.direct_play')],
     DirectStream: ['sb-stream', T('mode.direct_stream')],
@@ -424,7 +437,18 @@ $(function () {
     var st = ok ? [COLOR.green, 'fa-server', T('pill.online')]
          : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', T('pill.api_key')]
          : [COLOR.red, 'fa-chain-broken', T('pill.offline')];
-    $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
+    if (multi(r)) {
+      // one dot per server instead of the single online state
+      var $s = $('<span>');
+      $.each(r.servers, function (i, x) {
+        $s.append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : (x.error === 'auth' ? COLOR.amber : COLOR.red)))
+          .append(document.createTextNode((SRV[x.id] || [0, x.id])[1] + ' '));
+        if (!x.ok) { $s.attr('title', ($s.attr('title') ? $s.attr('title') + '\n' : '') + srvErr(x)); }
+      });
+      $p.append($s);
+    } else {
+      $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
+    }
     if (ok) {
       var n = r.streams_total || 0;
       if (n > 0) {
@@ -457,7 +481,16 @@ $(function () {
     var t = '18px minmax(0,1fr) 64px 84px 120px';
     $n.append(band(T('now.title') + ' \u00B7 ' + r.streams_total, '', true));
     var $box = $('<div class="mt-box">').appendTo($n);
-    if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); return; }
+    // a server that does not answer gets a quiet row at the end of the list; the other servers' streams stay
+    function downRows() {
+      if (!multi(r)) { return; }
+      $.each(r.servers, function (i, x) {
+        if (x.ok) { return; }
+        $box.append($('<div class="mt-r">').addClass(x.error === 'auth' ? 'mt-s-amber' : 'mt-s-red').css('grid-template-columns', 'auto minmax(0,1fr)')
+          .append(chip(x.id)).append($('<div>').css('color', x.error === 'auth' ? COLOR.amber : COLOR.red).text(srvErr(x))));
+      });
+    }
+    if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); downRows(); return; }
     $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
       .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.user'))).append($('<div>').text(T('col.device')))
       .append($('<div>').css('color', COLOR.orange).text(T('col.mode'))));
@@ -485,7 +518,9 @@ $(function () {
         if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
         else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
       }
-      $row.append($('<div>').append($('<div class="sb-nm">').attr('title', x.title).text(x.title)).append($pl));
+      var $nm = $('<div class="sb-nm">').attr('title', x.title);
+      if (multi(r)) { $nm.append(chip(x.srv)); }
+      $row.append($('<div>').append($nm.append(document.createTextNode(x.title))).append($pl));
 
       $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
       $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
@@ -493,6 +528,7 @@ $(function () {
         .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
       $box.append($row);
     });
+    downRows();
   }
 
   function renderAdded(r, href) {
@@ -746,6 +782,7 @@ $sbs_t = function ($k, $v = []) use ($sbs_T) { return htmlspecialchars($sbs_T($k
 $sb_file = '/boot/config/plugins/streambox/settings.cfg';
 $sb = [
   'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
+  'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
   'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
@@ -861,6 +898,18 @@ if (!function_exists('sb_auto')) {
 
 <dt><?=$sbs_t('set.socket_id')?></dt>
 <dd><input type="number" name="socket_id" min="0" max="3" class="narrow" value="<?=sb_h($sb['socket_id'])?>"></dd>
+</dl>
+
+<h3><?=$sbs_t('set.h.emby')?> <small><?=$sbs_t('set.h.emby_sub')?></small></h3>
+<dl>
+<dt><?=$sbs_t('set.em_on')?></dt>
+<dd><input type="hidden" name="em_on" value="0"><input type="checkbox" name="em_on" value="1" <?=sb_chk($sb['em_on'])?>> <?=$sbs_t('set.em_on_hint')?></dd>
+
+<dt><?=$sbs_t('set.em_host')?></dt>
+<dd><input type="text" name="em_host" class="narrow" value="<?=sb_h($sb['em_host'])?>"> <input type="number" name="em_port" min="1" max="65535" class="narrow" value="<?=sb_h($sb['em_port'])?>"> <span class="uset-hint"><?=$sbs_t('set.em_host_hint')?></span></dd>
+
+<dt><?=$sbs_t('set.em_key')?></dt>
+<dd><input type="password" name="em_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['em_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <input type="button" id="sb-etest" value="<?=$sbs_t('set.btn.test_emby')?>"> <span id="sb-emsg"></span> <span class="uset-hint"><?=$sbs_t('set.em_key_hint')?></span></dd>
 </dl>
 
 <h3><?=$sbs_t('week.title')?> <small><?=$sbs_t('set.h.week_sub')?></small></h3>
@@ -1023,6 +1072,20 @@ $(function () {
       })
       .always(function () { $b.prop('disabled', false); });
   });
+  // Emby test: the tile endpoint with the saved settings, its answer for this one server
+  $('#sb-etest').on('click', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#sb-emsg').css('color', '').text(T('set.asking_emby'));
+    $.getJSON('/plugins/streambox/api_fetch.php', { _: Date.now() })
+      .done(function (r) {
+        var x = null;
+        $.each((r && r.servers) || [], function (i, v) { if (v.id === 'em') { x = v; } });
+        if (!x && r && !r.ok && r.error !== 'nokey') { x = { ok: false, error: r.error }; }   // every server failed
+        if (!x) { $m.css('color', '#d9921f').text(T('set.em_test_off')); return; }
+        $m.css('color', x.ok ? '#3fa24a' : '#e5534b').text(x.ok ? T('set.em_test_ok') : (x.error === 'auth' ? T('set.em_test_auth') : T('set.em_test_fail', { e: x.error })));
+      })
+      .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
+      .always(function () { $b.prop('disabled', false); });
+  });
   $('#sb-wtest').on('click', function () {
     var $b = $(this).prop('disabled', true), $m = $('#sb-wmsg').css('color', '').text(T('set.asking_sonarr'));
     $.getJSON('/plugins/streambox/week.php', { test: 1, _: Date.now() })
@@ -1060,6 +1123,7 @@ $sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the sett
 
 $cfg = [
     'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
+    'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
     'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
 ];
 $file = '/boot/config/plugins/streambox/settings.cfg';
@@ -1084,6 +1148,20 @@ $base = "http://$host:$port";
 
 $ui = ['port' => $port, 'url' => $link, 'load' => sb_flag($cfg['show_load']), 'added' => $addedRows];
 
+// Media servers whose streams the tile shows (item 92). Emby has the same session API as Jellyfin, under /emby and with its own
+// token header. Jellyfin stays the library source (recently added, the user nicknames).
+$srv = [];
+if ($key !== '') {
+    $srv['jf'] = ['base' => $base, 'pre' => '', 'hdr' => 'Authorization: MediaBrowser Token="' . $key . '"'];
+}
+$emKey = (string)$cfg['em_key'];
+if (sb_flag($cfg['em_on']) && $emKey !== '') {
+    $emHost = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['em_host']) ? $cfg['em_host'] : '127.0.0.1';
+    $emPort = (int)$cfg['em_port'];
+    if ($emPort < 1 || $emPort > 65535) { $emPort = 8097; }
+    $srv['em'] = ['base' => "http://$emHost:$emPort", 'pre' => '/emby', 'hdr' => 'X-Emby-Token: ' . $emKey];
+}
+
 function out($arr) {
     global $ui;
     $arr['ui'] = $ui;
@@ -1091,16 +1169,17 @@ function out($arr) {
     exit;
 }
 
-if ($key === '') { out(['ok' => false, 'error' => 'nokey']); }
+if (!$srv) { out(['ok' => false, 'error' => 'nokey']); }
 
-function sb_get($path) {
-    global $base, $key;
-    $ch = curl_init($base . $path);
+function sb_get($path, $sv = 'jf') {
+    global $srv;
+    if (!isset($srv[$sv])) { return ['', 0, 1]; }
+    $ch = curl_init($srv[$sv]['base'] . $srv[$sv]['pre'] . $path);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 3,
         CURLOPT_TIMEOUT        => 4,
-        CURLOPT_HTTPHEADER     => ['Authorization: MediaBrowser Token="' . $key . '"', 'Accept: application/json'],
+        CURLOPT_HTTPHEADER     => [$srv[$sv]['hdr'], 'Accept: application/json'],
     ]);
     $body = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -1220,159 +1299,175 @@ if (is_file($nf)) {
 }
 
 // ---- Sessions -----------------------------------------------------------
-list($b, $code, $err) = sb_get('/Sessions');
-if ($err) { out(['ok' => false, 'error' => 'unreachable']); }
-if ($code === 401 || $code === 403) { out(['ok' => false, 'error' => 'auth']); }
-if ($code !== 200) { out(['ok' => false, 'error' => 'http_' . $code]); }
-$sessions = json_decode((string)$b, true);
-if (!is_array($sessions)) { out(['ok' => false, 'error' => 'bad_response']); }
-
 $arrow   = " \u{2192} ";
 $streams = [];
 $users   = [];
 $mbps    = 0.0;
 $trans   = 0;
+$state   = [];   // per server: '' = answered, else the error code
 
-foreach ($sessions as $s) {
-    $np = $s['NowPlayingItem'] ?? null;
-    if (!is_array($np)) { continue; }   // idle client
-    $ps = is_array($s['PlayState'] ?? null) ? $s['PlayState'] : [];
-    $ti = is_array($s['TranscodingInfo'] ?? null) ? $s['TranscodingInfo'] : null;
-
-    $uid   = (string)($s['UserId'] ?? '');
-    $uname = (string)($s['UserName'] ?? '?');
-    $short = ($uid !== '' && isset($nick[$uid]) && trim((string)$nick[$uid]) !== '') ? (string)$nick[$uid] : sb_short($uname);
-    $users[$uname] = true;
-
-    $vs       = sb_video($np);
-    $srcRes   = sb_vres($vs);
-    $srcCodec = $vs ? strtoupper((string)($vs['Codec'] ?? '')) : '';
-    $srcBps   = $vs ? (int)($vs['BitRate'] ?? 0) : 0;
-    $cparts   = explode(',', (string)($np['Container'] ?? ''));
-    $srcCont  = strtoupper(trim((string)$cparts[0]));
-    $as       = sb_audio($np);
-    $srcAudio = $as ? strtoupper((string)($as['Codec'] ?? '')) : '';
-    $srcCh    = $as ? (int)($as['Channels'] ?? 0) : 0;
-    $rs       = ($ti !== null) ? array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? []))) : [];
-
-    $mode = (string)($ps['PlayMethod'] ?? '');
-    if (!in_array($mode, ['DirectPlay', 'DirectStream', 'Transcode'], true)) {
-        if ($ti === null) { $mode = 'DirectPlay'; }
-        else { $mode = !empty($ti['IsVideoDirect']) ? 'DirectStream' : 'Transcode'; }
+foreach ($srv as $sv => $_) {
+    list($b, $code, $err) = sb_get('/Sessions', $sv);
+    $sessions = null;
+    if ($err) { $state[$sv] = 'unreachable'; }
+    elseif ($code === 401 || $code === 403) { $state[$sv] = 'auth'; }
+    elseif ($code !== 200) { $state[$sv] = 'http_' . $code; }
+    else {
+        $sessions = json_decode((string)$b, true);
+        $state[$sv] = is_array($sessions) ? '' : 'bad_response';
     }
+    if (!is_array($sessions)) { continue; }
 
-    // Only the audio is transcoded and the video stays untouched: treat it as a direct stream
-    if ($mode === 'Transcode' && $ti !== null && !empty($ti['IsVideoDirect'])) { $mode = 'DirectStream'; }
+    foreach ($sessions as $s) {
+        $np = $s['NowPlayingItem'] ?? null;
+        if (!is_array($np)) { continue; }   // idle client
+        $ps = is_array($s['PlayState'] ?? null) ? $s['PlayState'] : [];
+        $ti = is_array($s['TranscodingInfo'] ?? null) ? $s['TranscodingInfo'] : null;
 
-    $resLine = $srcRes;
-    if ($srcBps > 0) { $resLine .= (($resLine !== '') ? " \u{00b7} " : '') . number_format($srcBps / 1000000, 1) . ' Mbps'; }
+        $uid   = (string)($s['UserId'] ?? '');
+        $uname = (string)($s['UserName'] ?? '?');
+        $short = ($sv === 'jf' && $uid !== '' && isset($nick[$uid]) && trim((string)$nick[$uid]) !== '') ? (string)$nick[$uid] : sb_short($uname);
+        $users[mb_strtolower($uname)] = true;   // the same name on two servers is one person
 
-    $detail = '';
-    $bps    = $srcBps;
-    if ($mode === 'Transcode' && $ti !== null) {
-        $trans++;
-        $audioCodec = strtoupper((string)($ti['AudioCodec'] ?? '?'));
-        if (!empty($ti['IsVideoDirect'])) {
-            $detail = $sbx_T('det.audio') . $arrow . $audioCodec;
+        $vs       = sb_video($np);
+        $srcRes   = sb_vres($vs);
+        $srcCodec = $vs ? strtoupper((string)($vs['Codec'] ?? '')) : '';
+        $srcBps   = $vs ? (int)($vs['BitRate'] ?? 0) : 0;
+        $cparts   = explode(',', (string)($np['Container'] ?? ''));
+        $srcCont  = strtoupper(trim((string)$cparts[0]));
+        $as       = sb_audio($np);
+        $srcAudio = $as ? strtoupper((string)($as['Codec'] ?? '')) : '';
+        $srcCh    = $as ? (int)($as['Channels'] ?? 0) : 0;
+        $rs       = ($ti !== null) ? array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? []))) : [];
+
+        $mode = (string)($ps['PlayMethod'] ?? '');
+        if (!in_array($mode, ['DirectPlay', 'DirectStream', 'Transcode'], true)) {
+            if ($ti === null) { $mode = 'DirectPlay'; }
+            else { $mode = !empty($ti['IsVideoDirect']) ? 'DirectStream' : 'Transcode'; }
+        }
+
+        // Only the audio is transcoded and the video stays untouched: treat it as a direct stream
+        if ($mode === 'Transcode' && $ti !== null && !empty($ti['IsVideoDirect'])) { $mode = 'DirectStream'; }
+
+        $resLine = $srcRes;
+        if ($srcBps > 0) { $resLine .= (($resLine !== '') ? " \u{00b7} " : '') . number_format($srcBps / 1000000, 1) . ' Mbps'; }
+
+        $detail = '';
+        $bps    = $srcBps;
+        if ($mode === 'Transcode' && $ti !== null) {
+            $trans++;
+            $audioCodec = strtoupper((string)($ti['AudioCodec'] ?? '?'));
+            if (!empty($ti['IsVideoDirect'])) {
+                $detail = $sbx_T('det.audio') . $arrow . $audioCodec;
+            } else {
+                $dstRes = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
+                $dstCodec = strtoupper((string)($ti['VideoCodec'] ?? ''));
+                $rs = array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? [])));
+                $interlaced = in_array('InterlacedVideoNotSupported', $rs, true) || ($vs && !empty($vs['IsInterlaced']));
+                if ($dstRes !== '' && $srcRes !== '' && $dstRes !== $srcRes) { $detail = $srcRes . $arrow . $dstRes; }
+                elseif ($srcCodec !== '' && $dstCodec !== '' && $srcCodec !== $dstCodec) { $detail = $srcCodec . $arrow . $dstCodec; }
+                elseif ($interlaced && $dstRes !== '') { $detail = $sbx_T('det.deinterlace') . $arrow . $dstRes; }
+                elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
+                elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
+                else { $detail = $sbx_T('det.video_transcode'); }
+                // Jellyfin names the acceleration, Emby says whether the encoder is hardware
+                $hw = ((string)($ti['HardwareAccelerationType'] ?? '') !== '') || !empty($ti['VideoEncoderIsHardware']);
+                $detail .= $hw ? " \u{00b7} HW" : " \u{00b7} SW";
+            }
+            if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
+        } elseif ($mode === 'DirectStream') {
+            // First line: why the stream is not a plain direct play. Second line: resolution and bitrate.
+            $why = [];
+            foreach ($rs as $r) {
+                $t = sb_why($r);
+                if ($t !== '' && !in_array($t, $why, true)) { $why[] = $t; }
+            }
+            $conv = '';
+            if ($ti !== null) {
+                $dstCont = strtoupper((string)($ti['Container'] ?? ''));
+                if ($dstCont !== '' && $srcCont !== '' && $dstCont !== $srcCont) { $conv = $srcCont . $arrow . $dstCont; }
+            }
+            if ($ti !== null && empty($ti['IsAudioDirect']) && !empty($ti['AudioCodec'])) {
+                $line1 = ($srcAudio !== '' ? $srcAudio : $sbx_T('det.audio')) . $arrow . strtoupper((string)$ti['AudioCodec']);
+            } elseif ($why || $conv) {
+                $line1 = implode(" \u{00b7} ", array_filter([implode(', ', $why), $conv]));
+            } else {
+                // Jellyfin reports no reason: show what the file is made of, which usually explains it
+                $line1 = implode(" \u{00b7} ", array_filter([$srcCont, $srcCodec, $srcAudio]));
+            }
+            $detail = trim($line1 . "\n" . $resLine);
         } else {
-            $dstRes = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
-            $dstCodec = strtoupper((string)($ti['VideoCodec'] ?? ''));
-            $rs = array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? [])));
-            $interlaced = in_array('InterlacedVideoNotSupported', $rs, true) || ($vs && !empty($vs['IsInterlaced']));
-            if ($dstRes !== '' && $srcRes !== '' && $dstRes !== $srcRes) { $detail = $srcRes . $arrow . $dstRes; }
-            elseif ($srcCodec !== '' && $dstCodec !== '' && $srcCodec !== $dstCodec) { $detail = $srcCodec . $arrow . $dstCodec; }
-            elseif ($interlaced && $dstRes !== '') { $detail = $sbx_T('det.deinterlace') . $arrow . $dstRes; }
-            elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
-            elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
-            else { $detail = $sbx_T('det.video_transcode'); }
-            $detail .= ((string)($ti['HardwareAccelerationType'] ?? '') !== '') ? " \u{00b7} HW" : " \u{00b7} SW";
+            // direct play
+            $detail = $resLine;
         }
-        if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
-    } elseif ($mode === 'DirectStream') {
-        // First line: why the stream is not a plain direct play. Second line: resolution and bitrate.
-        $why = [];
-        foreach ($rs as $r) {
-            $t = sb_why($r);
-            if ($t !== '' && !in_array($t, $why, true)) { $why[] = $t; }
-        }
-        $conv = '';
+
+        // Hover text: everything Jellyfin tells us about this stream
+        $methodName = ['DirectPlay' => $sbx_T('mode.direct_play'), 'DirectStream' => $sbx_T('mode.direct_stream'), 'Transcode' => $sbx_T('mode.transcode')][$mode];
+        $info   = [$sbx_T('info.method', ['m' => $methodName])];
+        $srcBits = array_filter([
+            $srcCont,
+            trim($srcCodec . ($srcRes !== '' ? ' ' . $srcRes : '')),
+            trim($srcAudio . ($srcCh > 0 ? ' ' . $srcCh . 'ch' : '')),
+        ]);
+        if ($srcBits) { $info[] = $sbx_T('info.source', ['s' => implode(" \u{00b7} ", $srcBits)]); }
         if ($ti !== null) {
-            $dstCont = strtoupper((string)($ti['Container'] ?? ''));
-            if ($dstCont !== '' && $srcCont !== '' && $dstCont !== $srcCont) { $conv = $srcCont . $arrow . $dstCont; }
-        }
-        if ($ti !== null && empty($ti['IsAudioDirect']) && !empty($ti['AudioCodec'])) {
-            $line1 = ($srcAudio !== '' ? $srcAudio : $sbx_T('det.audio')) . $arrow . strtoupper((string)$ti['AudioCodec']);
-        } elseif ($why || $conv) {
-            $line1 = implode(" \u{00b7} ", array_filter([implode(', ', $why), $conv]));
+            $names = [];
+            foreach ($rs as $r) { $names[] = sb_why($r); }
+            $info[] = $sbx_T('info.reasons', ['r' => $names ? implode(', ', $names) : $sbx_T('info.none_reported')]);
         } else {
-            // Jellyfin reports no reason: show what the file is made of, which usually explains it
-            $line1 = implode(" \u{00b7} ", array_filter([$srcCont, $srcCodec, $srcAudio]));
+            $info[] = $sbx_T('info.no_details');
         }
-        $detail = trim($line1 . "\n" . $resLine);
-    } else {
-        // direct play
-        $detail = $resLine;
-    }
+        $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
+        $mbps += $bps / 1000000;
 
-    // Hover text: everything Jellyfin tells us about this stream
-    $methodName = ['DirectPlay' => $sbx_T('mode.direct_play'), 'DirectStream' => $sbx_T('mode.direct_stream'), 'Transcode' => $sbx_T('mode.transcode')][$mode];
-    $info   = [$sbx_T('info.method', ['m' => $methodName])];
-    $srcBits = array_filter([
-        $srcCont,
-        trim($srcCodec . ($srcRes !== '' ? ' ' . $srcRes : '')),
-        trim($srcAudio . ($srcCh > 0 ? ' ' . $srcCh . 'ch' : '')),
-    ]);
-    if ($srcBits) { $info[] = $sbx_T('info.source', ['s' => implode(" \u{00b7} ", $srcBits)]); }
-    if ($ti !== null) {
-        $names = [];
-        foreach ($rs as $r) { $names[] = sb_why($r); }
-        $info[] = $sbx_T('info.reasons', ['r' => $names ? implode(', ', $names) : $sbx_T('info.none_reported')]);
-    } else {
-        $info[] = $sbx_T('info.no_details');
-    }
-    $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
-    $mbps += $bps / 1000000;
+        $pos = (int)($ps['PositionTicks'] ?? 0);
+        $rt  = (int)($np['RunTimeTicks'] ?? 0);
 
-    $pos = (int)($ps['PositionTicks'] ?? 0);
-    $rt  = (int)($np['RunTimeTicks'] ?? 0);
-
-    // Live TV has no length of its own; the current program from the guide (EPG) gives start and end
-    $live = ($rt <= 0);
-    $epg  = false;
-    $pct  = ($rt > 0) ? max(0, min(1, $pos / $rt)) : 0;
-    $left = ($rt > 0) ? max(0, ($rt - $pos) / 10000000) : 0;
-    $cp   = is_array($np['CurrentProgram'] ?? null) ? $np['CurrentProgram'] : null;
-    if ($live && $cp !== null && !empty($cp['StartDate']) && !empty($cp['EndDate'])) {
-        $st = (int)strtotime((string)$cp['StartDate']);
-        $en = (int)strtotime((string)$cp['EndDate']);
-        if ($st > 0 && $en > $st) {
-            $nowTs = time();
-            $pct   = max(0, min(1, ($nowTs - $st) / ($en - $st)));
-            $left  = max(0, $en - $nowTs);
-            $epg   = true;
-            $info[] = $sbx_T('ww.program', ['t' => date('H:i', $st) . " \u{2013} " . date('H:i', $en)]);
+        // Live TV has no length of its own; the current program from the guide (EPG) gives start and end
+        $live = ($rt <= 0);
+        $epg  = false;
+        $pct  = ($rt > 0) ? max(0, min(1, $pos / $rt)) : 0;
+        $left = ($rt > 0) ? max(0, ($rt - $pos) / 10000000) : 0;
+        $cp   = is_array($np['CurrentProgram'] ?? null) ? $np['CurrentProgram'] : null;
+        if ($live && $cp !== null && !empty($cp['StartDate']) && !empty($cp['EndDate'])) {
+            $st = (int)strtotime((string)$cp['StartDate']);
+            $en = (int)strtotime((string)$cp['EndDate']);
+            if ($st > 0 && $en > $st) {
+                $nowTs = time();
+                $pct   = max(0, min(1, ($nowTs - $st) / ($en - $st)));
+                $left  = max(0, $en - $nowTs);
+                $epg   = true;
+                $info[] = $sbx_T('ww.program', ['t' => date('H:i', $st) . " \u{2013} " . date('H:i', $en)]);
+            }
         }
-    }
-    $dev = (string)($s['DeviceName'] ?? '?');
+        $dev = (string)($s['DeviceName'] ?? '?');
 
-    $streams[] = [
-        'title'       => sb_title($np),
-        'type'        => (string)($np['Type'] ?? ''),
-        'user'        => $short,
-        'user_full'   => $uname,
-        'device'      => sb_dev($dev),
-        'device_full' => $dev . ' ' . "\u{00b7}" . ' ' . (string)($s['Client'] ?? ''),
-        'mode'        => $mode,
-        'detail'      => $detail,
-        'info'        => implode("\n", $info),
-        'pct'         => $pct,
-        'left'        => $left,
-        'paused'      => !empty($ps['IsPaused']),
-        'live'        => $live,
-        'epg'         => $epg,
-        'sid'         => (string)($s['Id'] ?? ''),
-    ];
+        $streams[] = [
+            'title'       => sb_title($np),
+            'type'        => (string)($np['Type'] ?? ''),
+            'user'        => $short,
+            'user_full'   => $uname,
+            'device'      => sb_dev($dev),
+            'device_full' => $dev . ' ' . "\u{00b7}" . ' ' . (string)($s['Client'] ?? ''),
+            'mode'        => $mode,
+            'detail'      => $detail,
+            'info'        => implode("\n", $info),
+            'pct'         => $pct,
+            'left'        => $left,
+            'paused'      => !empty($ps['IsPaused']),
+            'live'        => $live,
+            'epg'         => $epg,
+            'srv'         => $sv,
+            'sid'         => (string)($s['Id'] ?? '') !== '' ? $sv . ':' . (string)$s['Id'] : '',
+        ];
+    }
 }
+
+// every server failed: the tile shows the error of the first one, as before
+$okSrv = array_keys(array_filter($state, function ($e) { return $e === ''; }));
+if (!$okSrv) { out(['ok' => false, 'error' => (string)reset($state)]); }
+$servers = [];
+foreach ($state as $sv => $e) { $servers[] = ['id' => $sv, 'ok' => ($e === ''), 'error' => $e]; }
 
 // Order: playing before paused, then by when the stream was first seen (oldest on top). Jellyfin lists the sessions by their last
 // activity, which changes with every progress report, so the rows used to swap places (owner, 2026-10-28).
@@ -1395,7 +1490,7 @@ $streams = array_slice($streams, 0, $maxStream);
 
 // ---- Recently added (cached for a minute) ----------------------------------
 $added = [];
-if ($addedRows > 0) {
+if ($addedRows > 0 && ($state['jf'] ?? 'x') === '') {
     $cf  = '/tmp/streambox_added.json';
     $now = time();
     $c   = is_file($cf) ? json_decode((string)@file_get_contents($cf), true) : null;
@@ -1431,6 +1526,7 @@ out([
     'mbps'          => round($mbps, 1),
     'transcoding'   => $trans,
     'added'         => $added,
+    'servers'       => $servers,
 ]);
 ]]></INLINE>
 </FILE>
@@ -1607,6 +1703,11 @@ function sb_keep($name, $old) { $v = trim((string)($_POST[$name] ?? '')); return
 $key = sb_keep('jf_key', $old);
 if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $key)) { sb_out(false, ['error' => $sbx_T('save.err_key')]); }
 
+$emKey = sb_keep('em_key', $old);
+if (!preg_match('/^[A-Za-z0-9._\-]{0,128}$/', $emKey)) { sb_out(false, ['error' => $sbx_T('save.err_em_key')]); }
+$emHost = trim((string)($_POST['em_host'] ?? '127.0.0.1'));
+if (!preg_match('/^[A-Za-z0-9.\-]+$/', $emHost)) { $emHost = '127.0.0.1'; }
+
 $url = trim(str_replace(["\r", "\n", "\0"], '', (string)($_POST['jf_url'] ?? '')));
 if ($url !== '' && !preg_match('#^https?://[^\s"<>]+$#i', $url)) { sb_out(false, ['error' => $sbx_T('save.err_url')]); }
 
@@ -1639,6 +1740,10 @@ $new = [
     'jf_port'     => (string)sb_int($_POST['jf_port'] ?? 8096, 1, 65535, 8096),
     'jf_key'      => $key,
     'jf_url'      => $url,
+    'em_on'       => sb_bool($_POST['em_on'] ?? '0'),
+    'em_host'     => $emHost,
+    'em_port'     => (string)sb_int($_POST['em_port'] ?? 8097, 1, 65535, 8097),
+    'em_key'      => $emKey,
     'streams_max' => (string)sb_int($_POST['streams_max'] ?? 8, 1, 30, 8),
     'added_rows'  => (string)sb_int($_POST['added_rows'] ?? 5, 0, 20, 5),
     'show_load'   => sb_bool($_POST['show_load'] ?? '1'),
@@ -1711,7 +1816,7 @@ if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UN
 if ($oldNotify !== '1' && $newNotify === '1') { @unlink($dir . '/notify_state.json'); }
 
 $shown = $new;
-unset($shown['jf_key'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
+unset($shown['jf_key'], $shown['em_key'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
 sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);
 ]]></INLINE>
 </FILE>
@@ -4156,6 +4261,78 @@ function mt_i18n_js($dir, $name, $only = null) {
  "ww.program": {
   "text": "Program: {t}",
   "note": "Dashboard tile, Live TV stream tooltip: the programme time."
+ },
+ "now.srv_down": {
+  "text": "{s}: not reachable",
+  "note": "row at the end of the Now playing list when one media server ({s} = Jellyfin, Emby or Plex) does not answer; the other servers' streams are still shown."
+ },
+ "now.srv_auth": {
+  "text": "{s}: API key rejected, check Settings",
+  "note": "row at the end of the Now playing list when a media server ({s}) refuses the saved API key."
+ },
+ "now.srv_err": {
+  "text": "{s}: error ({e})",
+  "note": "row at the end of the Now playing list; {e} is a short technical code such as http_500."
+ },
+ "set.h.emby": {
+  "text": "Emby",
+  "note": "band title of the Emby settings block (product name)."
+ },
+ "set.h.emby_sub": {
+  "text": "Now playing from a second media server",
+  "note": "small grey text on the right of the Emby band."
+ },
+ "set.em_on": {
+  "text": "Show Emby streams:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.em_on_hint": {
+  "text": "the tile lists Emby's streams next to Jellyfin's, with a server badge on each row",
+  "note": "hint next to the checkbox."
+ },
+ "set.em_host": {
+  "text": "Emby host and port:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.em_host_hint": {
+  "text": "as seen from Unraid; the Emby container usually maps its 8096 to 8097 on the host, because Jellyfin uses 8096",
+  "note": "hint line under the host and port fields."
+ },
+ "set.em_key": {
+  "text": "Emby API key:",
+  "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.em_key_hint": {
+  "text": "Emby: Settings, Advanced, API Keys, New API Key. Apply before you press Test.",
+  "note": "hint line under the API key field and the Test button."
+ },
+ "set.btn.test_emby": {
+  "text": "Test Emby",
+  "note": "button that asks Emby with the saved settings."
+ },
+ "set.asking_emby": {
+  "text": "Asking Emby…",
+  "note": "text next to the Test Emby button while waiting."
+ },
+ "set.em_test_ok": {
+  "text": "Emby answers, its streams will show on the tile",
+  "note": "result of the Emby test, success."
+ },
+ "set.em_test_auth": {
+  "text": "Emby refuses this API key",
+  "note": "result of the Emby test when the key is wrong."
+ },
+ "set.em_test_fail": {
+  "text": "Emby does not answer ({e})",
+  "note": "result of the Emby test; {e} is a short code such as unreachable or http_404."
+ },
+ "set.em_test_off": {
+  "text": "Emby is off or has no saved API key: tick Show Emby streams, enter the key, Apply",
+  "note": "result of the Emby test when Emby is not set up."
+ },
+ "save.err_em_key": {
+  "text": "The Emby API key may only contain letters, digits, dots, dashes and underscores.",
+  "note": "error text when saving the settings."
  }
 }
 ]]></INLINE>
@@ -5066,6 +5243,60 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "ww.program": {
   "text": "Műsor: {t}"
+ },
+ "now.srv_down": {
+  "text": "{s}: nem érhető el"
+ },
+ "now.srv_auth": {
+  "text": "{s}: elutasítja az API-kulcsot, nézd meg a beállításokat"
+ },
+ "now.srv_err": {
+  "text": "{s}: hiba ({e})"
+ },
+ "set.h.emby": {
+  "text": "Emby"
+ },
+ "set.h.emby_sub": {
+  "text": "Lejátszások egy második médiaszerverről"
+ },
+ "set.em_on": {
+  "text": "Emby lejátszások mutatása:"
+ },
+ "set.em_on_hint": {
+  "text": "a csempe a Jellyfiné mellett az Emby lejátszásait is mutatja, minden soron a szerver jelvényével"
+ },
+ "set.em_host": {
+  "text": "Emby cím és port:"
+ },
+ "set.em_host_hint": {
+  "text": "az Unraid felől nézve; az Emby konténer 8096-os portját általában a 8097-re tesszük, mert a 8096 a Jellyfiné"
+ },
+ "set.em_key": {
+  "text": "Emby API-kulcs:"
+ },
+ "set.em_key_hint": {
+  "text": "Emby: Settings, Advanced, API Keys, New API Key. A Test előtt nyomj Apply-t."
+ },
+ "set.btn.test_emby": {
+  "text": "Emby teszt"
+ },
+ "set.asking_emby": {
+  "text": "Kérdezem az Embyt…"
+ },
+ "set.em_test_ok": {
+  "text": "Az Emby válaszol, a lejátszásai megjelennek a csempén"
+ },
+ "set.em_test_auth": {
+  "text": "Az Emby nem fogadja el ezt az API-kulcsot"
+ },
+ "set.em_test_fail": {
+  "text": "Az Emby nem válaszol ({e})"
+ },
+ "set.em_test_off": {
+  "text": "Az Emby ki van kapcsolva, vagy nincs mentett kulcs: pipáld be, írd be a kulcsot, Apply"
+ },
+ "save.err_em_key": {
+  "text": "Az Emby API-kulcsban csak betű, szám, pont, kötőjel és aláhúzás lehet."
  }
 }
 ]]></INLINE>

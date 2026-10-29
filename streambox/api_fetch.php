@@ -6,6 +6,7 @@ $sbx_T = mt_i18n_t(__DIR__ . '/lang');   // texts shown on the tile and the sett
 
 $cfg = [
     'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
+    'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
     'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
 ];
 $file = '/boot/config/plugins/streambox/settings.cfg';
@@ -30,6 +31,20 @@ $base = "http://$host:$port";
 
 $ui = ['port' => $port, 'url' => $link, 'load' => sb_flag($cfg['show_load']), 'added' => $addedRows];
 
+// Media servers whose streams the tile shows (item 92). Emby has the same session API as Jellyfin, under /emby and with its own
+// token header. Jellyfin stays the library source (recently added, the user nicknames).
+$srv = [];
+if ($key !== '') {
+    $srv['jf'] = ['base' => $base, 'pre' => '', 'hdr' => 'Authorization: MediaBrowser Token="' . $key . '"'];
+}
+$emKey = (string)$cfg['em_key'];
+if (sb_flag($cfg['em_on']) && $emKey !== '') {
+    $emHost = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['em_host']) ? $cfg['em_host'] : '127.0.0.1';
+    $emPort = (int)$cfg['em_port'];
+    if ($emPort < 1 || $emPort > 65535) { $emPort = 8097; }
+    $srv['em'] = ['base' => "http://$emHost:$emPort", 'pre' => '/emby', 'hdr' => 'X-Emby-Token: ' . $emKey];
+}
+
 function out($arr) {
     global $ui;
     $arr['ui'] = $ui;
@@ -37,16 +52,17 @@ function out($arr) {
     exit;
 }
 
-if ($key === '') { out(['ok' => false, 'error' => 'nokey']); }
+if (!$srv) { out(['ok' => false, 'error' => 'nokey']); }
 
-function sb_get($path) {
-    global $base, $key;
-    $ch = curl_init($base . $path);
+function sb_get($path, $sv = 'jf') {
+    global $srv;
+    if (!isset($srv[$sv])) { return ['', 0, 1]; }
+    $ch = curl_init($srv[$sv]['base'] . $srv[$sv]['pre'] . $path);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 3,
         CURLOPT_TIMEOUT        => 4,
-        CURLOPT_HTTPHEADER     => ['Authorization: MediaBrowser Token="' . $key . '"', 'Accept: application/json'],
+        CURLOPT_HTTPHEADER     => [$srv[$sv]['hdr'], 'Accept: application/json'],
     ]);
     $body = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -166,159 +182,175 @@ if (is_file($nf)) {
 }
 
 // ---- Sessions -----------------------------------------------------------
-list($b, $code, $err) = sb_get('/Sessions');
-if ($err) { out(['ok' => false, 'error' => 'unreachable']); }
-if ($code === 401 || $code === 403) { out(['ok' => false, 'error' => 'auth']); }
-if ($code !== 200) { out(['ok' => false, 'error' => 'http_' . $code]); }
-$sessions = json_decode((string)$b, true);
-if (!is_array($sessions)) { out(['ok' => false, 'error' => 'bad_response']); }
-
 $arrow   = " \u{2192} ";
 $streams = [];
 $users   = [];
 $mbps    = 0.0;
 $trans   = 0;
+$state   = [];   // per server: '' = answered, else the error code
 
-foreach ($sessions as $s) {
-    $np = $s['NowPlayingItem'] ?? null;
-    if (!is_array($np)) { continue; }   // idle client
-    $ps = is_array($s['PlayState'] ?? null) ? $s['PlayState'] : [];
-    $ti = is_array($s['TranscodingInfo'] ?? null) ? $s['TranscodingInfo'] : null;
-
-    $uid   = (string)($s['UserId'] ?? '');
-    $uname = (string)($s['UserName'] ?? '?');
-    $short = ($uid !== '' && isset($nick[$uid]) && trim((string)$nick[$uid]) !== '') ? (string)$nick[$uid] : sb_short($uname);
-    $users[$uname] = true;
-
-    $vs       = sb_video($np);
-    $srcRes   = sb_vres($vs);
-    $srcCodec = $vs ? strtoupper((string)($vs['Codec'] ?? '')) : '';
-    $srcBps   = $vs ? (int)($vs['BitRate'] ?? 0) : 0;
-    $cparts   = explode(',', (string)($np['Container'] ?? ''));
-    $srcCont  = strtoupper(trim((string)$cparts[0]));
-    $as       = sb_audio($np);
-    $srcAudio = $as ? strtoupper((string)($as['Codec'] ?? '')) : '';
-    $srcCh    = $as ? (int)($as['Channels'] ?? 0) : 0;
-    $rs       = ($ti !== null) ? array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? []))) : [];
-
-    $mode = (string)($ps['PlayMethod'] ?? '');
-    if (!in_array($mode, ['DirectPlay', 'DirectStream', 'Transcode'], true)) {
-        if ($ti === null) { $mode = 'DirectPlay'; }
-        else { $mode = !empty($ti['IsVideoDirect']) ? 'DirectStream' : 'Transcode'; }
+foreach ($srv as $sv => $_) {
+    list($b, $code, $err) = sb_get('/Sessions', $sv);
+    $sessions = null;
+    if ($err) { $state[$sv] = 'unreachable'; }
+    elseif ($code === 401 || $code === 403) { $state[$sv] = 'auth'; }
+    elseif ($code !== 200) { $state[$sv] = 'http_' . $code; }
+    else {
+        $sessions = json_decode((string)$b, true);
+        $state[$sv] = is_array($sessions) ? '' : 'bad_response';
     }
+    if (!is_array($sessions)) { continue; }
 
-    // Only the audio is transcoded and the video stays untouched: treat it as a direct stream
-    if ($mode === 'Transcode' && $ti !== null && !empty($ti['IsVideoDirect'])) { $mode = 'DirectStream'; }
+    foreach ($sessions as $s) {
+        $np = $s['NowPlayingItem'] ?? null;
+        if (!is_array($np)) { continue; }   // idle client
+        $ps = is_array($s['PlayState'] ?? null) ? $s['PlayState'] : [];
+        $ti = is_array($s['TranscodingInfo'] ?? null) ? $s['TranscodingInfo'] : null;
 
-    $resLine = $srcRes;
-    if ($srcBps > 0) { $resLine .= (($resLine !== '') ? " \u{00b7} " : '') . number_format($srcBps / 1000000, 1) . ' Mbps'; }
+        $uid   = (string)($s['UserId'] ?? '');
+        $uname = (string)($s['UserName'] ?? '?');
+        $short = ($sv === 'jf' && $uid !== '' && isset($nick[$uid]) && trim((string)$nick[$uid]) !== '') ? (string)$nick[$uid] : sb_short($uname);
+        $users[mb_strtolower($uname)] = true;   // the same name on two servers is one person
 
-    $detail = '';
-    $bps    = $srcBps;
-    if ($mode === 'Transcode' && $ti !== null) {
-        $trans++;
-        $audioCodec = strtoupper((string)($ti['AudioCodec'] ?? '?'));
-        if (!empty($ti['IsVideoDirect'])) {
-            $detail = $sbx_T('det.audio') . $arrow . $audioCodec;
+        $vs       = sb_video($np);
+        $srcRes   = sb_vres($vs);
+        $srcCodec = $vs ? strtoupper((string)($vs['Codec'] ?? '')) : '';
+        $srcBps   = $vs ? (int)($vs['BitRate'] ?? 0) : 0;
+        $cparts   = explode(',', (string)($np['Container'] ?? ''));
+        $srcCont  = strtoupper(trim((string)$cparts[0]));
+        $as       = sb_audio($np);
+        $srcAudio = $as ? strtoupper((string)($as['Codec'] ?? '')) : '';
+        $srcCh    = $as ? (int)($as['Channels'] ?? 0) : 0;
+        $rs       = ($ti !== null) ? array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? []))) : [];
+
+        $mode = (string)($ps['PlayMethod'] ?? '');
+        if (!in_array($mode, ['DirectPlay', 'DirectStream', 'Transcode'], true)) {
+            if ($ti === null) { $mode = 'DirectPlay'; }
+            else { $mode = !empty($ti['IsVideoDirect']) ? 'DirectStream' : 'Transcode'; }
+        }
+
+        // Only the audio is transcoded and the video stays untouched: treat it as a direct stream
+        if ($mode === 'Transcode' && $ti !== null && !empty($ti['IsVideoDirect'])) { $mode = 'DirectStream'; }
+
+        $resLine = $srcRes;
+        if ($srcBps > 0) { $resLine .= (($resLine !== '') ? " \u{00b7} " : '') . number_format($srcBps / 1000000, 1) . ' Mbps'; }
+
+        $detail = '';
+        $bps    = $srcBps;
+        if ($mode === 'Transcode' && $ti !== null) {
+            $trans++;
+            $audioCodec = strtoupper((string)($ti['AudioCodec'] ?? '?'));
+            if (!empty($ti['IsVideoDirect'])) {
+                $detail = $sbx_T('det.audio') . $arrow . $audioCodec;
+            } else {
+                $dstRes = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
+                $dstCodec = strtoupper((string)($ti['VideoCodec'] ?? ''));
+                $rs = array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? [])));
+                $interlaced = in_array('InterlacedVideoNotSupported', $rs, true) || ($vs && !empty($vs['IsInterlaced']));
+                if ($dstRes !== '' && $srcRes !== '' && $dstRes !== $srcRes) { $detail = $srcRes . $arrow . $dstRes; }
+                elseif ($srcCodec !== '' && $dstCodec !== '' && $srcCodec !== $dstCodec) { $detail = $srcCodec . $arrow . $dstCodec; }
+                elseif ($interlaced && $dstRes !== '') { $detail = $sbx_T('det.deinterlace') . $arrow . $dstRes; }
+                elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
+                elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
+                else { $detail = $sbx_T('det.video_transcode'); }
+                // Jellyfin names the acceleration, Emby says whether the encoder is hardware
+                $hw = ((string)($ti['HardwareAccelerationType'] ?? '') !== '') || !empty($ti['VideoEncoderIsHardware']);
+                $detail .= $hw ? " \u{00b7} HW" : " \u{00b7} SW";
+            }
+            if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
+        } elseif ($mode === 'DirectStream') {
+            // First line: why the stream is not a plain direct play. Second line: resolution and bitrate.
+            $why = [];
+            foreach ($rs as $r) {
+                $t = sb_why($r);
+                if ($t !== '' && !in_array($t, $why, true)) { $why[] = $t; }
+            }
+            $conv = '';
+            if ($ti !== null) {
+                $dstCont = strtoupper((string)($ti['Container'] ?? ''));
+                if ($dstCont !== '' && $srcCont !== '' && $dstCont !== $srcCont) { $conv = $srcCont . $arrow . $dstCont; }
+            }
+            if ($ti !== null && empty($ti['IsAudioDirect']) && !empty($ti['AudioCodec'])) {
+                $line1 = ($srcAudio !== '' ? $srcAudio : $sbx_T('det.audio')) . $arrow . strtoupper((string)$ti['AudioCodec']);
+            } elseif ($why || $conv) {
+                $line1 = implode(" \u{00b7} ", array_filter([implode(', ', $why), $conv]));
+            } else {
+                // Jellyfin reports no reason: show what the file is made of, which usually explains it
+                $line1 = implode(" \u{00b7} ", array_filter([$srcCont, $srcCodec, $srcAudio]));
+            }
+            $detail = trim($line1 . "\n" . $resLine);
         } else {
-            $dstRes = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
-            $dstCodec = strtoupper((string)($ti['VideoCodec'] ?? ''));
-            $rs = array_values(array_map('strval', (array)($ti['TranscodeReasons'] ?? [])));
-            $interlaced = in_array('InterlacedVideoNotSupported', $rs, true) || ($vs && !empty($vs['IsInterlaced']));
-            if ($dstRes !== '' && $srcRes !== '' && $dstRes !== $srcRes) { $detail = $srcRes . $arrow . $dstRes; }
-            elseif ($srcCodec !== '' && $dstCodec !== '' && $srcCodec !== $dstCodec) { $detail = $srcCodec . $arrow . $dstCodec; }
-            elseif ($interlaced && $dstRes !== '') { $detail = $sbx_T('det.deinterlace') . $arrow . $dstRes; }
-            elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
-            elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
-            else { $detail = $sbx_T('det.video_transcode'); }
-            $detail .= ((string)($ti['HardwareAccelerationType'] ?? '') !== '') ? " \u{00b7} HW" : " \u{00b7} SW";
+            // direct play
+            $detail = $resLine;
         }
-        if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
-    } elseif ($mode === 'DirectStream') {
-        // First line: why the stream is not a plain direct play. Second line: resolution and bitrate.
-        $why = [];
-        foreach ($rs as $r) {
-            $t = sb_why($r);
-            if ($t !== '' && !in_array($t, $why, true)) { $why[] = $t; }
-        }
-        $conv = '';
+
+        // Hover text: everything Jellyfin tells us about this stream
+        $methodName = ['DirectPlay' => $sbx_T('mode.direct_play'), 'DirectStream' => $sbx_T('mode.direct_stream'), 'Transcode' => $sbx_T('mode.transcode')][$mode];
+        $info   = [$sbx_T('info.method', ['m' => $methodName])];
+        $srcBits = array_filter([
+            $srcCont,
+            trim($srcCodec . ($srcRes !== '' ? ' ' . $srcRes : '')),
+            trim($srcAudio . ($srcCh > 0 ? ' ' . $srcCh . 'ch' : '')),
+        ]);
+        if ($srcBits) { $info[] = $sbx_T('info.source', ['s' => implode(" \u{00b7} ", $srcBits)]); }
         if ($ti !== null) {
-            $dstCont = strtoupper((string)($ti['Container'] ?? ''));
-            if ($dstCont !== '' && $srcCont !== '' && $dstCont !== $srcCont) { $conv = $srcCont . $arrow . $dstCont; }
-        }
-        if ($ti !== null && empty($ti['IsAudioDirect']) && !empty($ti['AudioCodec'])) {
-            $line1 = ($srcAudio !== '' ? $srcAudio : $sbx_T('det.audio')) . $arrow . strtoupper((string)$ti['AudioCodec']);
-        } elseif ($why || $conv) {
-            $line1 = implode(" \u{00b7} ", array_filter([implode(', ', $why), $conv]));
+            $names = [];
+            foreach ($rs as $r) { $names[] = sb_why($r); }
+            $info[] = $sbx_T('info.reasons', ['r' => $names ? implode(', ', $names) : $sbx_T('info.none_reported')]);
         } else {
-            // Jellyfin reports no reason: show what the file is made of, which usually explains it
-            $line1 = implode(" \u{00b7} ", array_filter([$srcCont, $srcCodec, $srcAudio]));
+            $info[] = $sbx_T('info.no_details');
         }
-        $detail = trim($line1 . "\n" . $resLine);
-    } else {
-        // direct play
-        $detail = $resLine;
-    }
+        $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
+        $mbps += $bps / 1000000;
 
-    // Hover text: everything Jellyfin tells us about this stream
-    $methodName = ['DirectPlay' => $sbx_T('mode.direct_play'), 'DirectStream' => $sbx_T('mode.direct_stream'), 'Transcode' => $sbx_T('mode.transcode')][$mode];
-    $info   = [$sbx_T('info.method', ['m' => $methodName])];
-    $srcBits = array_filter([
-        $srcCont,
-        trim($srcCodec . ($srcRes !== '' ? ' ' . $srcRes : '')),
-        trim($srcAudio . ($srcCh > 0 ? ' ' . $srcCh . 'ch' : '')),
-    ]);
-    if ($srcBits) { $info[] = $sbx_T('info.source', ['s' => implode(" \u{00b7} ", $srcBits)]); }
-    if ($ti !== null) {
-        $names = [];
-        foreach ($rs as $r) { $names[] = sb_why($r); }
-        $info[] = $sbx_T('info.reasons', ['r' => $names ? implode(', ', $names) : $sbx_T('info.none_reported')]);
-    } else {
-        $info[] = $sbx_T('info.no_details');
-    }
-    $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
-    $mbps += $bps / 1000000;
+        $pos = (int)($ps['PositionTicks'] ?? 0);
+        $rt  = (int)($np['RunTimeTicks'] ?? 0);
 
-    $pos = (int)($ps['PositionTicks'] ?? 0);
-    $rt  = (int)($np['RunTimeTicks'] ?? 0);
-
-    // Live TV has no length of its own; the current program from the guide (EPG) gives start and end
-    $live = ($rt <= 0);
-    $epg  = false;
-    $pct  = ($rt > 0) ? max(0, min(1, $pos / $rt)) : 0;
-    $left = ($rt > 0) ? max(0, ($rt - $pos) / 10000000) : 0;
-    $cp   = is_array($np['CurrentProgram'] ?? null) ? $np['CurrentProgram'] : null;
-    if ($live && $cp !== null && !empty($cp['StartDate']) && !empty($cp['EndDate'])) {
-        $st = (int)strtotime((string)$cp['StartDate']);
-        $en = (int)strtotime((string)$cp['EndDate']);
-        if ($st > 0 && $en > $st) {
-            $nowTs = time();
-            $pct   = max(0, min(1, ($nowTs - $st) / ($en - $st)));
-            $left  = max(0, $en - $nowTs);
-            $epg   = true;
-            $info[] = $sbx_T('ww.program', ['t' => date('H:i', $st) . " \u{2013} " . date('H:i', $en)]);
+        // Live TV has no length of its own; the current program from the guide (EPG) gives start and end
+        $live = ($rt <= 0);
+        $epg  = false;
+        $pct  = ($rt > 0) ? max(0, min(1, $pos / $rt)) : 0;
+        $left = ($rt > 0) ? max(0, ($rt - $pos) / 10000000) : 0;
+        $cp   = is_array($np['CurrentProgram'] ?? null) ? $np['CurrentProgram'] : null;
+        if ($live && $cp !== null && !empty($cp['StartDate']) && !empty($cp['EndDate'])) {
+            $st = (int)strtotime((string)$cp['StartDate']);
+            $en = (int)strtotime((string)$cp['EndDate']);
+            if ($st > 0 && $en > $st) {
+                $nowTs = time();
+                $pct   = max(0, min(1, ($nowTs - $st) / ($en - $st)));
+                $left  = max(0, $en - $nowTs);
+                $epg   = true;
+                $info[] = $sbx_T('ww.program', ['t' => date('H:i', $st) . " \u{2013} " . date('H:i', $en)]);
+            }
         }
-    }
-    $dev = (string)($s['DeviceName'] ?? '?');
+        $dev = (string)($s['DeviceName'] ?? '?');
 
-    $streams[] = [
-        'title'       => sb_title($np),
-        'type'        => (string)($np['Type'] ?? ''),
-        'user'        => $short,
-        'user_full'   => $uname,
-        'device'      => sb_dev($dev),
-        'device_full' => $dev . ' ' . "\u{00b7}" . ' ' . (string)($s['Client'] ?? ''),
-        'mode'        => $mode,
-        'detail'      => $detail,
-        'info'        => implode("\n", $info),
-        'pct'         => $pct,
-        'left'        => $left,
-        'paused'      => !empty($ps['IsPaused']),
-        'live'        => $live,
-        'epg'         => $epg,
-        'sid'         => (string)($s['Id'] ?? ''),
-    ];
+        $streams[] = [
+            'title'       => sb_title($np),
+            'type'        => (string)($np['Type'] ?? ''),
+            'user'        => $short,
+            'user_full'   => $uname,
+            'device'      => sb_dev($dev),
+            'device_full' => $dev . ' ' . "\u{00b7}" . ' ' . (string)($s['Client'] ?? ''),
+            'mode'        => $mode,
+            'detail'      => $detail,
+            'info'        => implode("\n", $info),
+            'pct'         => $pct,
+            'left'        => $left,
+            'paused'      => !empty($ps['IsPaused']),
+            'live'        => $live,
+            'epg'         => $epg,
+            'srv'         => $sv,
+            'sid'         => (string)($s['Id'] ?? '') !== '' ? $sv . ':' . (string)$s['Id'] : '',
+        ];
+    }
 }
+
+// every server failed: the tile shows the error of the first one, as before
+$okSrv = array_keys(array_filter($state, function ($e) { return $e === ''; }));
+if (!$okSrv) { out(['ok' => false, 'error' => (string)reset($state)]); }
+$servers = [];
+foreach ($state as $sv => $e) { $servers[] = ['id' => $sv, 'ok' => ($e === ''), 'error' => $e]; }
 
 // Order: playing before paused, then by when the stream was first seen (oldest on top). Jellyfin lists the sessions by their last
 // activity, which changes with every progress report, so the rows used to swap places (owner, 2026-10-28).
@@ -341,7 +373,7 @@ $streams = array_slice($streams, 0, $maxStream);
 
 // ---- Recently added (cached for a minute) ----------------------------------
 $added = [];
-if ($addedRows > 0) {
+if ($addedRows > 0 && ($state['jf'] ?? 'x') === '') {
     $cf  = '/tmp/streambox_added.json';
     $now = time();
     $c   = is_file($cf) ? json_decode((string)@file_get_contents($cf), true) : null;
@@ -377,4 +409,5 @@ out([
     'mbps'          => round($mbps, 1),
     'transcoding'   => $trans,
     'added'         => $added,
+    'servers'       => $servers,
 ]);

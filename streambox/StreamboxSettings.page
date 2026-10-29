@@ -13,6 +13,7 @@ $sbs_t = function ($k, $v = []) use ($sbs_T) { return htmlspecialchars($sbs_T($k
 $sb_file = '/boot/config/plugins/streambox/settings.cfg';
 $sb = [
   'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
+  'em_on' => '0', 'em_host' => '127.0.0.1', 'em_port' => '8097', 'em_key' => '',
   'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
@@ -128,6 +129,18 @@ if (!function_exists('sb_auto')) {
 
 <dt><?=$sbs_t('set.socket_id')?></dt>
 <dd><input type="number" name="socket_id" min="0" max="3" class="narrow" value="<?=sb_h($sb['socket_id'])?>"></dd>
+</dl>
+
+<h3><?=$sbs_t('set.h.emby')?> <small><?=$sbs_t('set.h.emby_sub')?></small></h3>
+<dl>
+<dt><?=$sbs_t('set.em_on')?></dt>
+<dd><input type="hidden" name="em_on" value="0"><input type="checkbox" name="em_on" value="1" <?=sb_chk($sb['em_on'])?>> <?=$sbs_t('set.em_on_hint')?></dd>
+
+<dt><?=$sbs_t('set.em_host')?></dt>
+<dd><input type="text" name="em_host" class="narrow" value="<?=sb_h($sb['em_host'])?>"> <input type="number" name="em_port" min="1" max="65535" class="narrow" value="<?=sb_h($sb['em_port'])?>"> <span class="uset-hint"><?=$sbs_t('set.em_host_hint')?></span></dd>
+
+<dt><?=$sbs_t('set.em_key')?></dt>
+<dd><input type="password" name="em_key" class="narrow" autocomplete="new-password" value="" placeholder="<?=$sb['em_key'] !== '' ? $sbs_T('set.saved_keep') : ''?>"> <input type="button" id="sb-etest" value="<?=$sbs_t('set.btn.test_emby')?>"> <span id="sb-emsg"></span> <span class="uset-hint"><?=$sbs_t('set.em_key_hint')?></span></dd>
 </dl>
 
 <h3><?=$sbs_t('week.title')?> <small><?=$sbs_t('set.h.week_sub')?></small></h3>
@@ -288,6 +301,20 @@ $(function () {
         var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status;
         $msg.css('color', '#e5534b').text(T('set.not_saved', { e: e }));
       })
+      .always(function () { $b.prop('disabled', false); });
+  });
+  // Emby test: the tile endpoint with the saved settings, its answer for this one server
+  $('#sb-etest').on('click', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#sb-emsg').css('color', '').text(T('set.asking_emby'));
+    $.getJSON('/plugins/streambox/api_fetch.php', { _: Date.now() })
+      .done(function (r) {
+        var x = null;
+        $.each((r && r.servers) || [], function (i, v) { if (v.id === 'em') { x = v; } });
+        if (!x && r && !r.ok && r.error !== 'nokey') { x = { ok: false, error: r.error }; }   // every server failed
+        if (!x) { $m.css('color', '#d9921f').text(T('set.em_test_off')); return; }
+        $m.css('color', x.ok ? '#3fa24a' : '#e5534b').text(x.ok ? T('set.em_test_ok') : (x.error === 'auth' ? T('set.em_test_auth') : T('set.em_test_fail', { e: x.error })));
+      })
+      .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
       .always(function () { $b.prop('disabled', false); });
   });
   $('#sb-wtest').on('click', function () {
