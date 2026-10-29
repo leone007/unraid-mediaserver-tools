@@ -211,6 +211,9 @@ function sb_plex_sessions($j) {
         if (!is_array($m)) { continue; }
         $media = $m['Media'][0] ?? [];
         $ts = is_array($m['TranscodeSession'] ?? null) ? $m['TranscodeSession'] : null;
+        // the session's Media is the output of a transcode: its size is the target size
+        $outW = (int)($media['width'] ?? 0);
+        $outH = (int)($media['height'] ?? 0);
         $rk = (string)($m['ratingKey'] ?? '');
         // during a transcode the session's Media describes the output: take the source from the library item
         if ($ts !== null && $rk !== '' && ctype_digit($rk)) {
@@ -257,10 +260,9 @@ function sb_plex_sessions($j) {
             'MediaStreams' => $ms,
         ];
         if ($live) {
-            // live TV: Plex names the programme; the channel is the source title when given
-            $ch = trim((string)($m['sourceTitle'] ?? $m['grandparentTitle'] ?? ''));
-            $np['Name'] = ($ch !== '') ? $ch : $np['Name'];
-            $np['CurrentProgram'] = ['Name' => (string)($m['title'] ?? '')];
+            // live TV: Plex sends the programme title and no channel name (owner's test 2026-10-29); a channel name when given
+            $ch = trim((string)($m['sourceTitle'] ?? ''));
+            if ($ch !== '' && $ch !== $np['Name']) { $np['CurrentProgram'] = ['Name' => $np['Name']]; $np['Name'] = $ch; }
         }
         $vd = (string)($ts['videoDecision'] ?? '');
         $ad = (string)($ts['audioDecision'] ?? '');
@@ -272,12 +274,14 @@ function sb_plex_sessions($j) {
                 'IsAudioDirect' => ($ad !== 'transcode'),
                 'VideoCodec' => (string)($ts['videoCodec'] ?? ''),
                 'AudioCodec' => (string)($ts['audioCodec'] ?? ''),
-                'Width' => (int)($ts['width'] ?? 0),
-                'Height' => (int)($ts['height'] ?? 0),
+                'Width' => (int)($ts['width'] ?? $outW),
+                'Height' => (int)($ts['height'] ?? $outH),
                 'Container' => (string)($ts['container'] ?? ''),
                 'Bitrate' => 1000 * (int)($m['Session']['bandwidth'] ?? 0),
-                // Plex names the hardware encoder (qsv, vaapi ...) when the GPU encodes
+                // Plex names the hardware encoder (qsv, vaapi ...) when the GPU encodes; live TV was decoded and deinterlaced on
+                // the CPU with a VA-API encode (no transcodeHwDecoding, owner's test 2026-10-29)
                 'HardwareAccelerationType' => (string)($ts['transcodeHwEncoding'] ?? ''),
+                'HwEncodeOnly' => ((string)($ts['transcodeHwEncoding'] ?? '') !== '' && empty($ts['transcodeHwDecoding']) && empty($ts['transcodeHwFullPipeline'])),
                 'TranscodeReasons' => [],
             ];
         }
@@ -384,10 +388,16 @@ foreach ($srv as $sv => $_) {
                 // Jellyfin names the acceleration. Emby 4.10 lists the steps in VideoPipelineInfo (its VideoEncoderIsHardware said
                 // false during a QuickSync encode, owner's test 2026-10-29): the encoder step counts.
                 $hw = ((string)($ti['HardwareAccelerationType'] ?? '') !== '') || !empty($ti['VideoEncoderIsHardware']);
-                foreach ((array)($ti['VideoPipelineInfo'] ?? []) as $st) {
-                    if (is_array($st) && ($st['StepType'] ?? '') === 'Encoder' && !empty($st['IsHardwareContext'])) { $hw = true; }
+                $encOnly = !empty($ti['HwEncodeOnly']);
+                $pipe = array_values(array_filter((array)($ti['VideoPipelineInfo'] ?? []), 'is_array'));
+                foreach ($pipe as $st) {
+                    if (($st['StepType'] ?? '') === 'Encoder' && !empty($st['IsHardwareContext'])) { $hw = true; }
                 }
-                $detail .= $hw ? " \u{00b7} HW" : " \u{00b7} SW";
+                // Emby: hardware encoder after a software step (decode, deinterlace) is a partly hardware transcode too
+                if ($pipe && $hw) {
+                    foreach ($pipe as $st) { if (($st['StepType'] ?? '') !== 'Encoder' && empty($st['IsHardwareContext'])) { $encOnly = true; } }
+                }
+                $detail .= $hw ? ($encOnly ? " \u{00b7} HW enc" : " \u{00b7} HW") : " \u{00b7} SW";
             }
             if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
         } elseif ($mode === 'DirectStream') {
