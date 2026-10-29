@@ -253,8 +253,12 @@ foreach ($srv as $sv => $_) {
                 elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
                 elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
                 else { $detail = $sbx_T('det.video_transcode'); }
-                // Jellyfin names the acceleration, Emby says whether the encoder is hardware
+                // Jellyfin names the acceleration. Emby 4.10 lists the steps in VideoPipelineInfo (its VideoEncoderIsHardware said
+                // false during a QuickSync encode, owner's test 2026-10-29): the encoder step counts.
                 $hw = ((string)($ti['HardwareAccelerationType'] ?? '') !== '') || !empty($ti['VideoEncoderIsHardware']);
+                foreach ((array)($ti['VideoPipelineInfo'] ?? []) as $st) {
+                    if (is_array($st) && ($st['StepType'] ?? '') === 'Encoder' && !empty($st['IsHardwareContext'])) { $hw = true; }
+                }
                 $detail .= $hw ? " \u{00b7} HW" : " \u{00b7} SW";
             }
             if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }

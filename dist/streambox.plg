@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zm">
+<!ENTITY version   "2026.10.14zn">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Emby transcodes on Quick Sync now show HW instead of SW (Emby tells it per pipeline step, not in the field read before).
+###2026.10.14zm
 - Emby as a second media server: its streams show in Now playing with a server badge (JELLYFIN, EMBY), the header shows one dot per server, and a server that does not answer gets a quiet row instead of an error on the whole tile. New Emby block in Settings with a Test button. Recently added stays from Jellyfin.
 ###2026.10.14zl
 - Dashboard tile: Now playing order also stays steady for streams first seen at the same moment (after an install both took turns on top)
@@ -1370,8 +1372,12 @@ foreach ($srv as $sv => $_) {
                 elseif ($dstRes !== '') { $detail = $sbx_T('det.video') . $arrow . $dstRes; }
                 elseif ($rs && sb_reason($rs[0]) !== '') { $detail = sb_reason($rs[0]); }
                 else { $detail = $sbx_T('det.video_transcode'); }
-                // Jellyfin names the acceleration, Emby says whether the encoder is hardware
+                // Jellyfin names the acceleration. Emby 4.10 lists the steps in VideoPipelineInfo (its VideoEncoderIsHardware said
+                // false during a QuickSync encode, owner's test 2026-10-29): the encoder step counts.
                 $hw = ((string)($ti['HardwareAccelerationType'] ?? '') !== '') || !empty($ti['VideoEncoderIsHardware']);
+                foreach ((array)($ti['VideoPipelineInfo'] ?? []) as $st) {
+                    if (is_array($st) && ($st['StepType'] ?? '') === 'Encoder' && !empty($st['IsHardwareContext'])) { $hw = true; }
+                }
                 $detail .= $hw ? " \u{00b7} HW" : " \u{00b7} SW";
             }
             if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
