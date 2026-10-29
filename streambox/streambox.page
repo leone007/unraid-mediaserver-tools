@@ -90,6 +90,11 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-t-grey{background:rgba(128,128,128,.2);color:inherit;opacity:.8}
 .sb-sv{display:inline-block;vertical-align:1px;font-size:10px;font-weight:600;letter-spacing:.06em;padding:0 5px;border-radius:3px;border:1px solid currentColor;line-height:1.5;margin-right:5px;white-space:nowrap}
 .sb-sv-jf{color:#b57de0}.sb-sv-em{color:#5cc451}.sb-sv-px{color:#e5b40d}
+.sb-pill span.sb-srv{display:inline-flex;align-items:center;gap:6px}
+.sb-pill span.sb-srv span{border:0}
+.sb-pill span.sb-srv span:not(.sb-sv){padding:0}
+.sb-pill span.sb-srv .sb-sv{padding:0 5px;border:1px solid currentColor}
+.sb-pill span.sb-srv i.sb-dot{margin-right:0}
 .sb-pill i.sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
 .sb-v{font-family:bitstream,monospace;font-size:18px;margin:4px 0 6px}
 </style>
@@ -170,14 +175,13 @@ $(function () {
          : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', T('pill.api_key')]
          : [COLOR.red, 'fa-chain-broken', T('pill.offline')];
     if (multi(r)) {
-      // one dot per server instead of the single online state
-      var $s = $('<span>');
+      // every server in its own compartment: state dot, the same badge as on the rows, and what is wrong (owner's pick A, 2026-10-29)
       $.each(r.servers, function (i, x) {
-        $s.append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : (x.error === 'auth' ? COLOR.amber : COLOR.red)))
-          .append(document.createTextNode((SRV[x.id] || [0, x.id])[1] + ' '));
-        if (!x.ok) { $s.attr('title', ($s.attr('title') ? $s.attr('title') + '\n' : '') + srvErr(x)); }
+        var bad = x.error === 'auth' ? COLOR.amber : COLOR.red;
+        var $s = $('<span class="sb-srv">').append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : bad)).append(chip(x.id).css('margin-right', 0));
+        if (!x.ok) { $s.attr('title', srvErr(x)).append($('<span>').css('color', bad).text(x.error === 'auth' ? T('pill.api_key') : T('pill.offline'))); }
+        $p.append($s);
       });
-      $p.append($s);
     } else {
       $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
     }
