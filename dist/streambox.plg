@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zv">
+<!ENTITY version   "2026.10.14zw">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Now playing: live TV on Jellyfin and Emby shows the programme that is on now; before, the tile kept the programme that was on when playback started
+###2026.10.14zv
 - User nicknames: Emby and Plex users get nicknames too, in their own list per server on the settings page; the tile shows them on every server; a server that does not answer keeps its saved nicknames
 ###2026.10.14zu
 - Now playing: a transcoded stream shows a second line with what the client gets, target resolution and bitrate (for example 1080p 5.2 Mbps), in plain text under the amber line
@@ -1413,6 +1415,25 @@ function sb_title($it) {
     return $name . ($y ? ' (' . (int)$y . ')' : '');
 }
 
+// the programme on a live TV channel now, from the guide; cached until it ends (a channel without a guide: 10 minutes)
+function sb_live_now($sv, $chId) {
+    if (!preg_match('/^[0-9a-fA-F\-]{8,40}$/', $chId)) { return null; }
+    $cf = '/tmp/streambox_epg_now.json';
+    $c = is_file($cf) ? json_decode((string)@file_get_contents($cf), true) : [];
+    if (!is_array($c)) { $c = []; }
+    $k = $sv . ':' . $chId; $now = time();
+    if (isset($c[$k]) && (int)($c[$k]['until'] ?? 0) > $now) { return $c[$k]['p'] ?: null; }
+    list($b, $code, $err) = sb_get('/LiveTv/Programs?ChannelIds=' . $chId . '&IsAiring=true&Limit=1', $sv);
+    $j = (!$err && $code === 200) ? json_decode((string)$b, true) : null;
+    $it = is_array($j['Items'][0] ?? null) ? $j['Items'][0] : null;
+    $p = ($it && !empty($it['EndDate'])) ? ['Name' => (string)($it['Name'] ?? ''), 'StartDate' => (string)($it['StartDate'] ?? ''), 'EndDate' => (string)$it['EndDate']] : null;
+    $en = $p ? (int)strtotime($p['EndDate']) : 0;
+    $c[$k] = ['until' => $en > $now ? $en : $now + 600, 'p' => $p];
+    foreach ($c as $kk => $v) { if ((int)($v['until'] ?? 0) < $now - 3600) { unset($c[$kk]); } }
+    @file_put_contents($cf, json_encode($c));
+    return $p;
+}
+
 function sb_video($it) {
     foreach ((array)($it['MediaStreams'] ?? []) as $ms) {
         if (is_array($ms) && ($ms['Type'] ?? '') === 'Video') { return $ms; }
@@ -1686,6 +1707,13 @@ foreach ($srv as $sv => $_) {
         $pct  = ($rt > 0) ? max(0, min(1, $pos / $rt)) : 0;
         $left = ($rt > 0) ? max(0, ($rt - $pos) / 10000000) : 0;
         $cp   = is_array($np['CurrentProgram'] ?? null) ? $np['CurrentProgram'] : null;
+        // the session keeps the programme that was on when playback started: past its end, ask the guide what is on now
+        // (Jellyfin and Emby; owner's test 2026-10-30: Snooker stayed on the tile during the Curling that followed)
+        if ($live && $sv !== 'px' && in_array((string)($np['Type'] ?? ''), ['TvChannel', 'LiveTvChannel'], true)
+            && ($cp === null || (int)strtotime((string)($cp['EndDate'] ?? '')) <= time())) {
+            $now2 = sb_live_now($sv, (string)($np['Id'] ?? ''));
+            if ($now2 !== null) { $cp = $now2; $np['CurrentProgram'] = $now2; }
+        }
         if ($live && $cp !== null && !empty($cp['StartDate']) && !empty($cp['EndDate'])) {
             $st = (int)strtotime((string)$cp['StartDate']);
             $en = (int)strtotime((string)$cp['EndDate']);
