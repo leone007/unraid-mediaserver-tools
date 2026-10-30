@@ -268,8 +268,13 @@ $(function () {
 
     $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
     $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
-    $row.append($('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]))
-      .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
+    // a transcode's first line (what changes) is amber, its second line (what the client gets) plain like the other modes
+    var dl = String(x.detail || '').split('\n'), $md = $('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]));
+    if (x.mode === 'Transcode') {
+      $md.append($('<div class="sb-rs sb-warn">').text(dl[0]));
+      if (dl.length > 1) { $md.append($('<div class="sb-rs">').css('margin-top', '1px').text(dl.slice(1).join('\n'))); }
+    } else { $md.append($('<div class="sb-rs">').text(x.detail)); }
+    $row.append($md);
     return $row;
   }
 

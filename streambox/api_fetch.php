@@ -412,6 +412,12 @@ foreach ($srv as $sv => $_) {
                 $detail .= $hw ? ($encOnly ? " \u{00b7} HW enc" : " \u{00b7} HW") : " \u{00b7} SW";
             }
             if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
+            // second line, like the other modes: what the client gets (owner's pick B, 2026-10-30: the target only, no source)
+            if (empty($ti['IsVideoDirect'])) {
+                $tgt = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
+                if (!empty($ti['Bitrate'])) { $tgt .= ($tgt !== '' ? " \u{00b7} " : '') . number_format($ti['Bitrate'] / 1000000, 1) . ' Mbps'; }
+                if ($tgt !== '') { $detail .= "\n" . $tgt; }
+            }
         } elseif ($mode === 'DirectStream') {
             // First line: why the stream is not a plain direct play. Second line: resolution and bitrate.
             $why = [];

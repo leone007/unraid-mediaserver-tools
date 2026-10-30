@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zt">
+<!ENTITY version   "2026.10.14zu">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Now playing: a transcoded stream shows a second line with what the client gets, target resolution and bitrate (for example 1080p 5.2 Mbps), in plain text under the amber line
+###2026.10.14zt
 - Now playing: the stream count in a server section header is plain text again (the Unraid theme drew an orange button frame around it); a click still folds the section
 ###2026.10.14zs
 - Now playing: each media server section shows its own bandwidth on the right; a click on the stream count folds or unfolds that server's rows (remembered in the browser); an idle server is only its header line; no underline on the links
@@ -550,8 +552,13 @@ $(function () {
 
     $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
     $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
-    $row.append($('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]))
-      .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
+    // a transcode's first line (what changes) is amber, its second line (what the client gets) plain like the other modes
+    var dl = String(x.detail || '').split('\n'), $md = $('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]));
+    if (x.mode === 'Transcode') {
+      $md.append($('<div class="sb-rs sb-warn">').text(dl[0]));
+      if (dl.length > 1) { $md.append($('<div class="sb-rs">').css('margin-top', '1px').text(dl.slice(1).join('\n'))); }
+    } else { $md.append($('<div class="sb-rs">').text(x.detail)); }
+    $row.append($md);
     return $row;
   }
 
@@ -1573,6 +1580,12 @@ foreach ($srv as $sv => $_) {
                 $detail .= $hw ? ($encOnly ? " \u{00b7} HW enc" : " \u{00b7} HW") : " \u{00b7} SW";
             }
             if (!empty($ti['Bitrate'])) { $bps = (int)$ti['Bitrate']; }
+            // second line, like the other modes: what the client gets (owner's pick B, 2026-10-30: the target only, no source)
+            if (empty($ti['IsVideoDirect'])) {
+                $tgt = sb_res($ti['Width'] ?? 0, $ti['Height'] ?? 0);
+                if (!empty($ti['Bitrate'])) { $tgt .= ($tgt !== '' ? " \u{00b7} " : '') . number_format($ti['Bitrate'] / 1000000, 1) . ' Mbps'; }
+                if ($tgt !== '') { $detail .= "\n" . $tgt; }
+            }
         } elseif ($mode === 'DirectStream') {
             // First line: why the stream is not a plain direct play. Second line: resolution and bitrate.
             $why = [];
