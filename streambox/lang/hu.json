@@ -993,9 +993,6 @@
  "now.open_srv": {
   "text": "{s} megnyitása"
  },
- "now.st_idle": {
-  "text": "Nincs lejátszás"
- },
  "now.st_down": {
   "text": "nem érhető el"
  },
@@ -1010,5 +1007,11 @@
  },
  "now.st_err": {
   "text": "hiba ({e})"
+ },
+ "now.fold": {
+  "text": "A szerver lejátszásainak becsukása"
+ },
+ "now.unfold": {
+  "text": "A szerver lejátszásainak kinyitása"
  }
 }

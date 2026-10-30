@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zr">
+<!ENTITY version   "2026.10.14zs">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Now playing: each media server section shows its own bandwidth on the right; a click on the stream count folds or unfolds that server's rows (remembered in the browser); an idle server is only its header line; no underline on the links
+###2026.10.14zr
 - Now playing: one section per media server (Jellyfin, Emby, Plex) with a state dot and the server name, which opens that server; the progress bar has the server color; the home button, the status pill and the server badges are gone
 ###2026.10.14zq
 - Plex live TV shows the programme once (Plex sends no channel name), the transcode row shows the target resolution, and HW enc marks a transcode where only the encoder runs on the GPU (decode and deinterlace on the CPU), on Plex and Emby.
@@ -364,7 +366,12 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-grp:first-child{border-top:0}
 .sb-grp+.mt-r{border-top:0}
 .sb-grp a{color:inherit;display:inline-flex;align-items:center;gap:6px}
-.sb-grp a:hover{text-decoration:underline}
+.sb-grp a,.sb-grp a:hover{text-decoration:none}
+.sb-grp a:hover,.sb-cnt:hover{color:#fff}
+.sb-grp .sb-gl{display:flex;align-items:center;gap:4px}
+.sb-cnt{background:none;border:0;padding:0 2px;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.sb-cnt i{font-size:9px;opacity:.7;transition:transform .15s}
+.sb-cnt[aria-expanded="false"] i{transform:rotate(-90deg)}
 .sb-grp b{font-weight:400;opacity:.6;text-transform:none;letter-spacing:0;text-align:right}
 .sb-grp b.sb-bad{opacity:1}
 .sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
@@ -455,7 +462,20 @@ $(function () {
       + (r.mbps > 0 ? ' \u00B7 ' + r.mbps.toFixed(1) + ' Mbps' : ''));
   }
 
+  // folded server sections, remembered in this browser only
+  var FOLD_KEY = 'streambox.fold';
+  function foldSet() { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function folded(id) { return !!foldSet()[id]; }
+  var lastNow = null;
+  $('#sb-now').on('click', '.sb-cnt[data-srv]', function () {
+    var f = foldSet(), id = $(this).attr('data-srv');
+    if (f[id]) { delete f[id]; } else { f[id] = 1; }
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify(f)); } catch (e) { /* private window: the fold lasts until the next poll */ }
+    if (lastNow) { renderNow(lastNow[0], lastNow[1]); $('#sb-now .sb-cnt[data-srv="' + id + '"]').trigger('focus'); }
+  });
+
   function renderNow(r, ui) {
+    lastNow = [r, ui];
     var $n = $('#sb-now').empty();
     if (!r || (!r.ok && r.error !== 'unreachable' && r.error !== 'auth' && !(r.servers && r.servers.length))) {
       var msg = (r && r.error === 'auth') ? T('now.err_auth')
@@ -474,20 +494,26 @@ $(function () {
         .append($('<div>').css('color', COLOR.orange).text(T('col.mode'))));
     }
     // one section per media server (owner, 2026-10-30): state dot + name linking to the server, its streams under it
-    var state = {};
-    $.each(r.servers || [], function (i, x) { state[x.id] = x.ok ? '' : x.error; });
+    var state = {}, srvMbps = {};
+    $.each(r.servers || [], function (i, x) { state[x.id] = x.ok ? '' : x.error; srvMbps[x.id] = x.mbps || 0; });
     $.each(ui.srv || [{ id: 'jf', port: ui.port, url: ui.url }], function (i, sv) {
       var e = r.ok ? (state[sv.id] === undefined ? '' : state[sv.id]) : r.error;
       var own = $.grep(streams, function (x) { return (x.srv || 'jf') === sv.id; });
       var bad = e === '' ? '' : (keyErr(e) ? COLOR.amber : COLOR.red);
       var $a = $('<a target="_blank" rel="noopener">').attr({ href: srvHref(sv), title: T('now.open_srv', { s: srvName(sv.id) }) })
-        .append($('<i class="sb-dot">').css('background', bad || COLOR.green))
-        .append(document.createTextNode(srvName(sv.id) + (e === '' ? ' · ' + own.length : '')));
-      var $g = $('<div class="sb-grp">').append($a);
+        .append($('<i class="sb-dot">').css('background', bad || COLOR.green)).append(document.createTextNode(srvName(sv.id)));
+      var $l = $('<span class="sb-gl">').append($a);
+      // the count folds the server's rows (owner, 2026-10-30); an empty server is only its header line
+      var open = !folded(sv.id);
+      if (e === '' && own.length) {
+        $l.append($('<button type="button" class="sb-cnt">').attr({ 'data-srv': sv.id, 'aria-expanded': String(open), title: open ? T('now.fold') : T('now.unfold') })
+          .text('· ' + own.length + ' ').append($('<i class="fa fa-caret-down">')));
+      } else if (e === '') { $l.append($('<span class="sb-cnt">').css('cursor', 'default').text('· 0')); }
+      var $g = $('<div class="sb-grp">').append($l);
       if (e !== '') { $g.append($('<b class="sb-bad">').css('color', bad).text(srvErr(e))); }
-      else if (!own.length) { $g.append($('<b>').text(T('now.st_idle'))); }
+      else if (own.length && srvMbps[sv.id] > 0) { $g.append($('<b>').text(srvMbps[sv.id].toFixed(1) + ' Mbps')); }
       $box.append($g);
-      $.each(own, function (j, x) { $box.append(streamRow(x, t)); });
+      if (open) { $.each(own, function (j, x) { $box.append(streamRow(x, t)); }); }
     });
   }
 
@@ -1457,6 +1483,7 @@ $arrow   = " \u{2192} ";
 $streams = [];
 $users   = [];
 $mbps    = 0.0;
+$srvMbps = [];   // per media server, for the right side of its section on the tile
 $trans   = 0;
 $state   = [];   // per server: '' = answered, else the error code
 
@@ -1584,6 +1611,7 @@ foreach ($srv as $sv => $_) {
         }
         $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
         $mbps += $bps / 1000000;
+        $srvMbps[$sv] = ($srvMbps[$sv] ?? 0) + $bps / 1000000;
 
         $pos = (int)($ps['PositionTicks'] ?? 0);
         $rt  = (int)($np['RunTimeTicks'] ?? 0);
@@ -1633,7 +1661,7 @@ $state += $preState;
 $okSrv = array_keys(array_filter($state, function ($e) { return $e === ''; }));
 if (!$okSrv) { out(['ok' => false, 'error' => (string)reset($state)]); }
 $servers = [];
-foreach ($state as $sv => $e) { $servers[] = ['id' => $sv, 'ok' => ($e === ''), 'error' => $e]; }
+foreach ($state as $sv => $e) { $servers[] = ['id' => $sv, 'ok' => ($e === ''), 'error' => $e, 'mbps' => round($srvMbps[$sv] ?? 0, 1)]; }
 
 // Order: playing before paused, then by when the stream was first seen (oldest on top). Jellyfin lists the sessions by their last
 // activity, which changes with every progress report, so the rows used to swap places (owner, 2026-10-28).
@@ -4561,10 +4589,6 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Open {s}",
   "note": "Dashboard tile, Now playing: tooltip of a media server's name in its section header; the name links to the server's web UI ({s} = Jellyfin, Emby or Plex)."
  },
- "now.st_idle": {
-  "text": "No streams",
-  "note": "Dashboard tile, Now playing: right side of a media server's section header when nothing plays on that server."
- },
  "now.st_down": {
   "text": "not reachable",
   "note": "Dashboard tile, Now playing: right side of a media server's section header (red) when the server does not answer; the server name stands left of it."
@@ -4584,6 +4608,14 @@ function mt_i18n_js($dir, $name, $only = null) {
  "now.st_err": {
   "text": "error ({e})",
   "note": "Dashboard tile, Now playing: section header of a media server with another error; {e} is a short technical code such as http_500."
+ },
+ "now.fold": {
+  "text": "Fold this server's streams",
+  "note": "Dashboard tile, Now playing: tooltip of the stream count in a media server's section header; a click hides the rows."
+ },
+ "now.unfold": {
+  "text": "Show this server's streams",
+  "note": "Dashboard tile, Now playing: tooltip of the stream count of a folded server section; a click shows the rows again."
  }
 }
 ]]></INLINE>
@@ -5585,9 +5617,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  "now.open_srv": {
   "text": "{s} megnyitása"
  },
- "now.st_idle": {
-  "text": "Nincs lejátszás"
- },
  "now.st_down": {
   "text": "nem érhető el"
  },
@@ -5602,6 +5631,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "now.st_err": {
   "text": "hiba ({e})"
+ },
+ "now.fold": {
+  "text": "A szerver lejátszásainak becsukása"
+ },
+ "now.unfold": {
+  "text": "A szerver lejátszásainak kinyitása"
  }
 }
 ]]></INLINE>

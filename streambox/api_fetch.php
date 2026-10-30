@@ -328,6 +328,7 @@ $arrow   = " \u{2192} ";
 $streams = [];
 $users   = [];
 $mbps    = 0.0;
+$srvMbps = [];   // per media server, for the right side of its section on the tile
 $trans   = 0;
 $state   = [];   // per server: '' = answered, else the error code
 
@@ -455,6 +456,7 @@ foreach ($srv as $sv => $_) {
         }
         $info[] = $sbx_T('info.client', ['c' => trim((string)($s['Client'] ?? '') . ' ' . (string)($s['ApplicationVersion'] ?? ''))]);
         $mbps += $bps / 1000000;
+        $srvMbps[$sv] = ($srvMbps[$sv] ?? 0) + $bps / 1000000;
 
         $pos = (int)($ps['PositionTicks'] ?? 0);
         $rt  = (int)($np['RunTimeTicks'] ?? 0);
@@ -504,7 +506,7 @@ $state += $preState;
 $okSrv = array_keys(array_filter($state, function ($e) { return $e === ''; }));
 if (!$okSrv) { out(['ok' => false, 'error' => (string)reset($state)]); }
 $servers = [];
-foreach ($state as $sv => $e) { $servers[] = ['id' => $sv, 'ok' => ($e === ''), 'error' => $e]; }
+foreach ($state as $sv => $e) { $servers[] = ['id' => $sv, 'ok' => ($e === ''), 'error' => $e, 'mbps' => round($srvMbps[$sv] ?? 0, 1)]; }
 
 // Order: playing before paused, then by when the stream was first seen (oldest on top). Jellyfin lists the sessions by their last
 // activity, which changes with every progress report, so the rows used to swap places (owner, 2026-10-28).

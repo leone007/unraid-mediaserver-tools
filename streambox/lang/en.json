@@ -1321,10 +1321,6 @@
   "text": "Open {s}",
   "note": "Dashboard tile, Now playing: tooltip of a media server's name in its section header; the name links to the server's web UI ({s} = Jellyfin, Emby or Plex)."
  },
- "now.st_idle": {
-  "text": "No streams",
-  "note": "Dashboard tile, Now playing: right side of a media server's section header when nothing plays on that server."
- },
  "now.st_down": {
   "text": "not reachable",
   "note": "Dashboard tile, Now playing: right side of a media server's section header (red) when the server does not answer; the server name stands left of it."
@@ -1344,5 +1340,13 @@
  "now.st_err": {
   "text": "error ({e})",
   "note": "Dashboard tile, Now playing: section header of a media server with another error; {e} is a short technical code such as http_500."
+ },
+ "now.fold": {
+  "text": "Fold this server's streams",
+  "note": "Dashboard tile, Now playing: tooltip of the stream count in a media server's section header; a click hides the rows."
+ },
+ "now.unfold": {
+  "text": "Show this server's streams",
+  "note": "Dashboard tile, Now playing: tooltip of the stream count of a folded server section; a click shows the rows again."
  }
 }
