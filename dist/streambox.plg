@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zs">
+<!ENTITY version   "2026.10.14zt">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Now playing: the stream count in a server section header is plain text again (the Unraid theme drew an orange button frame around it); a click still folds the section
+###2026.10.14zs
 - Now playing: each media server section shows its own bandwidth on the right; a click on the stream count folds or unfolds that server's rows (remembered in the browser); an idle server is only its header line; no underline on the links
 ###2026.10.14zr
 - Now playing: one section per media server (Jellyfin, Emby, Plex) with a state dot and the server name, which opens that server; the progress bar has the server color; the home button, the status pill and the server badges are gone
@@ -368,8 +370,9 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-grp a{color:inherit;display:inline-flex;align-items:center;gap:6px}
 .sb-grp a,.sb-grp a:hover{text-decoration:none}
 .sb-grp a:hover,.sb-cnt:hover{color:#fff}
-.sb-grp .sb-gl{display:flex;align-items:center;gap:4px}
-.sb-cnt{background:none;border:0;padding:0 2px;margin:0;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.sb-grp .sb-gl{display:flex;align-items:center;gap:0}
+.sb-cnt{padding:0 2px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;border-radius:3px;user-select:none}
+.sb-cnt:focus-visible{outline:1px solid rgba(128,128,128,.6)}
 .sb-cnt i{font-size:9px;opacity:.7;transition:transform .15s}
 .sb-cnt[aria-expanded="false"] i{transform:rotate(-90deg)}
 .sb-grp b{font-weight:400;opacity:.6;text-transform:none;letter-spacing:0;text-align:right}
@@ -467,7 +470,10 @@ $(function () {
   function foldSet() { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } }
   function folded(id) { return !!foldSet()[id]; }
   var lastNow = null;
-  $('#sb-now').on('click', '.sb-cnt[data-srv]', function () {
+  // a span, not a button: Unraid's theme styles every button (orange frame, min-width)
+  $('#sb-now').on('click keydown', '.sb-cnt[data-srv]', function (ev) {
+    if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') { return; }
+    ev.preventDefault();
     var f = foldSet(), id = $(this).attr('data-srv');
     if (f[id]) { delete f[id]; } else { f[id] = 1; }
     try { localStorage.setItem(FOLD_KEY, JSON.stringify(f)); } catch (e) { /* private window: the fold lasts until the next poll */ }
@@ -506,7 +512,7 @@ $(function () {
       // the count folds the server's rows (owner, 2026-10-30); an empty server is only its header line
       var open = !folded(sv.id);
       if (e === '' && own.length) {
-        $l.append($('<button type="button" class="sb-cnt">').attr({ 'data-srv': sv.id, 'aria-expanded': String(open), title: open ? T('now.fold') : T('now.unfold') })
+        $l.append($('<span class="sb-cnt" role="button" tabindex="0">').attr({ 'data-srv': sv.id, 'aria-expanded': String(open), title: open ? T('now.fold') : T('now.unfold') })
           .text('· ' + own.length + ' ').append($('<i class="fa fa-caret-down">')));
       } else if (e === '') { $l.append($('<span class="sb-cnt">').css('cursor', 'default').text('· 0')); }
       var $g = $('<div class="sb-grp">').append($l);
