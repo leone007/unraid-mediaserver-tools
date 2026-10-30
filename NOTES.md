@@ -307,3 +307,9 @@ For whoever (human or Claude) continues this project. Author: leone007. Server: 
 - 2026.10.14zs: `servers[].mbps` (per server bandwidth, right side of the section header); the count button folds a section, kept in localStorage `streambox.fold` ({id:1}); an idle server is only its header line (no text).
 - Never use a `<button>` on a dashboard tile: Unraid's theme styles every button (orange frame, min-width, padding), which Playwright does not show. 14zt uses `span role=button tabindex=0` with Enter/Space.
 - Emby switched on without a key now reports `nokey` in `servers` (before it was silently left out).
+
+## Nicknames for every media server (Streambox 2026.10.14zv, Sysbox 2026.10.34)
+- `nicknames.json` keys: Jellyfin user id (unchanged), `em:<Emby user id>`, `px:<Plex account id>`. The settings page lists each enabled server's users (Jellyfin `/Users`, Emby `/emby/Users`, Plex `/accounts` = the server's own list, no plex.tv; account id 0 and empty names skipped). Owner's picks 2026-10-30: one list per server, no name matching across servers.
+- save.php rewrites only the servers whose list was on the page (`nick_srv[]`); a server that did not answer keeps its saved nicknames.
+- Sysbox stream priority watches every server Streambox has switched on with a key (`sxsp_servers`); Plex outside = `Session.location` wan, else `Player.local` false, else a public `Player.address`. Names: Streambox nickname, plus " (Server)" when more than one server is watched. Live `streamprio` data has `srv` = {id: answered}; `jf` stays as "some server answered" for old readers.
+- Not checked live: that Plex's `/accounts` id equals the session `User.id` (the owner should be id 1 in both).
