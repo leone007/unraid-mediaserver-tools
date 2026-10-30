@@ -304,4 +304,5 @@ For whoever (human or Claude) continues this project. Author: leone007. Server: 
 - Owner's pick (2026-10-30): no badges, no status pill, no home button. Now playing has one section per enabled server (`ui.srv` order: jf, em, px), even when empty ("No streams") or failing (red: not reachable, amber: key/token missing or rejected). The section header is a state dot + the server name, linking to its web UI.
 - Link: `ui.srv[].url` (Jellyfin's public URL) else `http://<host>:<port>` (+ `/web` for Plex); a loopback host (127.0.0.1/localhost) becomes `location.hostname`.
 - The progress bar takes the server color (Jellyfin #b57de0, Emby #5cc451, Plex #e5b40d); the left stripe still shows the mode (green/blue/amber, grey paused). A stream without `srv` counts as Jellyfin.
+- 2026.10.14zs: `servers[].mbps` (per server bandwidth, right side of the section header); the count button folds a section, kept in localStorage `streambox.fold` ({id:1}); an idle server is only its header line (no text).
 - Emby switched on without a key now reports `nokey` in `servers` (before it was silently left out).
