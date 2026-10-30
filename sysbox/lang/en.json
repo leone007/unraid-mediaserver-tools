@@ -4034,18 +4034,6 @@
   "text": "Earlier",
   "note": "Activity: the closed bar of earlier events."
  },
- "netp.sp_jf_ok": {
-  "text": "Jellyfin ✓ (from Streambox)",
-  "note": "stream priority status chip: Jellyfin answers, with the key from the Streambox settings."
- },
- "netp.sp_jf_err": {
-  "text": "Jellyfin does not answer",
-  "note": "stream priority status chip / test result: Jellyfin could not be asked."
- },
- "netp.sp_jf_none": {
-  "text": "Jellyfin: set it up in Streambox first",
-  "note": "stream priority status chip: there is no Jellyfin key in the Streambox settings."
- },
  "netp.sp_qb_ok": {
   "text": "qBittorrent ✓ (from Seedbox)",
   "note": "stream priority status chip: qBittorrent answers, with the login from the Seedbox settings."
@@ -4075,7 +4063,7 @@
   "note": "Stream priority band, right side: on, no outside stream."
  },
  "netp.sp_lead": {
-  "text": "While someone watches Jellyfin from outside the house, qBittorrent switches to its alternative speed limit, so the uploads leave room for the stream. When the last outside stream has ended, it goes back to full speed. Only that switch of qBittorrent is touched.",
+  "text": "While someone watches Jellyfin, Emby or Plex from outside the house, qBittorrent switches to its alternative speed limit, so the uploads leave room for the stream. When the last outside stream has ended, it goes back to full speed. Only that switch of qBittorrent is touched.",
   "note": "Stream priority band: the lead text."
  },
  "netp.sp_m_off": {
@@ -4162,10 +4150,6 @@
   "text": "Test the connections",
   "note": "button: asks Jellyfin and qBittorrent once."
  },
- "netp.sp_t_jf": {
-  "text": "Jellyfin: {n} playing, {o} outside",
-  "note": "test result. {n} = playing sessions, {o} = of them outside."
- },
  "netp.sp_t_qb_on": {
   "text": "qBittorrent: alternative limit on",
   "note": "test result: qBittorrent answers and its limit is on."
@@ -4203,7 +4187,7 @@
   "note": "Network page, container list: the host network row's names. {n} = container names."
  },
  "netp.sp_ev.release_nojf": {
-  "text": "Back to full speed · Jellyfin has not answered for 30 minutes",
+  "text": "Back to full speed · no media server has answered for 30 minutes",
   "note": "Activity line: the limit was given back because Jellyfin could not be asked for a long time."
  },
  "pow.ups": {
@@ -5301,5 +5285,25 @@
   "one": "The newest off-site copy is {n} day old.",
   "other": "The newest off-site copy is {n} days old.",
   "note": "Discord message of the Snapshots copies (and the Activity line on the page): line."
+ },
+ "netp.sp_srv_ok": {
+  "text": "{s} ✓",
+  "note": "Network page, Stream priority: chip of a media server that answers ({s} = Jellyfin, Emby or Plex)."
+ },
+ "netp.sp_srv_err": {
+  "text": "{s} does not answer",
+  "note": "Network page, Stream priority: chip or test result of a media server that does not answer."
+ },
+ "netp.sp_srv_none": {
+  "text": "Media servers: set them up in Streambox first",
+  "note": "Network page, Stream priority: no media server with a key in the Streambox settings."
+ },
+ "netp.sp_from_sb": {
+  "text": "(from Streambox)",
+  "note": "Network page, Stream priority: after the media server chips; their address and key come from the Streambox settings."
+ },
+ "netp.sp_t_srv": {
+  "text": "{s}: {n} playing, {o} outside",
+  "note": "Network page, Test the connections: one media server's result ({s} = Jellyfin, Emby or Plex)."
  }
 }

@@ -23,7 +23,7 @@ if ($op === 'state') {
         'auto_gw' => sxnet_route()[1], 'live' => $L, 'last7' => $last7, 'today' => $days[date('Y-m-d')] ?? [0, 0, 0, 0],
         'month' => ['key' => $tm, 'v' => $mon[$tm] ?? [0, 0]], 'prev' => ['key' => $pm, 'v' => $mon[$pm] ?? null],
         'events' => is_array($hist) ? array_slice((array)($hist['events'] ?? []), -50) : [],
-        'sp' => sxsp_live(), 'sp_have' => ['jf' => sxsp_jf_cfg()['key'] !== '', 'qb' => sxsp_qb_cfg()['host'] !== '' && is_file(getenv('SX_SP_QB_CFG') ?: '/boot/config/plugins/qbittorrent_widget/settings.cfg')]]);
+        'sp' => sxsp_live(), 'sp_have' => ['srv' => array_keys(sxsp_servers()), 'qb' => sxsp_qb_cfg()['host'] !== '' && is_file(getenv('SX_SP_QB_CFG') ?: '/boot/config/plugins/qbittorrent_widget/settings.cfg')]]);
 }
 
 if ($op === 'save') {
@@ -58,8 +58,14 @@ if ($op === 'sp_hold' || $op === 'sp_release') {
     sx_json(['ok' => true, 'sp' => $L]);
 }
 if ($op === 'sp_test') {
-    $s = sxsp_sessions(); $q = sxsp_qb_mode(); $a = $q === null ? null : sxsp_qb_alt();
-    sx_json(['ok' => true, 'jf' => $s !== null, 'n' => $s === null ? 0 : count($s), 'out' => $s === null ? 0 : count(array_filter($s, function ($x) { return $x[3]; })), 'qb' => $q !== null, 'q' => $q, 'alt' => $a]);
+    $s = sxsp_sessions($st); $q = sxsp_qb_mode(); $a = $q === null ? null : sxsp_qb_alt();
+    // per server: answered, playing, outside
+    $per = [];
+    foreach ($st as $id => $ok) {
+        $mine = array_filter((array)$s, function ($x) use ($id) { return $x[4] === $id; });
+        $per[] = ['id' => $id, 'ok' => $ok, 'n' => count($mine), 'out' => count(array_filter($mine, function ($x) { return $x[3]; }))];
+    }
+    sx_json(['ok' => true, 'jf' => $s !== null, 'srv' => $per, 'n' => $s === null ? 0 : count($s), 'out' => $s === null ? 0 : count(array_filter($s, function ($x) { return $x[3]; })), 'qb' => $q !== null, 'q' => $q, 'alt' => $a]);
 }
 
 if ($op === 'check') { sx_json(['ok' => true, 'check' => sxnet_check(sxnet_cfg())]); }

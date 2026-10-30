@@ -270,7 +270,14 @@ $(function () {
     var P = D.sp, H = D.sp_have || {}, $s = $('#nwp-sp-st');
     if (!$s.length) { return; }
     $s.empty();
-    $s.append($('<span class="nwp-chip">').addClass(H.jf && (!P || P.jf) ? 'ok' : 'no').text(H.jf ? (P && !P.jf ? T('netp.sp_jf_err') : T('netp.sp_jf_ok')) : T('netp.sp_jf_none')));
+    // one chip per media server Streambox watches (Jellyfin, Emby, Plex), then where they come from
+    var SN = { jf: 'Jellyfin', em: 'Emby', px: 'Plex' }, have = H.srv || [];
+    if (!have.length) { $s.append($('<span class="nwp-chip no">').text(T('netp.sp_srv_none'))); }
+    $.each(have, function (i, id) {
+      var bad = P && P.srv && P.srv[id] === false;
+      $s.append($('<span class="nwp-chip">').addClass(bad ? 'no' : 'ok').text(T(bad ? 'netp.sp_srv_err' : 'netp.sp_srv_ok', { s: SN[id] || id })));
+    });
+    if (have.length) { $s.append($('<span class="nwp-mut">').text(T('netp.sp_from_sb'))); }
     $s.append($('<span class="nwp-chip">').addClass(H.qb && (!P || P.qb) ? 'ok' : 'no').text(H.qb ? (P && !P.qb ? T('netp.sp_qb_err') : T('netp.sp_qb_ok')) : T('netp.sp_qb_none')));
     if (P) { $s.append($('<span>').text(T('netp.sp_checked', { t: hm(P.t) }))); }
     var mode = D.cfg.sp_mode, band = mode === 'off' ? T('netp.sp_band_off') : (P && P.held ? T('netp.sp_band_held') : T('netp.sp_band_on'));
@@ -302,7 +309,10 @@ $(function () {
     var $b = $(this).prop('disabled', true), $r = $('#nwp-sptest-r').css('color', '').text(T('netp.checking'));
     api('sp_test').done(function (r) {
       if (!r || !r.ok) { $r.css('color', '#e5534b').text(err(r)); return; }
-      var t = [r.jf ? T('netp.sp_t_jf', { n: r.n, o: r.out }) : T('netp.sp_jf_err'), r.qb ? T(r.q ? 'netp.sp_t_qb_on' : 'netp.sp_t_qb_off') : T('netp.sp_qb_err')];
+      var SN = { jf: 'Jellyfin', em: 'Emby', px: 'Plex' }, t = [];
+      $.each(r.srv || [], function (i, x) { t.push(x.ok ? T('netp.sp_t_srv', { s: SN[x.id] || x.id, n: x.n, o: x.out }) : T('netp.sp_srv_err', { s: SN[x.id] || x.id })); });
+      if (!(r.srv || []).length) { t.push(T('netp.sp_srv_none')); }
+      t.push(r.qb ? T(r.q ? 'netp.sp_t_qb_on' : 'netp.sp_t_qb_off') : T('netp.sp_qb_err'));
       if (r.alt) { t.push(T('netp.sp_t_alt', { u: r.alt[0] || '∞', d: r.alt[1] || '∞' })); }
       $r.css('color', r.jf && r.qb ? '#3fa24a' : '#d9921f').text(t.join(' · '));
     }).fail(function (x) { $r.css('color', '#e5534b').text(err(x)); }).always(function () { $b.prop('disabled', false); });

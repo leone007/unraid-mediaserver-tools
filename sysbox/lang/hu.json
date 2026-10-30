@@ -3032,15 +3032,6 @@
  "netp.sp_act_earlier": {
   "text": "Korábban"
  },
- "netp.sp_jf_ok": {
-  "text": "Jellyfin ✓ (a Streamboxból)"
- },
- "netp.sp_jf_err": {
-  "text": "A Jellyfin nem válaszol"
- },
- "netp.sp_jf_none": {
-  "text": "Jellyfin: előbb állítsd be a Streamboxban"
- },
  "netp.sp_qb_ok": {
   "text": "qBittorrent ✓ (a Seedboxból)"
  },
@@ -3063,7 +3054,7 @@
   "text": "Bekapcsolva · készenlétben"
  },
  "netp.sp_lead": {
-  "text": "Amíg valaki kintről nézi a Jellyfint, a qBittorrent az alternatív sebességkorlátjára vált, így a feltöltések helyet hagynak a streamnek. Az utolsó kinti stream után visszaáll teljes sebességre. A qBittorrentben csak ezt a kapcsolót állítja."
+  "text": "Amíg valaki kintről nézi a Jellyfint, az Embyt vagy a Plexet, a qBittorrent az alternatív sebességkorlátjára vált, így a feltöltések helyet hagynak a streamnek. Az utolsó kinti stream után visszaáll teljes sebességre. A qBittorrentben csak ezt a kapcsolót állítja."
  },
  "netp.sp_m_off": {
   "text": "Ki"
@@ -3128,9 +3119,6 @@
  "netp.sp_test": {
   "text": "Kapcsolatok tesztje"
  },
- "netp.sp_t_jf": {
-  "text": "Jellyfin: {n} lejátszás, ebből {o} kint"
- },
  "netp.sp_t_qb_on": {
   "text": "qBittorrent: az alternatív korlát be van kapcsolva"
  },
@@ -3159,7 +3147,7 @@
   "text": "{n} és maga a szerver"
  },
  "netp.sp_ev.release_nojf": {
-  "text": "Újra teljes sebesség · a Jellyfin 30 perce nem válaszol"
+  "text": "Vissza teljes sebességre · 30 perce egyik médiaszerver sem válaszol"
  },
  "pow.ups": {
   "text": "UPS"
@@ -3984,5 +3972,20 @@
  "cpd.stale_off": {
   "one": "A legújabb gépen kívüli másolat {n} napos.",
   "other": "A legújabb gépen kívüli másolat {n} napos."
+ },
+ "netp.sp_srv_ok": {
+  "text": "{s} ✓"
+ },
+ "netp.sp_srv_err": {
+  "text": "A(z) {s} nem válaszol"
+ },
+ "netp.sp_srv_none": {
+  "text": "Médiaszerverek: előbb a Streamboxban állítsd be őket"
+ },
+ "netp.sp_from_sb": {
+  "text": "(a Streamboxból)"
+ },
+ "netp.sp_t_srv": {
+  "text": "{s}: {n} lejátszás, ebből {o} kint"
  }
 }

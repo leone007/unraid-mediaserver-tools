@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.33">
+<!ENTITY version   "2026.10.34">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,10 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.34
+- Stream priority: outside streams on Emby and Plex hold qBittorrent too, not only Jellyfin; every media server switched on in Streambox counts
+- Stream priority: the tile, Activity and the events show the Streambox nicknames with the server name, for example Zoli (Plex); the Network page has one chip per media server and the connection test reports each server
+
 ###2026.10.33
 - Snapshots: the before-update snapshots of the Update manager are removed by themselves in the daily round, after 14 days, the newest of each container after 30 days (both can be set, or turned off); each row shows when it goes, and Keep turns one into a manual snapshot that stays
 - Snapshots: a line in Activity and on Discord when expired before-update snapshots are removed, with the space freed

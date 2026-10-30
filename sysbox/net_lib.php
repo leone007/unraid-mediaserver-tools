@@ -159,7 +159,7 @@ function sxnet_dt($lang, $k, $v = []) {
 function sxnet_live() { $j = json_decode((string)@file_get_contents(sxnet_live_file()), true); return is_array($j) ? $j : null; }
 
 // ---- stream priority (item 98) ------------------------------------------------------------------
-// While Jellyfin plays to somebody outside the house, qBittorrent runs on its alternative speed limit (written there
+// While Jellyfin, Emby or Plex (every server switched on in Streambox, owner 2026-10-30) plays to somebody outside the house, qBittorrent runs on its alternative speed limit (written there
 // when the Network page is saved); after the last outside stream it goes back to full speed. Only the limit switch of
 // qBittorrent is touched, and only one Sysbox switched on itself (a limit you set yourself stays).
 const SXSP_STATE = '/boot/config/plugins/sysbox/streamprio.json';   // held or not, events (written only when it changes)
@@ -189,11 +189,44 @@ function sxsp_inside($ep) {
     return false;   // unknown: counted as outside, the safe side for the stream
 }
 function sxsp_ini($f) { $x = is_file($f) ? @parse_ini_file($f, false, INI_SCANNER_RAW) : false; return is_array($x) ? $x : []; }
-// Jellyfin from the Streambox settings, qBittorrent from the Seedbox settings (no second copy of the keys)
+// the media servers from the Streambox settings, qBittorrent from the Seedbox settings (no second copy of the keys)
+function sxsp_sb_cfg() { return sxsp_ini(getenv('SX_SP_SB_CFG') ?: '/boot/config/plugins/streambox/settings.cfg'); }
 function sxsp_jf_cfg() {
-    $c = sxsp_ini(getenv('SX_SP_SB_CFG') ?: '/boot/config/plugins/streambox/settings.cfg');
+    $c = sxsp_sb_cfg();
     $h = (string)($c['jf_host'] ?? '127.0.0.1');
     return ['host' => preg_match('/^[A-Za-z0-9.\-]+$/', $h) ? $h : '', 'port' => (int)($c['jf_port'] ?? 8096), 'key' => (string)($c['jf_key'] ?? '')];
+}
+const SXSP_SRV_NAME = ['jf' => 'Jellyfin', 'em' => 'Emby', 'px' => 'Plex'];
+// every server Streambox shows and has a key for: [id => [base url, auth header]]
+function sxsp_servers() {
+    $c = sxsp_sb_cfg(); $o = [];
+    $on = function ($v) { return !in_array(strtolower(trim((string)$v)), ['0', 'no', 'false', 'off', ''], true); };
+    $host = function ($k, $def) use ($c) { $h = (string)($c[$k] ?? $def); return preg_match('/^[A-Za-z0-9.\-]+$/', $h) ? $h : ''; };
+    $jf = sxsp_jf_cfg();
+    if ($jf['key'] !== '' && $jf['host'] !== '') { $o['jf'] = ['http://' . $jf['host'] . ':' . $jf['port'], 'Authorization: MediaBrowser Token="' . $jf['key'] . '"']; }
+    if ($on($c['em_on'] ?? '0') && (string)($c['em_key'] ?? '') !== '' && $host('em_host', '127.0.0.1') !== '') {
+        $o['em'] = ['http://' . $host('em_host', '127.0.0.1') . ':' . (int)($c['em_port'] ?? 8097), 'X-Emby-Token: ' . $c['em_key']];
+    }
+    if ($on($c['px_on'] ?? '0') && $host('px_host', '127.0.0.1') !== '') {
+        $t = sxsp_plex_token($c);
+        if ($t !== '') { $o['px'] = ['http://' . $host('px_host', '127.0.0.1') . ':' . (int)($c['px_port'] ?? 32400), 'X-Plex-Token: ' . $t]; }
+    }
+    return $o;
+}
+// Plex: the token saved in Streambox, else the server owner's token from Plex's Preferences.xml (as Streambox does)
+function sxsp_plex_token($c) {
+    $t = trim((string)($c['px_token'] ?? ''));
+    if ($t !== '') { return preg_match('/^[A-Za-z0-9_\-]{8,64}$/', $t) ? $t : ''; }
+    $dir = rtrim((string)($c['px_dir'] ?? '/mnt/cache/docker/plex'), '/');
+    if (!preg_match('#^/mnt/[^\0]+$#', $dir) || strpos($dir, '..') !== false) { return ''; }
+    $x = @file_get_contents($dir . '/Library/Application Support/Plex Media Server/Preferences.xml');
+    return ($x !== false && preg_match('/\sPlexOnlineToken="([A-Za-z0-9_\-]{8,64})"/', $x, $m)) ? $m[1] : '';
+}
+// the Streambox nicknames: Jellyfin user id, em:<Emby user id>, px:<Plex account id>
+function sxsp_nicks() {
+    $f = getenv('SX_SP_NICKS') ?: '/boot/config/plugins/streambox/nicknames.json';
+    $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null;
+    return is_array($j) ? $j : [];
 }
 function sxsp_qb_cfg() {
     $c = sxsp_ini(getenv('SX_SP_QB_CFG') ?: '/boot/config/plugins/qbittorrent_widget/settings.cfg');
@@ -210,20 +243,44 @@ function sxsp_http($method, $url, $headers = [], $post = null, $jar = '') {
     if ($jar !== '' && is_file($jar)) { @chmod($jar, 0600); }
     return [$b === false ? 0 : $code, $b === false ? '' : (string)$b];
 }
-// the playing Jellyfin sessions: [[user, device, title, outside], ...]; null when Jellyfin cannot be asked
-function sxsp_sessions() {
-    $c = sxsp_jf_cfg();
-    if ($c['key'] === '' || $c['host'] === '') { return null; }
-    [$code, $b] = sxsp_http('GET', 'http://' . $c['host'] . ':' . $c['port'] . '/Sessions?ActiveWithinSeconds=120', ['Authorization: MediaBrowser Token="' . $c['key'] . '"', 'Accept: application/json']);
-    $j = $code === 200 ? json_decode($b, true) : null;
-    if (!is_array($j)) { return null; }
+// the playing sessions of every media server: [[user, device, title, outside, server id], ...]; null when no server could be
+// asked. $st gets each server's answer: [id => true | false]. The user is the Streambox nickname, with the server's name
+// after it when more than one server is watched ("Zoli (Plex)").
+function sxsp_sessions(&$st = null) {
+    $st = []; $o = []; $srv = sxsp_servers(); $nick = sxsp_nicks(); $multi = count($srv) > 1;
+    foreach ($srv as $id => [$base, $hdr]) {
+        $path = $id === 'px' ? '/status/sessions' : ($id === 'em' ? '/emby/Sessions?ActiveWithinSeconds=120' : '/Sessions?ActiveWithinSeconds=120');
+        [$code, $b] = sxsp_http('GET', $base . $path, [$hdr, 'Accept: application/json']);
+        $j = $code === 200 ? json_decode($b, true) : null;
+        if ($id === 'px' && is_array($j)) { $j = sxsp_plex_rows($j); }
+        $st[$id] = is_array($j);
+        if (!is_array($j)) { continue; }
+        foreach ($j as $s) {
+            if (!is_array($s) || empty($s['NowPlayingItem'])) { continue; }
+            $it = $s['NowPlayingItem'];
+            $t = (string)($it['Name'] ?? '');
+            if (!empty($it['SeriesName'])) { $t = $it['SeriesName'] . ' · ' . $t; }
+            $uid = (string)($s['UserId'] ?? ''); $nk = $id === 'jf' ? $uid : $id . ':' . $uid;
+            $u = ($uid !== '' && trim((string)($nick[$nk] ?? '')) !== '') ? trim((string)$nick[$nk]) : (string)($s['UserName'] ?? '?');
+            if ($multi) { $u .= ' (' . SXSP_SRV_NAME[$id] . ')'; }
+            $out = array_key_exists('Outside', $s) ? (bool)$s['Outside'] : !sxsp_inside($s['RemoteEndPoint'] ?? '');
+            $o[] = [$u, (string)($s['DeviceName'] ?? ''), mb_substr($t, 0, 80), $out, $id];
+        }
+    }
+    return in_array(true, $st, true) ? $o : null;
+}
+// Plex /status/sessions in the shape above; outside = Plex's own lan/wan mark, else its "local" flag, else the address
+function sxsp_plex_rows($j) {
+    $list = $j['MediaContainer']['Metadata'] ?? [];
+    if (!is_array($list)) { return null; }
     $o = [];
-    foreach ($j as $s) {
-        if (!is_array($s) || empty($s['NowPlayingItem'])) { continue; }
-        $it = $s['NowPlayingItem'];
-        $t = (string)($it['Name'] ?? '');
-        if (!empty($it['SeriesName'])) { $t = $it['SeriesName'] . ' · ' . $t; }
-        $o[] = [(string)($s['UserName'] ?? '?'), (string)($s['DeviceName'] ?? ''), mb_substr($t, 0, 80), !sxsp_inside($s['RemoteEndPoint'] ?? '')];
+    foreach ($list as $m) {
+        if (!is_array($m)) { continue; }
+        $pl = is_array($m['Player'] ?? null) ? $m['Player'] : []; $loc = (string)($m['Session']['location'] ?? '');
+        $out = $loc !== '' ? $loc === 'wan' : (isset($pl['local']) ? !filter_var($pl['local'], FILTER_VALIDATE_BOOLEAN) : !sxsp_inside($pl['address'] ?? ''));
+        $o[] = ['NowPlayingItem' => ['Name' => (string)($m['title'] ?? '?'), 'SeriesName' => (string)($m['grandparentTitle'] ?? '')],
+                'UserId' => (string)($m['User']['id'] ?? ''), 'UserName' => (string)($m['User']['title'] ?? '?'),
+                'DeviceName' => (string)($pl['title'] ?? $pl['device'] ?? ''), 'Outside' => $out];
     }
     return $o;
 }
@@ -275,7 +332,7 @@ function sxsp_run($op = 'tick') {
     $cfg = sxnet_cfg(); $S = sxsp_state(); $before = json_encode($S); $now = time();
     $mode = in_array($cfg['sp_mode'], ['off', 'auto', 'button'], true) ? $cfg['sp_mode'] : 'auto';
     $back = max(1, min(120, (int)$cfg['sp_back'])) * 60;
-    $sess = sxsp_sessions();
+    $sess = sxsp_sessions($srvSt);
     $out = $sess === null ? [] : array_values(array_filter($sess, function ($x) use ($cfg) { return $cfg['sp_out'] === 'all' || $x[3]; }));
     $q = sxsp_qb_mode(); $msg = '';
     if ($out) { $S['last_out'] = $now; }
@@ -308,12 +365,12 @@ function sxsp_run($op = 'tick') {
         }
         if (!$out && $now - $S['last_out'] >= $back) { $S['user_off'] = 0; $S['own'] = 0; }
     }
-    // Jellyfin has not answered for a long time while the limit is on: give qBittorrent its speed back
+    // no media server has answered for a long time while the limit is on: give qBittorrent its speed back
     if ($op === 'tick' && $sess === null && $S['held'] && $q === 1 && $now - $S['last_out'] >= max($back, 1800) && sxsp_qb_toggle()) {
         $S['held'] = 0; sxsp_ev($S, 'release_nojf'); $q = 0;
     }
     sxsp_save($S, $before);
-    $L = ['t' => $now, 'mode' => $mode, 'jf' => $sess !== null, 'qb' => $q !== null, 'q' => $q, 'out' => array_map(function ($x) { return ['u' => $x[0], 'd' => $x[1], 't' => $x[2]]; }, $out),
+    $L = ['t' => $now, 'mode' => $mode, 'jf' => $sess !== null, 'srv' => $srvSt, 'qb' => $q !== null, 'q' => $q, 'out' => array_map(function ($x) { return ['u' => $x[0], 'd' => $x[1], 't' => $x[2]]; }, $out),
           'n_all' => $sess === null ? 0 : count($sess), 'held' => (int)$S['held'], 'since' => (int)$S['since'], 'own' => (int)$S['own'], 'user_off' => (int)$S['user_off'],
           'last_out' => (int)$S['last_out'], 'back' => $back, 'ev' => array_slice($S['ev'], -20), 'err' => $msg];
     $f = sxsp_live_file(); @file_put_contents($f . '.tmp', json_encode($L)); @rename($f . '.tmp', $f);
