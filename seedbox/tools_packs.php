@@ -453,7 +453,7 @@ function st_sp_tick(&$state, $tor) {
     // a job stuck before the delete (the pack downloaded, pack_path known, no dt) whose season Sonarr then imported by itself
     // goes on to 'imported': monitoring back, the single-episode torrents to the trash folder (seen 2026-10-30: Dark Matter S02)
     foreach ($state['packjobs'] as &$j) {
-        if ($j['stage'] !== 'blocked' || empty($j['pack_path']) || !empty($j['dt']) || time() - (int)$j['t'] > 86400 || time() - (int)($j['rchk'] ?? 0) < 300) { continue; }
+        if (!st_sp_recheck($j) || time() - (int)($j['rchk'] ?? 0) < 300) { continue; }
         $j['rchk'] = time(); $ch = true;
         [$cE, $eps] = st_arr('sonarr', '/episode?seriesId=' . (int)$j['series_id'] . '&seasonNumber=' . (int)$j['season']);
         if (!is_array($eps)) { continue; }
@@ -467,8 +467,12 @@ function st_sp_tick(&$state, $tor) {
     $state['packjobs'] = $keep;
     return $ch;
 }
+// a job stuck before the delete step (pack downloaded: pack_path known, no dt) is looked at again for a day
+function st_sp_recheck($j) {
+    return $j['stage'] === 'blocked' && !empty($j['pack_path']) && empty($j['dt']) && time() - (int)$j['t'] <= 86400;
+}
 function st_sp_active($state) {
-    foreach ((array)($state['packjobs'] ?? []) as $j) { if (!in_array($j['stage'], ['done', 'failed', 'blocked'], true)) { return true; } }
+    foreach ((array)($state['packjobs'] ?? []) as $j) { if (!in_array($j['stage'], ['done', 'failed', 'blocked'], true) || st_sp_recheck($j)) { return true; } }
     return false;
 }
 function st_sp_clear() {

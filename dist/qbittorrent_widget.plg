@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzr">
+<!ENTITY version   "2026.10.99zzs">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzs
+- Season Repacker: a job stuck because Sonarr imported the pack by itself is now really looked at again every 5 minutes for a day and closes by itself (in 2026.10.99zzr the check never ran while that stuck job was the only one)
+
 ###2026.10.99zzr
 - Season Repacker: when Sonarr imports the season pack by itself while the job deletes the old files, the job waits for that import instead of getting stuck; a job stuck this way goes on by itself once Sonarr has every episode from the pack (seen with Dark Matter S02)
 - Season Repacker: a file holding two episodes is sent to Sonarr only once when the old files are deleted
@@ -3590,7 +3593,7 @@ function st_sp_tick(&$state, $tor) {
     // a job stuck before the delete (the pack downloaded, pack_path known, no dt) whose season Sonarr then imported by itself
     // goes on to 'imported': monitoring back, the single-episode torrents to the trash folder (seen 2026-10-30: Dark Matter S02)
     foreach ($state['packjobs'] as &$j) {
-        if ($j['stage'] !== 'blocked' || empty($j['pack_path']) || !empty($j['dt']) || time() - (int)$j['t'] > 86400 || time() - (int)($j['rchk'] ?? 0) < 300) { continue; }
+        if (!st_sp_recheck($j) || time() - (int)($j['rchk'] ?? 0) < 300) { continue; }
         $j['rchk'] = time(); $ch = true;
         [$cE, $eps] = st_arr('sonarr', '/episode?seriesId=' . (int)$j['series_id'] . '&seasonNumber=' . (int)$j['season']);
         if (!is_array($eps)) { continue; }
@@ -3604,8 +3607,12 @@ function st_sp_tick(&$state, $tor) {
     $state['packjobs'] = $keep;
     return $ch;
 }
+// a job stuck before the delete step (pack downloaded: pack_path known, no dt) is looked at again for a day
+function st_sp_recheck($j) {
+    return $j['stage'] === 'blocked' && !empty($j['pack_path']) && empty($j['dt']) && time() - (int)$j['t'] <= 86400;
+}
 function st_sp_active($state) {
-    foreach ((array)($state['packjobs'] ?? []) as $j) { if (!in_array($j['stage'], ['done', 'failed', 'blocked'], true)) { return true; } }
+    foreach ((array)($state['packjobs'] ?? []) as $j) { if (!in_array($j['stage'], ['done', 'failed', 'blocked'], true) || st_sp_recheck($j)) { return true; } }
     return false;
 }
 function st_sp_clear() {
