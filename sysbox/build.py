@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.34">
+<!ENTITY version   "2026.10.35">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.35
+- Updates keep the graph histories: the network, UPS voltage and CPU graphs on the tile go on where they were instead of starting from empty
+
 ###2026.10.34
 - Stream priority: outside streams on Emby and Plex hold qBittorrent too, not only Jellyfin; every media server switched on in Streambox counts
 - Stream priority: the tile, Activity and the events show the Streambox nicknames with the server name, for example Zoli (Plex); the Network page has one chip per media server and the connection test reports each server
@@ -274,7 +277,10 @@ CFG="/boot/config/plugins/$PLUG"
 
 rm -rf "$DIR"
 rm -rf "/usr/local/emhttp/plugins/Sysbox"
-rm -f /tmp/sysbox_* 2>/dev/null
+# clear the caches, but keep the graph histories (CPU, network, UPS voltage, energy samples), so an update does not
+# start the dashboard graphs from empty (owner, 2026-10-30)
+find /tmp -maxdepth 1 -name 'sysbox_*' ! -name sysbox_hist.json ! -name sysbox_net.json ! -name sysbox_upsv.json \
+  ! -name sysbox_energy_last.json ! -name sysbox_edays.json ! -name '*.lock' -exec rm -f {} + 2>/dev/null
 
 mkdir -p "$DIR"
 mkdir -p "$CFG"
