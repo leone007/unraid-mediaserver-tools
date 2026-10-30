@@ -16,6 +16,10 @@
   "text": "Open Jellyfin",
   "note": "tooltip of the home icon in the tile header, and the link at the bottom of the tile."
  },
+ "tile.open_srv": {
+  "text": "Open {s}",
+  "note": "tooltip of a media server name (Jellyfin, Emby, Plex) in the tile header when several servers are set up; the name opens that server. {s} is the product name."
+ },
  "tile.settings": {
   "text": "Streambox settings",
   "note": "tooltip of the gear icon in the tile header."

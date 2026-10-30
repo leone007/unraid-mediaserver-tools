@@ -12,6 +12,9 @@
  "tile.open_jellyfin": {
   "text": "Jellyfin megnyitása"
  },
+ "tile.open_srv": {
+  "text": "{s} megnyitása"
+ },
  "tile.settings": {
   "text": "Streambox beállítások"
  },

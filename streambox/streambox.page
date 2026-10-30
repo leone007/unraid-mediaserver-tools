@@ -90,11 +90,12 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-t-grey{background:rgba(128,128,128,.2);color:inherit;opacity:.8}
 .sb-sv{display:inline-block;vertical-align:1px;font-size:10px;font-weight:600;letter-spacing:.06em;padding:0 5px;border-radius:3px;border:1px solid currentColor;line-height:1.5;margin-right:5px;white-space:nowrap}
 .sb-sv-jf{color:#b57de0}.sb-sv-em{color:#5cc451}.sb-sv-px{color:#e5b40d}
-.sb-pill span.sb-srv{display:inline-flex;align-items:center;gap:6px}
-.sb-pill span.sb-srv span{border:0}
-.sb-pill span.sb-srv span:not(.sb-sv){padding:0}
-.sb-pill span.sb-srv .sb-sv{padding:0 5px;border:1px solid currentColor}
-.sb-pill span.sb-srv i.sb-dot{margin-right:0}
+.sb-srvs{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:4px 16px;padding:2px 0}
+.sb-srvs a.sb-sl{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.sb-srvs a.sb-sl:hover span{text-decoration:underline}
+.sb-srvs i.sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+.sb-srvs a.sb-sl em{font-style:normal;font-weight:400;font-size:11px}
+.sb-srvs .sb-sep{width:1px;align-self:stretch;background:rgba(128,128,128,.35)}
 .sb-pill i.sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
 .sb-v{font-family:bitstream,monospace;font-size:18px;margin:4px 0 6px}
 </style>
@@ -110,6 +111,12 @@ $(function () {
     TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
   // media servers (item 92): the badge text is the product name, not translated
   var SRV = { jf: ['sb-sv-jf', 'JELLYFIN', 'Jellyfin'], em: ['sb-sv-em', 'EMBY', 'Emby'], px: ['sb-sv-px', 'PLEX', 'Plex'] };
+  // the web UI of a server: Jellyfin as before (its own link or this host and port), Emby and Plex from ui.web (Plex's UI is under /web)
+  function srvHref(ui, id) {
+    if (id === 'jf') { return ui.url ? ui.url : 'http://' + location.hostname + ':' + ui.port; }
+    var w = (ui.web || {})[id];
+    return w ? 'http://' + (w.host || location.hostname) + ':' + w.port + (id === 'px' ? '/web' : '') : '';
+  }
   function multi(r) { return !!(r && r.servers && r.servers.length > 1); }
   function chip(id) { var s = SRV[id] || ['', String(id).toUpperCase(), id]; return $('<span class="sb-sv">').addClass(s[0]).text(s[1]); }
   function srvErr(x) {
@@ -169,20 +176,25 @@ $(function () {
   }
   function icon(cls, color) { return $('<i class="fa fa-fw">').addClass(cls).css('color', color); }
 
-  function renderPill(r) {
+  function renderPill(r, ui) {
     var $p = $('<div class="sb-pill">');
     var ok = r && r.ok;
     var st = ok ? [COLOR.green, 'fa-server', T('pill.online')]
          : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', T('pill.api_key')]
          : [COLOR.red, 'fa-chain-broken', T('pill.offline')];
     if (multi(r)) {
-      // every server in its own compartment: state dot, the same badge as on the rows, and what is wrong (owner's pick A, 2026-10-29)
+      // no box and no badges: state dot and the server's name in its colour, each a link to that server's web UI; what is wrong
+      // after the name (owner, 2026-10-30: the home icon only ever opened Jellyfin)
+      $p = $('<div class="sb-srvs">');
       $.each(r.servers, function (i, x) {
-        var bad = (x.error === 'auth' || x.error === 'notoken') ? COLOR.amber : COLOR.red;
-        var $s = $('<span class="sb-srv">').append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : bad)).append(chip(x.id).css('margin-right', 0));
-        if (!x.ok) { $s.attr('title', srvErr(x)).append($('<span>').css('color', bad).text((x.error === 'auth' || x.error === 'notoken') ? T('pill.api_key') : T('pill.offline'))); }
+        var key = (x.error === 'auth' || x.error === 'notoken'), bad = key ? COLOR.amber : COLOR.red, s = SRV[x.id] || ['', '', x.id];
+        var $s = $('<a class="sb-sl" target="_blank" rel="noopener">').addClass(s[0]).attr('href', srvHref(ui, x.id) || null)
+          .attr('title', x.ok ? T('tile.open_srv', { s: s[2] }) : srvErr(x))
+          .append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : bad)).append($('<span>').text(s[2]));
+        if (!x.ok) { $s.append($('<em>').css('color', bad).text(key ? T('pill.api_key') : T('pill.offline'))); }
         $p.append($s);
       });
+      if (ok && (r.streams_total > 0 || r.transcoding > 0)) { $p.append($('<span class="sb-sep">')); }
     } else {
       $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
     }
@@ -342,8 +354,9 @@ $(function () {
     applyTheme();
     var ui = (r && r.ui) ? r.ui : DEF_UI;
     var href = ui.url ? ui.url : 'http://' + location.hostname + ':' + ui.port;
-    $('#sb-home').attr('href', href);
-    renderPill(r);
+    // with several servers their names in the status line are the links; the home icon would only ever open Jellyfin
+    $('#sb-home').attr('href', href).toggle(!multi(r));
+    renderPill(r, ui);
     renderSummary(r);
     renderNow(r);
     renderAdded(r, href);

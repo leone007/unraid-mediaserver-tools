@@ -58,6 +58,15 @@ if (sb_flag($cfg['px_on'])) {
         $srv['px'] = ['base' => "http://$pxHost:$pxPort", 'pre' => '', 'hdr' => 'X-Plex-Token: ' . $pxTok];
     }
 }
+// where the server names in the tile header lead: the web UI of each server, on the host the browser sees the dashboard on
+// unless a real host name is set (a loopback address only means something to Unraid itself)
+function sb_web($h, $p) { return ['host' => in_array($h, ['127.0.0.1', 'localhost'], true) ? '' : $h, 'port' => $p]; }
+if (isset($srv['em'])) { $ui['web']['em'] = sb_web($emHost, $emPort); }
+if (sb_flag($cfg['px_on'])) {
+    $pxH = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['px_host']) ? $cfg['px_host'] : '127.0.0.1';
+    $pxP = (int)$cfg['px_port'];
+    $ui['web']['px'] = sb_web($pxH, ($pxP < 1 || $pxP > 65535) ? 32400 : $pxP);
+}
 
 function sb_plex_token($cfg) {
     $t = trim((string)($cfg['px_token'] ?? ''));
