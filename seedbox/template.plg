@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzq">
+<!ENTITY version   "2026.10.99zzr">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,10 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzr
+- Season Repacker: when Sonarr imports the season pack by itself while the job deletes the old files, the job waits for that import instead of getting stuck; a job stuck this way goes on by itself once Sonarr has every episode from the pack (seen with Dark Matter S02)
+- Season Repacker: a file holding two episodes is sent to Sonarr only once when the old files are deleted
+
 ###2026.10.99zzq
 - autobrr watch: when autobrr sees two packs of the same season (for example an SDR and a Dolby Vision release), Discord gets one message a day for that season; the first message already offers every pack of the season
 

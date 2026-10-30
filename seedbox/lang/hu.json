@@ -798,6 +798,9 @@
  "pk.already": {
   "text": "a Sonarr már importálta a csomagot ({n} epizód)"
  },
+ "pk.selfimp": {
+  "text": "a Sonarr magától importálja a csomagot, várok rá"
+ },
  "pk.deleted": {
   "text": "az évad fájljai törölve a Sonarrban, várakozás a csomag importjára"
  },

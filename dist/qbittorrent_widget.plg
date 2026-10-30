@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzq">
+<!ENTITY version   "2026.10.99zzr">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,10 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzr
+- Season Repacker: when Sonarr imports the season pack by itself while the job deletes the old files, the job waits for that import instead of getting stuck; a job stuck this way goes on by itself once Sonarr has every episode from the pack (seen with Dark Matter S02)
+- Season Repacker: a file holding two episodes is sent to Sonarr only once when the old files are deleted
+
 ###2026.10.99zzq
 - autobrr watch: when autobrr sees two packs of the same season (for example an SDR and a Dolby Vision release), Discord gets one message a day for that season; the first message already offers every pack of the season
 
@@ -3401,7 +3405,7 @@ function st_sp_step(&$j, $tor) {
         $got = 0; foreach ($curEps as $ep) {
             $fid = (int)($ep['episodeFileId'] ?? 0);
             if (in_array((int)$ep['episodeNumber'], $want, true) && $fid > 0 && !in_array($fid, $oldIds, true)) { $got++; }
-            if ($fid > 0 && in_array($fid, $oldIds, true)) { $live[] = $fid; }
+            if ($fid > 0 && in_array($fid, $oldIds, true) && !in_array($fid, $live, true)) { $live[] = $fid; }
         }
         if ($got >= count($want)) { $j['packeps'] = count($packEps); $j['stage'] = 'imported'; $j['msg'] = st_tr('pk.already', ['n' => $got]); $j['t'] = time(); return true; }
         // the old files are already gone (a restart between the delete and the saved state): go on waiting for the import
@@ -3412,6 +3416,12 @@ function st_sp_step(&$j, $tor) {
         if ($e !== '') { st_sp_fail($j, st_tr('pk.unmon', ['e' => $e])); return true; }
         [$c, $r, $e] = st_arr('sonarr', '/episodefile/bulk', 'DELETE', ['episodeFileIds' => array_values($live)], 120);
         if ($e !== '') {
+            // Sonarr may be importing the pack by itself right now: it replaces the files one by one, so a file of our list
+            // is gone and the bulk delete fails as a whole (seen 2026-10-30: Dark Matter S02, 7 rows asked, 6 found)
+            [$cE2, $eps2] = st_arr('sonarr', '/episode?seriesId=' . (int)$j['series_id'] . '&seasonNumber=' . (int)$j['season']);
+            $left = [];
+            foreach ((array)$eps2 as $ep) { $fid = (int)($ep['episodeFileId'] ?? 0); if (in_array($fid, $live, true) && !in_array($fid, $left, true)) { $left[] = $fid; } }
+            if (is_array($eps2) && count($left) < count($live)) { $j['stage'] = 'importing'; $j['msg'] = st_tr('pk.selfimp'); $j['t'] = time(); $j['dt'] = time(); return true; }
             st_sp_monitor(array_map(function ($f) { return (int)$f['ep_id']; }, array_filter($j['files'], function ($f) { return !empty($f['monitored']); })), true);
             st_sp_fail($j, st_tr('pk.nodel', ['e' => $e])); return true;
         }
@@ -3575,6 +3585,18 @@ function st_sp_tick(&$state, $tor) {
         if ($j['stage'] === 'blocked' && isset($doneAt[$j['key']]) && $doneAt[$j['key']] > (int)($j['gt'] ?? $j['t'])) {
             $j['stage'] = 'failed'; $j['dismissed'] = 1; $j['msg'] = st_tr('pk.superseded'); $j['msgd'] = st_trd('pk.superseded'); $j['t'] = time(); $ch = true;
         }
+    }
+    unset($j);
+    // a job stuck before the delete (the pack downloaded, pack_path known, no dt) whose season Sonarr then imported by itself
+    // goes on to 'imported': monitoring back, the single-episode torrents to the trash folder (seen 2026-10-30: Dark Matter S02)
+    foreach ($state['packjobs'] as &$j) {
+        if ($j['stage'] !== 'blocked' || empty($j['pack_path']) || !empty($j['dt']) || time() - (int)$j['t'] > 86400 || time() - (int)($j['rchk'] ?? 0) < 300) { continue; }
+        $j['rchk'] = time(); $ch = true;
+        [$cE, $eps] = st_arr('sonarr', '/episode?seriesId=' . (int)$j['series_id'] . '&seasonNumber=' . (int)$j['season']);
+        if (!is_array($eps)) { continue; }
+        $oldIds = array_map(function ($f) { return (int)$f['file']; }, $j['files']); $want = array_map(function ($f) { return (int)$f['ep']; }, $j['files']);
+        $got = 0; foreach ($eps as $ep) { $fid = (int)($ep['episodeFileId'] ?? 0); if (in_array((int)$ep['episodeNumber'], $want, true) && $fid > 0 && !in_array($fid, $oldIds, true)) { $got++; } }
+        if ($got >= count($want)) { $j['stage'] = 'imported'; $j['msg'] = st_tr('pk.already', ['n' => $got]); $j['t'] = time(); }
     }
     unset($j);
     $keep = [];
@@ -7003,6 +7025,10 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Sonarr already imported the pack ({n} episodes)",
   "note": "state of a season pack job in Activity."
  },
+ "pk.selfimp": {
+  "text": "Sonarr is importing the pack by itself, waiting for it",
+  "note": "state of a season pack job in Activity: the delete step was skipped because Sonarr was already replacing the files."
+ },
  "pk.deleted": {
   "text": "season files deleted in Sonarr, waiting for the import of the pack",
   "note": "state of a season pack job in Activity."
@@ -9536,6 +9562,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "pk.already": {
   "text": "a Sonarr már importálta a csomagot ({n} epizód)"
+ },
+ "pk.selfimp": {
+  "text": "a Sonarr magától importálja a csomagot, várok rá"
  },
  "pk.deleted": {
   "text": "az évad fájljai törölve a Sonarrban, várakozás a csomag importjára"

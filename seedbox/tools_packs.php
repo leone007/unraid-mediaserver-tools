@@ -268,7 +268,7 @@ function st_sp_step(&$j, $tor) {
         $got = 0; foreach ($curEps as $ep) {
             $fid = (int)($ep['episodeFileId'] ?? 0);
             if (in_array((int)$ep['episodeNumber'], $want, true) && $fid > 0 && !in_array($fid, $oldIds, true)) { $got++; }
-            if ($fid > 0 && in_array($fid, $oldIds, true)) { $live[] = $fid; }
+            if ($fid > 0 && in_array($fid, $oldIds, true) && !in_array($fid, $live, true)) { $live[] = $fid; }
         }
         if ($got >= count($want)) { $j['packeps'] = count($packEps); $j['stage'] = 'imported'; $j['msg'] = st_tr('pk.already', ['n' => $got]); $j['t'] = time(); return true; }
         // the old files are already gone (a restart between the delete and the saved state): go on waiting for the import
@@ -279,6 +279,12 @@ function st_sp_step(&$j, $tor) {
         if ($e !== '') { st_sp_fail($j, st_tr('pk.unmon', ['e' => $e])); return true; }
         [$c, $r, $e] = st_arr('sonarr', '/episodefile/bulk', 'DELETE', ['episodeFileIds' => array_values($live)], 120);
         if ($e !== '') {
+            // Sonarr may be importing the pack by itself right now: it replaces the files one by one, so a file of our list
+            // is gone and the bulk delete fails as a whole (seen 2026-10-30: Dark Matter S02, 7 rows asked, 6 found)
+            [$cE2, $eps2] = st_arr('sonarr', '/episode?seriesId=' . (int)$j['series_id'] . '&seasonNumber=' . (int)$j['season']);
+            $left = [];
+            foreach ((array)$eps2 as $ep) { $fid = (int)($ep['episodeFileId'] ?? 0); if (in_array($fid, $live, true) && !in_array($fid, $left, true)) { $left[] = $fid; } }
+            if (is_array($eps2) && count($left) < count($live)) { $j['stage'] = 'importing'; $j['msg'] = st_tr('pk.selfimp'); $j['t'] = time(); $j['dt'] = time(); return true; }
             st_sp_monitor(array_map(function ($f) { return (int)$f['ep_id']; }, array_filter($j['files'], function ($f) { return !empty($f['monitored']); })), true);
             st_sp_fail($j, st_tr('pk.nodel', ['e' => $e])); return true;
         }
@@ -442,6 +448,18 @@ function st_sp_tick(&$state, $tor) {
         if ($j['stage'] === 'blocked' && isset($doneAt[$j['key']]) && $doneAt[$j['key']] > (int)($j['gt'] ?? $j['t'])) {
             $j['stage'] = 'failed'; $j['dismissed'] = 1; $j['msg'] = st_tr('pk.superseded'); $j['msgd'] = st_trd('pk.superseded'); $j['t'] = time(); $ch = true;
         }
+    }
+    unset($j);
+    // a job stuck before the delete (the pack downloaded, pack_path known, no dt) whose season Sonarr then imported by itself
+    // goes on to 'imported': monitoring back, the single-episode torrents to the trash folder (seen 2026-10-30: Dark Matter S02)
+    foreach ($state['packjobs'] as &$j) {
+        if ($j['stage'] !== 'blocked' || empty($j['pack_path']) || !empty($j['dt']) || time() - (int)$j['t'] > 86400 || time() - (int)($j['rchk'] ?? 0) < 300) { continue; }
+        $j['rchk'] = time(); $ch = true;
+        [$cE, $eps] = st_arr('sonarr', '/episode?seriesId=' . (int)$j['series_id'] . '&seasonNumber=' . (int)$j['season']);
+        if (!is_array($eps)) { continue; }
+        $oldIds = array_map(function ($f) { return (int)$f['file']; }, $j['files']); $want = array_map(function ($f) { return (int)$f['ep']; }, $j['files']);
+        $got = 0; foreach ($eps as $ep) { $fid = (int)($ep['episodeFileId'] ?? 0); if (in_array((int)$ep['episodeNumber'], $want, true) && $fid > 0 && !in_array($fid, $oldIds, true)) { $got++; } }
+        if ($got >= count($want)) { $j['stage'] = 'imported'; $j['msg'] = st_tr('pk.already', ['n' => $got]); $j['t'] = time(); }
     }
     unset($j);
     $keep = [];

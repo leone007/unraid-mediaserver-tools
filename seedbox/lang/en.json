@@ -1063,6 +1063,10 @@
   "text": "Sonarr already imported the pack ({n} episodes)",
   "note": "state of a season pack job in Activity."
  },
+ "pk.selfimp": {
+  "text": "Sonarr is importing the pack by itself, waiting for it",
+  "note": "state of a season pack job in Activity: the delete step was skipped because Sonarr was already replacing the files."
+ },
  "pk.deleted": {
   "text": "season files deleted in Sonarr, waiting for the import of the pack",
   "note": "state of a season pack job in Activity."
