@@ -48,6 +48,7 @@ if (sb_flag($cfg['em_on']) && $emKey !== '') {
 // Plex: its own API (/status/sessions), turned into Jellyfin-shaped sessions by sb_plex_sessions(). Without a saved token the
 // server owner's token is read from Plex's Preferences.xml in its config folder, so nobody has to copy it.
 $preState = [];
+if (sb_flag($cfg['em_on']) && $emKey === '') { $preState['em'] = 'nokey'; }
 if (sb_flag($cfg['px_on'])) {
     $pxTok = sb_plex_token($cfg);
     if ($pxTok === '') { $preState['px'] = 'notoken'; }
@@ -57,6 +58,16 @@ if (sb_flag($cfg['px_on'])) {
         if ($pxPort < 1 || $pxPort > 65535) { $pxPort = 32400; }
         $srv['px'] = ['base' => "http://$pxHost:$pxPort", 'pre' => '', 'hdr' => 'X-Plex-Token: ' . $pxTok];
     }
+}
+
+// where each server's name on the tile links to (its own web UI): host and port as set; a loopback host is replaced by the
+// address the browser used for Unraid, Jellyfin keeps its optional public URL
+$ui['srv'] = [['id' => 'jf', 'host' => $host, 'port' => $port, 'url' => $link]];
+foreach (['em' => 8097, 'px' => 32400] as $sv => $defPort) {
+    if (!sb_flag($cfg[$sv . '_on'])) { continue; }
+    $h = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg[$sv . '_host']) ? $cfg[$sv . '_host'] : '127.0.0.1';
+    $p = (int)$cfg[$sv . '_port'];
+    $ui['srv'][] = ['id' => $sv, 'host' => $h, 'port' => ($p < 1 || $p > 65535) ? $defPort : $p, 'url' => ''];
 }
 
 function sb_plex_token($cfg) {

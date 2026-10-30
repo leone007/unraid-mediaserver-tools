@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zq">
+<!ENTITY version   "2026.10.14zr">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Now playing: one section per media server (Jellyfin, Emby, Plex) with a state dot and the server name, which opens that server; the progress bar has the server color; the home button, the status pill and the server badges are gone
+###2026.10.14zq
 - Plex live TV shows the programme once (Plex sends no channel name), the transcode row shows the target resolution, and HW enc marks a transcode where only the encoder runs on the GPU (decode and deinterlace on the CPU), on Plex and Emby.
 ###2026.10.14zp
 - Plex as a third media server: its streams in Now playing with a PLEX badge (direct play, direct stream, transcode with HW or SW, source quality from the library). The token is read from Plex's own config folder, no copying needed. New Plex block in Settings with a Test button.
@@ -265,7 +267,7 @@ require_once '/usr/local/emhttp/plugins/streambox/i18n.php';
 $sbx_lang = '/usr/local/emhttp/plugins/streambox/lang';
 $sbx_T = mt_i18n_t($sbx_lang);
 $sbx_h = function ($k) use ($sbx_T) { return htmlspecialchars($sbx_T($k), ENT_QUOTES); };
-$sbx_t = ['conn' => $sbx_h('tile.connecting'), 'load' => $sbx_h('tile.loading'), 'open' => $sbx_h('tile.open_jellyfin'), 'set' => $sbx_h('tile.settings')];
+$sbx_t = ['conn' => $sbx_h('tile.connecting'), 'load' => $sbx_h('tile.loading'), 'set' => $sbx_h('tile.settings')];
 
 $mytiles[$pluginname]['column2'] =
 <<<EOT
@@ -281,7 +283,6 @@ $mytiles[$pluginname]['column2'] =
     </span>
     <span class="tile-header-right">
       <span class="tile-header-right-controls">
-        <a id="sb-home" href="#" target="_blank" rel="noopener" title="{$sbx_t['open']}"><i class="fa fa-fw fa-home control"></i></a>
         <a href="/Settings/StreamboxSettings" title="{$sbx_t['set']}"><i class="fa fa-fw fa-cog control"></i></a>
       </span>
     </span>
@@ -289,7 +290,6 @@ $mytiles[$pluginname]['column2'] =
 </td></tr>
 <tr><td>
   <div class="sb-tile">
-    <div id="sb-status"></div>
     <div id="sb-now"><div class="sb-note">{$sbx_t['load']}</div></div>
     <div id="sb-week"></div>
     <div id="sb-load"></div>
@@ -298,7 +298,7 @@ $mytiles[$pluginname]['column2'] =
 </td></tr>
 </tbody>
 EOT;
-echo mt_i18n_js($sbx_lang, 'sb', ['tile.', 'mode.', 'time.', 'pill.', 'sum.', 'now.', 'col.', 'type.', 'added.', 'load.', 'date.', 'week.']);
+echo mt_i18n_js($sbx_lang, 'sb', ['tile.', 'mode.', 'time.', 'sum.', 'now.', 'col.', 'type.', 'added.', 'load.', 'date.', 'week.']);
 ?>
 <style>
 i.f32.sb-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/streambox/icon.png) center/contain no-repeat!important}
@@ -307,10 +307,6 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-sum{display:block;margin:0!important;line-height:1.3}
 .sb-tile{width:100%;font-size:12px;white-space:normal}
 .sb-tile a{text-decoration:none}
-#sb-status{display:flex;justify-content:flex-end;margin:0 0 4px}
-.sb-pill{display:inline-flex;border:1px solid rgba(128,128,128,.35);border-radius:6px;overflow:hidden}
-.sb-pill span{padding:3px 10px}
-.sb-pill span+span{border-left:1px solid rgba(128,128,128,.35)}
 .sb-num{text-align:right;white-space:nowrap;font-family:bitstream,monospace}
 .sb-nm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;word-break:break-word}
 .sb-el{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -364,14 +360,14 @@ i.f32.sb-ic.sb-inv{filter:invert(1)}
 .sb-t-amber{background:rgba(224,160,48,.22);color:#d9921f}
 .sb-t-red{background:rgba(229,83,75,.22);color:#e5534b}
 .sb-t-grey{background:rgba(128,128,128,.2);color:inherit;opacity:.8}
-.sb-sv{display:inline-block;vertical-align:1px;font-size:10px;font-weight:600;letter-spacing:.06em;padding:0 5px;border-radius:3px;border:1px solid currentColor;line-height:1.5;margin-right:5px;white-space:nowrap}
-.sb-sv-jf{color:#b57de0}.sb-sv-em{color:#5cc451}.sb-sv-px{color:#e5b40d}
-.sb-pill span.sb-srv{display:inline-flex;align-items:center;gap:6px}
-.sb-pill span.sb-srv span{border:0}
-.sb-pill span.sb-srv span:not(.sb-sv){padding:0}
-.sb-pill span.sb-srv .sb-sv{padding:0 5px;border:1px solid currentColor}
-.sb-pill span.sb-srv i.sb-dot{margin-right:0}
-.sb-pill i.sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
+.sb-grp{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:rgba(0,0,0,.15);border-top:1px solid rgba(128,128,128,.2)}
+.sb-grp:first-child{border-top:0}
+.sb-grp+.mt-r{border-top:0}
+.sb-grp a{color:inherit;display:inline-flex;align-items:center;gap:6px}
+.sb-grp a:hover{text-decoration:underline}
+.sb-grp b{font-weight:400;opacity:.6;text-transform:none;letter-spacing:0;text-align:right}
+.sb-grp b.sb-bad{opacity:1}
+.sb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
 .sb-v{font-family:bitstream,monospace;font-size:18px;margin:4px 0 6px}
 </style>
 <script>
@@ -384,14 +380,20 @@ $(function () {
   var COLOR = { red: '#e5534b', amber: '#d9921f', green: '#3fa24a', blue: '#4a90e2', grey: '#8a8a8a', orange: '#f5a524' };
   var TYPE_ICON = { Movie: 'fa-film', Episode: 'fa-television', Season: 'fa-television', Audio: 'fa-music',
     TvChannel: 'fa-video-camera', LiveTvChannel: 'fa-video-camera', Program: 'fa-video-camera', Recording: 'fa-video-camera' };
-  // media servers (item 92): the badge text is the product name, not translated
-  var SRV = { jf: ['sb-sv-jf', 'JELLYFIN', 'Jellyfin'], em: ['sb-sv-em', 'EMBY', 'Emby'], px: ['sb-sv-px', 'PLEX', 'Plex'] };
-  function multi(r) { return !!(r && r.servers && r.servers.length > 1); }
-  function chip(id) { var s = SRV[id] || ['', String(id).toUpperCase(), id]; return $('<span class="sb-sv">').addClass(s[0]).text(s[1]); }
-  function srvErr(x) {
-    var n = (SRV[x.id] || [0, 0, x.id])[2];
-    if (x.error === 'notoken') { return T('now.srv_notoken', { s: n }); }
-    return x.error === 'auth' ? T('now.srv_auth', { s: n }) : (x.error === 'unreachable' ? T('now.srv_down', { s: n }) : T('now.srv_err', { s: n, e: x.error }));
+  // media servers (item 92): the name is the product name, not translated; its progress bar color tells the streams apart
+  var SRV = { jf: ['Jellyfin', '#b57de0'], em: ['Emby', '#5cc451'], px: ['Plex', '#e5b40d'] };
+  function srvName(id) { return (SRV[id] || [id])[0]; }
+  function keyErr(e) { return e === 'auth' || e === 'notoken' || e === 'nokey'; }
+  function srvErr(e) {
+    if (e === 'notoken') { return T('now.st_notoken'); }
+    if (e === 'nokey') { return T('now.st_nokey'); }
+    return e === 'auth' ? T('now.st_auth') : (e === 'unreachable' ? T('now.st_down') : T('now.st_err', { e: e }));
+  }
+  // the server's own web UI: a loopback host means the server runs here, so the address the browser used for Unraid
+  function srvHref(s) {
+    if (s.url) { return s.url; }
+    var h = (!s.host || s.host === '127.0.0.1' || s.host === 'localhost') ? location.hostname : s.host;
+    return 'http://' + h + ':' + s.port + (s.id === 'px' ? '/web' : '');
   }
   var MODE = {
     DirectPlay:   ['sb-play', T('mode.direct_play')],
@@ -445,35 +447,6 @@ $(function () {
   }
   function icon(cls, color) { return $('<i class="fa fa-fw">').addClass(cls).css('color', color); }
 
-  function renderPill(r) {
-    var $p = $('<div class="sb-pill">');
-    var ok = r && r.ok;
-    var st = ok ? [COLOR.green, 'fa-server', T('pill.online')]
-         : (r && r.error === 'auth') ? [COLOR.amber, 'fa-key', T('pill.api_key')]
-         : [COLOR.red, 'fa-chain-broken', T('pill.offline')];
-    if (multi(r)) {
-      // every server in its own compartment: state dot, the same badge as on the rows, and what is wrong (owner's pick A, 2026-10-29)
-      $.each(r.servers, function (i, x) {
-        var bad = (x.error === 'auth' || x.error === 'notoken') ? COLOR.amber : COLOR.red;
-        var $s = $('<span class="sb-srv">').append($('<i class="sb-dot">').css('background', x.ok ? COLOR.green : bad)).append(chip(x.id).css('margin-right', 0));
-        if (!x.ok) { $s.attr('title', srvErr(x)).append($('<span>').css('color', bad).text((x.error === 'auth' || x.error === 'notoken') ? T('pill.api_key') : T('pill.offline'))); }
-        $p.append($s);
-      });
-    } else {
-      $p.append($('<span>').css('color', st[0]).append($('<i class="fa">').addClass(st[1])).append(document.createTextNode(' ' + st[2])));
-    }
-    if (ok) {
-      var n = r.streams_total || 0;
-      if (n > 0) {
-        $p.append($('<span>').css('color', COLOR.green).append($('<i class="fa fa-play">')).append(document.createTextNode(' ' + T('pill.streaming', { n: n }))));
-      }
-      if (r.transcoding > 0) {
-        $p.append($('<span>').css('color', COLOR.amber).append($('<i class="fa fa-bolt">')).append(document.createTextNode(' ' + T('pill.transcoding', { n: r.transcoding }))));
-      }
-    }
-    $('#sb-status').empty().append($p);
-  }
-
   function renderSummary(r) {
     var $s = $('#sb-summary');
     if (!r || !r.ok) { $s.text(T('sum.unavailable')); return; }
@@ -482,67 +455,72 @@ $(function () {
       + (r.mbps > 0 ? ' \u00B7 ' + r.mbps.toFixed(1) + ' Mbps' : ''));
   }
 
-  function renderNow(r) {
+  function renderNow(r, ui) {
     var $n = $('#sb-now').empty();
-    if (!r || !r.ok) {
+    if (!r || (!r.ok && r.error !== 'unreachable' && r.error !== 'auth' && !(r.servers && r.servers.length))) {
       var msg = (r && r.error === 'auth') ? T('now.err_auth')
               : (r && r.error === 'nokey') ? T('now.err_nokey')
               : T('now.err_down');
       $n.append(note(msg));
       return;
     }
+    var streams = r.ok ? r.streams : [];
     var t = '18px minmax(0,1fr) 64px 84px 120px';
-    $n.append(band(T('now.title') + ' \u00B7 ' + r.streams_total, '', true));
+    $n.append(band(T('now.title') + ' · ' + (r.ok ? r.streams_total : 0), '', true));
     var $box = $('<div class="mt-box">').appendTo($n);
-    // a server that does not answer gets a quiet row at the end of the list; the other servers' streams stay
-    function downRows() {
-      if (!multi(r)) { return; }
-      $.each(r.servers, function (i, x) {
-        if (x.ok) { return; }
-        var key = (x.error === 'auth' || x.error === 'notoken');
-        $box.append($('<div class="mt-r">').addClass(key ? 'mt-s-amber' : 'mt-s-red').css('grid-template-columns', 'auto minmax(0,1fr)')
-          .append(chip(x.id)).append($('<div>').css('color', key ? COLOR.amber : COLOR.red).text(srvErr(x))));
-      });
+    if (streams.length) {
+      $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
+        .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.user'))).append($('<div>').text(T('col.device')))
+        .append($('<div>').css('color', COLOR.orange).text(T('col.mode'))));
     }
-    if (!r.streams.length) { $box.append(mnote(T('sum.no_streams'))); downRows(); return; }
-    $box.append($('<div class="mt-cols">').css('grid-template-columns', t)
-      .append($('<div>')).append($('<div>').text(T('col.title'))).append($('<div>').text(T('col.user'))).append($('<div>').text(T('col.device')))
-      .append($('<div>').css('color', COLOR.orange).text(T('col.mode'))));
-
-    $.each(r.streams, function (i, x) {
-      var m = MODE[x.mode] || MODE.DirectPlay;
-      var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.paused ? 'mt-s-grey' : (x.mode === 'Transcode' ? 'mt-s-amber' : (x.mode === 'DirectStream' ? 'mt-s-blue' : 'mt-s-green')));
-      $row.append(x.paused ? icon('fa-pause', COLOR.grey) : icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
-
-      var pct = Math.max(0, Math.min(100, x.pct * 100));
-      var col = x.paused ? COLOR.grey : (x.mode === 'Transcode' ? COLOR.orange : COLOR.green);
-      var $pl;
-      if (x.live) {
-        // live TV has no length: a label instead of a progress bar
-        $pl = $('<div class="sb-pl">').append($('<span>').css('color', x.paused ? COLOR.grey : COLOR.red)
-          .text(x.paused ? T('now.paused') : '\u25CF ' + T('now.live')));
-        if (x.epg) {
-          $pl.append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })));
-          if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
-        }
-      } else {
-        $pl = $('<div class="sb-pl">')
-          .append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })))
-          .append($('<span>').css('color', col).text(x.paused ? T('now.paused') : Math.round(pct) + '%'));
-        if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
-        else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
-      }
-      var $nm = $('<div class="sb-nm">').attr('title', x.title);
-      if (multi(r)) { $nm.append(chip(x.srv)); }
-      $row.append($('<div>').append($nm.append(document.createTextNode(x.title))).append($pl));
-
-      $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
-      $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
-      $row.append($('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]))
-        .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
-      $box.append($row);
+    // one section per media server (owner, 2026-10-30): state dot + name linking to the server, its streams under it
+    var state = {};
+    $.each(r.servers || [], function (i, x) { state[x.id] = x.ok ? '' : x.error; });
+    $.each(ui.srv || [{ id: 'jf', port: ui.port, url: ui.url }], function (i, sv) {
+      var e = r.ok ? (state[sv.id] === undefined ? '' : state[sv.id]) : r.error;
+      var own = $.grep(streams, function (x) { return (x.srv || 'jf') === sv.id; });
+      var bad = e === '' ? '' : (keyErr(e) ? COLOR.amber : COLOR.red);
+      var $a = $('<a target="_blank" rel="noopener">').attr({ href: srvHref(sv), title: T('now.open_srv', { s: srvName(sv.id) }) })
+        .append($('<i class="sb-dot">').css('background', bad || COLOR.green))
+        .append(document.createTextNode(srvName(sv.id) + (e === '' ? ' · ' + own.length : '')));
+      var $g = $('<div class="sb-grp">').append($a);
+      if (e !== '') { $g.append($('<b class="sb-bad">').css('color', bad).text(srvErr(e))); }
+      else if (!own.length) { $g.append($('<b>').text(T('now.st_idle'))); }
+      $box.append($g);
+      $.each(own, function (j, x) { $box.append(streamRow(x, t)); });
     });
-    downRows();
+  }
+
+  function streamRow(x, t) {
+    var m = MODE[x.mode] || MODE.DirectPlay;
+    var $row = $('<div class="mt-r">').css('grid-template-columns', t).addClass('mt-n').addClass(x.paused ? 'mt-s-grey' : (x.mode === 'Transcode' ? 'mt-s-amber' : (x.mode === 'DirectStream' ? 'mt-s-blue' : 'mt-s-green')));
+    $row.append(x.paused ? icon('fa-pause', COLOR.grey) : icon(TYPE_ICON[x.type] || 'fa-play-circle', '#9fb4c8'));
+
+    var pct = Math.max(0, Math.min(100, x.pct * 100));
+    var col = x.paused ? COLOR.grey : (SRV[x.srv] || [0, COLOR.green])[1];
+    var $pl;
+    if (x.live) {
+      // live TV has no length: a label instead of a progress bar
+      $pl = $('<div class="sb-pl">').append($('<span>').css('color', x.paused ? COLOR.grey : COLOR.red)
+        .text(x.paused ? T('now.paused') : '● ' + T('now.live')));
+      if (x.epg) {
+        $pl.append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })));
+        if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
+      }
+    } else {
+      $pl = $('<div class="sb-pl">')
+        .append($('<div class="sb-pb">').append($('<i>').css({ width: pct + '%', background: col })))
+        .append($('<span>').text(x.paused ? T('now.paused') : Math.round(pct) + '%'));
+      if (x.paused) { $pl.append($('<span class="sb-u">').text(Math.round(pct) + '%')); }
+      else if (x.left > 0) { $pl.append($('<span class="sb-u">').text(leftTxt(x.left))); }
+    }
+    $row.append($('<div>').append($('<div class="sb-nm">').attr('title', x.title).text(x.title)).append($pl));
+
+    $row.append($('<div class="sb-el">').attr('title', x.user_full).text(x.user));
+    $row.append($('<div class="sb-el">').attr('title', x.device_full).text(x.device));
+    $row.append($('<div>').attr('title', x.info || '').append($('<span class="sb-bd">').addClass(m[0]).text(m[1]))
+      .append($('<div class="sb-rs">').addClass(x.mode === 'Transcode' ? 'sb-warn' : '').text(x.detail)));
+    return $row;
   }
 
   function renderAdded(r, href) {
@@ -618,10 +596,8 @@ $(function () {
     applyTheme();
     var ui = (r && r.ui) ? r.ui : DEF_UI;
     var href = ui.url ? ui.url : 'http://' + location.hostname + ':' + ui.port;
-    $('#sb-home').attr('href', href);
-    renderPill(r);
     renderSummary(r);
-    renderNow(r);
+    renderNow(r, ui);
     renderAdded(r, href);
     if (r && r.ok && ui.load) {
       if (!loadTimer) { pollLoad(); loadTimer = setInterval(pollLoad, 10000); }
@@ -1201,6 +1177,7 @@ if (sb_flag($cfg['em_on']) && $emKey !== '') {
 // Plex: its own API (/status/sessions), turned into Jellyfin-shaped sessions by sb_plex_sessions(). Without a saved token the
 // server owner's token is read from Plex's Preferences.xml in its config folder, so nobody has to copy it.
 $preState = [];
+if (sb_flag($cfg['em_on']) && $emKey === '') { $preState['em'] = 'nokey'; }
 if (sb_flag($cfg['px_on'])) {
     $pxTok = sb_plex_token($cfg);
     if ($pxTok === '') { $preState['px'] = 'notoken'; }
@@ -1210,6 +1187,16 @@ if (sb_flag($cfg['px_on'])) {
         if ($pxPort < 1 || $pxPort > 65535) { $pxPort = 32400; }
         $srv['px'] = ['base' => "http://$pxHost:$pxPort", 'pre' => '', 'hdr' => 'X-Plex-Token: ' . $pxTok];
     }
+}
+
+// where each server's name on the tile links to (its own web UI): host and port as set; a loopback host is replaced by the
+// address the browser used for Unraid, Jellyfin keeps its optional public URL
+$ui['srv'] = [['id' => 'jf', 'host' => $host, 'port' => $port, 'url' => $link]];
+foreach (['em' => 8097, 'px' => 32400] as $sv => $defPort) {
+    if (!sb_flag($cfg[$sv . '_on'])) { continue; }
+    $h = preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg[$sv . '_host']) ? $cfg[$sv . '_host'] : '127.0.0.1';
+    $p = (int)$cfg[$sv . '_port'];
+    $ui['srv'][] = ['id' => $sv, 'host' => $h, 'port' => ($p < 1 || $p > 65535) ? $defPort : $p, 'url' => ''];
 }
 
 function sb_plex_token($cfg) {
@@ -3313,26 +3300,6 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "{d}d ago",
   "note": "Added column: days ago. Very short."
  },
- "pill.online": {
-  "text": "Online",
-  "note": "status pill at the top of the tile: Jellyfin answers."
- },
- "pill.api_key": {
-  "text": "API key",
-  "note": "status pill: Jellyfin rejected the API key."
- },
- "pill.offline": {
-  "text": "Offline",
-  "note": "status pill: Jellyfin does not answer."
- },
- "pill.streaming": {
-  "text": "{n} streaming",
-  "note": "status pill: how many streams play now."
- },
- "pill.transcoding": {
-  "text": "{n} transcoding",
-  "note": "status pill: how many of the streams are transcoded."
- },
  "sum.unavailable": {
   "text": "Unavailable",
   "note": "line under the tile title when Jellyfin cannot be read."
@@ -4454,18 +4421,6 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Program: {t}",
   "note": "Dashboard tile, Live TV stream tooltip: the programme time."
  },
- "now.srv_down": {
-  "text": "{s}: not reachable",
-  "note": "row at the end of the Now playing list when one media server ({s} = Jellyfin, Emby or Plex) does not answer; the other servers' streams are still shown."
- },
- "now.srv_auth": {
-  "text": "{s}: API key rejected, check Settings",
-  "note": "row at the end of the Now playing list when a media server ({s}) refuses the saved API key."
- },
- "now.srv_err": {
-  "text": "{s}: error ({e})",
-  "note": "row at the end of the Now playing list; {e} is a short technical code such as http_500."
- },
  "set.h.emby": {
   "text": "Emby",
   "note": "band title of the Emby settings block (product name)."
@@ -4525,10 +4480,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  "save.err_em_key": {
   "text": "The Emby API key may only contain letters, digits, dots, dashes and underscores.",
   "note": "error text when saving the settings."
- },
- "now.srv_notoken": {
-  "text": "{s}: no token, check Settings",
-  "note": "row at the end of the Now playing list when Plex is switched on but no token was found ({s} = Plex)."
  },
  "set.h.plex": {
   "text": "Plex",
@@ -4605,6 +4556,34 @@ function mt_i18n_js($dir, $name, $only = null) {
  "save.err_px_dir": {
   "text": "The Plex config folder must be a folder under /mnt/.",
   "note": "error text when saving the settings."
+ },
+ "now.open_srv": {
+  "text": "Open {s}",
+  "note": "Dashboard tile, Now playing: tooltip of a media server's name in its section header; the name links to the server's web UI ({s} = Jellyfin, Emby or Plex)."
+ },
+ "now.st_idle": {
+  "text": "No streams",
+  "note": "Dashboard tile, Now playing: right side of a media server's section header when nothing plays on that server."
+ },
+ "now.st_down": {
+  "text": "not reachable",
+  "note": "Dashboard tile, Now playing: right side of a media server's section header (red) when the server does not answer; the server name stands left of it."
+ },
+ "now.st_auth": {
+  "text": "API key rejected, check Settings",
+  "note": "Dashboard tile, Now playing: section header of a media server that refuses the saved API key."
+ },
+ "now.st_nokey": {
+  "text": "no API key, check Settings",
+  "note": "Dashboard tile, Now playing: section header of a media server that is switched on in Settings but has no API key."
+ },
+ "now.st_notoken": {
+  "text": "no token, check Settings",
+  "note": "Dashboard tile, Now playing: section header of Plex when it is switched on but no token was found."
+ },
+ "now.st_err": {
+  "text": "error ({e})",
+  "note": "Dashboard tile, Now playing: section header of a media server with another error; {e} is a short technical code such as http_500."
  }
 }
 ]]></INLINE>
@@ -4657,21 +4636,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "time.ago_d": {
   "text": "{d} napja"
- },
- "pill.online": {
-  "text": "Elérhető"
- },
- "pill.api_key": {
-  "text": "API-kulcs"
- },
- "pill.offline": {
-  "text": "Nem elérhető"
- },
- "pill.streaming": {
-  "text": "{n} lejátszás"
- },
- "pill.transcoding": {
-  "text": "{n} átkódolás"
  },
  "sum.unavailable": {
   "text": "Nem elérhető"
@@ -5516,15 +5480,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  "ww.program": {
   "text": "Műsor: {t}"
  },
- "now.srv_down": {
-  "text": "{s}: nem érhető el"
- },
- "now.srv_auth": {
-  "text": "{s}: elutasítja az API-kulcsot, nézd meg a beállításokat"
- },
- "now.srv_err": {
-  "text": "{s}: hiba ({e})"
- },
  "set.h.emby": {
   "text": "Emby"
  },
@@ -5569,9 +5524,6 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "save.err_em_key": {
   "text": "Az Emby API-kulcsban csak betű, szám, pont, kötőjel és aláhúzás lehet."
- },
- "now.srv_notoken": {
-  "text": "{s}: nincs token, nézd meg a beállításokat"
  },
  "set.h.plex": {
   "text": "Plex"
@@ -5629,6 +5581,27 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "save.err_px_dir": {
   "text": "A Plex config mappának a /mnt/ alatt kell lennie."
+ },
+ "now.open_srv": {
+  "text": "{s} megnyitása"
+ },
+ "now.st_idle": {
+  "text": "Nincs lejátszás"
+ },
+ "now.st_down": {
+  "text": "nem érhető el"
+ },
+ "now.st_auth": {
+  "text": "elutasítja az API-kulcsot, nézd meg a beállításokat"
+ },
+ "now.st_nokey": {
+  "text": "nincs API-kulcs, nézd meg a beállításokat"
+ },
+ "now.st_notoken": {
+  "text": "nincs token, nézd meg a beállításokat"
+ },
+ "now.st_err": {
+  "text": "hiba ({e})"
  }
 }
 ]]></INLINE>

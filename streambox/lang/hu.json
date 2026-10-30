@@ -45,21 +45,6 @@
  "time.ago_d": {
   "text": "{d} napja"
  },
- "pill.online": {
-  "text": "Elérhető"
- },
- "pill.api_key": {
-  "text": "API-kulcs"
- },
- "pill.offline": {
-  "text": "Nem elérhető"
- },
- "pill.streaming": {
-  "text": "{n} lejátszás"
- },
- "pill.transcoding": {
-  "text": "{n} átkódolás"
- },
  "sum.unavailable": {
   "text": "Nem elérhető"
  },
@@ -903,15 +888,6 @@
  "ww.program": {
   "text": "Műsor: {t}"
  },
- "now.srv_down": {
-  "text": "{s}: nem érhető el"
- },
- "now.srv_auth": {
-  "text": "{s}: elutasítja az API-kulcsot, nézd meg a beállításokat"
- },
- "now.srv_err": {
-  "text": "{s}: hiba ({e})"
- },
  "set.h.emby": {
   "text": "Emby"
  },
@@ -956,9 +932,6 @@
  },
  "save.err_em_key": {
   "text": "Az Emby API-kulcsban csak betű, szám, pont, kötőjel és aláhúzás lehet."
- },
- "now.srv_notoken": {
-  "text": "{s}: nincs token, nézd meg a beállításokat"
  },
  "set.h.plex": {
   "text": "Plex"
@@ -1016,5 +989,26 @@
  },
  "save.err_px_dir": {
   "text": "A Plex config mappának a /mnt/ alatt kell lennie."
+ },
+ "now.open_srv": {
+  "text": "{s} megnyitása"
+ },
+ "now.st_idle": {
+  "text": "Nincs lejátszás"
+ },
+ "now.st_down": {
+  "text": "nem érhető el"
+ },
+ "now.st_auth": {
+  "text": "elutasítja az API-kulcsot, nézd meg a beállításokat"
+ },
+ "now.st_nokey": {
+  "text": "nincs API-kulcs, nézd meg a beállításokat"
+ },
+ "now.st_notoken": {
+  "text": "nincs token, nézd meg a beállításokat"
+ },
+ "now.st_err": {
+  "text": "hiba ({e})"
  }
 }

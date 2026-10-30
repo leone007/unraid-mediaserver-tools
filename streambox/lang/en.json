@@ -60,26 +60,6 @@
   "text": "{d}d ago",
   "note": "Added column: days ago. Very short."
  },
- "pill.online": {
-  "text": "Online",
-  "note": "status pill at the top of the tile: Jellyfin answers."
- },
- "pill.api_key": {
-  "text": "API key",
-  "note": "status pill: Jellyfin rejected the API key."
- },
- "pill.offline": {
-  "text": "Offline",
-  "note": "status pill: Jellyfin does not answer."
- },
- "pill.streaming": {
-  "text": "{n} streaming",
-  "note": "status pill: how many streams play now."
- },
- "pill.transcoding": {
-  "text": "{n} transcoding",
-  "note": "status pill: how many of the streams are transcoded."
- },
  "sum.unavailable": {
   "text": "Unavailable",
   "note": "line under the tile title when Jellyfin cannot be read."
@@ -1201,18 +1181,6 @@
   "text": "Program: {t}",
   "note": "Dashboard tile, Live TV stream tooltip: the programme time."
  },
- "now.srv_down": {
-  "text": "{s}: not reachable",
-  "note": "row at the end of the Now playing list when one media server ({s} = Jellyfin, Emby or Plex) does not answer; the other servers' streams are still shown."
- },
- "now.srv_auth": {
-  "text": "{s}: API key rejected, check Settings",
-  "note": "row at the end of the Now playing list when a media server ({s}) refuses the saved API key."
- },
- "now.srv_err": {
-  "text": "{s}: error ({e})",
-  "note": "row at the end of the Now playing list; {e} is a short technical code such as http_500."
- },
  "set.h.emby": {
   "text": "Emby",
   "note": "band title of the Emby settings block (product name)."
@@ -1272,10 +1240,6 @@
  "save.err_em_key": {
   "text": "The Emby API key may only contain letters, digits, dots, dashes and underscores.",
   "note": "error text when saving the settings."
- },
- "now.srv_notoken": {
-  "text": "{s}: no token, check Settings",
-  "note": "row at the end of the Now playing list when Plex is switched on but no token was found ({s} = Plex)."
  },
  "set.h.plex": {
   "text": "Plex",
@@ -1352,5 +1316,33 @@
  "save.err_px_dir": {
   "text": "The Plex config folder must be a folder under /mnt/.",
   "note": "error text when saving the settings."
+ },
+ "now.open_srv": {
+  "text": "Open {s}",
+  "note": "Dashboard tile, Now playing: tooltip of a media server's name in its section header; the name links to the server's web UI ({s} = Jellyfin, Emby or Plex)."
+ },
+ "now.st_idle": {
+  "text": "No streams",
+  "note": "Dashboard tile, Now playing: right side of a media server's section header when nothing plays on that server."
+ },
+ "now.st_down": {
+  "text": "not reachable",
+  "note": "Dashboard tile, Now playing: right side of a media server's section header (red) when the server does not answer; the server name stands left of it."
+ },
+ "now.st_auth": {
+  "text": "API key rejected, check Settings",
+  "note": "Dashboard tile, Now playing: section header of a media server that refuses the saved API key."
+ },
+ "now.st_nokey": {
+  "text": "no API key, check Settings",
+  "note": "Dashboard tile, Now playing: section header of a media server that is switched on in Settings but has no API key."
+ },
+ "now.st_notoken": {
+  "text": "no token, check Settings",
+  "note": "Dashboard tile, Now playing: section header of Plex when it is switched on but no token was found."
+ },
+ "now.st_err": {
+  "text": "error ({e})",
+  "note": "Dashboard tile, Now playing: section header of a media server with another error; {e} is a short technical code such as http_500."
  }
 }
