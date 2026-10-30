@@ -677,11 +677,8 @@
  "set.btn.nweek": {
   "text": "Heti összefoglaló küldése most"
  },
- "set.nicks_none": {
-  "text": "A felhasználólista nem tölthető be. Add meg fent a Jellyfin címét, portját és API-kulcsát, nyomd meg az Alkalmaz gombot, majd töltsd újra az oldalt."
- },
  "set.nicks_hint": {
-  "text": "A becenevek látszanak a hosszú felhasználónevek helyett a Dashboard csempén. Üresen hagyva az automatikus rövid név marad (halványan látszik)."
+  "text": "A becenevek a hosszú felhasználónevek helyett jelennek meg a csempén és a Sysbox stream priority sorában. Minden médiaszervernek saját listája van. Üres mező = automatikus rövid név (a halvány minta)."
  },
  "set.btn.apply": {
   "text": "Alkalmaz"
@@ -1013,5 +1010,11 @@
  },
  "now.unfold": {
   "text": "A szerver lejátszásainak kinyitása"
+ },
+ "set.nicks_n": {
+  "text": "{n} felhasználó"
+ },
+ "set.nicks_err": {
+  "text": "A(z) {s} felhasználólistája nem töltődött be. Ellenőrizd fent a címét és a kulcsát, nyomd meg az Alkalmaz gombot, majd töltsd újra az oldalt. A mentett becenevek megmaradnak."
  }
 }

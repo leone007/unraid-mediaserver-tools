@@ -125,13 +125,21 @@ $new = [
 $text = '';
 foreach ($new as $k => $v) { $text .= $k . '="' . $v . '"' . "\n"; }
 
-// Nicknames: {userId: nickname}
+// Nicknames: {key: nickname}; key = Jellyfin user id, 'em:<Emby user id>' or 'px:<Plex account id>'. Only the servers whose
+// list was on the page (nick_srv[]) are rewritten: the nicknames of a server that did not answer stay as they were.
 $map = [];
 $in  = $_POST['nick'] ?? [];
+$shownSrv = array_values(array_intersect(['jf', 'em', 'px'], (array)($_POST['nick_srv'] ?? [])));
+function sb_nick_srv($k) { return strpos($k, 'em:') === 0 ? 'em' : (strpos($k, 'px:') === 0 ? 'px' : 'jf'); }
+$oldN = is_file($nfile) ? json_decode((string)@file_get_contents($nfile), true) : [];
+if (is_array($oldN)) {
+    foreach ($oldN as $k => $v) { if (!in_array(sb_nick_srv((string)$k), $shownSrv, true) && is_string($v) && $v !== '') { $map[(string)$k] = $v; } }
+}
 if (is_array($in)) {
     foreach ($in as $id => $v) {
         $id = (string)$id;
-        if (!preg_match('/^[0-9a-fA-F\-]{32,36}$/', $id)) { continue; }
+        if (!preg_match('/^(?:em:)?[0-9a-fA-F\-]{32,36}$|^px:[0-9]{1,12}$/', $id)) { continue; }
+        if (!in_array(sb_nick_srv($id), $shownSrv, true)) { continue; }
         $v = trim(preg_replace('/[\x00-\x1f"\\\\]/u', '', (string)$v));
         if ($v === '') { continue; }
         if (preg_match('/^.{1,24}/us', $v, $m)) { $v = $m[0]; }
@@ -155,8 +163,8 @@ function sb_write($path, $data) {
 }
 
 if (!sb_write($file, $text)) { sb_out(false, ['error' => $sbx_T('save.err_write')]); }
-// only touch the nickname list when the nickname fields were part of the form
-if (isset($_POST['nick']) && !sb_write($nfile, json_encode((object)$map, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
+// only touch the nickname list when at least one server's nickname list was part of the form
+if ($shownSrv && !sb_write($nfile, json_encode((object)$map, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
     sb_out(false, ['error' => $sbx_T('save.err_nick')]);
 }
 @unlink('/tmp/streambox_added.json');

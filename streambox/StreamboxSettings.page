@@ -35,28 +35,59 @@ if (is_file($sb_nf)) {
 $sb_var = @parse_ini_file('/var/local/emhttp/var.ini');
 $sb_tok = is_array($sb_var) ? (string)($sb_var['csrf_token'] ?? '') : '';
 
-// Jellyfin users, for the nickname table
-$sb_users = null;
-if ((string)$sb['jf_key'] !== '' && preg_match('/^[A-Za-z0-9.\-]+$/', (string)$sb['jf_host'])) {
-  $sb_ch = curl_init('http://' . $sb['jf_host'] . ':' . (int)$sb['jf_port'] . '/Users');
-  curl_setopt_array($sb_ch, [
-    CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => 4,
-    CURLOPT_HTTPHEADER => ['Authorization: MediaBrowser Token="' . $sb['jf_key'] . '"', 'Accept: application/json'],
-  ]);
-  $sb_body = curl_exec($sb_ch);
-  $sb_code = (int)curl_getinfo($sb_ch, CURLINFO_HTTP_CODE);
-  curl_close($sb_ch);
-  if ($sb_code === 200) {
-    $sb_list = json_decode((string)$sb_body, true);
-    if (is_array($sb_list)) {
-      $sb_users = [];
-      foreach ($sb_list as $sb_u) {
-        if (!empty($sb_u['Id'])) { $sb_users[] = ['id' => (string)$sb_u['Id'], 'name' => (string)($sb_u['Name'] ?? '?')]; }
-      }
-      usort($sb_users, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
-    }
+// users of every media server, for the nickname table (one list per server, owner 2026-10-30): [key, name, label]; null = not loaded.
+// The keys in nicknames.json: Jellyfin its user id (as before), Emby 'em:<id>', Plex 'px:<account id>'.
+if (!function_exists('sb_get_json')) {
+  function sb_get_json($url, $hdr) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => 4, CURLOPT_HTTPHEADER => array_merge($hdr, ['Accept: application/json'])]);
+    $b = curl_exec($ch); $c = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    return $c === 200 ? json_decode((string)$b, true) : null;
   }
 }
+if (!function_exists('sb_host_ok')) {
+  function sb_host_ok($h) { return preg_match('/^[A-Za-z0-9.\-]+$/', (string)$h) === 1; }
+}
+if (!function_exists('sb_on')) {
+  function sb_on($v) { return !in_array(strtolower(trim((string)$v)), ['0', 'no', 'false', 'off', ''], true); }
+}
+// Plex: the saved token, else the server owner's token from Plex's Preferences.xml (as the tile does)
+if (!function_exists('sb_px_token')) {
+  function sb_px_token($sb) {
+    $t = trim((string)($sb['px_token'] ?? ''));
+    if ($t !== '') { return preg_match('/^[A-Za-z0-9_\-]{8,64}$/', $t) ? $t : ''; }
+    $dir = rtrim((string)($sb['px_dir'] ?? ''), '/');
+    if (!preg_match('#^/mnt/[^\0]+$#', $dir) || strpos($dir, '..') !== false) { return ''; }
+    $x = @file_get_contents($dir . '/Library/Application Support/Plex Media Server/Preferences.xml');
+    return ($x !== false && preg_match('/\sPlexOnlineToken="([A-Za-z0-9_\-]{8,64})"/', $x, $m)) ? $m[1] : '';
+  }
+}
+$sb_srv_users = [];
+if ((string)$sb['jf_key'] !== '' && sb_host_ok($sb['jf_host'])) {
+  $sb_l = sb_get_json('http://' . $sb['jf_host'] . ':' . (int)$sb['jf_port'] . '/Users', ['Authorization: MediaBrowser Token="' . $sb['jf_key'] . '"']);
+  $sb_u = null;
+  if (is_array($sb_l)) { $sb_u = []; foreach ($sb_l as $x) { if (!empty($x['Id'])) { $sb_u[] = [(string)$x['Id'], (string)($x['Name'] ?? '?'), '']; } } }
+  $sb_srv_users['jf'] = $sb_u;
+} else { $sb_srv_users['jf'] = null; }
+if (sb_on($sb['em_on'])) {
+  $sb_u = null;
+  if ((string)$sb['em_key'] !== '' && sb_host_ok($sb['em_host'])) {
+    $sb_l = sb_get_json('http://' . $sb['em_host'] . ':' . (int)$sb['em_port'] . '/emby/Users', ['X-Emby-Token: ' . $sb['em_key']]);
+    if (is_array($sb_l)) { $sb_u = []; foreach ($sb_l as $x) { if (!empty($x['Id'])) { $sb_u[] = ['em:' . $x['Id'], (string)($x['Name'] ?? '?'), '']; } } }
+  }
+  $sb_srv_users['em'] = $sb_u;
+}
+if (sb_on($sb['px_on'])) {
+  $sb_u = null; $sb_pt = sb_px_token($sb);
+  if ($sb_pt !== '' && sb_host_ok($sb['px_host'])) {
+    // the server's own account list (people who have used this server), no plex.tv call (owner, 2026-10-30)
+    $sb_l = sb_get_json('http://' . $sb['px_host'] . ':' . (int)$sb['px_port'] . '/accounts', ['X-Plex-Token: ' . $sb_pt]);
+    $sb_a = $sb_l['MediaContainer']['Account'] ?? null;
+    if (is_array($sb_a)) { $sb_u = []; foreach ($sb_a as $x) { if (isset($x['id']) && (int)$x['id'] > 0 && trim((string)($x['name'] ?? '')) !== '') { $sb_u[] = ['px:' . (int)$x['id'], (string)$x['name'], '']; } } }
+  }
+  $sb_srv_users['px'] = $sb_u;
+}
+foreach ($sb_srv_users as $k => $v) { if (is_array($v)) { usort($sb_srv_users[$k], function ($a, $b) { return strcasecmp($a[1], $b[1]); }); } }
 if (!function_exists('sb_h')) {
   function sb_h($v) { return htmlspecialchars((string)$v, ENT_QUOTES); }
 }
@@ -99,6 +130,11 @@ if (!function_exists('sb_auto')) {
 .uset dl.uset-save dt,.uset dl.uset-save dd{border-top:0}
 .uset .uset-ok{color:#3fa24a}.uset .uset-er{color:#e5534b}
 @media (max-width:760px){.uset dl{grid-template-columns:1fr}.uset dl dd{border-top:0;padding-top:0}}
+/* nickname table: one quiet sub-band per media server, state dot first */
+.uset .sb-nsub{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;margin:12px 0 0;background:rgba(0,0,0,.15)}
+.uset .sb-nsub i{width:7px;height:7px;border-radius:50%;flex:none}
+.uset .sb-nsub small{margin-left:auto;opacity:.6;text-transform:none;letter-spacing:0}
+.uset p.sb-nerr{margin:0;padding:8px 12px;font-size:12px;color:#d9921f;background:rgba(128,128,128,.12)}
 </style>
 <form id="sb-form" class="uset" method="POST" action="/plugins/streambox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=sb_h($sb_tok)?>">
@@ -265,17 +301,23 @@ if (!function_exists('sb_auto')) {
 </dl>
 
 <h3><?=$sbs_t('set.h.nicks')?></h3>
-<?php if ($sb_users === null): ?>
-<p><?=$sbs_t('set.nicks_none')?></p>
-<?php else: ?>
 <p><?=$sbs_t('set.nicks_hint')?></p>
+<?php foreach ($sb_srv_users as $sb_sv => $sb_ul): $sb_sn = ['jf' => 'Jellyfin', 'em' => 'Emby', 'px' => 'Plex'][$sb_sv]; ?>
+<div class="sb-nsub"><i style="background:<?=$sb_ul === null ? '#e5534b' : '#3fa24a'?>"></i><?=$sb_sn?><small><?=$sb_ul === null ? '' : $sbs_t('set.nicks_n', ['n' => count($sb_ul)])?></small></div>
+<?php if ($sb_ul === null): ?>
+<p class="sb-nerr"><?=$sbs_t('set.nicks_err', ['s' => $sb_sn])?></p>
+<?php elseif ($sb_ul): ?>
+<input type="hidden" name="nick_srv[]" value="<?=$sb_sv?>">
 <dl>
-<?php foreach ($sb_users as $sb_u): ?>
-<dt><?=sb_h($sb_u['name'])?>:</dt>
-<dd><input type="text" name="nick[<?=sb_h($sb_u['id'])?>]" class="narrow" maxlength="24" placeholder="<?=sb_h(sb_auto($sb_u['name']))?>" value="<?=sb_h($sb_nicks[$sb_u['id']] ?? '')?>"></dd>
+<?php foreach ($sb_ul as $sb_u): ?>
+<dt><?=sb_h($sb_u[1])?>:</dt>
+<dd><input type="text" name="nick[<?=sb_h($sb_u[0])?>]" class="narrow" maxlength="24" placeholder="<?=sb_h(sb_auto($sb_u[1]))?>" value="<?=sb_h($sb_nicks[$sb_u[0]] ?? '')?>"></dd>
 <?php endforeach; ?>
 </dl>
+<?php else: ?>
+<input type="hidden" name="nick_srv[]" value="<?=$sb_sv?>">
 <?php endif; ?>
+<?php endforeach; ?>
 
 <dl class="uset-save">
 <dt>&nbsp;</dt>

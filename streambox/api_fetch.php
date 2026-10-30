@@ -33,7 +33,7 @@ $base = "http://$host:$port";
 $ui = ['port' => $port, 'url' => $link, 'load' => sb_flag($cfg['show_load']), 'added' => $addedRows];
 
 // Media servers whose streams the tile shows (item 92). Emby has the same session API as Jellyfin, under /emby and with its own
-// token header. Jellyfin stays the library source (recently added, the user nicknames).
+// token header. Jellyfin stays the library source (recently added); every server has its own user nicknames.
 $srv = [];
 if ($key !== '') {
     $srv['jf'] = ['base' => $base, 'pre' => '', 'hdr' => 'Authorization: MediaBrowser Token="' . $key . '"'];
@@ -353,7 +353,8 @@ foreach ($srv as $sv => $_) {
 
         $uid   = (string)($s['UserId'] ?? '');
         $uname = (string)($s['UserName'] ?? '?');
-        $short = ($sv === 'jf' && $uid !== '' && isset($nick[$uid]) && trim((string)$nick[$uid]) !== '') ? (string)$nick[$uid] : sb_short($uname);
+        $nk    = $sv === 'jf' ? $uid : $sv . ':' . $uid;   // nicknames.json keys: Jellyfin id, em:<id>, px:<account id>
+        $short = ($uid !== '' && isset($nick[$nk]) && trim((string)$nick[$nk]) !== '') ? (string)$nick[$nk] : sb_short($uname);
         $users[mb_strtolower($uname)] = true;   // the same name on two servers is one person
 
         $vs       = sb_video($np);

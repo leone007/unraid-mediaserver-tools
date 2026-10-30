@@ -901,13 +901,9 @@
   "text": "Send weekly summary now",
   "note": "button: sends the weekly summary of the last 7 days now."
  },
- "set.nicks_none": {
-  "text": "The user list could not be loaded. Enter the Jellyfin host, port and API key above, press Apply, then reload this page.",
-  "note": "text in the User nicknames part when Jellyfin cannot be read."
- },
  "set.nicks_hint": {
-  "text": "Nicknames are shown instead of the long user names on the dashboard tile. Leave a field empty to use the automatic short name (shown as a hint).",
-  "note": "text above the nickname fields (one per Jellyfin user)."
+  "text": "Nicknames are shown instead of the long user names on the dashboard tile and in Sysbox stream priority. Every media server has its own list. Leave a field empty to use the automatic short name (shown as a hint).",
+  "note": "Streambox settings, User nicknames: the lead line above the per-server lists."
  },
  "set.btn.apply": {
   "text": "Apply",
@@ -1348,5 +1344,13 @@
  "now.unfold": {
   "text": "Show this server's streams",
   "note": "Dashboard tile, Now playing: tooltip of the stream count of a folded server section; a click shows the rows again."
+ },
+ "set.nicks_n": {
+  "text": "{n} users",
+  "note": "Streambox settings, User nicknames: right side of a media server's sub-band; {n} = number of users listed."
+ },
+ "set.nicks_err": {
+  "text": "The {s} user list could not be loaded. Check its address and key above, press Apply, then reload this page. Saved nicknames are kept.",
+  "note": "Streambox settings, User nicknames: shown under a media server's sub-band when its user list did not load ({s} = Jellyfin, Emby or Plex)."
  }
 }
