@@ -123,6 +123,8 @@ if (trim((string)$cfg['socket_host']) !== '' || $upsOn) {
     if ($upsOn && $ud) {
         $now = time(); $vh = [];
         foreach (sx_upsv_hist() as $p) { $vh[] = [$now - (int)$p[0], (float)$p[1], (float)$p[2], (float)$p[3]]; }
+        // the curve ends at the voltage now, so it shows from the first saved point on (not only after two 10-minute points)
+        if ($vh && $ud['vin'] !== null && end($vh)[0] > 60) { $vh[] = [0, (float)$ud['vin'], (float)$ud['vin'], (float)$ud['vin']]; }
         $ud['hist'] = $vh;
         $ud['loss'] = ($sk && $ud['watts'] !== null && $sk['power'] > $ud['watts']) ? $sk['power'] - $ud['watts'] : null;
         require_once __DIR__ . '/ups_lib.php';

@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.35">
+<!ENTITY version   "2026.10.36">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.36
+- Power: the UPS voltage curve shows from the first point on and ends at the voltage now; the first point is saved right away, so after a restart it no longer waits 20 minutes
+
 ###2026.10.35
 - Updates keep the graph histories: the network, UPS voltage and CPU graphs on the tile go on where they were instead of starting from empty
 
@@ -1862,6 +1865,8 @@ if (trim((string)$cfg['socket_host']) !== '' || $upsOn) {
     if ($upsOn && $ud) {
         $now = time(); $vh = [];
         foreach (sx_upsv_hist() as $p) { $vh[] = [$now - (int)$p[0], (float)$p[1], (float)$p[2], (float)$p[3]]; }
+        // the curve ends at the voltage now, so it shows from the first saved point on (not only after two 10-minute points)
+        if ($vh && $ud['vin'] !== null && end($vh)[0] > 60) { $vh[] = [0, (float)$ud['vin'], (float)$ud['vin'], (float)$ud['vin']]; }
         $ud['hist'] = $vh;
         $ud['loss'] = ($sk && $ud['watts'] !== null && $sk['power'] > $ud['watts']) ? $sk['power'] - $ud['watts'] : null;
         require_once __DIR__ . '/ups_lib.php';
@@ -2440,7 +2445,8 @@ function sx_upsv_note($v, $push) {
     if (!is_array($j)) { $j = ['pts' => [], 'lo' => null, 'hi' => null]; }
     $j['lo'] = $j['lo'] === null ? $v : min($j['lo'], $v);
     $j['hi'] = $j['hi'] === null ? $v : max($j['hi'], $v);
-    if ($push) {
+    // the first point right away (after a reboot or a fresh install), then one per 10 minutes from sample.php
+    if ($push || !$j['pts']) {
         $j['pts'][] = [time(), $v, $j['lo'], $j['hi']];
         $cut = time() - 86400;
         $j['pts'] = array_values(array_filter($j['pts'], function ($p) use ($cut) { return $p[0] >= $cut; }));

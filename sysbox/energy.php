@@ -178,7 +178,8 @@ function sx_upsv_note($v, $push) {
     if (!is_array($j)) { $j = ['pts' => [], 'lo' => null, 'hi' => null]; }
     $j['lo'] = $j['lo'] === null ? $v : min($j['lo'], $v);
     $j['hi'] = $j['hi'] === null ? $v : max($j['hi'], $v);
-    if ($push) {
+    // the first point right away (after a reboot or a fresh install), then one per 10 minutes from sample.php
+    if ($push || !$j['pts']) {
         $j['pts'][] = [time(), $v, $j['lo'], $j['hi']];
         $cut = time() - 86400;
         $j['pts'] = array_values(array_filter($j['pts'], function ($p) use ($cut) { return $p[0] >= $cut; }));

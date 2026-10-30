@@ -22,7 +22,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.35">
+<!ENTITY version   "2026.10.36">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +35,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.36
+- Power: the UPS voltage curve shows from the first point on and ends at the voltage now; the first point is saved right away, so after a restart it no longer waits 20 minutes
+
 ###2026.10.35
 - Updates keep the graph histories: the network, UPS voltage and CPU graphs on the tile go on where they were instead of starting from empty
 
