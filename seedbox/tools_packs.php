@@ -617,13 +617,16 @@ function st_ab_poll($force = false) {
         $w['last_id'] = $r['id'];
         if ($v['go']) {
             $key = $v['series_id'] . ':' . $v['season'] . ':' . st_norm($r['name']);
-            if (isset($seen[$key])) { $v['why'] .= ' ' . st_tr('abw.reported'); }
+            // one message per season a day: a second pack of the same season (SDR and DV of one release, seen 2026-10-30,
+            // Dark Matter S02) is already among the choices of the first message, which searched the whole season
+            $skey = 's:' . $v['series_id'] . ':' . $v['season'];
+            if (isset($seen[$key]) || time() - (int)($seen[$skey] ?? 0) < 86400) { $v['why'] .= ' ' . st_tr('abw.reported'); $seen[$key] = $seen[$key] ?? time(); $seenCh = true; }
             else {
                 $bot = st_bot_on('sp');
                 $abq[] = ['series_id' => $v['series_id'], 'season' => $v['season'], 'name' => $r['name'], 'indexer' => $r['indexer'], 'size' => $r['size'], 't' => time(), 'tries' => 0] + ($bot ? ['rel' => $r, 'v' => $v] : []);
                 if ($bot) { $ok = true; $v['why'] .= ', ' . st_tr('abw.bot'); }
                 else { [$ok, $er] = st_ab_message($r, $v); $v['why'] .= $ok ? ', ' . st_tr('abw.dc') : ', Discord: ' . $er; }
-                $seen[$key] = time(); $seenCh = true;
+                $seen[$key] = $seen[$skey] = time(); $seenCh = true;
             }
         }
         $recent[] = ['t' => time(), 'name' => $r['name'], 'why' => $v['why'], 'go' => $v['go'] ? 1 : 0];

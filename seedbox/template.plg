@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzp">
+<!ENTITY version   "2026.10.99zzq">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzq
+- autobrr watch: when autobrr sees two packs of the same season (for example an SDR and a Dolby Vision release), Discord gets one message a day for that season; the first message already offers every pack of the season
+
 ###2026.10.99zzp
 - Dashboard tile: a torrent that is Moving shows its time left right after you open the Dashboard again, also when the tile was closed for more than five minutes (it used to show a dash for the first minute)
 
