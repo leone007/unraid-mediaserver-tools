@@ -22,9 +22,12 @@ function sx_defaults() {
         'controls' => '1', 'logs' => '1', 'log_lines' => '100',
         'show_gpu' => '1', 'show_containers' => '1', 'hist_min' => '2', 'cpu_sec' => '1', 'clk_sec' => '2', 'show_clock' => '1',
         // Dashboard tile (item 53): blocks on or off, their order, and what the RAM, CPU and Power blocks show
-        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,net,con', 'ram_leg' => '1',
+        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,net,rtr,con', 'ram_leg' => '1',
         // Network part (item 94): on by default; its own settings (interface, pings, unit, Discord) are in network.cfg
         'show_net' => '1', 'net_speed' => '1', 'net_today' => '1', 'net_hist' => '1', 'net_inet' => '1', 'net_top' => '1',
+        // Router part (item 132): off until set up; view a compact | b standard | c full, the parts inside the view; connection in router.cfg
+        'show_rtr' => '0', 'rtr_view' => 'b', 'rtr_speed' => '1', 'rtr_month' => '1', 'rtr_graph' => '1', 'rtr_cores' => '1', 'rtr_mem' => '1', 'rtr_temp' => '1',
+        'rtr_svc' => '1', 'rtr_sky' => '1', 'rtr_cli' => '1', 'rtr_mesh' => '1',
         'cpu_load' => '1', 'cpu_temp' => '1', 'cpu_pow' => '1', 'cpu_hist' => '1', 'cpu_per' => '1', 'cpu_la' => '0',
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
         // UPS row in the Power block (item 99): read from NUT (upsd); host, port and UPS name only in settings.cfg
@@ -50,10 +53,10 @@ function sx_cfg() {
 }
 
 // The tile's block order: the saved list, unknown names dropped, missing ones added at the end
-const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
+const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'rtr', 'con'];
 function sx_order($cfg) {
     $o = array_values(array_unique(array_intersect(array_map('trim', explode(',', (string)($cfg['order'] ?? ''))), SX_BLOCKS)));
-    // a block that is new since the order was saved goes after the one before it in the default order (Network after Power)
+    // a block that is new since the order was saved goes after the one before it in the default order (Network after Power, Router after Network)
     foreach (SX_BLOCKS as $i => $b) {
         if (in_array($b, $o, true)) { continue; }
         $at = $i > 0 ? array_search(SX_BLOCKS[$i - 1], $o, true) : -1;

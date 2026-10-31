@@ -15,6 +15,7 @@ files=[('&plugdir;/sysbox.page','sysbox/sysbox.page','DASHBOARD TILE'),('&plugdi
  ('&plugdir;/SysboxUpdates.page','sysbox/SysboxUpdates.page','UPDATE MANAGER PAGE'),('&plugdir;/upd_lib.php','sysbox/upd_lib.php','UPDATE MANAGER LIBRARY'),('&plugdir;/upd.php','sysbox/upd.php','UPDATE MANAGER ENDPOINT'),('&plugdir;/upd_run.php','sysbox/upd_run.php','UPDATE MANAGER WORKER'),
  ('&plugdir;/SysboxGuard.page','sysbox/SysboxGuard.page','CLAUDE GUARD PAGE'),('&plugdir;/guard_lib.php','sysbox/guard_lib.php','CLAUDE GUARD LIBRARY'),('&plugdir;/guard.php','sysbox/guard.php','CLAUDE GUARD ENDPOINT'),('&plugdir;/guard_run.php','sysbox/guard_run.php','CLAUDE GUARD WORKER'),('&plugdir;/brief_lib.php','sysbox/brief_lib.php','CLAUDE GUARD MORNING BRIEF'),('&plugdir;/sugg_lib.php','sysbox/sugg_lib.php','CLAUDE GUARD SUGGESTIONS'),
  ('&plugdir;/SysboxNetwork.page','sysbox/SysboxNetwork.page','NETWORK PAGE'),('&plugdir;/net_lib.php','sysbox/net_lib.php','NETWORK LIBRARY'),('&plugdir;/net.php','sysbox/net.php','NETWORK ENDPOINT'),('&plugdir;/netmon.php','sysbox/netmon.php','NETWORK SAMPLER'),('&plugdir;/sp_tick.php','sysbox/sp_tick.php','STREAM PRIORITY CHECK'),('&plugdir;/ups_lib.php','sysbox/ups_lib.php','POWER OUTAGE LIBRARY'),('&plugdir;/ups_tick.php','sysbox/ups_tick.php','POWER OUTAGE CHECK'),
+ ('&plugdir;/rtr_lib.php','sysbox/rtr_lib.php','ROUTER LIBRARY'),('&plugdir;/rtr.php','sysbox/rtr.php','ROUTER SETTINGS ENDPOINT'),('&plugdir;/rtrmon.php','sysbox/rtrmon.php','ROUTER SAMPLER'),('&plugdir;/sysbox_ro.sh','sysbox/sysbox_ro.sh','ROUTER READ SCRIPT (copied to the router by its install line)'),
  ('&plugdir;/bot.php','common/bot.php','SHARED DISCORD BOT SETTING'),('&plugdir;/bot_block.php','common/bot_block.php','DISCORD BOT BLOCK'),('&plugdir;/bot_save.php','common/bot_save.php','DISCORD BOT SAVE AND TEST'),('&plugdir;/mtlang/en.json','common/lang/en.json','SHARED BLOCKS ENGLISH DICTIONARY'),('&plugdir;/mtlang/hu.json','common/lang/hu.json','SHARED BLOCKS HUNGARIAN DICTIONARY')]
 for _,p,_t in files: assert ']]>' not in rd(p),p
 out=r'''<?xml version='1.0' standalone='yes'?>
@@ -22,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.36">
+<!ENTITY version   "2026.10.37">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -35,6 +36,11 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37
+- New Router part on the tile (off until switched on): any router with SSH, Asuswrt-Merlin and other Entware routers; three views chosen in the settings: Compact (CPU, RAM, temperature, ping, services), Standard (WAN speed and 30-minute graph, month from vnstat, CPU cores, RAM and swap, temperatures) and Full (Standard plus foldable Skynet, Clients and AiMesh bars)
+- Only what the router has appears: Entware, AdGuard Home, Skynet, Tailscale, vnstat, connmon and the Wi-Fi radios are found by themselves; a stopped service is a red chip and an attention row, a router that does not answer is a red row
+- Read only: Sysbox makes its own key; the key line for the router runs nothing but a small read script, which a one-line install command writes on the router; Test and save lists what was found
+
 ###2026.10.36
 - Power: the UPS voltage curve shows from the first point on and ends at the voltage now; the first point is saved right away, so after a restart it no longer waits 20 minutes
 
@@ -283,7 +289,7 @@ rm -rf "/usr/local/emhttp/plugins/Sysbox"
 # clear the caches, but keep the graph histories (CPU, network, UPS voltage, energy samples), so an update does not
 # start the dashboard graphs from empty (owner, 2026-10-30)
 find /tmp -maxdepth 1 -name 'sysbox_*' ! -name sysbox_hist.json ! -name sysbox_net.json ! -name sysbox_upsv.json \
-  ! -name sysbox_energy_last.json ! -name sysbox_edays.json ! -name '*.lock' -exec rm -f {} + 2>/dev/null
+  ! -name sysbox_energy_last.json ! -name sysbox_edays.json ! -name sysbox_rtr.json ! -name '*.lock' -exec rm -f {} + 2>/dev/null
 
 mkdir -p "$DIR"
 mkdir -p "$CFG"
@@ -351,6 +357,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 * * * * * flock -n -E 0 /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
 # Sysbox: network meter (traffic counters every 5 s, internet ping every 30 s; one long-running process, restarted if it stops)
 * * * * * flock -n -E 0 /tmp/sysbox_net.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1
+# Sysbox: router part (item 132; one long-running process asking the router over ssh, it exits when the part is off)
+* * * * * flock -n -E 0 /tmp/sysbox_rtr.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/rtrmon.php >/dev/null 2>&1
 # Sysbox: stream priority, every minute (qBittorrent gives way to Jellyfin streams outside the house; off on the Network page)
 * * * * * flock -n -E 0 /tmp/sysbox_sp.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/sp_tick.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
@@ -378,6 +386,9 @@ setsid nohup flock -n /tmp/sysbox_hist.lock "$PHPBIN" /usr/local/emhttp/plugins/
 pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
 setsid nohup flock -n /tmp/sysbox_net.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1 </dev/null &
 
+# start the router reader right away (it exits by itself when the Router part is off)
+pkill -f "plugins/sysbox/rtrmon.php" 2>/dev/null
+setsid nohup flock -n /tmp/sysbox_rtr.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/rtrmon.php >/dev/null 2>&1 </dev/null &
 # the claude container flag for the header button (Claude Guard tick; cron repeats it every 2 minutes)
 setsid nohup "$PHPBIN" /usr/local/emhttp/plugins/sysbox/guard_run.php tick >/dev/null 2>&1 </dev/null &
 
@@ -406,10 +417,11 @@ rm -rf /usr/local/emhttp/plugins/Sysbox
 pkill -f "php -S 127.0.0.1:18184" 2>/dev/null
 pkill -f "plugins/sysbox/cpuhist.php" 2>/dev/null
 pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
+pkill -f "plugins/sysbox/rtrmon.php" 2>/dev/null
 rm -f /tmp/sysbox_*
 rm -f /boot/config/plugins/sysbox/sysbox.cron
 /usr/local/sbin/update_cron 2>/dev/null
-# Settings and the energy counter in /boot/config/plugins/sysbox are kept intentionally.
+# Settings, the energy counter and the router key in /boot/config/plugins/sysbox are kept intentionally.
 echo "sysbox removed."
 exit 0
 ]]></INLINE>

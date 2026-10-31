@@ -35,6 +35,10 @@ if (!function_exists('sx_chk')) {
 .sx-chip{display:inline-flex!important;align-items:center;gap:5px;padding:2px 9px;border-radius:12px;border:1px solid rgba(128,128,128,.35);cursor:pointer}
 .sx-chip input[type=checkbox]{margin:0!important}
 .sx-attn-note{opacity:.55;font-size:12px;margin:6px 0 0}
+#sx-rmods{display:flex;flex-wrap:wrap;gap:6px}
+#sx-rmods span{font-size:12px;padding:3px 9px;border-radius:3px;background:rgba(63,162,74,.14);box-shadow:inset 3px 0 0 #3fa24a}
+#sx-rmods span.bad{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.sx-blk .sx-chip.dim{opacity:.4}
 </style>
 <form id="sx-form" class="uset" method="POST" action="/plugins/sysbox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=sx_h($sx_tok)?>">
@@ -54,8 +58,11 @@ $sx_blk = [
   'gpu' => ['GPU', 'show_gpu', [], $sxs_T('blk.gpu_hint')],
   'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')], ['pow_ups', $sxs_T('blk.pow_ups')]], $sxs_T('blk.pow_hint')],
   'net' => [$sxs_T('net.title'), 'show_net', [['net_speed', $sxs_T('blk.net_speed')], ['net_today', $sxs_T('blk.net_today')], ['net_hist', $sxs_T('blk.net_hist')], ['net_inet', $sxs_T('blk.net_inet')], ['net_top', $sxs_T('blk.net_top')]], $sxs_T('blk.net_hint')],
+  'rtr' => [$sxs_T('rtr.title'), 'show_rtr', [['rtr_speed', $sxs_T('rtr.c_speed')], ['rtr_month', $sxs_T('rtr.c_month')], ['rtr_graph', $sxs_T('rtr.c_graph')], ['rtr_cores', $sxs_T('rtr.c_cores')], ['rtr_mem', $sxs_T('rtr.c_mem')], ['rtr_temp', $sxs_T('rtr.c_temp')], ['rtr_svc', $sxs_T('rtr.c_svc')], ['rtr_sky', 'Skynet'], ['rtr_cli', $sxs_T('rtr.clients')], ['rtr_mesh', 'AiMesh']], $sxs_T('rtr.c_hint')],
   'con' => [$sxs_T('con.title'), 'show_containers', [], $sxs_T('blk.con_hint')],
 ];
+require_once '/usr/local/emhttp/plugins/sysbox/rtr_lib.php';
+$sx_rc = rtr_cfg();
 foreach (sx_order($sx) as $sx_k):
   $sx_b = $sx_blk[$sx_k];
 ?>
@@ -77,6 +84,46 @@ foreach (sx_order($sx) as $sx_k):
   <span class="uset-hint"><?=sx_h($sx_b[3])?></span>
 <?php endif; ?>
 </dd>
+<?php if ($sx_k === 'rtr'): ?>
+<dt><?=$sxs_t('rtr.s_view')?></dt>
+<dd>
+<?php foreach (['a' => 'rtr.v_a', 'b' => 'rtr.v_b', 'c' => 'rtr.v_c'] as $sx_vv => $sx_vl): ?>
+  <label><input type="radio" name="rtr_view" value="<?=$sx_vv?>" <?=($sx['rtr_view'] ?? 'b') === $sx_vv ? 'checked' : ''?>> <?=$sxs_t($sx_vl)?></label>
+<?php endforeach; ?>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_view_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_router')?></dt>
+<dd>
+  <input type="text" name="rtr_host" class="narrow" placeholder="192.168.1.1" value="<?=sx_h($sx_rc['host'])?>">
+  <?=$sxs_t('rtr.s_user')?> <input type="text" name="rtr_user" class="narrow" placeholder="admin" value="<?=sx_h($sx_rc['user'])?>">
+  <?=$sxs_t('rtr.s_port')?> <input type="text" name="rtr_port" class="narrow" style="width:60px!important" value="<?=sx_h($sx_rc['port'])?>">
+  &middot; <?=$sxs_t('set.refresh')?> <select name="rtr_sec"><?=sx_sel_opts($sx_rc['sec'], ['2', '5', '10'])?></select> s
+  <span class="uset-hint"><?=$sxs_t('rtr.s_router_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_path')?></dt>
+<dd>
+  <input type="text" name="rtr_path" style="width:300px" value="<?=sx_h($sx_rc['path'])?>">
+  <span class="uset-hint"><?=$sxs_t('rtr.s_path_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_key')?></dt>
+<dd id="sx-rkey">
+  <textarea id="sx-rkline" readonly rows="2" style="width:100%;font:11px/1.4 monospace" placeholder="<?=$sxs_t('rtr.s_nokey')?>"><?=sx_h(rtr_keyline($sx_rc))?></textarea>
+  <input type="button" id="sx-rkcopy" value="<?=$sxs_t('rtr.b_copy_key')?>"> <input type="button" id="sx-rkmake" value="<?=$sxs_t(rtr_pub() === '' ? 'rtr.b_make_key' : 'rtr.b_new_key')?>"> <span class="sx-rkmsg"></span>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_key_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_install')?></dt>
+<dd>
+  <textarea id="sx-riline" readonly rows="2" style="width:100%;font:11px/1.4 monospace"><?=sx_h(rtr_pub() === '' ? '' : rtr_install_cmd($sx_rc))?></textarea>
+  <input type="button" id="sx-ricopy" value="<?=$sxs_t('rtr.b_copy_install')?>"> <span class="sx-rimsg"></span>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_install_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_test')?></dt>
+<dd>
+  <input type="button" id="sx-rtest" value="<?=$sxs_t('rtr.b_test')?>"> <span id="sx-rtmsg"></span>
+  <div id="sx-rmods"></div>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_test_hint')?></span>
+</dd>
+<?php endif; ?>
 </dl>
 <?php endforeach; ?>
 </div>
@@ -239,6 +286,56 @@ $(function () {
         .fail(function (x) { var e = (x.responseJSON && x.responseJSON.error) ? x.responseJSON.error : 'HTTP ' + x.status; $tm.css('color', '#e5534b').text(T('set.not_sent', { e: e })); })
         .always(function () { $b.prop('disabled', false); });
     });
+  });
+
+  // router (item 132): the parts a view does not have are dimmed; key, install line, Test and save
+  function rtrView() {
+    var v = $('input[name=rtr_view]:checked').val() || 'b', std = { rtr_speed: 1, rtr_month: 1, rtr_graph: 1, rtr_cores: 1, rtr_mem: 1, rtr_temp: 1 }, full = { rtr_sky: 1, rtr_cli: 1, rtr_mesh: 1 };
+    $('.sx-blk[data-k=rtr] .sx-chip').each(function () { var n = $(this).find('input[type=checkbox]').attr('name'); $(this).toggleClass('dim', (v === 'a' && !!(std[n] || full[n])) || (v === 'b' && !!full[n])); });
+  }
+  $('input[name=rtr_view]').on('change', rtrView); rtrView();
+  function rtrPost(op) {
+    var d = { op: op, csrf_token: $('#sx-form input[name=csrf_token]').val() };
+    $.each(['rtr_host', 'rtr_user', 'rtr_port', 'rtr_path', 'rtr_sec'], function (i, n) { d[n] = $('#sx-form [name=' + n + ']').val(); });
+    return $.post('/plugins/sysbox/rtr.php', d, null, 'json');
+  }
+  function rtrLines(r) { if (r && r.keyline !== undefined) { $('#sx-rkline').val(r.keyline); $('#sx-riline').val(r.install); if (r.keyline) { $('#sx-rkmake').val(T('rtr.b_new_key')); } } }
+  function rtrCopy($ta, $m) {
+    var t = $ta.val(); if (!t) { return; }
+    function done() { $m.css('color', '#3fa24a').text(T('rtr.copied')); setTimeout(function () { $m.text(''); }, 3000); }
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t).then(done, function () { $ta[0].select(); document.execCommand('copy'); done(); }); }
+    else { $ta[0].select(); try { document.execCommand('copy'); done(); } catch (e) { $m.text(T('rtr.copy_hand')); } }
+  }
+  $('#sx-rkcopy').on('click', function () { rtrCopy($('#sx-rkline'), $('.sx-rkmsg')); });
+  $('#sx-ricopy').on('click', function () { rtrCopy($('#sx-riline'), $('.sx-rimsg')); });
+  var rkArm = false;
+  $('#sx-rkmake').on('click', function () {
+    var $b = $(this), $m = $('.sx-rkmsg'), had = $('#sx-rkline').val() !== '';
+    if (had && !rkArm) { rkArm = true; $m.css('color', '#d9921f').text(T('rtr.new_key_confirm')); setTimeout(function () { rkArm = false; }, 8000); return; }
+    rkArm = false; $b.prop('disabled', true); $m.css('color', '').text(T('rtr.working'));
+    rtrPost(had ? 'newkey' : 'key').done(function (r) {
+      if (r && r.ok) { rtrLines(r); $b.val(T('rtr.b_new_key')); $m.css('color', '#3fa24a').text(T(had ? 'rtr.key_new' : 'rtr.key_made')); }
+      else { $m.css('color', '#e5534b').text((r && r.error) || T('set.unknown_error')); }
+    }).fail(function (x) { $m.css('color', '#e5534b').text((x.responseJSON && x.responseJSON.error) || 'HTTP ' + x.status); }).always(function () { $b.prop('disabled', false); });
+  });
+  $('#sx-rtest').on('click', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#sx-rtmsg'), $o = $('#sx-rmods').empty();
+    $m.css('color', '').text(T('rtr.testing'));
+    rtrPost('test').done(function (r) {
+      rtrLines(r);
+      if (r && r.ok) {
+        $m.css('color', '#3fa24a').text(T('rtr.test_ok', { t: r.t, n: r.modules.length }));
+        $.each(r.modules, function (i, m) {
+          var k = m[0], t;
+          if (k === 'base') { t = T('rtr.m_base', { n: m[1], w: m[2] || '–' }); }
+          else if (k === 'nvram') { t = T('rtr.m_nvram', { m: m[1], f: m[2], n: m[3] }); }
+          else if (k === 'radio') { t = T('rtr.m_radio', { n: m[1] }); }
+          else if (k === 'ping') { t = T('rtr.m_ping', { t: m[1] }); }
+          else { t = T('rtr.svc_' + k.slice(4)) + (m[1] ? '' : ' ' + T('rtr.stopped')); }
+          $o.append($('<span>').toggleClass('bad', k.indexOf('svc_') === 0 && !m[1]).text(t));
+        });
+      } else { $m.css('color', '#e5534b').text((r && r.error) || T('set.unknown_error')); }
+    }).fail(function (x) { $m.css('color', '#e5534b').text((x.responseJSON && x.responseJSON.error) || 'HTTP ' + x.status); }).always(function () { $b.prop('disabled', false); });
   });
   var $msg = $('#sx-msg');
   $('#sx-save').on('click', function () {

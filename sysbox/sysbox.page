@@ -40,12 +40,13 @@ $mytiles[$pluginname]['column2'] =
     <div id="sx-gpu"></div>
     <div id="sx-pow"></div>
     <div id="sx-net"></div>
+    <div id="sx-rtr"></div>
     <div id="sx-con"></div>
   </div>
 </td></tr>
 </tbody>
 EOT;
-echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'net.', 'con.', 'log.', 'sum.']);
+echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'net.', 'rtr.', 'con.', 'log.', 'sum.']);
 ?>
 <style>
 i.f32.sx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/sysbox/icon.png) center/contain no-repeat!important}
@@ -137,6 +138,16 @@ a.sx-b2.rd{background:#e5534b;color:#fff}
 .sx-nleg i{display:inline-block;width:9px;height:3px;margin:0 4px 2px 8px;vertical-align:middle}
 .sx-sp{grid-template-columns:18px minmax(0,1fr) auto;margin-top:8px}
 .sx-sp .t{font-weight:600;font-size:13px}.sx-sp .sx-sub{display:block;font-size:12px;opacity:.7;white-space:normal}
+.sx-rcores{display:grid;gap:6px;margin-top:6px}
+.sx-rcores div{font-size:10px;opacity:.85;white-space:nowrap}.sx-rcores .sx-tr{margin-top:3px}
+.sx-rbar{margin-top:10px}.sx-rnote{font-size:11px;opacity:.65;white-space:normal;line-height:1.4}
+.sx-svc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sx-svc span{font-size:11px;padding:2px 8px;border-radius:3px;background:rgba(63,162,74,.16);white-space:nowrap}
+.sx-svc span.bad{background:rgba(229,83,75,.22);color:#e5534b;font-weight:600}
+.sx-svc span i{font-style:normal;margin-right:5px}
+details.sx-cat{margin-top:6px}details.sx-cat>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;padding:6px 10px;background:rgba(128,128,128,.16);font-size:12px}
+details.sx-cat>summary::-webkit-details-marker{display:none}details.sx-cat>summary b{font-weight:400;opacity:.6;text-align:right}
+details.sx-cat>summary span::before{content:"\25B8";margin-right:6px;opacity:.6}details.sx-cat[open]>summary span::before{content:"\25BE"}
 .sx-sp .bd{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:2px 7px;white-space:nowrap}
 .sx-sp .bd.b{color:#7fb0ef;background:rgba(74,144,226,.22)}.sx-sp .bd.g{color:#b0b0b0;background:rgba(128,128,128,.25)}.sx-sp .bd.a{color:#d9921f;background:rgba(224,160,48,.22)}
 .sx-cr .n small{font-weight:400;opacity:.65;letter-spacing:0}
@@ -150,9 +161,9 @@ $(function () {
   var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
   var S = { confirm: null, busy: {}, logOpen: null, logs: {}, logErr: {}, logTimer: null, err: null };
   // Dashboard tile settings (item 53): which blocks, in which order, and which figures; all on until the first answer
-  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true, pow_ups: true };
-  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', con: 'sx-con' };
-  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, con: true }, ORDER = '';
+  var MX = { rtr_speed: true, rtr_month: true, rtr_graph: true, rtr_cores: true, rtr_mem: true, rtr_temp: true, rtr_svc: true, rtr_sky: true, rtr_cli: true, rtr_mesh: true, net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true, pow_ups: true };
+  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', rtr: 'sx-rtr', con: 'sx-con' };
+  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, rtr: false, con: true }, ORDER = '';
   function mx(k) { return MX[k] !== false; }
   var LV = { g: 'sx-g', a: 'sx-a', rd: 'sx-rd', mu: 'sx-mu', '': '' };
   var ICON = {
@@ -515,6 +526,123 @@ $(function () {
     }
   }
 
+  // router (item 132): Compact, Standard or Full (Settings); the foldable bars of Full stay as the owner left them
+  var rtrOpen = {};
+  function fmtUp(s) { var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d > 0 ? d + ' d ' + h + ' h' : (h > 0 ? h + ' h ' + m + ' m' : m + ' m'); }
+  function rtrSpark(pts, U) {
+    var mxv = 1; $.each(pts, function (i, p) { mxv = Math.max(mxv, p[1], p[2]); }); mxv *= 1.15;
+    function line(k) { return $.map(pts, function (p) { return (400 - p[0] / 1800 * 400).toFixed(1) + ',' + (52 - p[k] / mxv * 50).toFixed(1); }).join(' '); }
+    var dn = line(1), x0 = (400 - pts[0][0] / 1800 * 400).toFixed(1), x1 = (400 - pts[pts.length - 1][0] / 1800 * 400).toFixed(1);
+    var g = '<svg class="sx-spark" viewBox="0 0 400 54" preserveAspectRatio="none">'
+      + '<line x1="0" y1="27" x2="400" y2="27" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>'
+      + '<polygon points="' + x0 + ',52 ' + dn + ' ' + x1 + ',52" fill="#3fa24a" fill-opacity=".22"/>'
+      + '<polyline points="' + dn + '" fill="none" stroke="#3fa24a" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+      + '<polyline points="' + line(2) + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+    return [$('<span>').html(g).children(), el('sx-cl').append(txt('span', '', T('net.last30', { v: fmtRate(mxv / 1.15, U) + ' ' + unitTxt(U) })),
+      $('<span class="sx-nleg">').append($('<i>').css('background', '#3fa24a'), document.createTextNode(T('net.down_s')), $('<i>').css('background', '#4a90e2'), document.createTextNode(T('net.up_s'))))];
+  }
+  function rtrBar(lbl, pct, cls) { return el('sx-rbar').append(el('sx-ut').append(txt('span', '', lbl), txt('b', '', Math.round(pct) + ' %')), el('sx-tr').append($('<i>').addClass(cls || '').css('width', Math.min(100, pct) + '%'))); }
+  function rtrTempCls(t) { return t >= 90 ? 'sx-rd' : (t >= 80 ? 'sx-a' : ''); }
+  function rtrCat(key, label, right, rows) {
+    var $x = $('<details class="sx-cat">').prop('open', !!rtrOpen[key]).on('toggle', function () { rtrOpen[key] = this.open; });
+    $x.append($('<summary>').append(txt('span', '', label), $('<b>').text(right)));
+    var $b = el('mt-box').appendTo($x); $.each(rows, function (i, r) { $b.append(r); });
+    return $x;
+  }
+  function rtrRow(stripe, left, right) { return el('mt-r mt-s-' + stripe).css('grid-template-columns', 'minmax(0,1fr) auto').append($('<span>').append(left), $('<span class="sx-val">').append(right || '')); }
+  function renderRtr(R) {
+    var $d = $('#sx-rtr').empty();
+    if (!R) { return; }
+    var v = R.view || 'b', std = v !== 'a', full = v === 'c', U = R.unit || 'MB', ok = R.state === 'ok' && R.name !== undefined;
+    var svcBad = []; $.each(R.svc || [], function (i, x) { if (!x[1]) { svcBad.push(x[0]); } });
+    var right = ok ? R.name + (R.fw ? ' · ' + R.fw : '') : '';
+    if (R.state === 'err' && R.err === 'unreach') { right = T('rtr.no_answer', { t: hhmm(R.since) }); }
+    var $b = band(T('rtr.title'), right);
+    if ((R.state === 'err' && R.err === 'unreach') || (ok && svcBad.length)) { $b.addClass('mt-red'); }
+    $d.append($b);
+    if (R.state === 'setup' || R.state === 'pending') {
+      var $n = el('sx-box').append(txt('div', 'sx-fine', T(R.state === 'setup' ? 'rtr.setup' : 'rtr.connecting')).css('margin', 0));
+      if (R.state === 'setup') { $n.find('.sx-fine').append(' ', $('<a href="/Settings/SysboxSettings">').text(T('tile.settings'))); }
+      $d.append($n); return;
+    }
+    if (R.state === 'err') {
+      var down = R.err === 'unreach', $box = el('mt-box').appendTo($d);
+      $box.append(rtrRow(down ? 'red' : 'amber', document.createTextNode(T('rtr.e_' + R.err)), $('<span class="sx-pill">').addClass(down ? 'rd' : 'am').text(T(down ? 'rtr.offline' : 'rtr.check'))));
+      if (R.last_ok) { $box.append(rtrRow('grey', $('<span class="sx-sub">').text(T('rtr.last_seen', { t: hhmm(R.last_ok) }) + (R.name ? ' · ' + R.name : '')), down ? '' : $('<a href="/Settings/SysboxSettings">').text(T('tile.settings')))); }
+      return;
+    }
+    if (!ok) { return; }
+    var items = [], ramPct = R.ram[1] ? R.ram[0] / R.ram[1] * 100 : 0;
+    if (!std) {
+      items.push(kp('CPU', [document.createTextNode(R.cpu === null || R.cpu === undefined ? '–' : R.cpu), small(' %')], ''));
+      items.push(kp('RAM', [document.createTextNode(Math.round(ramPct)), small(' %')], ''));
+      if (R.temp !== null && R.temp !== undefined) { items.push(kp(T('rtr.temp'), [document.createTextNode(Math.round(R.temp)), small(' °C')], rtrTempCls(R.temp))); }
+      if (R.ping) { items.push(kp(T('rtr.ping'), [document.createTextNode(R.ping.ms), small(' ms')], '')); }
+      else { items.push(kp(T('net.down'), [document.createTextNode(fmtRate(R.rate[0], U)), small(' ' + unitTxt(U))], 'sx-dn')); }
+    } else {
+      if (mx('rtr_speed')) {
+        items.push(kp(T('net.down'), [document.createTextNode(fmtRate(R.rate[0], U)), small(' ' + unitTxt(U))], 'sx-dn'));
+        items.push(kp(T('net.up'), [document.createTextNode(fmtRate(R.rate[1], U)), small(' ' + unitTxt(U))], 'sx-upc'));
+      }
+      if (mx('rtr_month') && R.month) { var mb = fmtB(R.month[0] + R.month[1]).split(' '); items.push(kp(T('rtr.month'), [document.createTextNode(mb[0]), small(' ' + mb[1])], '')); }
+      if (R.ping) { items.push(kp(T('rtr.ping'), [document.createTextNode(R.ping.ms), small(' ms')], '')); }
+    }
+    var $f = el('sx-box').appendTo($d);
+    if (items.length) { var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)'); $.each(items, function (i, x) { $k.append(x); }); $f.append($k); }
+    if (std && mx('rtr_graph') && R.pts && R.pts.length > 1) { $f.append(rtrSpark(R.pts, U)); }
+    if (std && mx('rtr_month') && R.month && R.vn_since && Date.now() / 1000 - R.vn_since < 31 * 86400) { $f.append(el('sx-fine').text(T('rtr.month_since', { d: new Date(R.vn_since * 1000).toLocaleDateString() }))); }
+    if (!$f.children().length) { $f.remove(); }
+    if (std && (mx('rtr_cores') || mx('rtr_mem') || mx('rtr_temp'))) {
+      var $h = el('sx-box').appendTo($d);
+      if (mx('rtr_cores') && R.cores && R.cores.length) {
+        $h.append(el('sx-ut').css('margin-top', 0).append(txt('span', '', 'CPU · ' + T('rtr.cores', { n: R.cores.length }) + (R.load !== null && R.load !== undefined ? ' · load ' + R.load.toFixed(2) : '')), txt('b', '', (R.cpu === null || R.cpu === undefined ? '–' : R.cpu) + ' %')));
+        var $c = el('sx-rcores').css('grid-template-columns', 'repeat(' + Math.min(R.cores.length, 8) + ',minmax(0,1fr))');
+        $.each(R.cores, function (i, p) { $c.append(el('').append(document.createTextNode('#' + i + ' ' + p + '%'), el('sx-tr').append($('<i>').addClass(p >= 90 ? 'rd' : (p >= 70 ? 'a' : '')).css('width', p + '%')))); });
+        $h.append($c);
+      }
+      if (mx('rtr_mem')) {
+        $h.append(rtrBar('RAM ' + fmtB(R.ram[0]) + ' / ' + fmtB(R.ram[1]), ramPct, ramPct >= 92 ? 'rd' : (ramPct >= 80 ? 'a' : '')));
+        if (R.swap[1] > 0) { $h.append(rtrBar(T('rtr.swap') + ' ' + fmtB(R.swap[0]) + ' / ' + fmtB(R.swap[1]), R.swap[0] / R.swap[1] * 100, '')); }
+      }
+      if (mx('rtr_temp')) {
+        var tp = []; if (R.temp !== null && R.temp !== undefined) { tp.push($('<span>').addClass(rtrTempCls(R.temp)).text('CPU ' + Math.round(R.temp) + ' °C')); }
+        $.each(R.radios || [], function (i, r) { if (r[2] !== null) { tp.push($('<span>').addClass(rtrTempCls(r[2])).text(r[0] + ' ' + r[2] + ' °C')); } });
+        var $tl = $('<span>'); $.each(tp, function (i, x) { if (i) { $tl.append(' · '); } $tl.append(x); });
+        $h.append(el('sx-cl').append($tl, txt('span', '', T('rtr.up', { t: fmtUp(R.up) }))));
+      }
+      if (!$h.children().length) { $h.remove(); }
+    }
+    if (mx('rtr_svc') && R.svc && R.svc.length) {
+      var $s = el('sx-svc').appendTo($d);
+      $.each(R.svc, function (i, x) { $s.append($('<span>').toggleClass('bad', !x[1]).append($('<i>').text(x[1] ? '●' : '✖'), document.createTextNode(T('rtr.svc_' + x[0]) + (x[1] ? '' : ' ' + T(x[0] === 'entware' ? 'rtr.missing' : 'rtr.stopped'))))); });
+    }
+    if (full) {
+      var hasSky = false; $.each(R.svc || [], function (i, x) { if (x[0] === 'skynet') { hasSky = true; } });
+      if (mx('rtr_sky') && hasSky) {
+        var K = R.sky, rows = [];
+        if (K && K.ev !== null) {
+          $.each(K.ports || [], function (i, p) { rows.push(rtrRow('grey', document.createTextNode(T('rtr.port', { p: p[1] })), document.createTextNode(p[0] + '×'))); });
+          $.each(K.out || [], function (i, o) { rows.push(rtrRow('grey', document.createTextNode(T('rtr.sky_out', { d: o[1] })), document.createTextNode(o[0] + '×'))); });
+          if (K.ban) { rows.push(rtrRow('grey', document.createTextNode(T('rtr.sky_ban', { i: K.ban[0], r: K.ban[1] })), K.blk ? document.createTextNode(T('rtr.sky_blk', { a: K.blk[0], b: K.blk[1] })) : '')); }
+          rows.push(rtrRow('grey', $('<span class="sx-rnote">').text(T('rtr.sky_note') + (K.out && K.out.length ? ' ' + T('rtr.sky_out_note') : ' ' + T('rtr.sky_no_out'))), ''));
+        } else { rows.push(rtrRow('grey', $('<span class="sx-rnote">').text(T('rtr.sky_wait')), '')); }
+        $d.append(rtrCat('sky', 'Skynet', K && K.ev !== null ? T('rtr.sky_sum', { n: K.ev, i: K.ips, t: K.from ? (Date.now() / 1000 - K.from < 86400 ? hhmm(K.from) : new Date(K.from * 1000).toLocaleDateString()) : '–' }) : '', rows));
+      }
+      if (mx('rtr_cli')) {
+        var cr = []; $.each(R.radios || [], function (i, r) { cr.push(rtrRow('grey', document.createTextNode(T('rtr.radio', { b: r[0] })), document.createTextNode(r[1]))); });
+        cr.push(rtrRow('grey', document.createTextNode(T('rtr.lan_dev')), document.createTextNode(R.arp)));
+        $d.append(rtrCat('cli', T('rtr.clients'), T('rtr.cli_n', { n: R.arp }), cr));
+      }
+      if (mx('rtr_mesh') && R.mesh && R.mesh.length) {
+        var mr = [], off = 0;
+        $.each(R.mesh, function (i, m) { if (!m[2]) { off++; } mr.push(rtrRow(m[2] ? 'green' : 'red', document.createTextNode(m[0] + ' · ' + m[1]), $('<span class="sx-pill">').addClass(m[2] ? '' : 'rd').text(T(m[2] ? 'rtr.online' : 'rtr.offline')))); });
+        $d.append(rtrCat('mesh', 'AiMesh', T('rtr.nodes', { n: R.mesh.length }) + (off ? ' · ' + T('rtr.n_off', { n: off }) : ''), mr));
+      }
+    }
+    var wanTxt = R.wan ? 'WAN ' + R.wan + (R.proto ? ' · ' + R.proto.toUpperCase() : '') : '';
+    $d.append(el('sx-cl').append(txt('span', '', wanTxt), $('<a target="_blank" rel="noopener">').attr('href', 'http://' + R.host + '/').text(T('rtr.open'))));
+  }
+
   // stream priority (item 98): one row under the network box; a button only in the "Button on the tile" mode
   function spRow(P, U) {
     var lim = (U === 'Mbit' ? Math.round(P.up * 8) : P.up) + ' ' + unitTxt(U), stripe = 'grey', t, sub, bd = null, btn = null;
@@ -674,7 +802,7 @@ $(function () {
   function firstBand() {
     $('.sx-tile .mt-band.mt-first').removeClass('mt-first');
     if ($('#sx-attn').children().length) { return; }
-    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
+    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'rtr', 'con'];
     for (var i = 0; i < k.length; i++) { var $b = $('#' + BLK[k[i]]).find('.mt-band').first(); if ($b.length) { $b.addClass('mt-first'); return; } }
   }
 
@@ -710,6 +838,7 @@ $(function () {
     renderGpu(r.gpu);
     if (SHOW.pow) { renderPow(r.power); } else { $('#sx-pow').empty(); }
     if (SHOW.net) { renderNet(r.net); } else { $('#sx-net').empty(); }
+    if (SHOW.rtr) { renderRtr(r.router); } else { $('#sx-rtr').empty(); }
     renderCon();
     firstBand();
   }

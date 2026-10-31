@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.36">
+<!ENTITY version   "2026.10.37">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,11 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37
+- New Router part on the tile (off until switched on): any router with SSH, Asuswrt-Merlin and other Entware routers; three views chosen in the settings: Compact (CPU, RAM, temperature, ping, services), Standard (WAN speed and 30-minute graph, month from vnstat, CPU cores, RAM and swap, temperatures) and Full (Standard plus foldable Skynet, Clients and AiMesh bars)
+- Only what the router has appears: Entware, AdGuard Home, Skynet, Tailscale, vnstat, connmon and the Wi-Fi radios are found by themselves; a stopped service is a red chip and an attention row, a router that does not answer is a red row
+- Read only: Sysbox makes its own key; the key line for the router runs nothing but a small read script, which a one-line install command writes on the router; Test and save lists what was found
+
 ###2026.10.36
 - Power: the UPS voltage curve shows from the first point on and ends at the voltage now; the first point is saved right away, so after a restart it no longer waits 20 minutes
 
@@ -264,7 +269,7 @@ rm -rf "/usr/local/emhttp/plugins/Sysbox"
 # clear the caches, but keep the graph histories (CPU, network, UPS voltage, energy samples), so an update does not
 # start the dashboard graphs from empty (owner, 2026-10-30)
 find /tmp -maxdepth 1 -name 'sysbox_*' ! -name sysbox_hist.json ! -name sysbox_net.json ! -name sysbox_upsv.json \
-  ! -name sysbox_energy_last.json ! -name sysbox_edays.json ! -name '*.lock' -exec rm -f {} + 2>/dev/null
+  ! -name sysbox_energy_last.json ! -name sysbox_edays.json ! -name sysbox_rtr.json ! -name '*.lock' -exec rm -f {} + 2>/dev/null
 
 mkdir -p "$DIR"
 mkdir -p "$CFG"
@@ -398,12 +403,13 @@ $mytiles[$pluginname]['column2'] =
     <div id="sx-gpu"></div>
     <div id="sx-pow"></div>
     <div id="sx-net"></div>
+    <div id="sx-rtr"></div>
     <div id="sx-con"></div>
   </div>
 </td></tr>
 </tbody>
 EOT;
-echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'net.', 'con.', 'log.', 'sum.']);
+echo mt_i18n_js($sxt_lang, 'sx', ['tile.', 'attn.', 'ram.', 'sto.', 'cpu.', 'gpu.', 'pow.', 'net.', 'rtr.', 'con.', 'log.', 'sum.']);
 ?>
 <style>
 i.f32.sx-ic{display:inline-block!important;width:30px!important;height:30px!important;font-size:0!important;background:url(/plugins/sysbox/icon.png) center/contain no-repeat!important}
@@ -495,6 +501,16 @@ a.sx-b2.rd{background:#e5534b;color:#fff}
 .sx-nleg i{display:inline-block;width:9px;height:3px;margin:0 4px 2px 8px;vertical-align:middle}
 .sx-sp{grid-template-columns:18px minmax(0,1fr) auto;margin-top:8px}
 .sx-sp .t{font-weight:600;font-size:13px}.sx-sp .sx-sub{display:block;font-size:12px;opacity:.7;white-space:normal}
+.sx-rcores{display:grid;gap:6px;margin-top:6px}
+.sx-rcores div{font-size:10px;opacity:.85;white-space:nowrap}.sx-rcores .sx-tr{margin-top:3px}
+.sx-rbar{margin-top:10px}.sx-rnote{font-size:11px;opacity:.65;white-space:normal;line-height:1.4}
+.sx-svc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sx-svc span{font-size:11px;padding:2px 8px;border-radius:3px;background:rgba(63,162,74,.16);white-space:nowrap}
+.sx-svc span.bad{background:rgba(229,83,75,.22);color:#e5534b;font-weight:600}
+.sx-svc span i{font-style:normal;margin-right:5px}
+details.sx-cat{margin-top:6px}details.sx-cat>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;padding:6px 10px;background:rgba(128,128,128,.16);font-size:12px}
+details.sx-cat>summary::-webkit-details-marker{display:none}details.sx-cat>summary b{font-weight:400;opacity:.6;text-align:right}
+details.sx-cat>summary span::before{content:"\25B8";margin-right:6px;opacity:.6}details.sx-cat[open]>summary span::before{content:"\25BE"}
 .sx-sp .bd{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:2px 7px;white-space:nowrap}
 .sx-sp .bd.b{color:#7fb0ef;background:rgba(74,144,226,.22)}.sx-sp .bd.g{color:#b0b0b0;background:rgba(128,128,128,.25)}.sx-sp .bd.a{color:#d9921f;background:rgba(224,160,48,.22)}
 .sx-cr .n small{font-weight:400;opacity:.65;letter-spacing:0}
@@ -528,9 +544,9 @@ $(function () {
   var clockVal = null, showClock = true, cpuSec = 1, clkSec = 2, cpuTimer = null, clkTimer = null;
   var S = { confirm: null, busy: {}, logOpen: null, logs: {}, logErr: {}, logTimer: null, err: null };
   // Dashboard tile settings (item 53): which blocks, in which order, and which figures; all on until the first answer
-  var MX = { net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true, pow_ups: true };
-  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', con: 'sx-con' };
-  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, con: true }, ORDER = '';
+  var MX = { rtr_speed: true, rtr_month: true, rtr_graph: true, rtr_cores: true, rtr_mem: true, rtr_temp: true, rtr_svc: true, rtr_sky: true, rtr_cli: true, rtr_mesh: true, net_speed: true, net_today: true, net_hist: true, net_inet: true, net_top: true, ram_leg: true, cpu_load: true, cpu_temp: true, cpu_pow: true, cpu_hist: true, cpu_per: true, cpu_la: false, pow_w: true, pow_day: true, pow_mon: true, pow_cost: true, pow_name: true, pow_ups: true };
+  var BLK = { ram: 'sx-mem', sto: 'sx-sto', cpu: 'sx-cpu', gpu: 'sx-gpu', pow: 'sx-pow', net: 'sx-net', rtr: 'sx-rtr', con: 'sx-con' };
+  var SHOW = { ram: true, sto: true, cpu: true, gpu: true, pow: true, net: true, rtr: false, con: true }, ORDER = '';
   function mx(k) { return MX[k] !== false; }
   var LV = { g: 'sx-g', a: 'sx-a', rd: 'sx-rd', mu: 'sx-mu', '': '' };
   var ICON = {
@@ -893,6 +909,123 @@ $(function () {
     }
   }
 
+  // router (item 132): Compact, Standard or Full (Settings); the foldable bars of Full stay as the owner left them
+  var rtrOpen = {};
+  function fmtUp(s) { var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d > 0 ? d + ' d ' + h + ' h' : (h > 0 ? h + ' h ' + m + ' m' : m + ' m'); }
+  function rtrSpark(pts, U) {
+    var mxv = 1; $.each(pts, function (i, p) { mxv = Math.max(mxv, p[1], p[2]); }); mxv *= 1.15;
+    function line(k) { return $.map(pts, function (p) { return (400 - p[0] / 1800 * 400).toFixed(1) + ',' + (52 - p[k] / mxv * 50).toFixed(1); }).join(' '); }
+    var dn = line(1), x0 = (400 - pts[0][0] / 1800 * 400).toFixed(1), x1 = (400 - pts[pts.length - 1][0] / 1800 * 400).toFixed(1);
+    var g = '<svg class="sx-spark" viewBox="0 0 400 54" preserveAspectRatio="none">'
+      + '<line x1="0" y1="27" x2="400" y2="27" stroke="#808080" stroke-opacity=".25" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>'
+      + '<polygon points="' + x0 + ',52 ' + dn + ' ' + x1 + ',52" fill="#3fa24a" fill-opacity=".22"/>'
+      + '<polyline points="' + dn + '" fill="none" stroke="#3fa24a" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+      + '<polyline points="' + line(2) + '" fill="none" stroke="#4a90e2" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+    return [$('<span>').html(g).children(), el('sx-cl').append(txt('span', '', T('net.last30', { v: fmtRate(mxv / 1.15, U) + ' ' + unitTxt(U) })),
+      $('<span class="sx-nleg">').append($('<i>').css('background', '#3fa24a'), document.createTextNode(T('net.down_s')), $('<i>').css('background', '#4a90e2'), document.createTextNode(T('net.up_s'))))];
+  }
+  function rtrBar(lbl, pct, cls) { return el('sx-rbar').append(el('sx-ut').append(txt('span', '', lbl), txt('b', '', Math.round(pct) + ' %')), el('sx-tr').append($('<i>').addClass(cls || '').css('width', Math.min(100, pct) + '%'))); }
+  function rtrTempCls(t) { return t >= 90 ? 'sx-rd' : (t >= 80 ? 'sx-a' : ''); }
+  function rtrCat(key, label, right, rows) {
+    var $x = $('<details class="sx-cat">').prop('open', !!rtrOpen[key]).on('toggle', function () { rtrOpen[key] = this.open; });
+    $x.append($('<summary>').append(txt('span', '', label), $('<b>').text(right)));
+    var $b = el('mt-box').appendTo($x); $.each(rows, function (i, r) { $b.append(r); });
+    return $x;
+  }
+  function rtrRow(stripe, left, right) { return el('mt-r mt-s-' + stripe).css('grid-template-columns', 'minmax(0,1fr) auto').append($('<span>').append(left), $('<span class="sx-val">').append(right || '')); }
+  function renderRtr(R) {
+    var $d = $('#sx-rtr').empty();
+    if (!R) { return; }
+    var v = R.view || 'b', std = v !== 'a', full = v === 'c', U = R.unit || 'MB', ok = R.state === 'ok' && R.name !== undefined;
+    var svcBad = []; $.each(R.svc || [], function (i, x) { if (!x[1]) { svcBad.push(x[0]); } });
+    var right = ok ? R.name + (R.fw ? ' · ' + R.fw : '') : '';
+    if (R.state === 'err' && R.err === 'unreach') { right = T('rtr.no_answer', { t: hhmm(R.since) }); }
+    var $b = band(T('rtr.title'), right);
+    if ((R.state === 'err' && R.err === 'unreach') || (ok && svcBad.length)) { $b.addClass('mt-red'); }
+    $d.append($b);
+    if (R.state === 'setup' || R.state === 'pending') {
+      var $n = el('sx-box').append(txt('div', 'sx-fine', T(R.state === 'setup' ? 'rtr.setup' : 'rtr.connecting')).css('margin', 0));
+      if (R.state === 'setup') { $n.find('.sx-fine').append(' ', $('<a href="/Settings/SysboxSettings">').text(T('tile.settings'))); }
+      $d.append($n); return;
+    }
+    if (R.state === 'err') {
+      var down = R.err === 'unreach', $box = el('mt-box').appendTo($d);
+      $box.append(rtrRow(down ? 'red' : 'amber', document.createTextNode(T('rtr.e_' + R.err)), $('<span class="sx-pill">').addClass(down ? 'rd' : 'am').text(T(down ? 'rtr.offline' : 'rtr.check'))));
+      if (R.last_ok) { $box.append(rtrRow('grey', $('<span class="sx-sub">').text(T('rtr.last_seen', { t: hhmm(R.last_ok) }) + (R.name ? ' · ' + R.name : '')), down ? '' : $('<a href="/Settings/SysboxSettings">').text(T('tile.settings')))); }
+      return;
+    }
+    if (!ok) { return; }
+    var items = [], ramPct = R.ram[1] ? R.ram[0] / R.ram[1] * 100 : 0;
+    if (!std) {
+      items.push(kp('CPU', [document.createTextNode(R.cpu === null || R.cpu === undefined ? '–' : R.cpu), small(' %')], ''));
+      items.push(kp('RAM', [document.createTextNode(Math.round(ramPct)), small(' %')], ''));
+      if (R.temp !== null && R.temp !== undefined) { items.push(kp(T('rtr.temp'), [document.createTextNode(Math.round(R.temp)), small(' °C')], rtrTempCls(R.temp))); }
+      if (R.ping) { items.push(kp(T('rtr.ping'), [document.createTextNode(R.ping.ms), small(' ms')], '')); }
+      else { items.push(kp(T('net.down'), [document.createTextNode(fmtRate(R.rate[0], U)), small(' ' + unitTxt(U))], 'sx-dn')); }
+    } else {
+      if (mx('rtr_speed')) {
+        items.push(kp(T('net.down'), [document.createTextNode(fmtRate(R.rate[0], U)), small(' ' + unitTxt(U))], 'sx-dn'));
+        items.push(kp(T('net.up'), [document.createTextNode(fmtRate(R.rate[1], U)), small(' ' + unitTxt(U))], 'sx-upc'));
+      }
+      if (mx('rtr_month') && R.month) { var mb = fmtB(R.month[0] + R.month[1]).split(' '); items.push(kp(T('rtr.month'), [document.createTextNode(mb[0]), small(' ' + mb[1])], '')); }
+      if (R.ping) { items.push(kp(T('rtr.ping'), [document.createTextNode(R.ping.ms), small(' ms')], '')); }
+    }
+    var $f = el('sx-box').appendTo($d);
+    if (items.length) { var $k = el('sx-kp').css('grid-template-columns', 'repeat(' + items.length + ',1fr)'); $.each(items, function (i, x) { $k.append(x); }); $f.append($k); }
+    if (std && mx('rtr_graph') && R.pts && R.pts.length > 1) { $f.append(rtrSpark(R.pts, U)); }
+    if (std && mx('rtr_month') && R.month && R.vn_since && Date.now() / 1000 - R.vn_since < 31 * 86400) { $f.append(el('sx-fine').text(T('rtr.month_since', { d: new Date(R.vn_since * 1000).toLocaleDateString() }))); }
+    if (!$f.children().length) { $f.remove(); }
+    if (std && (mx('rtr_cores') || mx('rtr_mem') || mx('rtr_temp'))) {
+      var $h = el('sx-box').appendTo($d);
+      if (mx('rtr_cores') && R.cores && R.cores.length) {
+        $h.append(el('sx-ut').css('margin-top', 0).append(txt('span', '', 'CPU · ' + T('rtr.cores', { n: R.cores.length }) + (R.load !== null && R.load !== undefined ? ' · load ' + R.load.toFixed(2) : '')), txt('b', '', (R.cpu === null || R.cpu === undefined ? '–' : R.cpu) + ' %')));
+        var $c = el('sx-rcores').css('grid-template-columns', 'repeat(' + Math.min(R.cores.length, 8) + ',minmax(0,1fr))');
+        $.each(R.cores, function (i, p) { $c.append(el('').append(document.createTextNode('#' + i + ' ' + p + '%'), el('sx-tr').append($('<i>').addClass(p >= 90 ? 'rd' : (p >= 70 ? 'a' : '')).css('width', p + '%')))); });
+        $h.append($c);
+      }
+      if (mx('rtr_mem')) {
+        $h.append(rtrBar('RAM ' + fmtB(R.ram[0]) + ' / ' + fmtB(R.ram[1]), ramPct, ramPct >= 92 ? 'rd' : (ramPct >= 80 ? 'a' : '')));
+        if (R.swap[1] > 0) { $h.append(rtrBar(T('rtr.swap') + ' ' + fmtB(R.swap[0]) + ' / ' + fmtB(R.swap[1]), R.swap[0] / R.swap[1] * 100, '')); }
+      }
+      if (mx('rtr_temp')) {
+        var tp = []; if (R.temp !== null && R.temp !== undefined) { tp.push($('<span>').addClass(rtrTempCls(R.temp)).text('CPU ' + Math.round(R.temp) + ' °C')); }
+        $.each(R.radios || [], function (i, r) { if (r[2] !== null) { tp.push($('<span>').addClass(rtrTempCls(r[2])).text(r[0] + ' ' + r[2] + ' °C')); } });
+        var $tl = $('<span>'); $.each(tp, function (i, x) { if (i) { $tl.append(' · '); } $tl.append(x); });
+        $h.append(el('sx-cl').append($tl, txt('span', '', T('rtr.up', { t: fmtUp(R.up) }))));
+      }
+      if (!$h.children().length) { $h.remove(); }
+    }
+    if (mx('rtr_svc') && R.svc && R.svc.length) {
+      var $s = el('sx-svc').appendTo($d);
+      $.each(R.svc, function (i, x) { $s.append($('<span>').toggleClass('bad', !x[1]).append($('<i>').text(x[1] ? '●' : '✖'), document.createTextNode(T('rtr.svc_' + x[0]) + (x[1] ? '' : ' ' + T(x[0] === 'entware' ? 'rtr.missing' : 'rtr.stopped'))))); });
+    }
+    if (full) {
+      var hasSky = false; $.each(R.svc || [], function (i, x) { if (x[0] === 'skynet') { hasSky = true; } });
+      if (mx('rtr_sky') && hasSky) {
+        var K = R.sky, rows = [];
+        if (K && K.ev !== null) {
+          $.each(K.ports || [], function (i, p) { rows.push(rtrRow('grey', document.createTextNode(T('rtr.port', { p: p[1] })), document.createTextNode(p[0] + '×'))); });
+          $.each(K.out || [], function (i, o) { rows.push(rtrRow('grey', document.createTextNode(T('rtr.sky_out', { d: o[1] })), document.createTextNode(o[0] + '×'))); });
+          if (K.ban) { rows.push(rtrRow('grey', document.createTextNode(T('rtr.sky_ban', { i: K.ban[0], r: K.ban[1] })), K.blk ? document.createTextNode(T('rtr.sky_blk', { a: K.blk[0], b: K.blk[1] })) : '')); }
+          rows.push(rtrRow('grey', $('<span class="sx-rnote">').text(T('rtr.sky_note') + (K.out && K.out.length ? ' ' + T('rtr.sky_out_note') : ' ' + T('rtr.sky_no_out'))), ''));
+        } else { rows.push(rtrRow('grey', $('<span class="sx-rnote">').text(T('rtr.sky_wait')), '')); }
+        $d.append(rtrCat('sky', 'Skynet', K && K.ev !== null ? T('rtr.sky_sum', { n: K.ev, i: K.ips, t: K.from ? (Date.now() / 1000 - K.from < 86400 ? hhmm(K.from) : new Date(K.from * 1000).toLocaleDateString()) : '–' }) : '', rows));
+      }
+      if (mx('rtr_cli')) {
+        var cr = []; $.each(R.radios || [], function (i, r) { cr.push(rtrRow('grey', document.createTextNode(T('rtr.radio', { b: r[0] })), document.createTextNode(r[1]))); });
+        cr.push(rtrRow('grey', document.createTextNode(T('rtr.lan_dev')), document.createTextNode(R.arp)));
+        $d.append(rtrCat('cli', T('rtr.clients'), T('rtr.cli_n', { n: R.arp }), cr));
+      }
+      if (mx('rtr_mesh') && R.mesh && R.mesh.length) {
+        var mr = [], off = 0;
+        $.each(R.mesh, function (i, m) { if (!m[2]) { off++; } mr.push(rtrRow(m[2] ? 'green' : 'red', document.createTextNode(m[0] + ' · ' + m[1]), $('<span class="sx-pill">').addClass(m[2] ? '' : 'rd').text(T(m[2] ? 'rtr.online' : 'rtr.offline')))); });
+        $d.append(rtrCat('mesh', 'AiMesh', T('rtr.nodes', { n: R.mesh.length }) + (off ? ' · ' + T('rtr.n_off', { n: off }) : ''), mr));
+      }
+    }
+    var wanTxt = R.wan ? 'WAN ' + R.wan + (R.proto ? ' · ' + R.proto.toUpperCase() : '') : '';
+    $d.append(el('sx-cl').append(txt('span', '', wanTxt), $('<a target="_blank" rel="noopener">').attr('href', 'http://' + R.host + '/').text(T('rtr.open'))));
+  }
+
   // stream priority (item 98): one row under the network box; a button only in the "Button on the tile" mode
   function spRow(P, U) {
     var lim = (U === 'Mbit' ? Math.round(P.up * 8) : P.up) + ' ' + unitTxt(U), stripe = 'grey', t, sub, bd = null, btn = null;
@@ -1052,7 +1185,7 @@ $(function () {
   function firstBand() {
     $('.sx-tile .mt-band.mt-first').removeClass('mt-first');
     if ($('#sx-attn').children().length) { return; }
-    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
+    var k = ORDER ? ORDER.split(',') : ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'rtr', 'con'];
     for (var i = 0; i < k.length; i++) { var $b = $('#' + BLK[k[i]]).find('.mt-band').first(); if ($b.length) { $b.addClass('mt-first'); return; } }
   }
 
@@ -1088,6 +1221,7 @@ $(function () {
     renderGpu(r.gpu);
     if (SHOW.pow) { renderPow(r.power); } else { $('#sx-pow').empty(); }
     if (SHOW.net) { renderNet(r.net); } else { $('#sx-net').empty(); }
+    if (SHOW.rtr) { renderRtr(r.router); } else { $('#sx-rtr').empty(); }
     renderCon();
     firstBand();
   }
@@ -1231,6 +1365,10 @@ if (!function_exists('sx_chk')) {
 .sx-chip{display:inline-flex!important;align-items:center;gap:5px;padding:2px 9px;border-radius:12px;border:1px solid rgba(128,128,128,.35);cursor:pointer}
 .sx-chip input[type=checkbox]{margin:0!important}
 .sx-attn-note{opacity:.55;font-size:12px;margin:6px 0 0}
+#sx-rmods{display:flex;flex-wrap:wrap;gap:6px}
+#sx-rmods span{font-size:12px;padding:3px 9px;border-radius:3px;background:rgba(63,162,74,.14);box-shadow:inset 3px 0 0 #3fa24a}
+#sx-rmods span.bad{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.sx-blk .sx-chip.dim{opacity:.4}
 </style>
 <form id="sx-form" class="uset" method="POST" action="/plugins/sysbox/save.php" onsubmit="return false;">
 <input type="hidden" name="csrf_token" value="<?=sx_h($sx_tok)?>">
@@ -1250,8 +1388,11 @@ $sx_blk = [
   'gpu' => ['GPU', 'show_gpu', [], $sxs_T('blk.gpu_hint')],
   'pow' => [$sxs_T('pow.title'), 'show_pow', [['pow_w', $sxs_T('blk.pow_w')], ['pow_day', $sxs_T('blk.pow_day')], ['pow_mon', $sxs_T('blk.pow_mon')], ['pow_cost', $sxs_T('pow.cost')], ['pow_name', $sxs_T('blk.pow_name')], ['pow_ups', $sxs_T('blk.pow_ups')]], $sxs_T('blk.pow_hint')],
   'net' => [$sxs_T('net.title'), 'show_net', [['net_speed', $sxs_T('blk.net_speed')], ['net_today', $sxs_T('blk.net_today')], ['net_hist', $sxs_T('blk.net_hist')], ['net_inet', $sxs_T('blk.net_inet')], ['net_top', $sxs_T('blk.net_top')]], $sxs_T('blk.net_hint')],
+  'rtr' => [$sxs_T('rtr.title'), 'show_rtr', [['rtr_speed', $sxs_T('rtr.c_speed')], ['rtr_month', $sxs_T('rtr.c_month')], ['rtr_graph', $sxs_T('rtr.c_graph')], ['rtr_cores', $sxs_T('rtr.c_cores')], ['rtr_mem', $sxs_T('rtr.c_mem')], ['rtr_temp', $sxs_T('rtr.c_temp')], ['rtr_svc', $sxs_T('rtr.c_svc')], ['rtr_sky', 'Skynet'], ['rtr_cli', $sxs_T('rtr.clients')], ['rtr_mesh', 'AiMesh']], $sxs_T('rtr.c_hint')],
   'con' => [$sxs_T('con.title'), 'show_containers', [], $sxs_T('blk.con_hint')],
 ];
+require_once '/usr/local/emhttp/plugins/sysbox/rtr_lib.php';
+$sx_rc = rtr_cfg();
 foreach (sx_order($sx) as $sx_k):
   $sx_b = $sx_blk[$sx_k];
 ?>
@@ -1273,6 +1414,46 @@ foreach (sx_order($sx) as $sx_k):
   <span class="uset-hint"><?=sx_h($sx_b[3])?></span>
 <?php endif; ?>
 </dd>
+<?php if ($sx_k === 'rtr'): ?>
+<dt><?=$sxs_t('rtr.s_view')?></dt>
+<dd>
+<?php foreach (['a' => 'rtr.v_a', 'b' => 'rtr.v_b', 'c' => 'rtr.v_c'] as $sx_vv => $sx_vl): ?>
+  <label><input type="radio" name="rtr_view" value="<?=$sx_vv?>" <?=($sx['rtr_view'] ?? 'b') === $sx_vv ? 'checked' : ''?>> <?=$sxs_t($sx_vl)?></label>
+<?php endforeach; ?>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_view_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_router')?></dt>
+<dd>
+  <input type="text" name="rtr_host" class="narrow" placeholder="192.168.1.1" value="<?=sx_h($sx_rc['host'])?>">
+  <?=$sxs_t('rtr.s_user')?> <input type="text" name="rtr_user" class="narrow" placeholder="admin" value="<?=sx_h($sx_rc['user'])?>">
+  <?=$sxs_t('rtr.s_port')?> <input type="text" name="rtr_port" class="narrow" style="width:60px!important" value="<?=sx_h($sx_rc['port'])?>">
+  &middot; <?=$sxs_t('set.refresh')?> <select name="rtr_sec"><?=sx_sel_opts($sx_rc['sec'], ['2', '5', '10'])?></select> s
+  <span class="uset-hint"><?=$sxs_t('rtr.s_router_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_path')?></dt>
+<dd>
+  <input type="text" name="rtr_path" style="width:300px" value="<?=sx_h($sx_rc['path'])?>">
+  <span class="uset-hint"><?=$sxs_t('rtr.s_path_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_key')?></dt>
+<dd id="sx-rkey">
+  <textarea id="sx-rkline" readonly rows="2" style="width:100%;font:11px/1.4 monospace" placeholder="<?=$sxs_t('rtr.s_nokey')?>"><?=sx_h(rtr_keyline($sx_rc))?></textarea>
+  <input type="button" id="sx-rkcopy" value="<?=$sxs_t('rtr.b_copy_key')?>"> <input type="button" id="sx-rkmake" value="<?=$sxs_t(rtr_pub() === '' ? 'rtr.b_make_key' : 'rtr.b_new_key')?>"> <span class="sx-rkmsg"></span>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_key_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_install')?></dt>
+<dd>
+  <textarea id="sx-riline" readonly rows="2" style="width:100%;font:11px/1.4 monospace"><?=sx_h(rtr_pub() === '' ? '' : rtr_install_cmd($sx_rc))?></textarea>
+  <input type="button" id="sx-ricopy" value="<?=$sxs_t('rtr.b_copy_install')?>"> <span class="sx-rimsg"></span>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_install_hint')?></span>
+</dd>
+<dt><?=$sxs_t('rtr.s_test')?></dt>
+<dd>
+  <input type="button" id="sx-rtest" value="<?=$sxs_t('rtr.b_test')?>"> <span id="sx-rtmsg"></span>
+  <div id="sx-rmods"></div>
+  <span class="uset-hint"><?=$sxs_t('rtr.s_test_hint')?></span>
+</dd>
+<?php endif; ?>
 </dl>
 <?php endforeach; ?>
 </div>
@@ -1436,6 +1617,56 @@ $(function () {
         .always(function () { $b.prop('disabled', false); });
     });
   });
+
+  // router (item 132): the parts a view does not have are dimmed; key, install line, Test and save
+  function rtrView() {
+    var v = $('input[name=rtr_view]:checked').val() || 'b', std = { rtr_speed: 1, rtr_month: 1, rtr_graph: 1, rtr_cores: 1, rtr_mem: 1, rtr_temp: 1 }, full = { rtr_sky: 1, rtr_cli: 1, rtr_mesh: 1 };
+    $('.sx-blk[data-k=rtr] .sx-chip').each(function () { var n = $(this).find('input[type=checkbox]').attr('name'); $(this).toggleClass('dim', (v === 'a' && !!(std[n] || full[n])) || (v === 'b' && !!full[n])); });
+  }
+  $('input[name=rtr_view]').on('change', rtrView); rtrView();
+  function rtrPost(op) {
+    var d = { op: op, csrf_token: $('#sx-form input[name=csrf_token]').val() };
+    $.each(['rtr_host', 'rtr_user', 'rtr_port', 'rtr_path', 'rtr_sec'], function (i, n) { d[n] = $('#sx-form [name=' + n + ']').val(); });
+    return $.post('/plugins/sysbox/rtr.php', d, null, 'json');
+  }
+  function rtrLines(r) { if (r && r.keyline !== undefined) { $('#sx-rkline').val(r.keyline); $('#sx-riline').val(r.install); if (r.keyline) { $('#sx-rkmake').val(T('rtr.b_new_key')); } } }
+  function rtrCopy($ta, $m) {
+    var t = $ta.val(); if (!t) { return; }
+    function done() { $m.css('color', '#3fa24a').text(T('rtr.copied')); setTimeout(function () { $m.text(''); }, 3000); }
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t).then(done, function () { $ta[0].select(); document.execCommand('copy'); done(); }); }
+    else { $ta[0].select(); try { document.execCommand('copy'); done(); } catch (e) { $m.text(T('rtr.copy_hand')); } }
+  }
+  $('#sx-rkcopy').on('click', function () { rtrCopy($('#sx-rkline'), $('.sx-rkmsg')); });
+  $('#sx-ricopy').on('click', function () { rtrCopy($('#sx-riline'), $('.sx-rimsg')); });
+  var rkArm = false;
+  $('#sx-rkmake').on('click', function () {
+    var $b = $(this), $m = $('.sx-rkmsg'), had = $('#sx-rkline').val() !== '';
+    if (had && !rkArm) { rkArm = true; $m.css('color', '#d9921f').text(T('rtr.new_key_confirm')); setTimeout(function () { rkArm = false; }, 8000); return; }
+    rkArm = false; $b.prop('disabled', true); $m.css('color', '').text(T('rtr.working'));
+    rtrPost(had ? 'newkey' : 'key').done(function (r) {
+      if (r && r.ok) { rtrLines(r); $b.val(T('rtr.b_new_key')); $m.css('color', '#3fa24a').text(T(had ? 'rtr.key_new' : 'rtr.key_made')); }
+      else { $m.css('color', '#e5534b').text((r && r.error) || T('set.unknown_error')); }
+    }).fail(function (x) { $m.css('color', '#e5534b').text((x.responseJSON && x.responseJSON.error) || 'HTTP ' + x.status); }).always(function () { $b.prop('disabled', false); });
+  });
+  $('#sx-rtest').on('click', function () {
+    var $b = $(this).prop('disabled', true), $m = $('#sx-rtmsg'), $o = $('#sx-rmods').empty();
+    $m.css('color', '').text(T('rtr.testing'));
+    rtrPost('test').done(function (r) {
+      rtrLines(r);
+      if (r && r.ok) {
+        $m.css('color', '#3fa24a').text(T('rtr.test_ok', { t: r.t, n: r.modules.length }));
+        $.each(r.modules, function (i, m) {
+          var k = m[0], t;
+          if (k === 'base') { t = T('rtr.m_base', { n: m[1], w: m[2] || '–' }); }
+          else if (k === 'nvram') { t = T('rtr.m_nvram', { m: m[1], f: m[2], n: m[3] }); }
+          else if (k === 'radio') { t = T('rtr.m_radio', { n: m[1] }); }
+          else if (k === 'ping') { t = T('rtr.m_ping', { t: m[1] }); }
+          else { t = T('rtr.svc_' + k.slice(4)) + (m[1] ? '' : ' ' + T('rtr.stopped')); }
+          $o.append($('<span>').toggleClass('bad', k.indexOf('svc_') === 0 && !m[1]).text(t));
+        });
+      } else { $m.css('color', '#e5534b').text((r && r.error) || T('set.unknown_error')); }
+    }).fail(function (x) { $m.css('color', '#e5534b').text((x.responseJSON && x.responseJSON.error) || 'HTTP ' + x.status); }).always(function () { $b.prop('disabled', false); });
+  });
   var $msg = $('#sx-msg');
   $('#sx-save').on('click', function () {
     var $b = $(this).prop('disabled', true);
@@ -1484,9 +1715,12 @@ function sx_defaults() {
         'controls' => '1', 'logs' => '1', 'log_lines' => '100',
         'show_gpu' => '1', 'show_containers' => '1', 'hist_min' => '2', 'cpu_sec' => '1', 'clk_sec' => '2', 'show_clock' => '1',
         // Dashboard tile (item 53): blocks on or off, their order, and what the RAM, CPU and Power blocks show
-        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,net,con', 'ram_leg' => '1',
+        'show_ram' => '1', 'show_sto' => '1', 'show_cpu' => '1', 'show_pow' => '1', 'order' => 'ram,sto,cpu,gpu,pow,net,rtr,con', 'ram_leg' => '1',
         // Network part (item 94): on by default; its own settings (interface, pings, unit, Discord) are in network.cfg
         'show_net' => '1', 'net_speed' => '1', 'net_today' => '1', 'net_hist' => '1', 'net_inet' => '1', 'net_top' => '1',
+        // Router part (item 132): off until set up; view a compact | b standard | c full, the parts inside the view; connection in router.cfg
+        'show_rtr' => '0', 'rtr_view' => 'b', 'rtr_speed' => '1', 'rtr_month' => '1', 'rtr_graph' => '1', 'rtr_cores' => '1', 'rtr_mem' => '1', 'rtr_temp' => '1',
+        'rtr_svc' => '1', 'rtr_sky' => '1', 'rtr_cli' => '1', 'rtr_mesh' => '1',
         'cpu_load' => '1', 'cpu_temp' => '1', 'cpu_pow' => '1', 'cpu_hist' => '1', 'cpu_per' => '1', 'cpu_la' => '0',
         'pow_w' => '1', 'pow_day' => '1', 'pow_mon' => '1', 'pow_cost' => '1', 'pow_name' => '1',
         // UPS row in the Power block (item 99): read from NUT (upsd); host, port and UPS name only in settings.cfg
@@ -1512,10 +1746,10 @@ function sx_cfg() {
 }
 
 // The tile's block order: the saved list, unknown names dropped, missing ones added at the end
-const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'con'];
+const SX_BLOCKS = ['ram', 'sto', 'cpu', 'gpu', 'pow', 'net', 'rtr', 'con'];
 function sx_order($cfg) {
     $o = array_values(array_unique(array_intersect(array_map('trim', explode(',', (string)($cfg['order'] ?? ''))), SX_BLOCKS)));
-    // a block that is new since the order was saved goes after the one before it in the default order (Network after Power)
+    // a block that is new since the order was saved goes after the one before it in the default order (Network after Power, Router after Network)
     foreach (SX_BLOCKS as $i => $b) {
         if (in_array($b, $o, true)) { continue; }
         $at = $i > 0 ? array_search(SX_BLOCKS[$i - 1], $o, true) : -1;
@@ -1921,6 +2155,51 @@ if (sx_on($cfg['show_net'] ?? '1')) {
     }
 }
 
+// ---- router (item 132): rtrmon.php asks the router in the background ----------------------------
+$rtr = null;
+if (sx_on($cfg['show_rtr'] ?? '0')) {
+    require_once __DIR__ . '/rtr_lib.php';
+    $RC = rtr_cfg(); $RL = rtr_live(); $view = in_array($cfg['rtr_view'] ?? 'b', ['a', 'b', 'c'], true) ? $cfg['rtr_view'] : 'b';
+    if (!rtr_ready($RC)) { $rtr = ['state' => 'setup']; }
+    else {
+        $fresh = $RL && time() - (int)$RL['t'] < max(30, 4 * (int)$RC['sec']) && ($RL['state'] ?? '') !== 'setup';
+        if (!$fresh && (!is_file('/tmp/sysbox_rtr.lock.run') || time() - filemtime('/tmp/sysbox_rtr.lock.run') > 60)) {   // not running yet (just switched on): start it, cron keeps it alive
+            @touch('/tmp/sysbox_rtr.lock.run');
+            @exec('setsid nohup flock -n /tmp/sysbox_rtr.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/rtrmon.php') . ' >/dev/null 2>&1 </dev/null &');
+        }
+        if ($fresh) { @unlink('/tmp/sysbox_rtr.lock.run'); }
+        $D = $fresh ? ($RL['D'] ?? null) : null;
+        if (!$fresh || (!$D && ($RL['state'] ?? '') === 'ok')) { $rtr = ['state' => 'pending']; }
+        else {
+            $rtr = ['state' => (string)$RL['state'], 'err' => (string)($RL['err'] ?? ''), 'since' => (int)($RL['err_since'] ?? 0), 'last_ok' => (int)($RL['last_ok'] ?? 0)];
+            if ($D) {
+                $pts = []; $now = (int)$RL['t']; $acc = null;   // the last 30 minutes in 15-second averages, as the Network part: [seconds ago, down, up]
+                foreach ((array)$RL['pts'] as $p) {
+                    if ($p[0] < $now - 1800) { continue; }
+                    $k = intdiv($p[0], 15);
+                    if ($acc && $acc[0] !== $k) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; $acc = null; }
+                    if (!$acc) { $acc = [$k, 0, 0, 0]; }
+                    $acc[1] += $p[1]; $acc[2] += $p[2]; $acc[3]++;
+                }
+                if ($acc) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; }
+                $M = $D['mem'];
+                $rtr += ['name' => $D['name'], 'fw' => $D['fw'], 'cpu' => $RL['cpu'], 'cores' => $RL['cores'], 'load' => $D['load'], 'up' => $D['up'],
+                         'ram' => [$M['used'], $M['total']], 'swap' => [$M['swap_used'], $M['swap_total']], 'temp' => $D['temps'][0] ?? null,
+                         'radios' => $D['radios'], 'arp' => $D['arp'], 'svc' => $D['svc'], 'month' => $D['month'], 'vn_since' => (int)($D['vn_since'] ?? 0), 'ping' => $D['ping'],
+                         'rate' => $RL['rate'], 'pts' => $pts, 'wan' => $D['wan'], 'proto' => $D['wan_proto'] ?? '', 'mesh' => $RL['mesh'], 'sky' => $RL['sky'], 'host' => $RC['host']];
+            }
+            if ($rtr['state'] === 'err' && $rtr['err'] === 'unreach' && time() - $rtr['since'] >= 60) {
+                $attn[] = ['rd', 'Router', $sxx_T('attn.rtr_down'), date('H:i', $rtr['since'])];
+            } elseif ($rtr['state'] === 'ok' && $D) {
+                $bad = []; foreach ($D['svc'] as $x) { if (!$x[1]) { $bad[] = $sxx_T('rtr.svc_' . $x[0]); } }
+                if ($bad) { $attn[] = ['rd', 'Router', $sxx_T('attn.rtr_svc', ['s' => implode(', ', $bad)]), '']; }
+            }
+        }
+    }
+    $rtr['view'] = $view;
+    $rtr['unit'] = isset($net['unit']) ? $net['unit'] : 'MB';
+}
+
 // ---- containers ----------------------------------------------------------------------------------
 $cont = ['enabled' => sx_on($cfg['show_containers']), 'docker' => false, 'rows' => [], 'mode' => $cfg['top_mode'], 'n' => (int)$cfg['top_n'],
          'controls' => sx_on($cfg['controls']), 'logs' => sx_on($cfg['logs']), 'log_lines' => (int)$cfg['log_lines'], 'pending' => $stats === null];
@@ -1981,16 +2260,16 @@ $attOut = [];
 foreach ($attn as $a) { $attOut[] = ['level' => $a[0], 'name' => $a[1], 'text' => $a[2], 'small' => $a[3]]; }
 
 $sxShow = [];
-foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name', 'pow_ups'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
+foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'rtr_speed', 'rtr_month', 'rtr_graph', 'rtr_cores', 'rtr_mem', 'rtr_temp', 'rtr_svc', 'rtr_sky', 'rtr_cli', 'rtr_mesh', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name', 'pow_ups'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
 
 sx_json([
     'ok' => true, 'ts' => time(),
     'summary' => ['ram' => $memPct, 'cpu' => $load, 'temp' => $tPkg, 'uptime' => ($d > 0 ? $d . ' d ' . $h . ' h' : ($h > 0 ? $h . ' h ' . $m . ' m' : $m . ' m'))],
-    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'net' => $net, 'containers' => $cont,
+    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'net' => $net, 'router' => $rtr, 'containers' => $cont,
     'limits' => ['temp_warn' => (float)$cfg['temp_warn'], 'temp_crit' => (float)$cfg['temp_crit']],
     'ui' => ['hist_min' => max(1, min(60, (int)$cfg['hist_min'])), 'cpu_sec' => (int)$cfg['cpu_sec'], 'clk_sec' => (int)$cfg['clk_sec'], 'show_clock' => sx_on($cfg['show_clock']),
              'order' => sx_order($cfg), 'show' => ['ram' => sx_on($cfg['show_ram']), 'sto' => sx_on($cfg['show_sto']), 'cpu' => sx_on($cfg['show_cpu']),
-             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'net' => sx_on($cfg['show_net'] ?? '1'), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
+             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'net' => sx_on($cfg['show_net'] ?? '1'), 'rtr' => sx_on($cfg['show_rtr'] ?? '0'), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
 ]);
 ]]></INLINE>
 </FILE>
@@ -2231,6 +2510,10 @@ $new = [
     'ups_qb' => sx_choice($_POST['ups_qb'] ?? '5', ['0', '3', '5', '10'], 'qBittorrent before the NUT shutdown'),
     'show_net' => sx_bool($_POST['show_net'] ?? '1'), 'net_speed' => sx_bool($_POST['net_speed'] ?? '1'), 'net_today' => sx_bool($_POST['net_today'] ?? '1'),
     'net_hist' => sx_bool($_POST['net_hist'] ?? '1'), 'net_inet' => sx_bool($_POST['net_inet'] ?? '1'), 'net_top' => sx_bool($_POST['net_top'] ?? '1'),
+    'show_rtr' => sx_bool($_POST['show_rtr'] ?? '0'), 'rtr_view' => sx_choice($_POST['rtr_view'] ?? 'b', ['a', 'b', 'c'], 'Router view'),
+    'rtr_speed' => sx_bool($_POST['rtr_speed'] ?? '1'), 'rtr_month' => sx_bool($_POST['rtr_month'] ?? '1'), 'rtr_graph' => sx_bool($_POST['rtr_graph'] ?? '1'),
+    'rtr_cores' => sx_bool($_POST['rtr_cores'] ?? '1'), 'rtr_mem' => sx_bool($_POST['rtr_mem'] ?? '1'), 'rtr_temp' => sx_bool($_POST['rtr_temp'] ?? '1'),
+    'rtr_svc' => sx_bool($_POST['rtr_svc'] ?? '1'), 'rtr_sky' => sx_bool($_POST['rtr_sky'] ?? '1'), 'rtr_cli' => sx_bool($_POST['rtr_cli'] ?? '1'), 'rtr_mesh' => sx_bool($_POST['rtr_mesh'] ?? '1'),
     'ram_warn' => sx_int($_POST['ram_warn'] ?? '80', 1, 100, 'RAM warning'), 'ram_crit' => sx_int($_POST['ram_crit'] ?? '92', 1, 100, 'RAM critical'),
     'log_warn' => sx_int($_POST['log_warn'] ?? '80', 1, 100, 'Log warning'), 'log_crit' => sx_int($_POST['log_crit'] ?? '92', 1, 100, 'Log critical'),
     'vd_warn' => sx_int($_POST['vd_warn'] ?? '80', 1, 100, 'Docker vdisk warning'), 'vd_crit' => sx_int($_POST['vd_crit'] ?? '92', 1, 100, 'Docker vdisk critical'),
@@ -2243,6 +2526,12 @@ $new = [
     'n_remind' => sx_int($_POST['n_remind'] ?? '24', 0, 168, 'Repeat interval'),
     'wk_on' => sx_bool($_POST['wk_on'] ?? '1'), 'wk_day' => sx_int($_POST['wk_day'] ?? '7', 1, 7, 'Weekly day'), 'wk_hour' => sx_int($_POST['wk_hour'] ?? '19', 0, 23, 'Weekly hour'),
 ];
+// the router connection (item 132) has its own file; the page sends it with the rest
+if (isset($_POST['rtr_host'])) {
+    require_once __DIR__ . '/rtr_lib.php';
+    $rtr = rtr_check(['host' => $_POST['rtr_host'], 'user' => $_POST['rtr_user'] ?? '', 'port' => $_POST['rtr_port'] ?? '22', 'path' => $_POST['rtr_path'] ?? '', 'sec' => $_POST['rtr_sec'] ?? '5']);
+    if (!is_array($rtr)) { sx_json(['ok' => false, 'error' => sx_tr('rtr.err_' . $rtr)], 400); }
+}
 foreach (['ram', 'log', 'vd', 'temp'] as $k) {
     if ((int)$new[$k . '_warn'] > (int)$new[$k . '_crit']) { sx_json(['ok' => false, 'error' => sx_tr('save.err_limits')], 400); }
 }
@@ -2257,6 +2546,15 @@ if (@file_put_contents($tmp, $text) === false) { sx_json(['ok' => false, 'error'
 if (!@rename($tmp, SX_CFG)) { @file_put_contents(SX_CFG, $text); @unlink($tmp); }
 @chmod(SX_CFG, 0600);
 @unlink('/tmp/sysbox_slow.json');
+if (isset($rtr) && is_array($rtr)) {
+    $was = rtr_cfg(); rtr_cfg_save($rtr);
+    // the sampler reads its settings every minute; a new router address, or the part switched on, starts it again now
+    if ($was !== $rtr || $new['show_rtr'] === '1') {
+        @exec('pkill -f ' . escapeshellarg('plugins/sysbox/rtrmon.php') . ' 2>/dev/null');
+        if ($new['show_rtr'] === '1') { @exec('setsid nohup flock -n /tmp/sysbox_rtr.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/rtrmon.php') . ' >/dev/null 2>&1 </dev/null &'); }
+        else { @unlink(rtr_live_file()); }
+    }
+}
 sx_json(['ok' => true]);
 ]]></INLINE>
 </FILE>
@@ -3136,7 +3434,7 @@ sx_json($r[0] === 'ok' ? ['ok' => true] : ['ok' => false, 'error' => $r[1]]);
 <!-- README -->
 <!-- ========================================================= -->
 <FILE Name="/usr/local/emhttp/plugins/Sysbox/README.md">
-<INLINE><![CDATA[**Sysbox** replaces the System and Processor dashboard tiles with one native-looking tile: memory as a single bar (system, ZFS cache, Docker, free), boot, log and Docker vdisk usage, CPU load with history, temperature, power and per-thread heat map, the Intel GPU engines, wall power from a Shelly smart socket with the monthly kWh, network speed with the internet state and the busiest containers (details on the Network page), and a list of containers (busiest or selected) with start, stop, restart and log buttons. Anything that needs attention is listed at the top.
+<INLINE><![CDATA[**Sysbox** replaces the System and Processor dashboard tiles with one native-looking tile: memory as a single bar (system, ZFS cache, Docker, free), boot, log and Docker vdisk usage, CPU load with history, temperature, power and per-thread heat map, the Intel GPU engines, wall power from a Shelly smart socket with the monthly kWh, network speed with the internet state and the busiest containers (details on the Network page), your router (any router with SSH, Asuswrt-Merlin and other Entware routers: CPU, memory, WAN speed and month, temperatures, Entware, AdGuard, Skynet, Tailscale and AiMesh, read through a key that can only run a small read script; Compact, Standard or Full), and a list of containers (busiest or selected) with start, stop, restart and log buttons. Anything that needs attention is listed at the top.
 
 Settings: Settings, Utilities, Sysbox (or the gear icon on the tile).
 ]]></INLINE>
@@ -8722,6 +9020,388 @@ function mt_i18n_js($dir, $name, $only = null) {
  "netp.sp_t_srv": {
   "text": "{s}: {n} playing, {o} outside",
   "note": "Network page, Test the connections: one media server's result ({s} = Jellyfin, Emby or Plex)."
+ },
+ "rtr.title": {
+  "text": "Router",
+  "note": "tile band title of the router part (item 132) and its name on the settings page."
+ },
+ "rtr.no_answer": {
+  "text": "no answer since {t}",
+  "note": "tile band, right side, when the router does not answer; {t} = time (HH:MM)."
+ },
+ "rtr.setup": {
+  "text": "Set up the router connection in the Sysbox settings.",
+  "note": "tile: the router part is on but has no address or key yet; a link to the settings follows."
+ },
+ "rtr.connecting": {
+  "text": "Connecting to the router… the first numbers come in a few seconds.",
+  "note": "tile: the background reader has no data yet."
+ },
+ "rtr.e_unreach": {
+  "text": "The router does not answer (SSH). Internet and Wi-Fi may be down too.",
+  "note": "tile and settings test: no SSH answer from the router."
+ },
+ "rtr.e_auth": {
+  "text": "The router does not accept the Sysbox key. Paste the key line in the router (see the settings).",
+  "note": "tile and settings test: SSH said permission denied."
+ },
+ "rtr.e_hostkey": {
+  "text": "The router shows a new identity (new firmware or a new router). Press Test and save in the settings to accept it.",
+  "note": "tile and settings test: the SSH host key changed."
+ },
+ "rtr.e_noscript": {
+  "text": "The read script is missing on the router. Run the install line in the router (see the settings).",
+  "note": "tile and settings test: sysbox_ro.sh not found on the router."
+ },
+ "rtr.e_bad": {
+  "text": "The router answered, but not with the Sysbox script. Check the key line and the script path.",
+  "note": "tile and settings test: unexpected answer."
+ },
+ "rtr.e_setup": {
+  "text": "Address, user name or key missing.",
+  "note": "settings test: not set up."
+ },
+ "rtr.offline": {
+  "text": "offline",
+  "note": "pill on the tile row: the router or a node does not answer."
+ },
+ "rtr.check": {
+  "text": "check",
+  "note": "pill on the tile row: something the owner has to fix in the settings."
+ },
+ "rtr.last_seen": {
+  "text": "Last answer {t}",
+  "note": "tile, under an error; {t} = time (HH:MM)."
+ },
+ "rtr.temp": {
+  "text": "Temp",
+  "note": "tile figure label (Compact view): router CPU temperature."
+ },
+ "rtr.ping": {
+  "text": "Ping",
+  "note": "tile figure label: the router add-on connmon's last ping time to the internet."
+ },
+ "rtr.month": {
+  "text": "Month",
+  "note": "tile figure label: WAN traffic this month (down + up), from vnstat on the router."
+ },
+ "rtr.month_since": {
+  "text": "vnstat counts since {d}, so the month is not complete.",
+  "note": "tile note when vnstat started this month; {d} = date."
+ },
+ "rtr.swap": {
+  "text": "Swap",
+  "note": "tile bar label: the router's swap use."
+ },
+ "rtr.up": {
+  "text": "up {t}",
+  "note": "tile caption: router uptime; {t} like 3 h 54 m."
+ },
+ "rtr.svc_entware": {
+  "text": "Entware",
+  "note": "service chip: the Entware disk on the router."
+ },
+ "rtr.svc_adguard": {
+  "text": "AdGuard",
+  "note": "service chip: AdGuard Home on the router."
+ },
+ "rtr.svc_skynet": {
+  "text": "Skynet",
+  "note": "service chip: the Skynet firewall on the router."
+ },
+ "rtr.svc_tailscale": {
+  "text": "Tailscale",
+  "note": "service chip: Tailscale on the router."
+ },
+ "rtr.svc_vnstat": {
+  "text": "vnstat",
+  "note": "service chip: the vnstat traffic counter on the router."
+ },
+ "rtr.stopped": {
+  "text": "stopped",
+  "note": "after a service name: installed but not running."
+ },
+ "rtr.port": {
+  "text": "Port {p}",
+  "note": "Skynet bar row: an inbound port that blocked addresses tried; {p} = port number."
+ },
+ "rtr.sky_out": {
+  "text": "Blocked going out: {d}",
+  "note": "Skynet bar row: a home device that tried banned addresses going out; {d} = its name or address."
+ },
+ "rtr.sky_note": {
+  "text": "Most targeted ports, inbound.",
+  "note": "Skynet bar, last row."
+ },
+ "rtr.sky_no_out": {
+  "text": "No home device is blocked going out.",
+  "note": "Skynet bar: no outbound blocks."
+ },
+ "rtr.sky_wait": {
+  "text": "Reading Skynet statistics… (every 10 minutes)",
+  "note": "Skynet bar before the first statistics."
+ },
+ "rtr.sky_sum": {
+  "text": "{n} blocks · {i} IPs since {t}",
+  "note": "Skynet bar title, right side; {t} = start of Skynet's log span."
+ },
+ "rtr.radio": {
+  "text": "Wi-Fi {b}",
+  "note": "Clients bar row: a radio of the router; {b} = band (2.4 GHz, 5 GHz)."
+ },
+ "rtr.lan_dev": {
+  "text": "Devices on the LAN (ARP)",
+  "note": "Clients bar row: all devices the router sees, wired and through the nodes."
+ },
+ "rtr.clients": {
+  "text": "Clients",
+  "note": "name of the Clients bar (Full view) and its settings chip."
+ },
+ "rtr.cli_n": {
+  "text": "{n} on the LAN",
+  "note": "Clients bar title, right side."
+ },
+ "rtr.online": {
+  "text": "online",
+  "note": "AiMesh bar: the node answers ping."
+ },
+ "rtr.n_off": {
+  "text": "{n} offline",
+  "note": "AiMesh bar title: nodes that do not answer."
+ },
+ "rtr.open": {
+  "text": "Open router ›",
+  "note": "tile link to the router's web page."
+ },
+ "rtr.c_speed": {
+  "text": "Speed",
+  "note": "settings chip: WAN down and up now."
+ },
+ "rtr.c_month": {
+  "text": "Month",
+  "note": "settings chip: traffic this month (vnstat)."
+ },
+ "rtr.c_graph": {
+  "text": "WAN graph",
+  "note": "settings chip: the 30-minute WAN graph."
+ },
+ "rtr.c_cores": {
+  "text": "CPU cores",
+  "note": "settings chip: the per-core CPU bars."
+ },
+ "rtr.c_mem": {
+  "text": "RAM / swap",
+  "note": "settings chip: memory bars."
+ },
+ "rtr.c_temp": {
+  "text": "Temperatures",
+  "note": "settings chip: CPU and radio temperatures with the uptime."
+ },
+ "rtr.c_svc": {
+  "text": "Services",
+  "note": "settings chip: the service chips (Entware, AdGuard, Skynet, Tailscale, vnstat)."
+ },
+ "rtr.c_hint": {
+  "text": "Any router with SSH: Asuswrt-Merlin and other Entware routers. Only the parts the router has appear (Skynet, AdGuard, vnstat and the rest when they are installed). Parts the chosen view does not show are dimmed.",
+  "note": "settings hint under the router chips."
+ },
+ "rtr.s_view": {
+  "text": "View",
+  "note": "settings row label: Compact, Standard or Full."
+ },
+ "rtr.v_a": {
+  "text": "Compact",
+  "note": "settings: view with four numbers and the services."
+ },
+ "rtr.v_b": {
+  "text": "Standard",
+  "note": "settings: view with speed, graph, cores, memory, temperatures."
+ },
+ "rtr.v_c": {
+  "text": "Full",
+  "note": "settings: Standard plus the Skynet, Clients and AiMesh bars."
+ },
+ "rtr.s_view_hint": {
+  "text": "Compact: CPU, RAM, temperature, ping and the services. Standard: speed, month, WAN graph, CPU cores, RAM / swap, temperatures. Full: Standard plus the Skynet, Clients and AiMesh bars (closed on load).",
+  "note": "settings hint under the view choice."
+ },
+ "rtr.s_router": {
+  "text": "Router",
+  "note": "settings row label: address, user, port, refresh."
+ },
+ "rtr.s_user": {
+  "text": "user",
+  "note": "settings label before the SSH user name."
+ },
+ "rtr.s_port": {
+  "text": "port",
+  "note": "settings label before the SSH port."
+ },
+ "rtr.s_router_hint": {
+  "text": "The router's LAN address and its admin name for SSH (SSH must be on, LAN only is enough). No password is stored: Sysbox uses its own key.",
+  "note": "settings hint under the router address."
+ },
+ "rtr.s_path": {
+  "text": "Script on the router",
+  "note": "settings row label: where sysbox_ro.sh is."
+ },
+ "rtr.s_path_hint": {
+  "text": "Asuswrt-Merlin: /jffs/scripts/sysbox_ro.sh (stays when the Entware disk is missing). Other Entware routers: /opt/sbin/sysbox_ro.sh.",
+  "note": "settings hint under the script path."
+ },
+ "rtr.s_key": {
+  "text": "Key line",
+  "note": "settings row label: the authorized key line."
+ },
+ "rtr.s_nokey": {
+  "text": "Make a key first.",
+  "note": "placeholder of the empty key line."
+ },
+ "rtr.b_copy_key": {
+  "text": "Copy key line",
+  "note": "settings button."
+ },
+ "rtr.b_make_key": {
+  "text": "Make key",
+  "note": "settings button: makes the Sysbox key."
+ },
+ "rtr.b_new_key": {
+  "text": "New key",
+  "note": "settings button: replaces the Sysbox key."
+ },
+ "rtr.s_key_hint": {
+  "text": "Paste it as a new line in the router's authorized keys (Asuswrt-Merlin: Administration › System › Authorized Keys, then Apply). The key may only run the read script; it cannot change anything on the router.",
+  "note": "settings hint under the key line."
+ },
+ "rtr.s_install": {
+  "text": "Install line",
+  "note": "settings row label: the one-line install command for the router."
+ },
+ "rtr.b_copy_install": {
+  "text": "Copy install line",
+  "note": "settings button."
+ },
+ "rtr.s_install_hint": {
+  "text": "Run it once in the router's SSH (ssh admin@router, then paste). It writes only the read script to the path above. Again after a script path change or a Sysbox update that says so.",
+  "note": "settings hint under the install line."
+ },
+ "rtr.s_test": {
+  "text": "Connection",
+  "note": "settings row label: the test."
+ },
+ "rtr.b_test": {
+  "text": "Test and save",
+  "note": "settings button: connects once, saves the connection, lists what the router has."
+ },
+ "rtr.s_test_hint": {
+  "text": "Saves the address, user, port and path, trusts the router's identity on this click and lists what it found.",
+  "note": "settings hint under the test button."
+ },
+ "rtr.copied": {
+  "text": "Copied",
+  "note": "settings: after a copy button."
+ },
+ "rtr.copy_hand": {
+  "text": "Select the text and copy it by hand.",
+  "note": "settings: the browser did not allow copying."
+ },
+ "rtr.new_key_confirm": {
+  "text": "Click again to replace the key: the router then needs the new key line.",
+  "note": "settings: first click on New key."
+ },
+ "rtr.working": {
+  "text": "Working…",
+  "note": "settings: a request is running."
+ },
+ "rtr.key_new": {
+  "text": "New key made. Replace the key line in the router.",
+  "note": "settings: after New key."
+ },
+ "rtr.key_made": {
+  "text": "Key made. Paste the key line and the install line in the router.",
+  "note": "settings: after Make key."
+ },
+ "rtr.testing": {
+  "text": "Connecting…",
+  "note": "settings: the test runs."
+ },
+ "rtr.test_ok": {
+  "text": "Connected {t} · {n} parts found · saved",
+  "note": "settings: test result; {t} = time, {n} = number of parts."
+ },
+ "rtr.m_base": {
+  "text": "Linux: {n} cores, WAN {w}",
+  "note": "settings test chip: the basic counters; {w} = WAN interface."
+ },
+ "rtr.m_nvram": {
+  "text": "{m} · {f} · {n} AiMesh nodes",
+  "note": "settings test chip: ASUS model, firmware and nodes."
+ },
+ "rtr.m_radio": {
+  "text": "Wi-Fi radios: {n}",
+  "note": "settings test chip."
+ },
+ "rtr.m_ping": {
+  "text": "connmon ping to {t}",
+  "note": "settings test chip: the connmon add-on."
+ },
+ "rtr.err_host": {
+  "text": "The router address is not valid.",
+  "note": "settings error."
+ },
+ "rtr.err_user": {
+  "text": "The user name is not valid.",
+  "note": "settings error."
+ },
+ "rtr.err_port": {
+  "text": "The SSH port must be 1–65535.",
+  "note": "settings error."
+ },
+ "rtr.err_path": {
+  "text": "The script path must be a full path such as /jffs/scripts/sysbox_ro.sh.",
+  "note": "settings error."
+ },
+ "rtr.err_keygen": {
+  "text": "The key could not be made (ssh-keygen).",
+  "note": "settings error."
+ },
+ "rtr.err_need": {
+  "text": "Fill in the router address and the user name first.",
+  "note": "settings error before the test."
+ },
+ "attn.rtr_down": {
+  "text": "the router does not answer",
+  "note": "tile attention row: the router does not answer for a minute."
+ },
+ "attn.rtr_svc": {
+  "text": "stopped on the router: {s}",
+  "note": "tile attention row; {s} = service names."
+ },
+ "rtr.cores": {
+  "one": "{n} core",
+  "other": "{n} cores",
+  "note": "tile: number of CPU cores of the router."
+ },
+ "rtr.nodes": {
+  "one": "{n} node",
+  "other": "{n} nodes",
+  "note": "AiMesh bar title, right side."
+ },
+ "rtr.sky_ban": {
+  "text": "Banned: {i} IPs, {r} ranges",
+  "note": "Skynet bar row: size of the ban lists."
+ },
+ "rtr.sky_blk": {
+  "text": "{a} in · {b} out",
+  "note": "Skynet bar row, right: connections blocked inbound and outbound."
+ },
+ "rtr.sky_out_note": {
+  "text": "Rows \"Blocked going out\" are home devices that tried a banned address; on a torrent server peers on the ban lists are normal.",
+  "note": "Skynet bar, last row, when there are outbound device rows."
+ },
+ "rtr.missing": {
+  "text": "missing",
+  "note": "after Entware: the Entware disk is not mounted on the router."
  }
 }
 ]]></INLINE>
@@ -12720,6 +13400,293 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "netp.sp_t_srv": {
   "text": "{s}: {n} lejátszás, ebből {o} kint"
+ },
+ "rtr.title": {
+  "text": "Router"
+ },
+ "rtr.no_answer": {
+  "text": "nem válaszol {t} óta"
+ },
+ "rtr.setup": {
+  "text": "Állítsd be a router-kapcsolatot a Sysbox beállításaiban."
+ },
+ "rtr.connecting": {
+  "text": "Kapcsolódás a routerhez… az első számok pár másodperc múlva jönnek."
+ },
+ "rtr.e_unreach": {
+  "text": "A router nem válaszol (SSH). Lehet, hogy az internet és a Wi-Fi is áll."
+ },
+ "rtr.e_auth": {
+  "text": "A router nem fogadja el a Sysbox kulcsát. Másold be a kulcssort a routerbe (lásd a beállításokat)."
+ },
+ "rtr.e_hostkey": {
+  "text": "A router új azonosítót mutat (új firmware vagy új router). Elfogadáshoz nyomd meg a Test and save gombot a beállításokban."
+ },
+ "rtr.e_noscript": {
+  "text": "Hiányzik az olvasó szkript a routerről. Futtasd a telepítő sort a routeren (lásd a beállításokat)."
+ },
+ "rtr.e_bad": {
+  "text": "A router válaszolt, de nem a Sysbox szkripttel. Ellenőrizd a kulcssort és a szkript útvonalát."
+ },
+ "rtr.e_setup": {
+  "text": "Hiányzik a cím, a felhasználónév vagy a kulcs."
+ },
+ "rtr.offline": {
+  "text": "offline"
+ },
+ "rtr.check": {
+  "text": "ellenőrizd"
+ },
+ "rtr.last_seen": {
+  "text": "Utolsó válasz {t}"
+ },
+ "rtr.temp": {
+  "text": "Hőm."
+ },
+ "rtr.ping": {
+  "text": "Ping"
+ },
+ "rtr.month": {
+  "text": "Hónap"
+ },
+ "rtr.month_since": {
+  "text": "A vnstat {d} óta számol, ezért a hónap nem teljes."
+ },
+ "rtr.swap": {
+  "text": "Swap"
+ },
+ "rtr.up": {
+  "text": "fut {t}"
+ },
+ "rtr.svc_entware": {
+  "text": "Entware"
+ },
+ "rtr.svc_adguard": {
+  "text": "AdGuard"
+ },
+ "rtr.svc_skynet": {
+  "text": "Skynet"
+ },
+ "rtr.svc_tailscale": {
+  "text": "Tailscale"
+ },
+ "rtr.svc_vnstat": {
+  "text": "vnstat"
+ },
+ "rtr.stopped": {
+  "text": "leállt"
+ },
+ "rtr.port": {
+  "text": "Port {p}"
+ },
+ "rtr.sky_out": {
+  "text": "Kifelé tiltva: {d}"
+ },
+ "rtr.sky_note": {
+  "text": "A leggyakrabban célzott portok, befelé."
+ },
+ "rtr.sky_no_out": {
+  "text": "Kifelé egy otthoni eszköz sincs tiltva."
+ },
+ "rtr.sky_wait": {
+  "text": "Skynet-statisztika olvasása… (10 percenként)"
+ },
+ "rtr.sky_sum": {
+  "text": "{n} tiltás · {i} IP {t} óta"
+ },
+ "rtr.radio": {
+  "text": "Wi-Fi {b}"
+ },
+ "rtr.lan_dev": {
+  "text": "Eszközök a LAN-on (ARP)"
+ },
+ "rtr.clients": {
+  "text": "Kliensek"
+ },
+ "rtr.cli_n": {
+  "text": "{n} a LAN-on"
+ },
+ "rtr.online": {
+  "text": "online"
+ },
+ "rtr.n_off": {
+  "text": "{n} offline"
+ },
+ "rtr.open": {
+  "text": "Router megnyitása ›"
+ },
+ "rtr.c_speed": {
+  "text": "Sebesség"
+ },
+ "rtr.c_month": {
+  "text": "Hónap"
+ },
+ "rtr.c_graph": {
+  "text": "WAN-grafikon"
+ },
+ "rtr.c_cores": {
+  "text": "CPU-magok"
+ },
+ "rtr.c_mem": {
+  "text": "RAM / swap"
+ },
+ "rtr.c_temp": {
+  "text": "Hőmérsékletek"
+ },
+ "rtr.c_svc": {
+  "text": "Szolgáltatások"
+ },
+ "rtr.c_hint": {
+  "text": "Bármely SSH-s router: Asuswrt-Merlin és más Entware-es routerek. Csak az jelenik meg, ami a routeren van (Skynet, AdGuard, vnstat és a többi, ha telepítve van). Ami a választott nézetben nincs, az halványan látszik."
+ },
+ "rtr.s_view": {
+  "text": "Nézet"
+ },
+ "rtr.v_a": {
+  "text": "Compact"
+ },
+ "rtr.v_b": {
+  "text": "Standard"
+ },
+ "rtr.v_c": {
+  "text": "Full"
+ },
+ "rtr.s_view_hint": {
+  "text": "Compact: CPU, RAM, hőmérséklet, ping és a szolgáltatások. Standard: sebesség, hónap, WAN-grafikon, CPU-magok, RAM / swap, hőmérsékletek. Full: a Standard és a Skynet, Kliensek, AiMesh sávok (betöltéskor csukva)."
+ },
+ "rtr.s_router": {
+  "text": "Router"
+ },
+ "rtr.s_user": {
+  "text": "felhasználó"
+ },
+ "rtr.s_port": {
+  "text": "port"
+ },
+ "rtr.s_router_hint": {
+  "text": "A router LAN-címe és az admin neve SSH-hoz (az SSH legyen bekapcsolva, a „csak LAN” elég). Jelszót nem tárolunk: a Sysbox saját kulcsot használ."
+ },
+ "rtr.s_path": {
+  "text": "Szkript a routeren"
+ },
+ "rtr.s_path_hint": {
+  "text": "Asuswrt-Merlin: /jffs/scripts/sysbox_ro.sh (megmarad, ha az Entware-lemez hiányzik). Más Entware-es router: /opt/sbin/sysbox_ro.sh."
+ },
+ "rtr.s_key": {
+  "text": "Kulcssor"
+ },
+ "rtr.s_nokey": {
+  "text": "Előbb készíts kulcsot."
+ },
+ "rtr.b_copy_key": {
+  "text": "Kulcssor másolása"
+ },
+ "rtr.b_make_key": {
+  "text": "Kulcs készítése"
+ },
+ "rtr.b_new_key": {
+  "text": "Új kulcs"
+ },
+ "rtr.s_key_hint": {
+  "text": "Másold be új sorként a router engedélyezett kulcsai közé (Asuswrt-Merlin: Administration › System › Authorized Keys, majd Apply). A kulcs csak az olvasó szkriptet futtathatja, a routeren semmit sem változtathat."
+ },
+ "rtr.s_install": {
+  "text": "Telepítő sor"
+ },
+ "rtr.b_copy_install": {
+  "text": "Telepítő sor másolása"
+ },
+ "rtr.s_install_hint": {
+  "text": "Futtasd egyszer a router SSH-jában (ssh admin@router, majd beillesztés). Csak az olvasó szkriptet írja a fenti helyre. Újra akkor kell, ha az útvonal változik, vagy egy Sysbox-frissítés ezt kéri."
+ },
+ "rtr.s_test": {
+  "text": "Kapcsolat"
+ },
+ "rtr.b_test": {
+  "text": "Teszt és mentés"
+ },
+ "rtr.s_test_hint": {
+  "text": "Elmenti a címet, a felhasználót, a portot és az útvonalat, erre a kattintásra elfogadja a router azonosítóját, és felsorolja, mit talált."
+ },
+ "rtr.copied": {
+  "text": "Másolva"
+ },
+ "rtr.copy_hand": {
+  "text": "Jelöld ki a szöveget, és másold kézzel."
+ },
+ "rtr.new_key_confirm": {
+  "text": "Kattints újra a csere megerősítéséhez: utána a routerbe az új kulcssor kell."
+ },
+ "rtr.working": {
+  "text": "Dolgozom…"
+ },
+ "rtr.key_new": {
+  "text": "Új kulcs kész. Cseréld le a kulcssort a routerben."
+ },
+ "rtr.key_made": {
+  "text": "A kulcs kész. Másold be a kulcssort és a telepítő sort a routerbe."
+ },
+ "rtr.testing": {
+  "text": "Kapcsolódás…"
+ },
+ "rtr.test_ok": {
+  "text": "Kapcsolódva {t} · {n} rész található · mentve"
+ },
+ "rtr.m_base": {
+  "text": "Linux: {n} mag, WAN {w}"
+ },
+ "rtr.m_nvram": {
+  "text": "{m} · {f} · {n} AiMesh-nód"
+ },
+ "rtr.m_radio": {
+  "text": "Wi-Fi rádiók: {n}"
+ },
+ "rtr.m_ping": {
+  "text": "connmon ping: {t}"
+ },
+ "rtr.err_host": {
+  "text": "A router címe nem érvényes."
+ },
+ "rtr.err_user": {
+  "text": "A felhasználónév nem érvényes."
+ },
+ "rtr.err_port": {
+  "text": "Az SSH-port 1–65535 közé essen."
+ },
+ "rtr.err_path": {
+  "text": "A szkript útvonala teljes út legyen, pl. /jffs/scripts/sysbox_ro.sh."
+ },
+ "rtr.err_keygen": {
+  "text": "A kulcs nem készült el (ssh-keygen)."
+ },
+ "rtr.err_need": {
+  "text": "Előbb add meg a router címét és a felhasználónevet."
+ },
+ "attn.rtr_down": {
+  "text": "a router nem válaszol"
+ },
+ "attn.rtr_svc": {
+  "text": "leállt a routeren: {s}"
+ },
+ "rtr.cores": {
+  "one": "{n} mag",
+  "other": "{n} mag"
+ },
+ "rtr.nodes": {
+  "one": "{n} nód",
+  "other": "{n} nód"
+ },
+ "rtr.sky_ban": {
+  "text": "Tiltva: {i} IP, {r} tartomány"
+ },
+ "rtr.sky_blk": {
+  "text": "{a} be · {b} ki"
+ },
+ "rtr.sky_out_note": {
+  "text": "A „Kifelé tiltva” sorok otthoni eszközök, amelyek tiltott címet próbáltak elérni; torrentes szervernél a tiltólistás peerek megszokottak."
+ },
+ "rtr.missing": {
+  "text": "hiányzik"
  }
 }
 ]]></INLINE>
@@ -18747,6 +19714,399 @@ while (ups_step($cfg) && time() - $t0 < 40) { sleep(15); }
 </FILE>
 
 <!-- ========================================================= -->
+<!-- ROUTER LIBRARY -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/rtr_lib.php">
+<INLINE><![CDATA[<?php
+// Router part (item 132): any Linux router with SSH (Asuswrt-Merlin, other Entware routers). Sysbox makes its own key; the
+// router's key line runs only sysbox_ro.sh (command=), which prints counters and status and changes nothing. rtrmon.php asks
+// it every few seconds and keeps the live file for the tile; the connection settings are in router.cfg.
+require_once __DIR__ . '/lib.php';
+
+const RTR_CFG_DIR = '/boot/config/plugins/sysbox';
+function rtr_dir() { $d = getenv('SX_RTR_DIR'); return ($d !== false && $d !== '') ? rtrim($d, '/') : RTR_CFG_DIR; }   // tests: a scratch folder
+function rtr_cfg_file() { return rtr_dir() . '/router.cfg'; }
+function rtr_key_file() { return rtr_dir() . '/router_key'; }
+function rtr_known_file() { return rtr_dir() . '/router_known_hosts'; }
+function rtr_live_file() { $d = getenv('SX_RTR_DIR'); return ($d !== false && $d !== '') ? rtr_dir() . '/sysbox_rtr.json' : '/tmp/sysbox_rtr.json'; }
+
+function rtr_defaults() { return ['host' => '', 'user' => '', 'port' => '22', 'path' => '/jffs/scripts/sysbox_ro.sh', 'sec' => '5']; }
+function rtr_cfg() {
+    $c = rtr_defaults(); $f = rtr_cfg_file();
+    if (is_file($f)) { $x = @parse_ini_file($f); if (is_array($x)) { $c = array_merge($c, array_intersect_key($x, $c)); } }
+    return $c;
+}
+// the values the page sends; null when one is not valid (the caller says which)
+function rtr_check($c) {
+    $o = [];
+    $o['host'] = trim((string)($c['host'] ?? ''));
+    if ($o['host'] !== '' && !preg_match('/^[A-Za-z0-9][A-Za-z0-9.\-]{0,252}$/', $o['host'])) { return 'host'; }
+    $o['user'] = trim((string)($c['user'] ?? ''));
+    if ($o['user'] !== '' && !preg_match('/^[A-Za-z0-9_][A-Za-z0-9_.\-]{0,31}$/', $o['user'])) { return 'user'; }
+    $o['port'] = trim((string)($c['port'] ?? '22'));
+    if (!preg_match('/^\d{1,5}$/', $o['port']) || (int)$o['port'] < 1 || (int)$o['port'] > 65535) { return 'port'; }
+    $o['path'] = trim((string)($c['path'] ?? ''));
+    if (!preg_match('#^/[A-Za-z0-9_./\-]{1,200}$#', $o['path']) || strpos($o['path'], '..') !== false) { return 'path'; }
+    $o['sec'] = in_array((string)($c['sec'] ?? '5'), ['2', '5', '10'], true) ? (string)$c['sec'] : '5';
+    return $o;
+}
+function rtr_cfg_save($c) {
+    $txt = '';
+    foreach (rtr_defaults() as $k => $v) { $txt .= $k . '="' . str_replace('"', '', (string)($c[$k] ?? $v)) . "\"\n"; }
+    $f = rtr_cfg_file(); @mkdir(dirname($f), 0755, true);
+    if (@file_put_contents($f . '.tmp', $txt) === false) { return false; }
+    return @rename($f . '.tmp', $f);
+}
+function rtr_ready($r) { return $r['host'] !== '' && $r['user'] !== '' && is_file(rtr_key_file()) && is_file(rtr_key_file() . '.pub'); }
+
+// ---- the key: made once (or again on New key), kept on the flash; ssh wants a private file, the flash cannot give one ----
+function rtr_key_make($force = false) {
+    $k = rtr_key_file();
+    if (!$force && is_file($k) && is_file($k . '.pub')) { return true; }
+    $tmp = sys_get_temp_dir() . '/sysbox_rtrnew_' . getmypid();
+    @unlink($tmp); @unlink($tmp . '.pub');
+    $host = preg_replace('/[^A-Za-z0-9_.\-]/', '', (string)php_uname('n')) ?: 'unraid';
+    list($rc) = sx_run('ssh-keygen -q -t ed25519 -N "" -C ' . escapeshellarg('sysbox-' . strtolower($host)) . ' -f ' . escapeshellarg($tmp), 15);
+    if ($rc !== 0 || !is_file($tmp) || !is_file($tmp . '.pub')) { return false; }
+    @mkdir(dirname($k), 0755, true);
+    $ok = @copy($tmp, $k) && @copy($tmp . '.pub', $k . '.pub');
+    @unlink($tmp); @unlink($tmp . '.pub'); @unlink(rtr_key_work());
+    return $ok;
+}
+function rtr_key_work() { $d = getenv('SX_RTR_DIR'); return ($d !== false && $d !== '') ? rtr_dir() . '/work_key' : '/tmp/sysbox_rtrkey'; }
+function rtr_key_path() {
+    $src = rtr_key_file(); $w = rtr_key_work();
+    if (!is_file($src)) { return ''; }
+    if (!is_file($w) || md5_file($w) !== md5_file($src)) { @copy($src, $w . '.tmp'); @chmod($w . '.tmp', 0600); @rename($w . '.tmp', $w); }
+    @chmod($w, 0600);
+    return $w;
+}
+function rtr_pub() { $p = rtr_key_file() . '.pub'; return is_file($p) ? trim((string)@file_get_contents($p)) : ''; }
+// the line for the router's authorized keys: this key may only run the read-only script
+function rtr_keyline($r) {
+    $pub = rtr_pub(); if ($pub === '') { return ''; }
+    return 'command="' . $r['path'] . '",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ' . $pub;
+}
+// one short line for the router's SSH (under the 4 KB a terminal line takes): writes sysbox_ro.sh, nothing else
+function rtr_install_cmd($r) {
+    $src = (string)@file_get_contents(__DIR__ . '/sysbox_ro.sh'); if ($src === '') { return ''; }
+    $b64 = base64_encode(gzencode($src, 9));
+    $p = $r['path'];
+    return 'mkdir -p ' . dirname($p) . ' && echo ' . $b64 . ' | base64 -d | gunzip > ' . $p . ' && chmod 755 ' . $p . ' && echo Sysbox OK';
+}
+
+// ---- asking the router: one ssh call; the error kinds the tile and the page explain ----
+function rtr_ssh($r, $cmd, $secs = 15, $accept = false) {
+    $key = rtr_key_path();
+    if ($key === '' || $r['host'] === '' || $r['user'] === '') { return [false, '', 'setup']; }
+    $bin = getenv('SX_RTR_SSH') ?: 'ssh';   // tests: a fake ssh
+    $line = escapeshellarg($bin) . ' -T -i ' . escapeshellarg($key) . ' -p ' . (int)$r['port']
+        . ' -o BatchMode=yes -o ConnectTimeout=4 -o LogLevel=ERROR -o PasswordAuthentication=no -o ServerAliveInterval=5'
+        . ' -o UserKnownHostsFile=' . escapeshellarg(rtr_known_file()) . ' -o StrictHostKeyChecking=' . ($accept ? 'accept-new' : 'yes')
+        . ' ' . escapeshellarg($r['user'] . '@' . $r['host']) . ' ' . escapeshellarg($cmd);
+    $to = sx_bin('timeout'); if ($to !== '') { $line = $to . ' ' . (int)$secs . ' ' . $line; }
+    $p = @proc_open($line, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pp);
+    if (!is_resource($p)) { return [false, '', 'unreach']; }
+    fclose($pp[0]); $out = stream_get_contents($pp[1]); $err = stream_get_contents($pp[2]); fclose($pp[1]); fclose($pp[2]);
+    $rc = proc_close($p);
+    if ($rc === 0) { return [true, (string)$out, '']; }
+    $e = (string)$err;
+    if (stripos($e, 'host key') !== false || stripos($e, 'IDENTIFICATION HAS CHANGED') !== false) { return [false, $out, 'hostkey']; }
+    if (stripos($e, 'Permission denied') !== false) { return [false, $out, 'auth']; }
+    if ($rc === 127 || stripos($e, 'not found') !== false || stripos($e, 'No such file') !== false) { return [false, $out, 'noscript']; }
+    if (stripos($e, 'not allowed') !== false) { return [false, $out, 'bad']; }
+    return [false, $out, 'unreach'];
+}
+function rtr_sections($txt) {
+    $S = []; $cur = null;
+    foreach (preg_split('/\r?\n/', (string)$txt) as $l) {
+        if (preg_match('/^@([a-z]+)$/', $l, $m)) { $cur = $m[1]; $S[$cur] = []; continue; }
+        if ($cur !== null && $l !== '') { $S[$cur][] = $l; }
+    }
+    return $S;
+}
+function rtr_snap($r, $accept = false) {
+    list($ok, $out, $err) = rtr_ssh($r, 'snap', 15, $accept);
+    if (!$ok) { return ['ok' => false, 'err' => $err]; }
+    $S = rtr_sections($out);
+    if (!isset($S['ver'], $S['stat'], $S['mem'])) { return ['ok' => false, 'err' => 'bad']; }
+    return ['ok' => true, 'err' => '', 'D' => rtr_digest($S)];
+}
+
+// ---- reading the sections into figures ----
+function rtr_kv($lines) { $o = []; foreach ((array)$lines as $l) { $p = strpos($l, '='); if ($p !== false) { $o[substr($l, 0, $p)] = trim(substr($l, $p + 1)); } } return $o; }
+function rtr_digest($S) {
+    $D = ['cpu' => [], 'mem' => [], 'load' => null, 'up' => 0, 'dev' => [], 'wan' => '', 'temps' => [], 'arp' => 0, 'radios' => [], 'svc' => [], 'month' => null, 'ping' => null, 'mesh' => [], 'name' => '', 'fw' => ''];
+    $host = (array)($S['host'] ?? []); $D['name'] = (string)($host[0] ?? ''); $D['fw'] = isset($host[1]) ? 'Linux ' . $host[1] : '';
+    foreach ((array)($S['stat'] ?? []) as $l) {
+        $f = preg_split('/\s+/', trim($l)); if (count($f) < 5) { continue; }
+        $v = array_map('floatval', array_slice($f, 1, 8)); $tot = array_sum($v); $idle = $v[3] + ($v[4] ?? 0);
+        $D['cpu'][$f[0]] = [$tot, $idle];
+    }
+    $mi = []; foreach ((array)($S['mem'] ?? []) as $l) { if (preg_match('/^(\w+):\s+(\d+)/', $l, $m)) { $mi[$m[1]] = (float)$m[2] * 1024; } }
+    $tot = $mi['MemTotal'] ?? 0; $av = $mi['MemAvailable'] ?? (($mi['MemFree'] ?? 0) + ($mi['Buffers'] ?? 0) + ($mi['Cached'] ?? 0));
+    $D['mem'] = ['used' => max(0, $tot - $av), 'total' => $tot, 'swap_used' => max(0, ($mi['SwapTotal'] ?? 0) - ($mi['SwapFree'] ?? 0)), 'swap_total' => $mi['SwapTotal'] ?? 0];
+    $la = preg_split('/\s+/', trim((string)(($S['load'] ?? [''])[0]))); $D['load'] = is_numeric($la[0] ?? null) ? (float)$la[0] : null;
+    $D['up'] = (int)(float)(preg_split('/\s+/', trim((string)(($S['up'] ?? ['0'])[0])))[0] ?? 0);
+    foreach ((array)($S['dev'] ?? []) as $l) {
+        if (!preg_match('/^\s*([^:\s]+):\s*(.*)$/', $l, $m)) { continue; }
+        $f = preg_split('/\s+/', trim($m[2])); if (count($f) >= 9) { $D['dev'][$m[1]] = [(float)$f[0], (float)$f[8]]; }
+    }
+    foreach ((array)($S['temp'] ?? []) as $l) { if (is_numeric(trim($l))) { $t = (float)trim($l); $D['temps'][] = round($t > 1000 ? $t / 1000 : $t, 1); } }
+    $D['arp'] = (int)trim((string)(($S['arp'] ?? ['0'])[0]));
+    $nv = rtr_kv($S['nvram'] ?? []);
+    if ($nv) {
+        $model = ($nv['odmpid'] ?? '') !== '' ? $nv['odmpid'] : ($nv['productid'] ?? '');
+        if ($model !== '') { $D['name'] = $model; }
+        if (($nv['firmver'] ?? '') !== '' && ($nv['buildno'] ?? '') !== '') {
+            $D['fw'] = str_replace('.', '', $nv['firmver']) . '.' . $nv['buildno'] . ((($nv['extendno'] ?? '0') !== '0' && ($nv['extendno'] ?? '') !== '') ? '_' . $nv['extendno'] : '');
+        }
+    }
+    // the WAN: the router's own WAN interface, or the one of the default route
+    $wan = (string)($nv['wan0_ifname'] ?? '');
+    if ($wan === '' || !isset($D['dev'][$wan])) { foreach ((array)($S['route'] ?? []) as $l) { if (preg_match('/\bdev\s+(\S+)/', $l, $m) && isset($D['dev'][$m[1]])) { $wan = $m[1]; break; } } }
+    $D['wan'] = isset($D['dev'][$wan]) ? $wan : '';
+    $D['wan_proto'] = (string)($nv['wan0_proto'] ?? '');
+    $lan = (string)($nv['lan_ipaddr'] ?? '');
+    foreach (explode('<', implode('', (array)($S['mesh'] ?? []))) as $n) {
+        $f = explode('>', $n);
+        if (count($f) >= 2 && $f[0] !== '' && filter_var($f[1], FILTER_VALIDATE_IP) && $f[1] !== $lan) { $D['mesh'][] = [preg_replace('/[^A-Za-z0-9 _.\-]/', '', $f[0]), $f[1]]; }
+    }
+    foreach ((array)($S['radio'] ?? []) as $l) {
+        $f = preg_split('/\s+/', trim($l)); if (count($f) < 3) { continue; }
+        $band = ['2' => '2.4 GHz', '1' => '5 GHz', '4' => '6 GHz'][$f[1]] ?? $f[0];
+        $t = (isset($f[3]) && is_numeric($f[3]) && (float)$f[3] > 0) ? floor((float)$f[3] / 2 + 20) : null;   // Broadcom phy_tempsense: raw / 2 + 20 (as scMerlin shows it)
+        $D['radios'][] = [$band, (int)$f[2], $t];
+    }
+    $sv = rtr_kv($S['svc'] ?? []);
+    if (!empty($sv['ent_exp']) || !empty($sv['ent_ok'])) { $D['svc'][] = ['entware', !empty($sv['ent_ok'])]; }
+    if (!empty($sv['agh_inst'])) { $D['svc'][] = ['adguard', ($sv['AdGuardHome'] ?? '0') === '1']; }
+    if (!empty($sv['sky_inst'])) { $D['svc'][] = ['skynet', (int)($sv['sky_run'] ?? 0) > 0]; }
+    if (!empty($sv['ts_inst'])) { $D['svc'][] = ['tailscale', ($sv['tailscaled'] ?? '0') === '1']; }
+    if (!empty($sv['vn_inst'])) { $D['svc'][] = ['vnstat', ($sv['vnstatd'] ?? '0') === '1']; }
+    $vj = json_decode(implode('', (array)($S['vnm'] ?? [])), true);
+    if (is_array($vj) && !empty($vj['interfaces'])) {
+        $pick = null; foreach ($vj['interfaces'] as $i) { if (($i['name'] ?? '') === $D['wan']) { $pick = $i; } } if (!$pick) { $pick = $vj['interfaces'][0]; }
+        $ym = [(int)date('Y'), (int)date('n')];
+        foreach ((array)($pick['traffic']['month'] ?? []) as $mo) {
+            if ((int)($mo['date']['year'] ?? 0) === $ym[0] && (int)($mo['date']['month'] ?? 0) === $ym[1]) { $D['month'] = [(float)($mo['rx'] ?? 0), (float)($mo['tx'] ?? 0)]; }
+        }
+        if ($D['month'] === null) { $D['month'] = [0.0, 0.0]; }
+        $D['vn_since'] = (int)($pick['created']['timestamp'] ?? 0);
+    }
+    $pg = explode(',', (string)(($S['ping'] ?? [''])[0]));
+    if (count($pg) >= 4 && is_numeric($pg[1])) { $D['ping'] = ['ms' => round((float)$pg[1], 1), 'jit' => round((float)$pg[2], 1), 'q' => (float)$pg[3], 'to' => preg_replace('/[^0-9A-Za-z.:\-]/', '', (string)($pg[4] ?? '')), 't' => (int)$pg[0]]; }
+    return $D;
+}
+// Skynet's own statistics (firewall stats), read every 10 minutes: block events, top ports in, top devices out
+function rtr_sky_parse($txt) {
+    $txt = preg_replace('/\x1b\[[0-9;?]*[A-Za-z]/', '', (string)$txt);
+    $o = ['ev' => null, 'ips' => null, 'from' => 0, 'ports' => [], 'out' => [], 'ban' => null, 'blk' => null];
+    if (preg_match('/Block Events\D*?(\d+)\s*\((\d+)\s+Unique/u', $txt, $m)) { $o['ev'] = (int)$m[1]; $o['ips'] = (int)$m[2]; }
+    if (preg_match('/Monitor Span\s*\S*\s*(\w{3}\s+\d+\s+[\d:]+)\s*-\s*(\w{3}\s+\d+\s+[\d:]+)/u', $txt, $m)) {
+        $f = strtotime($m[1]); if ($f !== false && $f > time() + 86400) { $f = strtotime($m[1] . ' -1 year'); }   // the log has no year
+        $o['from'] = $f === false ? 0 : $f;
+    }
+    $sec = '';
+    foreach (preg_split('/\r?\n/', $txt) as $l) {
+        if (preg_match('/^Top \d+ (.+?);?\s*$/', trim($l), $m)) { $sec = $m[1]; continue; }
+        if (!preg_match('/^(\d+)x\s*\|\s*(\S+)/', trim($l), $m)) { continue; }
+        if (stripos($sec, 'Targeted Ports (Inbound)') !== false && count($o['ports']) < 5 && ctype_digit($m[2])) { $o['ports'][] = [(int)$m[1], (int)$m[2]]; }
+        elseif (stripos($sec, 'Blocked Devices (Outbound)') !== false && count($o['out']) < 5) {
+            $name = preg_match('/^\d+x\s*\|\s*\S+\s*\|\s*(.+?)\s*$/', trim($l), $n) ? $n[1] : $m[2];   // the device name when Skynet knows it
+            $o['out'][] = [(int)$m[1], preg_replace('/[^0-9A-Za-z .:_\-]/', '', $name)];
+        }
+    }
+    // the closing line: banned IPs and ranges, connections blocked in and out
+    if (preg_match('/(\d+)\s+IPs.*?(\d+)\s+Ranges Banned.*?(\d+)\s+Inbound.*?(\d+)\s+Outbound/u', $txt, $m)) { $o['ban'] = [(int)$m[1], (int)$m[2]]; $o['blk'] = [(int)$m[3], (int)$m[4]]; }
+    return $o;
+}
+function rtr_live() { $f = rtr_live_file(); $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : null; }
+// for the settings test: which parts the router has
+function rtr_modules($D) {
+    $m = [['base', count($D['cpu']) - 1, $D['wan']]];
+    if ($D['fw'] !== '' && strpos($D['fw'], 'Linux') !== 0) { $m[] = ['nvram', $D['name'], $D['fw'], count($D['mesh'])]; }
+    if ($D['radios']) { $m[] = ['radio', count($D['radios'])]; }
+    foreach ($D['svc'] as $s) { $m[] = ['svc_' . $s[0], $s[1]]; }
+    if ($D['ping']) { $m[] = ['ping', $D['ping']['to']]; }
+    return $m;
+}
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- ROUTER SETTINGS ENDPOINT -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/rtr.php">
+<INLINE><![CDATA[<?php
+// Router part (item 132), the settings page's endpoint: the key line and install command, a new key, and Test and save
+// (connects once, trusts the router's identity on this click, saves the connection and lists what the router has).
+require_once __DIR__ . '/rtr_lib.php';
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
+sx_guard();
+
+function rtr_out($r) { return ['keyline' => rtr_keyline($r), 'install' => rtr_install_cmd($r)]; }
+function rtr_restart() {
+    @exec('pkill -f ' . escapeshellarg('plugins/sysbox/rtrmon.php') . ' 2>/dev/null');
+    if (sx_on(sx_cfg()['show_rtr'] ?? '0')) { @exec('setsid nohup flock -n /tmp/sysbox_rtr.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/rtrmon.php') . ' >/dev/null 2>&1 </dev/null &'); }
+}
+
+$op = (string)($_POST['op'] ?? '');
+$r = rtr_check(['host' => $_POST['rtr_host'] ?? '', 'user' => $_POST['rtr_user'] ?? '', 'port' => $_POST['rtr_port'] ?? '22', 'path' => $_POST['rtr_path'] ?? '', 'sec' => $_POST['rtr_sec'] ?? '5']);
+if (!is_array($r)) { sx_json(['ok' => false, 'error' => sx_tr('rtr.err_' . $r)], 400); }
+
+if ($op === 'key' || $op === 'newkey') {
+    if (!rtr_key_make($op === 'newkey')) { sx_json(['ok' => false, 'error' => sx_tr('rtr.err_keygen')], 500); }
+    if ($op === 'newkey') { rtr_restart(); }
+    sx_json(['ok' => true] + rtr_out($r));
+}
+if ($op === 'test') {
+    if ($r['host'] === '' || $r['user'] === '') { sx_json(['ok' => false, 'error' => sx_tr('rtr.err_need')], 400); }
+    if (!rtr_key_make(false)) { sx_json(['ok' => false, 'error' => sx_tr('rtr.err_keygen')], 500); }
+    if (!rtr_cfg_save($r)) { sx_json(['ok' => false, 'error' => sx_tr('save.err_write')], 500); }
+    @unlink(rtr_known_file());   // the owner asked for this router now: trust the identity it shows (after a firmware change it is new)
+    $s = rtr_snap($r, true);
+    rtr_restart();
+    if (!$s['ok']) { sx_json(['ok' => false, 'error' => sx_tr('rtr.e_' . $s['err']), 'kind' => $s['err']] + rtr_out($r)); }
+    sx_json(['ok' => true, 'modules' => rtr_modules($s['D']), 'name' => $s['D']['name'], 'fw' => $s['D']['fw'], 't' => date('H:i')] + rtr_out($r));
+}
+sx_json(['ok' => false, 'error' => 'op'], 400);
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- ROUTER SAMPLER -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/rtrmon.php">
+<INLINE><![CDATA[<?php
+// Long-running router sampler (item 132; cron starts it every minute, one instance only, it exits when the Router part is
+// switched off or not set up). Every few seconds one ssh call to the router's read-only script (counters, status), every
+// 30 s a ping to the AiMesh nodes, every 10 minutes Skynet's statistics. Live data in /tmp (rtr_live_file). Only reads.
+if (PHP_SAPI !== 'cli') { exit; }
+require_once __DIR__ . '/rtr_lib.php';
+
+function rtr_on() { return sx_on(sx_cfg()['show_rtr'] ?? '0'); }
+if (!rtr_on()) { exit(0); }
+
+$rounds = 0; foreach ($argv as $a) { if (preg_match('/^--rounds=(\d+)$/', $a, $m)) { $rounds = (int)$m[1]; } }
+$R = rtr_cfg(); $cfgT = time();
+$L0 = rtr_live(); $pts = (is_array($L0) && !empty($L0['pts']) && time() - (int)($L0['t'] ?? 0) < 600) ? $L0['pts'] : [];
+$prevCpu = null; $prevWan = null; $prevT = 0; $D = null; $lastOk = (int)($L0['last_ok'] ?? 0); $err = ''; $errSince = 0;
+$cpu = null; $cores = []; $rate = [0, 0]; $sky = $L0['sky'] ?? null; $skyT = 0; $mesh = []; $meshT = 0;
+
+function rtr_write($L) { $f = rtr_live_file(); @file_put_contents($f . '.tmp', json_encode($L)); @rename($f . '.tmp', $f); }
+
+while (true) {
+    $now = time();
+    if (!is_dir(__DIR__)) { exit; }   // plugin removed
+    if ($now - $cfgT >= 60) {
+        $cfgT = $now;
+        if (!rtr_on()) { @unlink(rtr_live_file()); exit(0); }
+        $R2 = rtr_cfg(); if ($R2 !== $R) { $R = $R2; $prevCpu = null; $prevWan = null; $pts = []; $D = null; $sky = null; $skyT = 0; }
+    }
+    if (!rtr_ready($R)) { rtr_write(['t' => $now, 'state' => 'setup']); exit(0); }
+    $step = max(2, (int)$R['sec']);
+
+    $s = rtr_snap($R);
+    if ($s['ok']) {
+        $D = $s['D']; $err = ''; $errSince = 0; $lastOk = $now;
+        if ($prevCpu && $now > $prevT) {
+            $cores = [];
+            foreach ($D['cpu'] as $k => $v) {
+                $p = $prevCpu[$k] ?? null; if (!$p) { continue; }
+                $dt = $v[0] - $p[0]; $pct = $dt > 0 ? max(0, min(100, round((1 - ($v[1] - $p[1]) / $dt) * 100))) : 0;
+                if ($k === 'cpu') { $cpu = $pct; } else { $cores[] = $pct; }
+            }
+            $w = $D['wan'] !== '' ? $D['dev'][$D['wan']] : null;
+            if ($w && $prevWan) {
+                $dt = $now - $prevT;
+                $rate = [round(($w[0] >= $prevWan[0] ? $w[0] - $prevWan[0] : $w[0]) / $dt), round(($w[1] >= $prevWan[1] ? $w[1] - $prevWan[1] : $w[1]) / $dt)];
+                $pts[] = [$now, $rate[0], $rate[1]];
+                while ($pts && $pts[0][0] < $now - 1800) { array_shift($pts); }
+            }
+        }
+        $prevCpu = $D['cpu']; $prevWan = $D['wan'] !== '' ? $D['dev'][$D['wan']] : null; $prevT = $now;
+        // Skynet's statistics are slow to make: only for the Full view with the Skynet bar on
+        $c = sx_cfg(); $hasSky = false; foreach ($D['svc'] as $x) { if ($x[0] === 'skynet' && $x[1]) { $hasSky = true; } }
+        if ($hasSky && ($c['rtr_view'] ?? 'b') === 'c' && sx_on($c['rtr_sky'] ?? '1') && $now - $skyT >= 600) {
+            $skyT = $now; list($ok, $out) = rtr_ssh($R, 'sky', 60);
+            if ($ok) { $sky = rtr_sky_parse($out) + ['t' => $now]; }
+        }
+        // AiMesh nodes: a ping from the server (they are on the LAN)
+        if ($D['mesh'] && $now - $meshT >= 30) {
+            $meshT = $now; $mesh = [];
+            foreach ($D['mesh'] as $n) { list($rc) = sx_run('ping -c 1 -W 1 ' . escapeshellarg($n[1]), 3); $mesh[] = [$n[0], $n[1], $rc === 0]; }
+        }
+    } else {
+        if ($err !== $s['err'] || !$errSince) { $errSince = $now; }
+        $err = $s['err']; $prevCpu = null; $prevWan = null;
+        if ($err === 'hostkey' || $err === 'auth' || $err === 'noscript' || $err === 'bad') { $step = max($step, 30); }   // only the owner can fix these: ask less often
+    }
+    if ($s['ok']) { $D['cpu'] = []; $D['dev'] = []; }   // the raw counters stay here; on an error the last figures are shown as they were
+    rtr_write(['t' => $now, 'state' => $err === '' ? 'ok' : 'err', 'err' => $err, 'err_since' => $errSince, 'last_ok' => $lastOk,
+               'D' => $D, 'cpu' => $cpu, 'cores' => $cores, 'rate' => $err === '' ? $rate : [0, 0], 'pts' => $pts, 'sky' => $sky, 'mesh' => $mesh]);
+    if ($rounds && --$rounds === 0) { exit(0); }
+    sleep($step);
+}
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
+<!-- ROUTER READ SCRIPT (copied to the router by its install line) -->
+<!-- ========================================================= -->
+<FILE Name="&plugdir;/sysbox_ro.sh">
+<INLINE><![CDATA[#!/bin/sh
+# Sysbox Router part (item 132): the only command the Sysbox key may run on the router (command= in its key line).
+# It reads counters and status, prints them in @sections and changes nothing. Works on any Linux router; the
+# Entware, ASUS and add-on parts are printed only where they exist.
+PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+case "$SSH_ORIGINAL_COMMAND" in
+snap) ;;
+sky) [ -x /jffs/scripts/firewall ] && /jffs/scripts/firewall stats 2>/dev/null | head -c 100000; exit 0 ;;
+*) echo "sysbox_ro: not allowed" >&2; exit 1 ;;
+esac
+h() { command -v "$1" >/dev/null 2>&1; }
+s() { echo "@$1"; }
+s ver; echo 1
+s host; cat /proc/sys/kernel/hostname; uname -r
+s stat; grep '^cpu' /proc/stat
+s mem; grep -E '^(MemTotal|MemFree|MemAvailable|Buffers|Cached|SwapTotal|SwapFree):' /proc/meminfo
+s load; cat /proc/loadavg
+s up; cat /proc/uptime
+s dev; tail -n +3 /proc/net/dev
+s route; ip route show default 2>/dev/null | head -n 2
+s temp; for z in /sys/class/thermal/thermal_zone*/temp; do t=$(cat "$z" 2>/dev/null) && [ -n "$t" ] && echo "$t"; done
+s arp; awk 'NR>1 && $3=="0x2"' /proc/net/arp | wc -l
+if h nvram; then
+  s nvram
+  for k in productid odmpid firmver buildno extendno wan0_ifname wan0_proto wan0_state_t lan_ipaddr; do echo "$k=$(nvram get $k 2>/dev/null)"; done
+  s mesh; nvram get cfg_device_list 2>/dev/null
+fi
+s radio
+if h wl; then
+  for n in 0 1 2 3; do
+    i=$(nvram get wl${n}_ifname 2>/dev/null); [ -n "$i" ] || continue
+    echo "$i $(nvram get wl${n}_nband 2>/dev/null) $(wl -i "$i" assoclist 2>/dev/null | grep -c assoclist) $(wl -i "$i" phy_tempsense 2>/dev/null | cut -d' ' -f1)"
+  done
+elif h iw; then
+  for i in $(iw dev 2>/dev/null | awk '/Interface/{print $2}'); do echo "$i ? $(iw dev "$i" station dump 2>/dev/null | grep -c ^Station) -"; done
+fi
+s svc
+for p in AdGuardHome tailscaled vnstatd; do pidof $p >/dev/null 2>&1 && echo "$p=1" || echo "$p=0"; done
+{ [ -d /jffs/addons/AdGuardHome.d ] || [ -d /opt/etc/AdGuardHome ]; } && echo "agh_inst=1"
+{ [ -d /jffs/addons/tailmon.d ] || h tailscaled; } && echo "ts_inst=1"
+{ [ -d /jffs/addons/dn-vnstat.d ] || h vnstat; } && echo "vn_inst=1"
+[ -x /jffs/scripts/firewall ] && echo "sky_inst=1"
+h ipset && echo "sky_run=$(ipset -L -n 2>/dev/null | grep -c '^Skynet')"
+grep -qs -i entware /jffs/scripts/post-mount && echo "ent_exp=1"
+[ -f /opt/etc/entware_release ] && echo "ent_ok=1"
+if h vnstat; then s vnm; vnstat --json m 2>/dev/null; echo; fi
+[ -r /jffs/addons/connmon.d/lastx.csv ] && { s ping; tail -n 1 /jffs/addons/connmon.d/lastx.csv; }
+exit 0
+]]></INLINE>
+</FILE>
+
+<!-- ========================================================= -->
 <!-- SHARED DISCORD BOT SETTING -->
 <!-- ========================================================= -->
 <FILE Name="&plugdir;/bot.php">
@@ -19240,6 +20600,8 @@ cat > /boot/config/plugins/sysbox/sysbox.cron <<CRON
 * * * * * flock -n -E 0 /tmp/sysbox_hist.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/cpuhist.php >/dev/null 2>&1
 # Sysbox: network meter (traffic counters every 5 s, internet ping every 30 s; one long-running process, restarted if it stops)
 * * * * * flock -n -E 0 /tmp/sysbox_net.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1
+# Sysbox: router part (item 132; one long-running process asking the router over ssh, it exits when the part is off)
+* * * * * flock -n -E 0 /tmp/sysbox_rtr.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/rtrmon.php >/dev/null 2>&1
 # Sysbox: stream priority, every minute (qBittorrent gives way to Jellyfin streams outside the house; off on the Network page)
 * * * * * flock -n -E 0 /tmp/sysbox_sp.lock $PHPBIN /usr/local/emhttp/plugins/sysbox/sp_tick.php >/dev/null 2>&1
 # Sysbox: Discord alerts, checked every minute
@@ -19267,6 +20629,9 @@ setsid nohup flock -n /tmp/sysbox_hist.lock "$PHPBIN" /usr/local/emhttp/plugins/
 pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
 setsid nohup flock -n /tmp/sysbox_net.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/netmon.php >/dev/null 2>&1 </dev/null &
 
+# start the router reader right away (it exits by itself when the Router part is off)
+pkill -f "plugins/sysbox/rtrmon.php" 2>/dev/null
+setsid nohup flock -n /tmp/sysbox_rtr.lock "$PHPBIN" /usr/local/emhttp/plugins/sysbox/rtrmon.php >/dev/null 2>&1 </dev/null &
 # the claude container flag for the header button (Claude Guard tick; cron repeats it every 2 minutes)
 setsid nohup "$PHPBIN" /usr/local/emhttp/plugins/sysbox/guard_run.php tick >/dev/null 2>&1 </dev/null &
 
@@ -19295,10 +20660,11 @@ rm -rf /usr/local/emhttp/plugins/Sysbox
 pkill -f "php -S 127.0.0.1:18184" 2>/dev/null
 pkill -f "plugins/sysbox/cpuhist.php" 2>/dev/null
 pkill -f "plugins/sysbox/netmon.php" 2>/dev/null
+pkill -f "plugins/sysbox/rtrmon.php" 2>/dev/null
 rm -f /tmp/sysbox_*
 rm -f /boot/config/plugins/sysbox/sysbox.cron
 /usr/local/sbin/update_cron 2>/dev/null
-# Settings and the energy counter in /boot/config/plugins/sysbox are kept intentionally.
+# Settings, the energy counter and the router key in /boot/config/plugins/sysbox are kept intentionally.
 echo "sysbox removed."
 exit 0
 ]]></INLINE>

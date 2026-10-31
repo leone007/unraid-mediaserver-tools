@@ -5305,5 +5305,387 @@
  "netp.sp_t_srv": {
   "text": "{s}: {n} playing, {o} outside",
   "note": "Network page, Test the connections: one media server's result ({s} = Jellyfin, Emby or Plex)."
+ },
+ "rtr.title": {
+  "text": "Router",
+  "note": "tile band title of the router part (item 132) and its name on the settings page."
+ },
+ "rtr.no_answer": {
+  "text": "no answer since {t}",
+  "note": "tile band, right side, when the router does not answer; {t} = time (HH:MM)."
+ },
+ "rtr.setup": {
+  "text": "Set up the router connection in the Sysbox settings.",
+  "note": "tile: the router part is on but has no address or key yet; a link to the settings follows."
+ },
+ "rtr.connecting": {
+  "text": "Connecting to the router… the first numbers come in a few seconds.",
+  "note": "tile: the background reader has no data yet."
+ },
+ "rtr.e_unreach": {
+  "text": "The router does not answer (SSH). Internet and Wi-Fi may be down too.",
+  "note": "tile and settings test: no SSH answer from the router."
+ },
+ "rtr.e_auth": {
+  "text": "The router does not accept the Sysbox key. Paste the key line in the router (see the settings).",
+  "note": "tile and settings test: SSH said permission denied."
+ },
+ "rtr.e_hostkey": {
+  "text": "The router shows a new identity (new firmware or a new router). Press Test and save in the settings to accept it.",
+  "note": "tile and settings test: the SSH host key changed."
+ },
+ "rtr.e_noscript": {
+  "text": "The read script is missing on the router. Run the install line in the router (see the settings).",
+  "note": "tile and settings test: sysbox_ro.sh not found on the router."
+ },
+ "rtr.e_bad": {
+  "text": "The router answered, but not with the Sysbox script. Check the key line and the script path.",
+  "note": "tile and settings test: unexpected answer."
+ },
+ "rtr.e_setup": {
+  "text": "Address, user name or key missing.",
+  "note": "settings test: not set up."
+ },
+ "rtr.offline": {
+  "text": "offline",
+  "note": "pill on the tile row: the router or a node does not answer."
+ },
+ "rtr.check": {
+  "text": "check",
+  "note": "pill on the tile row: something the owner has to fix in the settings."
+ },
+ "rtr.last_seen": {
+  "text": "Last answer {t}",
+  "note": "tile, under an error; {t} = time (HH:MM)."
+ },
+ "rtr.temp": {
+  "text": "Temp",
+  "note": "tile figure label (Compact view): router CPU temperature."
+ },
+ "rtr.ping": {
+  "text": "Ping",
+  "note": "tile figure label: the router add-on connmon's last ping time to the internet."
+ },
+ "rtr.month": {
+  "text": "Month",
+  "note": "tile figure label: WAN traffic this month (down + up), from vnstat on the router."
+ },
+ "rtr.month_since": {
+  "text": "vnstat counts since {d}, so the month is not complete.",
+  "note": "tile note when vnstat started this month; {d} = date."
+ },
+ "rtr.swap": {
+  "text": "Swap",
+  "note": "tile bar label: the router's swap use."
+ },
+ "rtr.up": {
+  "text": "up {t}",
+  "note": "tile caption: router uptime; {t} like 3 h 54 m."
+ },
+ "rtr.svc_entware": {
+  "text": "Entware",
+  "note": "service chip: the Entware disk on the router."
+ },
+ "rtr.svc_adguard": {
+  "text": "AdGuard",
+  "note": "service chip: AdGuard Home on the router."
+ },
+ "rtr.svc_skynet": {
+  "text": "Skynet",
+  "note": "service chip: the Skynet firewall on the router."
+ },
+ "rtr.svc_tailscale": {
+  "text": "Tailscale",
+  "note": "service chip: Tailscale on the router."
+ },
+ "rtr.svc_vnstat": {
+  "text": "vnstat",
+  "note": "service chip: the vnstat traffic counter on the router."
+ },
+ "rtr.stopped": {
+  "text": "stopped",
+  "note": "after a service name: installed but not running."
+ },
+ "rtr.port": {
+  "text": "Port {p}",
+  "note": "Skynet bar row: an inbound port that blocked addresses tried; {p} = port number."
+ },
+ "rtr.sky_out": {
+  "text": "Blocked going out: {d}",
+  "note": "Skynet bar row: a home device that tried banned addresses going out; {d} = its name or address."
+ },
+ "rtr.sky_note": {
+  "text": "Most targeted ports, inbound.",
+  "note": "Skynet bar, last row."
+ },
+ "rtr.sky_no_out": {
+  "text": "No home device is blocked going out.",
+  "note": "Skynet bar: no outbound blocks."
+ },
+ "rtr.sky_wait": {
+  "text": "Reading Skynet statistics… (every 10 minutes)",
+  "note": "Skynet bar before the first statistics."
+ },
+ "rtr.sky_sum": {
+  "text": "{n} blocks · {i} IPs since {t}",
+  "note": "Skynet bar title, right side; {t} = start of Skynet's log span."
+ },
+ "rtr.radio": {
+  "text": "Wi-Fi {b}",
+  "note": "Clients bar row: a radio of the router; {b} = band (2.4 GHz, 5 GHz)."
+ },
+ "rtr.lan_dev": {
+  "text": "Devices on the LAN (ARP)",
+  "note": "Clients bar row: all devices the router sees, wired and through the nodes."
+ },
+ "rtr.clients": {
+  "text": "Clients",
+  "note": "name of the Clients bar (Full view) and its settings chip."
+ },
+ "rtr.cli_n": {
+  "text": "{n} on the LAN",
+  "note": "Clients bar title, right side."
+ },
+ "rtr.online": {
+  "text": "online",
+  "note": "AiMesh bar: the node answers ping."
+ },
+ "rtr.n_off": {
+  "text": "{n} offline",
+  "note": "AiMesh bar title: nodes that do not answer."
+ },
+ "rtr.open": {
+  "text": "Open router ›",
+  "note": "tile link to the router's web page."
+ },
+ "rtr.c_speed": {
+  "text": "Speed",
+  "note": "settings chip: WAN down and up now."
+ },
+ "rtr.c_month": {
+  "text": "Month",
+  "note": "settings chip: traffic this month (vnstat)."
+ },
+ "rtr.c_graph": {
+  "text": "WAN graph",
+  "note": "settings chip: the 30-minute WAN graph."
+ },
+ "rtr.c_cores": {
+  "text": "CPU cores",
+  "note": "settings chip: the per-core CPU bars."
+ },
+ "rtr.c_mem": {
+  "text": "RAM / swap",
+  "note": "settings chip: memory bars."
+ },
+ "rtr.c_temp": {
+  "text": "Temperatures",
+  "note": "settings chip: CPU and radio temperatures with the uptime."
+ },
+ "rtr.c_svc": {
+  "text": "Services",
+  "note": "settings chip: the service chips (Entware, AdGuard, Skynet, Tailscale, vnstat)."
+ },
+ "rtr.c_hint": {
+  "text": "Any router with SSH: Asuswrt-Merlin and other Entware routers. Only the parts the router has appear (Skynet, AdGuard, vnstat and the rest when they are installed). Parts the chosen view does not show are dimmed.",
+  "note": "settings hint under the router chips."
+ },
+ "rtr.s_view": {
+  "text": "View",
+  "note": "settings row label: Compact, Standard or Full."
+ },
+ "rtr.v_a": {
+  "text": "Compact",
+  "note": "settings: view with four numbers and the services."
+ },
+ "rtr.v_b": {
+  "text": "Standard",
+  "note": "settings: view with speed, graph, cores, memory, temperatures."
+ },
+ "rtr.v_c": {
+  "text": "Full",
+  "note": "settings: Standard plus the Skynet, Clients and AiMesh bars."
+ },
+ "rtr.s_view_hint": {
+  "text": "Compact: CPU, RAM, temperature, ping and the services. Standard: speed, month, WAN graph, CPU cores, RAM / swap, temperatures. Full: Standard plus the Skynet, Clients and AiMesh bars (closed on load).",
+  "note": "settings hint under the view choice."
+ },
+ "rtr.s_router": {
+  "text": "Router",
+  "note": "settings row label: address, user, port, refresh."
+ },
+ "rtr.s_user": {
+  "text": "user",
+  "note": "settings label before the SSH user name."
+ },
+ "rtr.s_port": {
+  "text": "port",
+  "note": "settings label before the SSH port."
+ },
+ "rtr.s_router_hint": {
+  "text": "The router's LAN address and its admin name for SSH (SSH must be on, LAN only is enough). No password is stored: Sysbox uses its own key.",
+  "note": "settings hint under the router address."
+ },
+ "rtr.s_path": {
+  "text": "Script on the router",
+  "note": "settings row label: where sysbox_ro.sh is."
+ },
+ "rtr.s_path_hint": {
+  "text": "Asuswrt-Merlin: /jffs/scripts/sysbox_ro.sh (stays when the Entware disk is missing). Other Entware routers: /opt/sbin/sysbox_ro.sh.",
+  "note": "settings hint under the script path."
+ },
+ "rtr.s_key": {
+  "text": "Key line",
+  "note": "settings row label: the authorized key line."
+ },
+ "rtr.s_nokey": {
+  "text": "Make a key first.",
+  "note": "placeholder of the empty key line."
+ },
+ "rtr.b_copy_key": {
+  "text": "Copy key line",
+  "note": "settings button."
+ },
+ "rtr.b_make_key": {
+  "text": "Make key",
+  "note": "settings button: makes the Sysbox key."
+ },
+ "rtr.b_new_key": {
+  "text": "New key",
+  "note": "settings button: replaces the Sysbox key."
+ },
+ "rtr.s_key_hint": {
+  "text": "Paste it as a new line in the router's authorized keys (Asuswrt-Merlin: Administration › System › Authorized Keys, then Apply). The key may only run the read script; it cannot change anything on the router.",
+  "note": "settings hint under the key line."
+ },
+ "rtr.s_install": {
+  "text": "Install line",
+  "note": "settings row label: the one-line install command for the router."
+ },
+ "rtr.b_copy_install": {
+  "text": "Copy install line",
+  "note": "settings button."
+ },
+ "rtr.s_install_hint": {
+  "text": "Run it once in the router's SSH (ssh admin@router, then paste). It writes only the read script to the path above. Again after a script path change or a Sysbox update that says so.",
+  "note": "settings hint under the install line."
+ },
+ "rtr.s_test": {
+  "text": "Connection",
+  "note": "settings row label: the test."
+ },
+ "rtr.b_test": {
+  "text": "Test and save",
+  "note": "settings button: connects once, saves the connection, lists what the router has."
+ },
+ "rtr.s_test_hint": {
+  "text": "Saves the address, user, port and path, trusts the router's identity on this click and lists what it found.",
+  "note": "settings hint under the test button."
+ },
+ "rtr.copied": {
+  "text": "Copied",
+  "note": "settings: after a copy button."
+ },
+ "rtr.copy_hand": {
+  "text": "Select the text and copy it by hand.",
+  "note": "settings: the browser did not allow copying."
+ },
+ "rtr.new_key_confirm": {
+  "text": "Click again to replace the key: the router then needs the new key line.",
+  "note": "settings: first click on New key."
+ },
+ "rtr.working": {
+  "text": "Working…",
+  "note": "settings: a request is running."
+ },
+ "rtr.key_new": {
+  "text": "New key made. Replace the key line in the router.",
+  "note": "settings: after New key."
+ },
+ "rtr.key_made": {
+  "text": "Key made. Paste the key line and the install line in the router.",
+  "note": "settings: after Make key."
+ },
+ "rtr.testing": {
+  "text": "Connecting…",
+  "note": "settings: the test runs."
+ },
+ "rtr.test_ok": {
+  "text": "Connected {t} · {n} parts found · saved",
+  "note": "settings: test result; {t} = time, {n} = number of parts."
+ },
+ "rtr.m_base": {
+  "text": "Linux: {n} cores, WAN {w}",
+  "note": "settings test chip: the basic counters; {w} = WAN interface."
+ },
+ "rtr.m_nvram": {
+  "text": "{m} · {f} · {n} AiMesh nodes",
+  "note": "settings test chip: ASUS model, firmware and nodes."
+ },
+ "rtr.m_radio": {
+  "text": "Wi-Fi radios: {n}",
+  "note": "settings test chip."
+ },
+ "rtr.m_ping": {
+  "text": "connmon ping to {t}",
+  "note": "settings test chip: the connmon add-on."
+ },
+ "rtr.err_host": {
+  "text": "The router address is not valid.",
+  "note": "settings error."
+ },
+ "rtr.err_user": {
+  "text": "The user name is not valid.",
+  "note": "settings error."
+ },
+ "rtr.err_port": {
+  "text": "The SSH port must be 1–65535.",
+  "note": "settings error."
+ },
+ "rtr.err_path": {
+  "text": "The script path must be a full path such as /jffs/scripts/sysbox_ro.sh.",
+  "note": "settings error."
+ },
+ "rtr.err_keygen": {
+  "text": "The key could not be made (ssh-keygen).",
+  "note": "settings error."
+ },
+ "rtr.err_need": {
+  "text": "Fill in the router address and the user name first.",
+  "note": "settings error before the test."
+ },
+ "attn.rtr_down": {
+  "text": "the router does not answer",
+  "note": "tile attention row: the router does not answer for a minute."
+ },
+ "attn.rtr_svc": {
+  "text": "stopped on the router: {s}",
+  "note": "tile attention row; {s} = service names."
+ },
+ "rtr.cores": {
+  "one": "{n} core",
+  "other": "{n} cores",
+  "note": "tile: number of CPU cores of the router."
+ },
+ "rtr.nodes": {
+  "one": "{n} node",
+  "other": "{n} nodes",
+  "note": "AiMesh bar title, right side."
+ },
+ "rtr.sky_ban": {
+  "text": "Banned: {i} IPs, {r} ranges",
+  "note": "Skynet bar row: size of the ban lists."
+ },
+ "rtr.sky_blk": {
+  "text": "{a} in · {b} out",
+  "note": "Skynet bar row, right: connections blocked inbound and outbound."
+ },
+ "rtr.sky_out_note": {
+  "text": "Rows \"Blocked going out\" are home devices that tried a banned address; on a torrent server peers on the ban lists are normal.",
+  "note": "Skynet bar, last row, when there are outbound device rows."
+ },
+ "rtr.missing": {
+  "text": "missing",
+  "note": "after Entware: the Entware disk is not mounted on the router."
  }
 }

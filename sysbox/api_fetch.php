@@ -179,6 +179,51 @@ if (sx_on($cfg['show_net'] ?? '1')) {
     }
 }
 
+// ---- router (item 132): rtrmon.php asks the router in the background ----------------------------
+$rtr = null;
+if (sx_on($cfg['show_rtr'] ?? '0')) {
+    require_once __DIR__ . '/rtr_lib.php';
+    $RC = rtr_cfg(); $RL = rtr_live(); $view = in_array($cfg['rtr_view'] ?? 'b', ['a', 'b', 'c'], true) ? $cfg['rtr_view'] : 'b';
+    if (!rtr_ready($RC)) { $rtr = ['state' => 'setup']; }
+    else {
+        $fresh = $RL && time() - (int)$RL['t'] < max(30, 4 * (int)$RC['sec']) && ($RL['state'] ?? '') !== 'setup';
+        if (!$fresh && (!is_file('/tmp/sysbox_rtr.lock.run') || time() - filemtime('/tmp/sysbox_rtr.lock.run') > 60)) {   // not running yet (just switched on): start it, cron keeps it alive
+            @touch('/tmp/sysbox_rtr.lock.run');
+            @exec('setsid nohup flock -n /tmp/sysbox_rtr.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/rtrmon.php') . ' >/dev/null 2>&1 </dev/null &');
+        }
+        if ($fresh) { @unlink('/tmp/sysbox_rtr.lock.run'); }
+        $D = $fresh ? ($RL['D'] ?? null) : null;
+        if (!$fresh || (!$D && ($RL['state'] ?? '') === 'ok')) { $rtr = ['state' => 'pending']; }
+        else {
+            $rtr = ['state' => (string)$RL['state'], 'err' => (string)($RL['err'] ?? ''), 'since' => (int)($RL['err_since'] ?? 0), 'last_ok' => (int)($RL['last_ok'] ?? 0)];
+            if ($D) {
+                $pts = []; $now = (int)$RL['t']; $acc = null;   // the last 30 minutes in 15-second averages, as the Network part: [seconds ago, down, up]
+                foreach ((array)$RL['pts'] as $p) {
+                    if ($p[0] < $now - 1800) { continue; }
+                    $k = intdiv($p[0], 15);
+                    if ($acc && $acc[0] !== $k) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; $acc = null; }
+                    if (!$acc) { $acc = [$k, 0, 0, 0]; }
+                    $acc[1] += $p[1]; $acc[2] += $p[2]; $acc[3]++;
+                }
+                if ($acc) { $pts[] = [$now - $acc[0] * 15, round($acc[1] / $acc[3]), round($acc[2] / $acc[3])]; }
+                $M = $D['mem'];
+                $rtr += ['name' => $D['name'], 'fw' => $D['fw'], 'cpu' => $RL['cpu'], 'cores' => $RL['cores'], 'load' => $D['load'], 'up' => $D['up'],
+                         'ram' => [$M['used'], $M['total']], 'swap' => [$M['swap_used'], $M['swap_total']], 'temp' => $D['temps'][0] ?? null,
+                         'radios' => $D['radios'], 'arp' => $D['arp'], 'svc' => $D['svc'], 'month' => $D['month'], 'vn_since' => (int)($D['vn_since'] ?? 0), 'ping' => $D['ping'],
+                         'rate' => $RL['rate'], 'pts' => $pts, 'wan' => $D['wan'], 'proto' => $D['wan_proto'] ?? '', 'mesh' => $RL['mesh'], 'sky' => $RL['sky'], 'host' => $RC['host']];
+            }
+            if ($rtr['state'] === 'err' && $rtr['err'] === 'unreach' && time() - $rtr['since'] >= 60) {
+                $attn[] = ['rd', 'Router', $sxx_T('attn.rtr_down'), date('H:i', $rtr['since'])];
+            } elseif ($rtr['state'] === 'ok' && $D) {
+                $bad = []; foreach ($D['svc'] as $x) { if (!$x[1]) { $bad[] = $sxx_T('rtr.svc_' . $x[0]); } }
+                if ($bad) { $attn[] = ['rd', 'Router', $sxx_T('attn.rtr_svc', ['s' => implode(', ', $bad)]), '']; }
+            }
+        }
+    }
+    $rtr['view'] = $view;
+    $rtr['unit'] = isset($net['unit']) ? $net['unit'] : 'MB';
+}
+
 // ---- containers ----------------------------------------------------------------------------------
 $cont = ['enabled' => sx_on($cfg['show_containers']), 'docker' => false, 'rows' => [], 'mode' => $cfg['top_mode'], 'n' => (int)$cfg['top_n'],
          'controls' => sx_on($cfg['controls']), 'logs' => sx_on($cfg['logs']), 'log_lines' => (int)$cfg['log_lines'], 'pending' => $stats === null];
@@ -239,14 +284,14 @@ $attOut = [];
 foreach ($attn as $a) { $attOut[] = ['level' => $a[0], 'name' => $a[1], 'text' => $a[2], 'small' => $a[3]]; }
 
 $sxShow = [];
-foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name', 'pow_ups'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
+foreach (['net_speed', 'net_today', 'net_hist', 'net_inet', 'net_top', 'rtr_speed', 'rtr_month', 'rtr_graph', 'rtr_cores', 'rtr_mem', 'rtr_temp', 'rtr_svc', 'rtr_sky', 'rtr_cli', 'rtr_mesh', 'ram_leg', 'cpu_load', 'cpu_temp', 'cpu_pow', 'cpu_hist', 'cpu_per', 'cpu_la', 'pow_w', 'pow_day', 'pow_mon', 'pow_cost', 'pow_name', 'pow_ups'] as $k) { $sxShow[$k] = sx_on($cfg[$k]); }
 
 sx_json([
     'ok' => true, 'ts' => time(),
     'summary' => ['ram' => $memPct, 'cpu' => $load, 'temp' => $tPkg, 'uptime' => ($d > 0 ? $d . ' d ' . $h . ' h' : ($h > 0 ? $h . ' h ' . $m . ' m' : $m . ' m'))],
-    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'net' => $net, 'containers' => $cont,
+    'attention' => $attOut, 'updates' => $updOut, 'memory' => $memory, 'storage' => $storage, 'cpu' => $cpu, 'gpu' => $gpu, 'power' => $power, 'net' => $net, 'router' => $rtr, 'containers' => $cont,
     'limits' => ['temp_warn' => (float)$cfg['temp_warn'], 'temp_crit' => (float)$cfg['temp_crit']],
     'ui' => ['hist_min' => max(1, min(60, (int)$cfg['hist_min'])), 'cpu_sec' => (int)$cfg['cpu_sec'], 'clk_sec' => (int)$cfg['clk_sec'], 'show_clock' => sx_on($cfg['show_clock']),
              'order' => sx_order($cfg), 'show' => ['ram' => sx_on($cfg['show_ram']), 'sto' => sx_on($cfg['show_sto']), 'cpu' => sx_on($cfg['show_cpu']),
-             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'net' => sx_on($cfg['show_net'] ?? '1'), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
+             'gpu' => sx_on($cfg['show_gpu']), 'pow' => sx_on($cfg['show_pow']), 'net' => sx_on($cfg['show_net'] ?? '1'), 'rtr' => sx_on($cfg['show_rtr'] ?? '0'), 'con' => sx_on($cfg['show_containers'])], 'metrics' => $sxShow],
 ]);

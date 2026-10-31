@@ -3987,5 +3987,292 @@
  },
  "netp.sp_t_srv": {
   "text": "{s}: {n} lejátszás, ebből {o} kint"
+ },
+ "rtr.title": {
+  "text": "Router"
+ },
+ "rtr.no_answer": {
+  "text": "nem válaszol {t} óta"
+ },
+ "rtr.setup": {
+  "text": "Állítsd be a router-kapcsolatot a Sysbox beállításaiban."
+ },
+ "rtr.connecting": {
+  "text": "Kapcsolódás a routerhez… az első számok pár másodperc múlva jönnek."
+ },
+ "rtr.e_unreach": {
+  "text": "A router nem válaszol (SSH). Lehet, hogy az internet és a Wi-Fi is áll."
+ },
+ "rtr.e_auth": {
+  "text": "A router nem fogadja el a Sysbox kulcsát. Másold be a kulcssort a routerbe (lásd a beállításokat)."
+ },
+ "rtr.e_hostkey": {
+  "text": "A router új azonosítót mutat (új firmware vagy új router). Elfogadáshoz nyomd meg a Test and save gombot a beállításokban."
+ },
+ "rtr.e_noscript": {
+  "text": "Hiányzik az olvasó szkript a routerről. Futtasd a telepítő sort a routeren (lásd a beállításokat)."
+ },
+ "rtr.e_bad": {
+  "text": "A router válaszolt, de nem a Sysbox szkripttel. Ellenőrizd a kulcssort és a szkript útvonalát."
+ },
+ "rtr.e_setup": {
+  "text": "Hiányzik a cím, a felhasználónév vagy a kulcs."
+ },
+ "rtr.offline": {
+  "text": "offline"
+ },
+ "rtr.check": {
+  "text": "ellenőrizd"
+ },
+ "rtr.last_seen": {
+  "text": "Utolsó válasz {t}"
+ },
+ "rtr.temp": {
+  "text": "Hőm."
+ },
+ "rtr.ping": {
+  "text": "Ping"
+ },
+ "rtr.month": {
+  "text": "Hónap"
+ },
+ "rtr.month_since": {
+  "text": "A vnstat {d} óta számol, ezért a hónap nem teljes."
+ },
+ "rtr.swap": {
+  "text": "Swap"
+ },
+ "rtr.up": {
+  "text": "fut {t}"
+ },
+ "rtr.svc_entware": {
+  "text": "Entware"
+ },
+ "rtr.svc_adguard": {
+  "text": "AdGuard"
+ },
+ "rtr.svc_skynet": {
+  "text": "Skynet"
+ },
+ "rtr.svc_tailscale": {
+  "text": "Tailscale"
+ },
+ "rtr.svc_vnstat": {
+  "text": "vnstat"
+ },
+ "rtr.stopped": {
+  "text": "leállt"
+ },
+ "rtr.port": {
+  "text": "Port {p}"
+ },
+ "rtr.sky_out": {
+  "text": "Kifelé tiltva: {d}"
+ },
+ "rtr.sky_note": {
+  "text": "A leggyakrabban célzott portok, befelé."
+ },
+ "rtr.sky_no_out": {
+  "text": "Kifelé egy otthoni eszköz sincs tiltva."
+ },
+ "rtr.sky_wait": {
+  "text": "Skynet-statisztika olvasása… (10 percenként)"
+ },
+ "rtr.sky_sum": {
+  "text": "{n} tiltás · {i} IP {t} óta"
+ },
+ "rtr.radio": {
+  "text": "Wi-Fi {b}"
+ },
+ "rtr.lan_dev": {
+  "text": "Eszközök a LAN-on (ARP)"
+ },
+ "rtr.clients": {
+  "text": "Kliensek"
+ },
+ "rtr.cli_n": {
+  "text": "{n} a LAN-on"
+ },
+ "rtr.online": {
+  "text": "online"
+ },
+ "rtr.n_off": {
+  "text": "{n} offline"
+ },
+ "rtr.open": {
+  "text": "Router megnyitása ›"
+ },
+ "rtr.c_speed": {
+  "text": "Sebesség"
+ },
+ "rtr.c_month": {
+  "text": "Hónap"
+ },
+ "rtr.c_graph": {
+  "text": "WAN-grafikon"
+ },
+ "rtr.c_cores": {
+  "text": "CPU-magok"
+ },
+ "rtr.c_mem": {
+  "text": "RAM / swap"
+ },
+ "rtr.c_temp": {
+  "text": "Hőmérsékletek"
+ },
+ "rtr.c_svc": {
+  "text": "Szolgáltatások"
+ },
+ "rtr.c_hint": {
+  "text": "Bármely SSH-s router: Asuswrt-Merlin és más Entware-es routerek. Csak az jelenik meg, ami a routeren van (Skynet, AdGuard, vnstat és a többi, ha telepítve van). Ami a választott nézetben nincs, az halványan látszik."
+ },
+ "rtr.s_view": {
+  "text": "Nézet"
+ },
+ "rtr.v_a": {
+  "text": "Compact"
+ },
+ "rtr.v_b": {
+  "text": "Standard"
+ },
+ "rtr.v_c": {
+  "text": "Full"
+ },
+ "rtr.s_view_hint": {
+  "text": "Compact: CPU, RAM, hőmérséklet, ping és a szolgáltatások. Standard: sebesség, hónap, WAN-grafikon, CPU-magok, RAM / swap, hőmérsékletek. Full: a Standard és a Skynet, Kliensek, AiMesh sávok (betöltéskor csukva)."
+ },
+ "rtr.s_router": {
+  "text": "Router"
+ },
+ "rtr.s_user": {
+  "text": "felhasználó"
+ },
+ "rtr.s_port": {
+  "text": "port"
+ },
+ "rtr.s_router_hint": {
+  "text": "A router LAN-címe és az admin neve SSH-hoz (az SSH legyen bekapcsolva, a „csak LAN” elég). Jelszót nem tárolunk: a Sysbox saját kulcsot használ."
+ },
+ "rtr.s_path": {
+  "text": "Szkript a routeren"
+ },
+ "rtr.s_path_hint": {
+  "text": "Asuswrt-Merlin: /jffs/scripts/sysbox_ro.sh (megmarad, ha az Entware-lemez hiányzik). Más Entware-es router: /opt/sbin/sysbox_ro.sh."
+ },
+ "rtr.s_key": {
+  "text": "Kulcssor"
+ },
+ "rtr.s_nokey": {
+  "text": "Előbb készíts kulcsot."
+ },
+ "rtr.b_copy_key": {
+  "text": "Kulcssor másolása"
+ },
+ "rtr.b_make_key": {
+  "text": "Kulcs készítése"
+ },
+ "rtr.b_new_key": {
+  "text": "Új kulcs"
+ },
+ "rtr.s_key_hint": {
+  "text": "Másold be új sorként a router engedélyezett kulcsai közé (Asuswrt-Merlin: Administration › System › Authorized Keys, majd Apply). A kulcs csak az olvasó szkriptet futtathatja, a routeren semmit sem változtathat."
+ },
+ "rtr.s_install": {
+  "text": "Telepítő sor"
+ },
+ "rtr.b_copy_install": {
+  "text": "Telepítő sor másolása"
+ },
+ "rtr.s_install_hint": {
+  "text": "Futtasd egyszer a router SSH-jában (ssh admin@router, majd beillesztés). Csak az olvasó szkriptet írja a fenti helyre. Újra akkor kell, ha az útvonal változik, vagy egy Sysbox-frissítés ezt kéri."
+ },
+ "rtr.s_test": {
+  "text": "Kapcsolat"
+ },
+ "rtr.b_test": {
+  "text": "Teszt és mentés"
+ },
+ "rtr.s_test_hint": {
+  "text": "Elmenti a címet, a felhasználót, a portot és az útvonalat, erre a kattintásra elfogadja a router azonosítóját, és felsorolja, mit talált."
+ },
+ "rtr.copied": {
+  "text": "Másolva"
+ },
+ "rtr.copy_hand": {
+  "text": "Jelöld ki a szöveget, és másold kézzel."
+ },
+ "rtr.new_key_confirm": {
+  "text": "Kattints újra a csere megerősítéséhez: utána a routerbe az új kulcssor kell."
+ },
+ "rtr.working": {
+  "text": "Dolgozom…"
+ },
+ "rtr.key_new": {
+  "text": "Új kulcs kész. Cseréld le a kulcssort a routerben."
+ },
+ "rtr.key_made": {
+  "text": "A kulcs kész. Másold be a kulcssort és a telepítő sort a routerbe."
+ },
+ "rtr.testing": {
+  "text": "Kapcsolódás…"
+ },
+ "rtr.test_ok": {
+  "text": "Kapcsolódva {t} · {n} rész található · mentve"
+ },
+ "rtr.m_base": {
+  "text": "Linux: {n} mag, WAN {w}"
+ },
+ "rtr.m_nvram": {
+  "text": "{m} · {f} · {n} AiMesh-nód"
+ },
+ "rtr.m_radio": {
+  "text": "Wi-Fi rádiók: {n}"
+ },
+ "rtr.m_ping": {
+  "text": "connmon ping: {t}"
+ },
+ "rtr.err_host": {
+  "text": "A router címe nem érvényes."
+ },
+ "rtr.err_user": {
+  "text": "A felhasználónév nem érvényes."
+ },
+ "rtr.err_port": {
+  "text": "Az SSH-port 1–65535 közé essen."
+ },
+ "rtr.err_path": {
+  "text": "A szkript útvonala teljes út legyen, pl. /jffs/scripts/sysbox_ro.sh."
+ },
+ "rtr.err_keygen": {
+  "text": "A kulcs nem készült el (ssh-keygen)."
+ },
+ "rtr.err_need": {
+  "text": "Előbb add meg a router címét és a felhasználónevet."
+ },
+ "attn.rtr_down": {
+  "text": "a router nem válaszol"
+ },
+ "attn.rtr_svc": {
+  "text": "leállt a routeren: {s}"
+ },
+ "rtr.cores": {
+  "one": "{n} mag",
+  "other": "{n} mag"
+ },
+ "rtr.nodes": {
+  "one": "{n} nód",
+  "other": "{n} nód"
+ },
+ "rtr.sky_ban": {
+  "text": "Tiltva: {i} IP, {r} tartomány"
+ },
+ "rtr.sky_blk": {
+  "text": "{a} be · {b} ki"
+ },
+ "rtr.sky_out_note": {
+  "text": "A „Kifelé tiltva” sorok otthoni eszközök, amelyek tiltott címet próbáltak elérni; torrentes szervernél a tiltólistás peerek megszokottak."
+ },
+ "rtr.missing": {
+  "text": "hiányzik"
  }
 }

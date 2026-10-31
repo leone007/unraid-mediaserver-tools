@@ -65,6 +65,10 @@ $new = [
     'ups_qb' => sx_choice($_POST['ups_qb'] ?? '5', ['0', '3', '5', '10'], 'qBittorrent before the NUT shutdown'),
     'show_net' => sx_bool($_POST['show_net'] ?? '1'), 'net_speed' => sx_bool($_POST['net_speed'] ?? '1'), 'net_today' => sx_bool($_POST['net_today'] ?? '1'),
     'net_hist' => sx_bool($_POST['net_hist'] ?? '1'), 'net_inet' => sx_bool($_POST['net_inet'] ?? '1'), 'net_top' => sx_bool($_POST['net_top'] ?? '1'),
+    'show_rtr' => sx_bool($_POST['show_rtr'] ?? '0'), 'rtr_view' => sx_choice($_POST['rtr_view'] ?? 'b', ['a', 'b', 'c'], 'Router view'),
+    'rtr_speed' => sx_bool($_POST['rtr_speed'] ?? '1'), 'rtr_month' => sx_bool($_POST['rtr_month'] ?? '1'), 'rtr_graph' => sx_bool($_POST['rtr_graph'] ?? '1'),
+    'rtr_cores' => sx_bool($_POST['rtr_cores'] ?? '1'), 'rtr_mem' => sx_bool($_POST['rtr_mem'] ?? '1'), 'rtr_temp' => sx_bool($_POST['rtr_temp'] ?? '1'),
+    'rtr_svc' => sx_bool($_POST['rtr_svc'] ?? '1'), 'rtr_sky' => sx_bool($_POST['rtr_sky'] ?? '1'), 'rtr_cli' => sx_bool($_POST['rtr_cli'] ?? '1'), 'rtr_mesh' => sx_bool($_POST['rtr_mesh'] ?? '1'),
     'ram_warn' => sx_int($_POST['ram_warn'] ?? '80', 1, 100, 'RAM warning'), 'ram_crit' => sx_int($_POST['ram_crit'] ?? '92', 1, 100, 'RAM critical'),
     'log_warn' => sx_int($_POST['log_warn'] ?? '80', 1, 100, 'Log warning'), 'log_crit' => sx_int($_POST['log_crit'] ?? '92', 1, 100, 'Log critical'),
     'vd_warn' => sx_int($_POST['vd_warn'] ?? '80', 1, 100, 'Docker vdisk warning'), 'vd_crit' => sx_int($_POST['vd_crit'] ?? '92', 1, 100, 'Docker vdisk critical'),
@@ -77,6 +81,12 @@ $new = [
     'n_remind' => sx_int($_POST['n_remind'] ?? '24', 0, 168, 'Repeat interval'),
     'wk_on' => sx_bool($_POST['wk_on'] ?? '1'), 'wk_day' => sx_int($_POST['wk_day'] ?? '7', 1, 7, 'Weekly day'), 'wk_hour' => sx_int($_POST['wk_hour'] ?? '19', 0, 23, 'Weekly hour'),
 ];
+// the router connection (item 132) has its own file; the page sends it with the rest
+if (isset($_POST['rtr_host'])) {
+    require_once __DIR__ . '/rtr_lib.php';
+    $rtr = rtr_check(['host' => $_POST['rtr_host'], 'user' => $_POST['rtr_user'] ?? '', 'port' => $_POST['rtr_port'] ?? '22', 'path' => $_POST['rtr_path'] ?? '', 'sec' => $_POST['rtr_sec'] ?? '5']);
+    if (!is_array($rtr)) { sx_json(['ok' => false, 'error' => sx_tr('rtr.err_' . $rtr)], 400); }
+}
 foreach (['ram', 'log', 'vd', 'temp'] as $k) {
     if ((int)$new[$k . '_warn'] > (int)$new[$k . '_crit']) { sx_json(['ok' => false, 'error' => sx_tr('save.err_limits')], 400); }
 }
@@ -91,4 +101,13 @@ if (@file_put_contents($tmp, $text) === false) { sx_json(['ok' => false, 'error'
 if (!@rename($tmp, SX_CFG)) { @file_put_contents(SX_CFG, $text); @unlink($tmp); }
 @chmod(SX_CFG, 0600);
 @unlink('/tmp/sysbox_slow.json');
+if (isset($rtr) && is_array($rtr)) {
+    $was = rtr_cfg(); rtr_cfg_save($rtr);
+    // the sampler reads its settings every minute; a new router address, or the part switched on, starts it again now
+    if ($was !== $rtr || $new['show_rtr'] === '1') {
+        @exec('pkill -f ' . escapeshellarg('plugins/sysbox/rtrmon.php') . ' 2>/dev/null');
+        if ($new['show_rtr'] === '1') { @exec('setsid nohup flock -n /tmp/sysbox_rtr.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/rtrmon.php') . ' >/dev/null 2>&1 </dev/null &'); }
+        else { @unlink(rtr_live_file()); }
+    }
+}
 sx_json(['ok' => true]);
