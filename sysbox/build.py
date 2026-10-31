@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37c">
+<!ENTITY version   "2026.10.37d">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37d
+- Router: on PPPoE the WAN figures use ppp0 even when the router gives no route line; nothing to copy to the router
+
 ###2026.10.37c
 - Router: the WAN figures follow the default route (ppp0 on PPPoE) instead of the physical WAN port; nothing to copy to the router
 

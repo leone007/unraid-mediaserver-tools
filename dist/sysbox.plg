@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37c">
+<!ENTITY version   "2026.10.37d">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37d
+- Router: on PPPoE the WAN figures use ppp0 even when the router gives no route line; nothing to copy to the router
+
 ###2026.10.37c
 - Router: the WAN figures follow the default route (ppp0 on PPPoE) instead of the physical WAN port; nothing to copy to the router
 
@@ -19874,6 +19877,7 @@ function rtr_digest($S) {
     // the WAN: the device of the default route (ppp0 on PPPoE, where the traffic really goes), else the router's WAN port
     $wan = '';
     foreach ((array)($S['route'] ?? []) as $l) { if (preg_match('/\bdev\s+(\S+)/', $l, $m) && isset($D['dev'][$m[1]])) { $wan = $m[1]; break; } }
+    if ($wan === '' && in_array($nv['wan0_proto'] ?? '', ['pppoe', 'pptp', 'l2tp'], true) && isset($D['dev']['ppp0'])) { $wan = 'ppp0'; }   // PPP without a route line
     if ($wan === '') { $wan = (string)($nv['wan0_ifname'] ?? ''); }
     $D['wan'] = isset($D['dev'][$wan]) ? $wan : '';
     $D['wan_proto'] = (string)($nv['wan0_proto'] ?? '');

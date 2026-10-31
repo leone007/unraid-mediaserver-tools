@@ -146,6 +146,7 @@ function rtr_digest($S) {
     // the WAN: the device of the default route (ppp0 on PPPoE, where the traffic really goes), else the router's WAN port
     $wan = '';
     foreach ((array)($S['route'] ?? []) as $l) { if (preg_match('/\bdev\s+(\S+)/', $l, $m) && isset($D['dev'][$m[1]])) { $wan = $m[1]; break; } }
+    if ($wan === '' && in_array($nv['wan0_proto'] ?? '', ['pppoe', 'pptp', 'l2tp'], true) && isset($D['dev']['ppp0'])) { $wan = 'ppp0'; }   // PPP without a route line
     if ($wan === '') { $wan = (string)($nv['wan0_ifname'] ?? ''); }
     $D['wan'] = isset($D['dev'][$wan]) ? $wan : '';
     $D['wan_proto'] = (string)($nv['wan0_proto'] ?? '');
