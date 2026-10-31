@@ -10,7 +10,7 @@ Dashboard plugins for **Unraid 7** (tested on **7.3.4**, see [Compatibility](#co
 
 | Plugin | Replaces / adds | Highlights |
 |---|---|---|
-| [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, network, containers; Network, Update manager, Snapshots, Safe shutdown pages |
+| [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, network, router, containers; Network, Update manager, Snapshots, Safe shutdown pages |
 | [**Diskbox**](#diskbox) | Disk Viewer tile | Array, parity, pools, unassigned disks, SMART, preclear and clearing progress; **Balance** page: balance, empty or remove disks |
 | [**Streambox**](#streambox) | new Jellyfin tile | Now playing, this week's episodes, recently added, Discord announcements |
 | [**Seedbox**](#seedbox) | new qBittorrent tile and *Seedbox Tools* page | Find my torrent, Shape up, Season Repacker, autobrr watch, Discord bot |
@@ -21,6 +21,8 @@ Dashboard plugins for **Unraid 7** (tested on **7.3.4**, see [Compatibility](#co
 <img src="screenshots/sysbox.png" alt="Sysbox" width="520">
 
 One tile instead of the System and Processor tiles: memory as one bar (system, ZFS cache, Docker, free), boot, log and Docker vdisk usage, CPU load with a 10 minute history, temperature and power, a per-thread heat map, the Intel GPU engines (Quick Sync), wall power from a Shelly smart socket with the monthly kWh, and the busiest or selected containers with start, stop, restart and log buttons. Anything that needs attention is listed at the top; Discord alerts with warning and critical limits you set.
+
+**Router part** (optional, off by default): CPU per core, memory and swap, WAN speed with a 30-minute graph, the month from vnstat, temperatures, and the state of Entware, AdGuard Home, Skynet, Tailscale and the AiMesh nodes, for any router you can reach over SSH (made for Asuswrt-Merlin, should work on other Entware routers). Sysbox makes its own key; the key line it gives you for the router runs nothing but a small read script, which a one-line install command writes on the router. Compact, Standard or Full view in the settings; only what the router has is shown.
 
 Pages under *Settings, Utilities*:
 - **Update manager**: every container with a waiting update, sorted *Wait*, *Look first* and *Safe* (rebuild, patch, feature or major change, from the image labels and the release notes), with a self-test of the services after an update.
@@ -93,6 +95,7 @@ What each part builds on, and what has **not** been tried yet. Reports from othe
 | All plugins | Unraid 7, the stock dashboard | Unraid 6; used every day only with the black (dark) theme |
 | Sysbox, Streambox GPU rows | Intel iGPU (`intel_gpu_top`) | NVIDIA and AMD GPUs are not read |
 | Sysbox wall power | Shelly plug with the Gen2+ RPC API (`/rpc/Switch.GetStatus`), no password on the plug | Shelly Gen1 devices, other smart plugs |
+| Sysbox router part | SSH on the router with a key (dropbear or OpenSSH honouring `command=`), a POSIX shell; ASUS nvram, Broadcom `wl`, vnstat, Skynet, connmon only where present | built and tested against an emulated Asuswrt-Merlin RT-BE88U; not yet tried on a live router, OpenWrt or Keenetic |
 | Sysbox Update manager | Docker; release notes from GitHub without a token (GitHub allows about 60 requests an hour) | Images built locally or kept in a private registry show *Not checkable*; release notes are found for linuxserver images and apps that publish GitHub releases |
 | Diskbox Balance | downloads and media in folders you set, hardlinked on the same disk (`rsync -aH` keeps the links); tested on XFS array disks | Btrfs or ZFS array disks, arrays with a single parity disk; files hardlinked outside the set folders are left in place |
 | Seedbox Tools | qBittorrent WebUI, Radarr and Sonarr (API v3), Prowlarr; tested with the downloads hardlinked into the library | Other download clients; torrents are matched to Radarr/Sonarr by exact video file sizes, so re-encoded or remuxed library files are not matched; music (Lidarr) is not matched |
