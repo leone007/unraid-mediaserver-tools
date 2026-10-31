@@ -63,7 +63,7 @@ if ($op === 'save') {
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'q_from' => [0, 23], 'q_to' => [0, 23], 'ev_max' => [0, 10], 'limit' => [10, 100]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
-    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow',
+    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 't_rtr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow',
               'b_sug', 's_dc', 's_upd_safe', 's_upd_look', 's_snap', 's_test', 's_sbx'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
     $lg = (string)($_POST['lang'] ?? 'auto'); $c['lang'] = in_array($lg, ['auto', 'en', 'hu'], true) ? $lg : 'auto';
     $cx = trim((string)($_POST['ctx'] ?? 'auto')); if ($cx !== 'auto' && $cx !== '' && !preg_match('#^/[A-Za-z0-9_./ -]{1,200}$#', $cx)) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_ctx')]); } $c['ctx'] = $cx;

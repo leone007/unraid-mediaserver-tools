@@ -5687,5 +5687,29 @@
  "rtr.missing": {
   "text": "missing",
   "note": "after Entware: the Entware disk is not mounted on the router."
+ },
+ "topic.router": {
+  "text": "Router",
+  "note": "topic of a finding; also a settings checkbox (the Sysbox Router part has to be on)."
+ },
+ "gd.ev_rtr_down": {
+  "text": "Router: does not answer since {t}",
+  "note": "Guard alert text; {t} = time (HH:MM)."
+ },
+ "gd.ev_rtr_svc": {
+  "text": "Router: {s} stopped",
+  "note": "Guard alert text; {s} = service name."
+ },
+ "gd.ev_rtr_ent": {
+  "text": "Router: the Entware disk is missing (AdGuard and Skynet stop with it)",
+  "note": "Guard alert text."
+ },
+ "gd.ev_rtr_node": {
+  "text": "Router: AiMesh node {n} ({ip}) is offline",
+  "note": "Guard alert text."
+ },
+ "gd.ev_rtr_temp": {
+  "text": "Router: CPU at {t} °C",
+  "note": "Guard alert text: the router CPU is 85 °C or more."
  }
 }

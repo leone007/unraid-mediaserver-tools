@@ -4274,5 +4274,23 @@
  },
  "rtr.missing": {
   "text": "hiányzik"
+ },
+ "topic.router": {
+  "text": "Router"
+ },
+ "gd.ev_rtr_down": {
+  "text": "Router: nem válaszol {t} óta"
+ },
+ "gd.ev_rtr_svc": {
+  "text": "Router: {s} leállt"
+ },
+ "gd.ev_rtr_ent": {
+  "text": "Router: hiányzik az Entware-lemez (vele áll az AdGuard és a Skynet)"
+ },
+ "gd.ev_rtr_node": {
+  "text": "Router: a(z) {n} AiMesh-nód ({ip}) offline"
+ },
+ "gd.ev_rtr_temp": {
+  "text": "Router: a CPU {t} °C"
  }
 }

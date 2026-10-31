@@ -46,9 +46,10 @@ while (true) {
             }
         }
         $prevCpu = $D['cpu']; $prevWan = $D['wan'] !== '' ? $D['dev'][$D['wan']] : null; $prevT = $now;
-        // Skynet's statistics are slow to make: only for the Full view with the Skynet bar on
+        // Skynet's statistics are slow to make: only for the Full view with the Skynet bar on, or for the Claude Guard (item 131)
         $c = sx_cfg(); $hasSky = false; foreach ($D['svc'] as $x) { if ($x[0] === 'skynet' && $x[1]) { $hasSky = true; } }
-        if ($hasSky && ($c['rtr_view'] ?? 'b') === 'c' && sx_on($c['rtr_sky'] ?? '1') && $now - $skyT >= 600) {
+        $G = json_decode((string)@file_get_contents(rtr_dir() . '/guard.json'), true); $forGuard = is_array($G) && !empty($G['on']) && ($G['t_rtr'] ?? 1);
+        if ($hasSky && ((($c['rtr_view'] ?? 'b') === 'c' && sx_on($c['rtr_sky'] ?? '1')) || $forGuard) && $now - $skyT >= 600) {
             $skyT = $now; list($ok, $out) = rtr_ssh($R, 'sky', 60);
             if ($ok) { $sky = rtr_sky_parse($out) + ['t' => $now]; }
         }

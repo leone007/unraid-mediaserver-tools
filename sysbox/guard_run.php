@@ -25,6 +25,7 @@ if ($mode === 'tick') {
     $ev = array_values(array_filter($ev, function ($e) use ($want) { return !empty($want[$e['src']]) && in_array($e['level'] ?? '', ['a', 'rd'], true); }));
     $spawn = gd_state_edit(function (&$S) use ($c, $ev) {
         if (!empty($c['ev_sbx'])) { $ev = array_merge($ev, gd_seedbox_events($S)); }
+        if (!empty($c['t_rtr'])) { $ev = array_merge($ev, gd_router_events($S)); }
         // the same alert key starts a report at most once in 6 hours
         $last = $S['ev_last'] ?? []; $fresh = [];
         foreach ($ev as $e) { $k = (string)($e['key'] ?? md5($e['text'])); if (time() - (int)($last[$k] ?? 0) < 6 * 3600) { continue; } $last[$k] = time(); $fresh[] = $e; }

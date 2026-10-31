@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37d">
+<!ENTITY version   "2026.10.38">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,10 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.38
+- Claude Guard: the router is part of the report (new Router box under What Claude looks at; needs the Sysbox Router part): model, firmware, uptime, CPU, memory, temperatures, WAN and month, ping, services, AiMesh nodes and the Skynet summary, read from what the Router part already collects
+- Claude Guard: an event report when the router does not answer for 5 minutes, a router service stops or the Entware disk is missing, an AiMesh node goes offline or the router CPU reaches 85 °C (a service, node or temperature counts after two checks in a row)
+
 ###2026.10.37d
 - Router: on PPPoE the WAN figures use ppp0 even when the router gives no route line; nothing to copy to the router
 

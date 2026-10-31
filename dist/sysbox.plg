@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37d">
+<!ENTITY version   "2026.10.38">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,10 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.38
+- Claude Guard: the router is part of the report (new Router box under What Claude looks at; needs the Sysbox Router part): model, firmware, uptime, CPU, memory, temperatures, WAN and month, ping, services, AiMesh nodes and the Skynet summary, read from what the Router part already collects
+- Claude Guard: an event report when the router does not answer for 5 minutes, a router service stops or the Entware disk is missing, an AiMesh node goes offline or the router CPU reaches 85 °C (a service, node or temperature counts after two checks in a row)
+
 ###2026.10.37d
 - Router: on PPPoE the WAN figures use ppp0 even when the router gives no route line; nothing to copy to the router
 
@@ -9414,6 +9418,30 @@ function mt_i18n_js($dir, $name, $only = null) {
  "rtr.missing": {
   "text": "missing",
   "note": "after Entware: the Entware disk is not mounted on the router."
+ },
+ "topic.router": {
+  "text": "Router",
+  "note": "topic of a finding; also a settings checkbox (the Sysbox Router part has to be on)."
+ },
+ "gd.ev_rtr_down": {
+  "text": "Router: does not answer since {t}",
+  "note": "Guard alert text; {t} = time (HH:MM)."
+ },
+ "gd.ev_rtr_svc": {
+  "text": "Router: {s} stopped",
+  "note": "Guard alert text; {s} = service name."
+ },
+ "gd.ev_rtr_ent": {
+  "text": "Router: the Entware disk is missing (AdGuard and Skynet stop with it)",
+  "note": "Guard alert text."
+ },
+ "gd.ev_rtr_node": {
+  "text": "Router: AiMesh node {n} ({ip}) is offline",
+  "note": "Guard alert text."
+ },
+ "gd.ev_rtr_temp": {
+  "text": "Router: CPU at {t} °C",
+  "note": "Guard alert text: the router CPU is 85 °C or more."
  }
 }
 ]]></INLINE>
@@ -13699,6 +13727,24 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "rtr.missing": {
   "text": "hiányzik"
+ },
+ "topic.router": {
+  "text": "Router"
+ },
+ "gd.ev_rtr_down": {
+  "text": "Router: nem válaszol {t} óta"
+ },
+ "gd.ev_rtr_svc": {
+  "text": "Router: {s} leállt"
+ },
+ "gd.ev_rtr_ent": {
+  "text": "Router: hiányzik az Entware-lemez (vele áll az AdGuard és a Skynet)"
+ },
+ "gd.ev_rtr_node": {
+  "text": "Router: a(z) {n} AiMesh-nód ({ip}) offline"
+ },
+ "gd.ev_rtr_temp": {
+  "text": "Router: a CPU {t} °C"
  }
 }
 ]]></INLINE>
@@ -17164,7 +17210,7 @@ $(function () {
       row(esc(T('gds.daily')), esc(T('gds.at')) + ' ' + num('gdm-h', c.hour, 0, 23) + ' : ' + num('gdm-m', c.min, 0, 59), esc(T('gds.daily_hint'))) +
       row(esc(T('gds.quiet')), esc(T('gds.from')) + ' ' + num('gdm-qf', c.q_from, 0, 23) + ' ' + esc(T('gds.to')) + ' ' + num('gdm-qt', c.q_to, 0, 23) + ' ' + esc(T('gds.hours')), esc(T('gds.quiet_hint'))) +
       row(esc(T('gds.events')), ck('gdm-es', c.ev_sys, esc(T('gds.ev_sys'))) + ck('gdm-ed', c.ev_dsk, esc(T('gds.ev_dsk'))) + ck('gdm-eb', c.ev_sbx, esc(T('gds.ev_sbx'))) + esc(T('gds.at_most')) + ' ' + num('gdm-em', c.ev_max, 0, 10) + ' ' + esc(T('gds.a_day')), esc(T('gds.events_hint'))) +
-      row(esc(T('gds.topics')), ck('gdm-td', c.t_disk, esc(T('topic.disks'))) + ck('gdm-tc', c.t_ct, esc(T('topic.containers'))) + ck('gdm-tl', c.t_log, esc(T('topic.logs'))) + ck('gdm-ta', c.t_arr, esc(T('topic.services'))), esc(T('gds.topics_hint'))) +
+      row(esc(T('gds.topics')), ck('gdm-td', c.t_disk, esc(T('topic.disks'))) + ck('gdm-tc', c.t_ct, esc(T('topic.containers'))) + ck('gdm-tl', c.t_log, esc(T('topic.logs'))) + ck('gdm-ta', c.t_arr, esc(T('topic.services'))) + ck('gdm-tr', c.t_rtr, esc(T('topic.router'))), esc(T('gds.topics_hint'))) +
       row(esc(T('gds.limit')), esc(T('gds.skip_above')) + ' ' + num('gdm-lim', c.limit, 10, 100) + ' %' + (r.usage ? ' <span class="gdm-chip ' + (r.usage.week >= c.limit ? 'a' : 'g') + '">' + esc(T('gds.now', { p: Math.round(r.usage.week) })) + '</span>' : ''), esc(T('gds.limit_hint'))) +
       row(esc(T('gds.lang')), '<select id="gdm-lang">' + $.map(['auto', 'hu', 'en'], function (k) { return '<option value="' + k + '"' + (c.lang === k ? ' selected' : '') + '>' + esc(T('gds.lang_' + k)) + '</option>'; }).join('') + '</select>' +
         (c.lang === 'auto' ? ' <span class="gdm-chip g">' + esc(T('gds.lang_now', { l: T('gds.lang_' + r.lang_now) })) + '</span>' : ''), esc(T('gds.lang_hint'))) +
@@ -17183,7 +17229,7 @@ $(function () {
     var $m = $('#gdm-smsg').attr('class', '').text(T('gdm.saving'));
     function b(id) { return $('#' + id).prop('checked') ? 1 : 0; }
     api('save', {on: b('gdm-on'), hour: $('#gdm-h').val(), min: $('#gdm-m').val(), q_from: $('#gdm-qf').val(), q_to: $('#gdm-qt').val(),
-      ev_sys: b('gdm-es'), ev_dsk: b('gdm-ed'), ev_sbx: b('gdm-eb'), ev_max: $('#gdm-em').val(), t_disk: b('gdm-td'), t_ct: b('gdm-tc'), t_log: b('gdm-tl'), t_arr: b('gdm-ta'),
+      ev_sys: b('gdm-es'), ev_dsk: b('gdm-ed'), ev_sbx: b('gdm-eb'), ev_max: $('#gdm-em').val(), t_disk: b('gdm-td'), t_ct: b('gdm-tc'), t_log: b('gdm-tl'), t_arr: b('gdm-ta'), t_rtr: b('gdm-tr'),
       limit: $('#gdm-lim').val(), discord: $('#gdm-dc').val(), todo: b('gdm-todo'), lang: $('#gdm-lang').val(), ctx: $('#gdm-ctx').val(),
       brief: b('gdm-br'), b_ep: b('gdm-bep'), b_dl: b('gdm-bdl'), b_upd: b('gdm-bupd'), b_net: b('gdm-bnet'), b_pow: b('gdm-bpow'),
       b_sug: b('gdm-bsug'), s_dc: b('gdm-sdc'), s_upd_safe: b('gdm-supd_safe'), s_upd_look: b('gdm-supd_look'), s_snap: b('gdm-ssnap'), s_test: b('gdm-stest'), s_sbx: b('gdm-ssbx')})
@@ -17247,7 +17293,7 @@ const GD_SNAP_DAYS = 7;
 
 function gd_defaults() {
     return ['on' => 0, 'hour' => 7, 'min' => 0, 'q_from' => 22, 'q_to' => 6, 'ev_sys' => 1, 'ev_dsk' => 1, 'ev_sbx' => 1, 'ev_max' => 3,
-            't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto',
+            't_disk' => 1, 't_ct' => 1, 't_log' => 1, 't_arr' => 1, 't_rtr' => 1, 'limit' => 70, 'discord' => 'issues', 'todo' => 1, 'lang' => 'auto', 'ctx' => 'auto',
             'brief' => 1, 'b_ep' => 1, 'b_dl' => 1, 'b_upd' => 1, 'b_net' => 1, 'b_pow' => 1,   // morning brief (item 95 B)
             'b_sug' => 1, 's_dc' => 1, 's_upd_safe' => 1, 's_upd_look' => 1, 's_snap' => 1, 's_test' => 1, 's_sbx' => 0];   // suggestions (item 95 C)
 }
@@ -17368,7 +17414,56 @@ function gd_snapshot($c, $since) {
         $s['arr_health'] = gd_arr_health();
         $s['seedbox'] = gd_seedbox();
     }
+    if (!empty($c['t_rtr'])) { $r = gd_router(); if ($r !== null) { $s['router'] = $r; } }
     return $s;
+}
+// ---- router (item 131): what the Sysbox Router part read (rtrmon.php); no connection of its own ----
+function gd_router_live() {
+    if (!sx_on(sx_cfg()['show_rtr'] ?? '0')) { return null; }
+    require_once __DIR__ . '/rtr_lib.php';
+    $L = rtr_live(); if (!$L || ($L['state'] ?? '') === 'setup') { return null; }
+    return $L;
+}
+function gd_router() {
+    $L = gd_router_live(); if (!$L) { return null; }
+    if (time() - (int)$L['t'] > 300) { return ['state' => 'the Sysbox router reader has not written for ' . round((time() - (int)$L['t']) / 60) . ' minutes']; }
+    $o = ['state' => $L['state'] === 'ok' ? 'answers' : 'error: ' . $L['err'] . ' since ' . date('Y-m-d H:i', (int)$L['err_since']), 'last_answer' => $L['last_ok'] ? date('Y-m-d H:i', (int)$L['last_ok']) : null];
+    $D = $L['D'] ?? null;
+    if ($D) {
+        $gb = function ($b) { return round($b / 1e9, 2); };
+        $o += ['model' => $D['name'], 'firmware' => $D['fw'], 'uptime_h' => round($D['up'] / 3600, 1), 'cpu_pct' => $L['cpu'], 'load' => $D['load'],
+               'ram_used_pct' => $D['mem']['total'] ? round($D['mem']['used'] / $D['mem']['total'] * 100) : null, 'swap_used_mb' => round($D['mem']['swap_used'] / 1048576),
+               'cpu_temp_c' => $D['temps'][0] ?? null, 'radios' => array_map(function ($r) { return ['band' => $r[0], 'clients_on_router' => $r[1], 'temp_c' => $r[2]]; }, $D['radios']),
+               'lan_devices_arp' => $D['arp'], 'wan' => $D['wan'] . ' ' . ($D['wan_proto'] ?? ''), 'wan_now_mb_s' => ['down' => round($L['rate'][0] / 1e6, 2), 'up' => round($L['rate'][1] / 1e6, 2)],
+               'services' => array_map(function ($x) { return $x[0] . ($x[1] ? ' running' : ($x[0] === 'entware' ? ' disk MISSING' : ' STOPPED')); }, $D['svc']),
+               'aimesh_nodes' => array_map(function ($m) { return $m[0] . ' ' . $m[1] . ($m[2] ? ' online' : ' OFFLINE'); }, (array)$L['mesh'])];
+        if ($D['month']) { $o['wan_month_gb'] = ['down' => $gb($D['month'][0]), 'up' => $gb($D['month'][1]), 'counting_since' => !empty($D['vn_since']) ? date('Y-m-d', (int)$D['vn_since']) : null]; }
+        if ($D['ping']) { $o['internet_ping'] = ['ms' => $D['ping']['ms'], 'jitter_ms' => $D['ping']['jit'], 'quality_pct' => $D['ping']['q'], 'to' => $D['ping']['to']]; }
+    }
+    $K = $L['sky'] ?? null;
+    if ($K && $K['ev'] !== null) {
+        $o['skynet'] = ['read' => date('Y-m-d H:i', (int)$K['t']), 'block_events' => $K['ev'], 'unique_ips' => $K['ips'], 'log_since' => $K['from'] ? date('Y-m-d H:i', (int)$K['from']) : null,
+                        'top_ports_in' => $K['ports'], 'blocked_going_out_by_device' => $K['out'], 'banned_ips_ranges' => $K['ban'], 'blocked_in_out' => $K['blk']];
+    }
+    return $o;
+}
+// alerts from the router for an event report: down for 5 minutes, a service stopped, an AiMesh node offline, CPU above 85 °C;
+// a service, node or temperature counts only when it is seen in two ticks in a row (2 minutes), so a single lost ping is not an alert
+function gd_router_events(&$st) {
+    $L = gd_router_live(); if (!$L || time() - (int)$L['t'] > 300) { $st['rtr_prev'] = []; return []; }
+    $now = []; $D = $L['D'] ?? null;
+    if (($L['state'] ?? '') === 'err' && ($L['err'] ?? '') === 'unreach' && time() - (int)$L['err_since'] >= 300) { $now['down'] = sx_tr('gd.ev_rtr_down', ['t' => date('H:i', (int)$L['err_since'])]); }
+    if (($L['state'] ?? '') === 'ok' && $D) {
+        foreach ($D['svc'] as $x) { if (!$x[1]) { $now['svc:' . $x[0]] = sx_tr($x[0] === 'entware' ? 'gd.ev_rtr_ent' : 'gd.ev_rtr_svc', ['s' => sx_tr('rtr.svc_' . $x[0])]); } }
+        foreach ((array)$L['mesh'] as $m) { if (!$m[2]) { $now['node:' . $m[1]] = sx_tr('gd.ev_rtr_node', ['n' => $m[0], 'ip' => $m[1]]); } }
+        if (($D['temps'][0] ?? 0) >= 85) { $now['temp'] = sx_tr('gd.ev_rtr_temp', ['t' => round($D['temps'][0])]); }
+    }
+    $prev = $st['rtr_prev'] ?? []; $st['rtr_prev'] = array_fill_keys(array_keys($now), 1); $out = [];
+    foreach ($now as $k => $text) {
+        if ($k !== 'down' && empty($prev[$k])) { continue; }
+        $out[] = ['src' => 'router', 'level' => ($k === 'down' || $k === 'svc:entware' || $k === 'svc:adguard') ? 'rd' : 'a', 'key' => 'rtr:' . $k, 'text' => $text, 't' => time()];
+    }
+    return $out;
 }
 // syslog lines since the last snapshot that look like a problem, grouped (the same message with other numbers counts once)
 function gd_logs($since) {
@@ -17511,7 +17606,7 @@ function gd_prompt($kind, $now, $prev, $events, $c = null, $menu = '') {
     $p .= "<snapshot_now>\n" . json_encode($now, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_now>\n";
     if ($prev) { unset($prev['logs']); $p .= "<snapshot_previous>\n" . json_encode($prev, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n</snapshot_previous>\n"; }
     $p .= "\nAnswer with ONE JSON object and nothing else, in this shape:\n" .
-        '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner: the overall state; do not repeat what the items say","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services",' .
+        '{"verdict":"green|amber|red","summary":"1-2 sentences for the owner: the overall state; do not repeat what the items say","items":[{"area":"short name, e.g. Disk 4 or Sonarr","topic":"disks|containers|logs|services|router",' .
         '"level":"green|amber|red","title":"what happened, one short sentence","text":"what it means, 1-3 sentences","todo":"what to do, 1-2 sentences, or empty",' .
         '"cmd":"one read-only command for the Unraid terminal, or empty","link":"diskbox|updates|docker|seedbox|sonarr|radarr|prowlarr|jellyfin|syslog or empty"}],' .
         '"noise":"one sentence on the log lines that are harmless, with counts, or empty"' . ($menu !== '' ? ',"suggest":[]' : '') . '}' . "\n" .
@@ -17556,7 +17651,7 @@ function gd_parse($text) {
     foreach ((array)($j['items'] ?? []) as $x) {
         if (!is_array($x)) { continue; }
         $cmd = (string)($x['cmd'] ?? '');
-        $items[] = ['area' => mb_substr((string)($x['area'] ?? ''), 0, 60), 'topic' => in_array($x['topic'] ?? '', ['disks', 'containers', 'logs', 'services'], true) ? $x['topic'] : 'services',
+        $items[] = ['area' => mb_substr((string)($x['area'] ?? ''), 0, 60), 'topic' => in_array($x['topic'] ?? '', ['disks', 'containers', 'logs', 'services', 'router'], true) ? $x['topic'] : 'services',
                     'level' => $lv($x['level'] ?? ''), 'title' => mb_substr((string)($x['title'] ?? ''), 0, 300), 'text' => mb_substr((string)($x['text'] ?? ''), 0, 1200),
                     'todo' => mb_substr((string)($x['todo'] ?? ''), 0, 800), 'cmd' => gd_cmd_ok($cmd) ? $cmd : '', 'link' => in_array($x['link'] ?? '', $links, true) ? $x['link'] : ''];
     }
@@ -17782,7 +17877,7 @@ if ($op === 'save') {
     foreach (['hour' => [0, 23], 'min' => [0, 59], 'q_from' => [0, 23], 'q_to' => [0, 23], 'ev_max' => [0, 10], 'limit' => [10, 100]] as $k => [$lo, $hi]) {
         $v = (int)($_POST[$k] ?? $c[$k]); if ($v < $lo || $v > $hi) { sx_json(['ok' => false, 'error' => sx_tr('snpe.range', ['name' => $k, 'min' => $lo, 'max' => $hi])]); } $c[$k] = $v;
     }
-    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow',
+    foreach (['on', 'ev_sys', 'ev_dsk', 'ev_sbx', 't_disk', 't_ct', 't_log', 't_arr', 't_rtr', 'todo', 'brief', 'b_ep', 'b_dl', 'b_upd', 'b_net', 'b_pow',
               'b_sug', 's_dc', 's_upd_safe', 's_upd_look', 's_snap', 's_test', 's_sbx'] as $k) { $c[$k] = !empty($_POST[$k]) && $_POST[$k] !== '0' ? 1 : 0; }
     $lg = (string)($_POST['lang'] ?? 'auto'); $c['lang'] = in_array($lg, ['auto', 'en', 'hu'], true) ? $lg : 'auto';
     $cx = trim((string)($_POST['ctx'] ?? 'auto')); if ($cx !== 'auto' && $cx !== '' && !preg_match('#^/[A-Za-z0-9_./ -]{1,200}$#', $cx)) { sx_json(['ok' => false, 'error' => sx_tr('gd.e_ctx')]); } $c['ctx'] = $cx;
@@ -17841,6 +17936,7 @@ if ($mode === 'tick') {
     $ev = array_values(array_filter($ev, function ($e) use ($want) { return !empty($want[$e['src']]) && in_array($e['level'] ?? '', ['a', 'rd'], true); }));
     $spawn = gd_state_edit(function (&$S) use ($c, $ev) {
         if (!empty($c['ev_sbx'])) { $ev = array_merge($ev, gd_seedbox_events($S)); }
+        if (!empty($c['t_rtr'])) { $ev = array_merge($ev, gd_router_events($S)); }
         // the same alert key starts a report at most once in 6 hours
         $last = $S['ev_last'] ?? []; $fresh = [];
         foreach ($ev as $e) { $k = (string)($e['key'] ?? md5($e['text'])); if (time() - (int)($last[$k] ?? 0) < 6 * 3600) { continue; } $last[$k] = time(); $fresh[] = $e; }
@@ -20040,9 +20136,10 @@ while (true) {
             }
         }
         $prevCpu = $D['cpu']; $prevWan = $D['wan'] !== '' ? $D['dev'][$D['wan']] : null; $prevT = $now;
-        // Skynet's statistics are slow to make: only for the Full view with the Skynet bar on
+        // Skynet's statistics are slow to make: only for the Full view with the Skynet bar on, or for the Claude Guard (item 131)
         $c = sx_cfg(); $hasSky = false; foreach ($D['svc'] as $x) { if ($x[0] === 'skynet' && $x[1]) { $hasSky = true; } }
-        if ($hasSky && ($c['rtr_view'] ?? 'b') === 'c' && sx_on($c['rtr_sky'] ?? '1') && $now - $skyT >= 600) {
+        $G = json_decode((string)@file_get_contents(rtr_dir() . '/guard.json'), true); $forGuard = is_array($G) && !empty($G['on']) && ($G['t_rtr'] ?? 1);
+        if ($hasSky && ((($c['rtr_view'] ?? 'b') === 'c' && sx_on($c['rtr_sky'] ?? '1')) || $forGuard) && $now - $skyT >= 600) {
             $skyT = $now; list($ok, $out) = rtr_ssh($R, 'sky', 60);
             if ($ok) { $sky = rtr_sky_parse($out) + ['t' => $now]; }
         }
