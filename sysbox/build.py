@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37">
+<!ENTITY version   "2026.10.37a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37a
+- Router: the install line is now a block of short lines (the router's shell cut the long line at about 1000 characters, so nothing was written); paste the whole block in the router's SSH, it ends with Sysbox OK
+
 ###2026.10.37
 - New Router part on the tile (off until switched on): any router with SSH, Asuswrt-Merlin and other Entware routers; three views chosen in the settings: Compact (CPU, RAM, temperature, ping, services), Standard (WAN speed and 30-minute graph, month from vnstat, CPU cores, RAM and swap, temperatures) and Full (Standard plus foldable Skynet, Clients and AiMesh bars)
 - Only what the router has appears: Entware, AdGuard Home, Skynet, Tailscale, vnstat, connmon and the Wi-Fi radios are found by themselves; a stopped service is a red chip and an attention row, a router that does not answer is a red row

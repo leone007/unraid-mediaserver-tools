@@ -68,12 +68,12 @@ function rtr_keyline($r) {
     $pub = rtr_pub(); if ($pub === '') { return ''; }
     return 'command="' . $r['path'] . '",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ' . $pub;
 }
-// one short line for the router's SSH (under the 4 KB a terminal line takes): writes sysbox_ro.sh, nothing else
+// the install block for the router's SSH: the script itself as a here-document, so every line stays short (busybox ash
+// cuts a pasted line at about 1000 characters) and the owner sees what goes on the router; writes that one file, nothing else
 function rtr_install_cmd($r) {
-    $src = (string)@file_get_contents(__DIR__ . '/sysbox_ro.sh'); if ($src === '') { return ''; }
-    $b64 = base64_encode(gzencode($src, 9));
+    $src = rtrim((string)@file_get_contents(__DIR__ . '/sysbox_ro.sh')); if ($src === '') { return ''; }
     $p = $r['path'];
-    return 'mkdir -p ' . dirname($p) . ' && echo ' . $b64 . ' | base64 -d | gunzip > ' . $p . ' && chmod 755 ' . $p . ' && echo Sysbox OK';
+    return 'mkdir -p ' . dirname($p) . " && cat > " . $p . " <<'SYSBOX_RO_END'\n" . $src . "\nSYSBOX_RO_END\nchmod 755 " . $p . " && echo Sysbox OK\n";
 }
 
 // ---- asking the router: one ssh call; the error kinds the tile and the page explain ----

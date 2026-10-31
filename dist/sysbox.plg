@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37">
+<!ENTITY version   "2026.10.37a">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37a
+- Router: the install line is now a block of short lines (the router's shell cut the long line at about 1000 characters, so nothing was written); paste the whole block in the router's SSH, it ends with Sysbox OK
+
 ###2026.10.37
 - New Router part on the tile (off until switched on): any router with SSH, Asuswrt-Merlin and other Entware routers; three views chosen in the settings: Compact (CPU, RAM, temperature, ping, services), Standard (WAN speed and 30-minute graph, month from vnstat, CPU cores, RAM and swap, temperatures) and Full (Standard plus foldable Skynet, Clients and AiMesh bars)
 - Only what the router has appears: Entware, AdGuard Home, Skynet, Tailscale, vnstat, connmon and the Wi-Fi radios are found by themselves; a stopped service is a red chip and an attention row, a router that does not answer is a red row
@@ -1443,7 +1446,7 @@ foreach (sx_order($sx) as $sx_k):
 </dd>
 <dt><?=$sxs_t('rtr.s_install')?></dt>
 <dd>
-  <textarea id="sx-riline" readonly rows="2" style="width:100%;font:11px/1.4 monospace"><?=sx_h(rtr_pub() === '' ? '' : rtr_install_cmd($sx_rc))?></textarea>
+  <textarea id="sx-riline" readonly rows="6" style="width:100%;font:11px/1.4 monospace;white-space:pre"><?=sx_h(rtr_pub() === '' ? '' : rtr_install_cmd($sx_rc))?></textarea>
   <input type="button" id="sx-ricopy" value="<?=$sxs_t('rtr.b_copy_install')?>"> <span class="sx-rimsg"></span>
   <span class="uset-hint"><?=$sxs_t('rtr.s_install_hint')?></span>
 </dd>
@@ -9274,15 +9277,15 @@ function mt_i18n_js($dir, $name, $only = null) {
   "note": "settings hint under the key line."
  },
  "rtr.s_install": {
-  "text": "Install line",
+  "text": "Install block",
   "note": "settings row label: the one-line install command for the router."
  },
  "rtr.b_copy_install": {
-  "text": "Copy install line",
+  "text": "Copy install block",
   "note": "settings button."
  },
  "rtr.s_install_hint": {
-  "text": "Run it once in the router's SSH (ssh admin@router, then paste). It writes only the read script to the path above. Again after a script path change or a Sysbox update that says so.",
+  "text": "Paste the whole block once in the router's SSH (ssh admin@router, then paste; it ends with Sysbox OK). It writes only the read script to the path above. Again after a script path change or a Sysbox update that says so.",
   "note": "settings hint under the install line."
  },
  "rtr.s_test": {
@@ -13591,13 +13594,13 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Másold be új sorként a router engedélyezett kulcsai közé (Asuswrt-Merlin: Administration › System › Authorized Keys, majd Apply). A kulcs csak az olvasó szkriptet futtathatja, a routeren semmit sem változtathat."
  },
  "rtr.s_install": {
-  "text": "Telepítő sor"
+  "text": "Telepítő blokk"
  },
  "rtr.b_copy_install": {
-  "text": "Telepítő sor másolása"
+  "text": "Telepítő blokk másolása"
  },
  "rtr.s_install_hint": {
-  "text": "Futtasd egyszer a router SSH-jában (ssh admin@router, majd beillesztés). Csak az olvasó szkriptet írja a fenti helyre. Újra akkor kell, ha az útvonal változik, vagy egy Sysbox-frissítés ezt kéri."
+  "text": "Illeszd be az egész blokkot egyszer a router SSH-jába (ssh admin@router, majd beillesztés; a végén Sysbox OK jön). Csak az olvasó szkriptet írja a fenti helyre. Újra akkor kell, ha az útvonal változik, vagy egy Sysbox-frissítés ezt kéri."
  },
  "rtr.s_test": {
   "text": "Kapcsolat"
@@ -19787,12 +19790,12 @@ function rtr_keyline($r) {
     $pub = rtr_pub(); if ($pub === '') { return ''; }
     return 'command="' . $r['path'] . '",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ' . $pub;
 }
-// one short line for the router's SSH (under the 4 KB a terminal line takes): writes sysbox_ro.sh, nothing else
+// the install block for the router's SSH: the script itself as a here-document, so every line stays short (busybox ash
+// cuts a pasted line at about 1000 characters) and the owner sees what goes on the router; writes that one file, nothing else
 function rtr_install_cmd($r) {
-    $src = (string)@file_get_contents(__DIR__ . '/sysbox_ro.sh'); if ($src === '') { return ''; }
-    $b64 = base64_encode(gzencode($src, 9));
+    $src = rtrim((string)@file_get_contents(__DIR__ . '/sysbox_ro.sh')); if ($src === '') { return ''; }
     $p = $r['path'];
-    return 'mkdir -p ' . dirname($p) . ' && echo ' . $b64 . ' | base64 -d | gunzip > ' . $p . ' && chmod 755 ' . $p . ' && echo Sysbox OK';
+    return 'mkdir -p ' . dirname($p) . " && cat > " . $p . " <<'SYSBOX_RO_END'\n" . $src . "\nSYSBOX_RO_END\nchmod 755 " . $p . " && echo Sysbox OK\n";
 }
 
 // ---- asking the router: one ssh call; the error kinds the tile and the page explain ----

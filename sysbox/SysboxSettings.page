@@ -113,7 +113,7 @@ foreach (sx_order($sx) as $sx_k):
 </dd>
 <dt><?=$sxs_t('rtr.s_install')?></dt>
 <dd>
-  <textarea id="sx-riline" readonly rows="2" style="width:100%;font:11px/1.4 monospace"><?=sx_h(rtr_pub() === '' ? '' : rtr_install_cmd($sx_rc))?></textarea>
+  <textarea id="sx-riline" readonly rows="6" style="width:100%;font:11px/1.4 monospace;white-space:pre"><?=sx_h(rtr_pub() === '' ? '' : rtr_install_cmd($sx_rc))?></textarea>
   <input type="button" id="sx-ricopy" value="<?=$sxs_t('rtr.b_copy_install')?>"> <span class="sx-rimsg"></span>
   <span class="uset-hint"><?=$sxs_t('rtr.s_install_hint')?></span>
 </dd>

@@ -4178,13 +4178,13 @@
   "text": "Másold be új sorként a router engedélyezett kulcsai közé (Asuswrt-Merlin: Administration › System › Authorized Keys, majd Apply). A kulcs csak az olvasó szkriptet futtathatja, a routeren semmit sem változtathat."
  },
  "rtr.s_install": {
-  "text": "Telepítő sor"
+  "text": "Telepítő blokk"
  },
  "rtr.b_copy_install": {
-  "text": "Telepítő sor másolása"
+  "text": "Telepítő blokk másolása"
  },
  "rtr.s_install_hint": {
-  "text": "Futtasd egyszer a router SSH-jában (ssh admin@router, majd beillesztés). Csak az olvasó szkriptet írja a fenti helyre. Újra akkor kell, ha az útvonal változik, vagy egy Sysbox-frissítés ezt kéri."
+  "text": "Illeszd be az egész blokkot egyszer a router SSH-jába (ssh admin@router, majd beillesztés; a végén Sysbox OK jön). Csak az olvasó szkriptet írja a fenti helyre. Újra akkor kell, ha az útvonal változik, vagy egy Sysbox-frissítés ezt kéri."
  },
  "rtr.s_test": {
   "text": "Kapcsolat"

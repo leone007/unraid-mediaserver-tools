@@ -5559,15 +5559,15 @@
   "note": "settings hint under the key line."
  },
  "rtr.s_install": {
-  "text": "Install line",
+  "text": "Install block",
   "note": "settings row label: the one-line install command for the router."
  },
  "rtr.b_copy_install": {
-  "text": "Copy install line",
+  "text": "Copy install block",
   "note": "settings button."
  },
  "rtr.s_install_hint": {
-  "text": "Run it once in the router's SSH (ssh admin@router, then paste). It writes only the read script to the path above. Again after a script path change or a Sysbox update that says so.",
+  "text": "Paste the whole block once in the router's SSH (ssh admin@router, then paste; it ends with Sysbox OK). It writes only the read script to the path above. Again after a script path change or a Sysbox update that says so.",
   "note": "settings hint under the install line."
  },
  "rtr.s_test": {
