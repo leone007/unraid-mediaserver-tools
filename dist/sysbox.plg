@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37b">
+<!ENTITY version   "2026.10.37c">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37c
+- Router: the WAN figures follow the default route (ppp0 on PPPoE) instead of the physical WAN port; nothing to copy to the router
+
 ###2026.10.37b
 - Router: the read script finds nvram, wl, ipset and vnstat on routers whose shell has no command -v (Asuswrt-Merlin); the model, firmware, AiMesh nodes, Wi-Fi radios and Skynet now show; copy the script to the router again
 
@@ -19868,9 +19871,10 @@ function rtr_digest($S) {
             $D['fw'] = str_replace('.', '', $nv['firmver']) . '.' . $nv['buildno'] . ((($nv['extendno'] ?? '0') !== '0' && ($nv['extendno'] ?? '') !== '') ? '_' . $nv['extendno'] : '');
         }
     }
-    // the WAN: the router's own WAN interface, or the one of the default route
-    $wan = (string)($nv['wan0_ifname'] ?? '');
-    if ($wan === '' || !isset($D['dev'][$wan])) { foreach ((array)($S['route'] ?? []) as $l) { if (preg_match('/\bdev\s+(\S+)/', $l, $m) && isset($D['dev'][$m[1]])) { $wan = $m[1]; break; } } }
+    // the WAN: the device of the default route (ppp0 on PPPoE, where the traffic really goes), else the router's WAN port
+    $wan = '';
+    foreach ((array)($S['route'] ?? []) as $l) { if (preg_match('/\bdev\s+(\S+)/', $l, $m) && isset($D['dev'][$m[1]])) { $wan = $m[1]; break; } }
+    if ($wan === '') { $wan = (string)($nv['wan0_ifname'] ?? ''); }
     $D['wan'] = isset($D['dev'][$wan]) ? $wan : '';
     $D['wan_proto'] = (string)($nv['wan0_proto'] ?? '');
     $lan = (string)($nv['lan_ipaddr'] ?? '');

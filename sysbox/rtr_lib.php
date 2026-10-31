@@ -143,9 +143,10 @@ function rtr_digest($S) {
             $D['fw'] = str_replace('.', '', $nv['firmver']) . '.' . $nv['buildno'] . ((($nv['extendno'] ?? '0') !== '0' && ($nv['extendno'] ?? '') !== '') ? '_' . $nv['extendno'] : '');
         }
     }
-    // the WAN: the router's own WAN interface, or the one of the default route
-    $wan = (string)($nv['wan0_ifname'] ?? '');
-    if ($wan === '' || !isset($D['dev'][$wan])) { foreach ((array)($S['route'] ?? []) as $l) { if (preg_match('/\bdev\s+(\S+)/', $l, $m) && isset($D['dev'][$m[1]])) { $wan = $m[1]; break; } } }
+    // the WAN: the device of the default route (ppp0 on PPPoE, where the traffic really goes), else the router's WAN port
+    $wan = '';
+    foreach ((array)($S['route'] ?? []) as $l) { if (preg_match('/\bdev\s+(\S+)/', $l, $m) && isset($D['dev'][$m[1]])) { $wan = $m[1]; break; } }
+    if ($wan === '') { $wan = (string)($nv['wan0_ifname'] ?? ''); }
     $D['wan'] = isset($D['dev'][$wan]) ? $wan : '';
     $D['wan_proto'] = (string)($nv['wan0_proto'] ?? '');
     $lan = (string)($nv['lan_ipaddr'] ?? '');
