@@ -8,7 +8,8 @@ snap) ;;
 sky) [ -x /jffs/scripts/firewall ] && /jffs/scripts/firewall stats 2>/dev/null | head -c 100000; exit 0 ;;
 *) echo "sysbox_ro: not allowed" >&2; exit 1 ;;
 esac
-h() { command -v "$1" >/dev/null 2>&1; }
+# is a program there: a PATH search of our own (some router shells have no "command -v")
+h() { for d in $(echo "$PATH" | tr ':' ' '); do [ -x "$d/$1" ] && return 0; done; return 1; }
 s() { echo "@$1"; }
 s ver; echo 1
 s host; cat /proc/sys/kernel/hostname; uname -r

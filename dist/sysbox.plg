@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.37a">
+<!ENTITY version   "2026.10.37b">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.37b
+- Router: the read script finds nvram, wl, ipset and vnstat on routers whose shell has no command -v (Asuswrt-Merlin); the model, firmware, AiMesh nodes, Wi-Fi radios and Skynet now show; copy the script to the router again
+
 ###2026.10.37a
 - Router: the install line is now a block of short lines (the router's shell cut the long line at about 1000 characters, so nothing was written); paste the whole block in the router's SSH, it ends with Sysbox OK
 
@@ -20068,7 +20071,8 @@ snap) ;;
 sky) [ -x /jffs/scripts/firewall ] && /jffs/scripts/firewall stats 2>/dev/null | head -c 100000; exit 0 ;;
 *) echo "sysbox_ro: not allowed" >&2; exit 1 ;;
 esac
-h() { command -v "$1" >/dev/null 2>&1; }
+# is a program there: a PATH search of our own (some router shells have no "command -v")
+h() { for d in $(echo "$PATH" | tr ':' ' '); do [ -x "$d/$1" ] && return 0; done; return 1; }
 s() { echo "@$1"; }
 s ver; echo 1
 s host; cat /proc/sys/kernel/hostname; uname -r
