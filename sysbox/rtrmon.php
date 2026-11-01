@@ -1,6 +1,6 @@
 <?php
 // Long-running router sampler (item 132; cron starts it every minute, one instance only, it exits when the Router part is
-// switched off or not set up). Every few seconds one ssh call to the router's read-only script (counters, status), every
+// switched off or not set up). Every few seconds one ask over a lasting ssh connection to the router's read-only script (counters, status), every
 // 30 s a ping to the AiMesh nodes, every 10 minutes Skynet's statistics. Live data in /tmp (rtr_live_file). Only reads.
 if (PHP_SAPI !== 'cli') { exit; }
 require_once __DIR__ . '/rtr_lib.php';
@@ -21,13 +21,13 @@ while (true) {
     if (!is_dir(__DIR__)) { exit; }   // plugin removed
     if ($now - $cfgT >= 60) {
         $cfgT = $now;
-        if (!rtr_on()) { @unlink(rtr_live_file()); exit(0); }
-        $R2 = rtr_cfg(); if ($R2 !== $R) { $R = $R2; $prevCpu = null; $prevWan = null; $pts = []; $D = null; $sky = null; $skyT = 0; }
+        if (!rtr_on()) { rtr_mux_stop(); @unlink(rtr_live_file()); exit(0); }
+        $R2 = rtr_cfg(); if ($R2 !== $R) { rtr_mux_stop(); $R = $R2; $prevCpu = null; $prevWan = null; $pts = []; $D = null; $sky = null; $skyT = 0; }
     }
     if (!rtr_ready($R)) { rtr_write(['t' => $now, 'state' => 'setup']); exit(0); }
     $step = max(2, (int)$R['sec']);
 
-    $s = rtr_snap($R);
+    $s = rtr_snap($R, false, true);
     if ($s['ok']) {
         $D = $s['D']; $err = ''; $errSince = 0; $lastOk = $now;
         if ($prevCpu && $now > $prevT) {
@@ -50,7 +50,7 @@ while (true) {
         $c = sx_cfg(); $hasSky = false; foreach ($D['svc'] as $x) { if ($x[0] === 'skynet' && $x[1]) { $hasSky = true; } }
         $G = json_decode((string)@file_get_contents(rtr_dir() . '/guard.json'), true); $forGuard = is_array($G) && !empty($G['on']) && ($G['t_rtr'] ?? 1);
         if ($hasSky && ((($c['rtr_view'] ?? 'b') === 'c' && sx_on($c['rtr_sky'] ?? '1')) || $forGuard) && $now - $skyT >= 600) {
-            $skyT = $now; list($ok, $out) = rtr_ssh($R, 'sky', 60);
+            $skyT = $now; list($ok, $out) = rtr_ssh($R, 'sky', 60, false, true);
             if ($ok) { $sky = rtr_sky_parse($out) + ['t' => $now]; }
         }
         // AiMesh nodes: a ping from the server (they are on the LAN)

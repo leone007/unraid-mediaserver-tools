@@ -77,26 +77,61 @@ function rtr_install_cmd($r) {
 }
 
 // ---- asking the router: one ssh call; the error kinds the tile and the page explain ----
-function rtr_ssh($r, $cmd, $secs = 15, $accept = false) {
-    $key = rtr_key_path();
-    if ($key === '' || $r['host'] === '' || $r['user'] === '') { return [false, '', 'setup']; }
+// rtrmon asks over one lasting connection (an OpenSSH master, ControlMaster): dropbear logs a login only once per
+// connection, a new ssh every few seconds filled the router's syslog (887 of its last 999 lines, 2026-10-31)
+function rtr_mux_sock() { $d = getenv('SX_RTR_DIR'); return ($d !== false && $d !== '') ? rtr_dir() . '/mux' : '/tmp/sysbox_rtr_mux'; }
+function rtr_ssh_line($r, $key, $accept, $extra) {
     $bin = getenv('SX_RTR_SSH') ?: 'ssh';   // tests: a fake ssh
-    $line = escapeshellarg($bin) . ' -T -i ' . escapeshellarg($key) . ' -p ' . (int)$r['port']
+    return escapeshellarg($bin) . ' -T -i ' . escapeshellarg($key) . ' -p ' . (int)$r['port']
         . ' -o BatchMode=yes -o ConnectTimeout=4 -o LogLevel=ERROR -o PasswordAuthentication=no -o ServerAliveInterval=5'
         . ' -o UserKnownHostsFile=' . escapeshellarg(rtr_known_file()) . ' -o StrictHostKeyChecking=' . ($accept ? 'accept-new' : 'yes')
-        . ' ' . escapeshellarg($r['user'] . '@' . $r['host']) . ' ' . escapeshellarg($cmd);
+        . $extra . ' ' . escapeshellarg($r['user'] . '@' . $r['host']);
+}
+function rtr_ssh_kind($rc, $e) {
+    if (stripos($e, 'host key') !== false || stripos($e, 'IDENTIFICATION HAS CHANGED') !== false) { return 'hostkey'; }
+    if (stripos($e, 'Permission denied') !== false) { return 'auth'; }
+    if ($rc === 127 || stripos($e, 'not found') !== false || stripos($e, 'No such file') !== false) { return 'noscript'; }
+    if (stripos($e, 'not allowed') !== false) { return 'bad'; }
+    return 'unreach';
+}
+function rtr_mux_up() {
+    $sock = rtr_mux_sock(); if (!file_exists($sock)) { return false; }
+    $bin = getenv('SX_RTR_SSH') ?: 'ssh';
+    list($rc) = sx_run(escapeshellarg($bin) . ' -O check -o ControlPath=' . escapeshellarg($sock) . ' sysbox', 5);
+    if ($rc !== 0) { @unlink($sock); return false; }   // a master that died (router restart): a new one is made
+    return true;
+}
+// the master: logs in once, then waits in the background (-f -N); it ends by itself 2 minutes after the last ask
+function rtr_mux_start($r, $key, $secs) {
+    $err = rtr_mux_sock() . '.err'; @unlink($err);
+    $line = rtr_ssh_line($r, $key, false, ' -M -N -f -o ControlPath=' . escapeshellarg(rtr_mux_sock()) . ' -o ControlPersist=120 -o ServerAliveCountMax=3');
+    $to = sx_bin('timeout'); if ($to !== '') { $line = $to . ' ' . (int)$secs . ' ' . $line; }
+    @exec($line . ' </dev/null >/dev/null 2>' . escapeshellarg($err), $o, $rc);   // stderr to a file: a pipe could stay open in the background
+    $e = (string)@file_get_contents($err); @unlink($err);
+    return $rc === 0 ? '' : rtr_ssh_kind($rc, $e);
+}
+function rtr_mux_stop() {
+    $sock = rtr_mux_sock(); if (!file_exists($sock)) { return; }
+    $bin = getenv('SX_RTR_SSH') ?: 'ssh';
+    sx_run(escapeshellarg($bin) . ' -O exit -o ControlPath=' . escapeshellarg($sock) . ' sysbox', 5);
+    @unlink($sock);
+}
+function rtr_ssh($r, $cmd, $secs = 15, $accept = false, $mux = false) {
+    $key = rtr_key_path();
+    if ($key === '' || $r['host'] === '' || $r['user'] === '') { return [false, '', 'setup']; }
+    $extra = '';
+    if ($mux) {
+        if (!rtr_mux_up()) { $k = rtr_mux_start($r, $key, $secs); if ($k !== '') { return [false, '', $k]; } }
+        $extra = ' -o ControlMaster=no -o ControlPath=' . escapeshellarg(rtr_mux_sock());
+    }
+    $line = rtr_ssh_line($r, $key, $accept, $extra) . ' ' . escapeshellarg($cmd);
     $to = sx_bin('timeout'); if ($to !== '') { $line = $to . ' ' . (int)$secs . ' ' . $line; }
     $p = @proc_open($line, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pp);
     if (!is_resource($p)) { return [false, '', 'unreach']; }
     fclose($pp[0]); $out = stream_get_contents($pp[1]); $err = stream_get_contents($pp[2]); fclose($pp[1]); fclose($pp[2]);
     $rc = proc_close($p);
     if ($rc === 0) { return [true, (string)$out, '']; }
-    $e = (string)$err;
-    if (stripos($e, 'host key') !== false || stripos($e, 'IDENTIFICATION HAS CHANGED') !== false) { return [false, $out, 'hostkey']; }
-    if (stripos($e, 'Permission denied') !== false) { return [false, $out, 'auth']; }
-    if ($rc === 127 || stripos($e, 'not found') !== false || stripos($e, 'No such file') !== false) { return [false, $out, 'noscript']; }
-    if (stripos($e, 'not allowed') !== false) { return [false, $out, 'bad']; }
-    return [false, $out, 'unreach'];
+    return [false, $out, rtr_ssh_kind($rc, (string)$err)];
 }
 function rtr_sections($txt) {
     $S = []; $cur = null;
@@ -106,8 +141,8 @@ function rtr_sections($txt) {
     }
     return $S;
 }
-function rtr_snap($r, $accept = false) {
-    list($ok, $out, $err) = rtr_ssh($r, 'snap', 15, $accept);
+function rtr_snap($r, $accept = false, $mux = false) {
+    list($ok, $out, $err) = rtr_ssh($r, 'snap', 15, $accept, $mux);
     if (!$ok) { return ['ok' => false, 'err' => $err]; }
     $S = rtr_sections($out);
     if (!isset($S['ver'], $S['stat'], $S['mem'])) { return ['ok' => false, 'err' => 'bad']; }

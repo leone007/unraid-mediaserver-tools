@@ -8,6 +8,7 @@ sx_guard();
 function rtr_out($r) { return ['keyline' => rtr_keyline($r), 'install' => rtr_install_cmd($r)]; }
 function rtr_restart() {
     @exec('pkill -f ' . escapeshellarg('plugins/sysbox/rtrmon.php') . ' 2>/dev/null');
+    rtr_mux_stop();   // a new key or router: the next ask logs in again
     if (sx_on(sx_cfg()['show_rtr'] ?? '0')) { @exec('setsid nohup flock -n /tmp/sysbox_rtr.lock ' . escapeshellarg(sx_php()) . ' ' . escapeshellarg(__DIR__ . '/rtrmon.php') . ' >/dev/null 2>&1 </dev/null &'); }
 }
 
