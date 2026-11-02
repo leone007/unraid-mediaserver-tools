@@ -29,6 +29,8 @@ i.f32{display:inline-block;width:32px;height:32px}
      if(/\.png$/.test(f)){return r.fulfill({status:404,body:''});}
      return r.fulfill({contentType:'application/json',body:'{"ok":false}'});
    } return r.continue();});
+ // MT_NOW=<unix s>: the page's clock starts there, so the ago and countdown texts match the times in the mocks
+ if(process.env.MT_NOW){await pg.addInitScript(n=>{const D=Date,o=n*1000-D.now();class F extends D{constructor(...a){a.length?super(...a):super(D.now()+o);}static now(){return D.now()+o;}}window.Date=F;},+process.env.MT_NOW);}
  pg.on('pageerror',e=>console.log('PAGEERR',e.message));
  await pg.goto('http://nas.local/Dashboard'); await pg.waitForTimeout(4000);
  for(const c of (process.env.CLICK||'').split('|').filter(Boolean)){const e=await pg.$(c); if(e){await e.click(); await pg.waitForTimeout(400);} else console.log('noclick',c);}

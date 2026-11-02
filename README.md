@@ -1,6 +1,6 @@
 # unraid-mediaserver-tools
 
-Dashboard plugins for **Unraid 7** (tested on **7.3.4**, see [Compatibility](#compatibility)) that help you run a media server (Jellyfin, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
+Dashboard plugins for **Unraid 7** (tested on **7.3.4**, see [Compatibility](#compatibility)) that help you run a media server (Jellyfin, Emby, Plex, qBittorrent, Radarr, Sonarr, Prowlarr, autobrr). They share one native-looking style, replace or extend the stock dashboard tiles, and need no extra containers.
 
 **The rule of every tool here: nothing is added, replaced or deleted without your click.** The tools scan and report by themselves; every step that changes something is a button with a confirmation.
 
@@ -12,7 +12,7 @@ Dashboard plugins for **Unraid 7** (tested on **7.3.4**, see [Compatibility](#co
 |---|---|---|
 | [**Sysbox**](#sysbox) | System and Processor tiles | RAM, storage, CPU and GPU, wall power, network, router, containers; Network, Update manager, Snapshots, Safe shutdown pages |
 | [**Diskbox**](#diskbox) | Disk Viewer tile | Array, parity, pools, unassigned disks, SMART, preclear and clearing progress; **Balance** page: balance, empty or remove disks |
-| [**Streambox**](#streambox) | new Jellyfin tile | Now playing, this week's episodes, recently added, Discord announcements |
+| [**Streambox**](#streambox) | new media server tile | Now playing on Jellyfin, Emby and Plex, this week's episodes, recently added, Discord announcements |
 | [**Seedbox**](#seedbox) | new qBittorrent tile and *Seedbox Tools* page | Find my torrent, Shape up, Season Repacker, autobrr watch, Discord bot |
 | **Monitor** | Settings, Utilities, Monitor | The tiles in one column for the phone; reorder or hide them, add the page to the iPhone home screen |
 
@@ -53,7 +53,7 @@ A title is a downloads folder together with its hardlinked media files; they are
 
 <img src="screenshots/streambox.png" alt="Streambox" width="600">
 
-Jellyfin at a glance: who is watching right now (direct play, direct stream or transcode, with progress), GPU and CPU load with the power draw, **this week's episodes** from the Sonarr calendar (air time, the usual delay until the release shows up, countdowns), and what was added recently. It can announce new movies and seasons in Discord, send a weekly summary, and put the week's episodes on Jellyfin's home page. In Jellyfin's web client it also adds IMDb ratings that link to IMDb (from IMDb's public daily ratings file, no API key), a Watched page per user and a "Watched too" switch on the home page.
+Your media servers at a glance: who is watching right now on **Jellyfin, Emby and Plex**, one section per server with its state and bandwidth (direct play, direct stream or transcode with HW or SW and what the client gets, progress, the programme that is on for live TV, nicknames for users), GPU and CPU load with the power draw, **this week's episodes** from the Sonarr calendar (air time, the usual delay until the release shows up, countdowns), and what was added recently (from Jellyfin). Emby and Plex are optional, each with its own block and Test button in the settings; the Plex token is read from Plex's own config folder. It can announce new movies and seasons in Discord, send a weekly summary, and put the week's episodes on Jellyfin's home page. In Jellyfin's web client it also adds IMDb ratings that link to IMDb (from IMDb's public daily ratings file, no API key), a Watched page per user and a "Watched too" switch on the home page.
 
 ## Seedbox
 
@@ -95,11 +95,11 @@ What each part builds on, and what has **not** been tried yet. Reports from othe
 | All plugins | Unraid 7, the stock dashboard | Unraid 6; used every day only with the black (dark) theme |
 | Sysbox, Streambox GPU rows | Intel iGPU (`intel_gpu_top`) | NVIDIA and AMD GPUs are not read |
 | Sysbox wall power | Shelly plug with the Gen2+ RPC API (`/rpc/Switch.GetStatus`), no password on the plug | Shelly Gen1 devices, other smart plugs |
-| Sysbox router part | SSH on the router with a key (dropbear or OpenSSH honouring `command=`), a POSIX shell; ASUS nvram, Broadcom `wl`, vnstat, Skynet, connmon only where present | built and tested against an emulated Asuswrt-Merlin RT-BE88U; not yet tried on a live router, OpenWrt or Keenetic |
+| Sysbox router part | SSH on the router with a key (dropbear or OpenSSH honouring `command=`), a POSIX shell; ASUS nvram, Broadcom `wl`, vnstat, Skynet, connmon only where present | in daily use on an Asuswrt-Merlin RT-BE88U (3006.102.x) with AiMesh nodes; not yet tried on OpenWrt or Keenetic |
 | Sysbox Update manager | Docker; release notes from GitHub without a token (GitHub allows about 60 requests an hour) | Images built locally or kept in a private registry show *Not checkable*; release notes are found for linuxserver images and apps that publish GitHub releases |
 | Diskbox Balance | downloads and media in folders you set, hardlinked on the same disk (`rsync -aH` keeps the links); tested on XFS array disks | Btrfs or ZFS array disks, arrays with a single parity disk; files hardlinked outside the set folders are left in place |
 | Seedbox Tools | qBittorrent WebUI, Radarr and Sonarr (API v3), Prowlarr; tested with the downloads hardlinked into the library | Other download clients; torrents are matched to Radarr/Sonarr by exact video file sizes, so re-encoded or remuxed library files are not matched; music (Lidarr) is not matched |
-| Streambox | Jellyfin API key; Sonarr for this week's episodes | Plex and Emby |
+| Streambox | Jellyfin API key; optional Emby API key and Plex (token read from its config folder); Sonarr for this week's episodes | Recently added, announcements and the Jellyfin web extras come from Jellyfin only; Emby and Plex add their streams to Now playing |
 | Sysbox Claude Guard, Ask Claude, header button | Claude Code signed in, in a container named `claude` (`docker/claude-code`); uses your Claude plan | Other ways of running Claude |
 | Discord | a webhook per plugin; for Seedbox reactions a bot token | |
 
