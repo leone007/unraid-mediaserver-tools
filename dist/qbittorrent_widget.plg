@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzs">
+<!ENTITY version   "2026.10.99zzt">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzt
+- autobrr season pack on Discord: when no replace choice can be made, the message now says why (for example: Sonarr says the season is still airing, E08 tomorrow; or Sonarr's search does not find the pack) instead of promising a Replace with pack row that never came
+
 ###2026.10.99zzs
 - Season Repacker: a job stuck because Sonarr imported the pack by itself is now really looked at again every 5 minutes for a day and closes by itself (in 2026.10.99zzr the check never ran while that stuck job was the only one)
 
@@ -3734,7 +3737,9 @@ function st_ab_eval($rel, &$tor) {
             'cur_res' => $cur_res, 'cur_quality' => (string)($first['quality']['quality']['name'] ?? ''), 'cur_size' => $cur_size, 'have' => count($have), 'aired' => $aired, 'missing' => $missing];
 }
 
-function st_ab_message($rel, $v) {
+// $why: the BoxBot worker could not build a row (st_sp_item reason code, $det: the episodes still to air): the message says why
+// instead of the way to replace (item 140: it promised a row that never came)
+function st_ab_message($rel, $v, $why = null, $det = '') {
     $free = st_ab_free();
     $miss = $v['missing'] ? implode(', ', array_map(function ($n) { return 'E' . str_pad((string)$n, 2, '0', STR_PAD_LEFT); }, array_slice($v['missing'], 0, 15))) . (count($v['missing']) > 15 ? ' ...' : '') : '';
     // the pack and your episodes with the same badges (2160p, DV, HDR10, HUN), so they can be compared at a glance (item 87)
@@ -3742,11 +3747,34 @@ function st_ab_message($rel, $v) {
     $haveName = st_trd('dc.have', ['n' => $v['have'], 'm' => max($v['have'], $v['aired']), 's' => st_gb($v['cur_size'])]);
     $haveTxt = (string)($v['eplines'] ?? '') !== '' ? (string)$v['eplines'] : $v['have'] . '/' . max($v['have'], $v['aired']) . ', ' . ($v['cur_quality'] !== '' ? $v['cur_quality'] : ($v['cur_res'] . 'p'));
     $desc = st_l('Az autobrr új évadpakkot látott egy figyelt évadhoz. Nem indítottam semmit.', 'autobrr saw a new season pack of a monitored season. Nothing was started.') . "\n"
-          . st_l('Csere: Seedbox Tools, Season repacker, From autobrr, Replace with pack (a sor pár perc múlva ott van).', 'To replace: Seedbox Tools, Season repacker, From autobrr, Replace with pack (the row is there in a few minutes).')
+          . ($why === null ? st_l('Csere: Seedbox Tools, Season repacker, From autobrr, Replace with pack (a sor pár perc múlva ott van).', 'To replace: Seedbox Tools, Season repacker, From autobrr, Replace with pack (the row is there in a few minutes).')
+             : st_l('Most nem cserélhető: ', 'Cannot be replaced now: ') . st_ab_why_dc($why, $det) . '. ' . st_l('Ha ez megváltozik, a Season repacker Scan felveszi.', 'When that changes, a Season repacker Scan lists it.'))
           . ($v['missing'] ? "\n" . st_l('Az évad hiányos nálad: a hiányzó részeket (gyakran az évadzárót) a pakkból hozza.', 'The season is incomplete here: the missing episodes (often the finale) come from the pack.') : '');
     return st_notify('i', st_l('Seedbox: évadpakk érkezett', 'Seedbox: a season pack arrived') . ' · ' . $v['tag'], $desc,
         [[st_l('Pakk', 'Pack'), $packTxt], [$haveName, $haveTxt], [st_l('Hiányzik', 'Missing'), $miss],
          [st_l('Szabad hely', 'Free space'), $free >= 0 ? st_gb($free) . ($rel['size'] > 0 && $free < $rel['size'] * 1.1 ? st_l(' (KEVÉS)', ' (NOT ENOUGH)') : '') : '']], true, 'rep');
+}
+
+// the reason of st_sp_item in the Discord language
+function st_ab_why_dc($why, $det = '') {
+    switch ($why) {
+        case 'airing': return st_l('a Sonarr szerint az évad még fut', 'Sonarr says the season is still airing') . ($det !== '' ? ' (' . $det . ')' : '');
+        case 'no pack': return st_l('a Sonarr keresése nem találja a pakkot', 'Sonarr\'s search does not find the pack');
+        case 'search failed': return st_l('a Sonarr keresése hibát adott', 'Sonarr\'s search failed');
+        case 'Sonarr did not answer': return st_l('a Sonarr nem válaszolt', 'Sonarr did not answer');
+        case 'qBittorrent did not answer': return st_l('a qBittorrent nem válaszolt', 'qBittorrent did not answer');
+        case 'already a pack': return st_l('az évad már pakkból van', 'the season is already a pack');
+        default: return st_l('nincs mit cserélni', 'there is nothing to replace');
+    }
+}
+// the episodes that make a season "airing": not aired yet or without a date (E08 2026-11-06, E09 no date)
+function st_sp_airing_eps($list) {
+    $out = [];
+    foreach ($list as $x) {
+        $ts = !empty($x['airDateUtc']) ? strtotime($x['airDateUtc']) : 0;
+        if ($ts === 0 || $ts > time()) { $out[] = 'E' . str_pad((string)(int)$x['episodeNumber'], 2, '0', STR_PAD_LEFT) . ' ' . ($ts ? date('Y-m-d', $ts) : st_l('dátum nélkül', 'no date')); }
+    }
+    return implode(', ', array_slice($out, 0, 3)) . (count($out) > 3 ? ' ...' : '');
 }
 
 // called by the tick; $force skips the 5 minute wait (Test button)
@@ -3860,7 +3888,7 @@ function st_sp_ab_run() {
         [$c0, $ser, $e0] = st_arr('sonarr', '/series/' . $sid, 'GET', null, 60);
         [$c1, $files] = st_arr('sonarr', '/episodefile?seriesId=' . $sid, 'GET', null, 60);
         [$c2, $eps] = st_arr('sonarr', '/episode?seriesId=' . $sid . '&seasonNumber=' . $sn, 'GET', null, 60);
-        $it = null; $why = 'Sonarr did not answer'; $tq = st_lib_in(st_qb_torrents(), st_cfg());
+        $it = null; $why = 'Sonarr did not answer'; $list = []; $tq = st_lib_in(st_qb_torrents(), st_cfg());
         if ($tq === null) { $why = 'qBittorrent did not answer'; }
         elseif (is_array($ser) && is_array($files) && is_array($eps)) {
             $fby = []; foreach ($files as $f) { $fby[(int)$f['id']] = $f; }
@@ -3877,7 +3905,7 @@ function st_sp_ab_run() {
         $retry = !$it && in_array($why, ['no pack', 'search failed', 'Sonarr did not answer', 'qBittorrent did not answer'], true) && (int)$q['tries'] < 4;
         if (!empty($q['rel'])) {
             if ($it) { st_sp_ab_bot($it, $q); }
-            elseif (!$retry) { st_ab_message($q['rel'], $q['v']); } // no row: the message without choices, as before
+            elseif (!$retry) { st_ab_message($q['rel'], $q['v'], $why, $why === 'airing' ? st_sp_airing_eps($list) : ''); } // no row: the message without choices says why
         }
         st_sp_ab_update(function (&$d) use ($q, $it, $retry, $why) {
             $d['queue'] = array_values(array_filter($d['queue'], function ($x) use ($q) { return !($x['name'] === $q['name'] && (int)$x['t'] === (int)$q['t']); }));

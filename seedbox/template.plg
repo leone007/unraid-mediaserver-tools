@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzs">
+<!ENTITY version   "2026.10.99zzt">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzt
+- autobrr season pack on Discord: when no replace choice can be made, the message now says why (for example: Sonarr says the season is still airing, E08 tomorrow; or Sonarr's search does not find the pack) instead of promising a Replace with pack row that never came
+
 ###2026.10.99zzs
 - Season Repacker: a job stuck because Sonarr imported the pack by itself is now really looked at again every 5 minutes for a day and closes by itself (in 2026.10.99zzr the check never ran while that stuck job was the only one)
 
