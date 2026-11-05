@@ -8,9 +8,10 @@ Build: `python3 tools/kodi_skin_build.py` -> `../outputs/skin.arctic.fuse.2.jell
 too big for the Kodi repository on GitHub), installed in Kodi with Add-ons > Install from zip file.
 
 Patches:
-- `01-centred-text-menu.patch`: with Skin settings > Layout > Customise style > Home > Categories = Text, every
-  category is shown at a fixed place and the row is centred (upstream shows the items relative to the focused one,
-  so the first ones slide out to the left).
+- `01-centred-text-menu.patch`: with Skin settings > Layout > Customise style > Home > Categories = Text, the
+  categories are a Jellyfin-like centred bar (dark rounded background, white pill on the focused item, dim pill on
+  the current one), every category at a fixed place (upstream shows the items relative to the focused one, so the
+  first ones slide out to the left).
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.
