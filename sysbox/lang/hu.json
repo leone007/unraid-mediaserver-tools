@@ -3647,7 +3647,7 @@
   "text": "Másolatok"
  },
  "cp.lead": {
-  "text": "Minden éjjel, a pillanatkép után a pillanatkép átmásolódik egy tömblemezre. Ha a cache SSD tönkremegy, a konténerek adatai ott megvannak. Minden másolat egy teljes, böngészhető mappa; a változatlan fájlok hardlinkek, így egy másolat csak a változás helyét foglalja. Hetente egy titkosított másolat a szerveren kívülre is mehet (restic)."
+  "text": "Minden éjjel, a pillanatkép után a pillanatkép átmásolódik egy tömblemezre. Ha a cache SSD tönkremegy, a konténerek adatai ott megvannak. Minden másolat egy teljes, böngészhető mappa; a változatlan fájlok hardlinkek, így egy másolat csak a változás helyét foglalja. Titkosított másolat a szerveren kívülre is mehet (restic): a konténerek adatai hetente, a kiválasztott mappák és a flash minden éjjel."
  },
  "cp.copy_now": {
   "text": "Másolás most"
@@ -3686,9 +3686,6 @@
  },
  "cp.off_sub": {
   "text": "hetente, {w} · {k} heti változatot tart meg · utoljára {t}"
- },
- "cp.off_sent": {
-  "text": "{s} elküldve"
  },
  "cp.off_off": {
   "text": "Kikapcsolva. Lent, a beállításokban választható SFTP vagy S3."
@@ -3813,7 +3810,7 @@
   "text": "S3 (Backblaze B2 és mások)"
  },
  "cps.off_hint": {
-  "text": "Hetente, resticcel titkosítva: a tároló nem tud beleolvasni. Csak a változás megy ki."
+  "text": "Resticcel titkosítva: a tároló nem tud beleolvasni. A konténerek adatai hetente mennek, a lenti mappák minden éjjel vagy a hetivel együtt. Csak a változás megy ki."
  },
  "cps.sftp": {
   "text": "SFTP cél"
@@ -3876,7 +3873,7 @@
   "text": "nap"
  },
  "cps.stale_hint": {
-  "text": "0 = soha. A gépen kívüli másolat 7 nappal többet kap (heti). A sikertelen másolás mindig megy Discordra."
+  "text": "0 = soha. A konténerek adatainak gépen kívüli másolata 7 nappal többet kap (heti), egy éjszakai mappa 1-gyel többet. A sikertelen másolás mindig megy Discordra."
  },
  "cpe.dir_bad": {
   "text": "A célmappa egy share mappája legyen: /mnt/user/<share>/..."
@@ -4292,5 +4289,134 @@
  },
  "gd.ev_rtr_temp": {
   "text": "Router: a CPU {t} °C"
+ },
+ "cp.src_ds": {
+  "text": "A konténerek adatai"
+ },
+ "cp.src_flash": {
+  "text": "Unraid flash"
+ },
+ "cp.src_last": {
+  "text": "utoljára {t} · {s} elküldve"
+ },
+ "cp.src_never": {
+  "text": "még nem ment ki"
+ },
+ "cp.of": {
+  "text": "{a} / {b}"
+ },
+ "cp.eta": {
+  "text": "még {t}"
+ },
+ "cp.dur_m": {
+  "text": "kb. {n} perc"
+ },
+ "cp.dur_h": {
+  "text": "kb. {n} óra"
+ },
+ "cp.off_night": {
+  "text": "mappák minden éjjel {t}"
+ },
+ "cp.ov_src": {
+  "text": "Gépen kívüli változatok · {n}"
+ },
+ "cp.ov_hint_dir": {
+  "text": "A Letöltés ide teszi a változatot: {p} (a dátumáról elnevezett mappába). Semmit nem ír felül; amire szükséged van, azt másold vissza."
+ },
+ "cps.dirs": {
+  "text": "Mappák gépen kívülre"
+ },
+ "cps.flash": {
+  "text": "Unraid flash (/boot: beállítások, licenc, pluginok)"
+ },
+ "cps.add": {
+  "text": "Hozzáad"
+ },
+ "cps.choose": {
+  "text": "Mappák kiválasztása"
+ },
+ "cps.whole": {
+  "text": "az egész share"
+ },
+ "cps.no_shares": {
+  "text": "Nincs share."
+ },
+ "cps.add_bad": {
+  "text": "A /mnt/user/ alatti mappát adj meg, pl. /mnt/user/data/FOTO."
+ },
+ "cps.dirs_hint": {
+  "text": "A bejelölt mappák a konténerek adatai mellé kerülnek a titkosított másolatba, ahogy éppen vannak (nem pillanatképből). A médiát és a letöltéseket hagyd ki: a Radarr és a Sonarr újra le tudja tölteni őket, a listájuk a konténerek adataiban van. A Mappák kiválasztása beolvassa a share-ek listáját, ez egyszer felébresztheti a lemezeket. Változtatás után ments."
+ },
+ "cps.dirs_when": {
+  "text": "Mappák mikor"
+ },
+ "cps.night": {
+  "text": "minden éjjel, a fenti időpontban"
+ },
+ "cps.with_weekly": {
+  "text": "a heti másolattal együtt"
+ },
+ "cps.daily_v": {
+  "text": "napi változatot"
+ },
+ "cps.night_hint": {
+  "text": "Az éjszakai futás csak a változást küldi, ez legtöbbször pár MB. A konténerek adatai hetente mennek (nagyok, és folyton változnak)."
+ },
+ "cps.first": {
+  "text": "Első mentés"
+ },
+ "cps.up": {
+  "text": "Feltöltési sebességed"
+ },
+ "cps.measure": {
+  "text": "Mérés"
+ },
+ "cps.first_hint": {
+  "text": "Az első mentés mindent elküld, utána csak a változás megy. A Mérés beolvassa a méreteket (a lemezek egyszer felébrednek). A feltöltési sebesség a szerver hálózatának internetes feltöltése; csak ehhez a becsléshez kell."
+ },
+ "cps.est_none": {
+  "text": "Még nincs semmi kiválasztva a gépen kívüli mentéshez."
+ },
+ "cps.est_measure": {
+  "text": "A méret még nem ismert: nyomd meg a Mérés gombot."
+ },
+ "cps.est_total": {
+  "text": "összesen {s}"
+ },
+ "cps.est_unk": {
+  "text": "({n} nincs lemérve)"
+ },
+ "cps.est_lan": {
+  "text": "otthoni LAN-on (kb. 110 MB/s): {t}"
+ },
+ "cps.est_up": {
+  "text": "{u} Mbit/s feltöltéssel: {t}"
+ },
+ "cps.est_rate": {
+  "text": "a legutóbb mért sebességgel ({s}/s): {t}"
+ },
+ "cps.est_done": {
+  "text": "az első mentés kész, most már csak a változás megy"
+ },
+ "cpj.size": {
+  "text": "{s} lemérése"
+ },
+ "cpj.done_size": {
+  "text": "A méretek lemérve; a becslés a beállításoknál látszik"
+ },
+ "cpd.no_dir": {
+  "text": "{d}: a mappa nem található"
+ },
+ "cpd.stale_dir": {
+  "text": "{d} legújabb gépen kívüli másolata {n} napos."
+ },
+ "cpe.folder_bad": {
+  "text": "{d}: nem /mnt/user/ alatti mappa (csak betű, szám, szóköz, . _ -)"
+ },
+ "cpe.folder_nf": {
+  "text": "{d}: nincs ilyen mappa"
+ },
+ "cpe.fetched_have": {
+  "text": "Ez a változat már le van töltve: {d}"
  }
 }

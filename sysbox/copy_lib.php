@@ -41,7 +41,7 @@ function cp_password() {
 // one dataset's folder name inside the target: cache/docker -> cache_docker
 function cp_tag($ds) { return str_replace('/', '_', $ds); }
 function cp_date_ok($d) { return (bool)preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$d); }
-function cp_dir_ok($p) { return (bool)preg_match('#^/mnt/user/[A-Za-z0-9_.\- ]+(?:/[A-Za-z0-9_.\- ]+)*$#', (string)$p) && strpos($p, '..') === false; }
+function cp_dir_ok($p) { return snp_udir_ok($p); }
 // the folder names to leave out, as rsync and restic patterns (names only: transcodes, docker.img, *.tmp)
 function cp_skip_list($s) {
     $out = [];
@@ -231,7 +231,67 @@ function cp_off_test($cfg) {
     snp_log('off-site repository made at ' . cp_off_label($cfg));
     return ['ok' => true, 'msg' => ['cpm.repo_made', []]];
 }
-// the off-site versions (newest first)
+// ---- what goes off-site (item 136): the datasets (from their newest snapshot), the chosen share folders and the flash (live)
+function cp_flash_root() { return cp_env('SX_FLASH_DIR', '/boot'); }   // tests: a fake flash
+// [key, kind ds|dir|flash, name, path]; the key is also the restic tag (ds:<dataset>, dir:<folder>, dir:/boot)
+function cp_sources($cfg, $what = 'all') {
+    $L = [];
+    if ($what !== 'dirs') { foreach ($cfg['datasets'] as $ds) { $L[] = ['key' => 'ds:' . $ds, 'kind' => 'ds', 'name' => $ds, 'path' => '']; } }
+    if ($what !== 'ds') {
+        if (!empty($cfg['off_flash'])) { $L[] = ['key' => 'dir:/boot', 'kind' => 'flash', 'name' => 'flash', 'path' => cp_flash_root()]; }
+        foreach ((array)$cfg['off_dirs'] as $p) { $L[] = ['key' => 'dir:' . $p, 'kind' => 'dir', 'name' => basename($p), 'path' => cp_user_root() . substr($p, strlen('/mnt/user'))]; }
+    }
+    return $L;
+}
+function cp_src_find($cfg, $key) { foreach (cp_sources($cfg) as $x) { if ($x['key'] === $key) { return $x; } } return null; }
+// the folder name of a source under restore/: cache/docker -> cache_docker, dir:/boot -> flash, dir:/mnt/user/data/FOTO -> data_FOTO
+function cp_src_tag($key) {
+    if (strpos($key, 'ds:') === 0) { return cp_tag(substr($key, 3)); }
+    $p = substr($key, 4); if ($p === '/boot') { return 'flash'; }
+    return str_replace([' ', '/'], ['-', '_'], substr($p, strlen('/mnt/user/')));
+}
+// the downloads of a folder go to <copy folder>/restore/<tag>/ in the user share (a folder is restored by copying it back)
+function cp_restore_user($cfg) {
+    $p = rtrim((string)$cfg['copy_dir'], '/'); if (!cp_dir_ok($p)) { return ['err' => ['cpe.dir_bad', []]]; }
+    $rel = substr($p, strlen('/mnt/user/')); $share = explode('/', $rel)[0];
+    if (!is_dir(cp_user_root() . '/' . $share)) { return ['err' => ['cpe.no_share', ['s' => $share]]]; }
+    return ['err' => '', 'dir' => cp_user_root() . '/' . $rel . '/restore', 'show' => '/mnt/user/' . $rel . '/restore'];
+}
+function cp_fetched_dir($cfg, $key) {
+    $r = cp_restore_user($cfg); if ($r['err'] !== '') { return []; }
+    $dir = $r['dir'] . '/' . cp_src_tag($key); $out = [];
+    foreach (is_dir($dir) ? (scandir($dir) ?: []) : [] as $n) { if (preg_match('/^\d{4}-\d{2}-\d{2}-[0-9a-f]{8}$/', $n) && is_dir("$dir/$n")) { $out[] = $n; } }
+    rsort($out); return $out;
+}
+// the folders that can be chosen: each share and its first level (names only, no sizes: that would wake every disk)
+function cp_dir_choices() {
+    $root = cp_user_root(); $out = [];
+    foreach (scandir($root) ?: [] as $s) {
+        if ($s[0] === '.' || !is_dir("$root/$s") || !snp_udir_ok("/mnt/user/$s")) { continue; }
+        $subs = [];
+        foreach (scandir("$root/$s") ?: [] as $x) { if ($x[0] !== '.' && is_dir("$root/$s/$x") && snp_udir_ok("/mnt/user/$s/$x")) { $subs[] = $x; } }
+        $out[] = ['share' => $s, 'subs' => array_slice($subs, 0, 300)];
+    }
+    return $out;
+}
+// Measure (a click): the size of every source (du, so the disks wake once); the first copy estimate uses it
+function cp_size_run($cfg, &$msg) {
+    $L = cp_sources($cfg); $n = count($L); $s = cp_state(); $sizes = (array)($s['sizes'] ?? []);
+    foreach ($L as $i => $x) {
+        if ($x['kind'] === 'ds') { $d = snp_dataset($x['name']); $path = $d ? $d['mnt'] : ''; $ex = ''; foreach (cp_skip_list($cfg['skip']) as $k) { $ex .= ' --exclude=' . escapeshellarg($k); } }
+        else { $path = $x['path']; $ex = ''; }
+        cp_job(['title' => sx_tr('cpj.size', ['s' => $x['kind'] === 'ds' ? $x['name'] : substr($x['key'], 4)]), 'pct' => (int)round(100 * $i / max(1, $n))]);
+        if ($path === '' || !is_dir($path)) { continue; }
+        $o = snp_run('du -sb' . $ex . ' ' . escapeshellarg($path), $rc);
+        $b = 0; foreach ($o as $l) { if (preg_match('/^(\d+)\s/', $l, $m)) { $b = (float)$m[1]; } }
+        $sizes[$x['key']] = ['b' => $b, 't' => time()];
+    }
+    cp_state_set('sizes', $sizes);
+    snp_log('off-site sizes measured: ' . implode(', ', array_map(function ($k, $v) { return substr($k, strpos($k, ':') + 1) . ' ' . round($v['b'] / 1e9, 1) . ' GB'; }, array_keys($sizes), $sizes)));
+    return true;
+}
+
+// the off-site versions (newest first); src is the source key (old versions without a tag of their own count as datasets)
 function cp_off_list($cfg) {
     $cmd = cp_restic_cmd($cfg, 'snapshots --json --tag sysbox', $env, $err); if ($cmd === '') { return ['ok' => false, 'error' => $err]; }
     $out = []; $rc = cp_stream($cmd, $env, function ($l) use (&$out) { $out[] = $l; });
@@ -239,51 +299,82 @@ function cp_off_list($cfg) {
     if ($rc !== 0 || !is_array($j)) { return ['ok' => false, 'error' => ['cpe.repo', ['e' => substr(implode(' ', array_slice($out, -3)), 0, 300)]]]; }
     $L = [];
     foreach ($j as $s) {
-        $ds = ''; foreach ((array)($s['tags'] ?? []) as $tg) { if (strpos($tg, 'ds:') === 0) { $ds = substr($tg, 3); } }
-        $L[] = ['id' => substr((string)$s['id'], 0, 8), 'time' => strtotime((string)$s['time']), 'ds' => $ds, 'path' => (string)($s['paths'][0] ?? ''), 'size' => (float)($s['summary']['total_bytes_processed'] ?? 0)];
+        $ds = ''; $src = '';
+        foreach ((array)($s['tags'] ?? []) as $tg) { if (strpos($tg, 'ds:') === 0) { $ds = substr($tg, 3); $src = $tg; } if (strpos($tg, 'dir:') === 0) { $src = $tg; } }
+        $L[] = ['id' => substr((string)$s['id'], 0, 8), 'time' => strtotime((string)$s['time']), 'ds' => $ds, 'src' => $src, 'path' => (string)($s['paths'][0] ?? ''), 'size' => (float)($s['summary']['total_bytes_processed'] ?? 0)];
     }
     usort($L, function ($a, $b) { return $b['time'] <=> $a['time']; });
     return ['ok' => true, 'list' => $L];
 }
-// the weekly off-site copy of each dataset's newest snapshot, then the old versions forgotten
-function cp_off_run($cfg, &$msg) {
-    $bad = [];
-    foreach ($cfg['datasets'] as $ds) {
-        $d = snp_dataset($ds); $sn = $d ? snp_snaps($ds) : []; $snap = $sn ? end($sn) : null;
-        if (!$snap) { $bad[] = ['cpd.no_snap', ['ds' => $ds]]; continue; }
-        $src = rtrim($d['mnt'], '/') . '/.zfs/snapshot/' . $snap['name'];
-        $cmd = cp_restic_cmd($cfg, 'backup --json --host ' . escapeshellarg(php_uname('n')) . ' --tag sysbox --tag ' . escapeshellarg('ds:' . $ds) . cp_skip_args($cfg) . ' ' . escapeshellarg($src), $env, $err);
+// a source's last result in the state (the page shows it per row)
+function cp_off_mark($key, $a) { $s = cp_state(); $s['off_last'][$key] = array_merge((array)($s['off_last'][$key] ?? []), $a); snp_json_write(cp_state_file(), $s); }
+// the off-site copy: $what = all (Off-site now, the weekly run without nightly folders), ds (weekly) or dirs (nightly).
+// A dataset is read from its newest snapshot, a folder and the flash as they are. Then the old versions of that source are
+// forgotten: grouped by host and tags, because a dataset's path changes with every snapshot name.
+function cp_off_run($cfg, &$msg, $what = 'all') {
+    $bad = []; $host = php_uname('n');
+    foreach (cp_sources($cfg, $what) as $src) {
+        $key = $src['key'];
+        if ($src['kind'] === 'ds') {
+            $ds = $src['name']; $d = snp_dataset($ds); $sn = $d ? snp_snaps($ds) : []; $snap = $sn ? end($sn) : null;
+            if (!$snap) { $e = ['cpd.no_snap', ['ds' => $ds]]; $bad[] = $e; cp_off_mark($key, ['err' => cp_t($e), 'err_t' => time()]); continue; }
+            $path = rtrim($d['mnt'], '/') . '/.zfs/snapshot/' . $snap['name']; $label = $ds . '@' . $snap['name']; $sname = $snap['name'];
+            $tags = ' --tag ' . escapeshellarg($key) . cp_skip_args($cfg); $keep = ' --keep-weekly ' . max(1, (int)$cfg['off_keep']);
+        } else {
+            $path = $src['path']; $label = substr($key, 4); $sname = '';
+            if (!is_dir($path)) { $e = ['cpd.no_dir', ['d' => $label]]; $bad[] = $e; cp_off_mark($key, ['err' => cp_t($e), 'err_t' => time()]); continue; }
+            $tags = ' --tag ' . escapeshellarg($key);
+            $keep = (!empty($cfg['off_night']) ? ' --keep-daily ' . max(1, (int)$cfg['off_daily']) : '') . ' --keep-weekly ' . max(1, (int)$cfg['off_keep']);
+        }
+        $cmd = cp_restic_cmd($cfg, 'backup --json --host ' . escapeshellarg($host) . ' --tag sysbox' . $tags . ' ' . escapeshellarg($path), $env, $err);
         if ($cmd === '') { $bad[] = $err; break; }
-        cp_job(['title' => sx_tr('cpj.off', ['s' => $ds . '@' . $snap['name']]), 'pct' => 0]);
+        cp_job(['title' => sx_tr('cpj.off', ['s' => $label]), 'pct' => 0, 'cur' => $key, 'done_b' => 0, 'total_b' => 0, 'eta' => -1]);
         $last = 0; $sum = null; $tail = []; $t0 = time();
         $rc = cp_stream($cmd, $env, function ($l) use (&$last, &$sum, &$tail) {
             $j = ($l !== '' && $l[0] === '{') ? json_decode($l, true) : null;
-            if (is_array($j) && ($j['message_type'] ?? '') === 'status') { if (time() - $last >= 3) { $last = time(); cp_job(['pct' => (int)round(100 * (float)($j['percent_done'] ?? 0))]); } return; }
+            if (is_array($j) && ($j['message_type'] ?? '') === 'status') {
+                if (time() - $last >= 3) { $last = time(); cp_job(['pct' => (int)round(100 * (float)($j['percent_done'] ?? 0)), 'done_b' => (float)($j['bytes_done'] ?? 0), 'total_b' => (float)($j['total_bytes'] ?? 0), 'eta' => (int)($j['seconds_remaining'] ?? -1)]); }
+                return;
+            }
             if (is_array($j) && ($j['message_type'] ?? '') === 'summary') { $sum = $j; return; }
             $tail[] = $l; $tail = array_slice($tail, -3);
         });
-        if ($rc !== 0 && $rc !== 3) { $bad[] = ['cpd.off_fail', ['ds' => $ds, 'e' => substr(implode(' ', $tail), 0, 200)]]; snp_log("off-site $ds FAILED (restic $rc): " . implode(' ', $tail)); continue; }   // 3: some files unreadable, the rest is saved
+        if ($rc !== 0 && $rc !== 3) {   // 3: some files unreadable, the rest is saved
+            $e = ['cpd.off_fail', ['ds' => $label, 'e' => substr(implode(' ', $tail), 0, 200)]]; $bad[] = $e;
+            cp_off_mark($key, ['err' => cp_t($e), 'err_t' => time()]); snp_log("off-site $label FAILED (restic $rc): " . implode(' ', $tail)); continue;
+        }
         $sent = (float)($sum['data_added_packed'] ?? $sum['data_added'] ?? 0);
-        $s = cp_state(); $s['off_ok'] = time(); $s['off_err'] = ''; $s['off_last'][$ds] = ['sent' => $sent, 'files' => (int)($sum['total_files_processed'] ?? 0), 'secs' => time() - $t0, 'snap' => $snap['name']]; snp_json_write(cp_state_file(), $s);
-        snp_log("off-site $ds@{$snap['name']}: " . round($sent / 1e9, 2) . ' GB sent, ' . (time() - $t0) . ' s');
-        $cmd = cp_restic_cmd($cfg, 'forget --prune --host ' . escapeshellarg(php_uname('n')) . ' --tag ' . escapeshellarg('ds:' . $ds) . ' --keep-weekly ' . max(1, (int)$cfg['off_keep']), $env, $err);
+        $s = cp_state(); $s['off_ok'] = time(); $s['off_err'] = '';
+        $s['off_last'][$key] = ['t' => time(), 'sent' => $sent, 'total' => (float)($sum['total_bytes_processed'] ?? 0), 'files' => (int)($sum['total_files_processed'] ?? 0), 'secs' => time() - $t0, 'snap' => $sname, 'err' => ''];
+        if ($src['kind'] === 'ds') { unset($s['off_last'][$src['name']]); }   // the key before item 136 was the dataset name
+        snp_json_write(cp_state_file(), $s);
+        snp_log("off-site $label: " . round($sent / 1e9, 2) . ' GB sent, ' . (time() - $t0) . ' s');
+        $cmd = cp_restic_cmd($cfg, 'forget --prune --group-by host,tags --host ' . escapeshellarg($host) . ' --tag ' . escapeshellarg($key) . $keep, $env, $err);
         $tail = []; $rc = cp_stream($cmd, $env, function ($l) use (&$tail) { $tail[] = $l; $tail = array_slice($tail, -3); });
-        if ($rc !== 0) { snp_log("off-site $ds forget FAILED (restic $rc): " . implode(' ', $tail)); }
+        if ($rc !== 0) { snp_log("off-site $label forget FAILED (restic $rc): " . implode(' ', $tail)); }
     }
     if ($bad) { cp_state_set('off_err', cp_t($bad)); $msg = $bad; return false; }
     return true;
 }
-// downloads one off-site version next to the array copies (restore/<dataset>/<date>-<id>), for a restore from the page
+// downloads one off-site version: a dataset next to the array copies (restore/<dataset>/<date>-<id>, then restored like an array
+// copy from the page), a folder or the flash to <copy folder>/restore/<tag>/<date>-<id> (copied back by hand). Nothing is overwritten.
 function cp_off_fetch($cfg, $id, &$msg) {
     $L = cp_off_list($cfg); if (!$L['ok']) { $msg = $L['error']; return false; }
     $v = null; foreach ($L['list'] as $x) { if ($x['id'] === $id) { $v = $x; } }
-    if (!$v || $v['ds'] === '' || !in_array($v['ds'], $cfg['datasets'], true)) { $msg = ['cpe.no_version', []]; return false; }
-    $t = cp_target($cfg, $v['ds']); if ($t['err'] !== '') { $msg = $t['err']; return false; }
-    $dest = dirname($t['dir']) . '/restore/' . cp_tag($v['ds']) . '/' . date('Y-m-d', $v['time']) . '-' . $id;
+    if (!$v) { $msg = ['cpe.no_version', []]; return false; }
+    if (strpos($v['src'], 'dir:') === 0) {
+        $r = cp_restore_user($cfg); if ($r['err'] !== '') { $msg = $r['err']; return false; }
+        $dest = $r['dir'] . '/' . cp_src_tag($v['src']) . '/' . date('Y-m-d', $v['time']) . '-' . $id; $what = substr($v['src'], 4);
+    } else {
+        if ($v['ds'] === '' || !in_array($v['ds'], $cfg['datasets'], true)) { $msg = ['cpe.no_version', []]; return false; }
+        $t = cp_target($cfg, $v['ds']); if ($t['err'] !== '') { $msg = $t['err']; return false; }
+        $dest = dirname($t['dir']) . '/restore/' . cp_tag($v['ds']) . '/' . date('Y-m-d', $v['time']) . '-' . $id; $what = $v['ds'];
+    }
+    if (is_dir($dest)) { $msg = ['cpe.fetched_have', ['d' => $dest]]; return false; }
     @mkdir($dest, 0775, true);
     $cmd = cp_restic_cmd($cfg, 'restore --json ' . escapeshellarg($id . ':' . $v['path']) . ' --target ' . escapeshellarg($dest), $env, $err);
     if ($cmd === '') { $msg = $err; return false; }
-    cp_job(['title' => sx_tr('cpj.fetch', ['v' => date('Y-m-d', $v['time']), 'ds' => $v['ds']]), 'pct' => 0]);
+    cp_job(['title' => sx_tr('cpj.fetch', ['v' => date('Y-m-d', $v['time']), 'ds' => $what]), 'pct' => 0]);
     $last = 0; $tail = [];
     $rc = cp_stream($cmd, $env, function ($l) use (&$last, &$tail) {
         $j = ($l !== '' && $l[0] === '{') ? json_decode($l, true) : null;
@@ -291,7 +382,7 @@ function cp_off_fetch($cfg, $id, &$msg) {
         if (!is_array($j)) { $tail[] = $l; $tail = array_slice($tail, -3); }
     });
     if ($rc !== 0) { $msg = ['cpe.repo', ['e' => substr(implode(' ', $tail), 0, 300)]]; snp_log("off-site download $id FAILED (restic $rc)"); return false; }
-    snp_log("off-site version $id ({$v['ds']}) downloaded to $dest");
+    snp_log("off-site version $id ($what) downloaded to $dest");
     return true;
 }
 
@@ -303,8 +394,15 @@ function cp_view($cfg) {
         foreach ($t['err'] === '' && is_dir($t['dir']) ? array_reverse(cp_list_dir($t['dir'])) : [] as $dt) { $L[] = ['date' => $dt] + (array)($s['copies'][$n][$dt] ?? []); }
         $ds[] = ['name' => $n, 'err' => $t['err'] === '' ? '' : cp_t($t['err']), 'disk' => $t['disk'] ?? '', 'dir' => $t['err'] === '' ? '/mnt/user/' . $t['rel'] . '/' . cp_tag($n) : '', 'free' => $t['free'] ?? 0, 'copies' => $L, 'fetched' => cp_fetched($cfg, $n)];
     }
+    // one row per off-site source: its last result, its measured size, its downloads (folders)
+    $last = (array)($s['off_last'] ?? []); $sizes = (array)($s['sizes'] ?? []); $srcs = []; $ru = cp_restore_user($cfg);
+    foreach (cp_sources($cfg) as $x) {
+        $l = $last[$x['key']] ?? ($x['kind'] === 'ds' ? ($last[$x['name']] ?? null) : null);
+        $srcs[] = ['key' => $x['key'], 'kind' => $x['kind'], 'name' => $x['name'], 'path' => $x['kind'] === 'ds' ? $x['name'] : substr($x['key'], 4), 'last' => $l, 'size' => $sizes[$x['key']] ?? null,
+                   'fetched' => $x['kind'] === 'ds' ? [] : cp_fetched_dir($cfg, $x['key']), 'fdir' => $ru['err'] === '' ? $ru['show'] . '/' . cp_src_tag($x['key']) : ''];
+    }
     $sec = cp_secret();
-    return ['ds' => $ds, 'ok' => (int)($s['ok'] ?? 0), 'err' => (string)($s['err'] ?? ''), 'off_ok' => (int)($s['off_ok'] ?? 0), 'off_err' => (string)($s['off_err'] ?? ''),
+    return ['ds' => $ds, 'srcs' => $srcs, 'ok' => (int)($s['ok'] ?? 0), 'err' => (string)($s['err'] ?? ''), 'off_ok' => (int)($s['off_ok'] ?? 0), 'off_err' => (string)($s['off_err'] ?? ''),
             'off_last' => $s['off_last'] ?? new stdClass(), 'off_label' => cp_off_label($cfg), 'pub' => $cfg['off'] === 'sftp' ? cp_ssh_pub() : '',
             'has_pw' => !empty($sec['pw']), 's3_set' => !empty($sec['s3_id']) && !empty($sec['s3_key']),
             'job' => json_decode((string)@file_get_contents(cp_job_file()), true) ?: ['state' => 'idle']];

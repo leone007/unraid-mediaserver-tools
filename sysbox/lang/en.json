@@ -4853,7 +4853,7 @@
   "note": "band title (upper case on screen): copies of the daily snapshot on an array disk and off the server."
  },
  "cp.lead": {
-  "text": "Every night after the snapshot, the snapshot is copied to an array disk. If the cache SSD fails, the containers' data is there. Every copy is a full folder you can browse; unchanged files are hardlinks, so a copy only takes the space of what changed. Once a week an encrypted copy can go off the server too (restic).",
+  "text": "Every night after the snapshot, the snapshot is copied to an array disk. If the cache SSD fails, the containers' data is there. Every copy is a full folder you can browse; unchanged files are hardlinks, so a copy only takes the space of what changed. An encrypted copy can go off the server too (restic): the containers' data weekly, chosen folders and the flash every night.",
   "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: lead line."
  },
  "cp.copy_now": {
@@ -4905,10 +4905,6 @@
  "cp.off_sub": {
   "text": "weekly, {w} · keeps {k} weekly versions · last {t}",
   "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: row detail. {w} a day and time like 'Sunday 04:30', {t} like '2 days ago' or 'never'."
- },
- "cp.off_sent": {
-  "text": "{s} sent",
-  "note": "Snapshots page (Settings, Utilities, Snapshots), Copies band: how much the last off-site copy sent (after deduplication and compression)."
  },
  "cp.off_off": {
   "text": "Off. Choose SFTP or S3 in the settings below.",
@@ -5073,7 +5069,7 @@
   "note": "Snapshots page, Settings band, copy settings: option."
  },
  "cps.off_hint": {
-  "text": "Weekly, encrypted with restic: the storage cannot read it. Only the changes are sent.",
+  "text": "Encrypted with restic: the storage cannot read it. The containers' data goes weekly, the folders below every night or with it. Only the changes are sent.",
   "note": "Snapshots page, Settings band, copy settings: hint."
  },
  "cps.sftp": {
@@ -5157,7 +5153,7 @@
   "note": "Snapshots page, Settings band, copy settings: after a number."
  },
  "cps.stale_hint": {
-  "text": "0 = never. The off-site copy gets 7 more days (it is weekly). A failed copy always goes to Discord.",
+  "text": "0 = never. The off-site copy of the containers' data gets 7 more days (it is weekly), a nightly folder 1 more. A failed copy always goes to Discord.",
   "note": "Snapshots page, Settings band, copy settings: hint."
  },
  "cpe.dir_bad": {
@@ -5711,5 +5707,177 @@
  "gd.ev_rtr_temp": {
   "text": "Router: CPU at {t} °C",
   "note": "Guard alert text: the router CPU is 85 °C or more."
+ },
+ "cp.src_ds": {
+  "text": "The containers' data",
+  "note": "Snapshots page, Copies band: off-site source row title: the chosen datasets (the containers' data, Radarr, Sonarr, Jellyfin and the others)."
+ },
+ "cp.src_flash": {
+  "text": "Unraid flash",
+  "note": "Snapshots page, Copies band: off-site source row title: the USB flash drive (/boot) with the Unraid settings."
+ },
+ "cp.src_last": {
+  "text": "last {t} · {s} sent",
+  "note": "Snapshots page, Copies band: off-site source row detail; {t} like '2 days ago', {s} a size (only the changes are sent)."
+ },
+ "cp.src_never": {
+  "text": "not sent yet",
+  "note": "Snapshots page, Copies band: off-site source row detail before its first copy."
+ },
+ "cp.of": {
+  "text": "{a} of {b}",
+  "note": "Snapshots page: progress of a running off-site copy, {a} and {b} sizes."
+ },
+ "cp.eta": {
+  "text": "{t} left",
+  "note": "Snapshots page: time left of a running off-site copy, {t} like 'about 25 min'."
+ },
+ "cp.dur_m": {
+  "text": "about {n} min",
+  "note": "a duration in minutes (estimate)."
+ },
+ "cp.dur_h": {
+  "text": "about {n} h",
+  "note": "a duration in hours (estimate), {n} may have one decimal."
+ },
+ "cp.off_night": {
+  "text": "folders nightly {t}",
+  "note": "Snapshots page, Copies band: off-site row detail when the folders go every night; {t} a time like 04:30."
+ },
+ "cp.ov_src": {
+  "text": "Off-site versions · {n}",
+  "note": "Snapshots page, Copies band: foldable bar title, the versions of one source; {n} like 'Unraid flash' or 'FOTO'."
+ },
+ "cp.ov_hint_dir": {
+  "text": "Download puts the version into {p} (a folder named after its date). Nothing is overwritten; copy back what you need.",
+  "note": "Snapshots page, Copies band: hint above the versions of a folder or of the flash."
+ },
+ "cps.dirs": {
+  "text": "Folders off-site",
+  "note": "Snapshots page, Settings band, off-site settings: label: share folders and the flash that also go off-site."
+ },
+ "cps.flash": {
+  "text": "Unraid flash (/boot: settings, licence, plugins)",
+  "note": "Snapshots page, Settings band, off-site settings: checkbox."
+ },
+ "cps.add": {
+  "text": "Add",
+  "note": "Snapshots page, Settings band, off-site settings: button: adds the folder typed in the box."
+ },
+ "cps.choose": {
+  "text": "Choose folders",
+  "note": "Snapshots page, Settings band, off-site settings: button: lists the folders of every share to tick."
+ },
+ "cps.whole": {
+  "text": "whole share",
+  "note": "Snapshots page, Settings band, off-site settings: checkbox for a whole share in the folder list."
+ },
+ "cps.no_shares": {
+  "text": "No share found.",
+  "note": "Snapshots page, Settings band, off-site settings: empty folder list."
+ },
+ "cps.add_bad": {
+  "text": "Type a folder under /mnt/user/, for example /mnt/user/data/FOTO.",
+  "note": "Snapshots page, Settings band, off-site settings: alert when the typed folder is not under /mnt/user/."
+ },
+ "cps.dirs_hint": {
+  "text": "Ticked folders go into the encrypted copy next to the containers' data, as they are (not from a snapshot). Leave out media and downloads: Radarr and Sonarr can get them again, and their lists are in the containers' data. Choose folders reads the share list, which can wake the disks once. Save after a change.",
+  "note": "Snapshots page, Settings band, off-site settings: hint."
+ },
+ "cps.dirs_when": {
+  "text": "Folders when",
+  "note": "Snapshots page, Settings band, off-site settings: label: when the folders and the flash go off-site."
+ },
+ "cps.night": {
+  "text": "every night, at the time above",
+  "note": "Snapshots page, Settings band, off-site settings: option."
+ },
+ "cps.with_weekly": {
+  "text": "with the weekly copy",
+  "note": "Snapshots page, Settings band, off-site settings: option."
+ },
+ "cps.daily_v": {
+  "text": "daily versions",
+  "note": "Snapshots page, Settings band, off-site settings: after a number (the weekly versions are set above)."
+ },
+ "cps.night_hint": {
+  "text": "A nightly run sends only what changed, usually a few MB. The containers' data stays weekly (it is large and changes all the time).",
+  "note": "Snapshots page, Settings band, off-site settings: hint."
+ },
+ "cps.first": {
+  "text": "First copy",
+  "note": "Snapshots page, Settings band, off-site settings: label: the estimate of the first off-site copy."
+ },
+ "cps.up": {
+  "text": "Your upload",
+  "note": "Snapshots page, Settings band, off-site settings: before the upload speed box (Mbit/s), used only for the estimate."
+ },
+ "cps.measure": {
+  "text": "Measure",
+  "note": "Snapshots page, Settings band, off-site settings: button: measures the size of every source (wakes the disks once)."
+ },
+ "cps.first_hint": {
+  "text": "The first copy sends everything; after it only the changes go. Measure reads the sizes (the disks wake once). Your upload is the internet upload speed of this server's network; it is used only here.",
+  "note": "Snapshots page, Settings band, off-site settings: hint."
+ },
+ "cps.est_none": {
+  "text": "Nothing chosen for the off-site copy yet.",
+  "note": "Snapshots page, Settings band: estimate text."
+ },
+ "cps.est_measure": {
+  "text": "Size not known yet: press Measure.",
+  "note": "Snapshots page, Settings band: estimate text."
+ },
+ "cps.est_total": {
+  "text": "{s} in all",
+  "note": "Snapshots page, Settings band: estimate text, {s} a size."
+ },
+ "cps.est_unk": {
+  "text": "({n} not measured)",
+  "note": "Snapshots page, Settings band: estimate text after the total."
+ },
+ "cps.est_lan": {
+  "text": "over a home LAN (about 110 MB/s): {t}",
+  "note": "Snapshots page, Settings band: estimate text, {t} like 'about 20 min'."
+ },
+ "cps.est_up": {
+  "text": "at {u} Mbit/s upload: {t}",
+  "note": "Snapshots page, Settings band: estimate text."
+ },
+ "cps.est_rate": {
+  "text": "at the speed seen last time ({s}/s): {t}",
+  "note": "Snapshots page, Settings band: estimate text."
+ },
+ "cps.est_done": {
+  "text": "the first copy is done, now only the changes go",
+  "note": "Snapshots page, Settings band: estimate text when every source has been sent once."
+ },
+ "cpj.size": {
+  "text": "Measuring {s}",
+  "note": "Snapshots page, Activity: a running size measurement; {s} a folder or dataset."
+ },
+ "cpj.done_size": {
+  "text": "Sizes measured; the estimate is in the settings",
+  "note": "Snapshots page, Activity: finished size measurement."
+ },
+ "cpd.no_dir": {
+  "text": "{d}: the folder was not found",
+  "note": "Discord message of the Snapshots copies (and the Activity line on the page): error."
+ },
+ "cpd.stale_dir": {
+  "text": "The newest off-site copy of {d} is {n} days old.",
+  "note": "Discord message of the Snapshots copies: a folder's off-site copy is old."
+ },
+ "cpe.folder_bad": {
+  "text": "{d}: not a folder under /mnt/user/ (letters, digits, space, . _ - only)",
+  "note": "Snapshots page, Settings: error when saving the folder list."
+ },
+ "cpe.folder_nf": {
+  "text": "{d}: no such folder",
+  "note": "Snapshots page, Settings: error when saving the folder list."
+ },
+ "cpe.fetched_have": {
+  "text": "This version is already downloaded: {d}",
+  "note": "Snapshots page: error of Download."
  }
 }

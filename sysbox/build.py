@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.38a">
+<!ENTITY version   "2026.10.39">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,14 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.39
+- Snapshots, off-site copy: chosen share folders (for example photos) and the Unraid flash can go into the encrypted copy too, next to the containers' data. Tick them in the settings (Choose folders lists every share) or type a folder
+- Snapshots, off-site copy: the folders and the flash go every night at the set time (only the changes, keeping 14 daily and the weekly versions), or with the weekly copy; the containers' data stays weekly
+- Snapshots, Copies band: one row per off-site source with its last copy, what it sent and its size; during a copy the row shows how much is done and the time left; a failed or old one turns red or amber, and Discord tells about a folder that was not copied
+- Snapshots, off-site versions: one bar per source; a folder or flash version downloads into the restore folder next to the copies (named after its date, nothing is overwritten) and can be deleted there with a click
+- Snapshots, settings: First copy shows the total size and how long the first copy takes on a home LAN, at your upload speed and at the speed seen last time; Measure reads the sizes once
+- Snapshots, off-site copy: old versions are now really forgotten after the set number of weeks (the copies of the containers' data were grouped by the snapshot name before, so none was ever removed)
+
 ###2026.10.38a
 - Router: one lasting SSH connection instead of a new login every few seconds, so the router syslog no longer fills with dropbear login lines (one login, then it is reused; after a router restart a new one is made by itself); nothing to copy to the router
 

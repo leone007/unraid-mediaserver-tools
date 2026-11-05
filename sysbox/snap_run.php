@@ -1,7 +1,7 @@
 <?php
 // Snapshots worker (Sysbox). php snap_run.php daily   (cron every 5 minutes: makes the day's snapshots once, after the set time)
 //                           php snap_run.php restore <dataset> <snapshot|copy:date|off:date-id> <container>   (started by snap.php after a click)
-//                           php snap_run.php copy | offsite | fetch <id>   (Copy now, Off-site now, Download: clicks on the page)
+//                           php snap_run.php copy | offsite | fetch <id> | size   (Copy now, Off-site now, Download, Measure: clicks on the page)
 if (PHP_SAPI !== 'cli') { exit(1); } // cron and the page's worker only, not a web page
 require_once __DIR__ . '/snap_lib.php';
 require_once __DIR__ . '/copy_lib.php';
@@ -14,9 +14,10 @@ $mode = $argv[1] ?? '';
 
 // a copy, off-site copy or download as a job the page's Activity follows
 function cp_jobrun($kind, $fn) {
+    @unlink(cp_job_file());   // a fresh job: no row or ETA of the last one
     cp_job(['kind' => $kind, 'state' => 'running', 'started' => time(), 'finished' => 0, 'pct' => 0, 'msg' => '', 'title' => '']);
     $msg = ''; $ok = $fn($msg);
-    cp_job(['state' => $ok ? 'done' : 'error', 'finished' => time(), 'pct' => 100, 'msg' => $ok ? sx_tr(['copy' => 'cpj.done_copy', 'off' => 'cpj.done_off', 'fetch' => 'cpj.done_fetch'][$kind]) : cp_t($msg)]);
+    cp_job(['state' => $ok ? 'done' : 'error', 'finished' => time(), 'pct' => 100, 'msg' => $ok ? sx_tr(['copy' => 'cpj.done_copy', 'off' => 'cpj.done_off', 'fetch' => 'cpj.done_fetch', 'size' => 'cpj.done_size'][$kind]) : cp_t($msg)]);
     return [$ok, $msg];
 }
 // the array copy of every chosen dataset from its newest snapshot (daily: the one just made)
@@ -32,9 +33,9 @@ function cp_copy_all($c) {
         return true;
     });
 }
-function cp_off_all($c) {
-    cp_state_set('off_try', time());
-    return cp_jobrun('off', function (&$msg) use ($c) { return cp_off_run($c, $msg); });
+function cp_off_all($c, $what = 'all') {
+    if ($what !== 'dirs') { cp_state_set('off_try', time()); }
+    return cp_jobrun('off', function (&$msg) use ($c, $what) { return cp_off_run($c, $msg, $what); });
 }
 
 if ($mode === 'copy' || $mode === 'offsite') {
@@ -43,6 +44,7 @@ if ($mode === 'copy' || $mode === 'offsite') {
     if (!$ok) { snp_discord('rd', sx_trd($mode === 'copy' ? 'cpd.dc_copy' : 'cpd.dc_off'), cp_t($msg, true)); }
     exit(0);
 }
+if ($mode === 'size') { cp_jobrun('size', function (&$msg) { return cp_size_run(snp_cfg(), $msg); }); exit(0); }
 if ($mode === 'fetch') {
     $c = snp_cfg(); $id = (string)($argv[2] ?? '');
     if (!preg_match('/^[0-9a-f]{8}$/', $id)) { exit(1); }
@@ -56,18 +58,31 @@ if ($mode === 'daily') {
     $st = json_decode((string)@file_get_contents(snp_state_file()), true) ?: [];
     $today = date('Y-m-d'); $now = (int)date('G') * 60 + (int)date('i');
     if (($st['day'] ?? '') === $today) {
-        // after the day's snapshot: the off-site copy when it is due (the set day and time, or more than 8 days since the last try)
-        $cs = cp_state();
-        if ($c['off'] !== 'off' && cp_off_ok($c) && $now >= (int)$c['off_hour'] * 60 + (int)$c['off_min'] && ($cs['off_week'] ?? '') !== date('o-W')
-            && ((int)date('N') === (int)$c['off_day'] || time() - (int)($cs['off_try'] ?? 0) > 8 * 86400)) {
+        // after the day's snapshot: the off-site copy when it is due (the set day and time, or more than 8 days since the last try);
+        // with nightly folders (item 136) the weekly run takes only the datasets, and the folders and the flash go every night
+        $cs = cp_state(); $night = !empty($c['off_night']) && cp_sources($c, 'dirs');
+        $due = $c['off'] !== 'off' && cp_off_ok($c) && $now >= (int)$c['off_hour'] * 60 + (int)$c['off_min'];
+        if ($due && ($cs['off_week'] ?? '') !== date('o-W') && ((int)date('N') === (int)$c['off_day'] || time() - (int)($cs['off_try'] ?? 0) > 8 * 86400)) {
             cp_state_set('off_week', date('o-W'));
-            [$ok, $msg] = cp_off_all($c);
+            [$ok, $msg] = cp_off_all($c, $night ? 'ds' : 'all');
+            if (!$ok) { snp_discord('rd', sx_trd('cpd.dc_off'), cp_t($msg, true)); }
+        }
+        if ($due && $night && ($cs['off_nday'] ?? '') !== $today) {
+            cp_state_set('off_nday', $today);
+            [$ok, $msg] = cp_off_all($c, 'dirs');
             if (!$ok) { snp_discord('rd', sx_trd('cpd.dc_off'), cp_t($msg, true)); }
         }
         // a copy older than the set days: one Discord message a day
         $cs = cp_state(); $old = [];
         if (!empty($c['copy']) && (int)$c['stale'] > 0 && time() - (int)($cs['ok'] ?? time()) > (int)$c['stale'] * 86400) { $old[] = sx_trd('cpd.stale_copy', ['n' => (int)floor((time() - (int)$cs['ok']) / 86400)]); }
         if ($c['off'] !== 'off' && (int)$c['stale'] > 0 && !empty($cs['off_ok']) && time() - (int)$cs['off_ok'] > (7 + (int)$c['stale']) * 86400) { $old[] = sx_trd('cpd.stale_off', ['n' => (int)floor((time() - (int)$cs['off_ok']) / 86400)]); }
+        // a folder or the flash: older than the set days plus 1 (nightly) or 7 (weekly)
+        if ($c['off'] !== 'off' && (int)$c['stale'] > 0) {
+            foreach (cp_sources($c, 'dirs') as $x) {
+                $t = (int)($cs['off_last'][$x['key']]['t'] ?? 0);
+                if ($t > 0 && time() - $t > ((empty($c['off_night']) ? 7 : 1) + (int)$c['stale']) * 86400) { $old[] = sx_trd('cpd.stale_dir', ['d' => substr($x['key'], 4), 'n' => (int)floor((time() - $t) / 86400)]); }
+            }
+        }
         if ($old && ($cs['stale_day'] ?? '') !== $today && $now >= (int)$c['hour'] * 60 + (int)$c['min'] + 120) { cp_state_set('stale_day', $today); snp_discord('a', sx_trd('cpd.dc_stale'), implode("\n", $old)); }
         exit(0);
     }

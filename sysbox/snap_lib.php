@@ -22,6 +22,8 @@ function snp_bin($n) {
 function snp_run($cmd, &$rc = null) { $o = []; @exec($cmd . ' 2>&1', $o, $rc); return $o; }
 
 function snp_name_ok($n) { return (bool)preg_match('/^[A-Za-z0-9_.:\-]{1,100}$/', (string)$n); }
+// a folder of a user share: /mnt/user/<share>[/<folder>...], no .. and no commas (restic reads a comma in a tag as "and")
+function snp_udir_ok($p) { return (bool)preg_match('#^/mnt/user/[A-Za-z0-9_.\- ]+(?:/[A-Za-z0-9_.\- ]+)*$#', (string)$p) && strpos($p, '..') === false; }
 function snp_ds_ok($d) { return (bool)preg_match('#^[A-Za-z0-9_.\-]+(?:/[A-Za-z0-9_.\-]+)*$#', (string)$d); }
 
 function snp_defaults() {
@@ -29,7 +31,9 @@ function snp_defaults() {
         'bu_on' => 1, 'bu_keep' => 14, 'bu_last' => 30,   // before-update snapshots (item 119)
         // copies (item 105): to an array share after the daily snapshot, and weekly off the server (restic)
         'copy' => 0, 'copy_dir' => '/mnt/user/backup/sysbox', 'keep_d' => 14, 'keep_w' => 8, 'skip' => 'docker.img, transcodes, cache', 'stale' => 2,
-        'off' => 'off', 'off_sftp' => '', 'off_port' => 22, 'off_s3' => '', 'off_day' => 7, 'off_hour' => 4, 'off_min' => 30, 'off_keep' => 26];
+        'off' => 'off', 'off_sftp' => '', 'off_port' => 22, 'off_s3' => '', 'off_day' => 7, 'off_hour' => 4, 'off_min' => 30, 'off_keep' => 26,
+        // folders and the flash off-site too (item 136): every night (off_night, keeping off_daily daily versions) or with the weekly run
+        'off_dirs' => [], 'off_flash' => 0, 'off_night' => 1, 'off_daily' => 14, 'off_up' => 0];
 }
 function snp_cfg() {
     $c = snp_defaults();
@@ -37,6 +41,7 @@ function snp_cfg() {
     if (is_array($x)) { foreach ($c as $k => $v) { if (array_key_exists($k, $x)) { $c[$k] = $x[$k]; } } }
     else { foreach (snp_datasets() as $d) { if (preg_match('#/docker$#', $d['name'])) { $c['datasets'][] = $d['name']; } } } // first run: the docker dataset
     $c['datasets'] = array_values(array_filter((array)$c['datasets'], 'snp_ds_ok'));
+    $c['off_dirs'] = array_values(array_unique(array_filter((array)$c['off_dirs'], 'snp_udir_ok')));
     return $c;
 }
 function snp_json_write($f, $data) {
