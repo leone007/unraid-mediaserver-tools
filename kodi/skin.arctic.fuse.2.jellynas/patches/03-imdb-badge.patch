@@ -25,7 +25,7 @@ index e3c44f0..1fef058 100644
                      <param name="listitem">$PARAM[listitem]</param>
                  </include>
 diff --git a/1080i/Includes_Objects.xml b/1080i/Includes_Objects.xml
-index 6c2f981..3f286a1 100644
+index 6c2f981..3f33665 100644
 --- a/1080i/Includes_Objects.xml
 +++ b/1080i/Includes_Objects.xml
 @@ -2356,4 +2356,75 @@
@@ -45,7 +45,7 @@ index 6c2f981..3f286a1 100644
 +                <height>26</height>
 +                <visible>!String.IsEmpty($PARAM[listitem].Property(jellynas.badge))</visible>
 +                <control type="image">
-+                    <texture colordiffuse="FF1E8E3E" border="8">jellynas/badge.png</texture>   <!-- rounded corners, shipped loose in media/ -->
++                    <texture colordiffuse="FF1E8E3E" border="4">jellynas/badge_r4.png</texture>   <!-- 4 px corners, shipped loose in media/ -->
 +                </control>
 +                <control type="label">
 +                    <font>font_hint_bold</font>
@@ -63,7 +63,7 @@ index 6c2f981..3f286a1 100644
 +                <visible>String.IsEmpty($PARAM[listitem].Property(jellynas.badge)) + !String.IsEqual($PARAM[listitem].Property(jellynas.kind),week)</visible>
 +                <visible>!String.IsEmpty($PARAM[listitem].Property(jellynas.imdb)) | !String.IsEmpty($PARAM[listitem].Rating(imdb))</visible>
 +                <control type="image">
-+                    <texture colordiffuse="FFF5C518" border="8">jellynas/badge.png</texture>
++                    <texture colordiffuse="FFF5C518" border="4">jellynas/badge_r4.png</texture>
 +                </control>
 +                <control type="label">
 +                    <left>4</left>
@@ -80,7 +80,7 @@ index 6c2f981..3f286a1 100644
 +                    <width>36</width>
 +                    <height>20</height>
 +                    <control type="image">
-+                        <texture colordiffuse="FF000000" border="6">jellynas/badge.png</texture>
++                        <texture colordiffuse="FF000000" border="2">jellynas/badge_r1.png</texture>   <!-- almost square: 1 px -->
 +                    </control>
 +                    <control type="label">
 +                        <font>font_hint_bold</font>

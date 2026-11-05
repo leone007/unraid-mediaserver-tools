@@ -19,7 +19,7 @@ Patches:
 - `03-imdb-badge.patch`: a badge in the top left corner of landscape and poster cards: green with the add-on's
   `jellynas.badge` text (This week: Available), else (not on `jellynas.kind=week` items) yellow IMDb: the add-on's
   property `jellynas.imdb`, else Kodi's IMDb rating of the item (`ListItem.Rating(imdb)`); rounded corners from
-  `files/media/jellynas/badge.png` (our own files under `files/` are copied over the skin; Kodi reads loose
+  `files/media/jellynas/badge_r4.png` (4 px) and `badge_r1.png` (1 px, the black score box) (our own files under `files/` are copied over the skin; Kodi reads loose
   textures from `media/` next to Textures.xbt).
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
