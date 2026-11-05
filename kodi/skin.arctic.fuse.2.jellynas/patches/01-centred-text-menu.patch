@@ -1,8 +1,8 @@
 diff --git a/1080i/Includes_Categories.xml b/1080i/Includes_Categories.xml
-index deea2ef..e025a3b 100644
+index deea2ef..9377314 100644
 --- a/1080i/Includes_Categories.xml
 +++ b/1080i/Includes_Categories.xml
-@@ -188,6 +188,200 @@
+@@ -188,6 +188,157 @@
      </include>
  
  
@@ -21,9 +21,9 @@ index deea2ef..e025a3b 100644
 +            <texturenofocus />
 +            <texturefocus />
 +            <font>font_main_bold</font>
-+            <textcolor>00ffffff</textcolor>
-+            <focusedcolor>00ffffff</focusedcolor>
-+            <selectedcolor>00ffffff</selectedcolor>
++            <textcolor>$PARAM[color_nf]</textcolor>
++            <focusedcolor>$PARAM[color_nf]</focusedcolor>
++            <selectedcolor>$PARAM[color_nf]</selectedcolor>
 +            <label>$INFO[Container($PARAM[id]).ListItemAbsolute($PARAM[pos]).Label]</label>
 +            <textoffsetx>20</textoffsetx>
 +            <onclick>SetFocus($PARAM[id],$PARAM[pos],absolute)</onclick>
@@ -43,49 +43,14 @@ index deea2ef..e025a3b 100644
 +            <aligny>center</aligny>
 +            <include>Texture_Highlight_Button_FakeFocus_V</include>
 +            <font>font_main_bold</font>
-+            <textcolor>00ffffff</textcolor>
-+            <focusedcolor>00ffffff</focusedcolor>
-+            <selectedcolor>00ffffff</selectedcolor>
++            <textcolor>$VAR[ColorSelected]</textcolor>
++            <focusedcolor>$VAR[ColorSelected]</focusedcolor>
++            <selectedcolor>$VAR[ColorSelected]</selectedcolor>
 +            <label>$INFO[Container($PARAM[id]).ListItemAbsolute($PARAM[pos]).Label]</label>
 +            <textoffsetx>20</textoffsetx>
 +            <onclick>SetFocus($PARAM[id],$PARAM[pos],absolute)</onclick>
 +            <onclick>Action(Select)</onclick>
 +            <hitrect x="0" y="0" w="0" h="0" />
-+            <include content="Categories_Selector_Fake_Item_Visible_Abs">
-+                <param name="id">$PARAM[id]</param>
-+                <param name="pos">$PARAM[pos]</param>
-+                <param name="num">$PARAM[num]</param>
-+                <param name="mod" />
-+            </include>
-+        </control>
-+    </include>
-+
-+    <include name="Categories_Selector_Fake_Label_Abs">
-+        <control type="label">
-+            <width max="260">auto</width>
-+            <height>80</height>
-+            <centertop>50%</centertop>
-+            <aligny>center</aligny>
-+            <font>font_main_bold</font>
-+            <textcolor>$PARAM[color_nf]</textcolor>
-+            <label>$INFO[Container($PARAM[id]).ListItemAbsolute($PARAM[pos]).Label]</label>
-+            <left>20</left>
-+            <include content="Categories_Selector_Fake_Item_Visible_Abs">
-+                <param name="id">$PARAM[id]</param>
-+                <param name="pos">$PARAM[pos]</param>
-+                <param name="num">$PARAM[num]</param>
-+                <param name="mod">!</param>
-+            </include>
-+        </control>
-+        <control type="label">
-+            <width max="260">auto</width>
-+            <height>80</height>
-+            <centertop>50%</centertop>
-+            <aligny>center</aligny>
-+            <font>font_main_bold</font>
-+            <textcolor>$VAR[ColorSelected]</textcolor>
-+            <label>$INFO[Container($PARAM[id]).ListItemAbsolute($PARAM[pos]).Label]</label>
-+            <left>20</left>
 +            <include content="Categories_Selector_Fake_Item_Visible_Abs">
 +                <param name="id">$PARAM[id]</param>
 +                <param name="pos">$PARAM[pos]</param>
@@ -146,55 +111,47 @@ index deea2ef..e025a3b 100644
 +        </include>
 +    </include>
 +
++    <!-- Drawn by Hub_Categories over the full window width (not inside the category grouplist), so it is centred on any aspect ratio -->
 +    <include name="Categories_Selector_FakeList_Absolute">
-+        <param name="id">302</param>
-+        <param name="color_fo">main_fg_30</param>
++        <param name="id">300</param>
 +        <param name="color_nf">main_fg_30</param>
 +        <definition>
 +            <control type="group">
-+
-+                <nested />
-+
-+                <!-- Hub_Categories places this group at x=140 (40 + search 80 + gap 20): 140 + 1640/2 = 960 = screen centre -->
++                <left>0</left>
++                <right>0</right>
++                <top>60</top>
++                <height>80</height>
 +                <control type="group">
-+                    <left>0</left>
-+                    <width>1640</width>
++                    <top>view_line_top</top>
 +                    <height>80</height>
-+                    <centertop>50%</centertop>
 +
-+                    <control type="group">
-+                        <top>view_line_top</top>
++                    <control type="grouplist">
++                        <hitrect x="0" y="0" w="0" h="0" />
++                        <left>0</left>
++                        <right>0</right>
 +                        <height>80</height>
-+
-+                        <control type="grouplist">
-+                            <hitrect x="0" y="0" w="0" h="0" />
-+                            <width>1640</width>
-+                            <height>80</height>
-+                            <orientation>horizontal</orientation>
-+                            <align>center</align>
-+                            <itemgap>20</itemgap>
-+                            <include content="Categories_Selector_FakeList_Items_Abs">
-+                                <param name="include">Categories_Selector_Fake_Button_Abs</param>
-+                                <param name="color_nf">$PARAM[color_nf]</param>
-+                                <param name="id">$PARAM[id]</param>
-+                            </include>
-+                        </control>
-+
-+                        <control type="grouplist">
-+                            <hitrect x="0" y="0" w="0" h="0" />
-+                            <width>1640</width>
-+                            <height>80</height>
-+                            <orientation>horizontal</orientation>
-+                            <align>center</align>
-+                            <itemgap>40</itemgap>
-+                            <include content="Categories_Selector_FakeList_Items_Abs">
-+                                <param name="include">Categories_Selector_Fake_Label_Abs</param>
-+                                <param name="color_nf">$PARAM[color_nf]</param>
-+                                <param name="id">$PARAM[id]</param>
-+                            </include>
-+                        </control>
++                        <orientation>horizontal</orientation>
++                        <align>center</align>
++                        <itemgap>0</itemgap>   <!-- the pills carry 20 + 20 text offset: 40 between the words, as upstream -->
++                        <include content="Categories_Selector_FakeList_Items_Abs">
++                            <param name="include">Categories_Selector_Fake_Button_Abs</param>
++                            <param name="color_nf">$PARAM[color_nf]</param>
++                            <param name="id">$PARAM[id]</param>
++                        </include>
 +                    </control>
 +                </control>
++            </control>
++        </definition>
++    </include>
++
++    <!-- Text menu of Hub_Categories: the fake list is drawn by Categories_Selector_FakeList_Absolute instead -->
++    <include name="Categories_Selector_FakeList_None">
++        <param name="id">300</param>
++        <param name="color_fo" />
++        <param name="color_nf" />
++        <definition>
++            <control type="group">
++                <visible>false</visible>
 +            </control>
 +        </definition>
 +    </include>
@@ -203,7 +160,7 @@ index deea2ef..e025a3b 100644
  
      <include name="Categories_Selector">
          <param name="id">300</param>
-@@ -201,6 +395,7 @@
+@@ -201,6 +352,7 @@
          <param name="preitem_fade">True</param>
          <param name="itemlayout_w">240</param>
          <param name="scrolltime">400</param>
@@ -211,7 +168,7 @@ index deea2ef..e025a3b 100644
          <definition>
              <include content="List_ButtonMenu_Row">
                  <param name="id">$PARAM[id]</param>
-@@ -234,7 +429,7 @@
+@@ -234,7 +386,7 @@
                  <onfocus condition="![$PARAM[slide]]">ClearProperty(Slide.WidgetContainer,$PARAM[property_window_id])</onfocus>
              </include>
  
@@ -221,14 +178,32 @@ index deea2ef..e025a3b 100644
                  <param name="color_fo">$PARAM[color_fo]</param>
                  <param name="color_nf">$PARAM[color_nf]</param>
 diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
-index 06812aa..cf0f20b 100644
+index 06812aa..0406588 100644
 --- a/1080i/Includes_Hubs.xml
 +++ b/1080i/Includes_Hubs.xml
 @@ -503,6 +503,7 @@
  
      <include name="Hub_Categories_Definition">
          <include content="Categories_Selector" condition="Skin.String(Hubs.MenuStyle,Text)">
-+            <param name="fakelist">Categories_Selector_FakeList_Absolute</param>
++            <param name="fakelist">Categories_Selector_FakeList_None</param>
              <param name="window_id">$PARAM[window_id]</param>
              <param name="property_window_id">$PARAM[property_window_id]</param>
              <param name="hidden_button_prefix">$INFO[Container(300).ListItem.Property(item)]302</param>
+@@ -686,6 +687,17 @@
+                 </control>
+             </control>
+ 
++            <!-- JELLYNAS: centred text menu over the full window width (the grouplist above starts after the search button) -->
++            <control type="group">
++                <centertop>100</centertop>
++                <height>200</height>
++                <include>Animation_View_WindowChangeAnimation</include>
++                <include content="Categories_Selector_FakeList_Absolute" condition="Skin.String(Hubs.MenuStyle,Text)">
++                    <param name="id">300</param>
++                    <param name="color_nf">main_fg_30</param>
++                </include>
++            </control>
++
+             <include content="Hub_Categories_Search" condition="!Skin.HasSetting(SideMenu.DisableSearchAndOptions) + [Skin.HasSetting(HubsMenu.EnableSearchAndOptions) | [Window.IsVisible(Home) + Integer.IsEqual(Skin.String(Hub.Home.ReplaceWindow),$PARAM[window_id])]]">
+                 <param name="window_id">$PARAM[window_id]</param>
+                 <param name="property_window_id">$PARAM[property_window_id]</param>
