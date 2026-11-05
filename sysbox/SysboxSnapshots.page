@@ -177,8 +177,15 @@ $(function () {
       var right = run ? '<span class="snp-pill b">' + (+j.pct || 0) + ' %</span>' : bad ? '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>' : old ? '<span class="snp-pill a">' + esc(T('cp.st_old', { n: age })) + '</span>' : '<span class="snp-num">' + (size ? fb(size) : '') + '</span>';
       h += '<div class="snp-row snp-src ' + cls + '"><span class="snp-ico">' + ico + '</span><div><b>' + esc(x.kind === 'ds' ? T('cp.src_ds') : x.kind === 'flash' ? T('cp.src_flash') : x.name) + '</b><span class="snp-path">' + esc(x.kind === 'flash' ? '/boot' : x.path) + '</span><small>' + esc(sub) + (bad ? '<br><span class="snp-er">' + esc(l.err) + '</span>' : '') + '</small></div>' + right + '</div>';
     });
+    // a source taken off the list: its versions stay off-site until Delete from off-site (a click with a confirm)
+    $.each(C.gone || [], function (i, x) {
+      var fr = j.state === 'running' && j.kind === 'forget';
+      h += '<div class="snp-row snp-src s-grey"><span class="snp-ico">&ndash;</span><div><b>' + esc(x.kind === 'ds' ? T('cp.src_ds') : x.kind === 'flash' ? T('cp.src_flash') : x.name) + '</b><span class="snp-path">' + esc(x.path) + '</span><small>' + esc(T('cp.gone_sub')) + '</small></div><span><input type="button" class="snp-ghost snp-sm cp-forget" data-key="' + esc(x.key) + '" data-path="' + esc(x.path) + '" value="' + esc(T('cp.forget')) + '"' + (fr ? ' disabled' : '') + '></span></div>';
+    });
     return h;
   }
+  // how many chosen sources failed last time (the off-site row shows only this; each row has its own error)
+  function srcBad(C) { var n = 0, j = C.job || {}; $.each(C.srcs || [], function (i, x) { var l = x.last || {}; if (!(j.state === 'running' && j.kind === 'off' && j.cur === x.key) && l.err && (+l.err_t || 0) >= (+l.t || 0)) { n++; } }); return n; }
   function drawCp(r) {
     var C = r.copies, c = r.cfg, h = '', off = c.off !== 'off', band = [];
     h += '<div class="snp-lead"><p>' + esc(T('cp.lead')) + '</p><span style="display:flex;gap:6px;flex-wrap:wrap"><input type="button" id="cp-now" value="' + esc(T('cp.copy_now')) + '">' + (off ? '<input type="button" id="cp-off" class="snp-ghost" value="' + esc(T('cp.off_now')) + '">' : '') + '</span></div>';
@@ -193,9 +200,9 @@ $(function () {
       if (+c.copy) { band.push(T('cp.band_arr', { n: d.copies.length })); }
     });
     if (off) {
-      var oa = days(C.off_ok), ost = C.off_err ? 'r' : (oa < 0 || oa > 7 + (+c.stale || 0)) ? 'a' : '';
+      var oa = days(C.off_ok), nb = srcBad(C), oerr = nb ? T('cpd.off_sum', { n: nb, all: (C.srcs || []).length }) : C.off_err, ost = oerr ? 'r' : (oa < 0 || oa > 7 + (+c.stale || 0)) ? 'a' : '';
       h += '<div class="snp-row snp-cpr ' + (ost === 'r' ? 's-red' : ost === 'a' ? 's-amber' : 's-purple') + '"><span class="snp-ico">' + (ost ? '!' : '&#8679;') + '</span><div><b>' + esc(T('cp.off_t')) + '</b><span class="snp-chip">restic</span><span class="snp-path">' + esc(C.off_label) + '</span><small>' +
-        esc(T('cp.off_sub', { w: dayName(c.off_day) + ' ' + ('0' + c.off_hour).slice(-2) + ':' + ('0' + c.off_min).slice(-2), k: c.off_keep, t: C.off_ok ? ago(C.off_ok) : T('cp.never') }) + (+c.off_night && (C.srcs || []).some(function (x) { return x.kind !== 'ds'; }) ? ' · ' + T('cp.off_night', { t: ('0' + c.off_hour).slice(-2) + ':' + ('0' + c.off_min).slice(-2) }) : '')) + (C.off_err ? '<br><span class="snp-er">' + esc(C.off_err) + '</span>' : '') + '</small></div><span>' +
+        esc(T('cp.off_sub', { w: dayName(c.off_day) + ' ' + ('0' + c.off_hour).slice(-2) + ':' + ('0' + c.off_min).slice(-2), k: c.off_keep, t: C.off_ok ? ago(C.off_ok) : T('cp.never') }) + (+c.off_night && (C.srcs || []).some(function (x) { return x.kind !== 'ds'; }) ? ' · ' + T('cp.off_night', { t: ('0' + c.off_hour).slice(-2) + ':' + ('0' + c.off_min).slice(-2) }) : '')) + (oerr ? '<br><span class="snp-er">' + esc(oerr) + '</span>' : '') + '</small></div><span>' +
         (ost === 'r' ? '<span class="snp-pill r">' + esc(T('cp.st_fail')) + '</span>' : ost === 'a' ? '<span class="snp-pill a">' + esc(C.off_ok ? T('cp.st_old', { n: oa }) : T('cp.never')) + '</span>' : '<span class="snp-pill">' + esc(T('cp.st_ok')) + '</span>') + '</span></div>';
       h += srcRows(C, c);
       band.push(T('cp.band_off', { t: C.off_ok ? ago(C.off_ok) : T('cp.never') }));
@@ -242,6 +249,11 @@ $(function () {
   $(document).on('click', '#cp-now', function () { var $b = $(this).prop('disabled', true); api('copy_now').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); });
   $(document).on('click', '#cp-off', function () { var $b = $(this).prop('disabled', true); api('off_now').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); }); });
   $(document).on('click', '#snp .cp-fetch', function () { var $b = $(this).prop('disabled', true); api('off_fetch', {id: $b.data('id')}).done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }); });
+  $(document).on('click', '#snp .cp-forget', function () {
+    var $b = $(this);
+    if (!window.confirm(T('cp.forget_confirm', { p: String($b.data('path')) }))) return;
+    $b.prop('disabled', true); api('off_forget', {key: String($b.data('key'))}).done(function (r) { if (!r.ok) { window.alert(r.error); } OV = null; load(); }).fail(function (x) { window.alert(err(x)); $b.prop('disabled', false); });
+  });
   $(document).on('click', '#snp .cp-fdel', function () {
     var $b = $(this), n = String($b.data('name'));
     if (!window.confirm(T('cp.fdel_confirm', { n: n }))) return;
@@ -320,7 +332,7 @@ $(function () {
       '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.when')) + '</span><div class="snp-ctl"><select id="cps-day">' + $.map([1, 2, 3, 4, 5, 6, 7], function (n) { return '<option value="' + n + '"' + (+c.off_day === n ? ' selected' : '') + '>' + esc(dayName(n)) + '</option>'; }).join('') + '</select> <input type="number" id="cps-h" min="0" max="23" value="' + c.off_hour + '"> : <input type="number" id="cps-m" min="0" max="59" value="' + c.off_min + '"> ' + esc(T('cps.keep_l')) + ' <input type="number" id="cps-ok" min="1" max="520" value="' + c.off_keep + '"> ' + esc(T('cps.weeks')) + '</div></div>' +
       // folders and the flash off-site (item 136)
       '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.dirs')) + '</span><div class="snp-ctl"><label><input type="checkbox" id="cps-flash"' + (+c.off_flash ? ' checked' : '') + '> ' + esc(T('cps.flash')) + '</label><div id="cps-dirs" class="snp-dirs"></div>' +
-        '<span style="display:flex;gap:6px;flex-wrap:wrap;width:100%;align-items:center"><input type="text" class="snp-wide" id="cps-other" placeholder="/mnt/user/..."><input type="button" id="cps-add" class="snp-ghost snp-sm" value="' + esc(T('cps.add')) + '"><input type="button" id="cps-choose" class="snp-ghost snp-sm" value="' + esc(T('cps.choose')) + '"></span><div id="cps-choices" class="snp-dirs"></div><span class="snp-hint">' + esc(T('cps.dirs_hint')) + '</span></div></div>' +
+        '<span style="display:flex;gap:6px;flex-wrap:wrap;width:100%;align-items:center"><input type="text" class="snp-wide" id="cps-other" placeholder="/mnt/user/..."><input type="button" id="cps-add" class="snp-ghost snp-sm" value="' + esc(T('cps.add')) + '"><input type="button" id="cps-choose" class="snp-ghost snp-sm" value="' + esc(T('cps.choose')) + '"></span><div id="cps-choices" class="snp-dirs"></div><span class="snp-hint">' + esc(T('cps.dirs_hint') + ' ' + T('cps.copy_hint', { d: c.copy_dir })) + '</span></div></div>' +
       '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.dirs_when')) + '</span><div class="snp-ctl"><select id="cps-night"><option value="1"' + (+c.off_night ? ' selected' : '') + '>' + esc(T('cps.night')) + '</option><option value="0"' + (+c.off_night ? '' : ' selected') + '>' + esc(T('cps.with_weekly')) + '</option></select> ' + esc(T('cps.keep_l')) + ' <input type="number" id="cps-kdaily" min="1" max="90" value="' + c.off_daily + '"> ' + esc(T('cps.daily_v')) + '<span class="snp-hint">' + esc(T('cps.night_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.first')) + '</span><div class="snp-ctl"><span id="cps-est" style="flex:1 1 100%"></span>' + esc(T('cps.up')) + ' <input type="number" id="cps-up" min="0" max="100000" value="' + c.off_up + '"> Mbit/s <input type="button" id="cps-measure" class="snp-ghost snp-sm" value="' + esc(T('cps.measure')) + '"><span class="snp-hint">' + esc(T('cps.first_hint')) + '</span></div></div>' +
       '<div class="snp-row snp-set cps-any"><span class="lb">' + esc(T('cps.pw')) + '</span><div class="snp-ctl"><input type="button" id="cps-pw" class="snp-ghost snp-sm" value="' + esc(T('cps.pw_show')) + '"' + (C.has_pw ? '' : ' disabled') + '><span id="cps-pwv" class="snp-pw"></span><span class="snp-hint">' + esc(T(C.has_pw ? 'cps.pw_hint' : 'cps.pw_none')) + '</span></div></div>' +
@@ -331,7 +343,8 @@ $(function () {
     offRows();
   }
   // the chosen folders (ticked) and, after Choose folders, the folders of every share
-  function dirBox(p, label) { return '<label><input type="checkbox" class="cps-dir" value="' + esc(p) + '"' + (DIRS.indexOf(p) >= 0 ? ' checked' : '') + '> ' + esc(label) + '</label>'; }
+  function inCopy(p) { var c = String((CONF && CONF.copy_dir) || '').replace(/\/+$/, ''); return c !== '' && (p === c || p.indexOf(c + '/') === 0); }
+  function dirBox(p, label) { var no = inCopy(p) && DIRS.indexOf(p) < 0; return '<label' + (no ? ' class="snp-mut" title="' + esc(T('cps.copy_no')) + '"' : '') + '><input type="checkbox" class="cps-dir" value="' + esc(p) + '"' + (DIRS.indexOf(p) >= 0 ? ' checked' : '') + (no ? ' disabled' : '') + '> ' + esc(label) + '</label>'; }
   function drawDirs() {
     $('#cps-dirs').html($.map(DIRS, function (p) { return dirBox(p, p); }).join(''));
     $('#cps-choices').html(CHO ? (CHO.length ? $.map(CHO, function (x) { return '<div class="snp-dirgrp"><b>' + esc(x.share) + '</b>' + dirBox('/mnt/user/' + x.share, T('cps.whole')) + $.map(x.subs, function (n) { return dirBox('/mnt/user/' + x.share + '/' + n, n); }).join('') + '</div>'; }).join('') : '<span class="snp-mut">' + esc(T('cps.no_shares')) + '</span>') : '');
@@ -350,7 +363,7 @@ $(function () {
     $('#cps-est').text(t.join(' · '));
   }
   $(document).on('change', '#snp .cps-dir', function () { var p = String($(this).val()), i = DIRS.indexOf(p); if (this.checked && i < 0) { DIRS.push(p); } if (!this.checked && i >= 0) { DIRS.splice(i, 1); } drawDirs(); });
-  $(document).on('click', '#cps-add', function () { var p = $.trim($('#cps-other').val()).replace(/\/+$/, ''); if (p.indexOf('/mnt/user/') !== 0) { window.alert(T('cps.add_bad')); return; } if (DIRS.indexOf(p) < 0) { DIRS.push(p); } $('#cps-other').val(''); drawDirs(); });
+  $(document).on('click', '#cps-add', function () { var p = $.trim($('#cps-other').val()).replace(/\/+$/, ''); if (p.indexOf('/mnt/user/') !== 0) { window.alert(T('cps.add_bad')); return; } if (inCopy(p)) { window.alert(T('cpe.folder_copy', { d: p })); return; } if (DIRS.indexOf(p) < 0) { DIRS.push(p); } $('#cps-other').val(''); drawDirs(); });
   $(document).on('click', '#cps-choose', function () { var $b = $(this).prop('disabled', true); api('off_dirs').done(function (r) { CHO = r.ok ? r.list : []; drawDirs(); }).fail(function (x) { window.alert(err(x)); }).always(function () { $b.prop('disabled', false); }); });
   $(document).on('input', '#cps-up', function () { if (D) { drawEst(D); } });
   $(document).on('click', '#cps-measure', function () { var $b = $(this).prop('disabled', true); api('off_size').done(function (r) { if (!r.ok) { window.alert(r.error); } load(); }).fail(function (x) { window.alert(err(x)); }).always(function () { $b.prop('disabled', false); }); });

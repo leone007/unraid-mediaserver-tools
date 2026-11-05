@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.39">
+<!ENTITY version   "2026.10.40">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,12 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.40
+- Snapshots, off-site copy: the off-site row shows one short line (for example 2 of 7 sources failed) instead of every error; each source row keeps its own error, and Activity shows the short line too
+- Snapshots, off-site copy: an error reads as restic's or ssh's message only, without the harmless OpenSSH post-quantum warning and without restic's JSON
+- Snapshots, folders off-site: the copy folder and the folders in it cannot be chosen (its copies are the containers' data again, and restored versions would go round); a folder that holds it, for example the whole backup share, goes without it, in Measure too
+- Snapshots, folders off-site: a source taken off the list stays as a grey row; Delete from off-site (with a confirm) removes all its versions from the off-site storage, otherwise they stay
+
 ###2026.10.39
 - Snapshots, off-site copy: chosen share folders (for example photos) and the Unraid flash can go into the encrypted copy too, next to the containers' data. Tick them in the settings (Choose folders lists every share) or type a folder
 - Snapshots, off-site copy: the folders and the flash go every night at the set time (only the changes, keeping 14 daily and the weekly versions), or with the weekly copy; the containers' data stays weekly

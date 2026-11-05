@@ -1,6 +1,6 @@
 <?php
 // Web endpoint of the Snapshots page (Sysbox). POST op=state|make|delete|keep|preview|restore|save
-//   copies (item 105): copy_now|off_now|off_test|off_list|off_fetch|off_pw|fetched_del; folders (item 136): off_dirs|off_size
+//   copies (item 105): copy_now|off_now|off_test|off_list|off_fetch|off_pw|fetched_del; folders (item 136): off_dirs|off_size|off_forget
 require_once __DIR__ . '/snap_lib.php';
 require_once __DIR__ . '/copy_lib.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { sx_json(['ok' => false, 'error' => 'method'], 405); }
@@ -68,6 +68,8 @@ if ($op === 'copy_now') { cp_spawn(['copy']); }
 if ($op === 'off_now') { if (!cp_off_ok(snp_cfg())) { sx_json(['ok' => false, 'error' => sx_tr('cpe.off_addr')]); } cp_spawn(['offsite']); }
 if ($op === 'off_size') { cp_spawn(['size']); }
 // the folders that can be chosen (loaded on a click: listing the shares can wake the disks)
+// Delete from off-site: only a source taken off the list (a click with a confirm)
+if ($op === 'off_forget') { $k = (string)($_POST['key'] ?? ''); if (!array_key_exists($k, cp_off_gone(snp_cfg()))) { sx_json(['ok' => false, 'error' => sx_tr('cpe.not_gone')]); } cp_spawn(['forget', $k]); }
 if ($op === 'off_dirs') { sx_json(['ok' => true, 'list' => cp_dir_choices()]); }
 if ($op === 'off_fetch') { $id = (string)($_POST['id'] ?? ''); if (!preg_match('/^[0-9a-f]{8}$/', $id)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.no_version')]); } cp_spawn(['fetch', $id]); }
 if ($op === 'off_test') { if (snp_running()) { sx_json(['ok' => false, 'error' => sx_tr('snpe.busy')]); } $r = cp_off_test(snp_cfg()); foreach (['msg', 'error'] as $k) { if (isset($r[$k])) { $r[$k] = cp_t($r[$k]); } } sx_json($r); }
@@ -113,6 +115,7 @@ if ($op === 'save') {
             $p = rtrim(trim((string)$p), '/'); if ($p === '') { continue; }
             if (!snp_udir_ok($p)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.folder_bad', ['d' => $p])]); }
             if (!is_dir(cp_user_root() . substr($p, strlen('/mnt/user')))) { sx_json(['ok' => false, 'error' => sx_tr('cpe.folder_nf', ['d' => $p])]); }
+            if (cp_in_copy($c, $p)) { sx_json(['ok' => false, 'error' => sx_tr('cpe.folder_copy', ['d' => $p])]); }
             $L[] = $p;
         }
         $c['off_dirs'] = array_values(array_unique($L));

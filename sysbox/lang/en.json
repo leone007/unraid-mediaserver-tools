@@ -5879,5 +5879,45 @@
  "cpe.fetched_have": {
   "text": "This version is already downloaded: {d}",
   "note": "Snapshots page: error of Download."
+ },
+ "cpd.off_sum": {
+  "text": "{n} of {all} sources failed, see the rows below",
+  "note": "Snapshots page, Copies band, off-site row (and the Activity line): short summary when sources failed; each source row shows its own error."
+ },
+ "cpe.folder_copy": {
+  "text": "{d}: this is the copy folder or a folder in it. Its copies are the containers' data again, so it cannot go off-site.",
+  "note": "Snapshots page: error when a folder in the copy folder is chosen for the off-site copy (alert, Save, the source row)."
+ },
+ "cps.copy_hint": {
+  "text": "The copy folder ({d}) cannot be chosen; a folder that holds it goes without it.",
+  "note": "Snapshots page, Settings band, off-site settings: hint under the folder list; {d} is the copy folder."
+ },
+ "cps.copy_no": {
+  "text": "The copy folder: its copies are the containers' data again",
+  "note": "Snapshots page, Settings band, folder chooser: tooltip of the disabled copy folder."
+ },
+ "cp.gone_sub": {
+  "text": "No longer chosen. Its off-site versions stay until you delete them.",
+  "note": "Snapshots page, Copies band: grey row of a source taken off the list."
+ },
+ "cp.forget": {
+  "text": "Delete from off-site",
+  "note": "Snapshots page, Copies band: button on the grey row of a source taken off the list."
+ },
+ "cp.forget_confirm": {
+  "text": "Delete every off-site version of {p} from the off-site storage? This cannot be undone. The files on this server stay as they are.",
+  "note": "Snapshots page: confirm of Delete from off-site."
+ },
+ "cpj.forget": {
+  "text": "Deleting the off-site versions of {s}",
+  "note": "Snapshots page, Activity: running job."
+ },
+ "cpj.done_forget": {
+  "text": "Off-site versions deleted",
+  "note": "Snapshots page, Activity: finished job."
+ },
+ "cpe.not_gone": {
+  "text": "This source is still chosen or was deleted already.",
+  "note": "Snapshots page: error of Delete from off-site."
  }
 }

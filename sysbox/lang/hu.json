@@ -4418,5 +4418,35 @@
  },
  "cpe.fetched_have": {
   "text": "Ez a változat már le van töltve: {d}"
+ },
+ "cpd.off_sum": {
+  "text": "{all} forrásból {n} sikertelen, lásd lent a sorokat"
+ },
+ "cpe.folder_copy": {
+  "text": "{d}: ez a másolatok mappája vagy annak egy almappája. A benne lévő másolatok a konténerek adatai még egyszer, ezért nem mehet gépen kívülre."
+ },
+ "cps.copy_hint": {
+  "text": "A másolatok mappája ({d}) nem választható; az azt tartalmazó mappa nélküle megy."
+ },
+ "cps.copy_no": {
+  "text": "A másolatok mappája: a benne lévő másolatok a konténerek adatai még egyszer"
+ },
+ "cp.gone_sub": {
+  "text": "Már nincs kiválasztva. A gépen kívüli verziói megmaradnak, amíg nem törlöd őket."
+ },
+ "cp.forget": {
+  "text": "Törlés a gépen kívüli tárolóból"
+ },
+ "cp.forget_confirm": {
+  "text": "Törlöd a(z) {p} összes gépen kívüli verzióját a gépen kívüli tárolóból? Ez nem vonható vissza. A szerveren lévő fájlok változatlanok maradnak."
+ },
+ "cpj.forget": {
+  "text": "A(z) {s} gépen kívüli verzióinak törlése"
+ },
+ "cpj.done_forget": {
+  "text": "A gépen kívüli verziók törölve"
+ },
+ "cpe.not_gone": {
+  "text": "Ez a forrás még ki van választva, vagy már törölve lett."
  }
 }
