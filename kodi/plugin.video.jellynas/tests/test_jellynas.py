@@ -1,5 +1,6 @@
 # Runs the JELLYNAS plugin outside Kodi: stub xbmc* modules and a local stub Jellyfin server (synthetic data).
 # Usage: python3 kodi/plugin.video.jellynas/tests/test_jellynas.py      exit code 1 on a failed check
+import re
 import http.server, json, os, sys, tempfile, threading, time, types, urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -206,29 +207,26 @@ items = run('?mode=spotlight')
 ok([li.label for _, li, _ in items] == ['Hotel Transylvania', 'Vízióküldetés', 'Lost'], 'spotlight: resume + next up, one per series')
 
 items = run('?mode=week')
-labels = [(li.label, li.props.get('jellynas.separator')) for _, li, _ in items]
-seps = [l for l, s in labels if s == '1']
-ok(len(seps) == 3 and seps[1].startswith('TODAY · '), 'week: a separator per day, today marked: %s' % seps)
+ok(not [li for _, li, _ in items if li.props.get('jellynas.separator')], 'week: no day cards')
+ok([e for e in items if e[1].label2.startswith('TODAY ')], 'week: today marked in the second line: %s' % [li.label2 for _, li, _ in items])
 grp = [(u, li, d) for u, li, d in items if li.label == 'Gengszter']
-ok(len(grp) == 1 and grp[0][2] and 'mode=wgroup' in grp[0][0] and grp[0][1].label2 == 'S02E01–E03 · 2/3 available', 'week: season pack of one day = one folder card')
+ok(len(grp) == 1 and grp[0][2] and 'mode=wgroup' in grp[0][0] and grp[0][1].label2.endswith(' · S02E01–E03') and '2/3 available' in grp[0][1].tag.d['plot'], 'week: season pack of one day = one folder card')
 v5 = [x for x in items if x[1].label == 'A visszavágó'][0]
 ok(v5[0].endswith('mode=play&id=v5') and v5[1].props['jellynas.imdb'] == '6.3', 'week: available episode plays, IMDb by series')
 ok(v5[1].art.get('landscape') == URL + '/Items/s3/Images/Backdrop?tag=bs3&maxWidth=1920&quality=90' and 'tag=ps3' in v5[1].art.get('poster', ''),
    'week: tagged series images, backdrop when the series has no Thumb')
-sep = [li for _, li, _ in items if li.props.get('jellynas.separator') == '1']
-ok(sep[1].art['landscape'].endswith('day_en_%d_today_land.png' % time.localtime().tm_wday) and os.path.exists(sep[1].art['landscape']),
-   'week: today day card image exists')
 noc = [x for x in items if x[1].label == 'Nocturne'][0]
-ok(noc[1].label2.startswith('S01E03 · Airs in 1d') and 'mode=na' in noc[0], 'week: future episode shows the countdown, not playable')
+ok(re.match(r'^[A-Z]+ \d\d:\d\d · S01E03$', noc[1].label2) and 'Airs in 1d' in noc[1].tag.d['plot'] and 'mode=na' in noc[0],
+   'week: day and time in the second line, the countdown in the plot, not playable: %s' % noc[1].label2)
 late = [x for x in items if x[1].label == 'Az Intézet'][0]
-ok(late[1].label2 == 'S02E01 · Late 2h 0m', 'week: late state with duration')
+ok('Late 2h 0m' in late[1].tag.d['plot'], 'week: late state with duration (plot)')
 
 g = run('?' + grp[0][0].split('?', 1)[1])
 ok([li.label2 for _, li, _ in g] == ['S02E01 · Available', 'S02E02 · Available', 'S02E03 · Downloading 40%'], 'week group folder: its episodes')
 
 LANG['lang'] = '2'
 items = run('?mode=week')
-ok(any(li.label.startswith('MA · ') for _, li, _ in items) and any(li.label2.endswith('Elérhető') for _, li, _ in items), 'Hungarian chosen in the settings')
+ok(any(li.label2.startswith('MA ') for _, li, _ in items) and any('Elérhető' in li.tag.d['plot'] for _, li, _ in items), 'Hungarian chosen in the settings')
 LANG['lang'] = '0'
 
 ok(not [s for s in SEEN if s[0] != 'GET'], 'only GET requests')

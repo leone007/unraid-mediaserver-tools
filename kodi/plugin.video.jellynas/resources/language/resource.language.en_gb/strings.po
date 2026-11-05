@@ -88,7 +88,7 @@ msgstr ""
 
 #. Day separator of today; {d} is the day name
 msgctxt "#30031"
-msgid "Today · {d}"
+msgid "Today"
 msgstr ""
 
 #. Duration: days and hours

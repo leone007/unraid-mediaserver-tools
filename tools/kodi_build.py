@@ -10,42 +10,12 @@ import xml.etree.ElementTree as ET
 R = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 SRC, OUT = os.path.join(R, 'kodi'), os.path.join(R, 'dist', 'kodi')
 SKIP = ('__pycache__', 'tests')
-FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 
 
 def po_texts(fn):
     t = open(fn, encoding='utf-8').read()
     return {int(m.group(1)): m.group(3) or m.group(2)
             for m in re.finditer(r'msgctxt "#(\d+)"\nmsgid "(.*)"\nmsgstr "(.*)"', t)}
-
-
-def day_cards(path):
-    """plugin.video.jellynas: the day cards of the This week row (day name drawn into the image, today marked), per
-    language from strings.po: resources/media/day_<en|hu>_<0..6>[_today]_<land|poster>.png"""
-    from PIL import Image, ImageDraw, ImageFont
-    media = os.path.join(path, 'resources', 'media')
-    os.makedirs(media, exist_ok=True)
-    for lang, folder in (('en', 'resource.language.en_gb'), ('hu', 'resource.language.hu_hu')):
-        tx = po_texts(os.path.join(path, 'resources', 'language', folder, 'strings.po'))
-        today_word = tx[30031].split('{d}')[0].strip(' ·').upper()
-        for d in range(7):
-            name = tx[30040 + d].upper()
-            for today in (False, True):
-                for shape, (w, h) in (('land', (640, 360)), ('poster', (400, 600))):
-                    im = Image.new('RGB', (w, h), (22, 22, 26) if not today else (32, 32, 38))
-                    dr = ImageDraw.Draw(im)
-                    size = 64 if shape == 'land' else 52
-                    f = ImageFont.truetype(FONT, size)
-                    while dr.textlength(name, font=f) > w * 0.86:
-                        size -= 2
-                        f = ImageFont.truetype(FONT, size)
-                    tw = dr.textlength(name, font=f)
-                    y = h // 2 - size // 2
-                    if today:
-                        sf = ImageFont.truetype(FONT, size // 2)
-                        dr.text(((w - dr.textlength(today_word, font=sf)) / 2, y - size * 0.9), today_word, font=sf, fill=(63, 191, 127))
-                    dr.text(((w - tw) / 2, y), name, font=f, fill=(255, 255, 255) if today else (170, 170, 176))
-                    im.save(os.path.join(media, 'day_%s_%d%s_%s.png' % (lang, d, '_today' if today else '', shape)), optimize=True)
 
 
 def po_ids(fn):
@@ -97,8 +67,6 @@ def build():
         if root.get('id') != aid:
             errors.append('%s: folder name and addon id (%s) differ' % (aid, root.get('id'))); continue
         errors += check(path, aid)
-        if aid == 'plugin.video.jellynas' and not errors:
-            day_cards(path)
         addons.append((aid, root.get('version'), path, root))
     if errors:
         print('\n'.join('FAIL ' + e for e in errors)); return 1

@@ -71,8 +71,8 @@ msgid "Any time now"
 msgstr "Bármikor jöhet"
 
 msgctxt "#30031"
-msgid "Today · {d}"
-msgstr "Ma · {d}"
+msgid "Today"
+msgstr "Ma"
 
 msgctxt "#30032"
 msgid "{d}d {h}h"

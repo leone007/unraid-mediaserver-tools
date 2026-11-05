@@ -1,7 +1,8 @@
 # JELLYNAS rows for Kodi skins (ATADAS item 141), shown as widget folders (Arctic Fuse 2: Edit widgets / Choose spotlight):
 #  - Continue watching: the Jellyfin server's own resume list (movies and episodes mixed, its order), episodes under the series name
 #  - Spotlight: continue watching + next up, one item per series, the series art and logo for episodes
-#  - This week: Streambox week.json, a day separator item before each day, a season pack of one day as one card
+#  - This week: Streambox week.json in air order, the day and time in the card's second line (no day cards: they were
+#    focusable and showed an empty info panel), a season pack of one day as one card
 # Jellyfin is asked with the Kofin login of this Kodi (GET only); week.json and imdb.json come from the Jellyfin web path
 # (/web/streambox/, written by Streambox). Playback goes through Kofin (mode=play&id=<Jellyfin id>).
 import json
@@ -23,7 +24,6 @@ KOFIN = 'plugin.video.kofin'
 PLAY = 'plugin://plugin.video.kofin/?mode=play&id=%s'
 ROOT = xbmcvfs.translatePath(ADDON.getAddonInfo('path'))
 PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
-MEDIA = os.path.join(ROOT, 'resources', 'media')
 TIMEOUT = 8
 LIMIT = 24
 SPOT_MAX = 10
@@ -375,29 +375,18 @@ def series_art(c, e, info):
     return {'poster': e['img'], 'thumb': e['img'], 'icon': e['img']} if e.get('img') else {}
 
 
-def lang_code():
-    sel = ADDON.getSetting('lang')
-    if sel in ('1', '2'):
-        return 'hu' if sel == '2' else 'en'
-    return 'hu' if xbmc.getLanguage(xbmc.ISO_639_1) == 'hu' else 'en'
+def when(e, now, this_week):
+    """KEDD 02:00, or MA 02:00 on today's episodes of this week"""
+    d = day_idx(e['air'])
+    day = L(30031) if this_week and d == day_idx(now) else day_name(d)
+    return '%s %s' % (day.upper(), time.strftime('%H:%M', time.localtime(e['air'])))
 
 
-def separator(label, d, today):
-    """A day card before the day's episodes: the day name drawn into the image (kodi_build.py makes them from strings.po),
-    until a skin can draw a narrow separator from the jellynas.separator property."""
-    name = 'day_%s_%d%s' % (lang_code(), d, '_today' if today else '')
-    land, poster = os.path.join(MEDIA, name + '_land.png'), os.path.join(MEDIA, name + '_poster.png')
-    li = xbmcgui.ListItem(label, offscreen=True)
-    li.setArt({'poster': poster, 'thumb': land, 'landscape': land, 'icon': poster, 'fanart': land})
-    li.setProperty('jellynas.separator', '1')
-    li.setProperty('IsPlayable', 'false')
-    return BASE + '?mode=noop', li, False
-
-
-def week_card(c, e, imdb, now, info):
+def week_card(c, e, imdb, now, info, day=None):
+    """day: the day and time for the second line (the week row); the episodes of a group folder show their state"""
     grp = e.get('g')
     st = group_status(grp, now) if grp else status(e, now)
-    sub = '%s · %s' % (e.get('c', ''), st)
+    sub = '%s · %s' % (day, e.get('c', '')) if day else '%s · %s' % (e.get('c', ''), st)
     li = xbmcgui.ListItem(e.get('s', ''), sub, offscreen=True)
     tag = li.getVideoInfoTag()
     tag.setMediaType('tvshow' if grp else 'episode')
@@ -442,19 +431,11 @@ def do_week(h, c):
     xbmcplugin.setContent(h, 'episodes')
     if not w:
         return
-    now, imdb, out, last_day = time.time(), imdb_table(c), [], None
+    now, imdb = time.time(), imdb_table(c)
     cards = week_cards(w)
     info = series_info(c, [e.get('sid') for e in cards])
     this_week = w.get('from', 0) <= now < w.get('to', 0)
-    today = day_idx(now)
-    for e in cards:
-        d = day_idx(e['air'])
-        if d != last_day:
-            name = day_name(d)
-            is_today = this_week and d == today
-            out.append(separator((L(30031, d=name) if is_today else name).upper(), d, is_today))
-            last_day = d
-        out.append(week_card(c, e, imdb, now, info))
+    out = [week_card(c, e, imdb, now, info, when(e, now, this_week)) for e in cards]
     xbmcplugin.addDirectoryItems(h, out)
 
 
