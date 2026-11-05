@@ -343,3 +343,4 @@ For whoever (human or Claude) continues this project. Author: leone007. Server: 
 - AF2 asks for home widgets again at every visit to Home (Kofin `core/state.py` comment), so no reload token is needed.
 - Kodi repository: `tools/kodi_build.py` -> `dist/kodi/addons.xml(.md5)` + `<id>/<id>-<ver>.zip`; `repository.jellynas` reads them from GitHub raw. Checks: compile, en_gb/hu_hu strings.po ids equal, every id used is defined and every defined id used.
 - Not tested in a real Kodi yet (stub test only): card label fields in AF2, the separator items' look, playback from our items through Kofin.
+- The public address (NPM) answers 403 to Python's default User-Agent `Python-urllib/3.x` (seen in the Mac's Kodi log, reproduced from the container): every request sends `JELLYNAS/<version> (Kodi)` (0.1.2). Kodi reads a repository add-on's assets from `<datadir>/<id>/<path in addon.xml>`; `kodi_build.py` copies them there.
