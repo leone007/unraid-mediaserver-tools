@@ -33,6 +33,16 @@ msgctxt "#30006"
 msgid "Recently added series"
 msgstr "Nemrég hozzáadott sorozatok"
 
+#. Folder: the whole movie library, newest first (a category's poster wall)
+msgctxt "#30007"
+msgid "All movies"
+msgstr "Összes film"
+
+#. Folder: the whole series library, newest first (a category's poster wall)
+msgctxt "#30008"
+msgid "All series"
+msgstr "Összes sorozat"
+
 msgctxt "#30010"
 msgid "Log in to Kofin first"
 msgstr "Előbb jelentkezz be a Kofinban"

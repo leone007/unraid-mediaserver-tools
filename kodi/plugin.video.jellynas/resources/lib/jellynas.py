@@ -3,6 +3,7 @@
 #  - Spotlight: continue watching + next up, one item per series, the series art and logo for episodes
 #  - Next up, Recently added movies, Recently added series: the same lists as the Jellyfin home page (the Kodi library
 #    rows from Kofin's sync have no IMDb rating, so the skin's IMDb badge stays empty on them)
+#  - All movies, All series: the whole library for a category's poster wall (newest first, Kodi's sort menu for the rest)
 #  - This week: Streambox week.json in air order, the day and time in the card's second line (no day cards: they were
 #    focusable and showed an empty info panel), a season pack of one day as one card
 # Jellyfin is asked with the Kofin login of this Kodi (GET only); week.json and imdb.json come from the Jellyfin web path
@@ -32,6 +33,7 @@ LIMIT = 24
 SPOT_MAX = 10
 FIELDS = 'Overview,ProviderIds,Genres,MediaStreams,PremiereDate,OfficialRating,CommunityRating'
 IMAGES = 'Primary,Backdrop,Thumb,Logo'
+GRID_FIELDS = 'Overview,ProviderIds,Genres,PremiereDate,OfficialRating,CommunityRating,DateCreated'   # no MediaStreams: the whole library in one answer
 GROUP_MIN = 2   # this many episodes of one season on one day make one card (as on the Jellyfin page)
 HDR = {'HDR10': 'hdr10', 'HDR10Plus': 'hdr10', 'HLG': 'hlg'}
 
@@ -226,9 +228,23 @@ def media_item(c, it, imdb, sids):
     total = int((it.get('RunTimeTicks') or 0) / 10000000)
     if total:
         tag.setDuration(total)
-    pos = ((it.get('UserData') or {}).get('PlaybackPositionTicks') or 0) / 10000000
+    ud = it.get('UserData') or {}
+    pos = (ud.get('PlaybackPositionTicks') or 0) / 10000000
     if pos and total:
         tag.setResumePoint(pos, total)
+    if ud.get('Played') and kind != 'Series':
+        tag.setPlaycount(max(1, ud.get('PlayCount') or 0))
+    if it.get('DateCreated'):
+        tag.setDateAdded(it['DateCreated'][:19].replace('T', ' '))
+    if kind == 'Series':
+        # the skin's watched tick and unwatched count read these (as on Kodi library series)
+        n, left = it.get('RecursiveItemCount') or 0, ud.get('UnplayedItemCount') or 0
+        if n:
+            li.setProperty('TotalEpisodes', str(n))
+            li.setProperty('WatchedEpisodes', str(max(0, n - left)))
+            li.setProperty('UnWatchedEpisodes', str(left))
+        if ud.get('Played'):
+            tag.setPlaycount(1)
     r = imdb.get(it.get('SeriesId') if ep or kind == 'Season' else it.get('Id'))
     if r:
         tag.setRating(r[0] / 10.0, int(r[1] or 0), 'imdb', True)
@@ -277,9 +293,16 @@ def latest_items(c, types):
     return d if isinstance(d, list) else d.get('Items', [])
 
 
-def list_media(h, c, items):
+def all_items(c, kind):
+    """The whole library of one kind, newest first (as Jellyfin's Movies / Shows tab sorted by date added)."""
+    return jf(c, '/Items', Recursive='true', IncludeItemTypes=kind, SortBy='DateCreated,SortName', SortOrder='Descending',
+              Fields=GRID_FIELDS + (',RecursiveItemCount' if kind == 'Series' else ''), EnableImageTypes=IMAGES, ImageTypeLimit=1,
+              EnableUserData='true', EnableTotalRecordCount='false').get('Items', [])
+
+
+def list_media(h, c, items, content='videos'):
     imdb, sids = imdb_table(c), series_ids(c, items)
-    xbmcplugin.setContent(h, 'videos')
+    xbmcplugin.setContent(h, content)
     xbmcplugin.addDirectoryItems(h, [media_item(c, it, imdb, sids) for it in items if it.get('Id')])
 
 
@@ -297,6 +320,22 @@ def do_movies(h, c):
 
 def do_series(h, c):
     list_media(h, c, latest_items(c, 'Episode'))
+
+
+def list_all(h, c, kind, content):
+    list_media(h, c, all_items(c, kind), content)
+    # the first one keeps the server's order (date added); the rest are Kodi's sort menu
+    for m in (xbmcplugin.SORT_METHOD_UNSORTED, xbmcplugin.SORT_METHOD_DATEADDED, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE,
+              xbmcplugin.SORT_METHOD_VIDEO_YEAR, xbmcplugin.SORT_METHOD_VIDEO_RATING, xbmcplugin.SORT_METHOD_PLAYCOUNT):
+        xbmcplugin.addSortMethod(h, m)
+
+
+def do_allmovies(h, c):
+    list_all(h, c, 'Movie', 'movies')
+
+
+def do_allseries(h, c):
+    list_all(h, c, 'Series', 'tvshows')
 
 
 def do_spotlight(h, c):
@@ -517,7 +556,7 @@ def do_wgroup(h, c, q):
 
 # ---- router ----
 ROUTES = {'resume': do_resume, 'nextup': do_nextup, 'movies': do_movies, 'series': do_series, 'spotlight': do_spotlight,
-          'week': do_week}
+          'week': do_week, 'allmovies': do_allmovies, 'allseries': do_allseries}
 
 
 def folder(label, mode):
@@ -537,7 +576,8 @@ def main(argv):
         return
     if not mode:
         xbmcplugin.addDirectoryItems(h, [folder(L(30001), 'resume'), folder(L(30004), 'nextup'), folder(L(30005), 'movies'),
-                                         folder(L(30006), 'series'), folder(L(30002), 'spotlight'), folder(L(30003), 'week')])
+                                         folder(L(30006), 'series'), folder(L(30002), 'spotlight'), folder(L(30003), 'week'),
+                                         folder(L(30007), 'allmovies'), folder(L(30008), 'allseries')])
         xbmcplugin.endOfDirectory(h)
         return
     c = kofin()

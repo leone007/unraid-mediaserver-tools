@@ -66,6 +66,13 @@ class H(http.server.BaseHTTPRequestHandler):
                 {'Id': 's2', 'Type': 'Series', 'Name': 'Lost', 'ProductionYear': 2004, 'ImageTags': {'Primary': 'p2'}, 'BackdropImageTags': ['b2']},
                 {'Id': 'se3', 'Type': 'Season', 'Name': '1. évad', 'SeriesName': 'A visszavágó', 'SeriesId': 's3', 'ImageTags': {}},
                 ep('v6', 'A visszavágó', 's3', 1, 6, '6. epizód')]
+        elif u.path == '/Items' and q.get('IncludeItemTypes') == 'Movie':
+            body = {'Items': [dict(MOVIE, DateCreated='2026-11-01T10:00:00.0000000Z'),
+                              {'Id': 'm2', 'Type': 'Movie', 'Name': 'Blade', 'ProductionYear': 1998, 'ImageTags': {'Primary': 'p'},
+                               'UserData': {'Played': True, 'PlayCount': 2}, 'DateCreated': '2026-10-01T10:00:00Z'}]}
+        elif u.path == '/Items' and q.get('IncludeItemTypes') == 'Series':
+            body = {'Items': [{'Id': 's2', 'Type': 'Series', 'Name': 'Lost', 'ProductionYear': 2004, 'RecursiveItemCount': 121,
+                               'UserData': {'UnplayedItemCount': 21}, 'ImageTags': {'Primary': 'p2'}}]}
         elif u.path == '/Items':
             ids = q.get('Ids', '').split(',')
             body = {'Items': [{'Id': i, 'Type': 'Series', 'ProviderIds': SERIES[i], 'ImageTags': {'Primary': 'p' + i},
@@ -166,7 +173,9 @@ xbmc = types.SimpleNamespace(log=lambda *a: None, LOGINFO=1, ISO_639_1=0, getLan
 xbmcaddon = types.SimpleNamespace(Addon=Addon)
 xbmcgui = types.SimpleNamespace(ListItem=ListItem, NOTIFICATION_WARNING='w',
                                 Dialog=lambda: types.SimpleNamespace(notification=lambda *a: DIR['notes'].append(a)))
-xbmcplugin = types.SimpleNamespace(setContent=lambda h, c: None, addDirectoryItems=lambda h, items: DIR['items'].extend(items),
+xbmcplugin = types.SimpleNamespace(setContent=lambda h, c: DIR.__setitem__('content', c),
+                                   addSortMethod=lambda h, m: DIR['sorts'].append(m),
+                                   **{'SORT_METHOD_' + n: i for i, n in enumerate(('UNSORTED', 'DATEADDED', 'LABEL_IGNORE_THE', 'VIDEO_YEAR', 'VIDEO_RATING', 'PLAYCOUNT'))}, addDirectoryItems=lambda h, items: DIR['items'].extend(items),
                                    endOfDirectory=lambda h, succeeded=True, cacheToDisc=True: DIR.__setitem__('end', succeeded))
 xbmcvfs = types.SimpleNamespace(translatePath=lambda p: p)
 for n, m in (('xbmc', xbmc), ('xbmcaddon', xbmcaddon), ('xbmcgui', xbmcgui), ('xbmcplugin', xbmcplugin), ('xbmcvfs', xbmcvfs)):
@@ -184,7 +193,7 @@ def ok(cond, what):
 
 
 def run(query):
-    DIR['items'], DIR['end'], DIR['notes'] = [], None, []
+    DIR['items'], DIR['end'], DIR['notes'], DIR['sorts'], DIR['content'] = [], None, [], [], None
     jellynas._po = None
     jellynas.main(['plugin://plugin.video.jellynas/', '1', query])
     return DIR['items']
@@ -192,7 +201,8 @@ def run(query):
 
 # ---- checks ----
 root = run('')
-ok([li.label for _, li, _ in root] == ['Continue watching', 'Next up', 'Recently added movies', 'Recently added series', 'Spotlight', 'This week'], 'root: six folders')
+ok([li.label for _, li, _ in root] == ['Continue watching', 'Next up', 'Recently added movies', 'Recently added series', 'Spotlight', 'This week', 'All movies', 'All series'],
+   'root: eight folders')
 
 items = run('?mode=resume')
 ok(len(items) == 2 and DIR['end'] is True, 'resume: 2 items, directory ok')
@@ -252,6 +262,20 @@ ssn = [x for x in items if 'type=season' in x[0]]
 ok(ssn and ssn[0][2] and 'series=s3' in ssn[0][0] and ssn[0][1].props.get('jellynas.imdb') == '6.3', 'season card: Kofin season browse, IMDb of its series')
 eps6 = [x for x in items if x[0].endswith('id=v6')]
 ok(eps6 and eps6[0][1].props.get('sublabel') == 'S1:E6 · 6. epizód', 'recently added series: a single new episode plays')
+
+items = run('?mode=allmovies')
+alls = [q for q in SEEN if q[1] == '/Items' and q[2].get('IncludeItemTypes') == 'Movie']
+ok([li.label for _, li, _ in items] == ['Hotel Transylvania', 'Blade'] and DIR['content'] == 'movies' and DIR['end'] is True,
+   'all movies: the library, content movies')
+ok(alls and alls[-1][2].get('Recursive') == 'true' and alls[-1][2].get('SortBy', '').startswith('DateCreated') and alls[-1][2].get('SortOrder') == 'Descending'
+   and 'MediaStreams' not in alls[-1][2].get('Fields', ''), 'all movies: newest first, no MediaStreams')
+ok(items[0][1].props.get('jellynas.imdb') == '7.1' and items[1][1].tag.d.get('playcount') == 2 and 'playcount' not in items[0][1].tag.d
+   and items[0][1].tag.d.get('dateadded') == '2026-11-01 10:00:00', 'all movies: IMDb badge, watched count, date added')
+ok(DIR['sorts'][0] == 0 and len(DIR['sorts']) == 6, 'all movies: server order first, Kodi sort methods')
+items = run('?mode=allseries')
+lost = items[0]
+ok(DIR['content'] == 'tvshows' and lost[2] and 'type=series&folder=s2' in lost[0] and lost[1].props.get('UnWatchedEpisodes') == '21'
+   and lost[1].props.get('WatchedEpisodes') == '100', 'all series: content tvshows, opens Kofin seasons, unwatched count')
 
 items = run('?mode=week')
 ok(not [li for _, li, _ in items if li.props.get('jellynas.imdb')] and all(li.props.get('jellynas.kind') == 'week' for _, li, _ in items),

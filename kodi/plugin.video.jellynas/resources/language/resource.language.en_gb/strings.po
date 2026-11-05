@@ -37,6 +37,16 @@ msgid "Recently added series"
 msgstr ""
 
 #. Notification when Kofin has no server login
+#. Folder: the whole movie library, newest first (a category's poster wall)
+msgctxt "#30007"
+msgid "All movies"
+msgstr ""
+
+#. Folder: the whole series library, newest first (a category's poster wall)
+msgctxt "#30008"
+msgid "All series"
+msgstr ""
+
 msgctxt "#30010"
 msgid "Log in to Kofin first"
 msgstr ""
