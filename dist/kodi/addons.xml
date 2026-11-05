@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
-<addon id="plugin.video.jellynas" name="JELLYNAS" version="0.1.0" provider-name="leone007">
+<addon id="plugin.video.jellynas" name="JELLYNAS" version="0.1.1" provider-name="leone007">
   <requires>
     <import addon="xbmc.python" version="3.0.1"/>
     <import addon="plugin.video.kofin" version="0.29.0"/>
@@ -16,7 +16,7 @@
     <platform>all</platform>
     <license>MIT</license>
     <source>https://github.com/leone007/unraid-mediaserver-tools/tree/main/kodi/plugin.video.jellynas</source>
-    <news>0.1.0: first version: Continue watching, Spotlight, This week</news>
+    <news>0.1.1: the language setting is saved (new settings format), new icon. 0.1.0: first version: Continue watching, Spotlight, This week</news>
     <assets>
       <icon>resources/icon.png</icon>
     </assets>
