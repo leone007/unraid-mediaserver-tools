@@ -67,8 +67,11 @@ class H(http.server.BaseHTTPRequestHandler):
                 {'Id': 'se3', 'Type': 'Season', 'Name': '1. évad', 'SeriesName': 'A visszavágó', 'SeriesId': 's3', 'ImageTags': {}},
                 ep('v6', 'A visszavágó', 's3', 1, 6, '6. epizód')]
         elif u.path == '/Items':
+            ids = q.get('Ids', '').split(',')
             body = {'Items': [{'Id': i, 'Type': 'Series', 'ProviderIds': SERIES[i], 'ImageTags': {'Primary': 'p' + i},
-                               'BackdropImageTags': ['b' + i]} for i in q.get('Ids', '').split(',') if i in SERIES]}
+                               'BackdropImageTags': ['b' + i], 'Overview': 'Series overview ' + i, 'Genres': ['Reality'],
+                               'OfficialRating': 'HU-12'} for i in ids if i in SERIES]
+                              + [dict(ep(i, 'x', 's3', 1, 5, 'n'), Overview='Episode overview ' + i) for i in ids if i in ('v5', 'g1', 'g2')]}
         elif u.path == '/web/streambox/week.json':
             body = week()
         elif u.path == '/web/streambox/imdb.json':
@@ -231,7 +234,7 @@ ok([li.label2 for _, li, _ in g] == ['S02E01 · Available', 'S02E02 · Available
 
 LANG['lang'] = '2'
 items = run('?mode=week')
-ok(any(li.label2.startswith('MA ') for _, li, _ in items) and any('Elérhető' in li.tag.d['plot'] for _, li, _ in items), 'Hungarian chosen in the settings')
+ok(any(li.label2.startswith('MA ') for _, li, _ in items) and any(li.props.get('jellynas.badge') == 'Elérhető' for _, li, _ in items), 'Hungarian chosen in the settings')
 LANG['lang'] = '0'
 
 items = run('?mode=nextup')
@@ -257,6 +260,11 @@ v5 = [x for x in items if x[1].label == 'A visszavágó'][0][1]
 noc = [x for x in items if x[1].label == 'Nocturne'][0][1]
 ok(v5.props.get('jellynas.badge') == 'Available' and not noc.props.get('jellynas.badge') and 'imdb' in [r[2] for r in v5.tag.d['ratings']],
    'week: Available badge only when available, IMDb rating kept for the info panel')
+
+ok(v5.tag.d.get('plot') == 'Episode overview v5' and v5.tag.d['video'] and v5.tag.d.get('duration') == 3000, 'week: available episode: its own overview, streams, length')
+ok(noc.tag.d.get('plot', '').startswith('Nocturne · S01E03'), 'week: no Jellyfin overview: the made-up text stays')
+gp = [x for x in items if x[1].label == 'Gengszter'][0][1]
+ok('Episode overview' not in gp.tag.d.get('plot', ''), 'week: a season pack card has no single episode overview')
 
 ok(not [s for s in SEEN if s[0] != 'GET'], 'only GET requests')
 ok(all(s[4].startswith('JELLYNAS/') for s in SEEN), 'own User-Agent (the proxy refuses Python-urllib)')

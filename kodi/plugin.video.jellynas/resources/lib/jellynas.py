@@ -168,7 +168,7 @@ def series_info(c, ids):
     if not ids:
         return {}
     try:
-        d = jf(c, '/Items', Ids=','.join(ids), Fields='ProviderIds', EnableImageTypes=IMAGES, ImageTypeLimit=1,
+        d = jf(c, '/Items', Ids=','.join(ids), Fields='ProviderIds,Overview,Genres,OfficialRating', EnableImageTypes=IMAGES, ImageTypeLimit=1,
                EnableUserData='false')
         return {s.get('Id'): s for s in d.get('Items', [])}
     except Exception as x:  # noqa: BLE001
@@ -414,8 +414,23 @@ def when(e, now, this_week):
     return '%s %s' % (day.upper(), time.strftime('%H:%M', time.localtime(e['air'])))
 
 
-def week_card(c, e, imdb, now, info, day=None):
-    """day: the day and time for the second line (the week row); the episodes of a group folder show their state"""
+def week_episodes(c, cards):
+    """The Jellyfin items of the available episodes (overview, streams, length) for the info panel, by id."""
+    ids = sorted({x.get('ep') for e in cards for x in (e.get('g') or [e]) if x.get('st') == 'jf' and x.get('ep')})
+    if not ids:
+        return {}
+    try:
+        d = jf(c, '/Items', Ids=','.join(ids), Fields=FIELDS, EnableImageTypes='', EnableUserData='false')
+        return {it.get('Id'): it for it in d.get('Items', [])}
+    except Exception as x:  # noqa: BLE001
+        log('week episodes: %s' % x)
+        return {}
+
+
+def week_card(c, e, imdb, now, info, day=None, eps=None):
+    """day: the day and time for the second line (the week row); the episodes of a group folder show their state.
+    The info panel shows what Jellyfin knows, as on the other rows: an available episode's own overview, streams and
+    length, else the series overview (owner, 2026-11-05); the made-up text only when Jellyfin has no overview."""
     grp = e.get('g')
     st = group_status(grp, now) if grp else status(e, now)
     sub = '%s · %s' % (day, e.get('c', '')) if day else '%s · %s' % (e.get('c', ''), st)
@@ -431,8 +446,21 @@ def week_card(c, e, imdb, now, info, day=None):
             tag.setEpisode(int(m.group(2)))
     tag.setPremiered(time.strftime('%Y-%m-%d', time.localtime(e['air'])))
     hm = time.strftime('%H:%M', time.localtime(e['air']))
-    tag.setPlot('%s · %s%s\n%s %s · %s' % (e.get('s', ''), e.get('c', ''), (' · ' + e['t']) if e.get('t') else '',
-                                           day_name(day_idx(e['air'])), hm, st))
+    it = None if grp else (eps or {}).get(e.get('ep'))
+    show = info.get(e.get('sid')) or {}
+    src = it or show
+    plot = (it or {}).get('Overview') or show.get('Overview')
+    tag.setPlot(plot or '%s · %s%s\n%s %s · %s' % (e.get('s', ''), e.get('c', ''), (' · ' + e['t']) if e.get('t') else '',
+                                                   day_name(day_idx(e['air'])), hm, st))
+    if src.get('Genres'):
+        tag.setGenres(src['Genres'])
+    if src.get('OfficialRating'):
+        tag.setMpaa(src['OfficialRating'])
+    if it:
+        total = int((it.get('RunTimeTicks') or 0) / 10000000)
+        if total:
+            tag.setDuration(total)
+        add_streams(tag, it)
     r = imdb.get(e.get('sid'))
     if r:   # rating for the info panel; the card badge of this row is Available, not IMDb (owner, 2026-11-05)
         tag.setRating(r[0] / 10.0, int(r[1] or 0), 'imdb', True)
@@ -468,9 +496,9 @@ def do_week(h, c):
         return
     now, imdb = time.time(), imdb_table(c)
     cards = week_cards(w)
-    info = series_info(c, [e.get('sid') for e in cards])
+    info, eps = series_info(c, [e.get('sid') for e in cards]), week_episodes(c, cards)
     this_week = w.get('from', 0) <= now < w.get('to', 0)
-    out = [week_card(c, e, imdb, now, info, when(e, now, this_week)) for e in cards]
+    out = [week_card(c, e, imdb, now, info, when(e, now, this_week), eps) for e in cards]
     xbmcplugin.addDirectoryItems(h, out)
 
 
@@ -483,7 +511,8 @@ def do_wgroup(h, c, q):
     info = series_info(c, [q.get('sid')])
     eps = [e for e in w.get('eps', []) if str(day_idx(e['air'])) == q.get('day') and e.get('s') == q.get('s')
            and season_of(e.get('c', '')) == q.get('season')]
-    xbmcplugin.addDirectoryItems(h, [week_card(c, e, imdb, now, info) for e in sorted(eps, key=lambda e: ep_num(e.get('c', '')))])
+    items = week_episodes(c, eps)
+    xbmcplugin.addDirectoryItems(h, [week_card(c, e, imdb, now, info, None, items) for e in sorted(eps, key=lambda e: ep_num(e.get('c', '')))])
 
 
 # ---- router ----
