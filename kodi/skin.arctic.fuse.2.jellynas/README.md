@@ -16,7 +16,8 @@ Patches:
   the second line under a card shows the item property `sublabel` first (plugin.video.jellynas: `KEDD 02:00 ·
   S01E05`, `S1:E4 · title`); upstream picks the series name or the premiere date before Label2. Patched in the
   template `shortcuts/skinvariables-labels.xml` and in the shipped generated includes.
-- `03-imdb-badge.patch`: a yellow IMDb badge in the top left corner of landscape and poster cards: the add-on's
+- `03-imdb-badge.patch`: a badge in the top left corner of landscape and poster cards: green with the add-on's
+  `jellynas.badge` text (This week: Available), else (not on `jellynas.kind=week` items) yellow IMDb: the add-on's
   property `jellynas.imdb`, else Kodi's IMDb rating of the item (`ListItem.Rating(imdb)`); rounded corners from
   `files/media/jellynas/badge.png` (our own files under `files/` are copied over the skin; Kodi reads loose
   textures from `media/` next to Textures.xbt).

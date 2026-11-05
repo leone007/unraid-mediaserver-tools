@@ -21,6 +21,21 @@ msgctxt "#30003"
 msgid "This week"
 msgstr ""
 
+#. Folder: the next episode of each series in progress (Jellyfin next up)
+msgctxt "#30004"
+msgid "Next up"
+msgstr ""
+
+#. Folder: movies added lately (Jellyfin latest)
+msgctxt "#30005"
+msgid "Recently added movies"
+msgstr ""
+
+#. Folder: series with new episodes (Jellyfin latest, grouped by series)
+msgctxt "#30006"
+msgid "Recently added series"
+msgstr ""
+
 #. Notification when Kofin has no server login
 msgctxt "#30010"
 msgid "Log in to Kofin first"

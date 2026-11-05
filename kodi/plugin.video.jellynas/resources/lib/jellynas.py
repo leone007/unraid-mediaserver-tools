@@ -1,6 +1,8 @@
 # JELLYNAS rows for Kodi skins (ATADAS item 141), shown as widget folders (Arctic Fuse 2: Edit widgets / Choose spotlight):
 #  - Continue watching: the Jellyfin server's own resume list (movies and episodes mixed, its order), episodes under the series name
 #  - Spotlight: continue watching + next up, one item per series, the series art and logo for episodes
+#  - Next up, Recently added movies, Recently added series: the same lists as the Jellyfin home page (the Kodi library
+#    rows from Kofin's sync have no IMDb rating, so the skin's IMDb badge stays empty on them)
 #  - This week: Streambox week.json in air order, the day and time in the card's second line (no day cards: they were
 #    focusable and showed an empty info panel), a season pack of one day as one card
 # Jellyfin is asked with the Kofin login of this Kodi (GET only); week.json and imdb.json come from the Jellyfin web path
@@ -22,6 +24,7 @@ ADDON = xbmcaddon.Addon()
 BASE = 'plugin://%s/' % ADDON.getAddonInfo('id')
 KOFIN = 'plugin.video.kofin'
 PLAY = 'plugin://plugin.video.kofin/?mode=play&id=%s'
+BROWSE = 'plugin://plugin.video.kofin/?mode=browse&type=%s&folder=%s'   # Kofin's drill-down: series -> seasons, season -> episodes
 ROOT = xbmcvfs.translatePath(ADDON.getAddonInfo('path'))
 PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 TIMEOUT = 8
@@ -193,13 +196,19 @@ def add_streams(tag, it):
 
 
 def media_item(c, it, imdb, sids):
-    ep = it.get('Type') == 'Episode'
+    kind = it.get('Type')
+    ep, show = kind == 'Episode', kind in ('Series', 'Season')
     name, series = it.get('Name') or '', it.get('SeriesName') or ''
     se, en = it.get('ParentIndexNumber') or 0, it.get('IndexNumber') or 0
-    sub = ('S%d:E%d · %s' % (se, en, name)) if ep else str(it.get('ProductionYear') or '')
-    li = xbmcgui.ListItem(series if ep else name, sub, offscreen=True)
+    if ep:
+        sub = 'S%d:E%d · %s' % (se, en, name)
+    elif kind == 'Season':
+        sub = name
+    else:
+        sub = str(it.get('ProductionYear') or '')
+    li = xbmcgui.ListItem(series if ep or kind == 'Season' else name, sub, offscreen=True)
     tag = li.getVideoInfoTag()
-    tag.setMediaType('episode' if ep else 'movie')
+    tag.setMediaType('episode' if ep else ('tvshow' if kind == 'Series' else ('season' if show else 'movie')))
     tag.setTitle(name)
     if ep:
         tag.setTvShowTitle(series)
@@ -220,7 +229,7 @@ def media_item(c, it, imdb, sids):
     pos = ((it.get('UserData') or {}).get('PlaybackPositionTicks') or 0) / 10000000
     if pos and total:
         tag.setResumePoint(pos, total)
-    r = imdb.get(it.get('SeriesId') if ep else it.get('Id'))
+    r = imdb.get(it.get('SeriesId') if ep or kind == 'Season' else it.get('Id'))
     if r:
         tag.setRating(r[0] / 10.0, int(r[1] or 0), 'imdb', True)
         li.setProperty('jellynas.imdb', '%.1f' % (r[0] / 10.0))
@@ -239,8 +248,12 @@ def media_item(c, it, imdb, sids):
         li.setProperty('tmdb_id', ids['tmdb'])
     add_streams(tag, it)
     li.setArt(art_of(c, it))
-    li.setProperty('IsPlayable', 'true')
     li.setProperty('sublabel', sub)
+    if kind == 'Series':
+        return BROWSE % ('series', it.get('Id')), li, True
+    if kind == 'Season':
+        return BROWSE % ('season', it.get('Id')) + '&' + urllib.parse.urlencode({'series': it.get('SeriesId', '')}), li, True
+    li.setProperty('IsPlayable', 'true')
     return PLAY % it.get('Id'), li, False
 
 
@@ -257,6 +270,13 @@ def nextup_items(c):
               NextUpDateCutoff=cutoff, EnableResumable='false', EnableRewatching='false').get('Items', [])
 
 
+def latest_items(c, types):
+    """Recently added, as on the Jellyfin home page: new episodes grouped into their series (or season)."""
+    d = jf(c, '/Items/Latest', Limit=LIMIT, IncludeItemTypes=types, Fields=FIELDS, EnableImageTypes=IMAGES,
+           ImageTypeLimit=1, EnableUserData='true', GroupItems='true')
+    return d if isinstance(d, list) else d.get('Items', [])
+
+
 def list_media(h, c, items):
     imdb, sids = imdb_table(c), series_ids(c, items)
     xbmcplugin.setContent(h, 'videos')
@@ -265,6 +285,18 @@ def list_media(h, c, items):
 
 def do_resume(h, c):
     list_media(h, c, resume_items(c))
+
+
+def do_nextup(h, c):
+    list_media(h, c, nextup_items(c))
+
+
+def do_movies(h, c):
+    list_media(h, c, latest_items(c, 'Movie'))
+
+
+def do_series(h, c):
+    list_media(h, c, latest_items(c, 'Episode'))
 
 
 def do_spotlight(h, c):
@@ -402,14 +434,17 @@ def week_card(c, e, imdb, now, info, day=None):
     tag.setPlot('%s · %s%s\n%s %s · %s' % (e.get('s', ''), e.get('c', ''), (' · ' + e['t']) if e.get('t') else '',
                                            day_name(day_idx(e['air'])), hm, st))
     r = imdb.get(e.get('sid'))
-    if r:
+    if r:   # rating for the info panel; the card badge of this row is Available, not IMDb (owner, 2026-11-05)
         tag.setRating(r[0] / 10.0, int(r[1] or 0), 'imdb', True)
-        li.setProperty('jellynas.imdb', '%.1f' % (r[0] / 10.0))
     li.setArt(series_art(c, e, info))
+    li.setProperty('jellynas.kind', 'week')
     li.setProperty('sublabel', sub)
     li.setProperty('jellynas.time', hm)
     li.setProperty('jellynas.state', st)
-    li.setProperty('jellynas.ready', '1' if (e.get('st') == 'jf' or (grp and all(x.get('st') == 'jf' for x in grp))) else '0')
+    ready = e.get('st') == 'jf' or bool(grp and all(x.get('st') == 'jf' for x in grp))
+    li.setProperty('jellynas.ready', '1' if ready else '0')
+    if ready:
+        li.setProperty('jellynas.badge', L(30020))
     if grp:
         q = urllib.parse.urlencode({'mode': 'wgroup', 'day': day_idx(e['air']), 's': e.get('s', ''), 'season': e['c'][:3],
                                     'sid': e.get('sid', '')})
@@ -452,7 +487,8 @@ def do_wgroup(h, c, q):
 
 
 # ---- router ----
-ROUTES = {'resume': do_resume, 'spotlight': do_spotlight, 'week': do_week}
+ROUTES = {'resume': do_resume, 'nextup': do_nextup, 'movies': do_movies, 'series': do_series, 'spotlight': do_spotlight,
+          'week': do_week}
 
 
 def folder(label, mode):
@@ -471,7 +507,8 @@ def main(argv):
         xbmcgui.Dialog().notification('JELLYNAS', L(30012, st=q.get('st', '')), os.path.join(ROOT, 'resources', 'icon.png'), 4000)
         return
     if not mode:
-        xbmcplugin.addDirectoryItems(h, [folder(L(30001), 'resume'), folder(L(30002), 'spotlight'), folder(L(30003), 'week')])
+        xbmcplugin.addDirectoryItems(h, [folder(L(30001), 'resume'), folder(L(30004), 'nextup'), folder(L(30005), 'movies'),
+                                         folder(L(30006), 'series'), folder(L(30002), 'spotlight'), folder(L(30003), 'week')])
         xbmcplugin.endOfDirectory(h)
         return
     c = kofin()

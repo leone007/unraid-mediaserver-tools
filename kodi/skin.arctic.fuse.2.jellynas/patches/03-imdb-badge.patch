@@ -25,25 +25,44 @@ index e3c44f0..1fef058 100644
                      <param name="listitem">$PARAM[listitem]</param>
                  </include>
 diff --git a/1080i/Includes_Objects.xml b/1080i/Includes_Objects.xml
-index 6c2f981..e78c158 100644
+index 6c2f981..1be23f9 100644
 --- a/1080i/Includes_Objects.xml
 +++ b/1080i/Includes_Objects.xml
-@@ -2356,4 +2356,37 @@
+@@ -2356,4 +2356,56 @@
          </definition>
      </include>
  
-+    <!-- JELLYNAS: IMDb badge in the top left corner of a card: the add-on's jellynas.imdb, else Kodi's IMDb rating -->
++    <!-- JELLYNAS: badge in the top left corner of a card: the add-on's jellynas.badge (This week: Available) in green;
++         else, outside This week (jellynas.kind=week), IMDb: the add-on's jellynas.imdb, else Kodi's IMDb rating -->
 +    <include name="Object_JellynasImdb">
 +        <param name="listitem">ListItem</param>
 +        <definition>
 +            <control type="group">
 +                <left>12</left>
 +                <top>12</top>
++                <width>150</width>
++                <height>34</height>
++                <visible>!String.IsEmpty($PARAM[listitem].Property(jellynas.badge))</visible>
++                <control type="image">
++                    <texture colordiffuse="FF1E8E3E" border="12">jellynas/badge.png</texture>   <!-- rounded corners, shipped loose in media/ -->
++                </control>
++                <control type="label">
++                    <font>font_mini_bold</font>
++                    <textcolor>FFFFFFFF</textcolor>
++                    <align>center</align>
++                    <aligny>center</aligny>
++                    <label>$INFO[$PARAM[listitem].Property(jellynas.badge)]</label>
++                </control>
++            </control>
++            <control type="group">
++                <left>12</left>
++                <top>12</top>
 +                <width>118</width>
 +                <height>34</height>
++                <visible>String.IsEmpty($PARAM[listitem].Property(jellynas.badge)) + !String.IsEqual($PARAM[listitem].Property(jellynas.kind),week)</visible>
 +                <visible>!String.IsEmpty($PARAM[listitem].Property(jellynas.imdb)) | !String.IsEmpty($PARAM[listitem].Rating(imdb))</visible>
 +                <control type="image">
-+                    <texture colordiffuse="FFF5C518" border="12">jellynas/badge.png</texture>   <!-- rounded corners, shipped loose in media/ -->
++                    <texture colordiffuse="FFF5C518" border="12">jellynas/badge.png</texture>
 +                </control>
 +                <control type="label">
 +                    <font>font_mini_bold</font>

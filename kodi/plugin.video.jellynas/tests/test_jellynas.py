@@ -61,6 +61,11 @@ class H(http.server.BaseHTTPRequestHandler):
             body = {'Items': RESUME}
         elif u.path == '/Shows/NextUp':
             body = {'Items': NEXTUP}
+        elif u.path == '/Items/Latest':
+            body = [MOVIE] if q.get('IncludeItemTypes') == 'Movie' else [
+                {'Id': 's2', 'Type': 'Series', 'Name': 'Lost', 'ProductionYear': 2004, 'ImageTags': {'Primary': 'p2'}, 'BackdropImageTags': ['b2']},
+                {'Id': 'se3', 'Type': 'Season', 'Name': '1. évad', 'SeriesName': 'A visszavágó', 'SeriesId': 's3', 'ImageTags': {}},
+                ep('v6', 'A visszavágó', 's3', 1, 6, '6. epizód')]
         elif u.path == '/Items':
             body = {'Items': [{'Id': i, 'Type': 'Series', 'ProviderIds': SERIES[i], 'ImageTags': {'Primary': 'p' + i},
                                'BackdropImageTags': ['b' + i]} for i in q.get('Ids', '').split(',') if i in SERIES]}
@@ -184,7 +189,7 @@ def run(query):
 
 # ---- checks ----
 root = run('')
-ok([li.label for _, li, _ in root] == ['Continue watching', 'Spotlight', 'This week'], 'root: three folders')
+ok([li.label for _, li, _ in root] == ['Continue watching', 'Next up', 'Recently added movies', 'Recently added series', 'Spotlight', 'This week'], 'root: six folders')
 
 items = run('?mode=resume')
 ok(len(items) == 2 and DIR['end'] is True, 'resume: 2 items, directory ok')
@@ -212,7 +217,7 @@ ok([e for e in items if e[1].label2.startswith('TODAY ')], 'week: today marked i
 grp = [(u, li, d) for u, li, d in items if li.label == 'Gengszter']
 ok(len(grp) == 1 and grp[0][2] and 'mode=wgroup' in grp[0][0] and grp[0][1].label2.endswith(' · S02E01–E03') and '2/3 available' in grp[0][1].tag.d['plot'], 'week: season pack of one day = one folder card')
 v5 = [x for x in items if x[1].label == 'A visszavágó'][0]
-ok(v5[0].endswith('mode=play&id=v5') and v5[1].props['jellynas.imdb'] == '6.3', 'week: available episode plays, IMDb by series')
+ok(v5[0].endswith('mode=play&id=v5') and [r for r in v5[1].tag.d['ratings'] if r[2] == 'imdb' and abs(r[0] - 6.3) < 0.01], 'week: available episode plays, IMDb by series (info panel)')
 ok(v5[1].art.get('landscape') == URL + '/Items/s3/Images/Backdrop?tag=bs3&maxWidth=1920&quality=90' and 'tag=ps3' in v5[1].art.get('poster', ''),
    'week: tagged series images, backdrop when the series has no Thumb')
 noc = [x for x in items if x[1].label == 'Nocturne'][0]
@@ -228,6 +233,30 @@ LANG['lang'] = '2'
 items = run('?mode=week')
 ok(any(li.label2.startswith('MA ') for _, li, _ in items) and any('Elérhető' in li.tag.d['plot'] for _, li, _ in items), 'Hungarian chosen in the settings')
 LANG['lang'] = '0'
+
+items = run('?mode=nextup')
+ok([li.label for _, li, _ in items] == ['Vízióküldetés', 'Lost'] and items[0][1].props.get('sublabel') == 'S1:E5 · 5. epizód', 'next up row')
+items = run('?mode=movies')
+ok(items[0][1].label == 'Hotel Transylvania' and items[0][1].props.get('jellynas.imdb') == '7.1' and items[0][0].endswith('mode=play&id=m1'),
+   'recently added movies: IMDb badge value, plays')
+lat = [q for q in SEEN if q[1] == '/Items/Latest']
+ok(lat and lat[-1][2].get('IncludeItemTypes') == 'Movie' and lat[-1][2].get('userId') == 'u1', 'latest movies asked with the user')
+items = run('?mode=series')
+ser = {li.label: (u, li, d) for u, li, d in items}
+ok(ser['Lost'][2] and ser['Lost'][0].endswith('mode=browse&type=series&folder=s2') and ser['Lost'][1].props.get('sublabel') == '2004',
+   'recently added series: a series opens its seasons in Kofin')
+ssn = [x for x in items if 'type=season' in x[0]]
+ok(ssn and ssn[0][2] and 'series=s3' in ssn[0][0] and ssn[0][1].props.get('jellynas.imdb') == '6.3', 'season card: Kofin season browse, IMDb of its series')
+eps6 = [x for x in items if x[0].endswith('id=v6')]
+ok(eps6 and eps6[0][1].props.get('sublabel') == 'S1:E6 · 6. epizód', 'recently added series: a single new episode plays')
+
+items = run('?mode=week')
+ok(not [li for _, li, _ in items if li.props.get('jellynas.imdb')] and all(li.props.get('jellynas.kind') == 'week' for _, li, _ in items),
+   'week: no IMDb badge value on the cards (kind=week)')
+v5 = [x for x in items if x[1].label == 'A visszavágó'][0][1]
+noc = [x for x in items if x[1].label == 'Nocturne'][0][1]
+ok(v5.props.get('jellynas.badge') == 'Available' and not noc.props.get('jellynas.badge') and 'imdb' in [r[2] for r in v5.tag.d['ratings']],
+   'week: Available badge only when available, IMDb rating kept for the info panel')
 
 ok(not [s for s in SEEN if s[0] != 'GET'], 'only GET requests')
 ok(all(s[4].startswith('JELLYNAS/') for s in SEEN), 'own User-Agent (the proxy refuses Python-urllib)')
