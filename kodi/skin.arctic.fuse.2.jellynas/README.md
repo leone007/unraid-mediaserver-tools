@@ -12,6 +12,10 @@ Patches:
   categories are a Jellyfin-like centred bar (dark rounded background, white pill on the focused item, dim pill on
   the current one), every category at a fixed place (upstream shows the items relative to the focused one, so the
   first ones slide out to the left).
+- `02-card-second-line.patch`: with Skin settings > Layout > Customise style > Viewtypes > Text labels = Detailed,
+  the second line under a card shows the item property `sublabel` first (plugin.video.jellynas: `KEDD 02:00 ·
+  S01E05`, `S1:E4 · title`); upstream picks the series name or the premiere date before Label2. Patched in the
+  template `shortcuts/skinvariables-labels.xml` and in the shipped generated includes.
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.

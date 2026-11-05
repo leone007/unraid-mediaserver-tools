@@ -1,0 +1,56 @@
+diff --git a/1080i/script-skinvariables-labels-includes.xml b/1080i/script-skinvariables-labels-includes.xml
+index 7b5109c..f702c4e 100644
+--- a/1080i/script-skinvariables-labels-includes.xml
++++ b/1080i/script-skinvariables-labels-includes.xml
+@@ -1083,6 +1083,7 @@
+         <value condition="!String.IsEmpty(ListItem.Property(biography))">$INFO[ListItem.Property(biography)]</value>
+     </variable>
+     <variable name="Label_Landscape_Lower_C50">
++        <value condition="!String.IsEmpty(Container(50).ListItem.Property(sublabel))">$INFO[Container(50).ListItem.Property(sublabel)]</value>  <!-- JELLYNAS: the add-on's second line -->
+         <value condition="!String.IsEmpty(Container(50).ListItem.Property(job))">$INFO[Container(50).ListItem.Property(job)]$INFO[Container(50).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(50).ListItem.Property(role))">$INFO[Container(50).ListItem.Property(role)]$INFO[Container(50).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(50).ListItem.Property(character))">$INFO[Container(50).ListItem.Property(character)]$INFO[Container(50).ListItem.Property(episodes), (,)]</value>
+@@ -1106,6 +1107,7 @@
+         <value condition="True">$LOCALIZE[31025]</value>
+     </variable>
+     <variable name="Label_Landscape_Lower_C503">
++        <value condition="!String.IsEmpty(Container(503).ListItem.Property(sublabel))">$INFO[Container(503).ListItem.Property(sublabel)]</value>  <!-- JELLYNAS: the add-on's second line -->
+         <value condition="!String.IsEmpty(Container(503).ListItem.Property(job))">$INFO[Container(503).ListItem.Property(job)]$INFO[Container(503).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(503).ListItem.Property(role))">$INFO[Container(503).ListItem.Property(role)]$INFO[Container(503).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(503).ListItem.Property(character))">$INFO[Container(503).ListItem.Property(character)]$INFO[Container(503).ListItem.Property(episodes), (,)]</value>
+@@ -1129,6 +1131,7 @@
+         <value condition="True">$LOCALIZE[31025]</value>
+     </variable>
+     <variable name="Label_Landscape_Lower_C51">
++        <value condition="!String.IsEmpty(Container(51).ListItem.Property(sublabel))">$INFO[Container(51).ListItem.Property(sublabel)]</value>  <!-- JELLYNAS: the add-on's second line -->
+         <value condition="!String.IsEmpty(Container(51).ListItem.Property(job))">$INFO[Container(51).ListItem.Property(job)]$INFO[Container(51).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(51).ListItem.Property(role))">$INFO[Container(51).ListItem.Property(role)]$INFO[Container(51).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(51).ListItem.Property(character))">$INFO[Container(51).ListItem.Property(character)]$INFO[Container(51).ListItem.Property(episodes), (,)]</value>
+@@ -1152,6 +1155,7 @@
+         <value condition="True">$LOCALIZE[31025]</value>
+     </variable>
+     <variable name="Label_Landscape_Lower_C513">
++        <value condition="!String.IsEmpty(Container(513).ListItem.Property(sublabel))">$INFO[Container(513).ListItem.Property(sublabel)]</value>  <!-- JELLYNAS: the add-on's second line -->
+         <value condition="!String.IsEmpty(Container(513).ListItem.Property(job))">$INFO[Container(513).ListItem.Property(job)]$INFO[Container(513).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(513).ListItem.Property(role))">$INFO[Container(513).ListItem.Property(role)]$INFO[Container(513).ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(Container(513).ListItem.Property(character))">$INFO[Container(513).ListItem.Property(character)]$INFO[Container(513).ListItem.Property(episodes), (,)]</value>
+@@ -1175,6 +1179,7 @@
+         <value condition="True">$LOCALIZE[31025]</value>
+     </variable>
+     <variable name="Label_Landscape_Lower">
++        <value condition="!String.IsEmpty(ListItem.Property(sublabel))">$INFO[ListItem.Property(sublabel)]</value>  <!-- JELLYNAS: the add-on's second line -->
+         <value condition="!String.IsEmpty(ListItem.Property(job))">$INFO[ListItem.Property(job)]$INFO[ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(ListItem.Property(role))">$INFO[ListItem.Property(role)]$INFO[ListItem.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty(ListItem.Property(character))">$INFO[ListItem.Property(character)]$INFO[ListItem.Property(episodes), (,)]</value>
+diff --git a/shortcuts/skinvariables-labels.xml b/shortcuts/skinvariables-labels.xml
+index b9d5bb5..3d67747 100644
+--- a/shortcuts/skinvariables-labels.xml
++++ b/shortcuts/skinvariables-labels.xml
+@@ -56,6 +56,7 @@
+     </variable>
+ 
+     <variable name="Label_Landscape_Lower" containers="50,503,51,513">
++        <value condition="!String.IsEmpty({listitem}.Property(sublabel))">$INFO[{listitem}.Property(sublabel)]</value>  <!-- JELLYNAS: the add-on's second line -->
+         <value condition="!String.IsEmpty({listitem}.Property(job))">$INFO[{listitem}.Property(job)]$INFO[{listitem}.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty({listitem}.Property(role))">$INFO[{listitem}.Property(role)]$INFO[{listitem}.Property(episodes), (,)]</value>
+         <value condition="!String.IsEmpty({listitem}.Property(character))">$INFO[{listitem}.Property(character)]$INFO[{listitem}.Property(episodes), (,)]</value>
