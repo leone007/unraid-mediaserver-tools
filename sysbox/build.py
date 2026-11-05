@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.40">
+<!ENTITY version   "2026.10.41">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.41
+- Snapshots, off-site copy: the containers' data went off-site empty. restic matched the Skip name cache against the whole path, and the data lies under /mnt/cache, so every file was left out. The Skip names now count only inside the copied folder, like in the array copy. Press Off-site now once after the update
+
 ###2026.10.40
 - Snapshots, off-site copy: the off-site row shows one short line (for example 2 of 7 sources failed) instead of every error; each source row keeps its own error, and Activity shows the short line too
 - Snapshots, off-site copy: an error reads as restic's or ssh's message only, without the harmless OpenSSH post-quantum warning and without restic's JSON

@@ -49,6 +49,9 @@ function cp_skip_list($s) {
     return array_values(array_unique($out));
 }
 function cp_skip_args($cfg) { $a = ''; foreach (cp_skip_list($cfg['skip']) as $x) { $a .= ' --exclude=' . escapeshellarg($x); } return $a; }
+// the same for restic, anchored under the backed-up folder: restic matches a bare name against the whole path, so 'cache'
+// left out everything under /mnt/cache/docker (the containers' data went off-site empty)
+function cp_skip_restic($cfg, $root) { $a = ''; foreach (cp_skip_list($cfg['skip']) as $x) { $a .= ' --exclude=' . escapeshellarg($root . '/' . $x) . ' --exclude=' . escapeshellarg($root . '/**/' . $x); } return $a; }
 // the copy folder and what is in it is never an off-site source (its copies are the containers' data again, restore/ would go round);
 // a folder that holds it goes without it (an --exclude of its real path)
 function cp_in_copy($cfg, $p) { $c = rtrim((string)$cfg['copy_dir'], '/'); return $c !== '' && ($p === $c || strpos($p, $c . '/') === 0); }
@@ -335,7 +338,7 @@ function cp_off_run($cfg, &$msg, $what = 'all', &$short = '') {
             $ds = $src['name']; $d = snp_dataset($ds); $sn = $d ? snp_snaps($ds) : []; $snap = $sn ? end($sn) : null;
             if (!$snap) { $e = ['cpd.no_snap', ['ds' => $ds]]; $bad[] = $e; $nbad++; cp_off_mark($key, ['err' => cp_t($e), 'err_t' => time()]); continue; }
             $path = rtrim($d['mnt'], '/') . '/.zfs/snapshot/' . $snap['name']; $label = $ds . '@' . $snap['name']; $sname = $snap['name'];
-            $tags = ' --tag ' . escapeshellarg($key) . cp_skip_args($cfg); $ex = ''; $keep = ' --keep-weekly ' . max(1, (int)$cfg['off_keep']);
+            $tags = ' --tag ' . escapeshellarg($key); $ex = cp_skip_restic($cfg, $path); $keep = ' --keep-weekly ' . max(1, (int)$cfg['off_keep']);
         } else {
             $path = $src['path']; $label = substr($key, 4); $sname = '';
             if (!is_dir($path)) { $e = ['cpd.no_dir', ['d' => $label]]; $bad[] = $e; $nbad++; cp_off_mark($key, ['err' => cp_t($e), 'err_t' => time()]); continue; }
