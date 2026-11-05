@@ -26,7 +26,7 @@ MOVIE = {'Id': 'm1', 'Type': 'Movie', 'Name': 'Hotel Transylvania', 'ProductionY
          'ImageTags': {'Primary': 'mp', 'Logo': 'ml'}, 'BackdropImageTags': ['mb'], 'CommunityRating': 6.9, 'OfficialRating': 'HU-6'}
 RESUME = [MOVIE, ep('e4', 'Vízióküldetés', 's1', 1, 4, '4. epizód', 12000000000)]
 NEXTUP = [ep('e5', 'Vízióküldetés', 's1', 1, 5, '5. epizód'), ep('l2', 'Lost', 's2', 4, 2, 'Halottnak nyilvánítva')]
-SERIES = {'s1': {'Tmdb': '213375', 'Imdb': 'tt23112594'}, 's2': {'Tmdb': '4607', 'Imdb': 'tt0411008'}}
+SERIES = {'s1': {'Tmdb': '213375', 'Imdb': 'tt23112594'}, 's2': {'Tmdb': '4607', 'Imdb': 'tt0411008'}, 's3': {'Tmdb': '1'}}
 WEEK_FROM = NOW - 3 * 86400
 
 
@@ -61,7 +61,8 @@ class H(http.server.BaseHTTPRequestHandler):
         elif u.path == '/Shows/NextUp':
             body = {'Items': NEXTUP}
         elif u.path == '/Items':
-            body = {'Items': [{'Id': i, 'ProviderIds': SERIES[i]} for i in q.get('Ids', '').split(',') if i in SERIES]}
+            body = {'Items': [{'Id': i, 'Type': 'Series', 'ProviderIds': SERIES[i], 'ImageTags': {'Primary': 'p' + i},
+                               'BackdropImageTags': ['b' + i]} for i in q.get('Ids', '').split(',') if i in SERIES]}
         elif u.path == '/web/streambox/week.json':
             body = week()
         elif u.path == '/web/streambox/imdb.json':
@@ -151,7 +152,7 @@ class Detail:
 
 
 DIR = {'items': [], 'end': None, 'notes': []}
-xbmc = types.SimpleNamespace(log=lambda *a: None, LOGINFO=1, getInfoLabel=lambda k: 'Mac "Studio"',
+xbmc = types.SimpleNamespace(log=lambda *a: None, LOGINFO=1, ISO_639_1=0, getLanguage=lambda f: 'en', getInfoLabel=lambda k: 'Mac "Studio"',
                              VideoStreamDetail=Detail, AudioStreamDetail=Detail)
 xbmcaddon = types.SimpleNamespace(Addon=Addon)
 xbmcgui = types.SimpleNamespace(ListItem=ListItem, NOTIFICATION_WARNING='w',
@@ -212,6 +213,11 @@ grp = [(u, li, d) for u, li, d in items if li.label == 'Gengszter']
 ok(len(grp) == 1 and grp[0][2] and 'mode=wgroup' in grp[0][0] and grp[0][1].label2 == 'S02E01–E03 · 2/3 available', 'week: season pack of one day = one folder card')
 v5 = [x for x in items if x[1].label == 'A visszavágó'][0]
 ok(v5[0].endswith('mode=play&id=v5') and v5[1].props['jellynas.imdb'] == '6.3', 'week: available episode plays, IMDb by series')
+ok(v5[1].art.get('landscape') == URL + '/Items/s3/Images/Backdrop?tag=bs3&maxWidth=1920&quality=90' and 'tag=ps3' in v5[1].art.get('poster', ''),
+   'week: tagged series images, backdrop when the series has no Thumb')
+sep = [li for _, li, _ in items if li.props.get('jellynas.separator') == '1']
+ok(sep[1].art['landscape'].endswith('day_en_%d_today_land.png' % time.localtime().tm_wday) and os.path.exists(sep[1].art['landscape']),
+   'week: today day card image exists')
 noc = [x for x in items if x[1].label == 'Nocturne'][0]
 ok(noc[1].label2.startswith('S01E03 · Airs in 1d') and 'mode=na' in noc[0], 'week: future episode shows the countdown, not playable')
 late = [x for x in items if x[1].label == 'Az Intézet'][0]

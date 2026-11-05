@@ -158,17 +158,24 @@ def art_of(c, it):
     return {k: v for k, v in a.items() if v}
 
 
-def series_ids(c, items):
-    """ProviderIds of the series of the episodes (TMDb Helper finds a series by its TMDb id, not by a Hungarian title)."""
-    ids = sorted({it.get('SeriesId') for it in items if it.get('Type') == 'Episode' and it.get('SeriesId')})
+def series_info(c, ids):
+    """The series items (ProviderIds and image tags) by id: TMDb Helper finds a series by its TMDb id rather than by a
+    Hungarian title, and image URLs need the real tags (a series without a Thumb image falls back to its backdrop)."""
+    ids = sorted({i for i in ids if i})
     if not ids:
         return {}
     try:
-        d = jf(c, '/Items', Ids=','.join(ids), Fields='ProviderIds', EnableImages='false', EnableUserData='false')
-        return {s.get('Id'): {k.lower(): v for k, v in (s.get('ProviderIds') or {}).items() if v} for s in d.get('Items', [])}
+        d = jf(c, '/Items', Ids=','.join(ids), Fields='ProviderIds', EnableImageTypes=IMAGES, ImageTypeLimit=1,
+               EnableUserData='false')
+        return {s.get('Id'): s for s in d.get('Items', [])}
     except Exception as x:  # noqa: BLE001
-        log('series ids: %s' % x)
+        log('series: %s' % x)
         return {}
+
+
+def series_ids(c, items):
+    info = series_info(c, [it.get('SeriesId') for it in items if it.get('Type') == 'Episode'])
+    return {k: {p.lower(): v for p, v in (s.get('ProviderIds') or {}).items() if v} for k, s in info.items()}
 
 
 def add_streams(tag, it):
@@ -359,26 +366,35 @@ def week_cards(w):
     return sorted(cards, key=lambda e: (e['air'], e.get('s', '')))
 
 
-def series_art(c, e):
-    sid = e.get('sid')
-    if not sid:
-        return {'poster': e['img'], 'thumb': e['img']} if e.get('img') else {}
-    base = '%s/Items/%s/Images/%%s?maxWidth=%%d&quality=90' % (c['srv'], sid)
-    return {'poster': base % ('Primary', 500), 'tvshow.poster': base % ('Primary', 500), 'icon': base % ('Primary', 500),
-            'fanart': base % ('Backdrop', 1920), 'landscape': base % ('Thumb', 960), 'thumb': base % ('Thumb', 960),
-            'clearlogo': base % ('Logo', 800), 'tvshow.clearlogo': base % ('Logo', 800)}
+def series_art(c, e, info):
+    s = info.get(e.get('sid'))
+    if s:
+        a = art_of(c, s)
+        a.update({'tvshow.' + k: a[k] for k in ('poster', 'fanart', 'landscape', 'clearlogo') if k in a})
+        return a
+    return {'poster': e['img'], 'thumb': e['img'], 'icon': e['img']} if e.get('img') else {}
 
 
-def separator(label):
+def lang_code():
+    sel = ADDON.getSetting('lang')
+    if sel in ('1', '2'):
+        return 'hu' if sel == '2' else 'en'
+    return 'hu' if xbmc.getLanguage(xbmc.ISO_639_1) == 'hu' else 'en'
+
+
+def separator(label, d, today):
+    """A day card before the day's episodes: the day name drawn into the image (kodi_build.py makes them from strings.po),
+    until a skin can draw a narrow separator from the jellynas.separator property."""
+    name = 'day_%s_%d%s' % (lang_code(), d, '_today' if today else '')
+    land, poster = os.path.join(MEDIA, name + '_land.png'), os.path.join(MEDIA, name + '_poster.png')
     li = xbmcgui.ListItem(label, offscreen=True)
-    li.setArt({'poster': os.path.join(MEDIA, 'day_poster.png'), 'thumb': os.path.join(MEDIA, 'day_landscape.png'),
-               'landscape': os.path.join(MEDIA, 'day_landscape.png'), 'icon': os.path.join(MEDIA, 'day_poster.png')})
+    li.setArt({'poster': poster, 'thumb': land, 'landscape': land, 'icon': poster, 'fanart': land})
     li.setProperty('jellynas.separator', '1')
     li.setProperty('IsPlayable', 'false')
     return BASE + '?mode=noop', li, False
 
 
-def week_card(c, e, imdb, now):
+def week_card(c, e, imdb, now, info):
     grp = e.get('g')
     st = group_status(grp, now) if grp else status(e, now)
     sub = '%s · %s' % (e.get('c', ''), st)
@@ -400,13 +416,14 @@ def week_card(c, e, imdb, now):
     if r:
         tag.setRating(r[0] / 10.0, int(r[1] or 0), 'imdb', True)
         li.setProperty('jellynas.imdb', '%.1f' % (r[0] / 10.0))
-    li.setArt(series_art(c, e))
+    li.setArt(series_art(c, e, info))
     li.setProperty('sublabel', sub)
     li.setProperty('jellynas.time', hm)
     li.setProperty('jellynas.state', st)
     li.setProperty('jellynas.ready', '1' if (e.get('st') == 'jf' or (grp and all(x.get('st') == 'jf' for x in grp))) else '0')
     if grp:
-        q = urllib.parse.urlencode({'mode': 'wgroup', 'day': day_idx(e['air']), 's': e.get('s', ''), 'season': e['c'][:3]})
+        q = urllib.parse.urlencode({'mode': 'wgroup', 'day': day_idx(e['air']), 's': e.get('s', ''), 'season': e['c'][:3],
+                                    'sid': e.get('sid', '')})
         return BASE + '?' + q, li, True
     if e.get('st') == 'jf' and e.get('ep'):
         li.setProperty('IsPlayable', 'true')
@@ -426,15 +443,18 @@ def do_week(h, c):
     if not w:
         return
     now, imdb, out, last_day = time.time(), imdb_table(c), [], None
+    cards = week_cards(w)
+    info = series_info(c, [e.get('sid') for e in cards])
     this_week = w.get('from', 0) <= now < w.get('to', 0)
     today = day_idx(now)
-    for e in week_cards(w):
+    for e in cards:
         d = day_idx(e['air'])
         if d != last_day:
             name = day_name(d)
-            out.append(separator((L(30031, d=name) if this_week and d == today else name).upper()))
+            is_today = this_week and d == today
+            out.append(separator((L(30031, d=name) if is_today else name).upper(), d, is_today))
             last_day = d
-        out.append(week_card(c, e, imdb, now))
+        out.append(week_card(c, e, imdb, now, info))
     xbmcplugin.addDirectoryItems(h, out)
 
 
@@ -444,9 +464,10 @@ def do_wgroup(h, c, q):
     if not w:
         return
     now, imdb = time.time(), imdb_table(c)
+    info = series_info(c, [q.get('sid')])
     eps = [e for e in w.get('eps', []) if str(day_idx(e['air'])) == q.get('day') and e.get('s') == q.get('s')
            and season_of(e.get('c', '')) == q.get('season')]
-    xbmcplugin.addDirectoryItems(h, [week_card(c, e, imdb, now) for e in sorted(eps, key=lambda e: ep_num(e.get('c', '')))])
+    xbmcplugin.addDirectoryItems(h, [week_card(c, e, imdb, now, info) for e in sorted(eps, key=lambda e: ep_num(e.get('c', '')))])
 
 
 # ---- router ----
