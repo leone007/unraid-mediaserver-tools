@@ -14,7 +14,7 @@ SRC = os.path.join(R, 'kodi', 'skin.arctic.fuse.2.jellynas')
 UPSTREAM = 'https://github.com/jurialmunkey/skin.arctic.fuse.2'
 BRANCH, COMMIT, UPSTREAM_VERSION = 'omega', 'e138a25fe11f24254c6456711d37ac9d1053f541', '2.12.12'
 SKIN_ID, SKIN_NAME = 'skin.arctic.fuse.2.jellynas', 'Arctic Fuse 2 JELLYNAS'
-VERSION = UPSTREAM_VERSION + '.5'   # our build number after the upstream version
+VERSION = UPSTREAM_VERSION + '.6'   # our build number after the upstream version
 CACHE = os.path.expanduser('~/.cache/jellynas/skin.arctic.fuse.2')
 SKIP = ('.git*',)   # .git, .github, .gitattributes, .gitignore
 
@@ -61,6 +61,10 @@ def build(out):
         for f in patches:
             run('git', 'apply', '--whitespace=nowarn', os.path.join(SRC, 'patches', f), cwd=path)
             print('OK   patch %s' % f)
+        extra = os.path.join(SRC, 'files')   # our own files (textures), copied over the skin
+        if os.path.isdir(extra):
+            shutil.copytree(extra, path, dirs_exist_ok=True)
+            print('OK   files %s' % ', '.join(sorted(os.path.relpath(os.path.join(b, f), extra) for b, _, fs in os.walk(extra) for f in fs)))
         addon_xml(path)
         bad = []
         for base, dirs, files in os.walk(path):

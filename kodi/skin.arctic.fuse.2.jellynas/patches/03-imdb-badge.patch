@@ -25,7 +25,7 @@ index e3c44f0..1fef058 100644
                      <param name="listitem">$PARAM[listitem]</param>
                  </include>
 diff --git a/1080i/Includes_Objects.xml b/1080i/Includes_Objects.xml
-index 6c2f981..1764822 100644
+index 6c2f981..e78c158 100644
 --- a/1080i/Includes_Objects.xml
 +++ b/1080i/Includes_Objects.xml
 @@ -2356,4 +2356,37 @@
@@ -43,7 +43,7 @@ index 6c2f981..1764822 100644
 +                <height>34</height>
 +                <visible>!String.IsEmpty($PARAM[listitem].Property(jellynas.imdb)) | !String.IsEmpty($PARAM[listitem].Rating(imdb))</visible>
 +                <control type="image">
-+                    <texture colordiffuse="FFF5C518" border="8">common/white.png</texture>
++                    <texture colordiffuse="FFF5C518" border="12">jellynas/badge.png</texture>   <!-- rounded corners, shipped loose in media/ -->
 +                </control>
 +                <control type="label">
 +                    <font>font_mini_bold</font>
