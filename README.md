@@ -74,6 +74,12 @@ A qBittorrent tile: connection state, torrents that need attention, what is in t
 - **Activity** on top shows what is running now and what has finished; an item whose job has started leaves the result lists and comes back only if the job fails.
 - **Scheduled scans** (daily or weekly) and **Discord**: summaries, torrents removed by their tracker, packs from autobrr. With the optional **Discord bot** you answer with a reaction (1, 2, 3 to pick a release, thumbs down to dismiss), and the message follows the job.
 
+## Kodi: JELLYNAS rows
+
+`kodi/plugin.video.jellynas` is a Kodi 21 add-on that gives a skin (made for Arctic Fuse 2) the rows of the Jellyfin home page as widget folders: **Continue watching** (the Jellyfin server's own resume list, movies and episodes mixed, episodes under the series name with `S1:E4 · title` below), **Spotlight** (continue watching + next up, one item per series, the series art and logo) and **This week** (Streambox's week.json with a separator item before each day, a season pack of one day as one card). It uses the login of the Kofin add-on of the same Kodi (read only, GET), IMDb ratings from Streambox's imdb.json, and plays through Kofin. Texts in English and Hungarian (setting: language of the rows).
+
+Install once from zip: `dist/kodi/repository.jellynas.zip` (*Add-ons, Install from zip file*), then *Install from repository, JELLYNAS Repository*; Kodi updates it from this repository. Build: `python3 tools/kodi_build.py`, test: `python3 kodi/plugin.video.jellynas/tests/test_jellynas.py` (stub Kodi and Jellyfin).
+
 ## Compatibility
 
 | | |
@@ -125,6 +131,7 @@ Updates: *Plugins, Check for updates* reads the `.plg` from this repository (`pl
 - `common/discord_tpl.php`: template of the Discord helper; `python3 tools/gen_discord.py` writes `diskbox/discord.php` and `sysbox/discord.php`
 - `seedbox/`: sources plus `template.plg`, built by `python3 seedbox/build.py`
 - `streambox/`: the files unpacked from the `.plg` for reading (`tools/extract_plg.py`); the `.plg` in `dist/` is the source of truth for Streambox
+- `kodi/`: Kodi add-ons (`plugin.video.jellynas`, `repository.jellynas`); `python3 tools/kodi_build.py` writes the Kodi repository to `dist/kodi/`
 - `icons/`: plugin icons and the Discord webhook avatars
 - `dist/`: the built plugins
 - `tools/screenshots/`: renders the screenshots from the real pages with the made-up data in `mock/` (`sh tools/screenshots/shoot_all.sh`, needs php, node and Playwright)

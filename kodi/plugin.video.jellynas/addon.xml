@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.jellynas" name="JELLYNAS" version="0.1.0" provider-name="leone007">
+  <requires>
+    <import addon="xbmc.python" version="3.0.1"/>
+    <import addon="plugin.video.kofin" version="0.29.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">JELLYNAS home rows for Kodi: continue watching, spotlight and this week</summary>
+    <summary lang="hu_HU">JELLYNAS kezdőlap-sorok a Kodiban: folytatás, kiemelt és ezen a héten</summary>
+    <description lang="en_GB">Widget folders for skins such as Arctic Fuse 2, built like the JELLYNAS Jellyfin home page. Continue watching and Spotlight come from the Jellyfin server with the Kofin login of this Kodi (read only); episodes show the series name. This week comes from Streambox (week.json), IMDb ratings from Streambox (imdb.json). Playback goes through Kofin.</description>
+    <description lang="hu_HU">Widget-mappák skinekhez (pl. Arctic Fuse 2), a JELLYNAS Jellyfin-kezdőlapja mintájára. A Megtekintés folytatása és a Kiemelt a Jellyfin-szerverről jön, ennek a Kodinak a Kofin-belépésével (csak olvasás); a részeknél a sorozat neve látszik. Az Ezen a héten a Streamboxból (week.json), az IMDb-pontszámok a Streamboxból (imdb.json) jönnek. A lejátszást a Kofin végzi.</description>
+    <platform>all</platform>
+    <license>MIT</license>
+    <source>https://github.com/leone007/unraid-mediaserver-tools/tree/main/kodi/plugin.video.jellynas</source>
+    <news>0.1.0: first version: Continue watching, Spotlight, This week</news>
+    <assets>
+      <icon>resources/icon.png</icon>
+    </assets>
+  </extension>
+</addon>

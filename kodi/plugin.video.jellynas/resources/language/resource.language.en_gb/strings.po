@@ -1,0 +1,178 @@
+# Kodi Media Center language file
+# Addon Name: JELLYNAS
+# Addon id: plugin.video.jellynas
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en_GB\n"
+
+#. Folder: movies and episodes in progress (Jellyfin resume list)
+msgctxt "#30001"
+msgid "Continue watching"
+msgstr ""
+
+#. Folder for the skin spotlight: continue watching + next up
+msgctxt "#30002"
+msgid "Spotlight"
+msgstr ""
+
+#. Folder: this week's episodes from Streambox
+msgctxt "#30003"
+msgid "This week"
+msgstr ""
+
+#. Notification when Kofin has no server login
+msgctxt "#30010"
+msgid "Log in to Kofin first"
+msgstr ""
+
+#. Notification on a this-week card that cannot be played; {st} is its state
+msgctxt "#30012"
+msgid "Not available yet: {st}"
+msgstr ""
+
+#. Episode state
+msgctxt "#30020"
+msgid "Available"
+msgstr ""
+
+#. Episode state: file arrived, being imported
+msgctxt "#30021"
+msgid "Available soon"
+msgstr ""
+
+#. Episode state
+msgctxt "#30022"
+msgid "Downloading"
+msgstr ""
+
+#. Episode state with percent
+msgctxt "#30023"
+msgid "Downloading {p}%"
+msgstr ""
+
+#. Episode state
+msgctxt "#30024"
+msgid "Download starting"
+msgstr ""
+
+#. Episode state
+msgctxt "#30025"
+msgid "Paused"
+msgstr ""
+
+#. Episode state
+msgctxt "#30026"
+msgid "Download failed"
+msgstr ""
+
+#. Episode state; {d} is a duration
+msgctxt "#30027"
+msgid "Late {d}"
+msgstr ""
+
+#. Expected download in a duration
+msgctxt "#30028"
+msgid "In {d}"
+msgstr ""
+
+#. Air time in a duration
+msgctxt "#30029"
+msgid "Airs in {d}"
+msgstr ""
+
+#. Episode state after air time
+msgctxt "#30030"
+msgid "Any time now"
+msgstr ""
+
+#. Day separator of today; {d} is the day name
+msgctxt "#30031"
+msgid "Today · {d}"
+msgstr ""
+
+#. Duration: days and hours
+msgctxt "#30032"
+msgid "{d}d {h}h"
+msgstr ""
+
+#. Duration: hours and minutes
+msgctxt "#30033"
+msgid "{h}h {m}m"
+msgstr ""
+
+#. Duration: minutes
+msgctxt "#30034"
+msgid "{m}m"
+msgstr ""
+
+#. Season card: how many episodes are available
+msgctxt "#30035"
+msgid "{n}/{m} available"
+msgstr ""
+
+#. Season card: number of episodes
+msgctxt "#30036"
+msgid "{n} episodes"
+msgstr ""
+
+#. Day name
+msgctxt "#30040"
+msgid "Monday"
+msgstr ""
+
+#. Day name
+msgctxt "#30041"
+msgid "Tuesday"
+msgstr ""
+
+#. Day name
+msgctxt "#30042"
+msgid "Wednesday"
+msgstr ""
+
+#. Day name
+msgctxt "#30043"
+msgid "Thursday"
+msgstr ""
+
+#. Day name
+msgctxt "#30044"
+msgid "Friday"
+msgstr ""
+
+#. Day name
+msgctxt "#30045"
+msgid "Saturday"
+msgstr ""
+
+#. Day name
+msgctxt "#30046"
+msgid "Sunday"
+msgstr ""
+
+#. Settings category
+msgctxt "#30100"
+msgid "General"
+msgstr ""
+
+#. Setting
+msgctxt "#30101"
+msgid "Language of the rows"
+msgstr ""
+
+#. Setting value
+msgctxt "#30102"
+msgid "Same as Kodi"
+msgstr ""
+
+#. Setting value (language name, keep it in English)
+msgctxt "#30103"
+msgid "English"
+msgstr ""
+
+#. Setting value (language name, keep it in Hungarian)
+msgctxt "#30104"
+msgid "Magyar"
+msgstr ""
+

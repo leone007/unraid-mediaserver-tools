@@ -14,3 +14,5 @@ guard_todo.md
 .claude/
 icons/prev*.png
 _local_old/
+!dist/kodi/*.zip
+!dist/kodi/*/*.zip

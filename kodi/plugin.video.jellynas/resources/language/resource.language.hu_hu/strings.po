@@ -1,0 +1,144 @@
+# Kodi Media Center language file
+# Addon Name: JELLYNAS
+# Addon id: plugin.video.jellynas
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: hu_HU\n"
+
+msgctxt "#30001"
+msgid "Continue watching"
+msgstr "Megtekintés folytatása"
+
+msgctxt "#30002"
+msgid "Spotlight"
+msgstr "Kiemelt"
+
+msgctxt "#30003"
+msgid "This week"
+msgstr "Ezen a héten"
+
+msgctxt "#30010"
+msgid "Log in to Kofin first"
+msgstr "Előbb jelentkezz be a Kofinban"
+
+msgctxt "#30012"
+msgid "Not available yet: {st}"
+msgstr "Még nem elérhető: {st}"
+
+msgctxt "#30020"
+msgid "Available"
+msgstr "Elérhető"
+
+msgctxt "#30021"
+msgid "Available soon"
+msgstr "Hamarosan elérhető"
+
+msgctxt "#30022"
+msgid "Downloading"
+msgstr "Letöltés"
+
+msgctxt "#30023"
+msgid "Downloading {p}%"
+msgstr "Letöltés {p}%"
+
+msgctxt "#30024"
+msgid "Download starting"
+msgstr "Letöltés indul"
+
+msgctxt "#30025"
+msgid "Paused"
+msgstr "Szünetel"
+
+msgctxt "#30026"
+msgid "Download failed"
+msgstr "Letöltési hiba"
+
+msgctxt "#30027"
+msgid "Late {d}"
+msgstr "Késik {d}"
+
+msgctxt "#30028"
+msgid "In {d}"
+msgstr "{d} múlva"
+
+msgctxt "#30029"
+msgid "Airs in {d}"
+msgstr "Adás {d} múlva"
+
+msgctxt "#30030"
+msgid "Any time now"
+msgstr "Bármikor jöhet"
+
+msgctxt "#30031"
+msgid "Today · {d}"
+msgstr "Ma · {d}"
+
+msgctxt "#30032"
+msgid "{d}d {h}h"
+msgstr "{d}n {h}ó"
+
+msgctxt "#30033"
+msgid "{h}h {m}m"
+msgstr "{h}ó {m}p"
+
+msgctxt "#30034"
+msgid "{m}m"
+msgstr "{m}p"
+
+msgctxt "#30035"
+msgid "{n}/{m} available"
+msgstr "{n}/{m} elérhető"
+
+msgctxt "#30036"
+msgid "{n} episodes"
+msgstr "{n} epizód"
+
+msgctxt "#30040"
+msgid "Monday"
+msgstr "Hétfő"
+
+msgctxt "#30041"
+msgid "Tuesday"
+msgstr "Kedd"
+
+msgctxt "#30042"
+msgid "Wednesday"
+msgstr "Szerda"
+
+msgctxt "#30043"
+msgid "Thursday"
+msgstr "Csütörtök"
+
+msgctxt "#30044"
+msgid "Friday"
+msgstr "Péntek"
+
+msgctxt "#30045"
+msgid "Saturday"
+msgstr "Szombat"
+
+msgctxt "#30046"
+msgid "Sunday"
+msgstr "Vasárnap"
+
+msgctxt "#30100"
+msgid "General"
+msgstr "Általános"
+
+msgctxt "#30101"
+msgid "Language of the rows"
+msgstr "A sorok nyelve"
+
+msgctxt "#30102"
+msgid "Same as Kodi"
+msgstr "Ugyanaz, mint a Kodié"
+
+msgctxt "#30103"
+msgid "English"
+msgstr "English"
+
+msgctxt "#30104"
+msgid "Magyar"
+msgstr "Magyar"
+
