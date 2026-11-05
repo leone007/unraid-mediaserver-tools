@@ -50,7 +50,11 @@ class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         q = dict(urllib.parse.parse_qsl(u.query))
-        SEEN.append(('GET', u.path, q, self.headers.get('Authorization', '')))
+        SEEN.append(('GET', u.path, q, self.headers.get('Authorization', ''), self.headers.get('User-Agent', '')))
+        if 'Python-urllib' in self.headers.get('User-Agent', ''):
+            self.send_response(403)
+            self.end_headers()
+            return
         body = None
         if u.path == '/UserItems/Resume':
             body = {'Items': RESUME}
@@ -69,7 +73,7 @@ class H(http.server.BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_POST(self):
-        SEEN.append(('POST', self.path, {}, ''))
+        SEEN.append(('POST', self.path, {}, '', ''))
         self.send_response(405)
         self.end_headers()
 
@@ -222,6 +226,7 @@ ok(any(li.label.startswith('MA · ') for _, li, _ in items) and any(li.label2.en
 LANG['lang'] = '0'
 
 ok(not [s for s in SEEN if s[0] != 'GET'], 'only GET requests')
+ok(all(s[4].startswith('JELLYNAS/') for s in SEEN), 'own User-Agent (the proxy refuses Python-urllib)')
 srv.shutdown()
 print('%d failed' % len(FAILS) if FAILS else 'all checks passed')
 sys.exit(1 if FAILS else 0)

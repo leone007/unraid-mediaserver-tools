@@ -90,7 +90,8 @@ def kofin():
 
 
 def get_json(url, hdr=None):
-    h = {'Accept': 'application/json'}
+    # an own User-Agent: the reverse proxy in front of the public address answers 403 to Python's default one
+    h = {'Accept': 'application/json', 'User-Agent': 'JELLYNAS/%s (Kodi)' % ADDON.getAddonInfo('version')}
     if hdr:
         h['Authorization'] = hdr
     with urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=TIMEOUT) as r:

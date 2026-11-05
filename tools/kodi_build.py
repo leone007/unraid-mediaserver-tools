@@ -76,9 +76,11 @@ def build():
                 for f in sorted(files):
                     full = os.path.join(base, f)
                     z.write(full, os.path.join(aid, os.path.relpath(full, path)))
-        for extra in ('icon.png', os.path.join('resources', 'icon.png')):
-            if os.path.exists(os.path.join(path, extra)):
-                shutil.copy(os.path.join(path, extra), os.path.join(d, os.path.basename(extra)))
+        for a in root.iter('assets'):   # Kodi reads the assets from <datadir>/<id>/<the path in addon.xml>
+            for el in a:
+                if el.text and os.path.exists(os.path.join(path, el.text)):
+                    os.makedirs(os.path.dirname(os.path.join(d, el.text)), exist_ok=True)
+                    shutil.copy(os.path.join(path, el.text), os.path.join(d, el.text))
         xml.append(open(os.path.join(path, 'addon.xml'), encoding='utf-8').read().split('?>', 1)[1].strip())
         print('OK   %s %s  %s  md5 %s' % (aid, ver, os.path.relpath(zfn, R), hashlib.md5(open(zfn, 'rb').read()).hexdigest()))
         if aid.startswith('repository.'):
