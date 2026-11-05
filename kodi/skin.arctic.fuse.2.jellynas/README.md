@@ -16,6 +16,8 @@ Patches:
   the second line under a card shows the item property `sublabel` first (plugin.video.jellynas: `KEDD 02:00 ·
   S01E05`, `S1:E4 · title`); upstream picks the series name or the premiere date before Label2. Patched in the
   template `shortcuts/skinvariables-labels.xml` and in the shipped generated includes.
+- `03-imdb-badge.patch`: a yellow IMDb badge in the top left corner of landscape and poster cards: the add-on's
+  property `jellynas.imdb`, else Kodi's IMDb rating of the item (`ListItem.Rating(imdb)`).
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.
