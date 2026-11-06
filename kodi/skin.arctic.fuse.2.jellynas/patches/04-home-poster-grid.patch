@@ -17,20 +17,23 @@ index b223b0a..2e07853 100644
  
              <onup condition="$PARAM[search]">SetFocus(309)</onup>
 diff --git a/1080i/Includes_Expressions.xml b/1080i/Includes_Expressions.xml
-index c6123ea..96f6414 100644
+index c6123ea..f743662 100644
 --- a/1080i/Includes_Expressions.xml
 +++ b/1080i/Includes_Expressions.xml
-@@ -78,6 +78,8 @@
+@@ -78,6 +78,11 @@
  
      <expression name="Exp_HomeMenu_HasFocus">[Control.HasFocus(300) | Control.HasFocus(306) | Control.HasFocus(307) | Control.HasFocus(308) | Control.HasFocus(309) | Control.HasFocus(331)]</expression>
      <expression name="Exp_HomeMenu_IsExpanded">[Skin.HasSetting(Home.ExpandedMenu)]</expression>
 +    <!-- JELLYNAS: a side menu category pointing at the add-on's All movies / All series folder shows a poster grid -->
 +    <expression name="Exp_JellynasGrid">[Window.IsVisible(Home) + String.Contains(Container(300).ListItem.Property(path),plugin.video.jellynas/?mode=all)]</expression>
++    <expression name="Exp_JellynasGrid_Series">String.Contains(Container(300).ListItem.Property(path),mode=allseries)</expression>
++    <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
++    <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
  
  
      <expression name="Exp_1101Hub_IsVisible">[Window.IsVisible(1101) | [Window.IsVisible(Home) + Integer.IsEqual(Skin.String(Hub.Home.ReplaceWindow),1101)]]</expression>
 diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
-index 0406588..75c6a7b 100644
+index 0406588..4679261 100644
 --- a/1080i/Includes_Hubs.xml
 +++ b/1080i/Includes_Hubs.xml
 @@ -342,6 +342,7 @@
@@ -41,13 +44,437 @@ index 0406588..75c6a7b 100644
  
                      </control>
                  </control>
-@@ -379,6 +380,25 @@
+@@ -379,6 +380,484 @@
          </definition>
      </include>
  
-+    <!-- JELLYNAS: poster grid of the focused side menu category (Exp_JellynasGrid), right of the menu, no extra OK -->
++    <!-- JELLYNAS: poster grid of the focused side menu category (Exp_JellynasGrid), right of the menu, no extra OK.
++         Up from the first row: the grid bar (letters, sort, watched, genre); the choices are Home window properties
++         JellynasGrid.<movies|series>.* that go into the grid's path ($VAR[JellynasGrid_Query]), the add-on filters. -->
 +    <include name="Hub_JellynasGrid">
 +        <control type="group">
++            <control type="grouplist">
++                <description>JELLYNAS grid: active filters</description>
++                <left>view_offx</left>
++                <right>view_offx</right>
++                <top>30</top>
++                <height>40</height>
++                <orientation>horizontal</orientation>
++                <itemgap>40</itemgap>
++                <usecontrolwidth>true</usecontrolwidth>
++                <visible>$EXP[Exp_JellynasGrid] + $EXP[Exp_JellynasGrid_Filtered] + !$EXP[Exp_JellynasGrid_BarFocus]</visible>
++                <control type="label">
++                    <width>auto</width>
++                    <height>40</height>
++                    <font>font_mini_bold</font>
++                    <textcolor>main_fg_70</textcolor>
++                    <label>$VAR[JellynasGrid_Letter]</label>
++                    <visible>[[$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter))] | [!$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter))]]</visible>
++                </control>
++                <control type="label">
++                    <width>auto</width>
++                    <height>40</height>
++                    <font>font_mini_bold</font>
++                    <textcolor>main_fg_70</textcolor>
++                    <label>$VAR[JellynasGrid_SortLabel]</label>
++                    <visible>[[$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sortlabel))] | [!$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sortlabel))]]</visible>
++                </control>
++                <control type="label">
++                    <width>auto</width>
++                    <height>40</height>
++                    <font>font_mini_bold</font>
++                    <textcolor>main_fg_70</textcolor>
++                    <label>$ADDON[plugin.video.jellynas 30057]</label>
++                    <visible>[[$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched))] | [!$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched))]]</visible>
++                </control>
++                <control type="label">
++                    <width>auto</width>
++                    <height>40</height>
++                    <font>font_mini_bold</font>
++                    <textcolor>main_fg_70</textcolor>
++                    <label>$VAR[JellynasGrid_GenreLabel]</label>
++                    <visible>[[$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genrelabel))] | [!$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genrelabel))]]</visible>
++                </control>
++            </control>
++
++            <control type="group">
++                <description>JELLYNAS grid bar</description>
++                <visible allowhiddenfocus="true">$EXP[Exp_JellynasGrid] + $EXP[Exp_JellynasGrid_BarFocus]</visible>
++                <include content="Animation_ConditionalFade">
++                    <param name="condition">!$EXP[Exp_JellynasGrid_BarFocus]</param>
++                </include>
++                <control type="list" id="4910">
++                    <left>view_offx</left>
++                    <right>view_offx</right>
++                    <top>20</top>
++                    <height>80</height>
++                    <orientation>horizontal</orientation>
++                    <scrolltime tween="quadratic">200</scrolltime>
++                    <ondown>4920</ondown>
++                    <onleft>300</onleft>
++                    <onback>4900</onback>
++                    <itemlayout width="140" height="80" condition="String.IsEmpty(ListItem.Property(v))">
++                        <control type="label">
++                            <width>140</width>
++                            <height>70</height>
++                            <align>center</align>
++                            <aligny>center</aligny>
++                            <font>font_main_bold</font>
++                            <label>$INFO[ListItem.Label]</label>
++                            <textcolor>main_fg_50</textcolor>
++                        </control>
++                        <control type="image">
++                            <left>50</left>
++                            <top>68</top>
++                            <width>40</width>
++                            <height>8</height>
++                            <texture colordiffuse="main_fg_30" border="4">common/menu.png</texture>
++                            <visible>[[String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.series.letter)]) + [$EXP[Exp_JellynasGrid_Series]]] | [String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.movies.letter)]) + !$EXP[Exp_JellynasGrid_Series]]]</visible>
++                        </control>
++                    </itemlayout>
++                    <itemlayout width="54" height="80" condition="!String.IsEmpty(ListItem.Property(v))">
++                        <control type="label">
++                            <width>54</width>
++                            <height>70</height>
++                            <align>center</align>
++                            <aligny>center</aligny>
++                            <font>font_main_bold</font>
++                            <label>$INFO[ListItem.Label]</label>
++                            <textcolor>main_fg_50</textcolor>
++                        </control>
++                        <control type="image">
++                            <left>7</left>
++                            <top>68</top>
++                            <width>40</width>
++                            <height>8</height>
++                            <texture colordiffuse="main_fg_30" border="4">common/menu.png</texture>
++                            <visible>[[String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.series.letter)]) + [$EXP[Exp_JellynasGrid_Series]]] | [String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.movies.letter)]) + !$EXP[Exp_JellynasGrid_Series]]]</visible>
++                        </control>
++                    </itemlayout>
++                    <focusedlayout width="140" height="80" condition="String.IsEmpty(ListItem.Property(v))">
++                        <control type="label">
++                            <width>140</width>
++                            <height>70</height>
++                            <align>center</align>
++                            <aligny>center</aligny>
++                            <font>font_main_bold</font>
++                            <label>$INFO[ListItem.Label]</label>
++                            <textcolor>$VAR[JellynasGrid_LetterColor]</textcolor>
++                        </control>
++                        <control type="image">
++                            <left>50</left>
++                            <top>68</top>
++                            <width>40</width>
++                            <height>8</height>
++                            <texture colordiffuse="main_fg_100" border="4">common/menu.png</texture>
++                            <visible>Control.HasFocus(4910)</visible>
++                        </control>
++                    </focusedlayout>
++                    <focusedlayout width="54" height="80" condition="!String.IsEmpty(ListItem.Property(v))">
++                        <control type="label">
++                            <width>54</width>
++                            <height>70</height>
++                            <align>center</align>
++                            <aligny>center</aligny>
++                            <font>font_main_bold</font>
++                            <label>$INFO[ListItem.Label]</label>
++                            <textcolor>$VAR[JellynasGrid_LetterColor]</textcolor>
++                        </control>
++                        <control type="image">
++                            <left>7</left>
++                            <top>68</top>
++                            <width>40</width>
++                            <height>8</height>
++                            <texture colordiffuse="main_fg_100" border="4">common/menu.png</texture>
++                            <visible>Control.HasFocus(4910)</visible>
++                        </control>
++                    </focusedlayout>
++                    <content>
++                        <item>
++                            <label>$ADDON[plugin.video.jellynas 30058]</label>
++                            <property name="v"></property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>A</label>
++                            <property name="v">A</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,A,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,A,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>B</label>
++                            <property name="v">B</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,B,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,B,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>C</label>
++                            <property name="v">C</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,C,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,C,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>D</label>
++                            <property name="v">D</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,D,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,D,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>E</label>
++                            <property name="v">E</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,E,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,E,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>F</label>
++                            <property name="v">F</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,F,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,F,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>G</label>
++                            <property name="v">G</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,G,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,G,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>H</label>
++                            <property name="v">H</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,H,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,H,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>I</label>
++                            <property name="v">I</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,I,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,I,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>J</label>
++                            <property name="v">J</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,J,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,J,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>K</label>
++                            <property name="v">K</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,K,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,K,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>L</label>
++                            <property name="v">L</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,L,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,L,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>M</label>
++                            <property name="v">M</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,M,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,M,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>N</label>
++                            <property name="v">N</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,N,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,N,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>O</label>
++                            <property name="v">O</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,O,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,O,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>P</label>
++                            <property name="v">P</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,P,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,P,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>Q</label>
++                            <property name="v">Q</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,Q,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,Q,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>R</label>
++                            <property name="v">R</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,R,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,R,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>S</label>
++                            <property name="v">S</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,S,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,S,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>T</label>
++                            <property name="v">T</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,T,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,T,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>U</label>
++                            <property name="v">U</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,U,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,U,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>V</label>
++                            <property name="v">V</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,V,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,V,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>W</label>
++                            <property name="v">W</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,W,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,W,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>X</label>
++                            <property name="v">X</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,X,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,X,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>Y</label>
++                            <property name="v">Y</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,Y,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,Y,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>Z</label>
++                            <property name="v">Z</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,Z,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,Z,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                        <item>
++                            <label>#</label>
++                            <property name="v">0</property>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,0,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,0,Home)</onclick>
++                            <onclick>SetFocus(4900,0,absolute)</onclick>
++                        </item>
++                    </content>
++                </control>
++                <control type="grouplist" id="4920">
++                    <left>view_offx</left>
++                    <right>view_offx</right>
++                    <top>115</top>
++                    <height>70</height>
++                    <orientation>horizontal</orientation>
++                    <itemgap>20</itemgap>
++                    <onup>4910</onup>
++                    <ondown>4900</ondown>
++                    <onleft>300</onleft>
++                    <onback>4900</onback>
++                    <control type="button" id="4921">
++                        <width>auto</width>
++                        <height>70</height>
++                        <font>font_mini_bold</font>
++                        <textoffsetx>36</textoffsetx>
++                        <aligny>center</aligny>
++                        <textcolor>main_fg_70</textcolor>
++                        <focusedcolor>$VAR[ColorSelected]</focusedcolor>
++                        <texturefocus colordiffuse="main_fg_100" border="34">common/menu.png</texturefocus>
++                        <texturenofocus colordiffuse="CC262626" border="34">common/menu.png</texturenofocus>
++                        <label>$ADDON[plugin.video.jellynas 30055]: $VAR[JellynasGrid_SortLabel]</label>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">RunPlugin(plugin://plugin.video.jellynas/?mode=pick&amp;what=sort&amp;kind=series)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">RunPlugin(plugin://plugin.video.jellynas/?mode=pick&amp;what=sort&amp;kind=movies)</onclick>
++                        <visible>true</visible>
++                    </control>
++                    <control type="button" id="4922">
++                        <width>auto</width>
++                        <height>70</height>
++                        <font>font_mini_bold</font>
++                        <textoffsetx>36</textoffsetx>
++                        <aligny>center</aligny>
++                        <textcolor>main_fg_70</textcolor>
++                        <focusedcolor>$VAR[ColorSelected]</focusedcolor>
++                        <texturefocus colordiffuse="main_fg_100" border="34">common/menu.png</texturefocus>
++                        <texturenofocus colordiffuse="CC262626" border="34">common/menu.png</texturenofocus>
++                        <label>$ADDON[plugin.video.jellynas 30060]: $VAR[JellynasGrid_WatchedLabel]</label>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched))">SetProperty(JellynasGrid.series.unwatched,1,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched))">ClearProperty(JellynasGrid.series.unwatched,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched))">SetProperty(JellynasGrid.movies.unwatched,1,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched))">ClearProperty(JellynasGrid.movies.unwatched,Home)</onclick>
++                        <visible>true</visible>
++                    </control>
++                    <control type="button" id="4923">
++                        <width>auto</width>
++                        <height>70</height>
++                        <font>font_mini_bold</font>
++                        <textoffsetx>36</textoffsetx>
++                        <aligny>center</aligny>
++                        <textcolor>main_fg_70</textcolor>
++                        <focusedcolor>$VAR[ColorSelected]</focusedcolor>
++                        <texturefocus colordiffuse="main_fg_100" border="34">common/menu.png</texturefocus>
++                        <texturenofocus colordiffuse="CC262626" border="34">common/menu.png</texturenofocus>
++                        <label>$ADDON[plugin.video.jellynas 30056]: $VAR[JellynasGrid_GenreLabel]</label>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">RunPlugin(plugin://plugin.video.jellynas/?mode=pick&amp;what=genre&amp;kind=series)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">RunPlugin(plugin://plugin.video.jellynas/?mode=pick&amp;what=genre&amp;kind=movies)</onclick>
++                        <visible>true</visible>
++                    </control>
++                    <control type="button" id="4924">
++                        <width>auto</width>
++                        <height>70</height>
++                        <font>font_mini_bold</font>
++                        <textoffsetx>36</textoffsetx>
++                        <aligny>center</aligny>
++                        <textcolor>main_fg_70</textcolor>
++                        <focusedcolor>$VAR[ColorSelected]</focusedcolor>
++                        <texturefocus colordiffuse="main_fg_100" border="34">common/menu.png</texturefocus>
++                        <texturenofocus colordiffuse="CC262626" border="34">common/menu.png</texturenofocus>
++                        <label>$ADDON[plugin.video.jellynas 30059]</label>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.sort,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.sort,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.sortlabel,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.sortlabel,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.unwatched,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.unwatched,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.genre,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.genre,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.genrelabel,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.genrelabel,Home)</onclick>
++                        <onclick>SetFocus(4900,0,absolute)</onclick>
++                        <visible>$EXP[Exp_JellynasGrid_Filtered]</visible>
++                    </control>
++                </control>
++            </control>
++
 +            <include content="List_Poster_Row">
 +                <param name="id">4900</param>
 +                <param name="control">panel</param>
@@ -55,19 +482,54 @@ index 0406588..75c6a7b 100644
 +                <param name="offset_y">40</param>
 +                <top>20</top>
 +                <bottom>0</bottom>
++                <onup>4910</onup>
 +                <onleft>300</onleft>
 +                <onback>300</onback>
 +                <visible>$EXP[Exp_JellynasGrid]</visible>
++                <animation effect="slide" end="0,200" time="300" tween="cubic" easing="out" condition="$EXP[Exp_JellynasGrid_BarFocus]">Conditional</animation>
++                <animation effect="slide" end="0,50" time="300" tween="cubic" easing="out" condition="!$EXP[Exp_JellynasGrid_BarFocus] + $EXP[Exp_JellynasGrid_Filtered]">Conditional</animation>
 +                <onfocus>ClearProperty(TMDbHelper.WidgetContainer)</onfocus>
-+                <content target="videos">$INFO[Container(300).ListItem.Property(path)]</content>
++                <content target="videos">$INFO[Container(300).ListItem.Property(path)]$VAR[JellynasGrid_Query]</content>
 +            </include>
 +        </control>
 +    </include>
 +
++    <variable name="JellynasGrid_Query">
++        <value condition="$EXP[Exp_JellynasGrid_Series]">&amp;sort=$INFO[Window(Home).Property(JellynasGrid.series.sort)]&amp;letter=$INFO[Window(Home).Property(JellynasGrid.series.letter)]&amp;unwatched=$INFO[Window(Home).Property(JellynasGrid.series.unwatched)]&amp;genre=$INFO[Window(Home).Property(JellynasGrid.series.genre)]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series]">&amp;sort=$INFO[Window(Home).Property(JellynasGrid.movies.sort)]&amp;letter=$INFO[Window(Home).Property(JellynasGrid.movies.letter)]&amp;unwatched=$INFO[Window(Home).Property(JellynasGrid.movies.unwatched)]&amp;genre=$INFO[Window(Home).Property(JellynasGrid.movies.genre)]</value>
++    </variable>
++    <variable name="JellynasGrid_SortLabel">
++        <value condition="$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.series.sortlabel))">$ADDON[plugin.video.jellynas 30050]</value>
++        <value condition="$EXP[Exp_JellynasGrid_Series]">$INFO[Window(Home).Property(JellynasGrid.series.sortlabel)]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sortlabel))">$ADDON[plugin.video.jellynas 30050]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series]">$INFO[Window(Home).Property(JellynasGrid.movies.sortlabel)]</value>
++    </variable>
++    <variable name="JellynasGrid_GenreLabel">
++        <value condition="$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.series.genrelabel))">$ADDON[plugin.video.jellynas 30058]</value>
++        <value condition="$EXP[Exp_JellynasGrid_Series]">$INFO[Window(Home).Property(JellynasGrid.series.genrelabel)]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genrelabel))">$ADDON[plugin.video.jellynas 30058]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series]">$INFO[Window(Home).Property(JellynasGrid.movies.genrelabel)]</value>
++    </variable>
++    <variable name="JellynasGrid_WatchedLabel">
++        <value condition="$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched))">$ADDON[plugin.video.jellynas 30058]</value>
++        <value condition="$EXP[Exp_JellynasGrid_Series]">$ADDON[plugin.video.jellynas 30061]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched))">$ADDON[plugin.video.jellynas 30058]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series]">$ADDON[plugin.video.jellynas 30061]</value>
++    </variable>
++    <variable name="JellynasGrid_Letter">
++        <value condition="String.IsEqual(Window(Home).Property(JellynasGrid.series.letter),0) | String.IsEqual(Window(Home).Property(JellynasGrid.movies.letter),0)">#</value>
++        <value condition="$EXP[Exp_JellynasGrid_Series]">$INFO[Window(Home).Property(JellynasGrid.series.letter)]</value>
++        <value condition="!$EXP[Exp_JellynasGrid_Series]">$INFO[Window(Home).Property(JellynasGrid.movies.letter)]</value>
++    </variable>
++    <variable name="JellynasGrid_LetterColor">
++        <value condition="Control.HasFocus(4910)">main_fg_100</value>
++        <value>main_fg_50</value>
++    </variable>
++
      <include name="Hub_Top_Animation">
          <!-- <param name="condition">[$EXP[Exp_HubName_IsVisible] + !Window.IsVisible(1163)]</param> -->
          <param name="condition">[$EXP[Exp_HubName_IsVisible]]</param>
-@@ -402,6 +422,7 @@
+@@ -402,6 +881,7 @@
      <include name="Hub_Widgets_Only">
          <include>Background_Transition</include>
          <control type="group" id="340">
@@ -75,7 +537,7 @@ index 0406588..75c6a7b 100644
              <include content="Object_Top" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
                  <param name="top">440</param>
              </include>
-@@ -412,6 +433,7 @@
+@@ -412,6 +892,7 @@
          </control>
  
          <include content="Hub_Widgets_Infopanel" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">

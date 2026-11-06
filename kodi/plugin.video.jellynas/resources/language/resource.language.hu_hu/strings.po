@@ -147,6 +147,66 @@ msgctxt "#30046"
 msgid "Sunday"
 msgstr "Vasárnap"
 
+#. Grid bar sort choice: date added, newest first (the default)
+msgctxt "#30050"
+msgid "Newest"
+msgstr "Legújabb"
+
+#. Grid bar sort choice: by title, A to Z
+msgctxt "#30051"
+msgid "Title"
+msgstr "Cím"
+
+#. Grid bar sort choice: by release year, newest first
+msgctxt "#30052"
+msgid "Year"
+msgstr "Év"
+
+#. Grid bar sort choice: by the IMDb rating shown on the badges, best first
+msgctxt "#30053"
+msgid "IMDb rating"
+msgstr "IMDb-értékelés"
+
+#. First line of the genre chooser: no genre filter
+msgctxt "#30054"
+msgid "All genres"
+msgstr "Minden műfaj"
+
+#. Grid bar button and dialog heading: the sort order of the poster grid
+msgctxt "#30055"
+msgid "Sort by"
+msgstr "Rendezés"
+
+#. Grid bar button and dialog heading: genre filter of the poster grid
+msgctxt "#30056"
+msgid "Genre"
+msgstr "Műfaj"
+
+#. Grid filter line: only titles not watched yet are shown
+msgctxt "#30057"
+msgid "Unwatched"
+msgstr "Nem látott"
+
+#. Grid bar: no filter (first item of the letter row, value of the watched and genre buttons)
+msgctxt "#30058"
+msgid "All"
+msgstr "Mind"
+
+#. Grid bar button: back to the whole library, newest first
+msgctxt "#30059"
+msgid "Clear filters"
+msgstr "Szűrők törlése"
+
+#. Grid bar button: show or hide titles already watched
+msgctxt "#30060"
+msgid "Watched"
+msgstr "Megnézettek"
+
+#. Grid bar: value of the watched button when watched titles are hidden
+msgctxt "#30061"
+msgid "Hidden"
+msgstr "Elrejtve"
+
 msgctxt "#30100"
 msgid "General"
 msgstr "Általános"

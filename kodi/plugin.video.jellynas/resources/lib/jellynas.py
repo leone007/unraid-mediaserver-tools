@@ -3,7 +3,8 @@
 #  - Spotlight: continue watching + next up, one item per series, the series art and logo for episodes
 #  - Next up, Recently added movies, Recently added series: the same lists as the Jellyfin home page (the Kodi library
 #    rows from Kofin's sync have no IMDb rating, so the skin's IMDb badge stays empty on them)
-#  - All movies, All series: the whole library for a category's poster wall (newest first, Kodi's sort menu for the rest)
+#  - All movies, All series: the whole library for a category's poster wall (newest first, Kodi's sort menu for the rest);
+#    the skin's grid bar adds sort, letter, unwatched and genre (mode=pick sets them as Home window properties)
 #  - This week: Streambox week.json in air order, the day and time in the card's second line (no day cards: they were
 #    focusable and showed an empty info panel), a season pack of one day as one card
 # Jellyfin is asked with the Kofin login of this Kodi (GET only); week.json and imdb.json come from the Jellyfin web path
@@ -33,6 +34,8 @@ LIMIT = 24
 SPOT_MAX = 10
 FIELDS = 'Overview,ProviderIds,Genres,MediaStreams,PremiereDate,OfficialRating,CommunityRating'
 IMAGES = 'Primary,Backdrop,Thumb,Logo'
+GRID_SORTS = (('new', 30050), ('name', 30051), ('year', 30052), ('imdb', 30053))   # grid bar: value, label
+SKIN_STRINGS = (30057, 30058, 30059, 30060, 30061)   # only the JELLYNAS skin's grid bar uses them ($ADDON[plugin.video.jellynas N])
 GRID_FIELDS = 'Overview,ProviderIds,Genres,PremiereDate,OfficialRating,CommunityRating,DateCreated'   # no MediaStreams: the whole library in one answer
 GROUP_MIN = 2   # this many episodes of one season on one day make one card (as on the Jellyfin page)
 HDR = {'HDR10': 'hdr10', 'HDR10Plus': 'hdr10', 'HLG': 'hlg'}
@@ -293,11 +296,27 @@ def latest_items(c, types):
     return d if isinstance(d, list) else d.get('Items', [])
 
 
-def all_items(c, kind):
-    """The whole library of one kind, newest first (as Jellyfin's Movies / Shows tab sorted by date added)."""
-    return jf(c, '/Items', Recursive='true', IncludeItemTypes=kind, SortBy='DateCreated,SortName', SortOrder='Descending',
+def all_items(c, kind, q=None):
+    """The whole library of one kind, newest first (as Jellyfin's Movies / Shows tab sorted by date added), or as the
+    grid bar asks: sort=name|year (imdb is sorted by list_all), letter=A..Z or 0/# (before A), unwatched=1, genre=<name>."""
+    q = q or {}
+    p = {'SortBy': 'DateCreated,SortName', 'SortOrder': 'Descending'}
+    if q.get('sort') == 'name':
+        p = {'SortBy': 'SortName', 'SortOrder': 'Ascending'}
+    elif q.get('sort') == 'year':
+        p = {'SortBy': 'ProductionYear,SortName', 'SortOrder': 'Descending'}
+    letter = q.get('letter', '')
+    if letter in ('#', '0'):   # the skin sends 0: a # would end the URL
+        p['NameLessThan'] = 'A'
+    elif len(letter) == 1 and letter.isalpha():
+        p['NameStartsWith'] = letter
+    if q.get('unwatched') == '1':
+        p['IsPlayed'] = 'false'
+    if q.get('genre'):
+        p['Genres'] = q['genre']
+    return jf(c, '/Items', Recursive='true', IncludeItemTypes=kind,
               Fields=GRID_FIELDS + (',RecursiveItemCount' if kind == 'Series' else ''), EnableImageTypes=IMAGES, ImageTypeLimit=1,
-              EnableUserData='true', EnableTotalRecordCount='false').get('Items', [])
+              EnableUserData='true', EnableTotalRecordCount='false', **p).get('Items', [])
 
 
 def list_media(h, c, items, content='videos'):
@@ -322,20 +341,48 @@ def do_series(h, c):
     list_media(h, c, latest_items(c, 'Episode'))
 
 
-def list_all(h, c, kind, content):
-    list_media(h, c, all_items(c, kind), content)
+def list_all(h, c, kind, content, q):
+    items = all_items(c, kind, q)
+    if q.get('sort') == 'imdb':   # the same ratings as the badges (Streambox imdb.json), unrated last
+        imdb = imdb_table(c)
+        items.sort(key=lambda it: -((imdb.get(it.get('Id')) or [0])[0] or 0))
+    list_media(h, c, items, content)
     # the first one keeps the server's order (date added); the rest are Kodi's sort menu
     for m in (xbmcplugin.SORT_METHOD_UNSORTED, xbmcplugin.SORT_METHOD_DATEADDED, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE,
               xbmcplugin.SORT_METHOD_VIDEO_YEAR, xbmcplugin.SORT_METHOD_VIDEO_RATING, xbmcplugin.SORT_METHOD_PLAYCOUNT):
         xbmcplugin.addSortMethod(h, m)
 
 
-def do_allmovies(h, c):
-    list_all(h, c, 'Movie', 'movies')
+def do_allmovies(h, c, q):
+    list_all(h, c, 'Movie', 'movies', q)
 
 
-def do_allseries(h, c):
-    list_all(h, c, 'Series', 'tvshows')
+def do_allseries(h, c, q):
+    list_all(h, c, 'Series', 'tvshows', q)
+
+
+def do_pick(c, q):
+    """Grid bar button (RunPlugin): choose the sort or the genre of the Home poster grid. The choice goes to the Home
+    window properties JellynasGrid.<movies|series>.<sort|genre> (the value, URL-quoted: the skin puts it in the grid's
+    path) and ...<sort|genre>label (shown by the skin); the default choice clears both."""
+    kind = 'series' if q.get('kind') == 'series' else 'movies'
+    what = q.get('what')
+    if what == 'sort':
+        vals, labels = [s for s, _ in GRID_SORTS], [L(n) for _, n in GRID_SORTS]
+    elif what == 'genre':
+        g = jf(c, '/Genres', IncludeItemTypes='Series' if kind == 'series' else 'Movie', Recursive='true',
+               SortBy='SortName').get('Items', [])
+        names = [x['Name'] for x in g if x.get('Name')]
+        vals, labels = [''] + [urllib.parse.quote(n) for n in names], [L(30054)] + names
+    else:
+        return
+    i = xbmcgui.Dialog().select(L(30055 if what == 'sort' else 30056), labels)
+    if i < 0:
+        return
+    win, pre = xbmcgui.Window(10000), 'JellynasGrid.%s.%s' % (kind, what)
+    first = i == 0
+    win.setProperty(pre, '' if first else vals[i])
+    win.setProperty(pre + 'label', '' if first else labels[i])
 
 
 def do_spotlight(h, c):
@@ -587,11 +634,17 @@ def main(argv):
         ok = False
     else:
         try:
+            if mode == 'pick':   # RunPlugin from the skin's grid bar: a dialog, no directory
+                do_pick(c, q)
+                return
             if mode == 'wgroup':
                 do_wgroup(h, c, q)
+            elif mode in ('allmovies', 'allseries'):
+                ROUTES[mode](h, c, q)
             elif mode in ROUTES:
                 ROUTES[mode](h, c)
         except Exception as x:  # noqa: BLE001 - a widget must not break the home screen: log and show an empty row
             log('%s: %s' % (mode, x))
             ok = False
-    xbmcplugin.endOfDirectory(h, succeeded=ok, cacheToDisc=False)
+    if mode != 'pick':
+        xbmcplugin.endOfDirectory(h, succeeded=ok, cacheToDisc=False)

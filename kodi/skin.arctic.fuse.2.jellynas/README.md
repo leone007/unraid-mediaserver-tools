@@ -25,6 +25,10 @@ Patches:
   All movies or All series folder (`plugin://plugin.video.jellynas/?mode=allmovies|allseries`, expression
   `Exp_JellynasGrid`), a vertical poster panel (id 4900, AF2 `List_Poster_Row` cards with the badge) fills the area
   right of the menu instead of the widget rows and their info panel; Right from the menu goes into it, Left or Back goes back to the menu.
+  Up from the first row opens the grid bar: a letter row (All, A-Z, #; ids 4910) and buttons (4920: Sort, Watched,
+  Genre, Clear filters). The choices are Home window properties `JellynasGrid.<movies|series>.*` added to the grid's
+  path (`$VAR[JellynasGrid_Query]`); the add-on (0.1.8) does the filtering, Sort and Genre are its dialogs
+  (`?mode=pick`). Active filters show in a small line above the grid. Labels come from the add-on (`$ADDON[...]`).
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.

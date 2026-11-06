@@ -66,6 +66,8 @@ class H(http.server.BaseHTTPRequestHandler):
                 {'Id': 's2', 'Type': 'Series', 'Name': 'Lost', 'ProductionYear': 2004, 'ImageTags': {'Primary': 'p2'}, 'BackdropImageTags': ['b2']},
                 {'Id': 'se3', 'Type': 'Season', 'Name': '1. évad', 'SeriesName': 'A visszavágó', 'SeriesId': 's3', 'ImageTags': {}},
                 ep('v6', 'A visszavágó', 's3', 1, 6, '6. epizód')]
+        elif u.path == '/Genres':
+            body = {'Items': [{'Name': 'Action'}, {'Name': 'Action & Adventure'}]}
         elif u.path == '/Items' and q.get('IncludeItemTypes') == 'Movie':
             body = {'Items': [dict(MOVIE, DateCreated='2026-11-01T10:00:00.0000000Z'),
                               {'Id': 'm2', 'Type': 'Movie', 'Name': 'Blade', 'ProductionYear': 1998, 'ImageTags': {'Primary': 'p'},
@@ -167,12 +169,15 @@ class Detail:
         self.__dict__.update(k)
 
 
-DIR = {'items': [], 'end': None, 'notes': []}
+DIR = {'items': [], 'end': None, 'notes': [], 'pick': 0}
+HOMEPROPS = {}
+Window = lambda wid: types.SimpleNamespace(setProperty=HOMEPROPS.__setitem__)
 xbmc = types.SimpleNamespace(log=lambda *a: None, LOGINFO=1, ISO_639_1=0, getLanguage=lambda f: 'en', getInfoLabel=lambda k: 'Mac "Studio"',
                              VideoStreamDetail=Detail, AudioStreamDetail=Detail)
 xbmcaddon = types.SimpleNamespace(Addon=Addon)
-xbmcgui = types.SimpleNamespace(ListItem=ListItem, NOTIFICATION_WARNING='w',
-                                Dialog=lambda: types.SimpleNamespace(notification=lambda *a: DIR['notes'].append(a)))
+xbmcgui = types.SimpleNamespace(ListItem=ListItem, NOTIFICATION_WARNING='w', Window=Window,
+                                Dialog=lambda: types.SimpleNamespace(notification=lambda *a: DIR['notes'].append(a),
+                                                                     select=lambda head, labels: DIR.__setitem__('labels', labels) or DIR['pick']))
 xbmcplugin = types.SimpleNamespace(setContent=lambda h, c: DIR.__setitem__('content', c),
                                    addSortMethod=lambda h, m: DIR['sorts'].append(m),
                                    **{'SORT_METHOD_' + n: i for i, n in enumerate(('UNSORTED', 'DATEADDED', 'LABEL_IGNORE_THE', 'VIDEO_YEAR', 'VIDEO_RATING', 'PLAYCOUNT'))}, addDirectoryItems=lambda h, items: DIR['items'].extend(items),
@@ -272,6 +277,25 @@ ok(alls and alls[-1][2].get('Recursive') == 'true' and alls[-1][2].get('SortBy',
 ok(items[0][1].props.get('jellynas.imdb') == '7.1' and items[1][1].tag.d.get('playcount') == 2 and 'playcount' not in items[0][1].tag.d
    and items[0][1].tag.d.get('dateadded') == '2026-11-01 10:00:00', 'all movies: IMDb badge, watched count, date added')
 ok(DIR['sorts'][0] == 0 and len(DIR['sorts']) == 6, 'all movies: server order first, Kodi sort methods')
+items = run('?mode=allmovies&sort=imdb&letter=b&unwatched=1&genre=Action%20%26%20Adventure')
+q = [q for q in SEEN if q[1] == '/Items' and q[2].get('IncludeItemTypes') == 'Movie'][-1][2]
+ok([li.label for _, li, _ in items] == ['Hotel Transylvania', 'Blade'] and q.get('NameStartsWith') == 'b' and q.get('IsPlayed') == 'false'
+   and q.get('Genres') == 'Action & Adventure', 'grid bar: letter, unwatched, genre to Jellyfin; IMDb sort, unrated last')
+run('?mode=allmovies&sort=name&letter=0')
+q = [q for q in SEEN if q[1] == '/Items' and q[2].get('IncludeItemTypes') == 'Movie'][-1][2]
+ok(q.get('SortBy') == 'SortName' and q.get('SortOrder') == 'Ascending' and q.get('NameLessThan') == 'A', 'grid bar: title order, # = before A')
+DIR['pick'] = 2
+run('?mode=pick&what=genre&kind=series')
+g = [q for q in SEEN if q[1] == '/Genres'][-1][2]
+ok(g.get('IncludeItemTypes') == 'Series' and DIR['labels'][0] == 'All genres' and DIR['end'] is None
+   and HOMEPROPS.get('JellynasGrid.series.genre') == 'Action%20%26%20Adventure'
+   and HOMEPROPS.get('JellynasGrid.series.genrelabel') == 'Action & Adventure', 'pick genre: Jellyfin genres, quoted value and label, no directory')
+DIR['pick'] = 0
+run('?mode=pick&what=sort&kind=movies')
+ok(HOMEPROPS.get('JellynasGrid.movies.sort') == '' and HOMEPROPS.get('JellynasGrid.movies.sortlabel') == '', 'pick sort: the default clears')
+DIR['pick'] = 3
+run('?mode=pick&what=sort&kind=movies')
+ok(HOMEPROPS.get('JellynasGrid.movies.sort') == 'imdb' and DIR['labels'][3] == 'IMDb rating', 'pick sort: value and label')
 items = run('?mode=allseries')
 lost = items[0]
 ok(DIR['content'] == 'tvshows' and lost[2] and 'type=series&folder=s2' in lost[0] and lost[1].props.get('UnWatchedEpisodes') == '21'

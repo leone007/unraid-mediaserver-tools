@@ -36,7 +36,6 @@ msgctxt "#30006"
 msgid "Recently added series"
 msgstr ""
 
-#. Notification when Kofin has no server login
 #. Folder: the whole movie library, newest first (a category's poster wall)
 msgctxt "#30007"
 msgid "All movies"
@@ -47,6 +46,7 @@ msgctxt "#30008"
 msgid "All series"
 msgstr ""
 
+#. Notification when Kofin has no server login
 msgctxt "#30010"
 msgid "Log in to Kofin first"
 msgstr ""
@@ -174,6 +174,66 @@ msgstr ""
 #. Day name
 msgctxt "#30046"
 msgid "Sunday"
+msgstr ""
+
+#. Grid bar sort choice: date added, newest first (the default)
+msgctxt "#30050"
+msgid "Newest"
+msgstr ""
+
+#. Grid bar sort choice: by title, A to Z
+msgctxt "#30051"
+msgid "Title"
+msgstr ""
+
+#. Grid bar sort choice: by release year, newest first
+msgctxt "#30052"
+msgid "Year"
+msgstr ""
+
+#. Grid bar sort choice: by the IMDb rating shown on the badges, best first
+msgctxt "#30053"
+msgid "IMDb rating"
+msgstr ""
+
+#. First line of the genre chooser: no genre filter
+msgctxt "#30054"
+msgid "All genres"
+msgstr ""
+
+#. Grid bar button and dialog heading: the sort order of the poster grid
+msgctxt "#30055"
+msgid "Sort by"
+msgstr ""
+
+#. Grid bar button and dialog heading: genre filter of the poster grid
+msgctxt "#30056"
+msgid "Genre"
+msgstr ""
+
+#. Grid filter line: only titles not watched yet are shown
+msgctxt "#30057"
+msgid "Unwatched"
+msgstr ""
+
+#. Grid bar: no filter (first item of the letter row, value of the watched and genre buttons)
+msgctxt "#30058"
+msgid "All"
+msgstr ""
+
+#. Grid bar button: back to the whole library, newest first
+msgctxt "#30059"
+msgid "Clear filters"
+msgstr ""
+
+#. Grid bar button: show or hide titles already watched
+msgctxt "#30060"
+msgid "Watched"
+msgstr ""
+
+#. Grid bar: value of the watched button when watched titles are hidden
+msgctxt "#30061"
+msgid "Hidden"
 msgstr ""
 
 #. Settings category
