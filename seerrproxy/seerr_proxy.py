@@ -90,6 +90,28 @@ def card(r, kind=None):
             'status': STATUS.get(mi.get('status'), ''), 'jellyfin': mi.get('jellyfinMediaId') or ''}
 
 
+def latin(s):
+    """True when the skin's font can draw it: Latin letters (with accents), digits, punctuation."""
+    return all(ord(ch) < 0x250 or 0x2000 <= ord(ch) < 0x2070 for ch in s)
+
+
+def readable(cards):
+    """A title without a Hungarian name falls back to the original one, e.g. Korean, which the skin's font shows as
+    boxes: then the English title (one cached Seerr call per such title)."""
+    for c in cards:
+        if c.get('title') and not latin(c['title']):
+            try:
+                def en(c=c):
+                    d = seerr('/%s/%d' % (c['type'], c['id']), language='en')
+                    return d.get('title') or d.get('name') or ''
+                name = cached('en:%s:%s' % (c['type'], c['id']), 86400, en)
+            except (urllib.error.URLError, OSError, ValueError):
+                name = ''
+            if name and latin(name):
+                c['title'] = name
+    return cards
+
+
 def title(kind, tid, lang):
     def get():
         d = seerr('/%s/%d' % (kind, tid), language=lang)
@@ -186,14 +208,14 @@ class Handler(BaseHTTPRequestHandler):
                 d = cached('d:%s:%d:%s' % (m.group(1), page, lang), 900,
                            lambda: seerr('/discover/' + m.group(1), page=page, **extra))
                 kind = {'movies': 'movie', 'movies/upcoming': 'movie', 'tv': 'tv', 'tv/upcoming': 'tv'}.get(m.group(1))
-                return self.send(200, {'results': [card(r, kind) for r in d.get('results', [])
-                                                   if (kind or r.get('mediaType')) in ('movie', 'tv')],
+                return self.send(200, {'results': readable([card(r, kind) for r in d.get('results', [])
+                                                            if (kind or r.get('mediaType')) in ('movie', 'tv')]),
                                        'pages': d.get('totalPages', 1)})
             m = re.fullmatch(r'/item/(movie|tv)/(\d+)', u.path)
             if m:
-                return self.send(200, title(m.group(1), int(m.group(2)), lang))
+                return self.send(200, readable([dict(title(m.group(1), int(m.group(2)), lang))])[0])
             if u.path == '/requests' and q.get('filter', 'all') in ('all', 'available', 'processing', 'comingsoon'):
-                return self.send(200, {'results': requests_list(q.get('filter', 'all'), lang, max(1, min(int(q.get('take', '40')), 100)))})
+                return self.send(200, {'results': readable(requests_list(q.get('filter', 'all'), lang, max(1, min(int(q.get('take', '40')), 100))))})
             self.send(404, {'error': 'path'})
         except urllib.error.HTTPError as x:
             self.send(502, {'error': 'seerr %d' % x.code})

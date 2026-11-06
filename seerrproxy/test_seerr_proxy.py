@@ -37,11 +37,14 @@ class Stub(BaseHTTPRequestHandler):
         if self.headers.get('X-Api-Key') != 'k1':
             return self.reply(403, {})
         if u.path == '/api/v1/discover/trending':
-            return self.reply(200, {'totalPages': 3, 'results': [dict(MOVIE, mediaType='movie'), dict(TV, mediaType='tv'), {'mediaType': 'person', 'id': 9}]})
+            return self.reply(200, {'totalPages': 3, 'results': [dict(MOVIE, mediaType='movie'), dict(TV, mediaType='tv'), {'mediaType': 'person', 'id': 9},
+                                                                 dict(MOVIE, id=5, title='가능한 사랑', mediaType='movie')]})
         if u.path == '/api/v1/discover/tv':
             return self.reply(200, {'results': [TV]})
         if u.path == '/api/v1/movie/1':
             return self.reply(200, MOVIE)
+        if u.path == '/api/v1/movie/5':
+            return self.reply(200, dict(MOVIE, id=5, title='Possible Love' if q.get('language') == 'en' else '가능한 사랑'))
         if u.path == '/api/v1/movie/3':
             return self.reply(200, SOON)
         if u.path == '/api/v1/tv/2':
@@ -103,7 +106,8 @@ ok(call('/health', auth=None) == (200, {'ok': True}), 'health without login')
 ok(call('/discover/trending', auth=None)[0] == 401, 'no login: 401')
 ok(call('/discover/trending', auth=GOOD.replace('good', 'bad'))[0] == 401, 'wrong Jellyfin token: 401')
 code, d = call('/discover/trending?language=hu')
-ok(code == 200 and [r['title'] for r in d['results']] == ['Stick', 'Nocturne'] and d['pages'] == 3, 'trending: movies and series, no persons')
+ok(code == 200 and [r['title'] for r in d['results']] == ['Stick', 'Nocturne', 'Possible Love'] and d['pages'] == 3,
+   'trending: movies and series, no persons; a Korean title (boxes in the skin font) becomes the English one')
 s = d['results'][0]
 ok(s['type'] == 'movie' and s['year'] == '2025' and s['rating'] == 7.3 and s['poster'] == 'https://image.tmdb.org/t/p/w500/p1.jpg'
    and s['status'] == 'available' and s['jellyfin'] == 'jf1', 'card: year, rating, TMDb poster, status, Jellyfin id')
