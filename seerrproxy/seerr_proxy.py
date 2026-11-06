@@ -180,8 +180,11 @@ class Handler(BaseHTTPRequestHandler):
             m = re.fullmatch(r'/discover/([a-z/]+)', u.path)
             if m and m.group(1) in DISCOVER:
                 page = max(1, min(int(q.get('page', '1')), 20))
+                # Seerr's movie and tv discover lists read 'language' as the ORIGINAL language filter (language=hu gave
+                # Hungarian films only): only trending gets it; the titles' language comes from Seerr's own locale
+                extra = {'language': lang} if m.group(1) == 'trending' else {}
                 d = cached('d:%s:%d:%s' % (m.group(1), page, lang), 900,
-                           lambda: seerr('/discover/' + m.group(1), page=page, language=lang))
+                           lambda: seerr('/discover/' + m.group(1), page=page, **extra))
                 kind = {'movies': 'movie', 'movies/upcoming': 'movie', 'tv': 'tv', 'tv/upcoming': 'tv'}.get(m.group(1))
                 return self.send(200, {'results': [card(r, kind) for r in d.get('results', [])
                                                    if (kind or r.get('mediaType')) in ('movie', 'tv')],

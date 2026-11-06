@@ -109,7 +109,8 @@ ok(s['type'] == 'movie' and s['year'] == '2025' and s['rating'] == 7.3 and s['po
    and s['status'] == 'available' and s['jellyfin'] == 'jf1', 'card: year, rating, TMDb poster, status, Jellyfin id')
 ok(d['results'][1]['status'] == 'partial', 'card: partially available')
 ok([x for x in SEEN if x[1] == '/api/v1/discover/trending'][-1][2].get('language') == 'hu', 'language goes to Seerr')
-ok(call('/discover/tv')[1]['results'][0]['type'] == 'tv', 'discover tv: type from the list kind')
+ok(call('/discover/tv?language=hu')[1]['results'][0]['type'] == 'tv', 'discover tv: type from the list kind')
+ok('language' not in [x for x in SEEN if x[1] == '/api/v1/discover/tv'][-1][2], 'discover tv: no language (Seerr filters the original language with it)')
 ok(call('/discover/people')[0] == 404, 'unknown list: 404')
 code, t = call('/item/tv/2')
 ok(code == 200 and [x['n'] for x in t['seasons']] == [1, 2] and t['seasons'][0]['status'] == 'available' and t['seasons'][1]['status'] == '',
