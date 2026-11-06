@@ -1,15 +1,14 @@
 diff --git a/1080i/Includes_Actions.xml b/1080i/Includes_Actions.xml
-index 2e07853..04b91cb 100644
+index 2e07853..f957922 100644
 --- a/1080i/Includes_Actions.xml
 +++ b/1080i/Includes_Actions.xml
-@@ -578,9 +578,11 @@
+@@ -578,9 +578,10 @@
              <onleft condition="Skin.String(Home.LeftMenu.Action,Bump)">SetFocus(331)</onleft>
  
              <onright condition="$EXP[Exp_JellynasGrid]">SetFocus(4900)</onright>
 -            <onright condition="!$EXP[Exp_JellynasGrid] + $PARAM[c_view]">SetFocus($PARAM[i_view],0,absolute)</onright>
 -            <onright condition="!$EXP[Exp_JellynasGrid] + !$PARAM[c_view] + $PARAM[c_tmdb]">SetFocus($PARAM[i_tmdb])</onright>
 -            <onright condition="!$EXP[Exp_JellynasGrid] + !$PARAM[c_view] + !$PARAM[c_tmdb]">$PARAM[onlist]</onright>
-+            <onright condition="$EXP[Exp_JellynasTV]">SetProperty(JellynasTV.Opened,1,Home)</onright>
 +            <onright condition="$EXP[Exp_JellynasTV]">ActivateWindow(TVGuide)</onright>
 +            <onright condition="!$EXP[Exp_JellynasPanel] + $PARAM[c_view]">SetFocus($PARAM[i_view],0,absolute)</onright>
 +            <onright condition="!$EXP[Exp_JellynasPanel] + !$PARAM[c_view] + $PARAM[c_tmdb]">SetFocus($PARAM[i_tmdb])</onright>
@@ -32,7 +31,7 @@ index 75f2d10..8e92082 100644
      <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
      <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
 diff --git a/1080i/Includes_Home.xml b/1080i/Includes_Home.xml
-index 6dfb51f..24eb236 100644
+index 6dfb51f..6c8bef7 100644
 --- a/1080i/Includes_Home.xml
 +++ b/1080i/Includes_Home.xml
 @@ -113,6 +113,12 @@
@@ -40,11 +39,11 @@ index 6dfb51f..24eb236 100644
              <visible allowhiddenfocus="true">false</visible>
              <animation effect="fade" start="0" end="0" time="50" reversible="false">Focus</animation>
 +            <!-- JELLYNAS: Live TV opens the TV guide a second after its menu item gets focus (moving on cancels it);
-+                 JellynasTV.Opened: back from the guide on the same item does not reopen it -->
++                 JellynasTV.Opened (set by the guide window, patch 06): back from the guide on the same item does not reopen it;
++                 the alarm is armed again on every refocus (AF2 moves the focus to the widgets and back) -->
 +            <onfocus>CancelAlarm(jellynastv,silent)</onfocus>
 +            <onfocus condition="!$EXP[Exp_JellynasTV]">ClearProperty(JellynasTV.Opened,Home)</onfocus>
 +            <onfocus condition="$EXP[Exp_JellynasTV] + String.IsEmpty(Window(Home).Property(JellynasTV.Opened))">AlarmClock(jellynastv,ActivateWindow(TVGuide),00:01,silent)</onfocus>
-+            <onfocus condition="$EXP[Exp_JellynasTV]">SetProperty(JellynasTV.Opened,1,Home)</onfocus>
  
              <onfocus condition="$EXP[Exp_HomeHub_IsVisible] + !Integer.IsEqual(Window(1198).Property(TMDbHelper.WidgetContainer.UpdateLock),ListItem.CurrentItem)">SetProperty(TMDbHelper.WidgetContainer.UpdateLock,$INFO[ListItem.CurrentItem],1198)</onfocus>
  

@@ -67,7 +67,7 @@ open(AF + 'Includes_Hubs.xml', 'w').write(h)
 a = open(AF + 'Includes_Actions.xml').read()
 if 'Exp_JellynasTV' not in a:
     a = a.replace('<onright condition="$EXP[Exp_JellynasGrid]">SetFocus(4900)</onright>',
-                  '<onright condition="$EXP[Exp_JellynasGrid]">SetFocus(4900)</onright>\n            <onright condition="$EXP[Exp_JellynasTV]">SetProperty(JellynasTV.Opened,1,Home)</onright>\n            <onright condition="$EXP[Exp_JellynasTV]">ActivateWindow(TVGuide)</onright>', 1)
+                  '<onright condition="$EXP[Exp_JellynasGrid]">SetFocus(4900)</onright>\n            <onright condition="$EXP[Exp_JellynasTV]">ActivateWindow(TVGuide)</onright>', 1)
     a = a.replace('"!$EXP[Exp_JellynasGrid] + ', '"!$EXP[Exp_JellynasPanel] + ')
 open(AF + 'Includes_Actions.xml', 'w').write(a)
 
@@ -78,11 +78,11 @@ HB = '''    <include name="Home_Menu_List_HiddenButton">
             <animation effect="fade" start="0" end="0" time="50" reversible="false">Focus</animation>
 '''
 OPEN = '''            <!-- JELLYNAS: Live TV opens the TV guide a second after its menu item gets focus (moving on cancels it);
-                 JellynasTV.Opened: back from the guide on the same item does not reopen it -->
+                 JellynasTV.Opened (set by the guide window, patch 06): back from the guide on the same item does not reopen it;
+                 the alarm is armed again on every refocus (AF2 moves the focus to the widgets and back) -->
             <onfocus>CancelAlarm(jellynastv,silent)</onfocus>
             <onfocus condition="!$EXP[Exp_JellynasTV]">ClearProperty(JellynasTV.Opened,Home)</onfocus>
             <onfocus condition="$EXP[Exp_JellynasTV] + String.IsEmpty(Window(Home).Property(JellynasTV.Opened))">AlarmClock(jellynastv,ActivateWindow(TVGuide),00:01,silent)</onfocus>
-            <onfocus condition="$EXP[Exp_JellynasTV]">SetProperty(JellynasTV.Opened,1,Home)</onfocus>
 '''
 if 'jellynastv' not in m:
     assert m.count(HB) == 1

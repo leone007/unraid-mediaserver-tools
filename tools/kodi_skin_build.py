@@ -14,7 +14,7 @@ SRC = os.path.join(R, 'kodi', 'skin.arctic.fuse.2.jellynas')
 UPSTREAM = 'https://github.com/jurialmunkey/skin.arctic.fuse.2'
 BRANCH, COMMIT, UPSTREAM_VERSION = 'omega', 'e138a25fe11f24254c6456711d37ac9d1053f541', '2.12.12'
 SKIN_ID, SKIN_NAME = 'skin.arctic.fuse.2.jellynas', 'Arctic Fuse 2 JELLYNAS'
-VERSION = UPSTREAM_VERSION + '.15'   # our build number after the upstream version
+VERSION = UPSTREAM_VERSION + '.16'   # our build number after the upstream version
 CACHE = os.path.expanduser('~/.cache/jellynas/skin.arctic.fuse.2')
 SKIP = ('.git*',)   # .git, .github, .gitattributes, .gitignore
 
@@ -44,7 +44,7 @@ def addon_xml(path):
     t = t.replace(head, '<addon id="%s" name="%s" provider-name="jurialmunkey, JELLYNAS" version="%s">' % (SKIN_ID, SKIN_NAME, VERSION))
     t = re.sub(r'<description lang="en">.*?</description>',
                '<description lang="en">Arctic Fuse 2 by jurialmunkey (CC BY-NC-SA 4.0) with the JELLYNAS changes: '
-               'Jellyfin-like centred category bar, the add-on second line under the cards, IMDb or Available badge on the cards, poster grid on Home for an All movies or All series menu item with a bar for letter, sort, watched and genre, Live TV opens the TV guide. Upstream: %s (%s, %s).</description>'
+               'Jellyfin-like centred category bar, the add-on second line under the cards, IMDb or Available badge on the cards, poster grid on Home for an All movies or All series menu item with a bar for letter, sort, watched and genre, Live TV opens a Jellyfin-like TV guide. Upstream: %s (%s, %s).</description>'
                % (UPSTREAM, BRANCH, COMMIT[:7]), t, flags=re.S)
     open(fn, 'w', encoding='utf-8').write(t)
     if ET.parse(fn).getroot().get('id') != SKIN_ID:

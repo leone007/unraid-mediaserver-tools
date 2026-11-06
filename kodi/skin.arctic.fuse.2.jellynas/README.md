@@ -32,7 +32,13 @@ Patches:
 - `05-livetv-guide.patch` (written by `gen_tv.py`): the side menu item Live TV (path with `TVGuide`, `TVChannels` or
   `pvr://`, expression `Exp_JellynasTV`) opens Kodi's TV guide window a second after it gets focus (alarm
   `jellynastv` from `Home_Menu_List_HiddenButton`, cancelled when the focus moves on) or at once with Right; back from
-  the guide the item does not reopen it (`JellynasTV.Opened`) until another item had focus. Plain background, no widgets.
+  the guide the item does not reopen it (`JellynasTV.Opened`, set by the guide window) until another item had focus; the
+  alarm is armed again on every refocus. Plain background, no widgets.
+- `06-tv-guide-look.patch` (written by `gen_guide.py`): Jellyfin-like TV guide: dark blocks with 4 px corners and 3 px gaps
+  (`Layout_JellynasGuide_Programs`, no genre colours, no pills that shrink to circles), the airing programme lighter, the
+  focused one white, title plus start-end time, a red dot for recording or timer; channel column number, logo, name
+  (`Layout_JellynasGuide_Channels`); plain background; Left at the start of the grid = Back to Home (with the Kodi
+  setting PVR > Guide > Past days to display = 0 the grid starts now).
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.

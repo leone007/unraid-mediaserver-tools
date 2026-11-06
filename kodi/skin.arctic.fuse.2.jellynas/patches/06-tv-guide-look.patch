@@ -1,0 +1,172 @@
+diff --git a/1080i/Includes_Lists.xml b/1080i/Includes_Lists.xml
+index e9db912..03136e8 100644
+--- a/1080i/Includes_Lists.xml
++++ b/1080i/Includes_Lists.xml
+@@ -85,6 +85,120 @@
+         </definition>
+     </include>
+ 
++    <!-- JELLYNAS: TV guide programme block (id 1 controls take the block's width) -->
++    <include name="Layout_JellynasGuide_Programs">
++        <param name="selected">false</param>
++        <param name="visible">true</param>
++        <definition>
++            <control type="image" id="1">
++                <bordersize>3</bordersize>
++                <texture colordiffuse="FF262626" border="4">jellynas/badge_r4.png</texture>
++                <visible>!$PARAM[selected]</visible>
++            </control>
++            <control type="image" id="1">
++                <bordersize>3</bordersize>
++                <texture colordiffuse="FF3A3A3A" border="4">jellynas/badge_r4.png</texture>
++                <visible>!$PARAM[selected] + Integer.IsGreater(ListItem.Progress,0)</visible>
++            </control>
++            <control type="image" id="1">
++                <bordersize>3</bordersize>
++                <texture colordiffuse="main_fg_100" border="4">jellynas/badge_r4.png</texture>
++                <visible>$PARAM[selected] + $PARAM[visible]</visible>
++            </control>
++            <control type="label" id="1">
++                <left>18</left>
++                <right>14</right>
++                <top>8</top>
++                <height>36</height>
++                <font>font_mini_bold</font>
++                <label>$INFO[ListItem.Label]</label>
++                <textcolor>main_fg_90</textcolor>
++                <visible>!$PARAM[selected]</visible>
++            </control>
++            <control type="label" id="1">
++                <left>18</left>
++                <right>14</right>
++                <top>8</top>
++                <height>36</height>
++                <font>font_mini_bold</font>
++                <label>$INFO[ListItem.Label]</label>
++                <textcolor>$VAR[ColorSelected]</textcolor>
++                <visible>$PARAM[selected] + $PARAM[visible]</visible>
++            </control>
++            <control type="label" id="1">
++                <left>18</left>
++                <right>14</right>
++                <top>42</top>
++                <height>28</height>
++                <font>font_tiny</font>
++                <label>$INFO[ListItem.StartTime]$INFO[ListItem.EndTime, – ]</label>
++                <textcolor>main_fg_50</textcolor>
++                <visible>!$PARAM[selected]</visible>
++            </control>
++            <control type="label" id="1">
++                <left>18</left>
++                <right>14</right>
++                <top>42</top>
++                <height>28</height>
++                <font>font_tiny</font>
++                <label>$INFO[ListItem.StartTime]$INFO[ListItem.EndTime, – ]</label>
++                <textcolor>$VAR[ColorSelected]</textcolor>
++                <visible>$PARAM[selected] + $PARAM[visible]</visible>
++            </control>
++            <control type="image">
++                <left>4</left>
++                <top>8</top>
++                <width>6</width>
++                <height>6</height>
++                <texture colordiffuse="FFE53935">jellynas/badge_r1.png</texture>
++                <visible>ListItem.IsRecording | ListItem.HasTimer</visible>
++            </control>
++        </definition>
++    </include>
++
++    <!-- JELLYNAS: TV guide channel column: number, logo, name; the row of the focused programme a bit lighter -->
++    <include name="Layout_JellynasGuide_Channels">
++        <param name="selected">false</param>
++        <param name="bottom">0</param>
++        <param name="right">20</param>
++        <definition>
++            <control type="group">
++                <right>$PARAM[right]</right>
++                <bottom>$PARAM[bottom]</bottom>
++                <control type="image">
++                    <bordersize>3</bordersize>
++                    <texture colordiffuse="FF262626" border="4">jellynas/badge_r4.png</texture>
++                    <visible>$PARAM[selected]</visible>
++                </control>
++                <control type="label">
++                    <left>14</left>
++                    <width>60</width>
++                    <align>center</align>
++                    <aligny>center</aligny>
++                    <font>font_mini_bold</font>
++                    <label>$INFO[ListItem.ChannelNumberLabel]</label>
++                    <textcolor>main_fg_50</textcolor>
++                </control>
++                <control type="image">
++                    <left>84</left>
++                    <width>96</width>
++                    <top>14</top>
++                    <bottom>14</bottom>
++                    <aspectratio>keep</aspectratio>
++                    <texture>$INFO[ListItem.Icon]</texture>
++                </control>
++                <control type="label">
++                    <left>196</left>
++                    <right>10</right>
++                    <aligny>center</aligny>
++                    <font>font_mini_bold</font>
++                    <label>$INFO[ListItem.ChannelName]</label>
++                    <textcolor>main_fg_90</textcolor>
++                </control>
++            </control>
++        </definition>
++    </include>
++
+     <include name="List_EPGGrid">
+         <param name="programheight">80</param>
+         <param name="programwidth">480</param>
+@@ -92,8 +206,8 @@
+         <param name="channelwidth">420</param>
+         <param name="rulerheight">55</param>
+         <param name="rulerdateheight">105</param>
+-        <param name="include_channels">Layout_PVRGuide_Channels</param>
+-        <param name="include_programs">Layout_PVRGuide_Programs</param>
++        <param name="include_channels">Layout_JellynasGuide_Channels</param>
++        <param name="include_programs">Layout_JellynasGuide_Programs</param>
+         <param name="include_ruler">Layout_PVRGuide_Ruler</param>
+         <param name="channelbottom">0</param>
+         <param name="channelright">20</param>
+diff --git a/1080i/Includes_Views_PVR.xml b/1080i/Includes_Views_PVR.xml
+index 412072a..288563e 100644
+--- a/1080i/Includes_Views_PVR.xml
++++ b/1080i/Includes_Views_PVR.xml
+@@ -53,6 +53,7 @@
+                 <onup>$PARAM[id]</onup>
+                 <ondown>$PARAM[id]</ondown>
+                 <onback>9001</onback>
++                <onleft condition="Window.IsActive(TVGuide)">Action(Back)</onleft>
+                 <viewtype label="$PARAM[viewtype_label]">list</viewtype>
+                 <progresstexture border="40,0,40,0">$PARAM[progresstexture]</progresstexture>
+                 <pagecontrol>8060</pagecontrol>
+diff --git a/1080i/MyPVRGuide.xml b/1080i/MyPVRGuide.xml
+index 0cb5603..294ede3 100644
+--- a/1080i/MyPVRGuide.xml
++++ b/1080i/MyPVRGuide.xml
+@@ -7,6 +7,8 @@
+         <param name="sourceimage">Art(fanart)|Property(fanart)||EPGEventIcon|Icon</param>
+     </include>
+     <include>Action_Media_Onload</include>
++    <!-- JELLYNAS: back on Home the Live TV menu item does not open the guide again -->
++    <onload>SetProperty(JellynasTV.Opened,1,Home)</onload>
+ 
+     <onload condition="![Control.IsVisible(502) | Control.IsVisible(503)]">SetProperty(Background.ShowOverlay,True,Home)</onload>
+     <onload condition="[Control.IsVisible(502) | Control.IsVisible(503)]">ClearProperty(Background.ShowOverlay,Home)</onload>
+@@ -14,6 +16,10 @@
+     <controls>
+         <include>Defs_Background_Loader</include>
+         <include>Background</include>
++        <!-- JELLYNAS: plain background, no programme or channel picture behind the guide -->
++        <control type="image">
++            <texture colordiffuse="$VAR[ColorBackground]">common/white.png</texture>
++        </control>
+ 
+         <include content="Object_Hidden_Button">
+             <param name="id">64</param>
