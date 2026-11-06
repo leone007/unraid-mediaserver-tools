@@ -338,7 +338,7 @@ st = items[0]
 ok(st[1].props.get('sublabel') == '★ 7.3 · 2025' and st[1].props.get('jellynas.badge') == 'Available' and st[1].props.get('tmdb_id') == '1'
    and 'mode=catitem&type=movie&id=1' in st[0] and not st[2] and st[1].art.get('fanart', '').endswith('b1.jpg'),
    'catalog card: rating and year, Available badge, TMDb id, opens the choice')
-ok(items[1][1].props.get('jellynas.badge') == 'Partially available' and items[1][1].props.get('tvshow.tmdb_id') == '2', 'catalog card: series partially available')
+ok(items[1][1].props.get('jellynas.badge') == 'Partly' and items[1][1].props.get('tvshow.tmdb_id') == '2', 'catalog card: series partially available')
 ok([li.label for _, li, _ in run('?mode=catreqs')] == ['All requests', 'Processing', 'Coming soon', 'Available'], 'requests: four folders, no pending approval')
 rq = run('?mode=catreqs&filter=available')
 ok(rq and rq[0][1].props.get('sublabel') == 'Zsuzsi · 2026-10-31', 'request card: who and when')

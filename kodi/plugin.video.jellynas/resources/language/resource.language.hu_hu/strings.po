@@ -337,6 +337,11 @@ msgctxt "#30095"
 msgid "Catalog server address"
 msgstr "Katalógus-szerver címe"
 
+#. Card badge (short, the badge is narrow): some seasons can be watched
+msgctxt "#30096"
+msgid "Partly"
+msgstr "Részben"
+
 msgctxt "#30100"
 msgid "General"
 msgstr "Általános"

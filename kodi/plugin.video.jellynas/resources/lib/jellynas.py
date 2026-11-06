@@ -654,8 +654,8 @@ def cat_item(t, sub=None):
     li.setProperty('tmdb_id' if t['type'] == 'movie' else 'tvshow.tmdb_id', str(t['id']))
     li.setProperty('sublabel', li.getLabel2())
     li.setProperty('jellynas.kind', 'catalog')
-    if t.get('status') in ('available', 'partial'):
-        li.setProperty('jellynas.badge', L(CAT_STATUS[t['status']]))
+    if t.get('status') in ('available', 'partial'):   # the skin's badge is narrow: the short word for partially available
+        li.setProperty('jellynas.badge', L(30080 if t['status'] == 'available' else 30096))
     li.setArt({'poster': t.get('poster', ''), 'thumb': t.get('backdrop') or t.get('poster', ''), 'fanart': t.get('backdrop', ''),
                'icon': t.get('poster', '')})
     li.setProperty('IsPlayable', 'false')
