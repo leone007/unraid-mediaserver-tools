@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 # Builds the JELLYNAS fork of Arctic Fuse 2 (item 141): the upstream skin at a pinned commit plus the patches of
 # kodi/skin.arctic.fuse.2.jellynas/patches/, as skin.arctic.fuse.2.jellynas-<version>.zip for "Install from zip file".
-# Only the patches live in the repo; the skin itself (~145 MB) is fetched from GitHub into a cache. The zip is too big
-# for GitHub (100 MB file limit), so it goes to /work/outputs/ and not into the Kodi repository dist/kodi/.
+# Only the patches live in the repo; the skin itself (~145 MB) is fetched from GitHub into a cache. The zip (~67 MB) goes
+# to /work/outputs/; it is not committed (every version would stay in the git history). With --publish it is uploaded as
+# an asset of the GitHub release with the tag skin.arctic.fuse.2.jellynas (the newest KEEP zips stay) and
+# dist/kodi/skins/addons.xml (+ .md5) is written: repository.jellynas reads that as a second <dir> whose datadir is
+# .../releases/download/, so Kodi finds <datadir>skin.arctic.fuse.2.jellynas/skin.arctic.fuse.2.jellynas-<version>.zip.
 # Internal references to skin.arctic.fuse.2 stay as they are on purpose: script.skinvariables keeps the menus and
 # widgets under addon_data/script.skinvariables/nodes/skin.arctic.fuse.2, so the fork uses the same menus as AF2.
 # Checks before writing: every patch applies, every .xml of the skin parses, addon.xml gets the new id.
-# Usage: python3 tools/kodi_skin_build.py [--out DIR]        exit code 1 on an error
+# Usage: python3 tools/kodi_skin_build.py [--out DIR] [--publish]        exit code 1 on an error
+#   --publish needs the GitHub token in ~/.gh_token (never printed); commit and push dist/kodi/skins/ afterwards
 import hashlib, os, re, shutil, subprocess, sys, tempfile, zipfile
 import xml.etree.ElementTree as ET
 R = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -17,6 +21,8 @@ SKIN_ID, SKIN_NAME = 'skin.arctic.fuse.2.jellynas', 'Arctic Fuse 2 JELLYNAS'
 VERSION = UPSTREAM_VERSION + '.16'   # our build number after the upstream version
 CACHE = os.path.expanduser('~/.cache/jellynas/skin.arctic.fuse.2')
 SKIP = ('.git*',)   # .git, .github, .gitattributes, .gitignore
+GH_REPO, KEEP = 'leone007/unraid-mediaserver-tools', 3
+SKINS = os.path.join(R, 'dist', 'kodi', 'skins')
 
 
 def run(*cmd, cwd=None):
@@ -84,13 +90,50 @@ def build(out):
                 dirs.sort()
                 for f in sorted(files):
                     full = os.path.join(base, f)
-                    z.write(full, os.path.join(SKIN_ID, os.path.relpath(full, path)))
+                    zi = zipfile.ZipInfo(os.path.join(SKIN_ID, os.path.relpath(full, path)), (2026, 1, 1, 0, 0, 0))
+                    zi.compress_type, zi.external_attr = zipfile.ZIP_DEFLATED, 0o644 << 16   # fixed time: the same build gives the same md5
+                    z.writestr(zi, open(full, 'rb').read())
         print('OK   %s %s  %s  %.1f MB  md5 %s' % (SKIN_ID, VERSION, zfn, os.path.getsize(zfn) / 1e6,
                                                 hashlib.md5(open(zfn, 'rb').read()).hexdigest()))
+        if PUBLISH:
+            publish(zfn, open(os.path.join(path, 'addon.xml'), encoding='utf-8').read())
         return 0
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
+
+def gh(*args):
+    env = dict(os.environ, GH_TOKEN=open(os.path.expanduser('~/.gh_token')).read().strip())
+    p = subprocess.run(('gh',) + args, capture_output=True, text=True, env=env)
+    if p.returncode:
+        raise RuntimeError('gh %s: %s' % (args[0] if args[0] != 'release' else ' '.join(args[:2]), (p.stderr or p.stdout).strip()[:300]))
+    return p.stdout
+
+
+def publish(zfn, xml):
+    """Upload the zip to the release <SKIN_ID>, drop older zips beyond KEEP, then write the skin's repository index."""
+    try:
+        gh('release', 'view', SKIN_ID, '-R', GH_REPO)
+    except RuntimeError:
+        gh('release', 'create', SKIN_ID, '-R', GH_REPO, '--title', SKIN_NAME + ' (Kodi repository files)',
+           '--notes', 'Zips of the JELLYNAS Arctic Fuse 2 fork for repository.jellynas. Build: tools/kodi_skin_build.py --publish.')
+    gh('release', 'upload', SKIN_ID, zfn, '--clobber', '-R', GH_REPO)
+    names = gh('release', 'view', SKIN_ID, '-R', GH_REPO, '--json', 'assets', '-q', '.assets[].name').split()
+    def ver(n):
+        return tuple(int(x) for x in re.findall(r'\d+', n[len(SKIN_ID):]))
+    for old in sorted((n for n in names if n.startswith(SKIN_ID + '-') and n.endswith('.zip')), key=ver)[:-KEEP]:
+        gh('release', 'delete-asset', SKIN_ID, old, '-y', '-R', GH_REPO)
+        print('OK   release: old %s removed' % old)
+    print('OK   release %s: %s uploaded' % (SKIN_ID, os.path.basename(zfn)))
+    os.makedirs(SKINS, exist_ok=True)
+    data = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<addons>\n%s\n</addons>\n' % re.sub(r'^<\?xml[^>]*>\s*', '', xml).strip()
+    ET.fromstring(data.encode('utf-8'))
+    open(os.path.join(SKINS, 'addons.xml'), 'w', encoding='utf-8').write(data)
+    open(os.path.join(SKINS, 'addons.xml.md5'), 'w').write(hashlib.md5(data.encode('utf-8')).hexdigest())
+    print('OK   dist/kodi/skins/addons.xml (%s %s)' % (SKIN_ID, VERSION))
+
+
+PUBLISH = '--publish' in sys.argv
 
 if __name__ == '__main__':
     a = sys.argv[1:]

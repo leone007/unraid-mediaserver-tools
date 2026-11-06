@@ -4,8 +4,10 @@ A fork of [Arctic Fuse 2](https://github.com/jurialmunkey/skin.arctic.fuse.2) by
 licensed like the original under CC BY-NC-SA 4.0 (non-commercial, attribution, same licence). Only the changes are
 kept here, as patches against the pinned upstream commit (`tools/kodi_skin_build.py`: branch `omega`, 2.12.12).
 
-Build: `python3 tools/kodi_skin_build.py` -> `../outputs/skin.arctic.fuse.2.jellynas-<version>.zip` (about 67 MB,
-too big for the Kodi repository on GitHub), installed in Kodi with Add-ons > Install from zip file.
+Build: `python3 tools/kodi_skin_build.py` -> `../outputs/skin.arctic.fuse.2.jellynas-<version>.zip` (about 67 MB; not
+in git, every version would stay in the history). `--publish` uploads it to the GitHub release `skin.arctic.fuse.2.jellynas`
+and writes `dist/kodi/skins/addons.xml`: repository.jellynas 1.0.1+ reads it as a second `<dir>` with the release
+download path as datadir, so Kodi updates the skin like the add-on. First install without the repository: Install from zip file.
 
 Patches:
 - `01-centred-text-menu.patch`: with Skin settings > Layout > Customise style > Home > Categories = Text, the
