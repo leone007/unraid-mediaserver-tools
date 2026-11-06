@@ -29,6 +29,10 @@ Patches:
   Genre, Clear filters). The choices are Home window properties `JellynasGrid.<movies|series>.*` added to the grid's
   path (`$VAR[JellynasGrid_Query]`); the add-on (0.1.8) does the filtering, Sort and Genre are its dialogs
   (`?mode=pick`). Active filters show in a small line above the grid. Labels come from the add-on (`$ADDON[...]`). A plain background covers the spotlight fanart behind the grid. The XML is written by `gen_grid.py`.
+- `05-livetv-guide.patch` (written by `gen_tv.py`): the side menu item Live TV (path with `TVGuide`, `TVChannels` or
+  `pvr://`, expression `Exp_JellynasTV`) opens Kodi's TV guide window a second after it gets focus (alarm
+  `jellynastv` from `Home_Menu_List_HiddenButton`, cancelled when the focus moves on) or at once with Right; back from
+  the guide the item does not reopen it (`JellynasTV.Opened`) until another item had focus. Plain background, no widgets.
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.

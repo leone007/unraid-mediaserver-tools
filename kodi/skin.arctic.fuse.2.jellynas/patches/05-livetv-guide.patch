@@ -1,0 +1,103 @@
+diff --git a/1080i/Includes_Actions.xml b/1080i/Includes_Actions.xml
+index 2e07853..04b91cb 100644
+--- a/1080i/Includes_Actions.xml
++++ b/1080i/Includes_Actions.xml
+@@ -578,9 +578,11 @@
+             <onleft condition="Skin.String(Home.LeftMenu.Action,Bump)">SetFocus(331)</onleft>
+ 
+             <onright condition="$EXP[Exp_JellynasGrid]">SetFocus(4900)</onright>
+-            <onright condition="!$EXP[Exp_JellynasGrid] + $PARAM[c_view]">SetFocus($PARAM[i_view],0,absolute)</onright>
+-            <onright condition="!$EXP[Exp_JellynasGrid] + !$PARAM[c_view] + $PARAM[c_tmdb]">SetFocus($PARAM[i_tmdb])</onright>
+-            <onright condition="!$EXP[Exp_JellynasGrid] + !$PARAM[c_view] + !$PARAM[c_tmdb]">$PARAM[onlist]</onright>
++            <onright condition="$EXP[Exp_JellynasTV]">SetProperty(JellynasTV.Opened,1,Home)</onright>
++            <onright condition="$EXP[Exp_JellynasTV]">ActivateWindow(TVGuide)</onright>
++            <onright condition="!$EXP[Exp_JellynasPanel] + $PARAM[c_view]">SetFocus($PARAM[i_view],0,absolute)</onright>
++            <onright condition="!$EXP[Exp_JellynasPanel] + !$PARAM[c_view] + $PARAM[c_tmdb]">SetFocus($PARAM[i_tmdb])</onright>
++            <onright condition="!$EXP[Exp_JellynasPanel] + !$PARAM[c_view] + !$PARAM[c_tmdb]">$PARAM[onlist]</onright>
+             <onright>ClearProperty(List.ViewContainer)</onright>
+ 
+             <onup condition="$PARAM[search]">SetFocus(309)</onup>
+diff --git a/1080i/Includes_Expressions.xml b/1080i/Includes_Expressions.xml
+index 75f2d10..8e92082 100644
+--- a/1080i/Includes_Expressions.xml
++++ b/1080i/Includes_Expressions.xml
+@@ -80,6 +80,9 @@
+     <expression name="Exp_HomeMenu_IsExpanded">[Skin.HasSetting(Home.ExpandedMenu)]</expression>
+     <!-- JELLYNAS: a side menu category pointing at the add-on's All movies / All series folder shows a poster grid -->
+     <expression name="Exp_JellynasGrid">[Window.IsVisible(Home) + String.Contains(Container(300).ListItem.Property(path),plugin.video.jellynas/?mode=all)]</expression>
++    <!-- JELLYNAS: the Live TV side menu item opens the TV guide (Home_Menu_List_HiddenButton) -->
++    <expression name="Exp_JellynasTV">[Window.IsVisible(Home) + [String.Contains(Container(300).ListItem.Property(path),TVGuide) | String.Contains(Container(300).ListItem.Property(path),TVChannels) | String.Contains(Container(300).ListItem.Property(path),pvr://)]]</expression>
++    <expression name="Exp_JellynasPanel">[$EXP[Exp_JellynasGrid] | $EXP[Exp_JellynasTV]]</expression>
+     <expression name="Exp_JellynasGrid_Series">String.Contains(Container(300).ListItem.Property(path),mode=allseries)</expression>
+     <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
+     <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
+diff --git a/1080i/Includes_Home.xml b/1080i/Includes_Home.xml
+index 6dfb51f..24eb236 100644
+--- a/1080i/Includes_Home.xml
++++ b/1080i/Includes_Home.xml
+@@ -113,6 +113,12 @@
+         <control type="button">
+             <visible allowhiddenfocus="true">false</visible>
+             <animation effect="fade" start="0" end="0" time="50" reversible="false">Focus</animation>
++            <!-- JELLYNAS: Live TV opens the TV guide a second after its menu item gets focus (moving on cancels it);
++                 JellynasTV.Opened: back from the guide on the same item does not reopen it -->
++            <onfocus>CancelAlarm(jellynastv,silent)</onfocus>
++            <onfocus condition="!$EXP[Exp_JellynasTV]">ClearProperty(JellynasTV.Opened,Home)</onfocus>
++            <onfocus condition="$EXP[Exp_JellynasTV] + String.IsEmpty(Window(Home).Property(JellynasTV.Opened))">AlarmClock(jellynastv,ActivateWindow(TVGuide),00:01,silent)</onfocus>
++            <onfocus condition="$EXP[Exp_JellynasTV]">SetProperty(JellynasTV.Opened,1,Home)</onfocus>
+ 
+             <onfocus condition="$EXP[Exp_HomeHub_IsVisible] + !Integer.IsEqual(Window(1198).Property(TMDbHelper.WidgetContainer.UpdateLock),ListItem.CurrentItem)">SetProperty(TMDbHelper.WidgetContainer.UpdateLock,$INFO[ListItem.CurrentItem],1198)</onfocus>
+ 
+diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
+index ed1a42b..89c82e0 100644
+--- a/1080i/Includes_Hubs.xml
++++ b/1080i/Includes_Hubs.xml
+@@ -343,6 +343,7 @@
+                         </include>
+                         <include condition="![$PARAM[widgets_only]] + !Skin.HasSetting(Hub.$PARAM[window_id].DisableSpotlight)">Spotlight_Info</include>
+                         <include condition="$PARAM[is_homemenu]">Hub_JellynasGrid</include>
++                        <include condition="$PARAM[is_homemenu]">Hub_JellynasTV</include>
+ 
+                     </control>
+                 </control>
+@@ -380,6 +381,22 @@
+         </definition>
+     </include>
+ 
++    <!-- JELLYNAS: Live TV side menu item (Exp_JellynasTV): plain background here; the TV guide window opens by
++         itself a second after the item gets focus (Home_Menu_List_HiddenButton), or with Right -->
++    <include name="Hub_JellynasTV">
++        <control type="image">
++            <description>JELLYNAS TV: plain background</description>
++            <left>-1000</left>
++            <width>4000</width>
++            <top>-200</top>
++            <height>1500</height>
++            <texture colordiffuse="$VAR[ColorBackground]">common/white.png</texture>
++            <visible>$EXP[Exp_JellynasTV]</visible>
++            <animation effect="fade" start="0" end="100" time="200">Visible</animation>
++            <animation effect="fade" start="100" end="0" time="200">Hidden</animation>
++        </control>
++    </include>
++
+     <!-- JELLYNAS: poster grid of the focused side menu category (Exp_JellynasGrid), right of the menu, no extra OK.
+          Up from the first row: the grid bar (letters, sort, watched, genre); the choices are Home window properties
+          JellynasGrid.<movies|series>.* that go into the grid's path ($VAR[JellynasGrid_Query]), the add-on filters. -->
+@@ -959,7 +976,7 @@
+     <include name="Hub_Widgets_Only">
+         <include>Background_Transition</include>
+         <control type="group" id="340">
+-            <visible>!$EXP[Exp_JellynasGrid]</visible>
++            <visible>!$EXP[Exp_JellynasPanel]</visible>
+             <include content="Object_Top" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
+                 <param name="top">440</param>
+             </include>
+@@ -970,7 +987,7 @@
+         </control>
+ 
+         <include content="Hub_Widgets_Infopanel" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
+-            <param name="visible">!$EXP[Exp_JellynasGrid]</param>
++            <param name="visible">!$EXP[Exp_JellynasPanel]</param>
+             <include content="Info_Panel">
+                 <param name="container">Container.</param>
+                 <param name="visible">!Integer.IsEqual(Window.Property(TMDBHelper.WidgetContainer),301)</param>
