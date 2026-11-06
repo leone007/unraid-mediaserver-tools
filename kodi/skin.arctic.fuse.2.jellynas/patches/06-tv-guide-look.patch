@@ -135,14 +135,14 @@ index e9db912..03136e8 100644
          <param name="channelbottom">0</param>
          <param name="channelright">20</param>
 diff --git a/1080i/Includes_Views_PVR.xml b/1080i/Includes_Views_PVR.xml
-index 412072a..288563e 100644
+index 412072a..414481f 100644
 --- a/1080i/Includes_Views_PVR.xml
 +++ b/1080i/Includes_Views_PVR.xml
 @@ -53,6 +53,7 @@
                  <onup>$PARAM[id]</onup>
                  <ondown>$PARAM[id]</ondown>
                  <onback>9001</onback>
-+                <onleft condition="Window.IsActive(TVGuide)">Action(Back)</onleft>
++                <onleft condition="Window.IsActive(TVGuide)">ActivateWindow(Home)</onleft>
                  <viewtype label="$PARAM[viewtype_label]">list</viewtype>
                  <progresstexture border="40,0,40,0">$PARAM[progresstexture]</progresstexture>
                  <pagecontrol>8060</pagecontrol>

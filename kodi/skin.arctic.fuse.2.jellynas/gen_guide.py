@@ -1,7 +1,8 @@
 # writes the JELLYNAS TV guide look of patch 06 into an AF2 work copy (after patch 05): python3 gen_guide.py <af2 work copy>
 # Jellyfin-like guide: square-ish dark programme blocks (4 px corners) instead of genre-coloured pills (short ones
 # shrank to circles), the airing programme a bit lighter, the focused one white; channel column number + logo + name;
-# plain background; Left at the start of the grid (now, with Past days to display = 0) goes back to Home.
+# plain background; Left at the start of the grid (now, with Past days to display = 0) goes back to Home (ActivateWindow:
+# Action(Back) would hit the grid's onback 9001, the bottom menu).
 import sys
 AF = sys.argv[1] + '/1080i/'
 
@@ -140,7 +141,7 @@ sub('Includes_Views_PVR.xml', '''                <onback>9001</onback>
                 <viewtype label="$PARAM[viewtype_label]">list</viewtype>
                 <progresstexture border="40,0,40,0">$PARAM[progresstexture]</progresstexture>''',
     '''                <onback>9001</onback>
-                <onleft condition="Window.IsActive(TVGuide)">Action(Back)</onleft>
+                <onleft condition="Window.IsActive(TVGuide)">ActivateWindow(Home)</onleft>
                 <viewtype label="$PARAM[viewtype_label]">list</viewtype>
                 <progresstexture border="40,0,40,0">$PARAM[progresstexture]</progresstexture>''')
 
