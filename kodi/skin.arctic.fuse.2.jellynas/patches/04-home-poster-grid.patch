@@ -30,7 +30,7 @@ index c6123ea..96f6414 100644
  
      <expression name="Exp_1101Hub_IsVisible">[Window.IsVisible(1101) | [Window.IsVisible(Home) + Integer.IsEqual(Skin.String(Hub.Home.ReplaceWindow),1101)]]</expression>
 diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
-index 0406588..b2ba115 100644
+index 0406588..75c6a7b 100644
 --- a/1080i/Includes_Hubs.xml
 +++ b/1080i/Includes_Hubs.xml
 @@ -342,6 +342,7 @@
@@ -75,3 +75,11 @@ index 0406588..b2ba115 100644
              <include content="Object_Top" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
                  <param name="top">440</param>
              </include>
+@@ -412,6 +433,7 @@
+         </control>
+ 
+         <include content="Hub_Widgets_Infopanel" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
++            <param name="visible">!$EXP[Exp_JellynasGrid]</param>
+             <include content="Info_Panel">
+                 <param name="container">Container.</param>
+                 <param name="visible">!Integer.IsEqual(Window.Property(TMDBHelper.WidgetContainer),301)</param>

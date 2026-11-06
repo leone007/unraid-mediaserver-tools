@@ -24,7 +24,7 @@ Patches:
 - `04-home-poster-grid.patch`: Home with the vertical side menu: when the focused menu item's path is the add-on's
   All movies or All series folder (`plugin://plugin.video.jellynas/?mode=allmovies|allseries`, expression
   `Exp_JellynasGrid`), a vertical poster panel (id 4900, AF2 `List_Poster_Row` cards with the badge) fills the area
-  right of the menu instead of the widget rows; Right from the menu goes into it, Left or Back goes back to the menu.
+  right of the menu instead of the widget rows and their info panel; Right from the menu goes into it, Left or Back goes back to the menu.
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.
