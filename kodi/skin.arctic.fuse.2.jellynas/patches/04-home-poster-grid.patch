@@ -1,0 +1,77 @@
+diff --git a/1080i/Includes_Actions.xml b/1080i/Includes_Actions.xml
+index b223b0a..2e07853 100644
+--- a/1080i/Includes_Actions.xml
++++ b/1080i/Includes_Actions.xml
+@@ -577,9 +577,10 @@
+             <onleft condition="Skin.String(Home.LeftMenu.Action,Bump)">SetProperty(List.ViewContainer,300)</onleft>
+             <onleft condition="Skin.String(Home.LeftMenu.Action,Bump)">SetFocus(331)</onleft>
+ 
+-            <onright condition="$PARAM[c_view]">SetFocus($PARAM[i_view],0,absolute)</onright>
+-            <onright condition="!$PARAM[c_view] + $PARAM[c_tmdb]">SetFocus($PARAM[i_tmdb])</onright>
+-            <onright condition="!$PARAM[c_view] + !$PARAM[c_tmdb]">$PARAM[onlist]</onright>
++            <onright condition="$EXP[Exp_JellynasGrid]">SetFocus(4900)</onright>
++            <onright condition="!$EXP[Exp_JellynasGrid] + $PARAM[c_view]">SetFocus($PARAM[i_view],0,absolute)</onright>
++            <onright condition="!$EXP[Exp_JellynasGrid] + !$PARAM[c_view] + $PARAM[c_tmdb]">SetFocus($PARAM[i_tmdb])</onright>
++            <onright condition="!$EXP[Exp_JellynasGrid] + !$PARAM[c_view] + !$PARAM[c_tmdb]">$PARAM[onlist]</onright>
+             <onright>ClearProperty(List.ViewContainer)</onright>
+ 
+             <onup condition="$PARAM[search]">SetFocus(309)</onup>
+diff --git a/1080i/Includes_Expressions.xml b/1080i/Includes_Expressions.xml
+index c6123ea..96f6414 100644
+--- a/1080i/Includes_Expressions.xml
++++ b/1080i/Includes_Expressions.xml
+@@ -78,6 +78,8 @@
+ 
+     <expression name="Exp_HomeMenu_HasFocus">[Control.HasFocus(300) | Control.HasFocus(306) | Control.HasFocus(307) | Control.HasFocus(308) | Control.HasFocus(309) | Control.HasFocus(331)]</expression>
+     <expression name="Exp_HomeMenu_IsExpanded">[Skin.HasSetting(Home.ExpandedMenu)]</expression>
++    <!-- JELLYNAS: a side menu category pointing at the add-on's All movies / All series folder shows a poster grid -->
++    <expression name="Exp_JellynasGrid">[Window.IsVisible(Home) + String.Contains(Container(300).ListItem.Property(path),plugin.video.jellynas/?mode=all)]</expression>
+ 
+ 
+     <expression name="Exp_1101Hub_IsVisible">[Window.IsVisible(1101) | [Window.IsVisible(Home) + Integer.IsEqual(Skin.String(Hub.Home.ReplaceWindow),1101)]]</expression>
+diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
+index 0406588..b2ba115 100644
+--- a/1080i/Includes_Hubs.xml
++++ b/1080i/Includes_Hubs.xml
+@@ -342,6 +342,7 @@
+                             <param name="widgets_include">$PARAM[widgets_include]</param>
+                         </include>
+                         <include condition="![$PARAM[widgets_only]] + !Skin.HasSetting(Hub.$PARAM[window_id].DisableSpotlight)">Spotlight_Info</include>
++                        <include condition="$PARAM[is_homemenu]">Hub_JellynasGrid</include>
+ 
+                     </control>
+                 </control>
+@@ -379,6 +380,25 @@
+         </definition>
+     </include>
+ 
++    <!-- JELLYNAS: poster grid of the focused side menu category (Exp_JellynasGrid), right of the menu, no extra OK -->
++    <include name="Hub_JellynasGrid">
++        <control type="group">
++            <include content="List_Poster_Row">
++                <param name="id">4900</param>
++                <param name="control">panel</param>
++                <param name="orientation">vertical</param>
++                <param name="offset_y">40</param>
++                <top>20</top>
++                <bottom>0</bottom>
++                <onleft>300</onleft>
++                <onback>300</onback>
++                <visible>$EXP[Exp_JellynasGrid]</visible>
++                <onfocus>ClearProperty(TMDbHelper.WidgetContainer)</onfocus>
++                <content target="videos">$INFO[Container(300).ListItem.Property(path)]</content>
++            </include>
++        </control>
++    </include>
++
+     <include name="Hub_Top_Animation">
+         <!-- <param name="condition">[$EXP[Exp_HubName_IsVisible] + !Window.IsVisible(1163)]</param> -->
+         <param name="condition">[$EXP[Exp_HubName_IsVisible]]</param>
+@@ -402,6 +422,7 @@
+     <include name="Hub_Widgets_Only">
+         <include>Background_Transition</include>
+         <control type="group" id="340">
++            <visible>!$EXP[Exp_JellynasGrid]</visible>
+             <include content="Object_Top" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
+                 <param name="top">440</param>
+             </include>
