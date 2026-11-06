@@ -16,6 +16,16 @@
           <control type="spinner" format="string"/>
         </setting>
       </group>
+      <group id="2" label="30070">
+        <setting id="catalog" type="string" label="30095">
+          <level>0</level>
+          <default>http://192.168.50.30:5056</default>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <control type="edit" format="string"/>
+        </setting>
+      </group>
     </category>
   </section>
 </settings>

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!-- Unraid template of the JELLYNAS catalog proxy (seerr_proxy.py). Copy to /boot/config/plugins/dockerMan/templates-user/,
+     then Docker > Add Container > Template: jellynas-catalog > Apply. The script is read from the repo folder (read only),
+     Seerr's settings.json (its API key) from Seerr's config folder (read only). -->
+<Container version="2">
+  <Name>jellynas-catalog</Name>
+  <Repository>python:3.12-alpine</Repository>
+  <Registry>https://hub.docker.com/_/python</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/leone007/unraid-mediaserver-tools</Support>
+  <Project>https://github.com/leone007/unraid-mediaserver-tools/tree/main/seerrproxy</Project>
+  <Overview>JELLYNAS catalog proxy: the Kodi add-on plugin.video.jellynas browses Seerr and requests titles in the viewer's own Seerr name (checked with the viewer's Jellyfin login). No Seerr key on the TVs.</Overview>
+  <Category>Tools: MediaServer:Other</Category>
+  <WebUI/>
+  <Icon>https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/kodi/plugin.video.jellynas/icon.png</Icon>
+  <PostArgs>python -u /app/seerr_proxy.py</PostArgs>
+  <ExtraParams/>
+  <Config Name="Port" Target="5056" Default="5056" Mode="tcp" Description="Catalog proxy port (the add-on setting Catalog server address)" Type="Port" Display="always" Required="true" Mask="false">5056</Config>
+  <Config Name="Script" Target="/app" Default="/mnt/user/data/DEV/unraid-mediaserver-tools/seerrproxy" Mode="ro" Description="Folder of seerr_proxy.py (the repo)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/data/DEV/unraid-mediaserver-tools/seerrproxy</Config>
+  <Config Name="Seerr config" Target="/seerr" Default="/mnt/cache/docker/seerr" Mode="ro" Description="Seerr's config folder (settings.json with the API key, read only)" Type="Path" Display="always" Required="true" Mask="false">/mnt/cache/docker/seerr</Config>
+  <Config Name="JELLYFIN_URL" Target="JELLYFIN_URL" Default="http://192.168.50.30:8096" Mode="" Description="Jellyfin (checks the viewer's login)" Type="Variable" Display="always" Required="true" Mask="false">http://192.168.50.30:8096</Config>
+  <Config Name="SEERR_URL" Target="SEERR_URL" Default="http://192.168.50.30:5055" Mode="" Description="Seerr" Type="Variable" Display="always" Required="true" Mask="false">http://192.168.50.30:5055</Config>
+  <Config Name="TZ" Target="TZ" Default="Europe/Budapest" Mode="" Description="Time zone (coming soon = released after today)" Type="Variable" Display="advanced" Required="false" Mask="false">Europe/Budapest</Config>
+</Container>

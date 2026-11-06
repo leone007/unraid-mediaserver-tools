@@ -7,6 +7,9 @@
 #    the skin's grid bar adds sort, letter, unwatched and genre (mode=pick sets them as Home window properties)
 #  - This week: Streambox week.json in air order, the day and time in the card's second line (no day cards: they were
 #    focusable and showed an empty info panel), a season pack of one day as one card
+#  - Catalog: Seerr through the JELLYNAS catalog proxy (seerrproxy/ in the repo; setting 'catalog'): trending, popular and
+#    upcoming movies and series, the requests (all, processing, coming soon, available); a card opens a choice: play
+#    (in Jellyfin), request (with a yes/no, as the viewer), details. The proxy checks the Kofin login, so no Seerr key here.
 # Jellyfin is asked with the Kofin login of this Kodi (GET only); week.json and imdb.json come from the Jellyfin web path
 # (/web/streambox/, written by Streambox). Playback goes through Kofin (mode=play&id=<Jellyfin id>).
 import json
@@ -30,6 +33,10 @@ BROWSE = 'plugin://plugin.video.kofin/?mode=browse&type=%s&folder=%s'   # Kofin'
 ROOT = xbmcvfs.translatePath(ADDON.getAddonInfo('path'))
 PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 TIMEOUT = 8
+CATALOG = 'http://192.168.50.30:5056'   # default of the setting 'catalog' (LAN); outside the LAN the NPM address
+CAT_LISTS = (('trending', 30071), ('movies', 30072), ('movies/upcoming', 30073), ('tv', 30074), ('tv/upcoming', 30075))
+CAT_REQS = (('all', 30077), ('processing', 30078), ('comingsoon', 30079), ('available', 30080))
+CAT_STATUS = {'available': 30080, 'partial': 30081, 'processing': 30082, 'pending': 30082}
 LIMIT = 24
 SPOT_MAX = 10
 FIELDS = 'Overview,ProviderIds,Genres,MediaStreams,PremiereDate,OfficialRating,CommunityRating'
@@ -601,9 +608,141 @@ def do_wgroup(h, c, q):
     xbmcplugin.addDirectoryItems(h, [week_card(c, e, imdb, now, info, None, items) for e in sorted(eps, key=lambda e: ep_num(e.get('c', '')))])
 
 
+# ---- catalog (Seerr through the JELLYNAS catalog proxy) ----
+def cat_lang():
+    s = ADDON.getSetting('lang')
+    return 'hu' if s == '2' or (s not in ('1', '2') and xbmc.getLanguage(xbmc.ISO_639_1) == 'hu') else 'en'
+
+
+def cat_get(c, path, **q):
+    q['language'] = cat_lang()
+    return get_json('%s%s?%s' % ((ADDON.getSetting('catalog') or CATALOG).rstrip('/'), path, urllib.parse.urlencode(q)), c['hdr'])
+
+
+def cat_post(c, body):
+    """The one write of the add-on: a Seerr request, sent by the proxy in the viewer's name. Returns the HTTP code."""
+    req = urllib.request.Request((ADDON.getSetting('catalog') or CATALOG).rstrip('/') + '/request', data=json.dumps(body).encode('utf-8'),
+                                 headers={'Content-Type': 'application/json', 'Authorization': c['hdr'],
+                                          'User-Agent': 'JELLYNAS/%s (Kodi)' % ADDON.getAddonInfo('version')}, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            return r.status
+    except urllib.error.HTTPError as x:
+        return x.code
+
+
+def cat_item(t, sub=None):
+    li = xbmcgui.ListItem(t['title'], sub if sub is not None else ' · '.join(x for x in (
+        ('★ %.1f' % t['rating']) if t.get('rating') else '', t.get('year', '')) if x), offscreen=True)
+    tag = li.getVideoInfoTag()
+    tag.setMediaType('movie' if t['type'] == 'movie' else 'tvshow')
+    tag.setTitle(t['title'])
+    if t.get('original') and t['original'] != t['title']:
+        tag.setOriginalTitle(t['original'])
+    tag.setPlot(t.get('overview', ''))
+    if t.get('year', '').isdigit():
+        tag.setYear(int(t['year']))
+    if t.get('date'):
+        tag.setPremiered(t['date'])
+    if t.get('rating'):
+        tag.setRating(float(t['rating']), 0, 'themoviedb', True)
+    if t.get('genres'):
+        tag.setGenres(t['genres'])
+    if t.get('runtime'):
+        tag.setDuration(int(t['runtime']) * 60)
+    tag.setUniqueIDs({'tmdb': str(t['id'])}, 'tmdb')
+    li.setProperty('tmdb_id' if t['type'] == 'movie' else 'tvshow.tmdb_id', str(t['id']))
+    li.setProperty('sublabel', li.getLabel2())
+    li.setProperty('jellynas.kind', 'catalog')
+    if t.get('status') in ('available', 'partial'):
+        li.setProperty('jellynas.badge', L(CAT_STATUS[t['status']]))
+    li.setArt({'poster': t.get('poster', ''), 'thumb': t.get('backdrop') or t.get('poster', ''), 'fanart': t.get('backdrop', ''),
+               'icon': t.get('poster', '')})
+    li.setProperty('IsPlayable', 'false')
+    return BASE + '?' + urllib.parse.urlencode({'mode': 'catitem', 'type': t['type'], 'id': t['id']}), li, False
+
+
+def do_catalog(h, c):
+    xbmcplugin.addDirectoryItems(h, [folder(L(n), 'catlist&list=' + k) for k, n in CAT_LISTS]
+                                 + [folder(L(30076), 'catreqs')])
+
+
+def do_catlist(h, c, q):
+    kind = q.get('list', 'trending')
+    xbmcplugin.setContent(h, 'movies' if kind.startswith('movies') else ('tvshows' if kind.startswith('tv') else 'videos'))
+    out, seen = [], set()
+    for page in (1, 2):   # 40 cards, as a Seerr row scrolled twice
+        for t in cat_get(c, '/discover/' + kind, page=page).get('results', []):
+            if (t['type'], t['id']) not in seen:
+                seen.add((t['type'], t['id']))
+                out.append(cat_item(t))
+    xbmcplugin.addDirectoryItems(h, out)
+
+
+def do_catreqs(h, c, q):
+    flt = q.get('filter')
+    if not flt:
+        xbmcplugin.addDirectoryItems(h, [folder(L(n), 'catreqs&filter=' + k) for k, n in CAT_REQS])
+        return
+    xbmcplugin.setContent(h, 'videos')
+    xbmcplugin.addDirectoryItems(h, [cat_item(t, L(30094, who=t.get('by', ''), day=t.get('added', '')))
+                                     for t in cat_get(c, '/requests', filter=flt).get('results', [])])
+
+
+def do_catitem(c, q):
+    """A catalog card was clicked (RunPlugin): play it in Jellyfin, request it (yes/no first), or show the details."""
+    try:
+        t = cat_get(c, '/item/%s/%d' % (q.get('type'), int(q.get('id'))))
+    except Exception as x:  # noqa: BLE001 - proxy down or unknown title: tell the viewer
+        log('catitem: %s' % x)
+        xbmcgui.Dialog().notification('JELLYNAS', L(30092), xbmcgui.NOTIFICATION_WARNING, 5000)
+        return
+    acts, open_seasons = [], [s['n'] for s in t.get('seasons', []) if not s.get('status')]
+    if t.get('jellyfin') and t.get('status') in ('available', 'partial'):
+        acts.append(('play', L(30083)))
+    if t['type'] == 'movie' and not t.get('status'):
+        acts.append(('movie', L(30084)))
+    if t['type'] == 'tv' and open_seasons:
+        acts.append(('all', L(30085, n=len(open_seasons))))
+        if len(open_seasons) > 1:
+            acts.append(('pick', L(30086)))
+    acts.append(('info', L(30087)))
+    head = '%s (%s)%s' % (t['title'], t.get('year', ''), (' · ' + L(CAT_STATUS[t['status']])) if t.get('status') in CAT_STATUS else '')
+    i = xbmcgui.Dialog().select(head, [a[1] for a in acts])
+    if i < 0:
+        return
+    act = acts[i][0]
+    if act == 'info':
+        xbmcgui.Dialog().info(cat_item(t)[1])
+        return
+    if act == 'play':
+        if t['type'] == 'movie':
+            xbmc.executebuiltin('PlayMedia(%s)' % (PLAY % t['jellyfin']))
+        else:
+            xbmc.executebuiltin('ActivateWindow(Videos,%s,return)' % (BROWSE % ('series', t['jellyfin'])))
+        return
+    seasons = open_seasons
+    if act == 'pick':
+        names = [L(30093, n=n) for n in open_seasons]
+        sel = xbmcgui.Dialog().multiselect(L(30086), names)
+        if not sel:
+            return
+        seasons = [open_seasons[k] for k in sel]
+    what = t['title'] if act == 'movie' else '%s · %s' % (t['title'], ', '.join(L(30093, n=n) for n in seasons))
+    if not xbmcgui.Dialog().yesno(L(30084), L(30088, title=what)):
+        return
+    code = cat_post(c, {'type': t['type'], 'id': t['id']} if act == 'movie' else {'type': 'tv', 'id': t['id'], 'seasons': seasons})
+    msg = {200: 30089, 201: 30089, 409: 30090, 403: 30091}.get(code, 30092)
+    xbmcgui.Dialog().notification('JELLYNAS', L(msg), os.path.join(ROOT, 'resources', 'icon.png') if msg in (30089, 30090)
+                                  else xbmcgui.NOTIFICATION_WARNING, 4000)
+    if msg == 30089:
+        xbmc.executebuiltin('Container.Refresh')
+
+
 # ---- router ----
 ROUTES = {'resume': do_resume, 'nextup': do_nextup, 'movies': do_movies, 'series': do_series, 'spotlight': do_spotlight,
-          'week': do_week, 'allmovies': do_allmovies, 'allseries': do_allseries}
+          'week': do_week, 'allmovies': do_allmovies, 'allseries': do_allseries, 'catalog': do_catalog}
+Q_ROUTES = {'catlist': do_catlist, 'catreqs': do_catreqs}   # these take the query too
 
 
 def folder(label, mode):
@@ -624,7 +763,7 @@ def main(argv):
     if not mode:
         xbmcplugin.addDirectoryItems(h, [folder(L(30001), 'resume'), folder(L(30004), 'nextup'), folder(L(30005), 'movies'),
                                          folder(L(30006), 'series'), folder(L(30002), 'spotlight'), folder(L(30003), 'week'),
-                                         folder(L(30007), 'allmovies'), folder(L(30008), 'allseries')])
+                                         folder(L(30007), 'allmovies'), folder(L(30008), 'allseries'), folder(L(30070), 'catalog')])
         xbmcplugin.endOfDirectory(h)
         return
     c = kofin()
@@ -637,8 +776,13 @@ def main(argv):
             if mode == 'pick':   # RunPlugin from the skin's grid bar: a dialog, no directory
                 do_pick(c, q)
                 return
+            if mode == 'catitem':   # a catalog card: a dialog, no directory
+                do_catitem(c, q)
+                return
             if mode == 'wgroup':
                 do_wgroup(h, c, q)
+            elif mode in Q_ROUTES:
+                Q_ROUTES[mode](h, c, q)
             elif mode in ('allmovies', 'allseries'):
                 ROUTES[mode](h, c, q)
             elif mode in ROUTES:
@@ -646,5 +790,5 @@ def main(argv):
         except Exception as x:  # noqa: BLE001 - a widget must not break the home screen: log and show an empty row
             log('%s: %s' % (mode, x))
             ok = False
-    if mode != 'pick':
+    if mode not in ('pick', 'catitem'):
         xbmcplugin.endOfDirectory(h, succeeded=ok, cacheToDisc=False)

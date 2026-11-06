@@ -29,6 +29,12 @@ RESUME = [MOVIE, ep('e4', 'Vízióküldetés', 's1', 1, 4, '4. epizód', 1200000
 NEXTUP = [ep('e5', 'Vízióküldetés', 's1', 1, 5, '5. epizód'), ep('l2', 'Lost', 's2', 4, 2, 'Halottnak nyilvánítva')]
 SERIES = {'s1': {'Tmdb': '213375', 'Imdb': 'tt23112594'}, 's2': {'Tmdb': '4607', 'Imdb': 'tt0411008'}, 's3': {'Tmdb': '1'}}
 WEEK_FROM = NOW - 3 * 86400
+CAT_MOVIE = {'type': 'movie', 'id': 1, 'title': 'Stick', 'original': 'Stick', 'year': '2025', 'date': '2025-06-03', 'overview': 'Golf.',
+             'rating': 7.3, 'poster': 'https://image.tmdb.org/t/p/w500/p1.jpg', 'backdrop': 'https://image.tmdb.org/t/p/w1280/b1.jpg',
+             'status': 'available', 'jellyfin': 'jf1', 'genres': ['Comedy'], 'runtime': 30}
+CAT_TV = {'type': 'tv', 'id': 2, 'title': 'Nocturne', 'original': 'Nocturne', 'year': '2026', 'date': '2026-01-01', 'overview': '',
+          'rating': 7.7, 'poster': '', 'backdrop': '', 'status': 'partial', 'jellyfin': 'jf2',
+          'seasons': [{'n': 1, 'status': 'available'}, {'n': 2, 'status': ''}, {'n': 3, 'status': ''}]}
 
 
 def week():
@@ -83,6 +89,16 @@ class H(http.server.BaseHTTPRequestHandler):
                               + [dict(ep(i, 'x', 's3', 1, 5, 'n'), Overview='Episode overview ' + i) for i in ids if i in ('v5', 'g1', 'g2')]}
         elif u.path == '/web/streambox/week.json':
             body = week()
+        elif u.path == '/discover/trending':
+            body = {'results': [CAT_MOVIE, CAT_TV], 'pages': 2}
+        elif u.path == '/item/movie/1':
+            body = CAT_MOVIE
+        elif u.path == '/item/movie/4':
+            body = dict(CAT_MOVIE, id=4, title='Új film', status='', jellyfin='')
+        elif u.path == '/item/tv/2':
+            body = CAT_TV
+        elif u.path == '/requests':
+            body = {'results': [dict(CAT_MOVIE, by='Zsuzsi', added='2026-10-31')] if q.get('filter') == 'available' else []}
         elif u.path == '/web/streambox/imdb.json':
             body = {'gen': 1, 'src': 1, 'r': {'m1': [71, 260000, 'tt0837562'], 's1': [78, 9000, 'tt23112594'], 's3': [63, 500, 'tt1']}}
         data = json.dumps(body).encode() if body is not None else b'{}'
@@ -92,9 +108,11 @@ class H(http.server.BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_POST(self):
-        SEEN.append(('POST', self.path, {}, '', ''))
-        self.send_response(405)
+        body = json.loads(self.rfile.read(int(self.headers.get('Content-Length') or 0)) or b'{}')
+        SEEN.append(('POST', self.path, body, self.headers.get('Authorization', ''), self.headers.get('User-Agent', '')))
+        self.send_response(200 if self.path == '/request' else 405)
         self.end_headers()
+        self.wfile.write(b'{"ok": true}')
 
 
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), H)
@@ -157,6 +175,12 @@ class ListItem:
     def getVideoInfoTag(self):
         return self.tag
 
+    def getLabel(self):
+        return self.label
+
+    def getLabel2(self):
+        return self.label2
+
     def setArt(self, a):
         self.art.update(a)
 
@@ -169,15 +193,18 @@ class Detail:
         self.__dict__.update(k)
 
 
-DIR = {'items': [], 'end': None, 'notes': [], 'pick': 0}
+DIR = {'items': [], 'end': None, 'notes': [], 'pick': 0, 'yes': True, 'multi': None, 'built': [], 'info': []}
 HOMEPROPS = {}
 Window = lambda wid: types.SimpleNamespace(setProperty=HOMEPROPS.__setitem__)
-xbmc = types.SimpleNamespace(log=lambda *a: None, LOGINFO=1, ISO_639_1=0, getLanguage=lambda f: 'en', getInfoLabel=lambda k: 'Mac "Studio"',
+xbmc = types.SimpleNamespace(executebuiltin=lambda b: DIR['built'].append(b), log=lambda *a: None, LOGINFO=1, ISO_639_1=0, getLanguage=lambda f: 'en', getInfoLabel=lambda k: 'Mac "Studio"',
                              VideoStreamDetail=Detail, AudioStreamDetail=Detail)
 xbmcaddon = types.SimpleNamespace(Addon=Addon)
 xbmcgui = types.SimpleNamespace(ListItem=ListItem, NOTIFICATION_WARNING='w', Window=Window,
                                 Dialog=lambda: types.SimpleNamespace(notification=lambda *a: DIR['notes'].append(a),
-                                                                     select=lambda head, labels: DIR.__setitem__('labels', labels) or DIR['pick']))
+                                                                     select=lambda head, labels: DIR.__setitem__('labels', labels) or DIR['pick'],
+                                                                     yesno=lambda head, text: DIR.__setitem__('asked', text) or DIR['yes'],
+                                                                     multiselect=lambda head, labels: DIR.__setitem__('labels', labels) or DIR['multi'],
+                                                                     info=lambda li: DIR['info'].append(li)))
 xbmcplugin = types.SimpleNamespace(setContent=lambda h, c: DIR.__setitem__('content', c),
                                    addSortMethod=lambda h, m: DIR['sorts'].append(m),
                                    **{'SORT_METHOD_' + n: i for i, n in enumerate(('UNSORTED', 'DATEADDED', 'LABEL_IGNORE_THE', 'VIDEO_YEAR', 'VIDEO_RATING', 'PLAYCOUNT'))}, addDirectoryItems=lambda h, items: DIR['items'].extend(items),
@@ -206,8 +233,8 @@ def run(query):
 
 # ---- checks ----
 root = run('')
-ok([li.label for _, li, _ in root] == ['Continue watching', 'Next up', 'Recently added movies', 'Recently added series', 'Spotlight', 'This week', 'All movies', 'All series'],
-   'root: eight folders')
+ok([li.label for _, li, _ in root] == ['Continue watching', 'Next up', 'Recently added movies', 'Recently added series', 'Spotlight', 'This week', 'All movies', 'All series', 'Catalog'],
+   'root: nine folders')
 
 items = run('?mode=resume')
 ok(len(items) == 2 and DIR['end'] is True, 'resume: 2 items, directory ok')
@@ -301,6 +328,46 @@ lost = items[0]
 ok(DIR['content'] == 'tvshows' and lost[2] and 'type=series&folder=s2' in lost[0] and lost[1].props.get('UnWatchedEpisodes') == '21'
    and lost[1].props.get('WatchedEpisodes') == '100', 'all series: content tvshows, opens Kofin seasons, unwatched count')
 
+# ---- catalog (stub proxy on the same server) ----
+LANG['catalog'] = URL
+items = run('?mode=catlist&list=trending')
+cq = [q for q in SEEN if q[1] == '/discover/trending']
+ok([li.label for _, li, _ in items] == ['Stick', 'Nocturne'] and len(cq) == 2 and cq[-1][3].startswith('MediaBrowser') and cq[-1][2].get('language') == 'en',
+   'catalog: trending, two pages without doubles, Kofin login, language')
+st = items[0]
+ok(st[1].props.get('sublabel') == '★ 7.3 · 2025' and st[1].props.get('jellynas.badge') == 'Available' and st[1].props.get('tmdb_id') == '1'
+   and 'mode=catitem&type=movie&id=1' in st[0] and not st[2] and st[1].art.get('fanart', '').endswith('b1.jpg'),
+   'catalog card: rating and year, Available badge, TMDb id, opens the choice')
+ok(items[1][1].props.get('jellynas.badge') == 'Partially available' and items[1][1].props.get('tvshow.tmdb_id') == '2', 'catalog card: series partially available')
+ok([li.label for _, li, _ in run('?mode=catreqs')] == ['All requests', 'Processing', 'Coming soon', 'Available'], 'requests: four folders, no pending approval')
+rq = run('?mode=catreqs&filter=available')
+ok(rq and rq[0][1].props.get('sublabel') == 'Zsuzsi · 2026-10-31', 'request card: who and when')
+DIR['pick'] = 0
+run('?mode=catitem&type=movie&id=1')
+ok(DIR['labels'] == ['Play', 'Details'] and DIR['built'][-1] == 'PlayMedia(plugin://plugin.video.kofin/?mode=play&id=jf1)' and DIR['end'] is None,
+   'available movie: play through Kofin, no request option')
+DIR['pick'] = 0
+run('?mode=catitem&type=movie&id=4')
+post = [s for s in SEEN if s[0] == 'POST']
+ok(DIR['labels'] == ['Request', 'Details'] and post and post[-1][1] == '/request' and post[-1][2] == {'type': 'movie', 'id': 4}
+   and post[-1][3].startswith('MediaBrowser') and 'Új film' in DIR['asked'] and DIR['notes'][-1][1] == 'Request sent',
+   "new movie: yes/no, then one POST to the proxy in the viewer's login")
+DIR['pick'], DIR['yes'], np = 0, False, len([s for s in SEEN if s[0] == 'POST'])
+run('?mode=catitem&type=movie&id=4')
+ok(len([s for s in SEEN if s[0] == 'POST']) == np, 'answer No: nothing is sent')
+DIR['yes'], DIR['pick'], DIR['multi'] = True, 2, [1]
+run('?mode=catitem&type=tv&id=2')
+post = [s for s in SEEN if s[0] == 'POST'][-1]
+ok(DIR['labels'] == ['Season 2', 'Season 3'] and post[2] == {'type': 'tv', 'id': 2, 'seasons': [3]}, 'series: choose seasons, only the missing ones offered')
+DIR['pick'] = 1
+run('?mode=catitem&type=tv&id=2')
+post = [s for s in SEEN if s[0] == 'POST'][-1]
+ok(post[2]['seasons'] == [2, 3], 'series: request the missing seasons')
+DIR['pick'] = 3
+run('?mode=catitem&type=tv&id=2')
+ok(DIR['info'] and DIR['info'][-1].label == 'Nocturne', 'details: the info window')
+del LANG['catalog']
+
 items = run('?mode=week')
 ok(not [li for _, li, _ in items if li.props.get('jellynas.imdb')] and all(li.props.get('jellynas.kind') == 'week' for _, li, _ in items),
    'week: no IMDb badge value on the cards (kind=week)')
@@ -314,7 +381,7 @@ ok(noc.tag.d.get('plot', '').startswith('Nocturne · S01E03'), 'week: no Jellyfi
 gp = [x for x in items if x[1].label == 'Gengszter'][0][1]
 ok('Episode overview' not in gp.tag.d.get('plot', ''), 'week: a season pack card has no single episode overview')
 
-ok(not [s for s in SEEN if s[0] != 'GET'], 'only GET requests')
+ok(not [s for s in SEEN if s[0] != 'GET' and s[1] != '/request'], 'only GET requests (but the catalog request to the proxy)')
 ok(all(s[4].startswith('JELLYNAS/') for s in SEEN), 'own User-Agent (the proxy refuses Python-urllib)')
 srv.shutdown()
 print('%d failed' % len(FAILS) if FAILS else 'all checks passed')

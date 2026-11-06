@@ -207,6 +207,136 @@ msgctxt "#30061"
 msgid "Hidden"
 msgstr "Elrejtve"
 
+#. Folder: Seerr catalog (discover and request titles)
+msgctxt "#30070"
+msgid "Catalog"
+msgstr "Katalógus"
+
+#. Catalog row: trending movies and series this week
+msgctxt "#30071"
+msgid "Trending"
+msgstr "Felkapott"
+
+#. Catalog row
+msgctxt "#30072"
+msgid "Popular movies"
+msgstr "Népszerű filmek"
+
+#. Catalog row: movies not released yet
+msgctxt "#30073"
+msgid "Upcoming movies"
+msgstr "Hamarosan érkező filmek"
+
+#. Catalog row
+msgctxt "#30074"
+msgid "Popular series"
+msgstr "Népszerű sorozatok"
+
+#. Catalog row: series starting soon
+msgctxt "#30075"
+msgid "Upcoming series"
+msgstr "Hamarosan érkező sorozatok"
+
+#. Catalog folder: the Seerr requests
+msgctxt "#30076"
+msgid "Requests"
+msgstr "Kérések"
+
+#. Requests folder: every request
+msgctxt "#30077"
+msgid "All requests"
+msgstr "Összes kérés"
+
+#. Requests folder: approved, being downloaded
+msgctxt "#30078"
+msgid "Processing"
+msgstr "Folyamatban"
+
+#. Requests folder: requested, not released yet
+msgctxt "#30079"
+msgid "Coming soon"
+msgstr "Hamarosan"
+
+#. Requests folder and card badge: the title can be watched
+msgctxt "#30080"
+msgid "Available"
+msgstr "Elérhető"
+
+#. Card badge: some seasons can be watched
+msgctxt "#30081"
+msgid "Partially available"
+msgstr "Részben elérhető"
+
+#. Status in the card dialog heading: requested, not available yet
+msgctxt "#30082"
+msgid "Requested"
+msgstr "Kérve"
+
+#. Card dialog: play in Jellyfin
+msgctxt "#30083"
+msgid "Play"
+msgstr "Lejátszás"
+
+#. Card dialog option (movie) and the heading of the yes/no question
+msgctxt "#30084"
+msgid "Request"
+msgstr "Kérés"
+
+#. Card dialog option (series); {n} is the number of seasons
+msgctxt "#30085"
+msgid "Request the missing seasons ({n})"
+msgstr "Kérés: a hiányzó évadok ({n})"
+
+#. Card dialog option (series) and the heading of the season list
+msgctxt "#30086"
+msgid "Choose seasons..."
+msgstr "Évadok kiválasztása..."
+
+#. Card dialog option: the info window
+msgctxt "#30087"
+msgid "Details"
+msgstr "Részletek"
+
+#. Yes/no question before the request is sent; {title} is the title (and the seasons)
+msgctxt "#30088"
+msgid "Request {title}?"
+msgstr "Kérjük ezt: {title}?"
+
+#. Notification after a request
+msgctxt "#30089"
+msgid "Request sent"
+msgstr "Kérés elküldve"
+
+#. Notification: Seerr has this request already
+msgctxt "#30090"
+msgid "Already requested"
+msgstr "Már kérték"
+
+#. Notification: the request could not be made
+msgctxt "#30091"
+msgid "No Seerr account for this Jellyfin user"
+msgstr "Ehhez a Jellyfin-fiókhoz nincs Seerr-fiók"
+
+#. Notification: the JELLYNAS catalog proxy is not reachable
+msgctxt "#30092"
+msgid "The catalog server does not answer"
+msgstr "A katalógus-szerver nem válaszol"
+
+#. Season name in the season list; {n} is its number
+msgctxt "#30093"
+msgid "Season {n}"
+msgstr "{n}. évad"
+
+#. Second line of a request card: who asked and when (date); keep the order if it reads well
+msgctxt "#30094"
+msgid "{who} · {day}"
+msgstr "{who} · {day}"
+
+#. Setting: the address of the JELLYNAS catalog proxy, e.g. http://192.168.50.30:5056
+msgctxt "#30095"
+msgid "Catalog server address"
+msgstr "Katalógus-szerver címe"
+
 msgctxt "#30100"
 msgid "General"
 msgstr "Általános"
