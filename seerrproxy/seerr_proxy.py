@@ -9,6 +9,7 @@
 #   JELLYFIN_URL (http://192.168.50.30:8096), SEERR_URL (http://192.168.50.30:5055),
 #   SEERR_SETTINGS (/seerr/settings.json), PORT (5056)
 import json, os, re, sys, threading, time, urllib.error, urllib.parse, urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -112,6 +113,20 @@ def readable(cards):
     return cards
 
 
+def localize(cards, lang):
+    """Popular and upcoming lists come in Seerr's locale (English): take the title and overview from each title's own
+    page in the viewer's language (cached), 8 at a time."""
+    def one(c):
+        try:
+            t = title(c['type'], int(c['id']), lang)
+            c.update({k: t[k] for k in ('title', 'overview') if t.get(k)})
+        except (urllib.error.URLError, OSError, ValueError, KeyError):
+            pass
+    with ThreadPoolExecutor(8) as ex:
+        list(ex.map(one, cards))
+    return cards
+
+
 def title(kind, tid, lang):
     def get():
         d = seerr('/%s/%d' % (kind, tid), language=lang)
@@ -124,7 +139,7 @@ def title(kind, tid, lang):
                                'episodes': s.get('episodeCount') or 0, 'status': have.get(s.get('seasonNumber'), '')}
                               for s in d.get('seasons') or [] if s.get('seasonNumber')]
         return out
-    return cached('t:%s:%s:%s' % (kind, tid, lang), 3600, get)
+    return cached('t:%s:%s:%s' % (kind, tid, lang), 6 * 3600, get)
 
 
 def coming(t, seasons):
@@ -208,8 +223,10 @@ class Handler(BaseHTTPRequestHandler):
                 d = cached('d:%s:%d:%s' % (m.group(1), page, lang), 900,
                            lambda: seerr('/discover/' + m.group(1), page=page, **extra))
                 kind = {'movies': 'movie', 'movies/upcoming': 'movie', 'tv': 'tv', 'tv/upcoming': 'tv'}.get(m.group(1))
-                return self.send(200, {'results': readable([card(r, kind) for r in d.get('results', [])
-                                                            if (kind or r.get('mediaType')) in ('movie', 'tv')]),
+                cards = [card(r, kind) for r in d.get('results', []) if (kind or r.get('mediaType')) in ('movie', 'tv')]
+                if extra.get('language') != lang and lang != 'en':
+                    localize(cards, lang)
+                return self.send(200, {'results': readable(cards),
                                        'pages': d.get('totalPages', 1)})
             m = re.fullmatch(r'/item/(movie|tv)/(\d+)', u.path)
             if m:

@@ -48,7 +48,7 @@ class Stub(BaseHTTPRequestHandler):
         if u.path == '/api/v1/movie/3':
             return self.reply(200, SOON)
         if u.path == '/api/v1/tv/2':
-            return self.reply(200, TV)
+            return self.reply(200, dict(TV, name='Éjszakai', overview='Magyar leírás') if q.get('language') == 'hu' else TV)
         if u.path == '/api/v1/user':
             return self.reply(200, {'results': [{'id': 7, 'jellyfinUserId': 'ABCD1234-abcd-1234-abcd-1234abcd1234'}, {'id': 8}]})
         if u.path == '/api/v1/request':
@@ -115,6 +115,7 @@ ok(d['results'][1]['status'] == 'partial', 'card: partially available')
 ok([x for x in SEEN if x[1] == '/api/v1/discover/trending'][-1][2].get('language') == 'hu', 'language goes to Seerr')
 ok(call('/discover/tv?language=hu')[1]['results'][0]['type'] == 'tv', 'discover tv: type from the list kind')
 ok('language' not in [x for x in SEEN if x[1] == '/api/v1/discover/tv'][-1][2], 'discover tv: no language (Seerr filters the original language with it)')
+ok(call('/discover/tv?language=hu&page=2')[1]['results'][0]['title'] == 'Éjszakai', 'discover tv: the Hungarian title from the title page')
 ok(call('/discover/people')[0] == 404, 'unknown list: 404')
 code, t = call('/item/tv/2')
 ok(code == 200 and [x['n'] for x in t['seasons']] == [1, 2] and t['seasons'][0]['status'] == 'available' and t['seasons'][1]['status'] == '',
