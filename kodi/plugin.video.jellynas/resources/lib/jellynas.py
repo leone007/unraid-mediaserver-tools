@@ -42,7 +42,7 @@ SPOT_MAX = 10
 FIELDS = 'Overview,ProviderIds,Genres,MediaStreams,PremiereDate,OfficialRating,CommunityRating'
 IMAGES = 'Primary,Backdrop,Thumb,Logo'
 GRID_SORTS = (('new', 30050), ('name', 30051), ('year', 30052), ('imdb', 30053))   # grid bar: value, label
-SKIN_STRINGS = (30057, 30058, 30059, 30060, 30061)   # only the JELLYNAS skin's grid bar uses them ($ADDON[plugin.video.jellynas N])
+SKIN_STRINGS = (30057, 30058, 30059, 30060, 30061, 30097, 30098, 30110, 30111)   # only the JELLYNAS skin's grid bar uses them ($ADDON[plugin.video.jellynas N])
 GRID_FIELDS = 'Overview,ProviderIds,Genres,PremiereDate,OfficialRating,CommunityRating,DateCreated'   # no MediaStreams: the whole library in one answer
 GROUP_MIN = 2   # this many episodes of one season on one day make one card (as on the Jellyfin page)
 HDR = {'HDR10': 'hdr10', 'HDR10Plus': 'hdr10', 'HLG': 'hlg'}
@@ -668,11 +668,11 @@ def do_catalog(h, c):
 
 
 def do_catlist(h, c, q):
-    kind = q.get('list', 'trending')
-    xbmcplugin.setContent(h, 'movies' if kind.startswith('movies') else ('tvshows' if kind.startswith('tv') else 'videos'))
+    kind, typ = q.get('list', 'trending'), q.get('type', '')   # type=movie|tv: trending split (the skin's Catalog tabs)
+    xbmcplugin.setContent(h, 'movies' if kind.startswith('movies') or typ == 'movie' else ('tvshows' if kind.startswith('tv') or typ == 'tv' else 'videos'))
     out, seen = [], set()
-    for page in (1, 2):   # 40 cards, as a Seerr row scrolled twice
-        for t in cat_get(c, '/discover/' + kind, page=page).get('results', []):
+    for page in ((1, 2, 3) if typ else (1, 2)):   # 40 cards, as a Seerr row scrolled twice (a split trending row: 3 pages)
+        for t in cat_get(c, '/discover/' + kind, page=page, **({'type': typ} if typ else {})).get('results', []):
             if (t['type'], t['id']) not in seen:
                 seen.add((t['type'], t['id']))
                 out.append(cat_item(t))

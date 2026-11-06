@@ -342,6 +342,26 @@ msgctxt "#30096"
 msgid "Partly"
 msgstr "Részben"
 
+#. Catalog page tab (skin): movies
+msgctxt "#30097"
+msgid "Movies"
+msgstr "Filmek"
+
+#. Catalog page tab (skin): series
+msgctxt "#30098"
+msgid "Series"
+msgstr "Sorozatok"
+
+#. Catalog page row (skin)
+msgctxt "#30110"
+msgid "Trending movies"
+msgstr "Felkapott filmek"
+
+#. Catalog page row (skin)
+msgctxt "#30111"
+msgid "Trending series"
+msgstr "Felkapott sorozatok"
+
 msgctxt "#30100"
 msgid "General"
 msgstr "Általános"

@@ -113,6 +113,7 @@ ok(s['type'] == 'movie' and s['year'] == '2025' and s['rating'] == 7.3 and s['po
    and s['status'] == 'available' and s['jellyfin'] == 'jf1', 'card: year, rating, TMDb poster, status, Jellyfin id')
 ok(d['results'][1]['status'] == 'partial', 'card: partially available')
 ok([x for x in SEEN if x[1] == '/api/v1/discover/trending'][-1][2].get('language') == 'hu', 'language goes to Seerr')
+ok([r['title'] for r in call('/discover/trending?language=hu&type=tv')[1]['results']] == ['Nocturne'], 'trending: only series with type=tv')
 ok(call('/discover/tv?language=hu')[1]['results'][0]['type'] == 'tv', 'discover tv: type from the list kind')
 ok('language' not in [x for x in SEEN if x[1] == '/api/v1/discover/tv'][-1][2], 'discover tv: no language (Seerr filters the original language with it)')
 ok(call('/discover/tv?language=hu&page=2')[1]['results'][0]['title'] == 'Éjszakai', 'discover tv: the Hungarian title from the title page')

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
-<addon id="skin.arctic.fuse.2.jellynas" name="Arctic Fuse 2 JELLYNAS" provider-name="jurialmunkey, JELLYNAS" version="2.12.12.17">
+<addon id="skin.arctic.fuse.2.jellynas" name="Arctic Fuse 2 JELLYNAS" provider-name="jurialmunkey, JELLYNAS" version="2.12.12.18">
     <requires>
         <import addon="xbmc.gui" version="5.17.0" />
         <import addon="script.skinvariables" version="2.1.28" />
@@ -22,7 +22,7 @@
     </extension>
     <extension point="xbmc.addon.metadata">
         <summary lang="en">A minimal row based skin</summary>
-        <description lang="en">Arctic Fuse 2 by jurialmunkey (CC BY-NC-SA 4.0) with the JELLYNAS changes: Jellyfin-like centred category bar, the add-on second line under the cards, IMDb or Available badge on the cards, poster grid on Home for an All movies or All series menu item with a bar for letter, sort, watched and genre, Live TV opens a Jellyfin-like TV guide. Upstream: https://github.com/jurialmunkey/skin.arctic.fuse.2 (omega, e138a25).</description>
+        <description lang="en">Arctic Fuse 2 by jurialmunkey (CC BY-NC-SA 4.0) with the JELLYNAS changes: Jellyfin-like centred category bar, the add-on second line under the cards, IMDb or Available badge on the cards, poster grid on Home for an All movies or All series menu item with a bar for letter, sort, watched and genre, Live TV opens a Jellyfin-like TV guide, a Catalog page with Movies, Series and Requests tabs. Upstream: https://github.com/jurialmunkey/skin.arctic.fuse.2 (omega, e138a25).</description>
         <platform>all</platform>
         <license>Creative Commons Attribution Non-Commercial Share-Alike 4.0</license>
         <forum />

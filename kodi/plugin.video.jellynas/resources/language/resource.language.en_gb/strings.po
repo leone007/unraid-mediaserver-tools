@@ -371,6 +371,26 @@ msgctxt "#30096"
 msgid "Partly"
 msgstr ""
 
+#. Catalog page tab (skin): movies
+msgctxt "#30097"
+msgid "Movies"
+msgstr ""
+
+#. Catalog page tab (skin): series
+msgctxt "#30098"
+msgid "Series"
+msgstr ""
+
+#. Catalog page row (skin)
+msgctxt "#30110"
+msgid "Trending movies"
+msgstr ""
+
+#. Catalog page row (skin)
+msgctxt "#30111"
+msgid "Trending series"
+msgstr ""
+
 #. Settings category
 msgctxt "#30100"
 msgid "General"

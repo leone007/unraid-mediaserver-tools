@@ -223,7 +223,8 @@ class Handler(BaseHTTPRequestHandler):
                 d = cached('d:%s:%d:%s' % (m.group(1), page, lang), 900,
                            lambda: seerr('/discover/' + m.group(1), page=page, **extra))
                 kind = {'movies': 'movie', 'movies/upcoming': 'movie', 'tv': 'tv', 'tv/upcoming': 'tv'}.get(m.group(1))
-                cards = [card(r, kind) for r in d.get('results', []) if (kind or r.get('mediaType')) in ('movie', 'tv')]
+                want = q.get('type') if q.get('type') in ('movie', 'tv') else None   # trending split for the skin's tabs
+                cards = [card(r, kind) for r in d.get('results', []) if (kind or r.get('mediaType')) in ((want,) if want else ('movie', 'tv'))]
                 if extra.get('language') != lang and lang != 'en':
                     localize(cards, lang)
                 return self.send(200, {'results': readable(cards),
