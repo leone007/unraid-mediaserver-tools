@@ -41,6 +41,10 @@ Patches:
   focused one white, title plus start-end time, a red dot for recording or timer; channel column number, logo, name
   (`Layout_JellynasGuide_Channels`); plain background; Left at the start of the grid = Back to Home (with the Kodi
   setting PVR > Guide > Past days to display = 0 the grid starts now).
+- `07-home-catalog.patch` (written by `gen_catalog.py`): the side menu item whose path is the add-on's Catalog folder
+  (`?mode=catalog`, `Exp_JellynasCatalog`) shows tabs Movies | Series | Requests (list 4950, Left/Right switches at
+  once, Down into the rows) and per tab a grouplist (4960/4970/4980) of three poster rows from the add-on: trending
+  (split by type), popular, upcoming; requests: processing, coming soon, available. Plain background.
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.
