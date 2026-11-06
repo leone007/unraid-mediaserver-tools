@@ -17,10 +17,10 @@ index b223b0a..2e07853 100644
  
              <onup condition="$PARAM[search]">SetFocus(309)</onup>
 diff --git a/1080i/Includes_Expressions.xml b/1080i/Includes_Expressions.xml
-index c6123ea..f743662 100644
+index c6123ea..75f2d10 100644
 --- a/1080i/Includes_Expressions.xml
 +++ b/1080i/Includes_Expressions.xml
-@@ -78,6 +78,11 @@
+@@ -78,6 +78,17 @@
  
      <expression name="Exp_HomeMenu_HasFocus">[Control.HasFocus(300) | Control.HasFocus(306) | Control.HasFocus(307) | Control.HasFocus(308) | Control.HasFocus(309) | Control.HasFocus(331)]</expression>
      <expression name="Exp_HomeMenu_IsExpanded">[Skin.HasSetting(Home.ExpandedMenu)]</expression>
@@ -29,11 +29,17 @@ index c6123ea..f743662 100644
 +    <expression name="Exp_JellynasGrid_Series">String.Contains(Container(300).ListItem.Property(path),mode=allseries)</expression>
 +    <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
 +    <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
++    <expression name="Exp_JellynasGrid_Series">String.Contains(Container(300).ListItem.Property(path),mode=allseries)</expression>
++    <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
++    <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
++    <expression name="Exp_JellynasGrid_Series">String.Contains(Container(300).ListItem.Property(path),mode=allseries)</expression>
++    <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
++    <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
  
  
      <expression name="Exp_1101Hub_IsVisible">[Window.IsVisible(1101) | [Window.IsVisible(Home) + Integer.IsEqual(Skin.String(Hub.Home.ReplaceWindow),1101)]]</expression>
 diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
-index 0406588..4679261 100644
+index 0406588..ed1a42b 100644
 --- a/1080i/Includes_Hubs.xml
 +++ b/1080i/Includes_Hubs.xml
 @@ -342,6 +342,7 @@
@@ -44,7 +50,7 @@ index 0406588..4679261 100644
  
                      </control>
                  </control>
-@@ -379,6 +380,484 @@
+@@ -379,6 +380,562 @@
          </definition>
      </include>
  
@@ -53,6 +59,17 @@ index 0406588..4679261 100644
 +         JellynasGrid.<movies|series>.* that go into the grid's path ($VAR[JellynasGrid_Query]), the add-on filters. -->
 +    <include name="Hub_JellynasGrid">
 +        <control type="group">
++            <control type="image">
++                <description>JELLYNAS grid: plain background over the spotlight / last widget fanart</description>
++                <left>-1000</left>
++                <width>4000</width>
++                <top>-200</top>
++                <height>1500</height>
++                <texture colordiffuse="$VAR[ColorBackground]">common/white.png</texture>
++                <visible>$EXP[Exp_JellynasGrid]</visible>
++                <animation effect="fade" start="0" end="100" time="200">Visible</animation>
++                <animation effect="fade" start="100" end="0" time="200">Hidden</animation>
++            </control>
 +            <control type="grouplist">
 +                <description>JELLYNAS grid: active filters</description>
 +                <left>view_offx</left>
@@ -113,26 +130,7 @@ index 0406588..4679261 100644
 +                    <ondown>4920</ondown>
 +                    <onleft>300</onleft>
 +                    <onback>4900</onback>
-+                    <itemlayout width="140" height="80" condition="String.IsEmpty(ListItem.Property(v))">
-+                        <control type="label">
-+                            <width>140</width>
-+                            <height>70</height>
-+                            <align>center</align>
-+                            <aligny>center</aligny>
-+                            <font>font_main_bold</font>
-+                            <label>$INFO[ListItem.Label]</label>
-+                            <textcolor>main_fg_50</textcolor>
-+                        </control>
-+                        <control type="image">
-+                            <left>50</left>
-+                            <top>68</top>
-+                            <width>40</width>
-+                            <height>8</height>
-+                            <texture colordiffuse="main_fg_30" border="4">common/menu.png</texture>
-+                            <visible>[[String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.series.letter)]) + [$EXP[Exp_JellynasGrid_Series]]] | [String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.movies.letter)]) + !$EXP[Exp_JellynasGrid_Series]]]</visible>
-+                        </control>
-+                    </itemlayout>
-+                    <itemlayout width="54" height="80" condition="!String.IsEmpty(ListItem.Property(v))">
++                    <itemlayout width="54" height="80">
 +                        <control type="label">
 +                            <width>54</width>
 +                            <height>70</height>
@@ -151,26 +149,7 @@ index 0406588..4679261 100644
 +                            <visible>[[String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.series.letter)]) + [$EXP[Exp_JellynasGrid_Series]]] | [String.IsEqual(ListItem.Property(v),$INFO[Window(Home).Property(JellynasGrid.movies.letter)]) + !$EXP[Exp_JellynasGrid_Series]]]</visible>
 +                        </control>
 +                    </itemlayout>
-+                    <focusedlayout width="140" height="80" condition="String.IsEmpty(ListItem.Property(v))">
-+                        <control type="label">
-+                            <width>140</width>
-+                            <height>70</height>
-+                            <align>center</align>
-+                            <aligny>center</aligny>
-+                            <font>font_main_bold</font>
-+                            <label>$INFO[ListItem.Label]</label>
-+                            <textcolor>$VAR[JellynasGrid_LetterColor]</textcolor>
-+                        </control>
-+                        <control type="image">
-+                            <left>50</left>
-+                            <top>68</top>
-+                            <width>40</width>
-+                            <height>8</height>
-+                            <texture colordiffuse="main_fg_100" border="4">common/menu.png</texture>
-+                            <visible>Control.HasFocus(4910)</visible>
-+                        </control>
-+                    </focusedlayout>
-+                    <focusedlayout width="54" height="80" condition="!String.IsEmpty(ListItem.Property(v))">
++                    <focusedlayout width="54" height="80">
 +                        <control type="label">
 +                            <width>54</width>
 +                            <height>70</height>
@@ -191,199 +170,300 @@ index 0406588..4679261 100644
 +                    </focusedlayout>
 +                    <content>
 +                        <item>
-+                            <label>$ADDON[plugin.video.jellynas 30058]</label>
-+                            <property name="v"></property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
-+                            <onclick>SetFocus(4900,0,absolute)</onclick>
-+                        </item>
-+                        <item>
 +                            <label>A</label>
 +                            <property name="v">A</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,A,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,A,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),A)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),A)">SetProperty(JellynasGrid.series.letter,A,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),A)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),A)">SetProperty(JellynasGrid.movies.letter,A,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>B</label>
 +                            <property name="v">B</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,B,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,B,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),B)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),B)">SetProperty(JellynasGrid.series.letter,B,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),B)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),B)">SetProperty(JellynasGrid.movies.letter,B,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>C</label>
 +                            <property name="v">C</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,C,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,C,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),C)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),C)">SetProperty(JellynasGrid.series.letter,C,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),C)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),C)">SetProperty(JellynasGrid.movies.letter,C,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>D</label>
 +                            <property name="v">D</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,D,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,D,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),D)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),D)">SetProperty(JellynasGrid.series.letter,D,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),D)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),D)">SetProperty(JellynasGrid.movies.letter,D,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>E</label>
 +                            <property name="v">E</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,E,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,E,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),E)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),E)">SetProperty(JellynasGrid.series.letter,E,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),E)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),E)">SetProperty(JellynasGrid.movies.letter,E,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>F</label>
 +                            <property name="v">F</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,F,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,F,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),F)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),F)">SetProperty(JellynasGrid.series.letter,F,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),F)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),F)">SetProperty(JellynasGrid.movies.letter,F,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>G</label>
 +                            <property name="v">G</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,G,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,G,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),G)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),G)">SetProperty(JellynasGrid.series.letter,G,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),G)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),G)">SetProperty(JellynasGrid.movies.letter,G,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>H</label>
 +                            <property name="v">H</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,H,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,H,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),H)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),H)">SetProperty(JellynasGrid.series.letter,H,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),H)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),H)">SetProperty(JellynasGrid.movies.letter,H,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>I</label>
 +                            <property name="v">I</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,I,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,I,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),I)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),I)">SetProperty(JellynasGrid.series.letter,I,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),I)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),I)">SetProperty(JellynasGrid.movies.letter,I,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>J</label>
 +                            <property name="v">J</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,J,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,J,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),J)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),J)">SetProperty(JellynasGrid.series.letter,J,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),J)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),J)">SetProperty(JellynasGrid.movies.letter,J,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>K</label>
 +                            <property name="v">K</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,K,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,K,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),K)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),K)">SetProperty(JellynasGrid.series.letter,K,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),K)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),K)">SetProperty(JellynasGrid.movies.letter,K,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>L</label>
 +                            <property name="v">L</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,L,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,L,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),L)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),L)">SetProperty(JellynasGrid.series.letter,L,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),L)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),L)">SetProperty(JellynasGrid.movies.letter,L,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>M</label>
 +                            <property name="v">M</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,M,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,M,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),M)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),M)">SetProperty(JellynasGrid.series.letter,M,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),M)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),M)">SetProperty(JellynasGrid.movies.letter,M,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>N</label>
 +                            <property name="v">N</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,N,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,N,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),N)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),N)">SetProperty(JellynasGrid.series.letter,N,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),N)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),N)">SetProperty(JellynasGrid.movies.letter,N,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>O</label>
 +                            <property name="v">O</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,O,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,O,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),O)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),O)">SetProperty(JellynasGrid.series.letter,O,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),O)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),O)">SetProperty(JellynasGrid.movies.letter,O,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>P</label>
 +                            <property name="v">P</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,P,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,P,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),P)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),P)">SetProperty(JellynasGrid.series.letter,P,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),P)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),P)">SetProperty(JellynasGrid.movies.letter,P,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>Q</label>
 +                            <property name="v">Q</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,Q,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,Q,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),Q)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),Q)">SetProperty(JellynasGrid.series.letter,Q,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),Q)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),Q)">SetProperty(JellynasGrid.movies.letter,Q,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>R</label>
 +                            <property name="v">R</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,R,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,R,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),R)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),R)">SetProperty(JellynasGrid.series.letter,R,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),R)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),R)">SetProperty(JellynasGrid.movies.letter,R,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>S</label>
 +                            <property name="v">S</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,S,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,S,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),S)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),S)">SetProperty(JellynasGrid.series.letter,S,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),S)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),S)">SetProperty(JellynasGrid.movies.letter,S,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>T</label>
 +                            <property name="v">T</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,T,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,T,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),T)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),T)">SetProperty(JellynasGrid.series.letter,T,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),T)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),T)">SetProperty(JellynasGrid.movies.letter,T,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>U</label>
 +                            <property name="v">U</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,U,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,U,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),U)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),U)">SetProperty(JellynasGrid.series.letter,U,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),U)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),U)">SetProperty(JellynasGrid.movies.letter,U,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>V</label>
 +                            <property name="v">V</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,V,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,V,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),V)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),V)">SetProperty(JellynasGrid.series.letter,V,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),V)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),V)">SetProperty(JellynasGrid.movies.letter,V,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>W</label>
 +                            <property name="v">W</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,W,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,W,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),W)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),W)">SetProperty(JellynasGrid.series.letter,W,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),W)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),W)">SetProperty(JellynasGrid.movies.letter,W,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>X</label>
 +                            <property name="v">X</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,X,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,X,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),X)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),X)">SetProperty(JellynasGrid.series.letter,X,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),X)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),X)">SetProperty(JellynasGrid.movies.letter,X,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>Y</label>
 +                            <property name="v">Y</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,Y,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,Y,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),Y)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),Y)">SetProperty(JellynasGrid.series.letter,Y,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),Y)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),Y)">SetProperty(JellynasGrid.movies.letter,Y,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>Z</label>
 +                            <property name="v">Z</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,Z,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,Z,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),Z)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),Z)">SetProperty(JellynasGrid.series.letter,Z,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),Z)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),Z)">SetProperty(JellynasGrid.movies.letter,Z,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                        <item>
 +                            <label>#</label>
 +                            <property name="v">0</property>
-+                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.series.letter,0,Home)</onclick>
-+                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.movies.letter,0,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.letter)],Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),0)">ClearProperty(JellynasGrid.series.letter,Home)</onclick>
++                            <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),0)">SetProperty(JellynasGrid.series.letter,0,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.letter)],Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEqual(Window(Home).Property(JellynasGrid.was),0)">ClearProperty(JellynasGrid.movies.letter,Home)</onclick>
++                            <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEqual(Window(Home).Property(JellynasGrid.was),0)">SetProperty(JellynasGrid.movies.letter,0,Home)</onclick>
 +                            <onclick>SetFocus(4900,0,absolute)</onclick>
 +                        </item>
 +                    </content>
@@ -425,10 +505,12 @@ index 0406588..4679261 100644
 +                        <texturefocus colordiffuse="main_fg_100" border="34">common/menu.png</texturefocus>
 +                        <texturenofocus colordiffuse="CC262626" border="34">common/menu.png</texturenofocus>
 +                        <label>$ADDON[plugin.video.jellynas 30060]: $VAR[JellynasGrid_WatchedLabel]</label>
-+                        <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched))">SetProperty(JellynasGrid.series.unwatched,1,Home)</onclick>
-+                        <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched))">ClearProperty(JellynasGrid.series.unwatched,Home)</onclick>
-+                        <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched))">SetProperty(JellynasGrid.movies.unwatched,1,Home)</onclick>
-+                        <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched))">ClearProperty(JellynasGrid.movies.unwatched,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.series.unwatched)],Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.was))">SetProperty(JellynasGrid.series.unwatched,1,Home)</onclick>
++                        <onclick condition="$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.was))">ClearProperty(JellynasGrid.series.unwatched,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series]">SetProperty(JellynasGrid.was,$INFO[Window(Home).Property(JellynasGrid.movies.unwatched)],Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series] + String.IsEmpty(Window(Home).Property(JellynasGrid.was))">SetProperty(JellynasGrid.movies.unwatched,1,Home)</onclick>
++                        <onclick condition="!$EXP[Exp_JellynasGrid_Series] + !String.IsEmpty(Window(Home).Property(JellynasGrid.was))">ClearProperty(JellynasGrid.movies.unwatched,Home)</onclick>
 +                        <visible>true</visible>
 +                    </control>
 +                    <control type="button" id="4923">
@@ -526,10 +608,12 @@ index 0406588..4679261 100644
 +        <value>main_fg_50</value>
 +    </variable>
 +
++
++
      <include name="Hub_Top_Animation">
          <!-- <param name="condition">[$EXP[Exp_HubName_IsVisible] + !Window.IsVisible(1163)]</param> -->
          <param name="condition">[$EXP[Exp_HubName_IsVisible]]</param>
-@@ -402,6 +881,7 @@
+@@ -402,6 +959,7 @@
      <include name="Hub_Widgets_Only">
          <include>Background_Transition</include>
          <control type="group" id="340">
@@ -537,7 +621,7 @@ index 0406588..4679261 100644
              <include content="Object_Top" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
                  <param name="top">440</param>
              </include>
-@@ -412,6 +892,7 @@
+@@ -412,6 +970,7 @@
          </control>
  
          <include content="Hub_Widgets_Infopanel" condition="Skin.HasSetting(Hub.$PARAM[window_id].EnableDetailedInformation)">
