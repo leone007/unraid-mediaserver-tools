@@ -26,7 +26,7 @@ index 8e92082..3e3e1f1 100644
      <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
      <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
 diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
-index 89c82e0..a159d06 100644
+index 89c82e0..f1b08de 100644
 --- a/1080i/Includes_Hubs.xml
 +++ b/1080i/Includes_Hubs.xml
 @@ -344,6 +344,7 @@
@@ -37,7 +37,7 @@ index 89c82e0..a159d06 100644
  
                      </control>
                  </control>
-@@ -397,6 +398,966 @@
+@@ -397,6 +398,999 @@
          </control>
      </include>
  
@@ -65,9 +65,15 @@ index 89c82e0..a159d06 100644
 +                <orientation>horizontal</orientation>
 +                <onleft>300</onleft>
 +                <onback>300</onback>
-+                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,1)">4960</ondown>
-+                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,2)">4970</ondown>
-+                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,3)">4980</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,1) + Integer.IsGreater(Container(4961).NumItems,0)">4961</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,1) + !Integer.IsGreater(Container(4961).NumItems,0) + Integer.IsGreater(Container(4962).NumItems,0)">4962</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,1) + !Integer.IsGreater(Container(4961).NumItems,0) + !Integer.IsGreater(Container(4962).NumItems,0) + Integer.IsGreater(Container(4963).NumItems,0)">4963</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,2) + Integer.IsGreater(Container(4971).NumItems,0)">4971</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,2) + !Integer.IsGreater(Container(4971).NumItems,0) + Integer.IsGreater(Container(4972).NumItems,0)">4972</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,2) + !Integer.IsGreater(Container(4971).NumItems,0) + !Integer.IsGreater(Container(4972).NumItems,0) + Integer.IsGreater(Container(4973).NumItems,0)">4973</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,3) + Integer.IsGreater(Container(4981).NumItems,0)">4981</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,3) + !Integer.IsGreater(Container(4981).NumItems,0) + Integer.IsGreater(Container(4982).NumItems,0)">4982</ondown>
++                <ondown condition="Integer.IsEqual(Container(4950).CurrentItem,3) + !Integer.IsGreater(Container(4981).NumItems,0) + !Integer.IsGreater(Container(4982).NumItems,0) + Integer.IsGreater(Container(4983).NumItems,0)">4983</ondown>
 +                <visible>$EXP[Exp_JellynasCatalog]</visible>
 +                <itemlayout width="270" height="80">
 +                    <control type="image">
@@ -145,6 +151,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup>4950</onup>
++                        <ondown condition="Integer.IsGreater(Container(4962).NumItems,0)">4962</ondown>
++                        <ondown condition="!Integer.IsGreater(Container(4962).NumItems,0) + Integer.IsGreater(Container(4963).NumItems,0)">4963</ondown>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -239,6 +248,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup condition="Integer.IsGreater(Container(4961).NumItems,0)">4961</onup>
++                        <onup condition="!Integer.IsGreater(Container(4961).NumItems,0)">4950</onup>
++                        <ondown condition="Integer.IsGreater(Container(4963).NumItems,0)">4963</ondown>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -333,6 +345,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup condition="Integer.IsGreater(Container(4962).NumItems,0)">4962</onup>
++                        <onup condition="!Integer.IsGreater(Container(4962).NumItems,0) + Integer.IsGreater(Container(4961).NumItems,0)">4961</onup>
++                        <onup condition="!Integer.IsGreater(Container(4962).NumItems,0) + !Integer.IsGreater(Container(4961).NumItems,0)">4950</onup>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -438,6 +453,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup>4950</onup>
++                        <ondown condition="Integer.IsGreater(Container(4972).NumItems,0)">4972</ondown>
++                        <ondown condition="!Integer.IsGreater(Container(4972).NumItems,0) + Integer.IsGreater(Container(4973).NumItems,0)">4973</ondown>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -532,6 +550,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup condition="Integer.IsGreater(Container(4971).NumItems,0)">4971</onup>
++                        <onup condition="!Integer.IsGreater(Container(4971).NumItems,0)">4950</onup>
++                        <ondown condition="Integer.IsGreater(Container(4973).NumItems,0)">4973</ondown>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -626,6 +647,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup condition="Integer.IsGreater(Container(4972).NumItems,0)">4972</onup>
++                        <onup condition="!Integer.IsGreater(Container(4972).NumItems,0) + Integer.IsGreater(Container(4971).NumItems,0)">4971</onup>
++                        <onup condition="!Integer.IsGreater(Container(4972).NumItems,0) + !Integer.IsGreater(Container(4971).NumItems,0)">4950</onup>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -731,6 +755,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup>4950</onup>
++                        <ondown condition="Integer.IsGreater(Container(4982).NumItems,0)">4982</ondown>
++                        <ondown condition="!Integer.IsGreater(Container(4982).NumItems,0) + Integer.IsGreater(Container(4983).NumItems,0)">4983</ondown>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -825,6 +852,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup condition="Integer.IsGreater(Container(4981).NumItems,0)">4981</onup>
++                        <onup condition="!Integer.IsGreater(Container(4981).NumItems,0)">4950</onup>
++                        <ondown condition="Integer.IsGreater(Container(4983).NumItems,0)">4983</ondown>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -919,6 +949,9 @@ index 89c82e0..a159d06 100644
 +                        <orientation>horizontal</orientation>
 +                        <scrolltime tween="quadratic">300</scrolltime>
 +                        <preloaditems>2</preloaditems>
++                        <onup condition="Integer.IsGreater(Container(4982).NumItems,0)">4982</onup>
++                        <onup condition="!Integer.IsGreater(Container(4982).NumItems,0) + Integer.IsGreater(Container(4981).NumItems,0)">4981</onup>
++                        <onup condition="!Integer.IsGreater(Container(4982).NumItems,0) + !Integer.IsGreater(Container(4981).NumItems,0)">4950</onup>
 +                        <onleft>300</onleft>
 +                        <onback>4950</onback>
 +                        <itemlayout width="257" height="420">
@@ -1004,7 +1037,7 @@ index 89c82e0..a159d06 100644
      <!-- JELLYNAS: poster grid of the focused side menu category (Exp_JellynasGrid), right of the menu, no extra OK.
           Up from the first row: the grid bar (letters, sort, watched, genre); the choices are Home window properties
           JellynasGrid.<movies|series>.* that go into the grid's path ($VAR[JellynasGrid_Query]), the add-on filters. -->
-@@ -919,6 +1880,14 @@
+@@ -919,6 +1913,14 @@
          </control>
      </include>
  

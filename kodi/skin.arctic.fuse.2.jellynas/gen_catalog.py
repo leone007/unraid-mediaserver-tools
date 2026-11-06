@@ -49,7 +49,22 @@ def card(lid, focused):
 ''' % (top, h, font, color, lab)
     return out
 
-def row(lid, label, path):
+def has(i):
+    return 'Integer.IsGreater(Container(%d).NumItems,0)' % i
+
+
+def nav(tag, targets, last):
+    """<onup>/<ondown> to the first non-empty list of targets, else last (0 = nowhere)."""
+    out, before = '', []
+    for t in targets:
+        out += '<%s condition="%s">%d</%s>\n' % (tag, ' + '.join(['!' + has(b) for b in before] + [has(t)]), t, tag)
+        before.append(t)
+    if last:
+        out += '<%s condition="%s">%d</%s>\n' % (tag, ' + '.join('!' + has(b) for b in before), last, tag) if before else '<%s>%d</%s>\n' % (tag, last, tag)
+    return out
+
+
+def row(lid, label, path, ups, downs):   # lists in a grouplist need their own up/down (Kodi does not pass them on)
     return '''<control type="group">
 <height>470</height>
 <control type="label">
@@ -66,7 +81,7 @@ def row(lid, label, path):
 <orientation>horizontal</orientation>
 <scrolltime tween="quadratic">300</scrolltime>
 <preloaditems>2</preloaditems>
-<onleft>300</onleft>
+%s%s<onleft>300</onleft>
 <onback>4950</onback>
 <itemlayout width="257" height="420">
 %s</itemlayout>
@@ -75,7 +90,7 @@ def row(lid, label, path):
 <content>%s%s</content>
 </control>
 </control>
-''' % (A, label, lid, card(lid, False), card(lid, True), P, path)
+''' % (A, label, lid, nav('onup', ups, 4950), nav('ondown', downs, 0), card(lid, False), card(lid, True), P, path)
 
 def tab_layout(focused):
     out = '''<control type="image">
@@ -120,9 +135,10 @@ for n, (lab, gid, rows) in enumerate(TABS, 1):
 <onleft>300</onleft>
 <visible>$EXP[Exp_JellynasCatalog] + Integer.IsEqual(Container(4950).CurrentItem,%d)</visible>
 %s</control>
-''' % (gid, n, ''.join(row(gid + k + 1, l, p) for k, (l, p) in enumerate(rows)))
+''' % (gid, n, ''.join(row(gid + k + 1, l, p, [gid + j for j in range(k, 0, -1)], [gid + j for j in range(k + 2, len(rows) + 1)]) for k, (l, p) in enumerate(rows)))
 
-down = ''.join('<ondown condition="Integer.IsEqual(Container(4950).CurrentItem,%d)">%d</ondown>\n' % (n, gid) for n, (_, gid, _) in enumerate(TABS, 1))
+down = ''.join(nav('ondown', [gid + 1, gid + 2, gid + 3], 0).replace('<ondown condition="', '<ondown condition="Integer.IsEqual(Container(4950).CurrentItem,%d) + ' % n)
+               for n, (_, gid, _) in enumerate(TABS, 1))
 INC = '''<!-- JELLYNAS: Catalog page next to the side menu (Exp_JellynasCatalog): tabs Movies | Series | Requests (list 4950,
 Left/Right switches at once), rows of poster cards in grouplists 4960 / 4970 / 4980 from the add-on (Seerr) -->
 <include name="Hub_JellynasCatalog">
