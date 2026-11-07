@@ -45,9 +45,11 @@ Patches:
   (`?mode=catalog`, `Exp_JellynasCatalog`) shows tabs Movies | Series | Requests (list 4950, Left/Right switches at
   once, Down into the rows) and per tab a grouplist (4960/4970/4980) of three poster rows from the add-on: trending
   (split by type), popular, upcoming; requests: processing, coming soon, available. Plain background.
-- `08-poster-row-labels.patch` (one line, on top of 06): `List_Poster_Row` shows the title and second line on poster
-  cards that carry our `sublabel` (AF2 did this only for cast cards, `Property(role)`): on the poster's bottom over a
-  fade, in the widget rows and the poster grid.
+- `08-poster-row-labels.patch` (a `git diff` on top of 07): poster cards that carry our `sublabel` show the title and
+  the second line under the poster, as on the Catalog page (`Layout_Poster`; Catalog cards draw their own); poster rows
+  are 420 high instead of 350 (`view_poster_labels_itemlayout_h`, in every `List_Poster_Row`: widget rows, the poster
+  grid, the cast row); the IMDb badge 14 px from the top and left edge, the green text badge 14 px from the bottom and
+  left edge, both on the same card (This week shows both).
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.

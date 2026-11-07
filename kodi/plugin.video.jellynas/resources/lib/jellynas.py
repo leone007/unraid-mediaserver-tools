@@ -39,7 +39,7 @@ CAT_REQS = (('all', 30077), ('processing', 30078), ('comingsoon', 30079), ('avai
 CAT_STATUS = {'available': 30080, 'partial': 30081, 'processing': 30082, 'pending': 30082}
 LIMIT = 24
 SPOT_MAX = 10
-FIELDS = 'Overview,ProviderIds,Genres,MediaStreams,PremiereDate,OfficialRating,CommunityRating'
+FIELDS = 'Overview,ProviderIds,Genres,MediaStreams,PremiereDate,OfficialRating,CommunityRating,ChildCount'   # ChildCount: seasons of a series card
 IMAGES = 'Primary,Backdrop,Thumb,Logo'
 GRID_SORTS = (('new', 30050), ('name', 30051), ('year', 30052), ('imdb', 30053))   # grid bar: value, label
 SKIN_STRINGS = (30057, 30058, 30059, 30060, 30061, 30097, 30098, 30110, 30111)   # only the JELLYNAS skin's grid bar uses them ($ADDON[plugin.video.jellynas N])
@@ -207,17 +207,34 @@ def add_streams(tag, it):
                                                       language=s.get('Language') or ''))
 
 
-def media_item(c, it, imdb, sids):
+def length(secs):
+    h, m = secs // 3600, secs % 3600 // 60
+    return L(30105).format(h=h, m=m) if h else L(30106).format(m=m)
+
+
+def second_line(it, row):
+    """The card's second line under the poster (owner, 2026-11-07): episode code; new movies year and length, new
+    series year and seasons; else the year."""
+    kind, year = it.get('Type'), str(it.get('ProductionYear') or '')
+    if kind == 'Episode':
+        return 'S%d:E%d' % (it.get('ParentIndexNumber') or 0, it.get('IndexNumber') or 0)
+    if kind == 'Season':
+        return it.get('Name') or ''
+    extra = ''
+    if row == 'movies' and it.get('RunTimeTicks'):
+        extra = length(int(it['RunTimeTicks'] / 10000000))
+    elif row == 'series' and kind == 'Series' and it.get('ChildCount'):
+        n = it['ChildCount']
+        extra = L(30108) if n == 1 else L(30107).format(n=n)
+    return ' · '.join(x for x in (year, extra) if x)
+
+
+def media_item(c, it, imdb, sids, row=''):
     kind = it.get('Type')
     ep, show = kind == 'Episode', kind in ('Series', 'Season')
     name, series = it.get('Name') or '', it.get('SeriesName') or ''
     se, en = it.get('ParentIndexNumber') or 0, it.get('IndexNumber') or 0
-    if ep:
-        sub = 'S%d:E%d · %s' % (se, en, name)
-    elif kind == 'Season':
-        sub = name
-    else:
-        sub = str(it.get('ProductionYear') or '')
+    sub = second_line(it, row)
     li = xbmcgui.ListItem(series if ep or kind == 'Season' else name, sub, offscreen=True)
     tag = li.getVideoInfoTag()
     tag.setMediaType('episode' if ep else ('tvshow' if kind == 'Series' else ('season' if show else 'movie')))
@@ -326,10 +343,10 @@ def all_items(c, kind, q=None):
               EnableUserData='true', EnableTotalRecordCount='false', **p).get('Items', [])
 
 
-def list_media(h, c, items, content='videos'):
+def list_media(h, c, items, content='videos', row=''):
     imdb, sids = imdb_table(c), series_ids(c, items)
     xbmcplugin.setContent(h, content)
-    xbmcplugin.addDirectoryItems(h, [media_item(c, it, imdb, sids) for it in items if it.get('Id')])
+    xbmcplugin.addDirectoryItems(h, [media_item(c, it, imdb, sids, row) for it in items if it.get('Id')])
 
 
 def do_resume(h, c):
@@ -341,11 +358,11 @@ def do_nextup(h, c):
 
 
 def do_movies(h, c):
-    list_media(h, c, latest_items(c, 'Movie'))
+    list_media(h, c, latest_items(c, 'Movie'), row='movies')
 
 
 def do_series(h, c):
-    list_media(h, c, latest_items(c, 'Episode'))
+    list_media(h, c, latest_items(c, 'Episode'), row='series')
 
 
 def list_all(h, c, kind, content, q):
@@ -555,8 +572,9 @@ def week_card(c, e, imdb, now, info, day=None, eps=None):
             tag.setDuration(total)
         add_streams(tag, it)
     r = imdb.get(e.get('sid'))
-    if r:   # rating for the info panel; the card badge of this row is Available, not IMDb (owner, 2026-11-05)
+    if r:   # the IMDb badge on top and Available at the bottom of the card (owner, 2026-11-07)
         tag.setRating(r[0] / 10.0, int(r[1] or 0), 'imdb', True)
+        li.setProperty('jellynas.imdb', '%.1f' % (r[0] / 10.0))
     li.setArt(series_art(c, e, info))
     li.setProperty('jellynas.kind', 'week')
     li.setProperty('sublabel', sub)

@@ -1,13 +1,86 @@
+diff --git a/1080i/Includes_Constants.xml b/1080i/Includes_Constants.xml
+index 8461583..34d7edf 100644
+--- a/1080i/Includes_Constants.xml
++++ b/1080i/Includes_Constants.xml
+@@ -94,6 +94,7 @@
+     <constant name="view_poster_itemlayout_h">350</constant>
+     <constant name="-view_poster_itemlayout_h">-350</constant>
+     <constant name="view_poster_item_h">310</constant>
++    <constant name="view_poster_labels_itemlayout_h">420</constant>  <!-- JELLYNAS: poster rows with the title and second line under the poster (as the Catalog page) -->
+     <constant name="-view_poster_item_h">-310</constant>
+     <constant name="view_poster_itemlayout_w">257.14</constant>
+     <constant name="-view_poster_itemlayout_w">-257.14</constant>
+diff --git a/1080i/Includes_Layouts.xml b/1080i/Includes_Layouts.xml
+index 1fef058..03ee1cc 100644
+--- a/1080i/Includes_Layouts.xml
++++ b/1080i/Includes_Layouts.xml
+@@ -2179,6 +2179,26 @@
+                         <param name="use_label2">$PARAM[use_label2]</param>
+                     </include>
+                 </control>
++                <control type="group">   <!-- JELLYNAS: title and second line under our poster cards (the Catalog page draws its own) -->
++                    <top>$PARAM[item_h]</top>
++                    <visible>!String.IsEmpty($PARAM[listitem].Property(sublabel)) + !String.IsEqual($PARAM[listitem].Property(jellynas.kind),catalog)</visible>
++                    <control type="label">
++                        <top>12</top>
++                        <width>$PARAM[item_w]</width>
++                        <height>36</height>
++                        <font>font_mini_bold</font>
++                        <textcolor>main_fg_90</textcolor>
++                        <label>$INFO[$PARAM[listitem].Label]</label>
++                    </control>
++                    <control type="label">
++                        <top>48</top>
++                        <width>$PARAM[item_w]</width>
++                        <height>30</height>
++                        <font>font_tiny</font>
++                        <textcolor>main_fg_50</textcolor>
++                        <label>$INFO[$PARAM[listitem].Property(sublabel)]</label>
++                    </control>
++                </control>
+                 <control type="group">
+                     <include content="Object_JellynasImdb">
+                         <param name="listitem">$PARAM[listitem]</param>
 diff --git a/1080i/Includes_Lists.xml b/1080i/Includes_Lists.xml
-index 03136e8..28d7993 100644
+index 03136e8..15b2e8c 100644
 --- a/1080i/Includes_Lists.xml
 +++ b/1080i/Includes_Lists.xml
-@@ -571,7 +571,7 @@
-         <param name="focusedlayout_special">false</param>
-         <param name="control">fixedlist</param>
-         <param name="orientation">horizontal</param>
--        <param name="detailed">!String.IsEmpty(ListItem.Property(role))</param>
-+        <param name="detailed">!String.IsEmpty(ListItem.Property(role)) | !String.IsEmpty(ListItem.Property(sublabel))</param>  <!-- JELLYNAS: title and second line on our poster cards -->
+@@ -580,7 +580,7 @@
+                 <param name="item_w">view_poster_item_w</param>
+                 <param name="item_h">view_poster_item_h</param>
+                 <param name="itemlayout_w">view_poster_itemlayout_w</param>
+-                <param name="itemlayout_h">view_poster_itemlayout_h</param>
++                <param name="itemlayout_h">view_poster_labels_itemlayout_h</param>  <!-- JELLYNAS: room for two lines under the poster -->
+                 <param name="itemlayout_include">Layout_Poster</param>
+                 <param name="focusedlayout_special">$PARAM[focusedlayout_special]</param>
+                 <param name="offset_y">$PARAM[offset_y]</param>
+diff --git a/1080i/Includes_Objects.xml b/1080i/Includes_Objects.xml
+index 3f33665..3e7ce36 100644
+--- a/1080i/Includes_Objects.xml
++++ b/1080i/Includes_Objects.xml
+@@ -2362,9 +2362,9 @@
+     <include name="Object_JellynasImdb">
+         <param name="listitem">ListItem</param>
          <definition>
-             <include content="List_Core">
-                 <param name="orientation">$PARAM[orientation]</param>
+-            <control type="group">
+-                <left>24</left>
+-                <top>14</top>
++            <control type="group">   <!-- Available at the bottom, as far from the edges as the IMDb badge on top (owner, 2026-11-07) -->
++                <left>14</left>
++                <bottom>14</bottom>
+                 <width>96</width>
+                 <height>26</height>
+                 <visible>!String.IsEmpty($PARAM[listitem].Property(jellynas.badge))</visible>
+@@ -2380,11 +2380,10 @@
+                 </control>
+             </control>
+             <control type="group">
+-                <left>24</left>
++                <left>14</left>
+                 <top>14</top>
+                 <width>90</width>
+                 <height>26</height>
+-                <visible>String.IsEmpty($PARAM[listitem].Property(jellynas.badge)) + !String.IsEqual($PARAM[listitem].Property(jellynas.kind),week)</visible>
+                 <visible>!String.IsEmpty($PARAM[listitem].Property(jellynas.imdb)) | !String.IsEmpty($PARAM[listitem].Rating(imdb))</visible>
+                 <control type="image">
+                     <texture colordiffuse="FFF5C518" border="4">jellynas/badge_r4.png</texture>

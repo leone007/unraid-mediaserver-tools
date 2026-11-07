@@ -382,3 +382,22 @@ msgctxt "#30104"
 msgid "Magyar"
 msgstr "Magyar"
 
+#. Card second line: a length of hours and minutes, e.g. 2 h 5 min
+msgctxt "#30105"
+msgid "{h} h {m} min"
+msgstr "{h} ó {m} p"
+
+#. Card second line: a length under an hour, e.g. 45 min
+msgctxt "#30106"
+msgid "{m} min"
+msgstr "{m} p"
+
+#. Card second line: number of seasons of a series (more than one)
+msgctxt "#30107"
+msgid "{n} seasons"
+msgstr "{n} évad"
+
+#. Card second line: a series with one season
+msgctxt "#30108"
+msgid "1 season"
+msgstr "1 évad"

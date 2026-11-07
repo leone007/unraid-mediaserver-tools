@@ -239,7 +239,7 @@ ok([li.label for _, li, _ in root] == ['Continue watching', 'Next up', 'Recently
 items = run('?mode=resume')
 ok(len(items) == 2 and DIR['end'] is True, 'resume: 2 items, directory ok')
 url, li, isdir = items[1]
-ok(li.label == 'Vízióküldetés' and li.label2 == 'S1:E4 · 4. epizód', 'resume: episode under the series name, S1:E4 · title below')
+ok(li.label == 'Vízióküldetés' and li.label2 == 'S1:E4', 'resume: episode under the series name, S1:E4 below')
 ok(url == 'plugin://plugin.video.kofin/?mode=play&id=e4' and not isdir and li.props.get('IsPlayable') == 'true', 'resume: plays through Kofin')
 ok(li.art.get('clearlogo', '').startswith(URL + '/Items/s1/Images/Logo?tag=sl'), 'resume: series clear logo')
 ok(li.art.get('poster', '').startswith(URL + '/Items/s1/Images/Primary?tag=sp'), 'resume: series poster')
@@ -280,10 +280,11 @@ ok(any(li.label2.startswith('MA ') for _, li, _ in items) and any(li.props.get('
 LANG['lang'] = '0'
 
 items = run('?mode=nextup')
-ok([li.label for _, li, _ in items] == ['Vízióküldetés', 'Lost'] and items[0][1].props.get('sublabel') == 'S1:E5 · 5. epizód', 'next up row')
+ok([li.label for _, li, _ in items] == ['Vízióküldetés', 'Lost'] and items[0][1].props.get('sublabel') == 'S1:E5', 'next up row')
 items = run('?mode=movies')
 ok(items[0][1].label == 'Hotel Transylvania' and items[0][1].props.get('jellynas.imdb') == '7.1' and items[0][0].endswith('mode=play&id=m1'),
    'recently added movies: IMDb badge value, plays')
+ok(items[0][1].props.get('sublabel') == '2012 · 1 h 31 min', 'recently added movies: year and length under the poster')
 lat = [q for q in SEEN if q[1] == '/Items/Latest']
 ok(lat and lat[-1][2].get('IncludeItemTypes') == 'Movie' and lat[-1][2].get('userId') == 'u1', 'latest movies asked with the user')
 items = run('?mode=series')
@@ -293,7 +294,7 @@ ok(ser['Lost'][2] and ser['Lost'][0].endswith('mode=browse&type=series&folder=s2
 ssn = [x for x in items if 'type=season' in x[0]]
 ok(ssn and ssn[0][2] and 'series=s3' in ssn[0][0] and ssn[0][1].props.get('jellynas.imdb') == '6.3', 'season card: Kofin season browse, IMDb of its series')
 eps6 = [x for x in items if x[0].endswith('id=v6')]
-ok(eps6 and eps6[0][1].props.get('sublabel') == 'S1:E6 · 6. epizód', 'recently added series: a single new episode plays')
+ok(eps6 and eps6[0][1].props.get('sublabel') == 'S1:E6', 'recently added series: a single new episode plays')
 
 items = run('?mode=allmovies')
 alls = [q for q in SEEN if q[1] == '/Items' and q[2].get('IncludeItemTypes') == 'Movie']
@@ -369,8 +370,8 @@ ok(DIR['info'] and DIR['info'][-1].label == 'Nocturne', 'details: the info windo
 del LANG['catalog']
 
 items = run('?mode=week')
-ok(not [li for _, li, _ in items if li.props.get('jellynas.imdb')] and all(li.props.get('jellynas.kind') == 'week' for _, li, _ in items),
-   'week: no IMDb badge value on the cards (kind=week)')
+ok([li for _, li, _ in items if li.props.get('jellynas.imdb')] and all(li.props.get('jellynas.kind') == 'week' for _, li, _ in items),
+   'week: IMDb badge value on the cards (with Available at the bottom, owner 2026-11-07)')
 v5 = [x for x in items if x[1].label == 'A visszavágó'][0][1]
 noc = [x for x in items if x[1].label == 'Nocturne'][0][1]
 ok(v5.props.get('jellynas.badge') == 'Available' and not noc.props.get('jellynas.badge') and 'imdb' in [r[2] for r in v5.tag.d['ratings']],
