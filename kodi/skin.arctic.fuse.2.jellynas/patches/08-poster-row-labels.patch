@@ -1,5 +1,5 @@
 diff --git a/1080i/Includes_Constants.xml b/1080i/Includes_Constants.xml
-index 8461583..2b1e1a0 100644
+index 8461583..afe3043 100644
 --- a/1080i/Includes_Constants.xml
 +++ b/1080i/Includes_Constants.xml
 @@ -94,6 +94,10 @@
@@ -13,24 +13,19 @@ index 8461583..2b1e1a0 100644
      <constant name="-view_poster_item_h">-310</constant>
      <constant name="view_poster_itemlayout_w">257.14</constant>
      <constant name="-view_poster_itemlayout_w">-257.14</constant>
-@@ -187,9 +191,9 @@
-     <constant name="widget_grouplist_t_recommendations">0</constant>
-     <constant name="widget_grouplist_b_recommendations">0</constant>
- 
--    <constant name="widget_grouplist_t">880</constant> <!-- 940 -->
-+    <constant name="widget_grouplist_t">830</constant> <!-- JELLYNAS: was 880; -50 with widget_label_t, so the first row stays in place --> <!-- 940 -->
-     <constant name="widget_grouplist_b">-880</constant>
--    <constant name="widget_grouplist_t_detailed">940</constant> <!-- 940 -->
-+    <constant name="widget_grouplist_t_detailed">890</constant> <!-- JELLYNAS: was 940; see widget_grouplist_t --> <!-- 940 -->
+@@ -193,12 +197,12 @@
      <constant name="widget_grouplist_b_detailed">-880</constant>
  
  
-@@ -198,7 +202,7 @@
+-    <constant name="widget_tbump_h_detailed">580</constant>  <!-- Bumper to address label top spacing (140) [200] [580] {640} -->
++    <constant name="widget_tbump_h_detailed">530</constant>  <!-- JELLYNAS: was 580, -50 with widget_label_t (bumper + label top + label height = 0) -->  <!-- Bumper to address label top spacing (140) [200] [580] {640} -->
+     <constant name="widget_label_h_detailed">0</constant>  <!-- Space between label and widget (0) [-60] {-60} -->
      <constant name="widget_items_t_detailed">10</constant>  <!-- Widget position from top (10) [70] {70} -->
  
-     <constant name="widget_tbump_h">640</constant>  <!-- Bumper to address label top spacing (140) [200] [580] {640} -->
+-    <constant name="widget_tbump_h">640</constant>  <!-- Bumper to address label top spacing (140) [200] [580] {640} -->
 -    <constant name="widget_label_t">-580</constant>  <!-- Space from widget bottom to next widget label [-140] {-580} -->
-+    <constant name="widget_label_t">-530</constant>  <!-- JELLYNAS: was -580; +50 row pitch for the 400 high poster rows, the focused list keeps its height (grouplist scrolling aligns its bottom) -->  <!-- Space from widget bottom to next widget label [-140] {-580} -->
++    <constant name="widget_tbump_h">590</constant>  <!-- JELLYNAS: was 640, -50 with widget_label_t (bumper + label top + label height = 0, the first row stays in place) -->  <!-- Bumper to address label top spacing (140) [200] [580] {640} -->
++    <constant name="widget_label_t">-530</constant>  <!-- JELLYNAS: was -580; +50 row pitch for the 400 high poster rows, the focused list keeps its height (the grouplist height equals the list slot, items_t + items_h, so a row lands at the same place scrolling up or down) -->  <!-- Space from widget bottom to next widget label [-140] {-580} -->
      <constant name="widget_label_h">-60</constant>  <!-- Space between label and widget (0) [-60] {-60} -->
      <constant name="widget_items_t">70</constant>  <!-- Widget position from top (10) [70] {70} -->
      <constant name="widget_items_h">1010</constant>  <!-- Widget position from bottom (570) [570] {1010} -->
