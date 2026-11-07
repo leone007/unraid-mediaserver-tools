@@ -1,12 +1,155 @@
-# Kodi JELLYNAS skin: telepítés Fire TV Stick 4K Max (2. gen) eszközre
+# Kodi JELLYNAS skin: beállítás Fire TV Stick 4K Max (2. gen) eszközön
 
-Állapot: 2026-11-06, a Macen élőben kipróbált beállítások alapján. **Fire TV-n még nem próbáltuk ki.** Ha valamelyik lépés másképp megy, ezt a fájlt kell javítani.
+Állapot: 2026-11-07, élő próba alapján (Fire OS RS8185/3898, LG C3). Ami nem igazolt, azt a szöveg külön jelöli.
 
-Cél: Kodi 21, Arctic Fuse 2 JELLYNAS skin, Kofin, Kofin PVR, JELLYNAS add-on, a Mac menüivel és widgetjeivel.
+Cél: Arctic Fuse 2 JELLYNAS skin, Kofin, Kofin PVR és JELLYNAS add-on, a Mac menüivel és widgetjeivel.
 
-## 0. Előkészítés a Macen
+## Kiindulás
 
-A Kodi legyen bezárva. Terminálban:
+- A Kodi 21.3 `armeabi-v7a` (32 bit) már fent van. A régi Kodit előbb töröld.
+- A Stick `Download/kodi addons` mappájában ott vannak:
+  - `repository.jurialmunkey-3.4.zip`
+  - `repository.kontell-1.0.2.zip`
+  - `repository.jellynas.zip`
+  - `script.keymapedit-master.zip`
+  - `script.service.ignoreforcedsubtitles-0.1.9.zip`
+  - `kodi-beall` mappa (lásd a Függeléket)
+
+## 1. Tárhely-jogosultság
+
+Fire TV: Settings > Applications > Manage Installed Applications > Kodi > App Permissions: engedélyezd a tárhelyet. Enélkül a Kodi nem látja a zipeket a `Download` mappában. Utána indítsd újra a Kodit.
+
+Tartalék, ha így sem látja: Beállítások > Fájlkezelő > Forrás hozzáadása > Hálózati hely hozzáadása, WebDAV (HTTPS), `dav.leone007.net`, mappa `kodi addons`. Ezt az útvonalat Fire TV-n nem próbáltuk ki.
+
+## 2. Kodi beállításai
+
+**Felület**
+- Beállítási szint: Szakértő (Expert).
+- Terület: Central Europe. Nyelv: Hungarian.
+
+**Lejátszó > Nyelv**
+- Elsődleges hangnyelv: English. Alapértelmezett hangfolyam: ki.
+- Elsődleges feliratnyelv: Hungarian.
+
+**Lejátszó > Feliratok**
+- Méret: 26. Szín: Spanish Grey.
+
+**Lejátszó > Videók**
+- Képfrissítési gyakoriság beállítása: Indításkor/leállításkor.
+- Engedélyezett HDR formátumok: Dolby Vision be, HDR10+ be (lásd a Dolby Vision részt lent).
+- Dolby Vision kompatibilitási mód: a jó állása még nincs tisztázva.
+
+**Rendszer > Képernyő**
+- Felbontás: 1920x1080, 50 Hz. A skin 4K felülettel nem elég fürge a Sticken, a filmek ettől még 4K-ban mennek.
+- Whitelist 3840x2160-ban és 1920x1080-ban is: 23.98, 24, 25, 29.97, 30, 50, 59.94, 60 Hz. Interlaced (`i`) módot ne jelölj be. A 4K sorok kellenek, mert ezek nélkül a Kodi nem vált 4K-ra.
+- Dupla képfrissítés engedélyezése: be.
+
+**Rendszer > Bővítmények**
+- Ismeretlen források: be.
+- Frissítés: bármely tárolóból.
+
+## 3. Zipek
+
+Bővítmények > Telepítés zip-fájlból > External storage > `Download/kodi addons`, ebben a sorrendben:
+
+1. `repository.jurialmunkey-3.4.zip`
+2. `repository.kontell-1.0.2.zip`
+3. `repository.jellynas.zip`
+4. `script.keymapedit-master.zip`
+5. `script.service.ignoreforcedsubtitles-0.1.9.zip`
+
+## 4. Kofin és élő TV
+
+Bővítmények > Telepítés tárolóból:
+
+1. **Kofin** (Kontell): szervercím `https://media.leone007.net`, belépés Quick Connecttel. Várd meg a filmek és sorozatok szinkronját.
+2. **Kofin PVR for Jellyfin** (Kontell, PVR-kliensek): ugyanez a cím, szintén Quick Connect. A Force remuxing és a Force transcoding legyen kikapcsolva. Az EPG magától beolvas. A Tvheadend HTSP klienst ne telepítsd.
+
+Helyi szervercímet ne adj meg: a `pvr.kofin` 21.19.0 azzal nem játszik le (`[::1]` hiba, bejelentve a fejlesztőnek).
+
+Beállítások > PVR és élő TV:
+- Megjelenítendő elmúlt napok: 0.
+- Alapértelmezett kiválasztási művelet: Okos választás.
+
+## 5. Távirányító hosszú nyomásai
+
+`script.keymapedit`:
+
+| Ablak | Művelet | Gomb (hosszú nyomás) |
+|---|---|---|
+| Global | Navigation actions: Context menu | Jobb |
+| Global | Activate Window: Shutdownmenu | Középső |
+| Fullscreenvideo és Fullscreenlivetv | Activate Window: Playerprocessinfo | Középső |
+| Fullscreenvideo és Fullscreenlivetv | Subtitles Actions: Delay | Fel |
+| Fullscreenvideo és Fullscreenlivetv | Subtitles Actions: Next Subtitle | Jobb |
+| Fullscreenvideo és Fullscreenlivetv | Audio Actions: Delay | Le |
+
+## 6. JELLYNAS és a skin
+
+Bővítmények > Telepítés tárolóból:
+
+1. **JELLYNAS** (Video add-ons).
+2. **Arctic Fuse 2 JELLYNAS** (Skins, Look and feel). Az eredeti AF2 nem kell, a függőségeket a Kodi behúzza. Még **ne válts rá**.
+
+Ha a telepítés függőségi hibával leáll, keresd meg, melyik függőség hiányzik, és tedd fel kézzel a jurialmunkey tárolóból. A próbán a `Roboto CJKSC` telepítettnek látszott, a skin mégis hiányzónak jelezte: a jurialmunkey tároló alatt törölve és újratelepítve rendbe jött. Az oka nem tisztázott. A Texture Maker is kézzel ment fel.
+
+## 7. Beállítások átmásolása és skinváltás
+
+1. Beállítások > Fájlkezelő. Bal oldalt `Download/kodi addons/kodi-beall`, jobb oldalt Profilkönyvtár > `addon_data`.
+2. Másold át mindkét mappát: `skin.arctic.fuse.2.jellynas` és `script.skinvariables`. Felülírást engedélyezz.
+3. Beállítások > Felület > Megjelenés > Skin: **Arctic Fuse 2 JELLYNAS**, tartsd meg.
+
+A menük felépültek, újraindítás sem kellett. Ha mégsem jelennek meg, indítsd újra a Kodit.
+
+## 8. Ellenőrzés
+
+Kipróbálva:
+- [x] Kezdőlap, menük (a tulajdonos szerint minden jó).
+- [x] Sport 2 megy, bezárás után eltűnik a Tvheadend Előfizetések fülén.
+- [x] 1080p-s és 4K-s film megy.
+- [x] 4K kimenet: The Punisher: One Last Kill alatt 3840x2160 @ 24 Hz, 1080p-s felületről is átvált.
+
+Még nincs kipróbálva:
+- [ ] Streamboxon látszik-e a Stick élő adása.
+- [ ] Összes film, Összes sorozat: rács, betűsor, szűrők.
+- [ ] Live TV: a guide megnyílik, Balra visszavisz a menüre.
+- [ ] Katalógus: Filmek, Sorozatok, Kérések, Fel/Le. Csak otthoni hálón megy.
+- [ ] Direct Play a Streamboxon egy filmnél.
+
+A kimenet felbontása: a C3 nem írja ki, a Playerprocessinfo csak a forrást mutatja. Film közben Vissza gomb, majd Beállítások > Rendszerinformáció > Összegzés > Képernyő felbontása.
+
+## Dolby Vision
+
+Tesztfilmek típusonként:
+
+| Típus | Film | Eredmény |
+|---|---|---|
+| Profil 8 + HDR10+ | The Punisher: One Last Kill (2026) | Hibátlan; a HDR10+ állása a próba alatt nincs rögzítve |
+| Profil 7, BL+EL+RPU | Land of Bad (2024) | HDR10+ engedélyezve jó a kép, a C3 Dolby Visiont ír. Egy korábbi lejátszásnál vibrált, amikor a HDR10+ tiltva volt |
+| Profil 8 + HDR10 | Nonnas (2025) | Nincs kipróbálva |
+| Profil 8, Blu-ray-alap | Annihilation (2018) | Nincs kipróbálva |
+| Profil 5 (nincs HDR10 alap) | The Electric State (2025) | Nincs kipróbálva |
+
+Nyitott kérdések:
+- Nem tudjuk, miért segít a HDR10+ engedélyezése a Land of Badnél: a fájlban a `mediainfo` szerint nincs HDR10+, és a C3 sem kezeli. Még nincs megismételve, hogy kikapcsolva visszajön-e a vibrálás.
+- A The Punishert célzottan HDR10+ engedélyezve is meg kell nézni. A fórumok ilyen fájloknál fekete képet jeleznek a 4K Max-on.
+- A Dolby Vision kompatibilitási mód hatása nincs tesztelve.
+
+A Dolby Vision teljes tiltása nem jó tartós megoldás: a profil 5-ös filmeknek nincs HDR10 alapja, azok lila-zöldek lennének.
+
+## Ha valami nem megy
+
+- **`...:9981/stream/channelid/...` timeout a naplóban:** nézd meg a Tvheadend Állapot > Előfizetések fülét. Beragadt Jellyfin-előfizetéseknél indítsd újra a Jellyfint. Egyszer ezután megszűnt a hiba, de az ok nincs bizonyítva. Ha nincs beragadt előfizetés, és a hiba marad, a Force remuxing megkerülheti, ez viszont nálunk szaggatott, ezért csak ideiglenes megoldás.
+- **Nem látszik a Streamboxon:** a Cloudflare `Kodi PVR jelentes` szabálya él-e (`/Sessions/Playing`, `/LiveStreams/Close`).
+- **Duplán jönnek a csatornák:** maradt egy másik PVR-kliens, tiltsd le.
+- **Lassú a felület:** ellenőrizd, hogy a felület 1080p-n fut-e (2. lépés).
+- **Lassú a Wi-Fi:** a próbán Wi-Fi 6, 80 MHz, -76 dBm (5 méter, fal és tévé), kb. 300 Mbps. Ez 60 Mbps-os remuxhoz is elég volt. A Sticken nincs külön Wi-Fi 6 kapcsoló.
+- **A napló helye:** `/storage/emulated/0/Android/data/org.xbmc.kodi/files/.kodi/temp/kodi.log`.
+- **Visszaút:** Beállítások > Felület > Megjelenés > Skin: Estuary.
+
+## Függelék: a `kodi-beall` mappa készítése a Macen
+
+A Kodi legyen bezárva. Terminálban, soronként:
 
 ```
 cd ~/Library/Application\ Support/Kodi/userdata/addon_data
@@ -24,71 +167,6 @@ grep -v -- '-hash"' skin.arctic.fuse.2.jellynas/settings.xml > ~/Desktop/kodi-be
 cp -R script.skinvariables ~/Desktop/kodi-beall/
 ```
 
-A `-hash` sorok szándékosan maradnak ki, így a skin az első indításkor újraépíti a menüket.
+A `-hash` sorok szándékosan maradnak ki, így a skin újraépíti a menüket. A Kofin mappáit ne másold, belépési adatok vannak bennük.
 
-A `kodi-beall` mappát másold a szerver `PROGRAM/APK/kodi addons` mappájába (a WebDAV csak olvasható). SMB-n root nem léphet be: külön Unraid-felhasználó kell Read/Write joggal, vagy egyszeri `scp` bekapcsolt SSH-val, utána az SSH-t kapcsold ki. Ugyanebben a mappában vannak a repó-zipek:
-- `repository.jurialmunkey-3.4.zip`
-- `repository.kontell-1.0.2.zip`
-- `repository.jellynas.zip`
-
-A Kofin mappáit ne másold, belépési adatok vannak bennük.
-
-## 1. Kodi felrakása
-
-1. Fire TV: Settings > My Fire TV > About: nyomd meg hétszer az eszköz nevét, így megjelenik a Developer Options.
-2. Developer Options: engedélyezd az ismeretlen forrásokat a Downloader appnak.
-3. Telepítsd a **Downloader** appot az Amazon boltból.
-4. Downloaderben: `kodi.tv/download` > Android > **Kodi 21.x (Omega), ARMV7A (32 bit)**. Ha nem települ, vagy gond van vele, próbáld az ARMV8A (64 bit) változatot; a források ellentmondanak, melyik a jobb erre a modellre.
-5. Indítsd el a Kodit, és engedélyezz mindent, amit kér.
-
-## 2. Tárolók
-
-1. Beállítások > Rendszer > Bővítmények: **Ismeretlen források: Be**.
-2. Beállítások > Fájlkezelő > Forrás hozzáadása > Tallózás > Hálózati hely hozzáadása:
-   - Protokoll: WebDAV (HTTPS)
-   - Szerver: `dav.leone007.net`
-   - A saját belépési adataid
-   - Mappa: `kodi addons`
-3. Bővítmények > Telepítés zip-fájlból, ebben a sorrendben: **jurialmunkey**, **kontell**, **jellynas**.
-
-## 3. Bővítmények
-
-Bővítmények > Telepítés tárolóból:
-
-1. **Kofin** (Kontell): lépj be, szervercím `https://media.leone007.net`. Várd meg az első szinkront, ez a Sticken lassú lehet.
-2. **Kofin PVR for Jellyfin** (Kontell, PVR-kliensek): ugyanez a cím és belépés. **Force remuxing és Force transcoding kikapcsolva.** A Tvheadend HTSP klienst ne telepítsd.
-3. **JELLYNAS** (Video add-ons).
-4. **Arctic Fuse 2 JELLYNAS** (Skins, Look and feel). Telepítés után még **ne válts rá**.
-
-A szervercímhez ne írj helyi címet: a `pvr.kofin` 21.19.0 helyi címmel nem játszik le (`[::1]` hiba, bejelentve a fejlesztőnek).
-
-## 4. A beállítások átmásolása
-
-1. Beállítások > Fájlkezelő. Bal oldalt a WebDAV-forrás > `kodi-beall`, jobb oldalt a **Profilkönyvtár > addon_data**.
-2. Másold át mindkét mappát: `skin.arctic.fuse.2.jellynas` és `script.skinvariables`.
-3. Beállítások > Felület > Megjelenés > Skin: **Arctic Fuse 2 JELLYNAS**. Ha kérdezi, tartsd meg.
-4. Indítsd újra a Kodit, a menük ilyenkor épülnek újra.
-
-## 5. Kézi beállítások
-
-- Beállítások > PVR és élő TV > Műsorújság > Past days to display: **0**.
-- Beállítások > Lejátszó > Videók > Képfrissítés igazítása: **Be, indításkor/leállításkor**. Az 50 fps-es tévécsatornákhoz ez fontos.
-- Nyelv, ha kell: Beállítások > Felület > Terület.
-
-## 6. Ellenőrzés
-
-- [ ] Kezdőlap: menü, sorok, IMDb- és Elérhető-jelvény.
-- [ ] Összes film és Összes sorozat: rács, betűsor, szűrők.
-- [ ] Live TV: 1 mp után megnyílik a guide, Balra visszavisz a menüre.
-- [ ] Sport 1 és Sport 2: elindul, sima, a Streamboxon látszik.
-- [ ] Csatorna leállítása után a Tvheadend Előfizetések fülén eltűnik.
-- [ ] Katalógus: Filmek, Sorozatok, Kérések, Fel/Le. Csak otthoni hálón megy.
-- [ ] Egy film lejátszása Direct Play-jel.
-
-## Ha valami nem megy
-
-- **`...:9981/stream/channelid/...` timeout a naplóban:** nézd meg a Tvheadend Állapot > Előfizetések fülét. Beragadt Jellyfin-előfizetéseknél a Jellyfin újraindítása segített; végső esetben Force remuxing.
-- **Nem látszik a Streamboxon:** a Cloudflare `Kodi PVR jelentes` szabálya él-e (`/Sessions/Playing`, `/LiveStreams/Close`).
-- **Duplán jönnek a csatornák:** maradt egy másik PVR-kliens, tiltsd le.
-- **Lassú a felület:** a skin nagy (67 MB), gyengébb eszközön a Skin beállításaiban a háttérképek és az animációk csökkentése segíthet. Ezt ezen a modellen még nem láttuk.
-- **Visszaút:** Beállítások > Felület > Megjelenés > Skin: Estuary.
+A mappa a szerver `PROGRAM/APK/kodi addons` mappájába kerül, onnan a Stickre. SMB-n root nem léphet be: külön Unraid-felhasználó kell Read/Write joggal, vagy egyszeri `scp` bekapcsolt SSH-val, utána az SSH-t kapcsold ki.
