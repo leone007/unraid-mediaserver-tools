@@ -26,7 +26,7 @@ index 8e92082..3e3e1f1 100644
      <expression name="Exp_JellynasGrid_Filtered">[[$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.series.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.series.genre))]] | [!$EXP[Exp_JellynasGrid_Series] + [!String.IsEmpty(Window(Home).Property(JellynasGrid.movies.letter)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.sort)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.unwatched)) | !String.IsEmpty(Window(Home).Property(JellynasGrid.movies.genre))]]]</expression>
      <expression name="Exp_JellynasGrid_BarFocus">[Control.HasFocus(4910) | ControlGroup(4920).HasFocus()]</expression>
 diff --git a/1080i/Includes_Hubs.xml b/1080i/Includes_Hubs.xml
-index 89c82e0..f1b08de 100644
+index 89c82e0..dc816b1 100644
 --- a/1080i/Includes_Hubs.xml
 +++ b/1080i/Includes_Hubs.xml
 @@ -344,6 +344,7 @@
@@ -229,7 +229,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=trending&amp;type=movie</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=trending&amp;type=movie&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +                <control type="group">
@@ -326,7 +326,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=movies</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=movies&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +                <control type="group">
@@ -423,7 +423,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=movies/upcoming</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=movies/upcoming&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +            </control>
@@ -531,7 +531,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=trending&amp;type=tv</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=trending&amp;type=tv&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +                <control type="group">
@@ -628,7 +628,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=tv</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=tv&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +                <control type="group">
@@ -725,7 +725,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=tv/upcoming</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catlist&amp;list=tv/upcoming&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +            </control>
@@ -833,7 +833,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catreqs&amp;filter=processing</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catreqs&amp;filter=processing&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +                <control type="group">
@@ -930,7 +930,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catreqs&amp;filter=comingsoon</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catreqs&amp;filter=comingsoon&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +                <control type="group">
@@ -1027,7 +1027,7 @@ index 89c82e0..f1b08de 100644
 +                                <label>$INFO[ListItem.Property(sublabel)]</label>
 +                            </control>
 +                        </focusedlayout>
-+                        <content>plugin://plugin.video.jellynas/?mode=catreqs&amp;filter=available</content>
++                        <content>plugin://plugin.video.jellynas/?mode=catreqs&amp;filter=available&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 +                    </control>
 +                </control>
 +            </control>

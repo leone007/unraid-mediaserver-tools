@@ -142,7 +142,7 @@ def cached(name, url, ttl):
 
 
 def imdb_table(c):
-    d = cached('imdb.json', c['srv'] + '/web/streambox/imdb.json', 6 * 3600)
+    d = cached('imdb.json', c['srv'] + '/web/streambox/imdb.json', 1800)   # new titles get their badge within about an hour (Streambox reads the library every 30 min)
     return d.get('r', {}) if isinstance(d, dict) else {}
 
 
@@ -763,6 +763,7 @@ def do_catitem(c, q):
     xbmcgui.Dialog().notification('JELLYNAS', L(msg), os.path.join(ROOT, 'resources', 'icon.png') if msg in (30089, 30090)
                                   else xbmcgui.NOTIFICATION_WARNING, 4000)
     if msg == 30089:
+        xbmcgui.Window(10000).setProperty('JellynasCatalog.Rev', str(int(time.time())))   # the skin's Catalog rows carry it in their path: they reload
         xbmc.executebuiltin('Container.Refresh')
 
 

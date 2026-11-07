@@ -87,7 +87,7 @@ def row(lid, label, path, ups, downs):   # lists in a grouplist need their own u
 %s</itemlayout>
 <focusedlayout width="257" height="420">
 %s</focusedlayout>
-<content>%s%s</content>
+<content>%s%s&amp;rev=$INFO[Window(Home).Property(JellynasCatalog.Rev)]</content>
 </control>
 </control>
 ''' % (A, label, lid, nav('onup', ups, 4950), nav('ondown', downs, 0), card(lid, False), card(lid, True), P, path)

@@ -359,9 +359,11 @@ post = [s for s in SEEN if s[0] == 'POST']
 ok(DIR['labels'] == ['Request', 'Details'] and post and post[-1][1] == '/request' and post[-1][2] == {'type': 'movie', 'id': 4}
    and post[-1][3].startswith('MediaBrowser') and 'Új film' in DIR['asked'] and DIR['notes'][-1][1] == 'Request sent',
    "new movie: yes/no, then one POST to the proxy in the viewer's login")
+ok(HOMEPROPS.get('JellynasCatalog.Rev', '').isdigit(), 'after a request the Catalog rows get a new rev (they reload)')
+HOMEPROPS.pop('JellynasCatalog.Rev', None)
 DIR['pick'], DIR['yes'], np = 0, False, len([s for s in SEEN if s[0] == 'POST'])
 run('?mode=catitem&type=movie&id=4')
-ok(len([s for s in SEEN if s[0] == 'POST']) == np, 'answer No: nothing is sent')
+ok(len([s for s in SEEN if s[0] == 'POST']) == np and 'JellynasCatalog.Rev' not in HOMEPROPS, 'answer No: nothing is sent, no reload')
 DIR['yes'], DIR['pick'], DIR['multi'] = True, 2, [1]
 run('?mode=catitem&type=tv&id=2')
 post = [s for s in SEEN if s[0] == 'POST'][-1]
