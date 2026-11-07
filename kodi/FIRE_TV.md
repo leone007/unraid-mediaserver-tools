@@ -39,6 +39,12 @@ Tartalék, ha így sem látja: Beállítások > Fájlkezelő > Forrás hozzáad�
 - Engedélyezett HDR formátumok: Dolby Vision be, HDR10+ be (lásd a Dolby Vision részt lent).
 - Dolby Vision kompatibilitási mód: a jó állása még nincs tisztázva.
 
+**PVR és élő TV**
+- Megjelenítendő elmúlt napok: 0.
+- Alapértelmezett kiválasztási művelet: Okos választás.
+
+A PVR-beállítások a Kofin PVR telepítése előtt is megadhatók, így az élő TV már beállított Kodival indul.
+
 **Rendszer > Képernyő**
 - Felbontás: 1920x1080, 50 Hz. A skin 4K felülettel nem elég fürge a Sticken, a filmek ettől még 4K-ban mennek.
 - Whitelist 3840x2160-ban és 1920x1080-ban is: 23.98, 24, 25, 29.97, 30, 50, 59.94, 60 Hz. Interlaced (`i`) módot ne jelölj be. A 4K sorok kellenek, mert ezek nélkül a Kodi nem vált 4K-ra.
@@ -66,10 +72,6 @@ Bővítmények > Telepítés tárolóból:
 2. **Kofin PVR for Jellyfin** (Kontell, PVR-kliensek): ugyanez a cím, szintén Quick Connect. A Force remuxing és a Force transcoding legyen kikapcsolva. Az EPG magától beolvas. A Tvheadend HTSP klienst ne telepítsd.
 
 Helyi szervercímet ne adj meg: a `pvr.kofin` 21.19.0 azzal nem játszik le (`[::1]` hiba, bejelentve a fejlesztőnek).
-
-Beállítások > PVR és élő TV:
-- Megjelenítendő elmúlt napok: 0.
-- Alapértelmezett kiválasztási művelet: Okos választás.
 
 ## 5. Távirányító hosszú nyomásai
 
@@ -101,6 +103,16 @@ Ha a telepítés függőségi hibával leáll, keresd meg, melyik függőség hi
 
 A menük felépültek, újraindítás sem kellett. Ha mégsem jelennek meg, indítsd újra a Kodit.
 
+**Rotten Tomatoes értékelés (OMDb-kulcs)**
+
+Az IMDb és a TMDb értékelés magától megjön, a Rotten Tomatoes-hoz OMDb API-kulcs kell (ingyenes, omdbapi.com).
+
+1. Bővítmények > Videó bővítmények > **TMDb Helper** (a skin függőségként telepítette) > hosszú Középső > Beállítások.
+2. Az API-kulcsok között az **OMDb API key** mezőbe írd be a kulcsot.
+3. Ugyanitt a TMDb Helper beállításaiban töröld a cache-t. Enélkül a már letöltött, RT nélküli értékelések maradnak.
+
+A kulcs és a cache törlése után az RT értékelés élőben megjelent (2026-11-07, a tulajdonos).
+
 ## 8. Ellenőrzés
 
 Kipróbálva:
@@ -114,6 +126,7 @@ Még nincs kipróbálva:
 - [ ] Összes film, Összes sorozat: rács, betűsor, szűrők.
 - [ ] Live TV: a guide megnyílik, Balra visszavisz a menüre.
 - [ ] Katalógus: Filmek, Sorozatok, Kérések, Fel/Le. Csak otthoni hálón megy.
+- [ ] Rotten Tomatoes értékelés az infósávban (OMDb-kulcs után).
 - [ ] Direct Play a Streamboxon egy filmnél.
 
 A kimenet felbontása: a C3 nem írja ki, a Playerprocessinfo csak a forrást mutatja. Film közben Vissza gomb, majd Beállítások > Rendszerinformáció > Összegzés > Képernyő felbontása.
