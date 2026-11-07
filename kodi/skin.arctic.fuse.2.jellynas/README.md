@@ -47,9 +47,10 @@ Patches:
   (split by type), popular, upcoming; requests: processing, coming soon, available. Plain background.
 - `08-poster-row-labels.patch` (a `git diff` on top of 07): poster cards that carry our `sublabel` show the title and
   the second line under the poster, as on the Catalog page (`Layout_Poster`; Catalog cards draw their own); in
-  `List_Poster_Row` (widget rows, the poster grid, the cast row) the poster is 175x250 so the card with its two lines
-  stays 350 high like a landscape row; the IMDb badge 14 px from the top and left edge, the green text badge 14 px
-  from the bottom and left edge, both on the same card (This week shows both).
+  `List_Poster_Row` (widget rows, the poster grid, the cast row) the poster is 210x300 in a 250x400 item, and the Home
+  widget row pitch is 50 higher (`widget_items_h` 1060, every row style); the IMDb badge 14 px from the top and left
+  edge, the green text badge 14 px from the bottom and left edge, both on the same card (This week shows both);
+  Catalog details (`jellynas.kind=catalog`): no Trailer and Wiki buttons, Play only with `jellynas.playable`.
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.

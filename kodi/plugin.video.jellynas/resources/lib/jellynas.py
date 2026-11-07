@@ -731,7 +731,16 @@ def do_catitem(c, q):
         return
     act = acts[i][0]
     if act == 'info':
-        xbmcgui.Dialog().info(cat_item(t)[1])
+        li = cat_item(t)[1]
+        if t.get('jellyfin') and t.get('status') in ('available', 'partial'):   # the info window's Play button (owner, 2026-11-07)
+            if t['type'] == 'movie':
+                li.setPath(PLAY % t['jellyfin'])
+                li.setProperty('IsPlayable', 'true')
+            else:
+                li.setPath(BROWSE % ('series', t['jellyfin']))
+                li.setIsFolder(True)
+            li.setProperty('jellynas.playable', '1')   # the skin hides Play on catalog details without it
+        xbmcgui.Dialog().info(li)
         return
     if act == 'play':
         if t['type'] == 'movie':

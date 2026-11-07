@@ -187,6 +187,12 @@ class ListItem:
     def setProperty(self, k, v):
         self.props[k] = v
 
+    def setPath(self, p):
+        self.path = p
+
+    def setIsFolder(self, f):
+        self.folder = f
+
 
 class Detail:
     def __init__(self, **k):
@@ -367,6 +373,15 @@ ok(post[2]['seasons'] == [2, 3], 'series: request the missing seasons')
 DIR['pick'] = 3
 run('?mode=catitem&type=tv&id=2')
 ok(DIR['info'] and DIR['info'][-1].label == 'Nocturne', 'details: the info window')
+ok(DIR['info'][-1].props.get('jellynas.playable') == '1' and DIR['info'][-1].path.endswith('mode=browse&type=series&folder=jf2')
+   and DIR['info'][-1].folder, 'details of a partly available series: Play opens its seasons in Kofin')
+DIR['pick'] = 1
+run('?mode=catitem&type=movie&id=1')
+ok(DIR['info'][-1].path == 'plugin://plugin.video.kofin/?mode=play&id=jf1' and DIR['info'][-1].props.get('IsPlayable') == 'true',
+   'details of an available movie: Play plays it through Kofin')
+DIR['pick'] = 1
+run('?mode=catitem&type=movie&id=4')
+ok(not DIR['info'][-1].props.get('jellynas.playable') and not getattr(DIR['info'][-1], 'path', ''), 'details of a new movie: nothing to play')
 del LANG['catalog']
 
 items = run('?mode=week')

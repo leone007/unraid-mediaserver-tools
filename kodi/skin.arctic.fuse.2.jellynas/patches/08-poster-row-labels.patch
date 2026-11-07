@@ -1,17 +1,68 @@
 diff --git a/1080i/Includes_Constants.xml b/1080i/Includes_Constants.xml
-index 8461583..276f45f 100644
+index 8461583..00b2ef5 100644
 --- a/1080i/Includes_Constants.xml
 +++ b/1080i/Includes_Constants.xml
-@@ -94,6 +94,9 @@
+@@ -94,6 +94,10 @@
      <constant name="view_poster_itemlayout_h">350</constant>
      <constant name="-view_poster_itemlayout_h">-350</constant>
      <constant name="view_poster_item_h">310</constant>
-+    <constant name="view_poster_row_item_w">175</constant>  <!-- JELLYNAS: poster rows: poster 175x250 + title and second line under it = 350, as a landscape row -->
-+    <constant name="view_poster_row_item_h">250</constant>
-+    <constant name="view_poster_row_itemlayout_w">215</constant>
++    <constant name="view_poster_row_item_w">210</constant>  <!-- JELLYNAS: poster rows: poster 210x300 + title and second line under it = 400 (owner, 2026-11-07) -->
++    <constant name="view_poster_row_item_h">300</constant>
++    <constant name="view_poster_row_itemlayout_w">250</constant>
++    <constant name="view_poster_row_itemlayout_h">400</constant>
      <constant name="-view_poster_item_h">-310</constant>
      <constant name="view_poster_itemlayout_w">257.14</constant>
      <constant name="-view_poster_itemlayout_w">-257.14</constant>
+@@ -201,7 +205,7 @@
+     <constant name="widget_label_t">-580</constant>  <!-- Space from widget bottom to next widget label [-140] {-580} -->
+     <constant name="widget_label_h">-60</constant>  <!-- Space between label and widget (0) [-60] {-60} -->
+     <constant name="widget_items_t">70</constant>  <!-- Widget position from top (10) [70] {70} -->
+-    <constant name="widget_items_h">1010</constant>  <!-- Widget position from bottom (570) [570] {1010} -->
++    <constant name="widget_items_h">1060</constant>  <!-- JELLYNAS: was 1010; +50 row pitch for the 400 high poster rows (a try, 2026-11-07) -->  <!-- Widget position from bottom (570) [570] {1010} -->
+     <constant name="widget_items_h_gallery">1450</constant>
+ 
+     <!-- Up Next -->
+diff --git a/1080i/Includes_DialogInfo.xml b/1080i/Includes_DialogInfo.xml
+index b19262d..775308e 100644
+--- a/1080i/Includes_DialogInfo.xml
++++ b/1080i/Includes_DialogInfo.xml
+@@ -1639,6 +1639,7 @@
+                         <param name="backing">true</param>
+                         <param name="label">$VAR[Label_DialogInfo_PlayButton]</param>
+                         <param name="icon">$VAR[Image_DialogInfo_PlayButton]</param>
++                        <param name="visible">!String.IsEqual(ListItem.Property(jellynas.kind),catalog) | !String.IsEmpty(ListItem.Property(jellynas.playable))</param>  <!-- JELLYNAS: Catalog details: Play only when it is in Jellyfin -->
+                         <onfocus>ClearProperty(Background.DialogInfo.HideArtwork,Home)</onfocus>
+                         <onclick>$VAR[Action_DialogInfo_PlayMedia]</onclick>
+                     </include>
+@@ -1846,6 +1847,7 @@
+                         <param name="backing">true</param>
+                         <param name="label">$VAR[Label_DialogInfo_PlayButton]</param>
+                         <param name="icon">$VAR[Image_DialogInfo_PlayButton]</param>
++                        <param name="visible">!String.IsEqual(ListItem.Property(jellynas.kind),catalog) | !String.IsEmpty(ListItem.Property(jellynas.playable))</param>  <!-- JELLYNAS: Catalog details: Play only when it is in Jellyfin -->
+                         <onfocus>ClearProperty(Background.DialogInfo.HideArtwork,Home)</onfocus>
+                         <!-- Addon Not Installed -->
+                         <onclick condition="!String.IsEqual(ListItem.DBType,artist) + !System.AddonIsEnabled(script.playalbum) + System.HasAddon(script.playalbum)">EnableAddon(script.playalbum)</onclick>
+diff --git a/1080i/Includes_Items.xml b/1080i/Includes_Items.xml
+index f792a34..6ff982e 100644
+--- a/1080i/Includes_Items.xml
++++ b/1080i/Includes_Items.xml
+@@ -1965,7 +1965,7 @@
+                 <param name="sliceid">4202</param>
+                 <param name="label">$LOCALIZE[31393]</param>
+                 <param name="icon">special://skin/extras/icons/videoplay.png</param>
+-                <param name="visible">!String.IsEmpty(ListItem.Trailer) | !String.IsEmpty(Window(Home).Property(TMDbHelper.ListItem.Trailer))</param>
++                <param name="visible">[!String.IsEmpty(ListItem.Trailer) | !String.IsEmpty(Window(Home).Property(TMDbHelper.ListItem.Trailer))] + !String.IsEqual(ListItem.Property(jellynas.kind),catalog)</param>  <!-- JELLYNAS: no trailer on Catalog details -->
+                 <include content="Action_PlayTrailer_OnClick">
+                     <param name="trailer">ListItem.Trailer</param>
+                     <param name="trailer_fallback">Window(Home).Property(TMDbHelper.ListItem.Trailer)</param>
+@@ -2014,6 +2014,7 @@
+                 <param name="sliceid">4205</param>
+                 <param name="label">Wiki</param>
+                 <param name="icon">special://skin/extras/icons/globe.png</param>
++                <param name="visible">!String.IsEqual(ListItem.Property(jellynas.kind),catalog)</param>  <!-- JELLYNAS: no Wiki on Catalog details -->
+                 <onclick>runscript(script.wikipedia,wikipedia=$VAR[Path_Wikipedia_Title],tmdb_type=$VAR[Path_Wikipedia_Type])</onclick>
+             </include>
+ 
 diff --git a/1080i/Includes_Layouts.xml b/1080i/Includes_Layouts.xml
 index 1fef058..91e9a0c 100644
 --- a/1080i/Includes_Layouts.xml
@@ -44,22 +95,24 @@ index 1fef058..91e9a0c 100644
                      <include content="Object_JellynasImdb">
                          <param name="listitem">$PARAM[listitem]</param>
 diff --git a/1080i/Includes_Lists.xml b/1080i/Includes_Lists.xml
-index 03136e8..4bd1ec6 100644
+index 03136e8..2ac3577 100644
 --- a/1080i/Includes_Lists.xml
 +++ b/1080i/Includes_Lists.xml
-@@ -577,9 +577,9 @@
+@@ -577,10 +577,10 @@
                  <param name="orientation">$PARAM[orientation]</param>
                  <param name="control">$PARAM[control]</param>
                  <param name="id">$PARAM[id]</param>
 -                <param name="item_w">view_poster_item_w</param>
 -                <param name="item_h">view_poster_item_h</param>
 -                <param name="itemlayout_w">view_poster_itemlayout_w</param>
+-                <param name="itemlayout_h">view_poster_itemlayout_h</param>
 +                <param name="item_w">view_poster_row_item_w</param>  <!-- JELLYNAS: a smaller poster with two lines under it, -->
 +                <param name="item_h">view_poster_row_item_h</param>  <!-- in the row height of the landscape cards -->
 +                <param name="itemlayout_w">view_poster_row_itemlayout_w</param>
-                 <param name="itemlayout_h">view_poster_itemlayout_h</param>
++                <param name="itemlayout_h">view_poster_row_itemlayout_h</param>
                  <param name="itemlayout_include">Layout_Poster</param>
                  <param name="focusedlayout_special">$PARAM[focusedlayout_special]</param>
+                 <param name="offset_y">$PARAM[offset_y]</param>
 diff --git a/1080i/Includes_Objects.xml b/1080i/Includes_Objects.xml
 index 3f33665..3e7ce36 100644
 --- a/1080i/Includes_Objects.xml
