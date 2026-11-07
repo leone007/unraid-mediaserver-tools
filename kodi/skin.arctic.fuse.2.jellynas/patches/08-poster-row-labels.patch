@@ -1,17 +1,19 @@
 diff --git a/1080i/Includes_Constants.xml b/1080i/Includes_Constants.xml
-index 8461583..34d7edf 100644
+index 8461583..276f45f 100644
 --- a/1080i/Includes_Constants.xml
 +++ b/1080i/Includes_Constants.xml
-@@ -94,6 +94,7 @@
+@@ -94,6 +94,9 @@
      <constant name="view_poster_itemlayout_h">350</constant>
      <constant name="-view_poster_itemlayout_h">-350</constant>
      <constant name="view_poster_item_h">310</constant>
-+    <constant name="view_poster_labels_itemlayout_h">420</constant>  <!-- JELLYNAS: poster rows with the title and second line under the poster (as the Catalog page) -->
++    <constant name="view_poster_row_item_w">175</constant>  <!-- JELLYNAS: poster rows: poster 175x250 + title and second line under it = 350, as a landscape row -->
++    <constant name="view_poster_row_item_h">250</constant>
++    <constant name="view_poster_row_itemlayout_w">215</constant>
      <constant name="-view_poster_item_h">-310</constant>
      <constant name="view_poster_itemlayout_w">257.14</constant>
      <constant name="-view_poster_itemlayout_w">-257.14</constant>
 diff --git a/1080i/Includes_Layouts.xml b/1080i/Includes_Layouts.xml
-index 1fef058..03ee1cc 100644
+index 1fef058..91e9a0c 100644
 --- a/1080i/Includes_Layouts.xml
 +++ b/1080i/Includes_Layouts.xml
 @@ -2179,6 +2179,26 @@
@@ -22,7 +24,7 @@ index 1fef058..03ee1cc 100644
 +                    <top>$PARAM[item_h]</top>
 +                    <visible>!String.IsEmpty($PARAM[listitem].Property(sublabel)) + !String.IsEqual($PARAM[listitem].Property(jellynas.kind),catalog)</visible>
 +                    <control type="label">
-+                        <top>12</top>
++                        <top>8</top>
 +                        <width>$PARAM[item_w]</width>
 +                        <height>36</height>
 +                        <font>font_mini_bold</font>
@@ -30,7 +32,7 @@ index 1fef058..03ee1cc 100644
 +                        <label>$INFO[$PARAM[listitem].Label]</label>
 +                    </control>
 +                    <control type="label">
-+                        <top>48</top>
++                        <top>42</top>
 +                        <width>$PARAM[item_w]</width>
 +                        <height>30</height>
 +                        <font>font_tiny</font>
@@ -42,18 +44,22 @@ index 1fef058..03ee1cc 100644
                      <include content="Object_JellynasImdb">
                          <param name="listitem">$PARAM[listitem]</param>
 diff --git a/1080i/Includes_Lists.xml b/1080i/Includes_Lists.xml
-index 03136e8..15b2e8c 100644
+index 03136e8..4bd1ec6 100644
 --- a/1080i/Includes_Lists.xml
 +++ b/1080i/Includes_Lists.xml
-@@ -580,7 +580,7 @@
-                 <param name="item_w">view_poster_item_w</param>
-                 <param name="item_h">view_poster_item_h</param>
-                 <param name="itemlayout_w">view_poster_itemlayout_w</param>
--                <param name="itemlayout_h">view_poster_itemlayout_h</param>
-+                <param name="itemlayout_h">view_poster_labels_itemlayout_h</param>  <!-- JELLYNAS: room for two lines under the poster -->
+@@ -577,9 +577,9 @@
+                 <param name="orientation">$PARAM[orientation]</param>
+                 <param name="control">$PARAM[control]</param>
+                 <param name="id">$PARAM[id]</param>
+-                <param name="item_w">view_poster_item_w</param>
+-                <param name="item_h">view_poster_item_h</param>
+-                <param name="itemlayout_w">view_poster_itemlayout_w</param>
++                <param name="item_w">view_poster_row_item_w</param>  <!-- JELLYNAS: a smaller poster with two lines under it, -->
++                <param name="item_h">view_poster_row_item_h</param>  <!-- in the row height of the landscape cards -->
++                <param name="itemlayout_w">view_poster_row_itemlayout_w</param>
+                 <param name="itemlayout_h">view_poster_itemlayout_h</param>
                  <param name="itemlayout_include">Layout_Poster</param>
                  <param name="focusedlayout_special">$PARAM[focusedlayout_special]</param>
-                 <param name="offset_y">$PARAM[offset_y]</param>
 diff --git a/1080i/Includes_Objects.xml b/1080i/Includes_Objects.xml
 index 3f33665..3e7ce36 100644
 --- a/1080i/Includes_Objects.xml
