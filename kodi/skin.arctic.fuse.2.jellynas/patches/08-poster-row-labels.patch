@@ -1,0 +1,13 @@
+diff --git a/1080i/Includes_Lists.xml b/1080i/Includes_Lists.xml
+index 03136e8..28d7993 100644
+--- a/1080i/Includes_Lists.xml
++++ b/1080i/Includes_Lists.xml
+@@ -571,7 +571,7 @@
+         <param name="focusedlayout_special">false</param>
+         <param name="control">fixedlist</param>
+         <param name="orientation">horizontal</param>
+-        <param name="detailed">!String.IsEmpty(ListItem.Property(role))</param>
++        <param name="detailed">!String.IsEmpty(ListItem.Property(role)) | !String.IsEmpty(ListItem.Property(sublabel))</param>  <!-- JELLYNAS: title and second line on our poster cards -->
+         <definition>
+             <include content="List_Core">
+                 <param name="orientation">$PARAM[orientation]</param>
