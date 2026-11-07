@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.41">
+<!ENTITY version   "2026.10.42">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.42
+- Update manager: when an update finds the same image but the fresh check says it is the current one (the publisher took the newer image back, autobrr latest on 2026-11-07), the result is green, already on the latest image, instead of a red update failed
+
 ###2026.10.41
 - Snapshots, off-site copy: the containers' data went off-site empty. restic matched the Skip name cache against the whole path, and the data lies under /mnt/cache, so every file was left out. The Skip names now count only inside the copied folder, like in the array copy. Press Off-site now once after the update
 
@@ -8102,6 +8105,10 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "{n}: the update ran but the image is the same",
   "note": "Update manager, Activity line of an update: result."
  },
+ "uu.same_current": {
+  "text": "{n}: already on the latest image ({v}); the update seen earlier is no longer in the registry",
+  "note": "Update manager, Activity line and Discord text of an update when the image did not change but the fresh check finds it current (the publisher took the newer image back). {v} = version."
+ },
  "uu.test_ok": {
   "text": "self-test {ok}/{n} passed",
   "note": "Update manager, Activity line of an update: added to the result."
@@ -12951,6 +12958,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  "uu.same": {
   "text": "{n}: a frissítés lefutott, de az image ugyanaz"
  },
+ "uu.same_current": {
+  "text": "{n}: már a legfrissebb image-en van ({v}); a korábban jelzett frissítés közben eltűnt a tárolóból"
+ },
  "uu.test_ok": {
   "text": "önteszt {ok}/{n} rendben"
  },
@@ -17489,8 +17499,12 @@ function upd_update_one($name, $dc = true) {
         if ($was0) { $tparts[] = ['uj.test_before', ['l' => implode(', ', $was0)]]; }
     }
     upd_scan($name);
-    $parts = array_merge([$new ? ['uu.updated', ['n' => $name, 'a' => $row['ver'] ?: '?', 'b' => $c['ver'] ?: '?']] : ['uu.same', ['n' => $name]]], $tparts, $snap ? [['uu.data_snap', ['s' => $snap]]] : []);
-    return $end($new && !$tbad ? 'done' : 'error', $parts);
+    // the same image but the fresh check finds it current: the registry went back to it (autobrr latest, 2026-11-07), nothing failed
+    $cur = false;
+    if (!$new) { foreach (upd_json(upd_scan_file(), [])['rows'] ?? [] as $r) { if ($r['name'] === $name && $r['state'] === 'current') { $cur = true; } } }
+    $head = $new ? ['uu.updated', ['n' => $name, 'a' => $row['ver'] ?: '?', 'b' => $c['ver'] ?: '?']] : ($cur ? ['uu.same_current', ['n' => $name, 'v' => $c['ver'] ?: '?']] : ['uu.same', ['n' => $name]]);
+    $parts = array_merge([$head], $tparts, $snap ? [['uu.data_snap', ['s' => $snap]]] : []);
+    return $end(($new || $cur) && !$tbad ? 'done' : 'error', $parts);
 }
 
 if ($mode === 'update') { upd_update_one($arg); exit(0); }

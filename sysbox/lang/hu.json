@@ -3270,6 +3270,9 @@
  "uu.same": {
   "text": "{n}: a frissítés lefutott, de az image ugyanaz"
  },
+ "uu.same_current": {
+  "text": "{n}: már a legfrissebb image-en van ({v}); a korábban jelzett frissítés közben eltűnt a tárolóból"
+ },
  "uu.test_ok": {
   "text": "önteszt {ok}/{n} rendben"
  },

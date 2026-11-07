@@ -185,8 +185,12 @@ function upd_update_one($name, $dc = true) {
         if ($was0) { $tparts[] = ['uj.test_before', ['l' => implode(', ', $was0)]]; }
     }
     upd_scan($name);
-    $parts = array_merge([$new ? ['uu.updated', ['n' => $name, 'a' => $row['ver'] ?: '?', 'b' => $c['ver'] ?: '?']] : ['uu.same', ['n' => $name]]], $tparts, $snap ? [['uu.data_snap', ['s' => $snap]]] : []);
-    return $end($new && !$tbad ? 'done' : 'error', $parts);
+    // the same image but the fresh check finds it current: the registry went back to it (autobrr latest, 2026-11-07), nothing failed
+    $cur = false;
+    if (!$new) { foreach (upd_json(upd_scan_file(), [])['rows'] ?? [] as $r) { if ($r['name'] === $name && $r['state'] === 'current') { $cur = true; } } }
+    $head = $new ? ['uu.updated', ['n' => $name, 'a' => $row['ver'] ?: '?', 'b' => $c['ver'] ?: '?']] : ($cur ? ['uu.same_current', ['n' => $name, 'v' => $c['ver'] ?: '?']] : ['uu.same', ['n' => $name]]);
+    $parts = array_merge([$head], $tparts, $snap ? [['uu.data_snap', ['s' => $snap]]] : []);
+    return $end(($new || $cur) && !$tbad ? 'done' : 'error', $parts);
 }
 
 if ($mode === 'update') { upd_update_one($arg); exit(0); }

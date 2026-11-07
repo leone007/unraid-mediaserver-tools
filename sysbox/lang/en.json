@@ -4351,6 +4351,10 @@
   "text": "{n}: the update ran but the image is the same",
   "note": "Update manager, Activity line of an update: result."
  },
+ "uu.same_current": {
+  "text": "{n}: already on the latest image ({v}); the update seen earlier is no longer in the registry",
+  "note": "Update manager, Activity line and Discord text of an update when the image did not change but the fresh check finds it current (the publisher took the newer image back). {v} = version."
+ },
  "uu.test_ok": {
   "text": "self-test {ok}/{n} passed",
   "note": "Update manager, Activity line of an update: added to the result."
