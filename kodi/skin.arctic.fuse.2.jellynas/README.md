@@ -46,7 +46,7 @@ Patches:
   once, Down into the rows) and per tab a grouplist (4960/4970/4980) of three poster rows from the add-on: trending
   (split by type), popular, upcoming; requests: processing, coming soon, available. Plain background.
 - `08-poster-row-labels.patch` (a `git diff` on top of 07): poster cards that carry our `sublabel` show the title and
-  the second line under the poster, as on the Catalog page (`Layout_Poster`; Catalog cards draw their own); in
+  the second line under the poster (not in the rows above the focused one, their text would show behind the info panel), as on the Catalog page (`Layout_Poster`; Catalog cards draw their own); in
   `List_Poster_Row` (widget rows, the poster grid, the cast row) the poster is 210x300 in a 250x400 item, and the Home
   widget row pitch is 50 higher (`widget_label_t` -530 and the top bumper `widget_tbump_h` 50 lower, every row style; the list and grouplist heights stay equal, otherwise a focused row lands elsewhere going up than going down); the IMDb badge 14 px from the top and left
   edge, the green text badge 14 px from the bottom and left edge, both on the same card (This week shows both);

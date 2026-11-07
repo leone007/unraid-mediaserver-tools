@@ -71,7 +71,7 @@ index f792a34..6ff982e 100644
              </include>
  
 diff --git a/1080i/Includes_Layouts.xml b/1080i/Includes_Layouts.xml
-index 1fef058..91e9a0c 100644
+index 1fef058..4b55b2d 100644
 --- a/1080i/Includes_Layouts.xml
 +++ b/1080i/Includes_Layouts.xml
 @@ -2179,6 +2179,26 @@
@@ -80,7 +80,7 @@ index 1fef058..91e9a0c 100644
                  </control>
 +                <control type="group">   <!-- JELLYNAS: title and second line under our poster cards (the Catalog page draws its own) -->
 +                    <top>$PARAM[item_h]</top>
-+                    <visible>!String.IsEmpty($PARAM[listitem].Property(sublabel)) + !String.IsEqual($PARAM[listitem].Property(jellynas.kind),catalog)</visible>
++                    <visible>!String.IsEmpty($PARAM[listitem].Property(sublabel)) + !String.IsEqual($PARAM[listitem].Property(jellynas.kind),catalog) + !Integer.IsGreater(Window.Property(Slide.WidgetContainer),$PARAM[id])</visible>   <!-- not in the rows above the focused one (widget ids grow down the page): their text would show behind the info panel -->
 +                    <control type="label">
 +                        <top>8</top>
 +                        <width>$PARAM[item_w]</width>
