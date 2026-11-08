@@ -75,7 +75,9 @@ Helyi szervercímet ne adj meg: a `pvr.kofin` 21.19.0 azzal nem játszik le (`[:
 
 ## 5. Távirányító hosszú nyomásai
 
-`script.keymapedit`:
+Gyors út: a `kodi-beall` mappában lévő `keymaps/gen.xml` (a Shieldről mentve 2026-11-08, Android-távirányítókra) a 7. lépésben a többivel együtt átmásolható: Fájlkezelő, bal oldalt `kodi-beall/keymaps`, jobb oldalt Profilkönyvtár, a teljes `keymaps` mappa. Utána indítsd újra a Kodit. Ekkor a `script.keymapedit` nem kell. A Mac `gen.xml`-je nem jó Androidra (más gombkódok).
+
+Kézi út, `script.keymapedit`:
 
 | Ablak | Művelet | Gomb (hosszú nyomás) |
 |---|---|---|
@@ -99,6 +101,7 @@ Ha a telepítés függőségi hibával leáll, keresd meg, melyik függőség hi
 
 1. Beállítások > Fájlkezelő. Bal oldalt `Download/kodi addons/kodi-beall`, jobb oldalt Profilkönyvtár > `addon_data`.
 2. Másold át mindkét mappát: `skin.arctic.fuse.2.jellynas` és `script.skinvariables`. Felülírást engedélyezz.
+   A hosszú nyomásokhoz a `kodi-beall/keymaps` mappát a Profilkönyvtár gyökerébe másold (nem az `addon_data` alá), lásd az 5. lépést.
 3. Beállítások > Felület > Megjelenés > Skin: **Arctic Fuse 2 JELLYNAS**, tartsd meg.
 
 A menük felépültek, újraindítás sem kellett. Ha mégsem jelennek meg, indítsd újra a Kodit.
