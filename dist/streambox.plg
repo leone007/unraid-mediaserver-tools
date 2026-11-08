@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zz">
+<!ENTITY version   "2026.10.15">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian descriptions: Claude also reads the IMDb plot of an episode, and avoids AI-sounding Hungarian (sales words, inflated stakes, dramatic closing lines, forced lists of three)
+###2026.10.14zz
 - Hungarian descriptions: own Discord webhook (Webhook for Hungarian descriptions), no longer the series channel; empty sends nothing; Send test message tests it too
 ###2026.10.14zy
 - Hungarian descriptions (item 147): new movies and episodes whose Jellyfin description is English or empty, or whose title is only N. epizód or the English one, are translated by Claude Code in the claude container after a wait (default 12 h, daily limit 30, not 22-06). Suggest mode (default) lists them on the settings page with Write and Skip; Automatic mode writes them. Every write backs up the original and locks the field, Undo puts it back. One Discord line a day on the series webhook.
@@ -7284,12 +7286,18 @@ function hu_prompt($batch) {
     return "You translate movie and TV episode descriptions and episode titles from English into Hungarian for a home Jellyfin "
         . "server. Series names are given as Jellyfin shows them (often already Hungarian). If you do not know a series or movie well, "
         . "look it up briefly with WebSearch first (plot, characters, the Hungarian title and terms used in Hungarian), so names and "
-        . "terms are right.\n\nStyle (the owner's rules):\n"
+        . "terms are right. For an episode read its plot summary on IMDb too (if IMDb does not answer: TVDB, Rotten Tomatoes or a recap).\n\nStyle (the owner's rules):\n"
         . "- Short, natural, everyday Hungarian. Keep the content of the English text, add no facts. A side detail may go if it makes the sentence heavy.\n"
         . "- Plain words: \"neonáci\" (not a long paraphrase), \"fekete\" for African American. U.S. Marshal = \"rendőrbíró\". Names stay as they are.\n"
         . "- \"Season premiere\" = \"Évadnyitó rész.\", \"Season finale\" = \"Évadzáró rész.\", \"Series finale\" = \"Sorozatzáró rész.\"; season is always \"évad\", never \"szezon\".\n"
         . "- Aphoristic originals stay aphorisms. A text cut off with \"...\" is finished from the plot, without invented detail.\n"
-        . "- Titles: always a Hungarian translation; proper nouns stay as they are (place and person names, invented words); hour titles in 24 h form (7:00 ... 21:00).\n\n"
+        . "- Titles: always a Hungarian translation; proper nouns stay as they are (place and person names, invented words); hour titles in 24 h form (7:00 ... 21:00).\n"
+        . "- No AI-sounding Hungarian (keep the facts, say them plainly; hype in the English text is toned down): no sales words (lenyűgöző, lebilincselő, "
+        . "izgalmas utazás, sorsfordító, epikus, felejthetetlen); no \"nemcsak/nem csupán X, hanem Y\" the original does not have; no inflated stakes "
+        . "(mindent megváltoztat, élete legnagyobb próbája); no dramatic closing line or fragment (\"Semmi sem lesz már a régi.\") and no closing question "
+        . "(\"Vajon sikerül neki?\"); no trailing -va/-ve clause (\", ezzel is rávilágítva...\", \", megmutatva, hogy...\"); no forced list of three "
+        . "(szerelem, árulás és bosszú); no dash as a connector (comma or a new sentence); \"van/lesz\" instead of \"szolgál valamiként\", \"rendelkezik\"; "
+        . "not every sentence opening the same way.\n\n"
         . "Answer with JSON only, no other text: an array with one object per item: {\"id\": \"...\", \"hu\": \"<Hungarian description>\", \"hu_name\": \"<Hungarian title>\"}; "
         . "leave out hu when the item does not ask for a description and hu_name when it does not ask for a title.\n\nItems:\n"
         . json_encode($items, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
