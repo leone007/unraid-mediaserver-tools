@@ -1,0 +1,49 @@
+diff --git a/language/resource.language.hu_hu/strings.po b/language/resource.language.hu_hu/strings.po
+index abfbc5f..f712636 100644
+--- a/language/resource.language.hu_hu/strings.po
++++ b/language/resource.language.hu_hu/strings.po
+@@ -1008,17 +1008,17 @@ msgstr "Szövegdobozok"
+ #: /1080i/Includes_Labels.xml
+ msgctxt "#31210"
+ msgid "Series Premiere"
+-msgstr "Rész bemutató"
++msgstr "Sorozatnyitó"
+ 
+ #: /1080i/Includes_Labels.xml
+ msgctxt "#31211"
+ msgid "Season Premiere"
+-msgstr "Szezon bemutató"
++msgstr "Évadnyitó"
+ 
+ #: /1080i/Includes_Labels.xml
+ msgctxt "#31212"
+ msgid "Mid-Season Premiere"
+-msgstr "Közép Szezon bemutató"
++msgstr "Évadközi nyitó"
+ 
+ msgctxt "#31213"
+ msgid "Visualisation settings"
+@@ -1027,12 +1027,12 @@ msgstr "Vizualizáció beállítások"
+ #: /1080i/Includes_Labels.xml
+ msgctxt "#31214"
+ msgid "Series Finale"
+-msgstr "Sorozat finálé"
++msgstr "Sorozatzáró"
+ 
+ #: /1080i/Includes_Labels.xml
+ msgctxt "#31215"
+ msgid "Season Finale"
+-msgstr "Szezon finálé"
++msgstr "Évadzáró"
+ 
+ msgctxt "#31216"
+ msgid "Video decoder"
+@@ -1045,7 +1045,7 @@ msgstr ""
+ #: /1080i/Includes_Labels.xml
+ msgctxt "#31218"
+ msgid "Mid-Season Finale"
+-msgstr "Közép Szezon finálé"
++msgstr "Évadközi záró"
+ 
+ #: /1080i/SkinSettings.xml
+ msgctxt "#31219"

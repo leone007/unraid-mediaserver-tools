@@ -51,6 +51,7 @@ Patches:
   widget row pitch is 50 higher (`widget_label_t` -530 and the top bumper `widget_tbump_h` 50 lower, every row style; the list and grouplist heights stay equal, otherwise a focused row lands elsewhere going up than going down); the IMDb badge 14 px from the top and left
   edge, the green text badge 14 px from the bottom and left edge, both on the same card (This week shows both);
   Catalog details (`jellynas.kind=catalog`): no Trailer and Wiki buttons, Play only with `jellynas.playable`.
+- `09-hu-season-labels.patch` (2.12.12.28): the Hungarian episode badges say évad, not szezon: Sorozatnyitó, Évadnyitó, Évadközi nyitó, Sorozatzáró, Évadzáró, Évadközi záró (upstream hu_hu strings 31210-31218 said Szezon bemutató, Szezon finálé, Rész bemutató).
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.
