@@ -17,6 +17,8 @@ For whoever (human or Claude) continues this project. Author: leone007. Server: 
 - Cron: write `/boot/config/plugins/<name>/<name>.cron` and run `update_cron`; the link in `/var/log/plugins` exists only after the install scripts end (wait for it in the background).
 - Disk data: `/var/local/emhttp/disks.ini` (`fsSize`, `fsUsed` in KB), `var.ini` (`mdState`, `mdResync*`, `csrf_token`).
 
+- Discord channels (lesson, 2026-11-08): the Streambox Hungarian descriptions first reused the series webhook and their daily line landed in a channel others see; the owner wanted his private system channel. Every new kind of Discord message asks: which channel, who reads it; give it its own webhook setting (empty = no message) rather than reusing one.
+
 ## Discord alerts (Diskbox and Sysbox)
 - Cron every minute runs `notify.php`; state lives on the flash (`notify_state.json`, written only when it changes), debounce counters in `/tmp`.
 - `*_track()`: sends on new, escalation or signature change, optional repeat of red alerts every `n_remind` hours, all-clear on resolve. Hysteresis is applied by the callers (temperature -2 C, fill -2, RAM/storage/CPU -3).
