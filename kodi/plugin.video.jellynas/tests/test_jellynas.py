@@ -301,6 +301,10 @@ ssn = [x for x in items if 'type=season' in x[0]]
 ok(ssn and ssn[0][2] and 'series=s3' in ssn[0][0] and ssn[0][1].props.get('jellynas.imdb') == '6.3', 'season card: Kofin season browse, IMDb of its series')
 eps6 = [x for x in items if x[0].endswith('id=v6')]
 ok(eps6 and eps6[0][1].props.get('sublabel') == 'S1:E6', 'recently added series: a single new episode plays')
+fill = [q for q in SEEN if q[1] == '/Items' and q[2].get('SortBy', '').startswith('DateLastContentAdded')]
+ok(fill and fill[-1][2].get('Limit') == '30' and len(items) == len({u for u, _, _ in items}),
+   'recently added series: filled up with the latest series, no duplicate card')
+ok(lat and [q for q in SEEN if q[1] == '/Items/Latest'][-1][2].get('Limit') == '30', 'recently added rows ask for 30')
 
 items = run('?mode=allmovies')
 alls = [q for q in SEEN if q[1] == '/Items' and q[2].get('IncludeItemTypes') == 'Movie']

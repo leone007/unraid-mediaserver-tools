@@ -38,6 +38,7 @@ CAT_LISTS = (('trending', 30071), ('movies', 30072), ('movies/upcoming', 30073),
 CAT_REQS = (('all', 30077), ('processing', 30078), ('comingsoon', 30079), ('available', 30080))
 CAT_STATUS = {'available': 30080, 'partial': 30081, 'processing': 30082, 'pending': 30082}
 LIMIT = 24
+LATEST = 30   # recently added rows
 SPOT_MAX = 10
 FIELDS = 'Overview,ProviderIds,Genres,MediaStreams,PremiereDate,OfficialRating,CommunityRating,ChildCount'   # ChildCount: seasons of a series card
 IMAGES = 'Primary,Backdrop,Thumb,Logo'
@@ -315,9 +316,18 @@ def nextup_items(c):
 
 def latest_items(c, types):
     """Recently added, as on the Jellyfin home page: new episodes grouped into their series (or season)."""
-    d = jf(c, '/Items/Latest', Limit=LIMIT, IncludeItemTypes=types, Fields=FIELDS, EnableImageTypes=IMAGES,
+    d = jf(c, '/Items/Latest', Limit=LATEST, IncludeItemTypes=types, Fields=FIELDS, EnableImageTypes=IMAGES,
            ImageTypeLimit=1, EnableUserData='true', GroupItems='true')
-    return d if isinstance(d, list) else d.get('Items', [])
+    items = d if isinstance(d, list) else d.get('Items', [])
+    if types == 'Episode' and len(items) < LATEST:
+        # Jellyfin groups only the newest few dozen episodes: one big import (a whole series) leaves a single card.
+        # Fill up with the series that got new episodes most recently.
+        have = {i.get('SeriesId') or i.get('Id') for i in items}
+        more = jf(c, '/Items', IncludeItemTypes='Series', Recursive='true', SortBy='DateLastContentAdded,SortName',
+                  SortOrder='Descending', Limit=LATEST, Fields=FIELDS, EnableImageTypes=IMAGES, ImageTypeLimit=1,
+                  EnableUserData='true').get('Items', [])
+        items += [i for i in more if i.get('Id') not in have][:LATEST - len(items)]
+    return items
 
 
 def all_items(c, kind, q=None):
