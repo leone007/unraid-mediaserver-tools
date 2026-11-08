@@ -154,6 +154,7 @@ A Dolby Vision teljes tiltása nem jó tartós megoldás: a profil 5-ös filmekn
 
 - **`...:9981/stream/channelid/...` timeout a naplóban:** nézd meg a Tvheadend Állapot > Előfizetések fülét. Beragadt Jellyfin-előfizetéseknél indítsd újra a Jellyfint. Egyszer ezután megszűnt a hiba, de az ok nincs bizonyítva. Ha nincs beragadt előfizetés, és a hiba marad, a Force remuxing megkerülheti, ez viszont nálunk szaggatott, ezért csak ideiglenes megoldás.
 - **Nem látszik a Streamboxon:** a Cloudflare `Kodi PVR jelentes` szabálya él-e (`/Sessions/Playing`, `/LiveStreams/Close`).
+- **Gyenge Stick, nincs meg az 50 fps élő TV-nél (pl. a régi sima Stick a pergolában):** a Kofin PVR-ben kapcsold be a Force transcodingot. Ekkor a Jellyfin a szerveren alakítja át a váltott soros adást 50 fps-re, a Sticknek csak le kell játszania. Ez csak a gyenge eszközön kell, a 4K Max-on és a Shielden maradjon kikapcsolva.
 - **Duplán jönnek a csatornák:** maradt egy másik PVR-kliens, tiltsd le.
 - **Lassú a felület:** ellenőrizd, hogy a felület 1080p-n fut-e (2. lépés).
 - **Lassú a Wi-Fi:** a próbán Wi-Fi 6, 80 MHz, -76 dBm (5 méter, fal és tévé), kb. 300 Mbps. Ez 60 Mbps-os remuxhoz is elég volt. A Sticken nincs külön Wi-Fi 6 kapcsoló.
