@@ -168,6 +168,15 @@ function wk_jf_series($cfg) {
     return $m;
 }
 
+// wk_jf_series, asked at most every 15 minutes (shared with week_web.php)
+function wk_jf_series_cached($cfg, $now) {
+    $sf = '/tmp/streambox_jfseries.json'; $sc = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : null;
+    if (is_array($sc) && $now - (int)($sc['t'] ?? 0) < 900 && is_array($sc['m'] ?? null)) { return $sc['m']; }
+    $ser = wk_jf_series($cfg);
+    if (is_array($ser)) { @file_put_contents($sf, json_encode(['t' => $now, 'm' => $ser], JSON_INVALID_UTF8_SUBSTITUTE)); }
+    return $ser;
+}
+
 function wk_norm($s) { return preg_replace('/[^a-z0-9]+/', '', strtolower((string)preg_replace('/\s*\(\d{4}\)\s*$/', '', (string)$s))); }
 
 // Episodes Jellyfin already lists: tvdb ids and "series|S|E" keys (value: the Jellyfin item id); null when Jellyfin cannot be asked
@@ -189,6 +198,7 @@ function wk_jf_have($cfg, $from, $to) {
             if ($tv !== '') { $have['t' . $tv] = $id; }
             if (isset($it['ParentIndexNumber'], $it['IndexNumber'])) {
                 $have[wk_norm($it['SeriesName'] ?? '') . '|' . (int)$it['ParentIndexNumber'] . '|' . (int)$it['IndexNumber']] = $id;
+                if (!empty($it['SeriesId'])) { $have['S' . $it['SeriesId'] . '|' . (int)$it['ParentIndexNumber'] . '|' . (int)$it['IndexNumber']] = $id; }
             }
         }
     }
@@ -209,7 +219,7 @@ function wk_build($cfg, $now) {
         if (is_array($r) && !empty($r['episodeId'])) { $queue[(int)$r['episodeId']] = $r; }
     }
     $samples = wk_samples($son, $now);
-    $have = null;
+    $have = null; $jser = false;
     foreach ($cal as $ep) { if (!empty($ep['hasFile'])) { $have = wk_jf_have($cfg, $from, $to); break; } }
     $late = max(0, (float)$cfg['wk_late']) * 3600;
     $mode = in_array((string)$cfg['wk_delay'], ['series', 'idx', 'all'], true) ? (string)$cfg['wk_delay'] : 'series';
@@ -245,6 +255,11 @@ function wk_build($cfg, $now) {
             else {
                 $tv = (string)($ep['tvdbId'] ?? '');
                 $in = ($tv !== '' && $tv !== '0' && isset($have['t' . $tv])) ? $have['t' . $tv] : ($have[wk_norm($ser) . '|' . $sn . '|' . $en] ?? '');
+                if ($in === '') {   // a fresh episode often has no TVDB id yet, and Jellyfin may name the series in its own language: match by Jellyfin's series id
+                    if ($jser === false) { $jser = wk_jf_series_cached($cfg, $now); }
+                    $js = is_array($jser) ? ($jser['t' . $row['tvdb']] ?? ($jser['n' . wk_norm($ser)] ?? '')) : '';
+                    if ($js !== '') { $in = $have['S' . $js . '|' . $sn . '|' . $en] ?? ''; }
+                }
                 $row['st'] = $in !== '' ? 'jf' : 'scan';   // imported, Jellyfin has not listed it yet
                 $row['jfid'] = $in !== '1' ? $in : '';
             }

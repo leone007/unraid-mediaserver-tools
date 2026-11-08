@@ -67,9 +67,7 @@ if (!$w['ok']) {
 // Jellyfin's series list changes rarely: asked at most every 15 minutes (it was every 2 minutes)
 $ser = null;
 if ($w['counts']['all']) {
-    $sf = '/tmp/streambox_jfseries.json'; $sc = is_file($sf) ? json_decode((string)@file_get_contents($sf), true) : null;
-    if (is_array($sc) && $now - (int)($sc['t'] ?? 0) < 900 && is_array($sc['m'] ?? null)) { $ser = $sc['m']; }
-    else { $ser = wk_jf_series($cfg); if (is_array($ser)) { @file_put_contents($sf, json_encode(['t' => $now, 'm' => $ser], JSON_INVALID_UTF8_SUBSTITUTE)); } }
+    $ser = wk_jf_series_cached($cfg, $now);
 }
 $eps = [];
 foreach ($w['days'] as $day) {
