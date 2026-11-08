@@ -573,6 +573,10 @@
   "text": "the weekly summary webhook is not a valid Discord webhook URL",
   "note": "error after \"Not saved:\" when the settings page is saved."
  },
+ "save.err_hook_hu": {
+  "text": "the Hungarian descriptions webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
  "save.err_son_key": {
   "text": "the Sonarr API key contains invalid characters",
   "note": "error after \"Not saved:\" when the settings page is saved."
@@ -607,6 +611,10 @@
  },
  "ntest.ch_weekly": {
   "text": "weekly",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.ch_hu": {
+  "text": "Hungarian descriptions",
   "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
  },
  "ntest.sent": {
@@ -768,6 +776,14 @@
  "set.dc_weekly": {
   "text": "Webhook for the weekly summary:",
   "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_hu": {
+  "text": "Webhook for Hungarian descriptions:",
+  "note": "label of a setting (left column, ends with a colon). The daily line of the Hungarian descriptions part goes there."
+ },
+ "set.dc_hu_hint": {
+  "text": "their daily line (ready, written, login error); empty: no Discord message",
+  "note": "hint after the webhook field of the Hungarian descriptions."
  },
  "set.weekly_when": {
   "text": "Weekly summary day and hour:",

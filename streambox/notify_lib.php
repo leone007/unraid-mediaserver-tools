@@ -14,7 +14,7 @@ function nf_cfg() {
     $c = [
         'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
         'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
-        'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
+        'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18', 'dc_hu' => '',
     ];
     $f = '/boot/config/plugins/streambox/settings.cfg';
     if (is_file($f)) {

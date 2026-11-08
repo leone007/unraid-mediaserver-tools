@@ -67,6 +67,8 @@ if ($dcs !== '' && !preg_match($hookRe, $dcs)) { sb_out(false, ['error' => $sbx_
 
 $dcw = sb_keep('dc_weekly', $old);
 if ($dcw !== '' && !preg_match($hookRe, $dcw)) { sb_out(false, ['error' => $sbx_T('save.err_hook_weekly')]); }
+$dch = sb_keep('dc_hu', $old);   // Hungarian descriptions: their own channel (the owner's private system channel)
+if ($dch !== '' && !preg_match($hookRe, $dch)) { sb_out(false, ['error' => $sbx_T('save.err_hook_hu')]); }
 
 $sonKey = sb_keep('son_key', $old);
 if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $sbx_T('save.err_son_key')]); }
@@ -106,6 +108,7 @@ $new = [
     'notify_wait'   => (string)sb_int($_POST['notify_wait'] ?? 30, 1, 240, 30),
     'weekly'        => sb_bool($_POST['weekly'] ?? '0'),
     'dc_weekly'     => $dcw,
+    'dc_hu'         => $dch,
     'weekly_day'    => (string)sb_int($_POST['weekly_day'] ?? 5, 0, 6, 5),
     'weekly_hour'   => (string)sb_int($_POST['weekly_hour'] ?? 18, 0, 23, 18),
     'wk_show'       => (string)sb_int($_POST['wk_show'] ?? 1, 0, 2, 1),
@@ -182,5 +185,5 @@ if ($shownSrv && !sb_write($nfile, json_encode((object)$map, JSON_UNESCAPED_UNIC
 if ($oldNotify !== '1' && $newNotify === '1') { @unlink($dir . '/notify_state.json'); }
 
 $shown = $new;
-unset($shown['jf_key'], $shown['em_key'], $shown['px_token'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
+unset($shown['jf_key'], $shown['em_key'], $shown['px_token'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly'], $shown['dc_hu']);
 sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);

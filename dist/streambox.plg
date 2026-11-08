@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zy">
+<!ENTITY version   "2026.10.14zz">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian descriptions: own Discord webhook (Webhook for Hungarian descriptions), no longer the series channel; empty sends nothing; Send test message tests it too
+###2026.10.14zy
 - Hungarian descriptions (item 147): new movies and episodes whose Jellyfin description is English or empty, or whose title is only N. epizód or the English one, are translated by Claude Code in the claude container after a wait (default 12 h, daily limit 30, not 22-06). Suggest mode (default) lists them on the settings page with Write and Skip; Automatic mode writes them. Every write backs up the original and locks the field, Undo puts it back. One Discord line a day on the series webhook.
 ###2026.10.14zx
 - This week's episodes: a fresh episode that Jellyfin already lists under its own series name (for example a Hungarian title) and without a TVDB id yet now shows In Jellyfin instead of Imported (matched by the Jellyfin series id)
@@ -824,7 +826,7 @@ $sb = [
   'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
-  'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
+  'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18', 'dc_hu' => '',
   'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1', 'jx_badge' => 'title',
   'hu_on' => '1', 'hu_mode' => 'suggest', 'hu_ov' => '1', 'hu_ti' => '1', 'hu_mv' => '1', 'hu_wait' => '12', 'hu_lim' => '30',
 ];
@@ -1098,6 +1100,9 @@ if (!function_exists('sb_auto')) {
 
 <dt><?=$sbs_t('set.dc_weekly')?></dt>
 <dd><input type="password" name="dc_weekly" autocomplete="new-password" placeholder="<?=$sb['dc_weekly'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+
+<dt><?=$sbs_t('set.dc_hu')?></dt>
+<dd><input type="password" name="dc_hu" autocomplete="new-password" placeholder="<?=$sb['dc_hu'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""> <span class="uset-hint"><?=$sbs_t('set.dc_hu_hint')?></span></dd>
 
 <dt><?=$sbs_t('set.weekly_when')?></dt>
 <dd>
@@ -2121,6 +2126,8 @@ if ($dcs !== '' && !preg_match($hookRe, $dcs)) { sb_out(false, ['error' => $sbx_
 
 $dcw = sb_keep('dc_weekly', $old);
 if ($dcw !== '' && !preg_match($hookRe, $dcw)) { sb_out(false, ['error' => $sbx_T('save.err_hook_weekly')]); }
+$dch = sb_keep('dc_hu', $old);   // Hungarian descriptions: their own channel (the owner's private system channel)
+if ($dch !== '' && !preg_match($hookRe, $dch)) { sb_out(false, ['error' => $sbx_T('save.err_hook_hu')]); }
 
 $sonKey = sb_keep('son_key', $old);
 if (!preg_match('/^[A-Za-z0-9]{0,64}$/', $sonKey)) { sb_out(false, ['error' => $sbx_T('save.err_son_key')]); }
@@ -2160,6 +2167,7 @@ $new = [
     'notify_wait'   => (string)sb_int($_POST['notify_wait'] ?? 30, 1, 240, 30),
     'weekly'        => sb_bool($_POST['weekly'] ?? '0'),
     'dc_weekly'     => $dcw,
+    'dc_hu'         => $dch,
     'weekly_day'    => (string)sb_int($_POST['weekly_day'] ?? 5, 0, 6, 5),
     'weekly_hour'   => (string)sb_int($_POST['weekly_hour'] ?? 18, 0, 23, 18),
     'wk_show'       => (string)sb_int($_POST['wk_show'] ?? 1, 0, 2, 1),
@@ -2236,7 +2244,7 @@ if ($shownSrv && !sb_write($nfile, json_encode((object)$map, JSON_UNESCAPED_UNIC
 if ($oldNotify !== '1' && $newNotify === '1') { @unlink($dir . '/notify_state.json'); }
 
 $shown = $new;
-unset($shown['jf_key'], $shown['em_key'], $shown['px_token'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly']);
+unset($shown['jf_key'], $shown['em_key'], $shown['px_token'], $shown['son_key'], $shown['dc_movies'], $shown['dc_series'], $shown['dc_weekly'], $shown['dc_hu']);
 sb_out(true, ['saved' => $shown, 'nicknames' => count($map)]);
 ]]></INLINE>
 </FILE>
@@ -4067,6 +4075,10 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "the weekly summary webhook is not a valid Discord webhook URL",
   "note": "error after \"Not saved:\" when the settings page is saved."
  },
+ "save.err_hook_hu": {
+  "text": "the Hungarian descriptions webhook is not a valid Discord webhook URL",
+  "note": "error after \"Not saved:\" when the settings page is saved."
+ },
  "save.err_son_key": {
   "text": "the Sonarr API key contains invalid characters",
   "note": "error after \"Not saved:\" when the settings page is saved."
@@ -4101,6 +4113,10 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "ntest.ch_weekly": {
   "text": "weekly",
+  "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
+ },
+ "ntest.ch_hu": {
+  "text": "Hungarian descriptions",
   "note": "name of a Discord channel in the answer of Send test message, like \"movies: sent\". Short."
  },
  "ntest.sent": {
@@ -4262,6 +4278,14 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.dc_weekly": {
   "text": "Webhook for the weekly summary:",
   "note": "label of a setting (left column, ends with a colon)."
+ },
+ "set.dc_hu": {
+  "text": "Webhook for Hungarian descriptions:",
+  "note": "label of a setting (left column, ends with a colon). The daily line of the Hungarian descriptions part goes there."
+ },
+ "set.dc_hu_hint": {
+  "text": "their daily line (ready, written, login error); empty: no Discord message",
+  "note": "hint after the webhook field of the Hungarian descriptions."
  },
  "set.weekly_when": {
   "text": "Weekly summary day and hour:",
@@ -5524,6 +5548,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  "save.err_hook_weekly": {
   "text": "a heti összefoglaló webhookja nem érvényes Discord webhook URL"
  },
+ "save.err_hook_hu": {
+  "text": "a magyar leírások webhookja nem érvényes Discord webhook URL"
+ },
  "save.err_son_key": {
   "text": "a Sonarr API-kulcs érvénytelen karaktert tartalmaz"
  },
@@ -5550,6 +5577,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "ntest.ch_weekly": {
   "text": "heti"
+ },
+ "ntest.ch_hu": {
+  "text": "magyar leírások"
  },
  "ntest.sent": {
   "text": "elküldve"
@@ -5670,6 +5700,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "set.dc_weekly": {
   "text": "Webhook a heti összefoglalóhoz:"
+ },
+ "set.dc_hu": {
+  "text": "Webhook a magyar leírásokhoz:"
+ },
+ "set.dc_hu_hint": {
+  "text": "a napi sora (kész javaslatok, beírtak, login-hiba); üresen: nincs Discord-üzenet"
  },
  "set.weekly_when": {
   "text": "A heti összefoglaló napja és órája:"
@@ -7131,7 +7167,7 @@ const HU_TRIES = 3;           // a failing item is tried this many times (an hou
 
 function hu_cfg() {
     $c = array_merge(['hu_on' => '1', 'hu_mode' => 'suggest', 'hu_ov' => '1', 'hu_ti' => '1', 'hu_mv' => '1', 'hu_wait' => '12', 'hu_lim' => '30',
-                      'dc_series' => ''], wk_cfg());
+                      'dc_hu' => ''], wk_cfg());
     $c['hu_mode'] = $c['hu_mode'] === 'auto' ? 'auto' : 'suggest';
     return $c;
 }
@@ -7363,7 +7399,7 @@ function hu_tick($cfg, $now, $force = false) {
     return $st;
 }
 
-// ---- Discord: one line a day (series webhook), in the Discord language ----------------------------------------------------
+// ---- Discord: one line a day (own webhook dc_hu, empty: none), in the Discord language ----------------------------------------------------
 function hu_dc_t($key, $vars = []) {
     static $tab = null;
     if ($tab === null) {
@@ -7382,7 +7418,7 @@ function hu_daily($cfg, $now) {
     $st = hu_state();
     $today = date('Y-m-d', $now);
     if ($st['dc_day'] === $today || (int)date('G', $now) < 9 || hu_quiet($now)) { return; }
-    $hook = trim((string)$cfg['dc_series']);
+    $hook = trim((string)$cfg['dc_hu']);
     if (!preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $hook)) { return; }
     $ready = []; $done = [];
     foreach ($st['items'] as $x) {
@@ -7486,7 +7522,7 @@ function nf_cfg() {
     $c = [
         'jf_host' => '127.0.0.1', 'jf_port' => '8096', 'jf_key' => '', 'jf_url' => '',
         'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
-        'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
+        'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18', 'dc_hu' => '',
     ];
     $f = '/boot/config/plugins/streambox/settings.cfg';
     if (is_file($f)) {
@@ -8180,12 +8216,13 @@ $cfg  = nf_cfg();
 $hm   = nf_hook($cfg['dc_movies']);
 $hs   = nf_hook($cfg['dc_series']);
 $hw   = nf_hook($cfg['dc_weekly']);
+$hh   = nf_hook($cfg['dc_hu']);
 $mode = (string)($_POST['mode'] ?? 'test');
-if ($hm === '' && $hs === '' && $hw === '') { nt_out(false, $sbx_T('ntest.no_hook')); }
+if ($hm === '' && $hs === '' && $hw === '' && $hh === '') { nt_out(false, $sbx_T('ntest.no_hook')); }
 
 $report = [];
 if ($mode === 'test') {
-    foreach (['movies' => $hm, 'series' => $hs, 'weekly' => $hw] as $label => $h) {
+    foreach (['movies' => $hm, 'series' => $hs, 'weekly' => $hw, 'hu' => $hh] as $label => $h) {
         if ($h === '') { continue; }
         list($r, $m) = nf_send($h, ['username' => 'Streambox', 'content' => nf_t('✅ Streambox: tesztüzenet (' . $label . ' csatorna)', '✅ Streambox: test message (' . $label . ' channel)')]);
         $report[] = $sbx_T('ntest.ch_' . $label) . ': ' . ($r === 'ok' ? $sbx_T('ntest.sent') : $sbx_T('ntest.failed', ['e' => $m]));

@@ -431,6 +431,9 @@
  "save.err_hook_weekly": {
   "text": "a heti összefoglaló webhookja nem érvényes Discord webhook URL"
  },
+ "save.err_hook_hu": {
+  "text": "a magyar leírások webhookja nem érvényes Discord webhook URL"
+ },
  "save.err_son_key": {
   "text": "a Sonarr API-kulcs érvénytelen karaktert tartalmaz"
  },
@@ -457,6 +460,9 @@
  },
  "ntest.ch_weekly": {
   "text": "heti"
+ },
+ "ntest.ch_hu": {
+  "text": "magyar leírások"
  },
  "ntest.sent": {
   "text": "elküldve"
@@ -577,6 +583,12 @@
  },
  "set.dc_weekly": {
   "text": "Webhook a heti összefoglalóhoz:"
+ },
+ "set.dc_hu": {
+  "text": "Webhook a magyar leírásokhoz:"
+ },
+ "set.dc_hu_hint": {
+  "text": "a napi sora (kész javaslatok, beírtak, login-hiba); üresen: nincs Discord-üzenet"
  },
  "set.weekly_when": {
   "text": "A heti összefoglaló napja és órája:"

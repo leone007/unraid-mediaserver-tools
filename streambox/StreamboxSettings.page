@@ -18,7 +18,7 @@ $sb = [
   'streams_max' => '8', 'added_rows' => '5', 'show_load' => '1',
   'socket_host' => '', 'socket_id' => '0',
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
-  'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
+  'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18', 'dc_hu' => '',
   'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1', 'jx_badge' => 'title',
   'hu_on' => '1', 'hu_mode' => 'suggest', 'hu_ov' => '1', 'hu_ti' => '1', 'hu_mv' => '1', 'hu_wait' => '12', 'hu_lim' => '30',
 ];
@@ -292,6 +292,9 @@ if (!function_exists('sb_auto')) {
 
 <dt><?=$sbs_t('set.dc_weekly')?></dt>
 <dd><input type="password" name="dc_weekly" autocomplete="new-password" placeholder="<?=$sb['dc_weekly'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""></dd>
+
+<dt><?=$sbs_t('set.dc_hu')?></dt>
+<dd><input type="password" name="dc_hu" autocomplete="new-password" placeholder="<?=$sb['dc_hu'] !== '' ? $sbs_T('set.saved_keep') : 'https://discord.com/api/webhooks/...'?>" value=""> <span class="uset-hint"><?=$sbs_t('set.dc_hu_hint')?></span></dd>
 
 <dt><?=$sbs_t('set.weekly_when')?></dt>
 <dd>

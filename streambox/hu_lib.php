@@ -16,7 +16,7 @@ const HU_TRIES = 3;           // a failing item is tried this many times (an hou
 
 function hu_cfg() {
     $c = array_merge(['hu_on' => '1', 'hu_mode' => 'suggest', 'hu_ov' => '1', 'hu_ti' => '1', 'hu_mv' => '1', 'hu_wait' => '12', 'hu_lim' => '30',
-                      'dc_series' => ''], wk_cfg());
+                      'dc_hu' => ''], wk_cfg());
     $c['hu_mode'] = $c['hu_mode'] === 'auto' ? 'auto' : 'suggest';
     return $c;
 }
@@ -248,7 +248,7 @@ function hu_tick($cfg, $now, $force = false) {
     return $st;
 }
 
-// ---- Discord: one line a day (series webhook), in the Discord language ----------------------------------------------------
+// ---- Discord: one line a day (own webhook dc_hu, empty: none), in the Discord language ----------------------------------------------------
 function hu_dc_t($key, $vars = []) {
     static $tab = null;
     if ($tab === null) {
@@ -267,7 +267,7 @@ function hu_daily($cfg, $now) {
     $st = hu_state();
     $today = date('Y-m-d', $now);
     if ($st['dc_day'] === $today || (int)date('G', $now) < 9 || hu_quiet($now)) { return; }
-    $hook = trim((string)$cfg['dc_series']);
+    $hook = trim((string)$cfg['dc_hu']);
     if (!preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $hook)) { return; }
     $ready = []; $done = [];
     foreach ($st['items'] as $x) {

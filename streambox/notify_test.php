@@ -22,12 +22,13 @@ $cfg  = nf_cfg();
 $hm   = nf_hook($cfg['dc_movies']);
 $hs   = nf_hook($cfg['dc_series']);
 $hw   = nf_hook($cfg['dc_weekly']);
+$hh   = nf_hook($cfg['dc_hu']);
 $mode = (string)($_POST['mode'] ?? 'test');
-if ($hm === '' && $hs === '' && $hw === '') { nt_out(false, $sbx_T('ntest.no_hook')); }
+if ($hm === '' && $hs === '' && $hw === '' && $hh === '') { nt_out(false, $sbx_T('ntest.no_hook')); }
 
 $report = [];
 if ($mode === 'test') {
-    foreach (['movies' => $hm, 'series' => $hs, 'weekly' => $hw] as $label => $h) {
+    foreach (['movies' => $hm, 'series' => $hs, 'weekly' => $hw, 'hu' => $hh] as $label => $h) {
         if ($h === '') { continue; }
         list($r, $m) = nf_send($h, ['username' => 'Streambox', 'content' => nf_t('✅ Streambox: tesztüzenet (' . $label . ' csatorna)', '✅ Streambox: test message (' . $label . ' channel)')]);
         $report[] = $sbx_T('ntest.ch_' . $label) . ': ' . ($r === 'ok' ? $sbx_T('ntest.sent') : $sbx_T('ntest.failed', ['e' => $m]));
