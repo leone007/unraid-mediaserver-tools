@@ -103,6 +103,15 @@ Ha a telepítés függőségi hibával leáll, keresd meg, melyik függőség hi
 
 A menük felépültek, újraindítás sem kellett. Ha mégsem jelennek meg, indítsd újra a Kodit.
 
+A `kodi-beall` mappa (2026-11-08, a Mac teljes beállítása):
+- Menü: JELLYNAS, Live TV, Összes film, Összes sorozat, Katalógus.
+- A JELLYNAS oldalon a Megtekintés folytatása és a Következik landscape, az Ezen a héten, a Nemrég hozzáadott filmek és a Nemrég hozzáadott sorozatok poszter.
+
+Eszközönként kapcsold ki a menüszerkesztőben, ami túl nehéz:
+- Shield, Mac: minden marad.
+- Fire TV Stick 4K Max: Összes film és Összes sorozat ki.
+- Régi, sima Fire TV Stick: Összes film, Összes sorozat és Katalógus ki.
+
 **Rotten Tomatoes értékelés (OMDb-kulcs)**
 
 Az IMDb és a TMDb értékelés magától megjön, a Rotten Tomatoes-hoz OMDb API-kulcs kell (ingyenes, omdbapi.com).
@@ -182,5 +191,7 @@ cp -R script.skinvariables ~/Desktop/kodi-beall/
 ```
 
 A `-hash` sorok szándékosan maradnak ki, így a skin újraépíti a menüket. A Kofin mappáit ne másold, belépési adatok vannak bennük.
+
+Ha az Asztalon már van egy régi `kodi-beall`, előbb töröld (`rm -rf ~/Desktop/kodi-beall`), és a `mkdir` sort ne hagyd ki. A szerveren a régi mappát ne írd felül, hanem nevezd át (pl. `kodi-beall-1106`).
 
 A mappa a szerver `PROGRAM/APK/kodi addons` mappájába kerül, onnan a Stickre. SMB-n root nem léphet be: külön Unraid-felhasználó kell Read/Write joggal, vagy egyszeri `scp` bekapcsolt SSH-val, utána az SSH-t kapcsold ki.
