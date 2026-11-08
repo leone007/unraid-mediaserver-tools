@@ -33,7 +33,8 @@ BROWSE = 'plugin://plugin.video.kofin/?mode=browse&type=%s&folder=%s'   # Kofin'
 ROOT = xbmcvfs.translatePath(ADDON.getAddonInfo('path'))
 PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 TIMEOUT = 8
-CATALOG = 'http://192.168.50.30:5056'   # default of the setting 'catalog' (LAN); outside the LAN the NPM address
+CATALOG = 'http://192.168.50.30:5056'   # default of the setting 'catalog' (LAN)
+CAT_PUBLIC = 'https://seerr.leone007.net'   # the same proxy through NPM: used when the LAN address does not answer (a TV away from home)
 CAT_LISTS = (('trending', 30071), ('movies', 30072), ('movies/upcoming', 30073), ('tv', 30074), ('tv/upcoming', 30075))
 CAT_REQS = (('all', 30077), ('processing', 30078), ('comingsoon', 30079), ('available', 30080))
 CAT_STATUS = {'available': 30080, 'partial': 30081, 'processing': 30082, 'pending': 30082}
@@ -642,14 +643,36 @@ def cat_lang():
     return 'hu' if s == '2' or (s not in ('1', '2') and xbmc.getLanguage(xbmc.ISO_639_1) == 'hu') else 'en'
 
 
+def cat_base():
+    """The proxy address: the setting when it was changed; else the LAN address, or the public one when the LAN does not
+    answer (a TV away from home, 2026-11-08). The choice is kept for 10 minutes in a Home property, so only one row waits."""
+    s = ADDON.getSetting('catalog').strip().rstrip('/')
+    if s and s != CATALOG:
+        return s
+    win = xbmcgui.Window(10000)
+    t, _, base = win.getProperty('JellynasCatalog.Base').partition('|')
+    if base and t.isdigit() and time.time() - int(t) < 600:
+        return base
+    base = CAT_PUBLIC
+    try:
+        req = urllib.request.Request(CATALOG + '/health', headers={'User-Agent': 'JELLYNAS/%s (Kodi)' % ADDON.getAddonInfo('version')})
+        with urllib.request.urlopen(req, timeout=2) as r:
+            if json.loads(r.read().decode('utf-8')).get('ok'):
+                base = CATALOG
+    except (OSError, ValueError):
+        pass
+    win.setProperty('JellynasCatalog.Base', '%d|%s' % (time.time(), base))
+    return base
+
+
 def cat_get(c, path, **q):
     q['language'] = cat_lang()
-    return get_json('%s%s?%s' % ((ADDON.getSetting('catalog') or CATALOG).rstrip('/'), path, urllib.parse.urlencode(q)), c['hdr'])
+    return get_json('%s%s?%s' % (cat_base(), path, urllib.parse.urlencode(q)), c['hdr'])
 
 
 def cat_post(c, body):
     """The one write of the add-on: a Seerr request, sent by the proxy in the viewer's name. Returns the HTTP code."""
-    req = urllib.request.Request((ADDON.getSetting('catalog') or CATALOG).rstrip('/') + '/request', data=json.dumps(body).encode('utf-8'),
+    req = urllib.request.Request(cat_base() + '/request', data=json.dumps(body).encode('utf-8'),
                                  headers={'Content-Type': 'application/json', 'Authorization': c['hdr'],
                                           'User-Agent': 'JELLYNAS/%s (Kodi)' % ADDON.getAddonInfo('version')}, method='POST')
     try:

@@ -63,7 +63,9 @@ class H(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
         body = None
-        if u.path == '/UserItems/Resume':
+        if u.path == '/health':
+            body = {'ok': True}
+        elif u.path == '/UserItems/Resume':
             body = {'Items': RESUME}
         elif u.path == '/Shows/NextUp':
             body = {'Items': NEXTUP}
@@ -201,7 +203,7 @@ class Detail:
 
 DIR = {'items': [], 'end': None, 'notes': [], 'pick': 0, 'yes': True, 'multi': None, 'built': [], 'info': []}
 HOMEPROPS = {}
-Window = lambda wid: types.SimpleNamespace(setProperty=HOMEPROPS.__setitem__)
+Window = lambda wid: types.SimpleNamespace(setProperty=HOMEPROPS.__setitem__, getProperty=lambda k: HOMEPROPS.get(k, ''))
 xbmc = types.SimpleNamespace(executebuiltin=lambda b: DIR['built'].append(b), log=lambda *a: None, LOGINFO=1, ISO_639_1=0, getLanguage=lambda f: 'en', getInfoLabel=lambda k: 'Mac "Studio"',
                              VideoStreamDetail=Detail, AudioStreamDetail=Detail)
 xbmcaddon = types.SimpleNamespace(Addon=Addon)
@@ -389,6 +391,21 @@ DIR['pick'] = 1
 run('?mode=catitem&type=movie&id=4')
 ok(not DIR['info'][-1].props.get('jellynas.playable') and not getattr(DIR['info'][-1], 'path', ''), 'details of a new movie: nothing to play')
 del LANG['catalog']
+
+# catalog address: setting empty or the LAN default -> LAN when /health answers, else the public address (remembered)
+jellynas.CATALOG, jellynas.CAT_PUBLIC = 'http://127.0.0.1:1', URL
+LANG['catalog'] = 'http://127.0.0.1:1'
+HOMEPROPS.pop('JellynasCatalog.Base', None)
+ok([li.label for _, li, _ in run('?mode=catlist&list=trending')] == ['Stick', 'Nocturne'] and HOMEPROPS['JellynasCatalog.Base'].endswith('|' + URL),
+   'catalog: the LAN address does not answer -> the public address, remembered')
+jellynas.CATALOG, jellynas.CAT_PUBLIC = URL, 'http://127.0.0.1:1'
+del LANG['catalog']
+HOMEPROPS.pop('JellynasCatalog.Base', None)
+n = len([q for q in SEEN if q[1] == '/health'])
+ok([li.label for _, li, _ in run('?mode=catlist&list=trending')] == ['Stick', 'Nocturne'] and len([q for q in SEEN if q[1] == '/health']) == n + 1,
+   'catalog: no setting, the LAN address answers /health -> LAN')
+run('?mode=catlist&list=trending')
+ok(len([q for q in SEEN if q[1] == '/health']) == n + 1, 'catalog: the choice is kept (no second /health)')
 
 items = run('?mode=week')
 ok([li for _, li, _ in items if li.props.get('jellynas.imdb')] and all(li.props.get('jellynas.kind') == 'week' for _, li, _ in items),
