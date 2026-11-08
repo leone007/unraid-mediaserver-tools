@@ -1016,5 +1016,185 @@
  },
  "set.nicks_err": {
   "text": "A(z) {s} felhasználólistája nem töltődött be. Ellenőrizd fent a címét és a kulcsát, nyomd meg az Alkalmaz gombot, majd töltsd újra az oldalt. A mentett becenevek megmaradnak."
+ },
+ "hu.title": {
+  "text": "Magyar leírások"
+ },
+ "hu.loading": {
+  "text": "Betöltés…"
+ },
+ "hu.written": {
+  "text": "Az elmúlt 7 napban beírva"
+ },
+ "hu.settings": {
+  "text": "Beállítások"
+ },
+ "hu.sum": {
+  "text": "{on} · {mode} · {h} óra · {n}/nap"
+ },
+ "hu.on": {
+  "text": "Be"
+ },
+ "hu.off": {
+  "text": "Ki"
+ },
+ "hu.mode_sug_s": {
+  "text": "Javaslat"
+ },
+ "hu.mode_auto_s": {
+  "text": "Automatikus"
+ },
+ "hu.on_label": {
+  "text": "Fordítás Claude-dal"
+ },
+ "hu.on_hint": {
+  "text": "Új filmek és epizódok, amelyek leírása angol vagy üres, vagy a címe csak „N. epizód” vagy az angol cím. A Claude Code a claude konténerben fut, a te előfizetéseddel; 22:00 és 06:00 között nem fut."
+ },
+ "hu.mode": {
+  "text": "Mód"
+ },
+ "hu.mode_sug": {
+  "text": "Javaslat: beírás kattintásra"
+ },
+ "hu.mode_auto": {
+  "text": "Automatikus: beírja, aztán szól"
+ },
+ "hu.mode_hint": {
+  "text": "Minden beírás elmenti az eredetit, és zárolja a mezőt, hogy egy metaadat-frissítés ne hozza vissza az angolt; a Visszavonás visszateszi az eredetit."
+ },
+ "hu.what": {
+  "text": "Mit"
+ },
+ "hu.what_ov": {
+  "text": "Leírások"
+ },
+ "hu.what_ti": {
+  "text": "Epizódcímek"
+ },
+ "hu.what_mv": {
+  "text": "Filmek"
+ },
+ "hu.what_hint": {
+  "text": "A cím csak akkor marad „N. epizód”, ha az eredeti is az; a nevek maradnak. Az üres leírás a Sonarr angol szövegéből készül."
+ },
+ "hu.wait": {
+  "text": "Várakozás fordítás előtt"
+ },
+ "hu.hours": {
+  "text": "óra"
+ },
+ "hu.wait_hint": {
+  "text": "A TMDb-re gyakran egy napon belül megjön a magyar szöveg; csak ami utána is angol, az megy Claude-hoz."
+ },
+ "hu.lim": {
+  "text": "Napi korlát"
+ },
+ "hu.items": {
+  "text": "tétel"
+ },
+ "hu.lim_hint": {
+  "text": "A korlát fölötti évadpakk másnap folytatódik."
+ },
+ "hu.err_login": {
+  "text": "Claude nincs bejelentkezve"
+ },
+ "hu.err_docker": {
+  "text": "A Docker nem érhető el"
+ },
+ "hu.err_ctstop": {
+  "text": "A claude konténer nem fut"
+ },
+ "hu.err_timeout": {
+  "text": "Claude 15 percen belül nem válaszolt"
+ },
+ "hu.err_answer": {
+  "text": "Claude válasza nem olvasható"
+ },
+ "hu.err_hint": {
+  "text": "Utolsó próba: {t}. A tételek várnak, semmi nem íródott be. Javítsd (bejelentkezésnél: /login a claude konténerben), aztán Újra."
+ },
+ "hu.retry": {
+  "text": "Újra"
+ },
+ "hu.what_d": {
+  "text": "leírás"
+ },
+ "hu.what_t": {
+  "text": "cím"
+ },
+ "hu.what_dt": {
+  "text": "cím és leírás"
+ },
+ "hu.st_new": {
+  "text": "várakozik"
+ },
+ "hu.st_run": {
+  "text": "fordítás"
+ },
+ "hu.st_fail": {
+  "one": "{n} alkalommal nem sikerült, egy óra múlva újra",
+  "other": "{n} alkalommal nem sikerült, egy óra múlva újra"
+ },
+ "hu.st_done": {
+  "text": "beírva"
+ },
+ "hu.st_skip": {
+  "text": "kihagyva"
+ },
+ "hu.st_undone": {
+  "text": "visszavonva"
+ },
+ "hu.st_gone": {
+  "text": "közben megváltozott, nem írtam be"
+ },
+ "hu.orig": {
+  "text": "Eredeti:"
+ },
+ "hu.write": {
+  "text": "Beírás"
+ },
+ "hu.skip": {
+  "text": "Kihagyás"
+ },
+ "hu.undo": {
+  "text": "Visszavonás"
+ },
+ "hu.auto": {
+  "text": "automatikus"
+ },
+ "hu.idle": {
+  "text": "Nincs mit fordítani"
+ },
+ "hu.idle_hint": {
+  "text": "Az új tételeket 15 percenként nézi."
+ },
+ "hu.off_long": {
+  "text": "Kikapcsolva"
+ },
+ "hu.none": {
+  "text": "Még semmi"
+ },
+ "hu.state_err": {
+  "text": "beavatkozás kell"
+ },
+ "hu.state_sug": {
+  "text": "Javaslat · {n} vár · ma {c}/{l}"
+ },
+ "hu.state_auto": {
+  "text": "Automatikus · ma {c}/{l}"
+ },
+ "hu.op_fail": {
+  "text": "Nem sikerült: {e}"
+ },
+ "hu.dc_done": {
+  "one": "📝 {n} magyar leírás beírva: {list}. Visszavonás a Streambox oldalán.",
+  "other": "📝 {n} magyar leírás beírva: {list}. Visszavonás a Streambox oldalán."
+ },
+ "hu.dc_ready": {
+  "one": "📝 {n} magyar leírás vár: {list}. Beírás a Streambox oldalán.",
+  "other": "📝 {n} magyar leírás vár: {list}. Beírás a Streambox oldalán."
+ },
+ "hu.dc_login": {
+  "text": "⚠️ A magyar leírások leálltak: Claude nincs bejelentkezve. Jelentkezz be újra, aztán Újra a Streambox oldalán."
  }
 }

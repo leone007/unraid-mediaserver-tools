@@ -1352,5 +1352,244 @@
  "set.nicks_err": {
   "text": "The {s} user list could not be loaded. Check its address and key above, press Apply, then reload this page. Saved nicknames are kept.",
   "note": "Streambox settings, User nicknames: shown under a media server's sub-band when its user list did not load ({s} = Jellyfin, Emby or Plex)."
+ },
+ "hu.title": {
+  "text": "Hungarian descriptions",
+  "note": "band title on the settings page: Claude translates English or empty Jellyfin descriptions and episode titles into Hungarian"
+ },
+ "hu.loading": {
+  "text": "Loading…",
+  "note": "placeholder row while the list loads"
+ },
+ "hu.written": {
+  "text": "Written in the last 7 days",
+  "note": "foldable bar: translations already written into Jellyfin"
+ },
+ "hu.settings": {
+  "text": "Settings",
+  "note": "foldable bar with the settings of this part"
+ },
+ "hu.sum": {
+  "text": "{on} · {mode} · {h} h · {n}/day",
+  "note": "summary on the closed Settings bar: on/off, mode, wait in hours, daily limit"
+ },
+ "hu.on": {
+  "text": "On",
+  "note": "short: the feature is on"
+ },
+ "hu.off": {
+  "text": "Off",
+  "note": "short: the feature is off"
+ },
+ "hu.mode_sug_s": {
+  "text": "Suggest",
+  "note": "short name of the suggest mode"
+ },
+ "hu.mode_auto_s": {
+  "text": "Automatic",
+  "note": "short name of the automatic mode"
+ },
+ "hu.on_label": {
+  "text": "Translate with Claude",
+  "note": "setting label: switch the feature on"
+ },
+ "hu.on_hint": {
+  "text": "New movies and episodes whose description is English or empty, or whose title is only \"Episode N\" or the English one. Claude Code runs in the claude container with your plan; nothing runs between 22:00 and 06:00.",
+  "note": "hint under the switch"
+ },
+ "hu.mode": {
+  "text": "Mode",
+  "note": "setting label: suggest or automatic"
+ },
+ "hu.mode_sug": {
+  "text": "Suggest: write after a click",
+  "note": "option: translations wait for the Write button"
+ },
+ "hu.mode_auto": {
+  "text": "Automatic: write, then tell me",
+  "note": "option: translations are written at once, the daily Discord line tells what"
+ },
+ "hu.mode_hint": {
+  "text": "Every write keeps a backup of the original and locks the field, so a metadata refresh does not bring the English back; Undo puts the original back.",
+  "note": "hint under the mode"
+ },
+ "hu.what": {
+  "text": "What",
+  "note": "setting label: which fields and items"
+ },
+ "hu.what_ov": {
+  "text": "Descriptions",
+  "note": "checkbox: translate descriptions"
+ },
+ "hu.what_ti": {
+  "text": "Episode titles",
+  "note": "checkbox: translate episode titles"
+ },
+ "hu.what_mv": {
+  "text": "Movies",
+  "note": "checkbox: also movies, not only episodes"
+ },
+ "hu.what_hint": {
+  "text": "A title stays \"Episode N\" only when the original is that too; names stay as they are. An empty description is translated from Sonarr's English one.",
+  "note": "hint under What"
+ },
+ "hu.wait": {
+  "text": "Wait before translating",
+  "note": "setting label: hours after the item was added"
+ },
+ "hu.hours": {
+  "text": "hours",
+  "note": "unit after the number"
+ },
+ "hu.wait_hint": {
+  "text": "TMDb often gets the Hungarian text within a day; only what is still English then goes to Claude.",
+  "note": "hint under the wait"
+ },
+ "hu.lim": {
+  "text": "Daily limit",
+  "note": "setting label: items translated per day"
+ },
+ "hu.items": {
+  "text": "items",
+  "note": "unit after the number"
+ },
+ "hu.lim_hint": {
+  "text": "A season pack over the limit continues the next day.",
+  "note": "hint under the daily limit"
+ },
+ "hu.err_login": {
+  "text": "Claude is not logged in",
+  "note": "error row: the claude container answered not logged in"
+ },
+ "hu.err_docker": {
+  "text": "Docker is not available",
+  "note": "error row: no docker on the server"
+ },
+ "hu.err_ctstop": {
+  "text": "The claude container is not running",
+  "note": "error row"
+ },
+ "hu.err_timeout": {
+  "text": "Claude did not answer in 15 minutes",
+  "note": "error row"
+ },
+ "hu.err_answer": {
+  "text": "Claude's answer could not be read",
+  "note": "error row: the answer was not the expected JSON"
+ },
+ "hu.err_hint": {
+  "text": "Last try {t}. The items wait; nothing was written. Fix it (for a login: /login in the claude container), then press Retry.",
+  "note": "hint under an error row, {t} = time"
+ },
+ "hu.retry": {
+  "text": "Retry",
+  "note": "button: run again now"
+ },
+ "hu.what_d": {
+  "text": "description",
+  "note": "what is translated for this item"
+ },
+ "hu.what_t": {
+  "text": "title",
+  "note": "what is translated for this item"
+ },
+ "hu.what_dt": {
+  "text": "title and description",
+  "note": "what is translated for this item"
+ },
+ "hu.st_new": {
+  "text": "waiting",
+  "note": "pill: found, waits for its Claude run"
+ },
+ "hu.st_run": {
+  "text": "translating",
+  "note": "pill: Claude is working on it"
+ },
+ "hu.st_fail": {
+  "one": "failed {n} time, tried again in an hour",
+  "other": "failed {n} times, tried again in an hour",
+  "note": "row text of an item whose translation failed"
+ },
+ "hu.st_done": {
+  "text": "written",
+  "note": "state of a written item"
+ },
+ "hu.st_skip": {
+  "text": "skipped",
+  "note": "state of a skipped item"
+ },
+ "hu.st_undone": {
+  "text": "undone",
+  "note": "state of an undone item"
+ },
+ "hu.st_gone": {
+  "text": "changed meanwhile, not written",
+  "note": "the item changed in Jellyfin before the write"
+ },
+ "hu.orig": {
+  "text": "Original:",
+  "note": "label before the English source text"
+ },
+ "hu.write": {
+  "text": "Write",
+  "note": "button: write the translation into Jellyfin"
+ },
+ "hu.skip": {
+  "text": "Skip",
+  "note": "button: drop this translation"
+ },
+ "hu.undo": {
+  "text": "Undo",
+  "note": "button: put the original back"
+ },
+ "hu.auto": {
+  "text": "automatic",
+  "note": "marks an item written by the automatic mode"
+ },
+ "hu.idle": {
+  "text": "Nothing to translate",
+  "note": "row when the list is empty"
+ },
+ "hu.idle_hint": {
+  "text": "New items are checked every 15 minutes.",
+  "note": "hint under the empty row"
+ },
+ "hu.off_long": {
+  "text": "Switched off",
+  "note": "row when the feature is off"
+ },
+ "hu.none": {
+  "text": "Nothing yet",
+  "note": "empty foldable list"
+ },
+ "hu.state_err": {
+  "text": "needs attention",
+  "note": "band state on the right: an error"
+ },
+ "hu.state_sug": {
+  "text": "Suggest · {n} waiting · today {c}/{l}",
+  "note": "band state: suggest mode, {n} waiting for Write, {c} of {l} translated today"
+ },
+ "hu.state_auto": {
+  "text": "Automatic · today {c}/{l}",
+  "note": "band state: automatic mode"
+ },
+ "hu.op_fail": {
+  "text": "Did not work: {e}",
+  "note": "error shown in a row after a button"
+ },
+ "hu.dc_done": {
+  "one": "📝 {n} Hungarian description written: {list}. Undo on the Streambox page.",
+  "other": "📝 {n} Hungarian descriptions written: {list}. Undo on the Streambox page.",
+  "note": "Discord daily line, automatic mode"
+ },
+ "hu.dc_ready": {
+  "one": "📝 {n} Hungarian description is ready: {list}. Write it on the Streambox page.",
+  "other": "📝 {n} Hungarian descriptions are ready: {list}. Write them on the Streambox page.",
+  "note": "Discord daily line, suggest mode"
+ },
+ "hu.dc_login": {
+  "text": "⚠️ Hungarian descriptions stopped: Claude is not logged in. Log in again, then Retry on the Streambox page.",
+  "note": "Discord daily line on a login problem"
  }
 }

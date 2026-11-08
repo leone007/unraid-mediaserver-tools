@@ -120,6 +120,13 @@ $new = [
     'wk_web_view'   => ((string)($_POST['wk_web_view'] ?? '') === 'row') ? 'row' : 'grid',
     'jx_on'         => sb_bool($_POST['jx_on'] ?? '0'),
     'jx_badge'      => ((string)($_POST['jx_badge'] ?? '') === 'poster') ? 'poster' : 'title',
+    'hu_on'         => sb_bool($_POST['hu_on'] ?? '1'),
+    'hu_mode'       => ((string)($_POST['hu_mode'] ?? '') === 'auto') ? 'auto' : 'suggest',
+    'hu_ov'         => sb_bool($_POST['hu_ov'] ?? '1'),
+    'hu_ti'         => sb_bool($_POST['hu_ti'] ?? '1'),
+    'hu_mv'         => sb_bool($_POST['hu_mv'] ?? '1'),
+    'hu_wait'       => (string)sb_int($_POST['hu_wait'] ?? 12, 0, 168, 12),
+    'hu_lim'        => (string)sb_int($_POST['hu_lim'] ?? 30, 1, 200, 30),
 ];
 
 $text = '';

@@ -20,6 +20,7 @@ $sb = [
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
   'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
   'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1', 'jx_badge' => 'title',
+  'hu_on' => '1', 'hu_mode' => 'suggest', 'hu_ov' => '1', 'hu_ti' => '1', 'hu_mv' => '1', 'hu_wait' => '12', 'hu_lim' => '30',
 ];
 $sb_log = is_file('/tmp/streambox_notify.log') ? implode("\n", array_slice((array)@file('/tmp/streambox_notify.log', FILE_IGNORE_NEW_LINES), -6)) : '';
 if (is_file($sb_file)) {
@@ -134,6 +135,23 @@ if (!function_exists('sb_auto')) {
 .uset .sb-nsub{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;margin:12px 0 0;background:rgba(0,0,0,.15)}
 .uset .sb-nsub i{width:7px;height:7px;border-radius:50%;flex:none}
 .uset .sb-nsub small{margin-left:auto;opacity:.6;text-transform:none;letter-spacing:0}
+/* Hungarian descriptions (item 147): rows with a coloured left stripe, foldable bars closed on load (owner's tile look) */
+.uset .sb-hu{background:rgba(128,128,128,.12)}
+.uset .sb-hu-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:8px 12px;border-top:1px solid rgba(128,128,128,.2)}
+.uset .sb-hu>.sb-hu-r:first-child{border-top:0}
+.uset .sb-hu-r small{display:block;opacity:.6;font-size:12px;line-height:1.45;margin-top:2px;white-space:normal}
+.uset .sb-hu-r .sb-hu-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.uset .sb-hu-r .sb-hu-a input{margin:0}
+.uset .sb-hu-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+.uset .sb-hu-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+.uset .sb-hu-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+.uset .sb-hu-red{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.uset .sb-hu-grey{background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.uset details.sb-hu-cat{margin-top:6px}
+.uset details.sb-hu-cat>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;padding:7px 12px;background:rgba(128,128,128,.16);font-size:12px}
+.uset details.sb-hu-cat>summary::-webkit-details-marker{display:none}
+.uset details.sb-hu-cat>summary b{font-weight:400;opacity:.6}
+.uset .sb-hu-pill{font-size:11px;padding:1px 7px;border-radius:3px;white-space:nowrap;background:rgba(74,144,226,.22);color:#4a90e2}
 .uset p.sb-nerr{margin:0;padding:8px 12px;font-size:12px;color:#d9921f;background:rgba(128,128,128,.12)}
 </style>
 <form id="sb-form" class="uset" method="POST" action="/plugins/streambox/save.php" onsubmit="return false;">
@@ -300,6 +318,33 @@ if (!function_exists('sb_auto')) {
 </dd>
 </dl>
 
+<h3><?=$sbs_t('hu.title')?> <small id="sb-hu-state"></small></h3>
+<div id="sb-hu" class="sb-hu"><div class="sb-hu-r sb-hu-grey"><span><?=$sbs_t('hu.loading')?></span></div></div>
+<details class="sb-hu-cat" id="sb-hu-done"><summary><?=$sbs_t('hu.written')?> <b id="sb-hu-dn">0</b></summary><div class="sb-hu" id="sb-hu-dl"></div></details>
+<details class="sb-hu-cat"><summary><?=$sbs_t('hu.settings')?> <b><?=$sbs_t('hu.sum', ['on' => $sb['hu_on'] === '1' ? $sbs_T('hu.on') : $sbs_T('hu.off'), 'mode' => $sb['hu_mode'] === 'auto' ? $sbs_T('hu.mode_auto_s') : $sbs_T('hu.mode_sug_s'), 'h' => (int)$sb['hu_wait'], 'n' => (int)$sb['hu_lim']])?></b></summary>
+<dl>
+<dt><?=$sbs_t('hu.on_label')?></dt>
+<dd><input type="hidden" name="hu_on" value="0"><input type="checkbox" name="hu_on" value="1" <?=sb_chk($sb['hu_on'])?>>
+  <span class="uset-hint"><?=$sbs_t('hu.on_hint')?></span></dd>
+<dt><?=$sbs_t('hu.mode')?></dt>
+<dd><select name="hu_mode">
+  <option value="suggest" <?=$sb['hu_mode'] !== 'auto' ? 'selected' : ''?>><?=$sbs_t('hu.mode_sug')?></option>
+  <option value="auto" <?=$sb['hu_mode'] === 'auto' ? 'selected' : ''?>><?=$sbs_t('hu.mode_auto')?></option>
+</select><span class="uset-hint"><?=$sbs_t('hu.mode_hint')?></span></dd>
+<dt><?=$sbs_t('hu.what')?></dt>
+<dd><label><input type="hidden" name="hu_ov" value="0"><input type="checkbox" name="hu_ov" value="1" <?=sb_chk($sb['hu_ov'])?>> <?=$sbs_t('hu.what_ov')?></label>
+  <label><input type="hidden" name="hu_ti" value="0"><input type="checkbox" name="hu_ti" value="1" <?=sb_chk($sb['hu_ti'])?>> <?=$sbs_t('hu.what_ti')?></label>
+  <label><input type="hidden" name="hu_mv" value="0"><input type="checkbox" name="hu_mv" value="1" <?=sb_chk($sb['hu_mv'])?>> <?=$sbs_t('hu.what_mv')?></label>
+  <span class="uset-hint"><?=$sbs_t('hu.what_hint')?></span></dd>
+<dt><?=$sbs_t('hu.wait')?></dt>
+<dd><input type="number" name="hu_wait" min="0" max="168" class="narrow" value="<?=sb_h($sb['hu_wait'])?>"> <?=$sbs_t('hu.hours')?>
+  <span class="uset-hint"><?=$sbs_t('hu.wait_hint')?></span></dd>
+<dt><?=$sbs_t('hu.lim')?></dt>
+<dd><input type="number" name="hu_lim" min="1" max="200" class="narrow" value="<?=sb_h($sb['hu_lim'])?>"> <?=$sbs_t('hu.items')?>
+  <span class="uset-hint"><?=$sbs_t('hu.lim_hint')?></span></dd>
+</dl>
+</details>
+
 <h3><?=$sbs_t('set.h.nicks')?></h3>
 <p><?=$sbs_t('set.nicks_hint')?></p>
 <?php foreach ($sb_srv_users as $sb_sv => $sb_ul): $sb_sn = ['jf' => 'Jellyfin', 'em' => 'Emby', 'px' => 'Plex'][$sb_sv]; ?>
@@ -388,6 +433,63 @@ $(function () {
       .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
       .always(function () { $b.prop('disabled', false); });
   });
+  // Hungarian descriptions (item 147): waiting translations with Write / Skip, written ones with Undo, the run state
+  var HU = '/plugins/streambox/hu.php', huTok = $('#sb-form [name=csrf_token]').val() || '';
+  function huEsc(t) { return $('<div>').text(t == null ? '' : String(t)).html(); }
+  function huTime(t) { var d = new Date(t * 1000); return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function huRow(cls, main, sub, acts) {
+    return '<div class="sb-hu-r ' + cls + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sb-hu-a">' + (acts || '') + '</div></div>';
+  }
+  function huText(r) {
+    var p = [];
+    if (r.hu_name) { p.push('<i>' + huEsc(r.hu_name) + '</i>'); }
+    if (r.hu) { p.push('„' + huEsc(r.hu) + '”'); }
+    return p.join(' · ');
+  }
+  function huLoad() {
+    $.getJSON(HU, { _: Date.now() }).done(function (d) {
+      if (!d || !d.ok) { return; }
+      var top = '', done = '', nd = 0, ready = 0, run = 0;
+      if (d.err) {
+        top += huRow('sb-hu-red', huEsc(T('hu.err_' + d.err)), huEsc(T('hu.err_hint', { t: huTime(d.err_t) })), '<input type="button" class="sb-hu-retry" value="' + huEsc(T('hu.retry')) + '">');
+      }
+      $.each(d.rows, function (i, r) {
+        var what = T('hu.what_' + r.what);
+        if (r.st === 'run' || r.st === 'new') {
+          run++;
+          top += huRow(r.st === 'run' ? 'sb-hu-blue' : 'sb-hu-grey', huEsc(r.label), huEsc(what), '<span class="sb-hu-pill">' + huEsc(T(r.st === 'run' ? 'hu.st_run' : 'hu.st_new')) + '</span>');
+        } else if (r.st === 'ready') {
+          ready++;
+          top += huRow('sb-hu-amber', huEsc(r.label) + (r.hu_name ? ' · <i>' + huEsc(r.hu_name) + '</i>' : ''), (r.hu ? '„' + huEsc(r.hu) + '”' : '') + '<br>' + huEsc(T('hu.orig')) + ' ' + huEsc(r.en || r.name_now),
+            '<input type="button" class="sb-hu-op" data-op="write" data-id="' + r.id + '" value="' + huEsc(T('hu.write')) + '"><input type="button" class="sb-hu-op" data-op="skip" data-id="' + r.id + '" value="' + huEsc(T('hu.skip')) + '">');
+        } else if (r.st === 'fail') {
+          top += huRow('sb-hu-red', huEsc(r.label), huEsc(T('hu.st_fail', { n: r.tries })), '');
+        } else {
+          nd++;
+          var cls = r.st === 'done' ? 'sb-hu-green' : 'sb-hu-grey';
+          done += huRow(cls, huEsc(r.label), huText(r) + '<br>' + huEsc(T('hu.st_' + r.st) + ' · ' + huTime(r.t) + (r.auto ? ' · ' + T('hu.auto') : '')),
+            r.st === 'done' ? '<input type="button" class="sb-hu-op" data-op="undo" data-id="' + r.id + '" value="' + huEsc(T('hu.undo')) + '">' : '');
+        }
+      });
+      if (!top) { top = huRow('sb-hu-grey', huEsc(d.on ? T('hu.idle') : T('hu.off_long')), d.on ? huEsc(T('hu.idle_hint')) : '', ''); }
+      $('#sb-hu').html(top);
+      $('#sb-hu-dl').html(done || huRow('sb-hu-grey', huEsc(T('hu.none')), '', ''));
+      $('#sb-hu-dn').text(nd);
+      $('#sb-hu-state').text(!d.on ? T('hu.off') : (d.err ? T('hu.state_err') : T(d.mode === 'auto' ? 'hu.state_auto' : 'hu.state_sug', { n: ready, c: d.count, l: d.lim })));
+    });
+  }
+  $(document).on('click', '.sb-hu-op', function () {
+    var $b = $(this), op = $b.data('op');
+    $b.closest('.sb-hu-a').find('input').prop('disabled', true);
+    $.post(HU, { op: op, id: $b.data('id'), csrf_token: huTok }, null, 'json')
+      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: (r && r.error) || '?' })) + '</span><br>'); } })
+      .always(huLoad);
+  });
+  $(document).on('click', '.sb-hu-retry', function () {
+    $(this).prop('disabled', true);
+    $.post(HU, { op: 'retry', csrf_token: huTok }, null, 'json').always(function () { setTimeout(huLoad, 1500); });
+  });
+  huLoad(); setInterval(huLoad, 30000);
   var $nm = $('#sb-nmsg');
   $('#sb-ntest, #sb-nprev, #sb-nweek').on('click', function () {
     var mode = (this.id === 'sb-nprev') ? 'preview' : ((this.id === 'sb-nweek') ? 'weekly' : 'test');

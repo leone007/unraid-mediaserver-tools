@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.14zx">
+<!ENTITY version   "2026.10.14zy">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian descriptions (item 147): new movies and episodes whose Jellyfin description is English or empty, or whose title is only N. epizód or the English one, are translated by Claude Code in the claude container after a wait (default 12 h, daily limit 30, not 22-06). Suggest mode (default) lists them on the settings page with Write and Skip; Automatic mode writes them. Every write backs up the original and locks the field, Undo puts it back. One Discord line a day on the series webhook.
+###2026.10.14zx
 - This week's episodes: a fresh episode that Jellyfin already lists under its own series name (for example a Hungarian title) and without a TVDB id yet now shows In Jellyfin instead of Imported (matched by the Jellyfin series id)
 ###2026.10.14zw
 - Now playing: live TV on Jellyfin and Emby shows the programme that is on now; before, the tile kept the programme that was on when playback started
@@ -824,6 +826,7 @@ $sb = [
   'notify' => '0', 'dc_movies' => '', 'dc_series' => '', 'notify_settle' => '5', 'notify_wait' => '30',
   'weekly' => '0', 'dc_weekly' => '', 'weekly_day' => '5', 'weekly_hour' => '18',
   'wk_show' => '1', 'wk_src' => 'seedbox', 'son_url' => '', 'son_key' => '', 'wk_delay' => 'series', 'wk_late' => '2', 'wk_dc' => '0', 'wk_web' => '1', 'wk_web_dir' => '/mnt/cache/docker/streambox/web', 'wk_web_view' => 'grid', 'jx_on' => '1', 'jx_badge' => 'title',
+  'hu_on' => '1', 'hu_mode' => 'suggest', 'hu_ov' => '1', 'hu_ti' => '1', 'hu_mv' => '1', 'hu_wait' => '12', 'hu_lim' => '30',
 ];
 $sb_log = is_file('/tmp/streambox_notify.log') ? implode("\n", array_slice((array)@file('/tmp/streambox_notify.log', FILE_IGNORE_NEW_LINES), -6)) : '';
 if (is_file($sb_file)) {
@@ -938,6 +941,23 @@ if (!function_exists('sb_auto')) {
 .uset .sb-nsub{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;margin:12px 0 0;background:rgba(0,0,0,.15)}
 .uset .sb-nsub i{width:7px;height:7px;border-radius:50%;flex:none}
 .uset .sb-nsub small{margin-left:auto;opacity:.6;text-transform:none;letter-spacing:0}
+/* Hungarian descriptions (item 147): rows with a coloured left stripe, foldable bars closed on load (owner's tile look) */
+.uset .sb-hu{background:rgba(128,128,128,.12)}
+.uset .sb-hu-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:8px 12px;border-top:1px solid rgba(128,128,128,.2)}
+.uset .sb-hu>.sb-hu-r:first-child{border-top:0}
+.uset .sb-hu-r small{display:block;opacity:.6;font-size:12px;line-height:1.45;margin-top:2px;white-space:normal}
+.uset .sb-hu-r .sb-hu-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.uset .sb-hu-r .sb-hu-a input{margin:0}
+.uset .sb-hu-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+.uset .sb-hu-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+.uset .sb-hu-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+.uset .sb-hu-red{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.uset .sb-hu-grey{background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.uset details.sb-hu-cat{margin-top:6px}
+.uset details.sb-hu-cat>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;padding:7px 12px;background:rgba(128,128,128,.16);font-size:12px}
+.uset details.sb-hu-cat>summary::-webkit-details-marker{display:none}
+.uset details.sb-hu-cat>summary b{font-weight:400;opacity:.6}
+.uset .sb-hu-pill{font-size:11px;padding:1px 7px;border-radius:3px;white-space:nowrap;background:rgba(74,144,226,.22);color:#4a90e2}
 .uset p.sb-nerr{margin:0;padding:8px 12px;font-size:12px;color:#d9921f;background:rgba(128,128,128,.12)}
 </style>
 <form id="sb-form" class="uset" method="POST" action="/plugins/streambox/save.php" onsubmit="return false;">
@@ -1104,6 +1124,33 @@ if (!function_exists('sb_auto')) {
 </dd>
 </dl>
 
+<h3><?=$sbs_t('hu.title')?> <small id="sb-hu-state"></small></h3>
+<div id="sb-hu" class="sb-hu"><div class="sb-hu-r sb-hu-grey"><span><?=$sbs_t('hu.loading')?></span></div></div>
+<details class="sb-hu-cat" id="sb-hu-done"><summary><?=$sbs_t('hu.written')?> <b id="sb-hu-dn">0</b></summary><div class="sb-hu" id="sb-hu-dl"></div></details>
+<details class="sb-hu-cat"><summary><?=$sbs_t('hu.settings')?> <b><?=$sbs_t('hu.sum', ['on' => $sb['hu_on'] === '1' ? $sbs_T('hu.on') : $sbs_T('hu.off'), 'mode' => $sb['hu_mode'] === 'auto' ? $sbs_T('hu.mode_auto_s') : $sbs_T('hu.mode_sug_s'), 'h' => (int)$sb['hu_wait'], 'n' => (int)$sb['hu_lim']])?></b></summary>
+<dl>
+<dt><?=$sbs_t('hu.on_label')?></dt>
+<dd><input type="hidden" name="hu_on" value="0"><input type="checkbox" name="hu_on" value="1" <?=sb_chk($sb['hu_on'])?>>
+  <span class="uset-hint"><?=$sbs_t('hu.on_hint')?></span></dd>
+<dt><?=$sbs_t('hu.mode')?></dt>
+<dd><select name="hu_mode">
+  <option value="suggest" <?=$sb['hu_mode'] !== 'auto' ? 'selected' : ''?>><?=$sbs_t('hu.mode_sug')?></option>
+  <option value="auto" <?=$sb['hu_mode'] === 'auto' ? 'selected' : ''?>><?=$sbs_t('hu.mode_auto')?></option>
+</select><span class="uset-hint"><?=$sbs_t('hu.mode_hint')?></span></dd>
+<dt><?=$sbs_t('hu.what')?></dt>
+<dd><label><input type="hidden" name="hu_ov" value="0"><input type="checkbox" name="hu_ov" value="1" <?=sb_chk($sb['hu_ov'])?>> <?=$sbs_t('hu.what_ov')?></label>
+  <label><input type="hidden" name="hu_ti" value="0"><input type="checkbox" name="hu_ti" value="1" <?=sb_chk($sb['hu_ti'])?>> <?=$sbs_t('hu.what_ti')?></label>
+  <label><input type="hidden" name="hu_mv" value="0"><input type="checkbox" name="hu_mv" value="1" <?=sb_chk($sb['hu_mv'])?>> <?=$sbs_t('hu.what_mv')?></label>
+  <span class="uset-hint"><?=$sbs_t('hu.what_hint')?></span></dd>
+<dt><?=$sbs_t('hu.wait')?></dt>
+<dd><input type="number" name="hu_wait" min="0" max="168" class="narrow" value="<?=sb_h($sb['hu_wait'])?>"> <?=$sbs_t('hu.hours')?>
+  <span class="uset-hint"><?=$sbs_t('hu.wait_hint')?></span></dd>
+<dt><?=$sbs_t('hu.lim')?></dt>
+<dd><input type="number" name="hu_lim" min="1" max="200" class="narrow" value="<?=sb_h($sb['hu_lim'])?>"> <?=$sbs_t('hu.items')?>
+  <span class="uset-hint"><?=$sbs_t('hu.lim_hint')?></span></dd>
+</dl>
+</details>
+
 <h3><?=$sbs_t('set.h.nicks')?></h3>
 <p><?=$sbs_t('set.nicks_hint')?></p>
 <?php foreach ($sb_srv_users as $sb_sv => $sb_ul): $sb_sn = ['jf' => 'Jellyfin', 'em' => 'Emby', 'px' => 'Plex'][$sb_sv]; ?>
@@ -1192,6 +1239,63 @@ $(function () {
       .fail(function (x) { $m.css('color', '#e5534b').text('HTTP ' + x.status); })
       .always(function () { $b.prop('disabled', false); });
   });
+  // Hungarian descriptions (item 147): waiting translations with Write / Skip, written ones with Undo, the run state
+  var HU = '/plugins/streambox/hu.php', huTok = $('#sb-form [name=csrf_token]').val() || '';
+  function huEsc(t) { return $('<div>').text(t == null ? '' : String(t)).html(); }
+  function huTime(t) { var d = new Date(t * 1000); return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function huRow(cls, main, sub, acts) {
+    return '<div class="sb-hu-r ' + cls + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sb-hu-a">' + (acts || '') + '</div></div>';
+  }
+  function huText(r) {
+    var p = [];
+    if (r.hu_name) { p.push('<i>' + huEsc(r.hu_name) + '</i>'); }
+    if (r.hu) { p.push('„' + huEsc(r.hu) + '”'); }
+    return p.join(' · ');
+  }
+  function huLoad() {
+    $.getJSON(HU, { _: Date.now() }).done(function (d) {
+      if (!d || !d.ok) { return; }
+      var top = '', done = '', nd = 0, ready = 0, run = 0;
+      if (d.err) {
+        top += huRow('sb-hu-red', huEsc(T('hu.err_' + d.err)), huEsc(T('hu.err_hint', { t: huTime(d.err_t) })), '<input type="button" class="sb-hu-retry" value="' + huEsc(T('hu.retry')) + '">');
+      }
+      $.each(d.rows, function (i, r) {
+        var what = T('hu.what_' + r.what);
+        if (r.st === 'run' || r.st === 'new') {
+          run++;
+          top += huRow(r.st === 'run' ? 'sb-hu-blue' : 'sb-hu-grey', huEsc(r.label), huEsc(what), '<span class="sb-hu-pill">' + huEsc(T(r.st === 'run' ? 'hu.st_run' : 'hu.st_new')) + '</span>');
+        } else if (r.st === 'ready') {
+          ready++;
+          top += huRow('sb-hu-amber', huEsc(r.label) + (r.hu_name ? ' · <i>' + huEsc(r.hu_name) + '</i>' : ''), (r.hu ? '„' + huEsc(r.hu) + '”' : '') + '<br>' + huEsc(T('hu.orig')) + ' ' + huEsc(r.en || r.name_now),
+            '<input type="button" class="sb-hu-op" data-op="write" data-id="' + r.id + '" value="' + huEsc(T('hu.write')) + '"><input type="button" class="sb-hu-op" data-op="skip" data-id="' + r.id + '" value="' + huEsc(T('hu.skip')) + '">');
+        } else if (r.st === 'fail') {
+          top += huRow('sb-hu-red', huEsc(r.label), huEsc(T('hu.st_fail', { n: r.tries })), '');
+        } else {
+          nd++;
+          var cls = r.st === 'done' ? 'sb-hu-green' : 'sb-hu-grey';
+          done += huRow(cls, huEsc(r.label), huText(r) + '<br>' + huEsc(T('hu.st_' + r.st) + ' · ' + huTime(r.t) + (r.auto ? ' · ' + T('hu.auto') : '')),
+            r.st === 'done' ? '<input type="button" class="sb-hu-op" data-op="undo" data-id="' + r.id + '" value="' + huEsc(T('hu.undo')) + '">' : '');
+        }
+      });
+      if (!top) { top = huRow('sb-hu-grey', huEsc(d.on ? T('hu.idle') : T('hu.off_long')), d.on ? huEsc(T('hu.idle_hint')) : '', ''); }
+      $('#sb-hu').html(top);
+      $('#sb-hu-dl').html(done || huRow('sb-hu-grey', huEsc(T('hu.none')), '', ''));
+      $('#sb-hu-dn').text(nd);
+      $('#sb-hu-state').text(!d.on ? T('hu.off') : (d.err ? T('hu.state_err') : T(d.mode === 'auto' ? 'hu.state_auto' : 'hu.state_sug', { n: ready, c: d.count, l: d.lim })));
+    });
+  }
+  $(document).on('click', '.sb-hu-op', function () {
+    var $b = $(this), op = $b.data('op');
+    $b.closest('.sb-hu-a').find('input').prop('disabled', true);
+    $.post(HU, { op: op, id: $b.data('id'), csrf_token: huTok }, null, 'json')
+      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: (r && r.error) || '?' })) + '</span><br>'); } })
+      .always(huLoad);
+  });
+  $(document).on('click', '.sb-hu-retry', function () {
+    $(this).prop('disabled', true);
+    $.post(HU, { op: 'retry', csrf_token: huTok }, null, 'json').always(function () { setTimeout(huLoad, 1500); });
+  });
+  huLoad(); setInterval(huLoad, 30000);
   var $nm = $('#sb-nmsg');
   $('#sb-ntest, #sb-nprev, #sb-nweek').on('click', function () {
     var mode = (this.id === 'sb-nprev') ? 'preview' : ((this.id === 'sb-nweek') ? 'weekly' : 'test');
@@ -2070,6 +2174,13 @@ $new = [
     'wk_web_view'   => ((string)($_POST['wk_web_view'] ?? '') === 'row') ? 'row' : 'grid',
     'jx_on'         => sb_bool($_POST['jx_on'] ?? '0'),
     'jx_badge'      => ((string)($_POST['jx_badge'] ?? '') === 'poster') ? 'poster' : 'title',
+    'hu_on'         => sb_bool($_POST['hu_on'] ?? '1'),
+    'hu_mode'       => ((string)($_POST['hu_mode'] ?? '') === 'auto') ? 'auto' : 'suggest',
+    'hu_ov'         => sb_bool($_POST['hu_ov'] ?? '1'),
+    'hu_ti'         => sb_bool($_POST['hu_ti'] ?? '1'),
+    'hu_mv'         => sb_bool($_POST['hu_mv'] ?? '1'),
+    'hu_wait'       => (string)sb_int($_POST['hu_wait'] ?? 12, 0, 168, 12),
+    'hu_lim'        => (string)sb_int($_POST['hu_lim'] ?? 30, 1, 200, 30),
 ];
 
 $text = '';
@@ -4735,6 +4846,245 @@ function mt_i18n_js($dir, $name, $only = null) {
  "set.nicks_err": {
   "text": "The {s} user list could not be loaded. Check its address and key above, press Apply, then reload this page. Saved nicknames are kept.",
   "note": "Streambox settings, User nicknames: shown under a media server's sub-band when its user list did not load ({s} = Jellyfin, Emby or Plex)."
+ },
+ "hu.title": {
+  "text": "Hungarian descriptions",
+  "note": "band title on the settings page: Claude translates English or empty Jellyfin descriptions and episode titles into Hungarian"
+ },
+ "hu.loading": {
+  "text": "Loading…",
+  "note": "placeholder row while the list loads"
+ },
+ "hu.written": {
+  "text": "Written in the last 7 days",
+  "note": "foldable bar: translations already written into Jellyfin"
+ },
+ "hu.settings": {
+  "text": "Settings",
+  "note": "foldable bar with the settings of this part"
+ },
+ "hu.sum": {
+  "text": "{on} · {mode} · {h} h · {n}/day",
+  "note": "summary on the closed Settings bar: on/off, mode, wait in hours, daily limit"
+ },
+ "hu.on": {
+  "text": "On",
+  "note": "short: the feature is on"
+ },
+ "hu.off": {
+  "text": "Off",
+  "note": "short: the feature is off"
+ },
+ "hu.mode_sug_s": {
+  "text": "Suggest",
+  "note": "short name of the suggest mode"
+ },
+ "hu.mode_auto_s": {
+  "text": "Automatic",
+  "note": "short name of the automatic mode"
+ },
+ "hu.on_label": {
+  "text": "Translate with Claude",
+  "note": "setting label: switch the feature on"
+ },
+ "hu.on_hint": {
+  "text": "New movies and episodes whose description is English or empty, or whose title is only \"Episode N\" or the English one. Claude Code runs in the claude container with your plan; nothing runs between 22:00 and 06:00.",
+  "note": "hint under the switch"
+ },
+ "hu.mode": {
+  "text": "Mode",
+  "note": "setting label: suggest or automatic"
+ },
+ "hu.mode_sug": {
+  "text": "Suggest: write after a click",
+  "note": "option: translations wait for the Write button"
+ },
+ "hu.mode_auto": {
+  "text": "Automatic: write, then tell me",
+  "note": "option: translations are written at once, the daily Discord line tells what"
+ },
+ "hu.mode_hint": {
+  "text": "Every write keeps a backup of the original and locks the field, so a metadata refresh does not bring the English back; Undo puts the original back.",
+  "note": "hint under the mode"
+ },
+ "hu.what": {
+  "text": "What",
+  "note": "setting label: which fields and items"
+ },
+ "hu.what_ov": {
+  "text": "Descriptions",
+  "note": "checkbox: translate descriptions"
+ },
+ "hu.what_ti": {
+  "text": "Episode titles",
+  "note": "checkbox: translate episode titles"
+ },
+ "hu.what_mv": {
+  "text": "Movies",
+  "note": "checkbox: also movies, not only episodes"
+ },
+ "hu.what_hint": {
+  "text": "A title stays \"Episode N\" only when the original is that too; names stay as they are. An empty description is translated from Sonarr's English one.",
+  "note": "hint under What"
+ },
+ "hu.wait": {
+  "text": "Wait before translating",
+  "note": "setting label: hours after the item was added"
+ },
+ "hu.hours": {
+  "text": "hours",
+  "note": "unit after the number"
+ },
+ "hu.wait_hint": {
+  "text": "TMDb often gets the Hungarian text within a day; only what is still English then goes to Claude.",
+  "note": "hint under the wait"
+ },
+ "hu.lim": {
+  "text": "Daily limit",
+  "note": "setting label: items translated per day"
+ },
+ "hu.items": {
+  "text": "items",
+  "note": "unit after the number"
+ },
+ "hu.lim_hint": {
+  "text": "A season pack over the limit continues the next day.",
+  "note": "hint under the daily limit"
+ },
+ "hu.err_login": {
+  "text": "Claude is not logged in",
+  "note": "error row: the claude container answered not logged in"
+ },
+ "hu.err_docker": {
+  "text": "Docker is not available",
+  "note": "error row: no docker on the server"
+ },
+ "hu.err_ctstop": {
+  "text": "The claude container is not running",
+  "note": "error row"
+ },
+ "hu.err_timeout": {
+  "text": "Claude did not answer in 15 minutes",
+  "note": "error row"
+ },
+ "hu.err_answer": {
+  "text": "Claude's answer could not be read",
+  "note": "error row: the answer was not the expected JSON"
+ },
+ "hu.err_hint": {
+  "text": "Last try {t}. The items wait; nothing was written. Fix it (for a login: /login in the claude container), then press Retry.",
+  "note": "hint under an error row, {t} = time"
+ },
+ "hu.retry": {
+  "text": "Retry",
+  "note": "button: run again now"
+ },
+ "hu.what_d": {
+  "text": "description",
+  "note": "what is translated for this item"
+ },
+ "hu.what_t": {
+  "text": "title",
+  "note": "what is translated for this item"
+ },
+ "hu.what_dt": {
+  "text": "title and description",
+  "note": "what is translated for this item"
+ },
+ "hu.st_new": {
+  "text": "waiting",
+  "note": "pill: found, waits for its Claude run"
+ },
+ "hu.st_run": {
+  "text": "translating",
+  "note": "pill: Claude is working on it"
+ },
+ "hu.st_fail": {
+  "one": "failed {n} time, tried again in an hour",
+  "other": "failed {n} times, tried again in an hour",
+  "note": "row text of an item whose translation failed"
+ },
+ "hu.st_done": {
+  "text": "written",
+  "note": "state of a written item"
+ },
+ "hu.st_skip": {
+  "text": "skipped",
+  "note": "state of a skipped item"
+ },
+ "hu.st_undone": {
+  "text": "undone",
+  "note": "state of an undone item"
+ },
+ "hu.st_gone": {
+  "text": "changed meanwhile, not written",
+  "note": "the item changed in Jellyfin before the write"
+ },
+ "hu.orig": {
+  "text": "Original:",
+  "note": "label before the English source text"
+ },
+ "hu.write": {
+  "text": "Write",
+  "note": "button: write the translation into Jellyfin"
+ },
+ "hu.skip": {
+  "text": "Skip",
+  "note": "button: drop this translation"
+ },
+ "hu.undo": {
+  "text": "Undo",
+  "note": "button: put the original back"
+ },
+ "hu.auto": {
+  "text": "automatic",
+  "note": "marks an item written by the automatic mode"
+ },
+ "hu.idle": {
+  "text": "Nothing to translate",
+  "note": "row when the list is empty"
+ },
+ "hu.idle_hint": {
+  "text": "New items are checked every 15 minutes.",
+  "note": "hint under the empty row"
+ },
+ "hu.off_long": {
+  "text": "Switched off",
+  "note": "row when the feature is off"
+ },
+ "hu.none": {
+  "text": "Nothing yet",
+  "note": "empty foldable list"
+ },
+ "hu.state_err": {
+  "text": "needs attention",
+  "note": "band state on the right: an error"
+ },
+ "hu.state_sug": {
+  "text": "Suggest · {n} waiting · today {c}/{l}",
+  "note": "band state: suggest mode, {n} waiting for Write, {c} of {l} translated today"
+ },
+ "hu.state_auto": {
+  "text": "Automatic · today {c}/{l}",
+  "note": "band state: automatic mode"
+ },
+ "hu.op_fail": {
+  "text": "Did not work: {e}",
+  "note": "error shown in a row after a button"
+ },
+ "hu.dc_done": {
+  "one": "📝 {n} Hungarian description written: {list}. Undo on the Streambox page.",
+  "other": "📝 {n} Hungarian descriptions written: {list}. Undo on the Streambox page.",
+  "note": "Discord daily line, automatic mode"
+ },
+ "hu.dc_ready": {
+  "one": "📝 {n} Hungarian description is ready: {list}. Write it on the Streambox page.",
+  "other": "📝 {n} Hungarian descriptions are ready: {list}. Write them on the Streambox page.",
+  "note": "Discord daily line, suggest mode"
+ },
+ "hu.dc_login": {
+  "text": "⚠️ Hungarian descriptions stopped: Claude is not logged in. Log in again, then Retry on the Streambox page.",
+  "note": "Discord daily line on a login problem"
  }
 }
 ]]></INLINE>
@@ -5759,6 +6109,186 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "set.nicks_err": {
   "text": "A(z) {s} felhasználólistája nem töltődött be. Ellenőrizd fent a címét és a kulcsát, nyomd meg az Alkalmaz gombot, majd töltsd újra az oldalt. A mentett becenevek megmaradnak."
+ },
+ "hu.title": {
+  "text": "Magyar leírások"
+ },
+ "hu.loading": {
+  "text": "Betöltés…"
+ },
+ "hu.written": {
+  "text": "Az elmúlt 7 napban beírva"
+ },
+ "hu.settings": {
+  "text": "Beállítások"
+ },
+ "hu.sum": {
+  "text": "{on} · {mode} · {h} óra · {n}/nap"
+ },
+ "hu.on": {
+  "text": "Be"
+ },
+ "hu.off": {
+  "text": "Ki"
+ },
+ "hu.mode_sug_s": {
+  "text": "Javaslat"
+ },
+ "hu.mode_auto_s": {
+  "text": "Automatikus"
+ },
+ "hu.on_label": {
+  "text": "Fordítás Claude-dal"
+ },
+ "hu.on_hint": {
+  "text": "Új filmek és epizódok, amelyek leírása angol vagy üres, vagy a címe csak „N. epizód” vagy az angol cím. A Claude Code a claude konténerben fut, a te előfizetéseddel; 22:00 és 06:00 között nem fut."
+ },
+ "hu.mode": {
+  "text": "Mód"
+ },
+ "hu.mode_sug": {
+  "text": "Javaslat: beírás kattintásra"
+ },
+ "hu.mode_auto": {
+  "text": "Automatikus: beírja, aztán szól"
+ },
+ "hu.mode_hint": {
+  "text": "Minden beírás elmenti az eredetit, és zárolja a mezőt, hogy egy metaadat-frissítés ne hozza vissza az angolt; a Visszavonás visszateszi az eredetit."
+ },
+ "hu.what": {
+  "text": "Mit"
+ },
+ "hu.what_ov": {
+  "text": "Leírások"
+ },
+ "hu.what_ti": {
+  "text": "Epizódcímek"
+ },
+ "hu.what_mv": {
+  "text": "Filmek"
+ },
+ "hu.what_hint": {
+  "text": "A cím csak akkor marad „N. epizód”, ha az eredeti is az; a nevek maradnak. Az üres leírás a Sonarr angol szövegéből készül."
+ },
+ "hu.wait": {
+  "text": "Várakozás fordítás előtt"
+ },
+ "hu.hours": {
+  "text": "óra"
+ },
+ "hu.wait_hint": {
+  "text": "A TMDb-re gyakran egy napon belül megjön a magyar szöveg; csak ami utána is angol, az megy Claude-hoz."
+ },
+ "hu.lim": {
+  "text": "Napi korlát"
+ },
+ "hu.items": {
+  "text": "tétel"
+ },
+ "hu.lim_hint": {
+  "text": "A korlát fölötti évadpakk másnap folytatódik."
+ },
+ "hu.err_login": {
+  "text": "Claude nincs bejelentkezve"
+ },
+ "hu.err_docker": {
+  "text": "A Docker nem érhető el"
+ },
+ "hu.err_ctstop": {
+  "text": "A claude konténer nem fut"
+ },
+ "hu.err_timeout": {
+  "text": "Claude 15 percen belül nem válaszolt"
+ },
+ "hu.err_answer": {
+  "text": "Claude válasza nem olvasható"
+ },
+ "hu.err_hint": {
+  "text": "Utolsó próba: {t}. A tételek várnak, semmi nem íródott be. Javítsd (bejelentkezésnél: /login a claude konténerben), aztán Újra."
+ },
+ "hu.retry": {
+  "text": "Újra"
+ },
+ "hu.what_d": {
+  "text": "leírás"
+ },
+ "hu.what_t": {
+  "text": "cím"
+ },
+ "hu.what_dt": {
+  "text": "cím és leírás"
+ },
+ "hu.st_new": {
+  "text": "várakozik"
+ },
+ "hu.st_run": {
+  "text": "fordítás"
+ },
+ "hu.st_fail": {
+  "one": "{n} alkalommal nem sikerült, egy óra múlva újra",
+  "other": "{n} alkalommal nem sikerült, egy óra múlva újra"
+ },
+ "hu.st_done": {
+  "text": "beírva"
+ },
+ "hu.st_skip": {
+  "text": "kihagyva"
+ },
+ "hu.st_undone": {
+  "text": "visszavonva"
+ },
+ "hu.st_gone": {
+  "text": "közben megváltozott, nem írtam be"
+ },
+ "hu.orig": {
+  "text": "Eredeti:"
+ },
+ "hu.write": {
+  "text": "Beírás"
+ },
+ "hu.skip": {
+  "text": "Kihagyás"
+ },
+ "hu.undo": {
+  "text": "Visszavonás"
+ },
+ "hu.auto": {
+  "text": "automatikus"
+ },
+ "hu.idle": {
+  "text": "Nincs mit fordítani"
+ },
+ "hu.idle_hint": {
+  "text": "Az új tételeket 15 percenként nézi."
+ },
+ "hu.off_long": {
+  "text": "Kikapcsolva"
+ },
+ "hu.none": {
+  "text": "Még semmi"
+ },
+ "hu.state_err": {
+  "text": "beavatkozás kell"
+ },
+ "hu.state_sug": {
+  "text": "Javaslat · {n} vár · ma {c}/{l}"
+ },
+ "hu.state_auto": {
+  "text": "Automatikus · ma {c}/{l}"
+ },
+ "hu.op_fail": {
+  "text": "Nem sikerült: {e}"
+ },
+ "hu.dc_done": {
+  "one": "📝 {n} magyar leírás beírva: {list}. Visszavonás a Streambox oldalán.",
+  "other": "📝 {n} magyar leírás beírva: {list}. Visszavonás a Streambox oldalán."
+ },
+ "hu.dc_ready": {
+  "one": "📝 {n} magyar leírás vár: {list}. Beírás a Streambox oldalán.",
+  "other": "📝 {n} magyar leírás vár: {list}. Beírás a Streambox oldalán."
+ },
+ "hu.dc_login": {
+  "text": "⚠️ A magyar leírások leálltak: Claude nincs bejelentkezve. Jelentkezz be újra, aztán Újra a Streambox oldalán."
  }
 }
 ]]></INLINE>
@@ -6579,6 +7109,363 @@ function jx_run($cfg, $dir, $now) {
   }
   if (document.body) { start(); } else { document.addEventListener('DOMContentLoaded', start); }
 })();
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/hu_lib.php">
+<INLINE><![CDATA[<?php
+// Hungarian descriptions (item 147): new movies and episodes whose Jellyfin description is English or empty, or whose
+// episode title is only "N. epizód" or the English one, are translated by Claude Code in the claude container (claude -p,
+// the owner's plan), after a wait (TMDb often gets the Hungarian text within a day). Suggest mode (default): the translation
+// waits on the settings page for Write; Automatic mode (the owner's deliberate exception to the click rule, 2026-11-08):
+// written at once. Every write backs up the original (Overview, Name, LockedFields) in the state and locks the changed
+// field; Undo puts it back. Rules of the translation: the hu-overview skill (owner's style).
+require_once __DIR__ . '/week_lib.php';   // wk_cfg, wk_http, wk_jf, wk_son, wk_sonarr, wk_tz
+require_once __DIR__ . '/lang.php';       // mt_lang_discord
+
+const HU_CT = 'claude';
+const HU_KEEP_DAYS = 30;      // finished items stay in the state this long (the page shows the last 7 days)
+const HU_LOOK_DAYS = 14;      // only items added to Jellyfin in the last 14 days are looked at
+const HU_BATCH = 10;          // items per Claude run
+const HU_TRIES = 3;           // a failing item is tried this many times (an hour apart)
+
+function hu_cfg() {
+    $c = array_merge(['hu_on' => '1', 'hu_mode' => 'suggest', 'hu_ov' => '1', 'hu_ti' => '1', 'hu_mv' => '1', 'hu_wait' => '12', 'hu_lim' => '30',
+                      'dc_series' => ''], wk_cfg());
+    $c['hu_mode'] = $c['hu_mode'] === 'auto' ? 'auto' : 'suggest';
+    return $c;
+}
+function hu_state_file() { return getenv('SB_HU_STATE') ?: '/boot/config/plugins/streambox/hu_state.json'; }
+function hu_state() {
+    $j = json_decode((string)@file_get_contents(hu_state_file()), true);
+    $s = is_array($j) ? $j : [];
+    return array_merge(['items' => [], 'day' => '', 'count' => 0, 'err' => '', 'err_t' => 0, 'run_t' => 0, 'dc_day' => ''], $s);
+}
+function hu_state_save($s) {
+    $f = hu_state_file(); $tmp = $f . '.tmp';
+    if (@file_put_contents($tmp, json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false) { @rename($tmp, $f); }
+}
+function hu_is_hu($t) { return (bool)preg_match('/[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/u', (string)$t); }
+function hu_generic($name) { return (bool)preg_match('/^\d+\. epizód$/u', trim((string)$name)); }
+function hu_en_generic($t) { $t = trim((string)$t); return $t === '' || strtoupper($t) === 'TBA' || (bool)preg_match('/^(Episode|Ep\.?)\s*#?\s*\d+$/i', $t); }
+
+// Jellyfin item as an object (an empty {} must stay {} when it is sent back: as [] Jellyfin answers 400)
+function hu_jf_raw($cfg, $method, $path, $body = null) {
+    if ((string)$cfg['jf_key'] === '' || !preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { return [0, null]; }
+    $ch = curl_init('http://' . $cfg['jf_host'] . ':' . (int)$cfg['jf_port'] . $path);
+    $h = ['Authorization: MediaBrowser Token="' . $cfg['jf_key'] . '"', 'Accept: application/json'];
+    $o = [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_TIMEOUT => 20, CURLOPT_CUSTOMREQUEST => $method];
+    if ($body !== null) { $o[CURLOPT_POSTFIELDS] = json_encode($body, JSON_UNESCAPED_UNICODE); $h[] = 'Content-Type: application/json'; }
+    $o[CURLOPT_HTTPHEADER] = $h; curl_setopt_array($ch, $o);
+    $b = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    return [$code, is_string($b) ? json_decode($b) : null];
+}
+function hu_jf_item($cfg, $id) {
+    static $uid = null;
+    if ($uid === null) {
+        $uid = '';
+        [$c, $us] = hu_jf_raw($cfg, 'GET', '/Users');
+        foreach ((array)$us as $u) { if (is_object($u) && !empty($u->Policy->IsAdministrator)) { $uid = (string)$u->Id; break; } }
+    }
+    if ($uid === '') { return null; }
+    [$c, $it] = hu_jf_raw($cfg, 'GET', '/Items/' . rawurlencode($id) . '?userId=' . rawurlencode($uid));
+    if ($c !== 200 || !is_object($it)) { [$c, $it] = hu_jf_raw($cfg, 'GET', '/Users/' . rawurlencode($uid) . '/Items/' . rawurlencode($id)); }
+    return $c === 200 && is_object($it) ? $it : null;
+}
+
+// ---- finding the items ------------------------------------------------------------------------------------------------
+// Sonarr's English title and description of an episode, by the series' TVDB id (Jellyfin's names are Hungarian)
+function hu_sonarr_ep($cfg, $tvdb, $s, $e) {
+    static $ser = null, $eps = [];
+    $son = wk_sonarr($cfg);
+    if ($tvdb === '' || $son[0] === '') { return null; }
+    if ($ser === null) {
+        $ser = [];
+        [$l] = wk_son($son, '/series', 20);
+        foreach ((array)$l as $x) { if (!empty($x['tvdbId'])) { $ser[(string)$x['tvdbId']] = (int)$x['id']; } }
+    }
+    $sid = $ser[$tvdb] ?? 0; if (!$sid) { return null; }
+    if (!isset($eps[$sid])) {
+        $eps[$sid] = [];
+        [$l] = wk_son($son, '/episode?seriesId=' . $sid, 20);
+        foreach ((array)$l as $x) { $eps[$sid][(int)$x['seasonNumber'] . '|' . (int)$x['episodeNumber']] = ['t' => (string)($x['title'] ?? ''), 'o' => (string)($x['overview'] ?? '')]; }
+    }
+    return $eps[$sid][$s . '|' . $e] ?? null;
+}
+// new candidates: [id => item]; the ones already in the state are left out
+function hu_scan($cfg, $st, $now) {
+    $types = nf_on_hu($cfg['hu_mv']) ? 'Movie,Episode' : 'Episode';
+    [$j] = wk_jf($cfg, '/Items?IncludeItemTypes=' . $types . '&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=300'
+        . '&Fields=Overview,LockedFields,DateCreated,ProviderIds&EnableImages=false');
+    if (!is_array($j)) { return null; }
+    $tv = [];   // Jellyfin series id -> TVDB id
+    [$sl] = wk_jf($cfg, '/Items?IncludeItemTypes=Series&Recursive=true&Fields=ProviderIds&EnableImages=false');
+    foreach ((array)($sl['Items'] ?? []) as $x) { $tv[(string)($x['Id'] ?? '')] = (string)($x['ProviderIds']['Tvdb'] ?? ''); }
+    $wait = max(0, (int)$cfg['hu_wait']) * 3600; $out = [];
+    foreach ((array)($j['Items'] ?? []) as $it) {
+        $id = (string)($it['Id'] ?? ''); $added = wk_ts($it['DateCreated'] ?? '');
+        if ($id === '' || isset($st['items'][$id]) || !$added || $added < $now - HU_LOOK_DAYS * 86400 || $added > $now - $wait) { continue; }
+        $lock = (array)($it['LockedFields'] ?? []); $ep = ($it['Type'] ?? '') === 'Episode';
+        $ov = trim((string)($it['Overview'] ?? '')); $name = (string)($it['Name'] ?? '');
+        $row = ['id' => $id, 'kind' => $ep ? 'episode' : 'movie', 'name_now' => $name, 'en' => $ov, 'src' => '', 'en_title' => '',
+                'series' => (string)($it['SeriesName'] ?? ''), 'year' => (int)($it['ProductionYear'] ?? 0), 'code' => '', 'st' => 'new', 'found' => $now, 'tries' => 0];
+        if ($ep) {
+            $s = (int)($it['ParentIndexNumber'] ?? 0); $e = (int)($it['IndexNumber'] ?? 0);
+            $row['code'] = sprintf('S%02dE%02d', $s, $e);
+            $so = hu_sonarr_ep($cfg, $tv[(string)($it['SeriesId'] ?? '')] ?? '', $s, $e);
+            if ($so) { $row['en_title'] = $so['t']; if ($ov === '') { $row['src'] = $so['o']; } }
+        }
+        if ($ov !== '' && !hu_is_hu($ov)) { $row['src'] = $ov; }
+        $needOv = nf_on_hu($cfg['hu_ov']) && !in_array('Overview', $lock, true) && trim($row['src']) !== '' && !hu_is_hu($ov);
+        $needTi = $ep && nf_on_hu($cfg['hu_ti']) && !in_array('Name', $lock, true) && !hu_en_generic($row['en_title'])
+                  && (hu_generic($name) || ($name === $row['en_title'] && !hu_is_hu($name)));
+        if (!$needOv && !$needTi) { continue; }
+        $row['want_ov'] = $needOv; $row['want_ti'] = $needTi;
+        $out[$id] = $row;
+    }
+    return $out;
+}
+function nf_on_hu($v) { return in_array(strtolower(trim((string)$v)), ['1', 'yes', 'true', 'on'], true); }
+function hu_label($x) { return $x['kind'] === 'episode' ? trim($x['series'] . ' ' . $x['code']) : trim($x['name_now'] . ($x['year'] ? ' (' . $x['year'] . ')' : '')); }
+
+// ---- Claude ---------------------------------------------------------------------------------------------------------
+function hu_docker() {
+    $t = getenv('SB_HU_DOCKER'); if ($t !== false && $t !== '') { return $t; }   // tests: a fake docker
+    if (!file_exists('/var/run/docker.sock')) { return ''; }
+    foreach (['/usr/bin/docker', '/usr/local/bin/docker'] as $d) { if (is_executable($d)) { return $d; } }
+    return '';
+}
+function hu_prompt($batch) {
+    $items = [];
+    foreach ($batch as $x) {
+        $i = ['id' => $x['id'], 'kind' => $x['kind'], 'title' => $x['kind'] === 'episode' ? $x['series'] : $x['name_now']];
+        if ($x['kind'] === 'episode') { $i['episode'] = $x['code']; $i['english_title'] = $x['en_title']; }
+        else { $i['year'] = $x['year']; }
+        if ($x['want_ov']) { $i['english_description'] = $x['src']; }
+        $i['translate'] = array_values(array_filter([$x['want_ov'] ? 'description' : '', $x['want_ti'] ? 'title' : '']));
+        $items[] = $i;
+    }
+    return "You translate movie and TV episode descriptions and episode titles from English into Hungarian for a home Jellyfin "
+        . "server. Series names are given as Jellyfin shows them (often already Hungarian). If you do not know a series or movie well, "
+        . "look it up briefly with WebSearch first (plot, characters, the Hungarian title and terms used in Hungarian), so names and "
+        . "terms are right.\n\nStyle (the owner's rules):\n"
+        . "- Short, natural, everyday Hungarian. Keep the content of the English text, add no facts. A side detail may go if it makes the sentence heavy.\n"
+        . "- Plain words: \"neonáci\" (not a long paraphrase), \"fekete\" for African American. U.S. Marshal = \"rendőrbíró\". Names stay as they are.\n"
+        . "- \"Season premiere\" = \"Évadnyitó rész.\", \"Season finale\" = \"Évadzáró rész.\", \"Series finale\" = \"Sorozatzáró rész.\"; season is always \"évad\", never \"szezon\".\n"
+        . "- Aphoristic originals stay aphorisms. A text cut off with \"...\" is finished from the plot, without invented detail.\n"
+        . "- Titles: always a Hungarian translation; proper nouns stay as they are (place and person names, invented words); hour titles in 24 h form (7:00 ... 21:00).\n\n"
+        . "Answer with JSON only, no other text: an array with one object per item: {\"id\": \"...\", \"hu\": \"<Hungarian description>\", \"hu_name\": \"<Hungarian title>\"}; "
+        . "leave out hu when the item does not ask for a description and hu_name when it does not ask for a title.\n\nItems:\n"
+        . json_encode($items, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+}
+// [answers by id or null, error code: '' | 'docker' | 'ctstop' | 'login' | 'timeout' | 'answer', detail]
+function hu_ask($batch) {
+    $fake = getenv('SB_HU_FAKE');
+    if ($fake !== false && $fake !== '') { $text = (string)@file_get_contents($fake); $rc = 0; }
+    else {
+        $d = hu_docker(); if ($d === '') { return [null, 'docker', '']; }
+        $o = []; @exec(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . HU_CT . ' 2>/dev/null', $o);
+        if (trim(implode('', $o)) !== 'true') { return [null, 'ctstop', '']; }
+        $pf = tempnam('/tmp', 'sbhu'); file_put_contents($pf, hu_prompt($batch));
+        $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w /home/claude ' . HU_CT .
+               ' claude -p --tools WebSearch --allowedTools WebSearch --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
+        $o = []; @exec($cmd, $o, $rc); @unlink($pf);
+        $text = trim(implode("\n", $o));
+    }
+    if (preg_match('/not logged in|please run \/login|invalid api key|oauth token has expired/i', $text)) { return [null, 'login', mb_substr($text, 0, 200)]; }
+    if ($rc === 124) { return [null, 'timeout', '']; }
+    $a = strpos($text, '['); $b = strrpos($text, ']');
+    $j = ($a !== false && $b > $a) ? json_decode(substr($text, $a, $b - $a + 1), true) : null;
+    if (!is_array($j)) { return [null, 'answer', mb_substr($text, 0, 200)]; }
+    $out = [];
+    foreach ($j as $x) {
+        if (!is_array($x) || !isset($x['id'])) { continue; }
+        $hu = trim((string)($x['hu'] ?? '')); $hn = trim((string)($x['hu_name'] ?? ''));
+        $out[(string)$x['id']] = ['hu' => mb_substr($hu, 0, 2000), 'hu_name' => mb_substr($hn, 0, 200)];
+    }
+    return [$out, '', ''];
+}
+
+// ---- writing and undo -----------------------------------------------------------------------------------------------
+// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'http NNN')
+function hu_write($cfg, &$x) {
+    $it = hu_jf_item($cfg, $x['id']);
+    if (!$it) { return 'gone'; }
+    $ov = trim((string)($it->Overview ?? '')); $name = (string)($it->Name ?? '');
+    if (($x['want_ov'] && $ov !== trim($x['en'])) || ($x['want_ti'] && $name !== $x['name_now'])) { return 'changed'; }
+    $lock = array_values((array)($it->LockedFields ?? []));
+    $x['backup'] = ['Overview' => $it->Overview ?? '', 'Name' => $name, 'LockedFields' => $lock, 'LockData' => $it->LockData ?? false];
+    if ($x['want_ov'] && ($x['hu'] ?? '') !== '') { $it->Overview = $x['hu']; if (!in_array('Overview', $lock, true)) { $lock[] = 'Overview'; } }
+    if ($x['want_ti'] && ($x['hu_name'] ?? '') !== '' && $x['hu_name'] !== $name) { $it->Name = $x['hu_name']; if (!in_array('Name', $lock, true)) { $lock[] = 'Name'; } }
+    $it->LockedFields = $lock;
+    [$c] = hu_jf_raw($cfg, 'POST', '/Items/' . rawurlencode($x['id']), $it);
+    return ($c >= 200 && $c < 300) ? '' : 'http ' . $c;
+}
+function hu_undo($cfg, &$x) {
+    if (empty($x['backup'])) { return 'nobackup'; }
+    $it = hu_jf_item($cfg, $x['id']);
+    if (!$it) { return 'gone'; }
+    $b = $x['backup'];
+    $it->Overview = $b['Overview']; $it->Name = $b['Name']; $it->LockedFields = $b['LockedFields']; $it->LockData = $b['LockData'];
+    [$c] = hu_jf_raw($cfg, 'POST', '/Items/' . rawurlencode($x['id']), $it);
+    return ($c >= 200 && $c < 300) ? '' : 'http ' . $c;
+}
+
+// ---- one run (cron every 15 minutes, or the Retry button) ---------------------------------------------------------------
+function hu_quiet($now) { $h = (int)date('G', $now); return $h >= 22 || $h < 6; }
+function hu_tick($cfg, $now, $force = false) {
+    $st = hu_state();
+    $today = date('Y-m-d', $now);
+    if ($st['day'] !== $today) { $st['day'] = $today; $st['count'] = 0; }
+    foreach ($st['items'] as $id => $x) {   // forget finished items after 30 days, a run that died stays 'run' no longer than an hour
+        if (in_array($x['st'], ['done', 'skip', 'undone', 'gone'], true) && ($x['t'] ?? $x['found']) < $now - HU_KEEP_DAYS * 86400) { unset($st['items'][$id]); }
+        elseif ($x['st'] === 'run' && ($x['t'] ?? 0) < $now - 3600) { $st['items'][$id]['st'] = 'new'; }
+    }
+    if (!nf_on_hu($cfg['hu_on']) || (!$force && hu_quiet($now))) { hu_state_save($st); return $st; }
+    $new = hu_scan($cfg, $st, $now);
+    if (is_array($new)) { $st['items'] += $new; }
+    $left = max(0, (int)$cfg['hu_lim'] - (int)$st['count']);
+    $batch = [];
+    foreach ($st['items'] as $id => $x) {
+        if (count($batch) >= min($left, HU_BATCH)) { break; }
+        if ($x['st'] === 'new' || ($x['st'] === 'fail' && ($x['tries'] ?? 0) < HU_TRIES && ($x['t'] ?? 0) < $now - 3600)) { $batch[$id] = $x; }
+    }
+    if (!$batch) { hu_state_save($st); return $st; }
+    foreach ($batch as $id => $x) { $st['items'][$id]['st'] = 'run'; $st['items'][$id]['t'] = $now; }
+    $st['run_t'] = $now; hu_state_save($st);
+    [$ans, $err, $detail] = hu_ask($batch);
+    $st = hu_state();   // the page may have changed something meanwhile
+    if ($ans === null) {
+        $st['err'] = $err; $st['err_t'] = $now; $st['err_detail'] = $detail;
+        foreach ($batch as $id => $x) {
+            if (!isset($st['items'][$id])) { continue; }
+            // a login or container problem is not the item's fault: it waits without using a try
+            $st['items'][$id]['st'] = in_array($err, ['login', 'docker', 'ctstop'], true) ? 'new' : 'fail';
+            if (!in_array($err, ['login', 'docker', 'ctstop'], true)) { $st['items'][$id]['tries'] = ($x['tries'] ?? 0) + 1; }
+            $st['items'][$id]['t'] = $now;
+        }
+        hu_state_save($st); return $st;
+    }
+    $st['err'] = ''; $st['err_detail'] = '';
+    foreach ($batch as $id => $x) {
+        if (!isset($st['items'][$id])) { continue; }
+        $a = $ans[$id] ?? null; $y = &$st['items'][$id];
+        if (!$a || ($y['want_ov'] && $a['hu'] === '' && (!$y['want_ti'] || $a['hu_name'] === ''))) { $y['st'] = 'fail'; $y['tries'] = ($y['tries'] ?? 0) + 1; $y['t'] = $now; unset($y); continue; }
+        $y['hu'] = $a['hu']; $y['hu_name'] = $a['hu_name']; $y['t'] = $now; $st['count']++;
+        if ($cfg['hu_mode'] === 'auto') {
+            $e = hu_write($cfg, $y);
+            $y['st'] = $e === '' ? 'done' : ($e === 'changed' || $e === 'gone' ? 'gone' : 'fail');
+            $y['auto'] = 1; if ($e !== '') { $y['werr'] = $e; }
+        } else { $y['st'] = 'ready'; }
+        unset($y);
+    }
+    hu_state_save($st);
+    return $st;
+}
+
+// ---- Discord: one line a day (series webhook), in the Discord language ----------------------------------------------------
+function hu_dc_t($key, $vars = []) {
+    static $tab = null;
+    if ($tab === null) {
+        $rd = function ($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; };
+        $en = $rd(__DIR__ . '/lang/en.json'); $tr = mt_lang_discord() === 'en' ? [] : $rd(__DIR__ . '/lang/' . mt_lang_discord() . '.json');
+        $tab = ['en' => $en, 'tr' => $tr];
+    }
+    $e = $tab['en'][$key] ?? null; if (!$e) { return $key; }
+    $t = $tab['tr'][$key] ?? [];
+    $n = (float)($vars['n'] ?? 0);
+    $f = isset($e['other']) ? ((abs($n) == 1 && isset($e['one'])) ? 'one' : 'other') : 'text';
+    $s = (is_string($t[$f] ?? null) && trim($t[$f]) !== '') ? $t[$f] : (string)($e[$f] ?? '');
+    return preg_replace_callback('/\{([a-z0-9_]+)\}/', function ($m) use ($vars) { return array_key_exists($m[1], $vars) ? (string)$vars[$m[1]] : $m[0]; }, $s);
+}
+function hu_daily($cfg, $now) {
+    $st = hu_state();
+    $today = date('Y-m-d', $now);
+    if ($st['dc_day'] === $today || (int)date('G', $now) < 9 || hu_quiet($now)) { return; }
+    $hook = trim((string)$cfg['dc_series']);
+    if (!preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $hook)) { return; }
+    $ready = []; $done = [];
+    foreach ($st['items'] as $x) {
+        if ($x['st'] === 'ready') { $ready[] = hu_label($x); }
+        elseif ($x['st'] === 'done' && !empty($x['auto']) && ($x['t'] ?? 0) > $now - 86400) { $done[] = hu_label($x); }
+    }
+    $st['dc_day'] = $today; hu_state_save($st);
+    if (!$ready && !$done && $st['err'] !== 'login') { return; }
+    $lines = [];
+    if ($done) { $lines[] = hu_dc_t('hu.dc_done', ['n' => count($done), 'list' => implode(', ', array_slice($done, 0, 8)) . (count($done) > 8 ? ' …' : '')]); }
+    if ($ready) { $lines[] = hu_dc_t('hu.dc_ready', ['n' => count($ready), 'list' => implode(', ', array_slice($ready, 0, 8)) . (count($ready) > 8 ? ' …' : '')]); }
+    if ($st['err'] === 'login') { $lines[] = hu_dc_t('hu.dc_login'); }
+    $ch = curl_init($hook);
+    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode(['content' => implode("\n", $lines), 'allowed_mentions' => ['parse' => []]], JSON_UNESCAPED_UNICODE)]);
+    curl_exec($ch); curl_close($ch);
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/hu_run.php">
+<INLINE><![CDATA[<?php
+// Started by cron every 15 minutes (and by the Retry button with "now"): Hungarian descriptions (item 147), see hu_lib.php.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/hu_lib.php';
+wk_tz();
+$lk = fopen('/tmp/streambox_hu.lock', 'c');
+if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) { exit(0); }   // one run at a time (a Claude run can take minutes)
+$cfg = hu_cfg();
+$now = time();
+hu_tick($cfg, $now, ($argv[1] ?? '') === 'now');
+hu_daily($cfg, $now);
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/hu.php">
+<INLINE><![CDATA[<?php
+// Hungarian descriptions (item 147) for the settings page: GET = the list; POST op=write|skip|undo (id) or retry.
+// Write and Undo are the owner's clicks (the click rule); Retry starts a run now in the background.
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+require_once __DIR__ . '/hu_lib.php';
+wk_tz();
+function hu_out($a) { echo json_encode($a, JSON_UNESCAPED_UNICODE); exit; }
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    // CSRF as save.php: Unraid's prepend checks csrf_token and removes it; without it only an AJAX request is accepted
+    $var = @parse_ini_file('/var/local/emhttp/var.ini'); $tok = is_array($var) ? (string)($var['csrf_token'] ?? '') : '';
+    $sent = (string)($_POST['csrf_token'] ?? '');
+    if ($sent !== '' ? ($tok === '' || !hash_equals($tok, $sent)) : (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest')) { http_response_code(403); hu_out(['ok' => false, 'error' => 'csrf']); }
+    $op = (string)($_POST['op'] ?? ''); $id = (string)($_POST['id'] ?? '');
+    $cfg = hu_cfg();
+    if ($op === 'retry') {
+        $st = hu_state(); $st['err'] = ''; $st['err_detail'] = '';
+        foreach ($st['items'] as $k => $x) { if ($x['st'] === 'fail') { $st['items'][$k]['st'] = 'new'; $st['items'][$k]['tries'] = 0; } }
+        hu_state_save($st);
+        exec('/usr/bin/php ' . escapeshellarg(__DIR__ . '/hu_run.php') . ' now > /dev/null 2>&1 &');
+        hu_out(['ok' => true]);
+    }
+    if (!preg_match('/^[0-9a-f]{32}$/', $id) || !in_array($op, ['write', 'skip', 'undo'], true)) { hu_out(['ok' => false, 'error' => 'bad request']); }
+    $lk = fopen('/tmp/streambox_hu_page.lock', 'c'); if ($lk) { flock($lk, LOCK_EX); }
+    $st = hu_state();
+    if (!isset($st['items'][$id])) { hu_out(['ok' => false, 'error' => 'gone']); }
+    $x = &$st['items'][$id]; $e = '';
+    if ($op === 'skip' && $x['st'] === 'ready') { $x['st'] = 'skip'; $x['t'] = time(); }
+    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone'], true) ? 'gone' : 'ready'); $x['t'] = time(); }
+    elseif ($op === 'undo' && $x['st'] === 'done') { $e = hu_undo($cfg, $x); if ($e === '') { $x['st'] = 'undone'; $x['t'] = time(); } }
+    else { $e = 'state'; }
+    unset($x);
+    hu_state_save($st);
+    hu_out(['ok' => $e === '', 'error' => $e]);
+}
+
+$cfg = hu_cfg(); $st = hu_state(); $now = time(); $rows = [];
+foreach ($st['items'] as $x) {
+    if (in_array($x['st'], ['done', 'skip', 'undone', 'gone'], true) && ($x['t'] ?? 0) < $now - 7 * 86400) { continue; }
+    $rows[] = ['id' => $x['id'], 'st' => $x['st'], 'label' => hu_label($x), 'kind' => $x['kind'], 't' => (int)($x['t'] ?? $x['found']),
+               'hu' => (string)($x['hu'] ?? ''), 'hu_name' => $x['want_ti'] ? (string)($x['hu_name'] ?? '') : '', 'name_now' => $x['name_now'],
+               'en' => mb_substr((string)$x['src'], 0, 300), 'what' => ($x['want_ov'] ? 'd' : '') . ($x['want_ti'] ? 't' : ''), 'auto' => !empty($x['auto']), 'tries' => (int)($x['tries'] ?? 0)];
+}
+usort($rows, function ($a, $b) { return $b['t'] <=> $a['t']; });
+hu_out(['ok' => true, 'on' => nf_on_hu($cfg['hu_on']), 'mode' => $cfg['hu_mode'], 'err' => $st['err'], 'err_t' => (int)$st['err_t'],
+        'count' => (int)$st['count'], 'lim' => (int)$cfg['hu_lim'], 'quiet' => hu_quiet($now), 'rows' => $rows]);
 ]]></INLINE>
 </FILE>
 
@@ -7412,6 +8299,8 @@ cat > /boot/config/plugins/streambox/streambox.cron <<CRON
 */10 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/week_late.php >/dev/null 2>&1
 # Streambox: this week's episodes for the row on Jellyfin's home page (week.json, week.js)
 */2 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/week_web.php >/dev/null 2>&1
+# Streambox: Hungarian descriptions, Claude translates English or empty ones (only when switched on; not 22-06)
+7,22,37,52 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/hu_run.php >/dev/null 2>&1
 CRON
 # update_cron reads the plugin link in /var/log/plugins, which appears only after the install scripts
 # have finished, so wait for it in the background.
