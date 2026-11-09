@@ -28,7 +28,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (!isset($st['items'][$id])) { hu_out(['ok' => false, 'error' => 'gone']); }
     $x = &$st['items'][$id]; $e = '';
     if ($op === 'skip' && in_array($x['st'], ['ready', 'fail'], true)) { $x['st'] = 'skip'; $x['t'] = time(); }
-    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone'], true) ? 'gone' : 'ready'); $x['t'] = time(); if ($e === '') { unset($x['werr']); } }
+    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone', 'locked'], true) ? 'gone' : 'ready'); $x['t'] = time(); if ($e === '') { unset($x['werr']); } }
     elseif ($op === 'undo' && $x['st'] === 'done') { $e = hu_undo($cfg, $x); if ($e === '') { $x['st'] = 'undone'; $x['t'] = time(); } }
     else { $e = 'state'; }
     unset($x);

@@ -1201,6 +1201,30 @@
  "hu.op_fail": {
   "text": "Nem sikerült: {e}"
  },
+ "hu.e_http": {
+  "text": "a Jellyfin {c} hibakóddal válaszolt"
+ },
+ "hu.e_changed": {
+  "text": "a szöveget közben a Jellyfinben átírták"
+ },
+ "hu.e_gone": {
+  "text": "a tétel már nincs a Jellyfinben"
+ },
+ "hu.e_locked": {
+  "text": "a tétel zárolva van a Jellyfinben (Lock this item)"
+ },
+ "hu.e_nobackup": {
+  "text": "nincs mentett eredeti"
+ },
+ "hu.e_state": {
+  "text": "a tétel már más állapotban van; a lista frissült"
+ },
+ "hu.e_csrf": {
+  "text": "az oldal elavult, töltsd újra"
+ },
+ "hu.e_other": {
+  "text": "ismeretlen hiba"
+ },
  "hu.werr": {
   "text": "Az automatikus írás nem sikerült ({e}); a fordítás megmaradt, a Write gombbal újra próbálható"
  },

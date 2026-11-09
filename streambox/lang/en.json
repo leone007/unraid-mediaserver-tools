@@ -1598,6 +1598,38 @@
   "text": "Did not work: {e}",
   "note": "error shown in a row after a button"
  },
+ "hu.e_http": {
+  "text": "Jellyfin answered with error {c}",
+  "note": "reason after a button, {c} = HTTP code"
+ },
+ "hu.e_changed": {
+  "text": "the text was changed in Jellyfin meanwhile",
+  "note": "reason: Write found a different text, or Undo found every written field edited by hand"
+ },
+ "hu.e_gone": {
+  "text": "the item is no longer in Jellyfin",
+  "note": "reason"
+ },
+ "hu.e_locked": {
+  "text": "the item is locked in Jellyfin (Lock this item)",
+  "note": "reason: the whole item has LockData"
+ },
+ "hu.e_nobackup": {
+  "text": "there is no saved original",
+  "note": "reason: Undo without a backup"
+ },
+ "hu.e_state": {
+  "text": "the item is in another state now; the list was reloaded",
+  "note": "reason: the button no longer fits the item"
+ },
+ "hu.e_csrf": {
+  "text": "the page is too old, reload it",
+  "note": "reason: CSRF token refused"
+ },
+ "hu.e_other": {
+  "text": "unknown error",
+  "note": "reason: anything else"
+ },
  "hu.werr": {
   "text": "Automatic write did not work ({e}); the translation is kept, press Write to try again",
   "note": "red line in a waiting row, {e} = the reason"

@@ -35,8 +35,9 @@ function hu_lock() {
 }
 function hu_unlock($h) { if ($h) { flock($h, LOCK_UN); } }
 function hu_state_save($s) {
-    $f = hu_state_file(); $tmp = $f . '.tmp';
-    if (@file_put_contents($tmp, json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false) { @rename($tmp, $f); }
+    $f = hu_state_file(); $tmp = $f . '.tmp'; $j = json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($j === false || $j === @file_get_contents($f)) { return; }   // unchanged: no write to the flash (the cron runs every 15 min)
+    if (@file_put_contents($tmp, $j) !== false) { @rename($tmp, $f); }
 }
 // Hungarian text: ő or ű (only Hungarian has them), else more Hungarian than English small words; one é or ü alone is
 // not enough ("café", "Pokémon", German names in an English text); no small word at all: two accents
@@ -109,6 +110,7 @@ function hu_scan($cfg, $st, $now) {
     foreach ((array)($j['Items'] ?? []) as $it) {
         $id = (string)($it['Id'] ?? ''); $added = wk_ts($it['DateCreated'] ?? '');
         if ($id === '' || isset($st['items'][$id]) || !$added || $added < $now - HU_LOOK_DAYS * 86400 || $added > $now - $wait) { continue; }
+        if (!empty($it['LockData'])) { continue; }   // the owner locked the whole item in Jellyfin
         $lock = (array)($it['LockedFields'] ?? []); $ep = ($it['Type'] ?? '') === 'Episode';
         $ov = trim((string)($it['Overview'] ?? '')); $name = (string)($it['Name'] ?? '');
         $row = ['id' => $id, 'kind' => $ep ? 'episode' : 'movie', 'name_now' => $name, 'en' => $ov, 'src' => '', 'en_title' => '',
@@ -222,11 +224,13 @@ function hu_ask($batch) {
 }
 
 // ---- writing and undo -----------------------------------------------------------------------------------------------
-// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'jf' = no answer, 'http NNN')
+// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'locked' = the whole item is
+// locked in Jellyfin, 'jf' = no answer, 'http NNN')
 function hu_write($cfg, &$x) {
     $it = hu_jf_item($cfg, $x['id']);
     if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
+    if (!empty($it->LockData)) { return 'locked'; }
     $ov = trim((string)($it->Overview ?? '')); $name = (string)($it->Name ?? '');
     if (($x['want_ov'] && $ov !== trim($x['en'])) || ($x['want_ti'] && $name !== $x['name_now'])) { return 'changed'; }
     $lock = array_values((array)($it->LockedFields ?? []));
@@ -237,13 +241,24 @@ function hu_write($cfg, &$x) {
     [$c] = hu_jf_raw($cfg, 'POST', '/Items/' . rawurlencode($x['id']), $it);
     return ($c >= 200 && $c < 300) ? '' : 'http ' . $c;
 }
+// puts the original back; returns '' or 'nobackup', 'gone', 'jf', 'changed' (every written field was edited by hand since), 'http NNN'
 function hu_undo($cfg, &$x) {
     if (empty($x['backup'])) { return 'nobackup'; }
     $it = hu_jf_item($cfg, $x['id']);
     if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
-    $b = $x['backup'];
-    $it->Overview = $b['Overview']; $it->Name = $b['Name']; $it->LockedFields = $b['LockedFields']; $it->LockData = $b['LockData'];
+    // only a field that still holds our text goes back; a field changed by hand since then stays with its lock
+    $b = $x['backup']; $lock = array_values((array)($it->LockedFields ?? [])); $back = 0;
+    $ours = ['Overview' => trim((string)($x['hu'] ?? '')), 'Name' => (string)($x['hu_name'] ?? '')];
+    foreach (['Overview', 'Name'] as $f) {
+        $wrote = $f === 'Overview' ? ($x['want_ov'] && $ours[$f] !== '') : ($x['want_ti'] && $ours[$f] !== '' && $ours[$f] !== $b['Name']);
+        if (!$wrote) { continue; }
+        if (trim((string)($it->$f ?? '')) !== trim($ours[$f])) { continue; }
+        $it->$f = $b[$f]; $back++;
+        if (!in_array($f, (array)$b['LockedFields'], true)) { $lock = array_values(array_diff($lock, [$f])); }
+    }
+    if (!$back) { return 'changed'; }
+    $it->LockedFields = $lock;
     [$c] = hu_jf_raw($cfg, 'POST', '/Items/' . rawurlencode($x['id']), $it);
     return ($c >= 200 && $c < 300) ? '' : 'http ' . $c;
 }
@@ -296,7 +311,7 @@ function hu_tick($cfg, $now, $force = false) {
         if ($cfg['hu_mode'] === 'auto') {
             // a write that did not work keeps the translation: the item waits on the page for Write, it does not go back to Claude
             $e = hu_write($cfg, $y);
-            $y['st'] = $e === '' ? 'done' : ($e === 'changed' || $e === 'gone' ? 'gone' : 'ready');
+            $y['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone', 'locked'], true) ? 'gone' : 'ready');
             if ($e === '') { $y['auto'] = 1; } else { $y['werr'] = $e; }
         } else { $y['st'] = 'ready'; }
         unset($y);

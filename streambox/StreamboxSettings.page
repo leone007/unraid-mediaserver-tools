@@ -443,7 +443,13 @@ $(function () {
   function huRow(cls, main, sub, acts) {
     return '<div class="sb-hu-r ' + cls + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sb-hu-a">' + (acts || '') + '</div></div>';
   }
-  function huErr(e) { return e === 'jf' ? T('hu.werr_jf') : e; }
+  function huErr(e) {
+    var m = /^http (\d+)$/.exec(e || '');
+    if (m) { return T('hu.e_http', { c: m[1] }); }
+    var k = { jf: 'hu.werr_jf', changed: 'hu.e_changed', gone: 'hu.e_gone', locked: 'hu.e_locked', nobackup: 'hu.e_nobackup', state: 'hu.e_state', csrf: 'hu.e_csrf' }[e];
+    return k ? T(k) : T('hu.e_other');
+  }
+  var huMsg = null;   // the last failed button {id, text}: shown again after the list reloads
   function huText(r) {
     var p = [];
     if (r.hu_name) { p.push('<i>' + huEsc(r.hu_name) + '</i>'); }
@@ -477,6 +483,11 @@ $(function () {
       });
       if (!top) { top = huRow('sb-hu-grey', huEsc(d.on ? T('hu.idle') : T('hu.off_long')), d.on ? huEsc(T('hu.idle_hint')) : '', ''); }
       $('#sb-hu').html(top);
+      if (huMsg && Date.now() - huMsg.t > 120000) { huMsg = null; }   // shown for two minutes
+      if (huMsg) {
+        var line = '<span style="color:#e5534b">' + huEsc(huMsg.text) + '</span><br>', $r = $('.sb-hu-op[data-id="' + huMsg.id + '"]').first().closest('.sb-hu-r');
+        if ($r.length) { $r.find('small').first().prepend(line); } else { $('#sb-hu').prepend(huRow('sb-hu-red', huEsc(huMsg.text), '', '')); }
+      }
       $('#sb-hu-dl').html(done || huRow('sb-hu-grey', huEsc(T('hu.none')), '', ''));
       $('#sb-hu-dn').text(nd);
       $('#sb-hu-state').text(!d.on ? T('hu.off') : (d.err ? T('hu.state_err') : T(d.mode === 'auto' ? 'hu.state_auto' : 'hu.state_sug', { n: ready, c: d.count, l: d.lim })));
@@ -486,7 +497,8 @@ $(function () {
     var $b = $(this), op = $b.data('op');
     $b.closest('.sb-hu-a').find('input').prop('disabled', true);
     $.post(HU, { op: op, id: $b.data('id'), csrf_token: huTok }, null, 'json')
-      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: huErr((r && r.error) || '?') })) + '</span><br>'); } })
+      .done(function (r) { huMsg = (!r || !r.ok) ? { id: String($b.data('id')), text: T('hu.op_fail', { e: huErr(r && r.error) }), t: Date.now() } : null; })
+      .fail(function () { huMsg = { id: String($b.data('id')), text: T('hu.op_fail', { e: T('hu.e_other') }), t: Date.now() }; })
       .always(huLoad);
   });
   $(document).on('click', '.sb-hu-retry', function () {

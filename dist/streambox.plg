@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.17">
+<!ENTITY version   "2026.10.18">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian descriptions: Undo puts back only what was not edited by hand since; an item locked in Jellyfin (Lock this item) is left alone; a button error stays visible after the list reloads, in plain words instead of codes; the state file on the flash is written only when something changed
+###2026.10.17
 - Hungarian descriptions: the cron run and the page buttons no longer overwrite each other's changes; a Claude run that times out is stopped inside the container too; a failed item can be skipped (taken off the list); the daily Discord line is tried again when Discord refuses it (up to 4 times a day)
 ###2026.10.16
 - Hungarian descriptions: Claude's answer is read even with a Sources list after it; a failed automatic write keeps the translation and waits for Write instead of going back to Claude; a Jellyfin restart no longer marks items gone; the usage limit pauses an hour instead of failing items; English text with an accent (café, Pokémon) is no longer taken for Hungarian; Claude gets no MCP server or connector
@@ -1257,7 +1259,13 @@ $(function () {
   function huRow(cls, main, sub, acts) {
     return '<div class="sb-hu-r ' + cls + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sb-hu-a">' + (acts || '') + '</div></div>';
   }
-  function huErr(e) { return e === 'jf' ? T('hu.werr_jf') : e; }
+  function huErr(e) {
+    var m = /^http (\d+)$/.exec(e || '');
+    if (m) { return T('hu.e_http', { c: m[1] }); }
+    var k = { jf: 'hu.werr_jf', changed: 'hu.e_changed', gone: 'hu.e_gone', locked: 'hu.e_locked', nobackup: 'hu.e_nobackup', state: 'hu.e_state', csrf: 'hu.e_csrf' }[e];
+    return k ? T(k) : T('hu.e_other');
+  }
+  var huMsg = null;   // the last failed button {id, text}: shown again after the list reloads
   function huText(r) {
     var p = [];
     if (r.hu_name) { p.push('<i>' + huEsc(r.hu_name) + '</i>'); }
@@ -1291,6 +1299,11 @@ $(function () {
       });
       if (!top) { top = huRow('sb-hu-grey', huEsc(d.on ? T('hu.idle') : T('hu.off_long')), d.on ? huEsc(T('hu.idle_hint')) : '', ''); }
       $('#sb-hu').html(top);
+      if (huMsg && Date.now() - huMsg.t > 120000) { huMsg = null; }   // shown for two minutes
+      if (huMsg) {
+        var line = '<span style="color:#e5534b">' + huEsc(huMsg.text) + '</span><br>', $r = $('.sb-hu-op[data-id="' + huMsg.id + '"]').first().closest('.sb-hu-r');
+        if ($r.length) { $r.find('small').first().prepend(line); } else { $('#sb-hu').prepend(huRow('sb-hu-red', huEsc(huMsg.text), '', '')); }
+      }
       $('#sb-hu-dl').html(done || huRow('sb-hu-grey', huEsc(T('hu.none')), '', ''));
       $('#sb-hu-dn').text(nd);
       $('#sb-hu-state').text(!d.on ? T('hu.off') : (d.err ? T('hu.state_err') : T(d.mode === 'auto' ? 'hu.state_auto' : 'hu.state_sug', { n: ready, c: d.count, l: d.lim })));
@@ -1300,7 +1313,8 @@ $(function () {
     var $b = $(this), op = $b.data('op');
     $b.closest('.sb-hu-a').find('input').prop('disabled', true);
     $.post(HU, { op: op, id: $b.data('id'), csrf_token: huTok }, null, 'json')
-      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: huErr((r && r.error) || '?') })) + '</span><br>'); } })
+      .done(function (r) { huMsg = (!r || !r.ok) ? { id: String($b.data('id')), text: T('hu.op_fail', { e: huErr(r && r.error) }), t: Date.now() } : null; })
+      .fail(function () { huMsg = { id: String($b.data('id')), text: T('hu.op_fail', { e: T('hu.e_other') }), t: Date.now() }; })
       .always(huLoad);
   });
   $(document).on('click', '.sb-hu-retry', function () {
@@ -5107,6 +5121,38 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Did not work: {e}",
   "note": "error shown in a row after a button"
  },
+ "hu.e_http": {
+  "text": "Jellyfin answered with error {c}",
+  "note": "reason after a button, {c} = HTTP code"
+ },
+ "hu.e_changed": {
+  "text": "the text was changed in Jellyfin meanwhile",
+  "note": "reason: Write found a different text, or Undo found every written field edited by hand"
+ },
+ "hu.e_gone": {
+  "text": "the item is no longer in Jellyfin",
+  "note": "reason"
+ },
+ "hu.e_locked": {
+  "text": "the item is locked in Jellyfin (Lock this item)",
+  "note": "reason: the whole item has LockData"
+ },
+ "hu.e_nobackup": {
+  "text": "there is no saved original",
+  "note": "reason: Undo without a backup"
+ },
+ "hu.e_state": {
+  "text": "the item is in another state now; the list was reloaded",
+  "note": "reason: the button no longer fits the item"
+ },
+ "hu.e_csrf": {
+  "text": "the page is too old, reload it",
+  "note": "reason: CSRF token refused"
+ },
+ "hu.e_other": {
+  "text": "unknown error",
+  "note": "reason: anything else"
+ },
  "hu.werr": {
   "text": "Automatic write did not work ({e}); the translation is kept, press Write to try again",
   "note": "red line in a waiting row, {e} = the reason"
@@ -6337,6 +6383,30 @@ function mt_i18n_js($dir, $name, $only = null) {
  "hu.op_fail": {
   "text": "Nem sikerült: {e}"
  },
+ "hu.e_http": {
+  "text": "a Jellyfin {c} hibakóddal válaszolt"
+ },
+ "hu.e_changed": {
+  "text": "a szöveget közben a Jellyfinben átírták"
+ },
+ "hu.e_gone": {
+  "text": "a tétel már nincs a Jellyfinben"
+ },
+ "hu.e_locked": {
+  "text": "a tétel zárolva van a Jellyfinben (Lock this item)"
+ },
+ "hu.e_nobackup": {
+  "text": "nincs mentett eredeti"
+ },
+ "hu.e_state": {
+  "text": "a tétel már más állapotban van; a lista frissült"
+ },
+ "hu.e_csrf": {
+  "text": "az oldal elavult, töltsd újra"
+ },
+ "hu.e_other": {
+  "text": "ismeretlen hiba"
+ },
  "hu.werr": {
   "text": "Az automatikus írás nem sikerült ({e}); a fordítás megmaradt, a Write gombbal újra próbálható"
  },
@@ -7214,8 +7284,9 @@ function hu_lock() {
 }
 function hu_unlock($h) { if ($h) { flock($h, LOCK_UN); } }
 function hu_state_save($s) {
-    $f = hu_state_file(); $tmp = $f . '.tmp';
-    if (@file_put_contents($tmp, json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false) { @rename($tmp, $f); }
+    $f = hu_state_file(); $tmp = $f . '.tmp'; $j = json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($j === false || $j === @file_get_contents($f)) { return; }   // unchanged: no write to the flash (the cron runs every 15 min)
+    if (@file_put_contents($tmp, $j) !== false) { @rename($tmp, $f); }
 }
 // Hungarian text: ő or ű (only Hungarian has them), else more Hungarian than English small words; one é or ü alone is
 // not enough ("café", "Pokémon", German names in an English text); no small word at all: two accents
@@ -7288,6 +7359,7 @@ function hu_scan($cfg, $st, $now) {
     foreach ((array)($j['Items'] ?? []) as $it) {
         $id = (string)($it['Id'] ?? ''); $added = wk_ts($it['DateCreated'] ?? '');
         if ($id === '' || isset($st['items'][$id]) || !$added || $added < $now - HU_LOOK_DAYS * 86400 || $added > $now - $wait) { continue; }
+        if (!empty($it['LockData'])) { continue; }   // the owner locked the whole item in Jellyfin
         $lock = (array)($it['LockedFields'] ?? []); $ep = ($it['Type'] ?? '') === 'Episode';
         $ov = trim((string)($it['Overview'] ?? '')); $name = (string)($it['Name'] ?? '');
         $row = ['id' => $id, 'kind' => $ep ? 'episode' : 'movie', 'name_now' => $name, 'en' => $ov, 'src' => '', 'en_title' => '',
@@ -7401,11 +7473,13 @@ function hu_ask($batch) {
 }
 
 // ---- writing and undo -----------------------------------------------------------------------------------------------
-// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'jf' = no answer, 'http NNN')
+// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'locked' = the whole item is
+// locked in Jellyfin, 'jf' = no answer, 'http NNN')
 function hu_write($cfg, &$x) {
     $it = hu_jf_item($cfg, $x['id']);
     if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
+    if (!empty($it->LockData)) { return 'locked'; }
     $ov = trim((string)($it->Overview ?? '')); $name = (string)($it->Name ?? '');
     if (($x['want_ov'] && $ov !== trim($x['en'])) || ($x['want_ti'] && $name !== $x['name_now'])) { return 'changed'; }
     $lock = array_values((array)($it->LockedFields ?? []));
@@ -7416,13 +7490,24 @@ function hu_write($cfg, &$x) {
     [$c] = hu_jf_raw($cfg, 'POST', '/Items/' . rawurlencode($x['id']), $it);
     return ($c >= 200 && $c < 300) ? '' : 'http ' . $c;
 }
+// puts the original back; returns '' or 'nobackup', 'gone', 'jf', 'changed' (every written field was edited by hand since), 'http NNN'
 function hu_undo($cfg, &$x) {
     if (empty($x['backup'])) { return 'nobackup'; }
     $it = hu_jf_item($cfg, $x['id']);
     if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
-    $b = $x['backup'];
-    $it->Overview = $b['Overview']; $it->Name = $b['Name']; $it->LockedFields = $b['LockedFields']; $it->LockData = $b['LockData'];
+    // only a field that still holds our text goes back; a field changed by hand since then stays with its lock
+    $b = $x['backup']; $lock = array_values((array)($it->LockedFields ?? [])); $back = 0;
+    $ours = ['Overview' => trim((string)($x['hu'] ?? '')), 'Name' => (string)($x['hu_name'] ?? '')];
+    foreach (['Overview', 'Name'] as $f) {
+        $wrote = $f === 'Overview' ? ($x['want_ov'] && $ours[$f] !== '') : ($x['want_ti'] && $ours[$f] !== '' && $ours[$f] !== $b['Name']);
+        if (!$wrote) { continue; }
+        if (trim((string)($it->$f ?? '')) !== trim($ours[$f])) { continue; }
+        $it->$f = $b[$f]; $back++;
+        if (!in_array($f, (array)$b['LockedFields'], true)) { $lock = array_values(array_diff($lock, [$f])); }
+    }
+    if (!$back) { return 'changed'; }
+    $it->LockedFields = $lock;
     [$c] = hu_jf_raw($cfg, 'POST', '/Items/' . rawurlencode($x['id']), $it);
     return ($c >= 200 && $c < 300) ? '' : 'http ' . $c;
 }
@@ -7475,7 +7560,7 @@ function hu_tick($cfg, $now, $force = false) {
         if ($cfg['hu_mode'] === 'auto') {
             // a write that did not work keeps the translation: the item waits on the page for Write, it does not go back to Claude
             $e = hu_write($cfg, $y);
-            $y['st'] = $e === '' ? 'done' : ($e === 'changed' || $e === 'gone' ? 'gone' : 'ready');
+            $y['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone', 'locked'], true) ? 'gone' : 'ready');
             if ($e === '') { $y['auto'] = 1; } else { $y['werr'] = $e; }
         } else { $y['st'] = 'ready'; }
         unset($y);
@@ -7574,7 +7659,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (!isset($st['items'][$id])) { hu_out(['ok' => false, 'error' => 'gone']); }
     $x = &$st['items'][$id]; $e = '';
     if ($op === 'skip' && in_array($x['st'], ['ready', 'fail'], true)) { $x['st'] = 'skip'; $x['t'] = time(); }
-    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone'], true) ? 'gone' : 'ready'); $x['t'] = time(); if ($e === '') { unset($x['werr']); } }
+    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone', 'locked'], true) ? 'gone' : 'ready'); $x['t'] = time(); if ($e === '') { unset($x['werr']); } }
     elseif ($op === 'undo' && $x['st'] === 'done') { $e = hu_undo($cfg, $x); if ($e === '') { $x['st'] = 'undone'; $x['t'] = time(); } }
     else { $e = 'state'; }
     unset($x);
