@@ -30,7 +30,17 @@ function hu_state_save($s) {
     $f = hu_state_file(); $tmp = $f . '.tmp';
     if (@file_put_contents($tmp, json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false) { @rename($tmp, $f); }
 }
-function hu_is_hu($t) { return (bool)preg_match('/[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/u', (string)$t); }
+// Hungarian text: ő or ű (only Hungarian has them), else more Hungarian than English small words; one é or ü alone is
+// not enough ("café", "Pokémon", German names in an English text); no small word at all: two accents
+function hu_is_hu($t) {
+    $t = (string)$t;
+    if (preg_match('/[őűŐŰ]/u', $t)) { return true; }
+    if (!preg_match('/[áéíóöúüÁÉÍÓÖÚÜ]/u', $t)) { return false; }
+    $w = function ($re) use ($t) { return preg_match_all('/(?<![\\p{L}])(?:' . $re . ')(?![\\p{L}])/iu', $t); };
+    $hu = $w('az|és|hogy|egy|nem|meg|de|is|már|még|aki|ami|amikor|után|között|ő|ez|azt|majd|pedig|csak|mint|vagy');
+    $en = $w('the|and|of|to|in|with|his|her|he|she|is|an|for|on|when|their|they|from|who|that');
+    return ($hu > 0 && $hu >= $en) || ($en === 0 && preg_match_all('/[áéíóöúüÁÉÍÓÖÚÜ]/u', $t) >= 2);   // short: "Luke új búvóhelyet keres.
+}
 function hu_generic($name) { return (bool)preg_match('/^\d+\. epizód$/u', trim((string)$name)); }
 function hu_en_generic($t) { $t = trim((string)$t); return $t === '' || strtoupper($t) === 'TBA' || (bool)preg_match('/^(Episode|Ep\.?)\s*#?\s*\d+$/i', $t); }
 
@@ -45,17 +55,18 @@ function hu_jf_raw($cfg, $method, $path, $body = null) {
     $b = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
     return [$code, is_string($b) ? json_decode($b) : null];
 }
+// the item; null = Jellyfin says it is not there (404); false = Jellyfin did not answer (restart, network): not the item's fault
 function hu_jf_item($cfg, $id) {
-    static $uid = null;
-    if ($uid === null) {
-        $uid = '';
+    static $uid = '';
+    if ($uid === '') {
         [$c, $us] = hu_jf_raw($cfg, 'GET', '/Users');
         foreach ((array)$us as $u) { if (is_object($u) && !empty($u->Policy->IsAdministrator)) { $uid = (string)$u->Id; break; } }
     }
-    if ($uid === '') { return null; }
+    if ($uid === '') { return false; }
     [$c, $it] = hu_jf_raw($cfg, 'GET', '/Items/' . rawurlencode($id) . '?userId=' . rawurlencode($uid));
-    if ($c !== 200 || !is_object($it)) { [$c, $it] = hu_jf_raw($cfg, 'GET', '/Users/' . rawurlencode($uid) . '/Items/' . rawurlencode($id)); }
-    return $c === 200 && is_object($it) ? $it : null;
+    if ($c !== 200 || !is_object($it)) { [$c2, $it] = hu_jf_raw($cfg, 'GET', '/Users/' . rawurlencode($uid) . '/Items/' . rawurlencode($id)); $c = $c2 === 404 ? $c : $c2; }
+    if ($c === 200 && is_object($it)) { return $it; }
+    return $c === 404 ? null : false;
 }
 
 // ---- finding the items ------------------------------------------------------------------------------------------------
@@ -149,7 +160,26 @@ function hu_prompt($batch) {
         . "leave out hu when the item does not ask for a description and hu_name when it does not ask for a title.\n\nItems:\n"
         . json_encode($items, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 }
-// [answers by id or null, error code: '' | 'docker' | 'ctstop' | 'login' | 'timeout' | 'answer', detail]
+// the first JSON array of objects in Claude's text; the text may have words or a "Sources: [title](url)" list around it
+function hu_json_list($text) {
+    $n = strlen($text);
+    for ($a = strpos($text, '['); $a !== false; $a = strpos($text, '[', $a + 1)) {
+        if (!preg_match('/\G\[\s*\{/', $text, $m, 0, $a)) { continue; }
+        $d = 0; $q = false;
+        for ($i = $a; $i < $n; $i++) {
+            $ch = $text[$i];
+            if ($q) { if ($ch === '\\') { $i++; } elseif ($ch === '"') { $q = false; } continue; }
+            if ($ch === '"') { $q = true; } elseif ($ch === '[' || $ch === '{') { $d++; }
+            elseif (($ch === ']' || $ch === '}') && --$d === 0) {
+                $j = json_decode(substr($text, $a, $i - $a + 1), true);
+                if (is_array($j) && isset($j[0]['id'])) { return $j; }
+                break;
+            }
+        }
+    }
+    return null;
+}
+// [answers by id or null, error code: '' | 'docker' | 'ctstop' | 'login' | 'limit' | 'timeout' | 'answer', detail]
 function hu_ask($batch) {
     $fake = getenv('SB_HU_FAKE');
     if ($fake !== false && $fake !== '') { $text = (string)@file_get_contents($fake); $rc = 0; }
@@ -158,16 +188,21 @@ function hu_ask($batch) {
         $o = []; @exec(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . HU_CT . ' 2>/dev/null', $o);
         if (trim(implode('', $o)) !== 'true') { return [null, 'ctstop', '']; }
         $pf = tempnam('/tmp', 'sbhu'); file_put_contents($pf, hu_prompt($batch));
-        $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w /home/claude ' . HU_CT .
-               ' claude -p --tools WebSearch --allowedTools WebSearch --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
+        // the prompt carries outside text (TMDb, Sonarr): Claude gets WebSearch only, no MCP server or claude.ai connector (Drive, Docs)
+        $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -e ENABLE_CLAUDEAI_MCP_SERVERS=false -w /home/claude ' . HU_CT .
+               ' claude -p --tools WebSearch --allowedTools WebSearch --strict-mcp-config --disallowedTools ' . escapeshellarg('mcp__*') .
+               ' --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
         $o = []; @exec($cmd, $o, $rc); @unlink($pf);
         $text = trim(implode("\n", $o));
     }
     if (preg_match('/not logged in|please run \/login|invalid api key|oauth token has expired/i', $text)) { return [null, 'login', mb_substr($text, 0, 200)]; }
     if ($rc === 124) { return [null, 'timeout', '']; }
-    $a = strpos($text, '['); $b = strrpos($text, ']');
-    $j = ($a !== false && $b > $a) ? json_decode(substr($text, $a, $b - $a + 1), true) : null;
-    if (!is_array($j)) { return [null, 'answer', mb_substr($text, 0, 200)]; }
+    $j = hu_json_list($text);
+    if ($j === null) {
+        // the plan's usage limit: not the items' fault, they wait (hu_tick pauses an hour)
+        if (preg_match('/usage limit|limit reached|hit your (?:usage )?limit|out of (?:extra )?usage|rate_limit_error/i', $text)) { return [null, 'limit', mb_substr($text, 0, 200)]; }
+        return [null, 'answer', mb_substr($text, 0, 200)];
+    }
     $out = [];
     foreach ($j as $x) {
         if (!is_array($x) || !isset($x['id'])) { continue; }
@@ -178,9 +213,10 @@ function hu_ask($batch) {
 }
 
 // ---- writing and undo -----------------------------------------------------------------------------------------------
-// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'http NNN')
+// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'jf' = no answer, 'http NNN')
 function hu_write($cfg, &$x) {
     $it = hu_jf_item($cfg, $x['id']);
+    if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
     $ov = trim((string)($it->Overview ?? '')); $name = (string)($it->Name ?? '');
     if (($x['want_ov'] && $ov !== trim($x['en'])) || ($x['want_ti'] && $name !== $x['name_now'])) { return 'changed'; }
@@ -195,6 +231,7 @@ function hu_write($cfg, &$x) {
 function hu_undo($cfg, &$x) {
     if (empty($x['backup'])) { return 'nobackup'; }
     $it = hu_jf_item($cfg, $x['id']);
+    if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
     $b = $x['backup'];
     $it->Overview = $b['Overview']; $it->Name = $b['Name']; $it->LockedFields = $b['LockedFields']; $it->LockData = $b['LockData'];
@@ -213,6 +250,7 @@ function hu_tick($cfg, $now, $force = false) {
         elseif ($x['st'] === 'run' && ($x['t'] ?? 0) < $now - 3600) { $st['items'][$id]['st'] = 'new'; }
     }
     if (!nf_on_hu($cfg['hu_on']) || (!$force && hu_quiet($now))) { hu_state_save($st); return $st; }
+    if (!$force && $st['err'] === 'limit' && $st['err_t'] > $now - 3600) { hu_state_save($st); return $st; }   // usage limit: an hour's pause
     $new = hu_scan($cfg, $st, $now);
     if (is_array($new)) { $st['items'] += $new; }
     $left = max(0, (int)$cfg['hu_lim'] - (int)$st['count']);
@@ -230,9 +268,10 @@ function hu_tick($cfg, $now, $force = false) {
         $st['err'] = $err; $st['err_t'] = $now; $st['err_detail'] = $detail;
         foreach ($batch as $id => $x) {
             if (!isset($st['items'][$id])) { continue; }
-            // a login or container problem is not the item's fault: it waits without using a try
-            $st['items'][$id]['st'] = in_array($err, ['login', 'docker', 'ctstop'], true) ? 'new' : 'fail';
-            if (!in_array($err, ['login', 'docker', 'ctstop'], true)) { $st['items'][$id]['tries'] = ($x['tries'] ?? 0) + 1; }
+            // a login, limit or container problem is not the item's fault: it waits without using a try
+            $wait = in_array($err, ['login', 'limit', 'docker', 'ctstop'], true);
+            $st['items'][$id]['st'] = $wait ? 'new' : 'fail';
+            if (!$wait) { $st['items'][$id]['tries'] = ($x['tries'] ?? 0) + 1; }
             $st['items'][$id]['t'] = $now;
         }
         hu_state_save($st); return $st;
@@ -244,9 +283,10 @@ function hu_tick($cfg, $now, $force = false) {
         if (!$a || ($y['want_ov'] && $a['hu'] === '' && (!$y['want_ti'] || $a['hu_name'] === ''))) { $y['st'] = 'fail'; $y['tries'] = ($y['tries'] ?? 0) + 1; $y['t'] = $now; unset($y); continue; }
         $y['hu'] = $a['hu']; $y['hu_name'] = $a['hu_name']; $y['t'] = $now; $st['count']++;
         if ($cfg['hu_mode'] === 'auto') {
+            // a write that did not work keeps the translation: the item waits on the page for Write, it does not go back to Claude
             $e = hu_write($cfg, $y);
-            $y['st'] = $e === '' ? 'done' : ($e === 'changed' || $e === 'gone' ? 'gone' : 'fail');
-            $y['auto'] = 1; if ($e !== '') { $y['werr'] = $e; }
+            $y['st'] = $e === '' ? 'done' : ($e === 'changed' || $e === 'gone' ? 'gone' : 'ready');
+            if ($e === '') { $y['auto'] = 1; } else { $y['werr'] = $e; }
         } else { $y['st'] = 'ready'; }
         unset($y);
     }

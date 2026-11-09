@@ -1122,6 +1122,9 @@
  "hu.err_answer": {
   "text": "Claude válasza nem olvasható"
  },
+ "hu.err_limit": {
+  "text": "Elfogyott a Claude használati kerete; a tételek várnak (újra egy óra múlva)"
+ },
  "hu.err_hint": {
   "text": "Utolsó próba: {t}. A tételek várnak, semmi nem íródott be. Javítsd (bejelentkezésnél: /login a claude konténerben), aztán Újra."
  },
@@ -1197,6 +1200,12 @@
  },
  "hu.op_fail": {
   "text": "Nem sikerült: {e}"
+ },
+ "hu.werr": {
+  "text": "Az automatikus írás nem sikerült ({e}); a fordítás megmaradt, a Write gombbal újra próbálható"
+ },
+ "hu.werr_jf": {
+  "text": "A Jellyfin nem válaszolt"
  },
  "hu.dc_done": {
   "one": "📝 {n} magyar leírás beírva: {list}. Visszavonás a Streambox oldalán.",

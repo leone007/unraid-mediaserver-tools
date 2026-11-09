@@ -27,7 +27,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (!isset($st['items'][$id])) { hu_out(['ok' => false, 'error' => 'gone']); }
     $x = &$st['items'][$id]; $e = '';
     if ($op === 'skip' && $x['st'] === 'ready') { $x['st'] = 'skip'; $x['t'] = time(); }
-    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone'], true) ? 'gone' : 'ready'); $x['t'] = time(); }
+    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone'], true) ? 'gone' : 'ready'); $x['t'] = time(); if ($e === '') { unset($x['werr']); } }
     elseif ($op === 'undo' && $x['st'] === 'done') { $e = hu_undo($cfg, $x); if ($e === '') { $x['st'] = 'undone'; $x['t'] = time(); } }
     else { $e = 'state'; }
     unset($x);
@@ -40,7 +40,8 @@ foreach ($st['items'] as $x) {
     if (in_array($x['st'], ['done', 'skip', 'undone', 'gone'], true) && ($x['t'] ?? 0) < $now - 7 * 86400) { continue; }
     $rows[] = ['id' => $x['id'], 'st' => $x['st'], 'label' => hu_label($x), 'kind' => $x['kind'], 't' => (int)($x['t'] ?? $x['found']),
                'hu' => (string)($x['hu'] ?? ''), 'hu_name' => $x['want_ti'] ? (string)($x['hu_name'] ?? '') : '', 'name_now' => $x['name_now'],
-               'en' => mb_substr((string)$x['src'], 0, 300), 'what' => ($x['want_ov'] ? 'd' : '') . ($x['want_ti'] ? 't' : ''), 'auto' => !empty($x['auto']), 'tries' => (int)($x['tries'] ?? 0)];
+               'en' => mb_substr((string)$x['src'], 0, 300), 'what' => ($x['want_ov'] ? 'd' : '') . ($x['want_ti'] ? 't' : ''), 'auto' => !empty($x['auto']), 'tries' => (int)($x['tries'] ?? 0),
+               'werr' => $x['st'] === 'ready' ? (string)($x['werr'] ?? '') : ''];
 }
 usort($rows, function ($a, $b) { return $b['t'] <=> $a['t']; });
 hu_out(['ok' => true, 'on' => nf_on_hu($cfg['hu_on']), 'mode' => $cfg['hu_mode'], 'err' => $st['err'], 'err_t' => (int)$st['err_t'],

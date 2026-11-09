@@ -443,6 +443,7 @@ $(function () {
   function huRow(cls, main, sub, acts) {
     return '<div class="sb-hu-r ' + cls + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sb-hu-a">' + (acts || '') + '</div></div>';
   }
+  function huErr(e) { return e === 'jf' ? T('hu.werr_jf') : e; }
   function huText(r) {
     var p = [];
     if (r.hu_name) { p.push('<i>' + huEsc(r.hu_name) + '</i>'); }
@@ -463,7 +464,7 @@ $(function () {
           top += huRow(r.st === 'run' ? 'sb-hu-blue' : 'sb-hu-grey', huEsc(r.label), huEsc(what), '<span class="sb-hu-pill">' + huEsc(T(r.st === 'run' ? 'hu.st_run' : 'hu.st_new')) + '</span>');
         } else if (r.st === 'ready') {
           ready++;
-          top += huRow('sb-hu-amber', huEsc(r.label) + (r.hu_name ? ' · <i>' + huEsc(r.hu_name) + '</i>' : ''), (r.hu ? '„' + huEsc(r.hu) + '”' : '') + '<br>' + huEsc(T('hu.orig')) + ' ' + huEsc(r.en || r.name_now),
+          top += huRow('sb-hu-amber', huEsc(r.label) + (r.hu_name ? ' · <i>' + huEsc(r.hu_name) + '</i>' : ''), (r.werr ? '<span style="color:#e5534b">' + huEsc(T('hu.werr', { e: huErr(r.werr) })) + '</span><br>' : '') + (r.hu ? '„' + huEsc(r.hu) + '”' : '') + '<br>' + huEsc(T('hu.orig')) + ' ' + huEsc(r.en || r.name_now),
             '<input type="button" class="sb-hu-op" data-op="write" data-id="' + r.id + '" value="' + huEsc(T('hu.write')) + '"><input type="button" class="sb-hu-op" data-op="skip" data-id="' + r.id + '" value="' + huEsc(T('hu.skip')) + '">');
         } else if (r.st === 'fail') {
           top += huRow('sb-hu-red', huEsc(r.label), huEsc(T('hu.st_fail', { n: r.tries })), '');
@@ -485,7 +486,7 @@ $(function () {
     var $b = $(this), op = $b.data('op');
     $b.closest('.sb-hu-a').find('input').prop('disabled', true);
     $.post(HU, { op: op, id: $b.data('id'), csrf_token: huTok }, null, 'json')
-      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: (r && r.error) || '?' })) + '</span><br>'); } })
+      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: huErr((r && r.error) || '?') })) + '</span><br>'); } })
       .always(huLoad);
   });
   $(document).on('click', '.sb-hu-retry', function () {

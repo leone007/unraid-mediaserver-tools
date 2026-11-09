@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.15">
+<!ENTITY version   "2026.10.16">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- Hungarian descriptions: Claude's answer is read even with a Sources list after it; a failed automatic write keeps the translation and waits for Write instead of going back to Claude; a Jellyfin restart no longer marks items gone; the usage limit pauses an hour instead of failing items; English text with an accent (café, Pokémon) is no longer taken for Hungarian; Claude gets no MCP server or connector
+###2026.10.15
 - Hungarian descriptions: Claude also reads the IMDb plot of an episode, and avoids AI-sounding Hungarian (sales words, inflated stakes, dramatic closing lines, forced lists of three)
 ###2026.10.14zz
 - Hungarian descriptions: own Discord webhook (Webhook for Hungarian descriptions), no longer the series channel; empty sends nothing; Send test message tests it too
@@ -1253,6 +1255,7 @@ $(function () {
   function huRow(cls, main, sub, acts) {
     return '<div class="sb-hu-r ' + cls + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sb-hu-a">' + (acts || '') + '</div></div>';
   }
+  function huErr(e) { return e === 'jf' ? T('hu.werr_jf') : e; }
   function huText(r) {
     var p = [];
     if (r.hu_name) { p.push('<i>' + huEsc(r.hu_name) + '</i>'); }
@@ -1273,7 +1276,7 @@ $(function () {
           top += huRow(r.st === 'run' ? 'sb-hu-blue' : 'sb-hu-grey', huEsc(r.label), huEsc(what), '<span class="sb-hu-pill">' + huEsc(T(r.st === 'run' ? 'hu.st_run' : 'hu.st_new')) + '</span>');
         } else if (r.st === 'ready') {
           ready++;
-          top += huRow('sb-hu-amber', huEsc(r.label) + (r.hu_name ? ' · <i>' + huEsc(r.hu_name) + '</i>' : ''), (r.hu ? '„' + huEsc(r.hu) + '”' : '') + '<br>' + huEsc(T('hu.orig')) + ' ' + huEsc(r.en || r.name_now),
+          top += huRow('sb-hu-amber', huEsc(r.label) + (r.hu_name ? ' · <i>' + huEsc(r.hu_name) + '</i>' : ''), (r.werr ? '<span style="color:#e5534b">' + huEsc(T('hu.werr', { e: huErr(r.werr) })) + '</span><br>' : '') + (r.hu ? '„' + huEsc(r.hu) + '”' : '') + '<br>' + huEsc(T('hu.orig')) + ' ' + huEsc(r.en || r.name_now),
             '<input type="button" class="sb-hu-op" data-op="write" data-id="' + r.id + '" value="' + huEsc(T('hu.write')) + '"><input type="button" class="sb-hu-op" data-op="skip" data-id="' + r.id + '" value="' + huEsc(T('hu.skip')) + '">');
         } else if (r.st === 'fail') {
           top += huRow('sb-hu-red', huEsc(r.label), huEsc(T('hu.st_fail', { n: r.tries })), '');
@@ -1295,7 +1298,7 @@ $(function () {
     var $b = $(this), op = $b.data('op');
     $b.closest('.sb-hu-a').find('input').prop('disabled', true);
     $.post(HU, { op: op, id: $b.data('id'), csrf_token: huTok }, null, 'json')
-      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: (r && r.error) || '?' })) + '</span><br>'); } })
+      .done(function (r) { if (!r || !r.ok) { $b.closest('.sb-hu-r').find('small').first().prepend('<span style="color:#e5534b">' + huEsc(T('hu.op_fail', { e: huErr((r && r.error) || '?') })) + '</span><br>'); } })
       .always(huLoad);
   });
   $(document).on('click', '.sb-hu-retry', function () {
@@ -4997,6 +5000,10 @@ function mt_i18n_js($dir, $name, $only = null) {
   "text": "Claude's answer could not be read",
   "note": "error row: the answer was not the expected JSON"
  },
+ "hu.err_limit": {
+  "text": "Claude's usage limit is used up; the items wait (next try in an hour)",
+  "note": "error row: the plan's usage limit was reached; nothing failed"
+ },
  "hu.err_hint": {
   "text": "Last try {t}. The items wait; nothing was written. Fix it (for a login: /login in the claude container), then press Retry.",
   "note": "hint under an error row, {t} = time"
@@ -5097,6 +5104,14 @@ function mt_i18n_js($dir, $name, $only = null) {
  "hu.op_fail": {
   "text": "Did not work: {e}",
   "note": "error shown in a row after a button"
+ },
+ "hu.werr": {
+  "text": "Automatic write did not work ({e}); the translation is kept, press Write to try again",
+  "note": "red line in a waiting row, {e} = the reason"
+ },
+ "hu.werr_jf": {
+  "text": "Jellyfin did not answer",
+  "note": "reason: Jellyfin was restarting or unreachable"
  },
  "hu.dc_done": {
   "one": "📝 {n} Hungarian description written: {list}. Undo on the Streambox page.",
@@ -6241,6 +6256,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  "hu.err_answer": {
   "text": "Claude válasza nem olvasható"
  },
+ "hu.err_limit": {
+  "text": "Elfogyott a Claude használati kerete; a tételek várnak (újra egy óra múlva)"
+ },
  "hu.err_hint": {
   "text": "Utolsó próba: {t}. A tételek várnak, semmi nem íródott be. Javítsd (bejelentkezésnél: /login a claude konténerben), aztán Újra."
  },
@@ -6316,6 +6334,12 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "hu.op_fail": {
   "text": "Nem sikerült: {e}"
+ },
+ "hu.werr": {
+  "text": "Az automatikus írás nem sikerült ({e}); a fordítás megmaradt, a Write gombbal újra próbálható"
+ },
+ "hu.werr_jf": {
+  "text": "A Jellyfin nem válaszolt"
  },
  "hu.dc_done": {
   "one": "📝 {n} magyar leírás beírva: {list}. Visszavonás a Streambox oldalán.",
@@ -7183,7 +7207,17 @@ function hu_state_save($s) {
     $f = hu_state_file(); $tmp = $f . '.tmp';
     if (@file_put_contents($tmp, json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false) { @rename($tmp, $f); }
 }
-function hu_is_hu($t) { return (bool)preg_match('/[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/u', (string)$t); }
+// Hungarian text: ő or ű (only Hungarian has them), else more Hungarian than English small words; one é or ü alone is
+// not enough ("café", "Pokémon", German names in an English text); no small word at all: two accents
+function hu_is_hu($t) {
+    $t = (string)$t;
+    if (preg_match('/[őűŐŰ]/u', $t)) { return true; }
+    if (!preg_match('/[áéíóöúüÁÉÍÓÖÚÜ]/u', $t)) { return false; }
+    $w = function ($re) use ($t) { return preg_match_all('/(?<![\\p{L}])(?:' . $re . ')(?![\\p{L}])/iu', $t); };
+    $hu = $w('az|és|hogy|egy|nem|meg|de|is|már|még|aki|ami|amikor|után|között|ő|ez|azt|majd|pedig|csak|mint|vagy');
+    $en = $w('the|and|of|to|in|with|his|her|he|she|is|an|for|on|when|their|they|from|who|that');
+    return ($hu > 0 && $hu >= $en) || ($en === 0 && preg_match_all('/[áéíóöúüÁÉÍÓÖÚÜ]/u', $t) >= 2);   // short: "Luke új búvóhelyet keres.
+}
 function hu_generic($name) { return (bool)preg_match('/^\d+\. epizód$/u', trim((string)$name)); }
 function hu_en_generic($t) { $t = trim((string)$t); return $t === '' || strtoupper($t) === 'TBA' || (bool)preg_match('/^(Episode|Ep\.?)\s*#?\s*\d+$/i', $t); }
 
@@ -7198,17 +7232,18 @@ function hu_jf_raw($cfg, $method, $path, $body = null) {
     $b = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
     return [$code, is_string($b) ? json_decode($b) : null];
 }
+// the item; null = Jellyfin says it is not there (404); false = Jellyfin did not answer (restart, network): not the item's fault
 function hu_jf_item($cfg, $id) {
-    static $uid = null;
-    if ($uid === null) {
-        $uid = '';
+    static $uid = '';
+    if ($uid === '') {
         [$c, $us] = hu_jf_raw($cfg, 'GET', '/Users');
         foreach ((array)$us as $u) { if (is_object($u) && !empty($u->Policy->IsAdministrator)) { $uid = (string)$u->Id; break; } }
     }
-    if ($uid === '') { return null; }
+    if ($uid === '') { return false; }
     [$c, $it] = hu_jf_raw($cfg, 'GET', '/Items/' . rawurlencode($id) . '?userId=' . rawurlencode($uid));
-    if ($c !== 200 || !is_object($it)) { [$c, $it] = hu_jf_raw($cfg, 'GET', '/Users/' . rawurlencode($uid) . '/Items/' . rawurlencode($id)); }
-    return $c === 200 && is_object($it) ? $it : null;
+    if ($c !== 200 || !is_object($it)) { [$c2, $it] = hu_jf_raw($cfg, 'GET', '/Users/' . rawurlencode($uid) . '/Items/' . rawurlencode($id)); $c = $c2 === 404 ? $c : $c2; }
+    if ($c === 200 && is_object($it)) { return $it; }
+    return $c === 404 ? null : false;
 }
 
 // ---- finding the items ------------------------------------------------------------------------------------------------
@@ -7302,7 +7337,26 @@ function hu_prompt($batch) {
         . "leave out hu when the item does not ask for a description and hu_name when it does not ask for a title.\n\nItems:\n"
         . json_encode($items, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 }
-// [answers by id or null, error code: '' | 'docker' | 'ctstop' | 'login' | 'timeout' | 'answer', detail]
+// the first JSON array of objects in Claude's text; the text may have words or a "Sources: [title](url)" list around it
+function hu_json_list($text) {
+    $n = strlen($text);
+    for ($a = strpos($text, '['); $a !== false; $a = strpos($text, '[', $a + 1)) {
+        if (!preg_match('/\G\[\s*\{/', $text, $m, 0, $a)) { continue; }
+        $d = 0; $q = false;
+        for ($i = $a; $i < $n; $i++) {
+            $ch = $text[$i];
+            if ($q) { if ($ch === '\\') { $i++; } elseif ($ch === '"') { $q = false; } continue; }
+            if ($ch === '"') { $q = true; } elseif ($ch === '[' || $ch === '{') { $d++; }
+            elseif (($ch === ']' || $ch === '}') && --$d === 0) {
+                $j = json_decode(substr($text, $a, $i - $a + 1), true);
+                if (is_array($j) && isset($j[0]['id'])) { return $j; }
+                break;
+            }
+        }
+    }
+    return null;
+}
+// [answers by id or null, error code: '' | 'docker' | 'ctstop' | 'login' | 'limit' | 'timeout' | 'answer', detail]
 function hu_ask($batch) {
     $fake = getenv('SB_HU_FAKE');
     if ($fake !== false && $fake !== '') { $text = (string)@file_get_contents($fake); $rc = 0; }
@@ -7311,16 +7365,21 @@ function hu_ask($batch) {
         $o = []; @exec(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . HU_CT . ' 2>/dev/null', $o);
         if (trim(implode('', $o)) !== 'true') { return [null, 'ctstop', '']; }
         $pf = tempnam('/tmp', 'sbhu'); file_put_contents($pf, hu_prompt($batch));
-        $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w /home/claude ' . HU_CT .
-               ' claude -p --tools WebSearch --allowedTools WebSearch --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
+        // the prompt carries outside text (TMDb, Sonarr): Claude gets WebSearch only, no MCP server or claude.ai connector (Drive, Docs)
+        $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -e ENABLE_CLAUDEAI_MCP_SERVERS=false -w /home/claude ' . HU_CT .
+               ' claude -p --tools WebSearch --allowedTools WebSearch --strict-mcp-config --disallowedTools ' . escapeshellarg('mcp__*') .
+               ' --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
         $o = []; @exec($cmd, $o, $rc); @unlink($pf);
         $text = trim(implode("\n", $o));
     }
     if (preg_match('/not logged in|please run \/login|invalid api key|oauth token has expired/i', $text)) { return [null, 'login', mb_substr($text, 0, 200)]; }
     if ($rc === 124) { return [null, 'timeout', '']; }
-    $a = strpos($text, '['); $b = strrpos($text, ']');
-    $j = ($a !== false && $b > $a) ? json_decode(substr($text, $a, $b - $a + 1), true) : null;
-    if (!is_array($j)) { return [null, 'answer', mb_substr($text, 0, 200)]; }
+    $j = hu_json_list($text);
+    if ($j === null) {
+        // the plan's usage limit: not the items' fault, they wait (hu_tick pauses an hour)
+        if (preg_match('/usage limit|limit reached|hit your (?:usage )?limit|out of (?:extra )?usage|rate_limit_error/i', $text)) { return [null, 'limit', mb_substr($text, 0, 200)]; }
+        return [null, 'answer', mb_substr($text, 0, 200)];
+    }
     $out = [];
     foreach ($j as $x) {
         if (!is_array($x) || !isset($x['id'])) { continue; }
@@ -7331,9 +7390,10 @@ function hu_ask($batch) {
 }
 
 // ---- writing and undo -----------------------------------------------------------------------------------------------
-// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'http NNN')
+// writes one translated item into Jellyfin; returns '' or an error code ('gone', 'changed', 'jf' = no answer, 'http NNN')
 function hu_write($cfg, &$x) {
     $it = hu_jf_item($cfg, $x['id']);
+    if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
     $ov = trim((string)($it->Overview ?? '')); $name = (string)($it->Name ?? '');
     if (($x['want_ov'] && $ov !== trim($x['en'])) || ($x['want_ti'] && $name !== $x['name_now'])) { return 'changed'; }
@@ -7348,6 +7408,7 @@ function hu_write($cfg, &$x) {
 function hu_undo($cfg, &$x) {
     if (empty($x['backup'])) { return 'nobackup'; }
     $it = hu_jf_item($cfg, $x['id']);
+    if ($it === false) { return 'jf'; }
     if (!$it) { return 'gone'; }
     $b = $x['backup'];
     $it->Overview = $b['Overview']; $it->Name = $b['Name']; $it->LockedFields = $b['LockedFields']; $it->LockData = $b['LockData'];
@@ -7366,6 +7427,7 @@ function hu_tick($cfg, $now, $force = false) {
         elseif ($x['st'] === 'run' && ($x['t'] ?? 0) < $now - 3600) { $st['items'][$id]['st'] = 'new'; }
     }
     if (!nf_on_hu($cfg['hu_on']) || (!$force && hu_quiet($now))) { hu_state_save($st); return $st; }
+    if (!$force && $st['err'] === 'limit' && $st['err_t'] > $now - 3600) { hu_state_save($st); return $st; }   // usage limit: an hour's pause
     $new = hu_scan($cfg, $st, $now);
     if (is_array($new)) { $st['items'] += $new; }
     $left = max(0, (int)$cfg['hu_lim'] - (int)$st['count']);
@@ -7383,9 +7445,10 @@ function hu_tick($cfg, $now, $force = false) {
         $st['err'] = $err; $st['err_t'] = $now; $st['err_detail'] = $detail;
         foreach ($batch as $id => $x) {
             if (!isset($st['items'][$id])) { continue; }
-            // a login or container problem is not the item's fault: it waits without using a try
-            $st['items'][$id]['st'] = in_array($err, ['login', 'docker', 'ctstop'], true) ? 'new' : 'fail';
-            if (!in_array($err, ['login', 'docker', 'ctstop'], true)) { $st['items'][$id]['tries'] = ($x['tries'] ?? 0) + 1; }
+            // a login, limit or container problem is not the item's fault: it waits without using a try
+            $wait = in_array($err, ['login', 'limit', 'docker', 'ctstop'], true);
+            $st['items'][$id]['st'] = $wait ? 'new' : 'fail';
+            if (!$wait) { $st['items'][$id]['tries'] = ($x['tries'] ?? 0) + 1; }
             $st['items'][$id]['t'] = $now;
         }
         hu_state_save($st); return $st;
@@ -7397,9 +7460,10 @@ function hu_tick($cfg, $now, $force = false) {
         if (!$a || ($y['want_ov'] && $a['hu'] === '' && (!$y['want_ti'] || $a['hu_name'] === ''))) { $y['st'] = 'fail'; $y['tries'] = ($y['tries'] ?? 0) + 1; $y['t'] = $now; unset($y); continue; }
         $y['hu'] = $a['hu']; $y['hu_name'] = $a['hu_name']; $y['t'] = $now; $st['count']++;
         if ($cfg['hu_mode'] === 'auto') {
+            // a write that did not work keeps the translation: the item waits on the page for Write, it does not go back to Claude
             $e = hu_write($cfg, $y);
-            $y['st'] = $e === '' ? 'done' : ($e === 'changed' || $e === 'gone' ? 'gone' : 'fail');
-            $y['auto'] = 1; if ($e !== '') { $y['werr'] = $e; }
+            $y['st'] = $e === '' ? 'done' : ($e === 'changed' || $e === 'gone' ? 'gone' : 'ready');
+            if ($e === '') { $y['auto'] = 1; } else { $y['werr'] = $e; }
         } else { $y['st'] = 'ready'; }
         unset($y);
     }
@@ -7492,7 +7556,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (!isset($st['items'][$id])) { hu_out(['ok' => false, 'error' => 'gone']); }
     $x = &$st['items'][$id]; $e = '';
     if ($op === 'skip' && $x['st'] === 'ready') { $x['st'] = 'skip'; $x['t'] = time(); }
-    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone'], true) ? 'gone' : 'ready'); $x['t'] = time(); }
+    elseif ($op === 'write' && $x['st'] === 'ready') { $e = hu_write($cfg, $x); $x['st'] = $e === '' ? 'done' : (in_array($e, ['changed', 'gone'], true) ? 'gone' : 'ready'); $x['t'] = time(); if ($e === '') { unset($x['werr']); } }
     elseif ($op === 'undo' && $x['st'] === 'done') { $e = hu_undo($cfg, $x); if ($e === '') { $x['st'] = 'undone'; $x['t'] = time(); } }
     else { $e = 'state'; }
     unset($x);
@@ -7505,7 +7569,8 @@ foreach ($st['items'] as $x) {
     if (in_array($x['st'], ['done', 'skip', 'undone', 'gone'], true) && ($x['t'] ?? 0) < $now - 7 * 86400) { continue; }
     $rows[] = ['id' => $x['id'], 'st' => $x['st'], 'label' => hu_label($x), 'kind' => $x['kind'], 't' => (int)($x['t'] ?? $x['found']),
                'hu' => (string)($x['hu'] ?? ''), 'hu_name' => $x['want_ti'] ? (string)($x['hu_name'] ?? '') : '', 'name_now' => $x['name_now'],
-               'en' => mb_substr((string)$x['src'], 0, 300), 'what' => ($x['want_ov'] ? 'd' : '') . ($x['want_ti'] ? 't' : ''), 'auto' => !empty($x['auto']), 'tries' => (int)($x['tries'] ?? 0)];
+               'en' => mb_substr((string)$x['src'], 0, 300), 'what' => ($x['want_ov'] ? 'd' : '') . ($x['want_ti'] ? 't' : ''), 'auto' => !empty($x['auto']), 'tries' => (int)($x['tries'] ?? 0),
+               'werr' => $x['st'] === 'ready' ? (string)($x['werr'] ?? '') : ''];
 }
 usort($rows, function ($a, $b) { return $b['t'] <=> $a['t']; });
 hu_out(['ok' => true, 'on' => nf_on_hu($cfg['hu_on']), 'mode' => $cfg['hu_mode'], 'err' => $st['err'], 'err_t' => (int)$st['err_t'],

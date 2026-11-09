@@ -1493,6 +1493,10 @@
   "text": "Claude's answer could not be read",
   "note": "error row: the answer was not the expected JSON"
  },
+ "hu.err_limit": {
+  "text": "Claude's usage limit is used up; the items wait (next try in an hour)",
+  "note": "error row: the plan's usage limit was reached; nothing failed"
+ },
  "hu.err_hint": {
   "text": "Last try {t}. The items wait; nothing was written. Fix it (for a login: /login in the claude container), then press Retry.",
   "note": "hint under an error row, {t} = time"
@@ -1593,6 +1597,14 @@
  "hu.op_fail": {
   "text": "Did not work: {e}",
   "note": "error shown in a row after a button"
+ },
+ "hu.werr": {
+  "text": "Automatic write did not work ({e}); the translation is kept, press Write to try again",
+  "note": "red line in a waiting row, {e} = the reason"
+ },
+ "hu.werr_jf": {
+  "text": "Jellyfin did not answer",
+  "note": "reason: Jellyfin was restarting or unreachable"
  },
  "hu.dc_done": {
   "one": "📝 {n} Hungarian description written: {list}. Undo on the Streambox page.",
