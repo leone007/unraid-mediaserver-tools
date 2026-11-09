@@ -26,6 +26,14 @@ function hu_state() {
     $s = is_array($j) ? $j : [];
     return array_merge(['items' => [], 'day' => '', 'count' => 0, 'err' => '', 'err_t' => 0, 'run_t' => 0, 'dc_day' => ''], $s);
 }
+// every read-change-write of the state (cron run, page buttons, Discord line) holds this short lock; never around the Claude call
+function hu_lock() {
+    static $h = null;
+    if ($h === null) { $h = @fopen((getenv('SB_HU_STATE') ? hu_state_file() . '.lock' : '/tmp/streambox_hu_state.lock'), 'c') ?: false; }
+    if ($h) { flock($h, LOCK_EX); }
+    return $h;
+}
+function hu_unlock($h) { if ($h) { flock($h, LOCK_UN); } }
 function hu_state_save($s) {
     $f = hu_state_file(); $tmp = $f . '.tmp';
     if (@file_put_contents($tmp, json_encode($s, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false) { @rename($tmp, $f); }
@@ -188,9 +196,10 @@ function hu_ask($batch) {
         $o = []; @exec(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . HU_CT . ' 2>/dev/null', $o);
         if (trim(implode('', $o)) !== 'true') { return [null, 'ctstop', '']; }
         $pf = tempnam('/tmp', 'sbhu'); file_put_contents($pf, hu_prompt($batch));
+        // timeout inside the container too: the outer one only ends docker exec, claude would run on (its 124 comes back through exec)
         // the prompt carries outside text (TMDb, Sonarr): Claude gets WebSearch only, no MCP server or claude.ai connector (Drive, Docs)
         $cmd = 'timeout 900 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -e ENABLE_CLAUDEAI_MCP_SERVERS=false -w /home/claude ' . HU_CT .
-               ' claude -p --tools WebSearch --allowedTools WebSearch --strict-mcp-config --disallowedTools ' . escapeshellarg('mcp__*') .
+               ' timeout -k 20 870 claude -p --tools WebSearch --allowedTools WebSearch --strict-mcp-config --disallowedTools ' . escapeshellarg('mcp__*') .
                ' --no-session-persistence --output-format text < ' . escapeshellarg($pf) . ' 2>&1';
         $o = []; @exec($cmd, $o, $rc); @unlink($pf);
         $text = trim(implode("\n", $o));
@@ -242,6 +251,8 @@ function hu_undo($cfg, &$x) {
 // ---- one run (cron every 15 minutes, or the Retry button) ---------------------------------------------------------------
 function hu_quiet($now) { $h = (int)date('G', $now); return $h >= 22 || $h < 6; }
 function hu_tick($cfg, $now, $force = false) {
+    $new = (nf_on_hu($cfg['hu_on']) && ($force || !hu_quiet($now))) ? hu_scan($cfg, hu_state(), $now) : null;   // Jellyfin and Sonarr calls, outside the lock
+    $lk = hu_lock();
     $st = hu_state();
     $today = date('Y-m-d', $now);
     if ($st['day'] !== $today) { $st['day'] = $today; $st['count'] = 0; }
@@ -249,9 +260,8 @@ function hu_tick($cfg, $now, $force = false) {
         if (in_array($x['st'], ['done', 'skip', 'undone', 'gone'], true) && ($x['t'] ?? $x['found']) < $now - HU_KEEP_DAYS * 86400) { unset($st['items'][$id]); }
         elseif ($x['st'] === 'run' && ($x['t'] ?? 0) < $now - 3600) { $st['items'][$id]['st'] = 'new'; }
     }
-    if (!nf_on_hu($cfg['hu_on']) || (!$force && hu_quiet($now))) { hu_state_save($st); return $st; }
-    if (!$force && $st['err'] === 'limit' && $st['err_t'] > $now - 3600) { hu_state_save($st); return $st; }   // usage limit: an hour's pause
-    $new = hu_scan($cfg, $st, $now);
+    if (!nf_on_hu($cfg['hu_on']) || (!$force && hu_quiet($now))) { hu_state_save($st); hu_unlock($lk); return $st; }
+    if (!$force && $st['err'] === 'limit' && $st['err_t'] > $now - 3600) { hu_state_save($st); hu_unlock($lk); return $st; }   // usage limit: an hour's pause
     if (is_array($new)) { $st['items'] += $new; }
     $left = max(0, (int)$cfg['hu_lim'] - (int)$st['count']);
     $batch = [];
@@ -259,10 +269,11 @@ function hu_tick($cfg, $now, $force = false) {
         if (count($batch) >= min($left, HU_BATCH)) { break; }
         if ($x['st'] === 'new' || ($x['st'] === 'fail' && ($x['tries'] ?? 0) < HU_TRIES && ($x['t'] ?? 0) < $now - 3600)) { $batch[$id] = $x; }
     }
-    if (!$batch) { hu_state_save($st); return $st; }
+    if (!$batch) { hu_state_save($st); hu_unlock($lk); return $st; }
     foreach ($batch as $id => $x) { $st['items'][$id]['st'] = 'run'; $st['items'][$id]['t'] = $now; }
-    $st['run_t'] = $now; hu_state_save($st);
+    $st['run_t'] = $now; hu_state_save($st); hu_unlock($lk);
     [$ans, $err, $detail] = hu_ask($batch);
+    $lk = hu_lock();
     $st = hu_state();   // the page may have changed something meanwhile
     if ($ans === null) {
         $st['err'] = $err; $st['err_t'] = $now; $st['err_detail'] = $detail;
@@ -274,11 +285,11 @@ function hu_tick($cfg, $now, $force = false) {
             if (!$wait) { $st['items'][$id]['tries'] = ($x['tries'] ?? 0) + 1; }
             $st['items'][$id]['t'] = $now;
         }
-        hu_state_save($st); return $st;
+        hu_state_save($st); hu_unlock($lk); return $st;
     }
     $st['err'] = ''; $st['err_detail'] = '';
     foreach ($batch as $id => $x) {
-        if (!isset($st['items'][$id])) { continue; }
+        if (!isset($st['items'][$id]) || $st['items'][$id]['st'] !== 'run') { continue; }   // changed meanwhile
         $a = $ans[$id] ?? null; $y = &$st['items'][$id];
         if (!$a || ($y['want_ov'] && $a['hu'] === '' && (!$y['want_ti'] || $a['hu_name'] === ''))) { $y['st'] = 'fail'; $y['tries'] = ($y['tries'] ?? 0) + 1; $y['t'] = $now; unset($y); continue; }
         $y['hu'] = $a['hu']; $y['hu_name'] = $a['hu_name']; $y['t'] = $now; $st['count']++;
@@ -290,7 +301,7 @@ function hu_tick($cfg, $now, $force = false) {
         } else { $y['st'] = 'ready'; }
         unset($y);
     }
-    hu_state_save($st);
+    hu_state_save($st); hu_unlock($lk);
     return $st;
 }
 
@@ -320,8 +331,7 @@ function hu_daily($cfg, $now) {
         if ($x['st'] === 'ready') { $ready[] = hu_label($x); }
         elseif ($x['st'] === 'done' && !empty($x['auto']) && ($x['t'] ?? 0) > $now - 86400) { $done[] = hu_label($x); }
     }
-    $st['dc_day'] = $today; hu_state_save($st);
-    if (!$ready && !$done && $st['err'] !== 'login') { return; }
+    if (!$ready && !$done && $st['err'] !== 'login') { $lk = hu_lock(); $st = hu_state(); $st['dc_day'] = $today; hu_state_save($st); hu_unlock($lk); return; }
     $lines = [];
     if ($done) { $lines[] = hu_dc_t('hu.dc_done', ['n' => count($done), 'list' => implode(', ', array_slice($done, 0, 8)) . (count($done) > 8 ? ' …' : '')]); }
     if ($ready) { $lines[] = hu_dc_t('hu.dc_ready', ['n' => count($ready), 'list' => implode(', ', array_slice($ready, 0, 8)) . (count($ready) > 8 ? ' …' : '')]); }
@@ -329,5 +339,10 @@ function hu_daily($cfg, $now) {
     $ch = curl_init($hook);
     curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_POSTFIELDS => json_encode(['content' => implode("\n", $lines), 'allowed_mentions' => ['parse' => []]], JSON_UNESCAPED_UNICODE)]);
-    curl_exec($ch); curl_close($ch);
+    curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    // sent, or 4 tries today (429, Discord down, a deleted webhook): done for today; else the next run (15 min) tries again
+    $lk = hu_lock(); $st = hu_state();
+    $st['dc_try'] = ($st['dc_try_day'] ?? '') === $today ? (int)($st['dc_try'] ?? 0) + 1 : 1; $st['dc_try_day'] = $today;
+    if (($code >= 200 && $code < 300) || $st['dc_try'] >= 4) { $st['dc_day'] = $today; }
+    hu_state_save($st); hu_unlock($lk);
 }

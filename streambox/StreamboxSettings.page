@@ -467,7 +467,7 @@ $(function () {
           top += huRow('sb-hu-amber', huEsc(r.label) + (r.hu_name ? ' · <i>' + huEsc(r.hu_name) + '</i>' : ''), (r.werr ? '<span style="color:#e5534b">' + huEsc(T('hu.werr', { e: huErr(r.werr) })) + '</span><br>' : '') + (r.hu ? '„' + huEsc(r.hu) + '”' : '') + '<br>' + huEsc(T('hu.orig')) + ' ' + huEsc(r.en || r.name_now),
             '<input type="button" class="sb-hu-op" data-op="write" data-id="' + r.id + '" value="' + huEsc(T('hu.write')) + '"><input type="button" class="sb-hu-op" data-op="skip" data-id="' + r.id + '" value="' + huEsc(T('hu.skip')) + '">');
         } else if (r.st === 'fail') {
-          top += huRow('sb-hu-red', huEsc(r.label), huEsc(T('hu.st_fail', { n: r.tries })), '');
+          top += huRow('sb-hu-red', huEsc(r.label), huEsc(T('hu.st_fail', { n: r.tries })), '<input type="button" class="sb-hu-op" data-op="skip" data-id="' + r.id + '" value="' + huEsc(T('hu.skip')) + '">');
         } else {
           nd++;
           var cls = r.st === 'done' ? 'sb-hu-green' : 'sb-hu-grey';
