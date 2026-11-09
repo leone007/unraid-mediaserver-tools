@@ -204,7 +204,7 @@ class Detail:
 DIR = {'items': [], 'end': None, 'notes': [], 'pick': 0, 'yes': True, 'multi': None, 'built': [], 'info': []}
 HOMEPROPS = {}
 Window = lambda wid: types.SimpleNamespace(setProperty=HOMEPROPS.__setitem__, getProperty=lambda k: HOMEPROPS.get(k, ''))
-xbmc = types.SimpleNamespace(executebuiltin=lambda b: DIR['built'].append(b), log=lambda *a: None, LOGINFO=1, ISO_639_1=0, getLanguage=lambda f: 'en', getInfoLabel=lambda k: 'Mac "Studio"',
+xbmc = types.SimpleNamespace(executebuiltin=lambda b: DIR['built'].append(b), log=lambda *a: None, LOGINFO=1, LOGWARNING=2, ISO_639_1=0, getLanguage=lambda f: 'en', getInfoLabel=lambda k: 'Mac "Studio"',
                              VideoStreamDetail=Detail, AudioStreamDetail=Detail)
 xbmcaddon = types.SimpleNamespace(Addon=Addon)
 xbmcgui = types.SimpleNamespace(ListItem=ListItem, NOTIFICATION_WARNING='w', Window=Window,
@@ -406,6 +406,43 @@ ok([li.label for _, li, _ in run('?mode=catlist&list=trending')] == ['Stick', 'N
    'catalog: no setting, the LAN address answers /health -> LAN')
 run('?mode=catlist&list=trending')
 ok(len([q for q in SEEN if q[1] == '/health']) == n + 1, 'catalog: the choice is kept (no second /health)')
+
+# the LAN check fails in a way that is not OSError (a cut answer, a JSON list): the public address, no crash
+import http.client
+real_open = jellynas.urllib.request.urlopen
+for bad in (http.client.IncompleteRead(b''), '[1]'):
+    def fake(req, timeout=None, bad=bad):
+        if isinstance(bad, Exception):
+            raise bad
+        return _Resp(bad)
+    class _Resp:
+        def __init__(self, b): self.b = b.encode()
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return self.b
+    jellynas.urllib.request.urlopen = fake
+    HOMEPROPS.pop('JellynasCatalog.Base', None)
+    try:
+        got = jellynas.cat_base()
+    except Exception as e:
+        got = 'raised %r' % e
+    jellynas.urllib.request.urlopen = real_open
+    ok(got == jellynas.CAT_PUBLIC, 'catalog: LAN check %s -> the public address, no crash' % type(bad).__name__)
+HOMEPROPS.pop('JellynasCatalog.Base', None)
+
+# the fill of Recently added series fails: the row keeps what /Items/Latest gave
+real_jf = jellynas.jf
+def jf_fail(c, path, **q):
+    if path == '/Items' and q.get('SortBy', '').startswith('DateLastContentAdded'):
+        raise OSError('timed out')
+    return real_jf(c, path, **q)
+jellynas.jf = jf_fail
+try:
+    items = run('?mode=series')
+except Exception as e:
+    items = []
+jellynas.jf = real_jf
+ok(len(items) > 0 and any(li.label == 'Lost' for _, li, _ in items), 'recently added series: a failed fill keeps the Latest cards')
 
 items = run('?mode=week')
 ok([li for _, li, _ in items if li.props.get('jellynas.imdb')] and all(li.props.get('jellynas.kind') == 'week' for _, li, _ in items),

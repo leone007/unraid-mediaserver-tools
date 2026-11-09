@@ -323,10 +323,15 @@ def latest_items(c, types):
     if types == 'Episode' and len(items) < LATEST:
         # Jellyfin groups only the newest few dozen episodes: one big import (a whole series) leaves a single card.
         # Fill up with the series that got new episodes most recently.
+        # The fill is extra: when it fails (timeout, a Jellyfin error) the row keeps what /Items/Latest gave.
         have = {i.get('SeriesId') or i.get('Id') for i in items}
-        more = jf(c, '/Items', IncludeItemTypes='Series', Recursive='true', SortBy='DateLastContentAdded,SortName',
-                  SortOrder='Descending', Limit=LATEST, Fields=FIELDS, EnableImageTypes=IMAGES, ImageTypeLimit=1,
-                  EnableUserData='true').get('Items', [])
+        try:
+            more = jf(c, '/Items', IncludeItemTypes='Series', Recursive='true', SortBy='DateLastContentAdded,SortName',
+                      SortOrder='Descending', Limit=LATEST, Fields=FIELDS, EnableImageTypes=IMAGES, ImageTypeLimit=1,
+                      EnableUserData='true').get('Items', [])
+        except Exception as e:
+            xbmc.log('JELLYNAS latest fill failed: %s' % e, xbmc.LOGWARNING)
+            more = []
         items += [i for i in more if i.get('Id') not in have][:LATEST - len(items)]
     return items
 
@@ -657,9 +662,10 @@ def cat_base():
     try:
         req = urllib.request.Request(CATALOG + '/health', headers={'User-Agent': 'JELLYNAS/%s (Kodi)' % ADDON.getAddonInfo('version')})
         with urllib.request.urlopen(req, timeout=2) as r:
-            if json.loads(r.read().decode('utf-8')).get('ok'):
+            d = json.loads(r.read().decode('utf-8'))
+            if isinstance(d, dict) and d.get('ok'):
                 base = CATALOG
-    except (OSError, ValueError):
+    except Exception:   # any LAN failure (also http.client errors, which are not OSError): the public address
         pass
     win.setProperty('JellynasCatalog.Base', '%d|%s' % (time.time(), base))
     return base
