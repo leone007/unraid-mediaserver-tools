@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.42">
+<!ENTITY version   "2026.10.43">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.43
+- Claude Guard: besides the notes, Claude now also gets the system map of the plugins and services (which part does what, where to check), so findings name the right part and suggest the check at the right place.
+
 ###2026.10.42
 - Update manager: when an update finds the same image but the fresh check says it is the current one (the publisher took the newer image back, autobrr latest on 2026-11-07), the result is green, already on the latest image, instead of a red update failed
 
@@ -18253,6 +18256,17 @@ function gd_ctx_text($c) {
     }
     return mb_substr($out !== '' ? $out : $t, 0, 40000);
 }
+// the repo's system map (skill mediaserver-tools) next to the notes: which plugin, service and file does what and the
+// chains with their boundary points, so Claude names the right part and a check at the right place (owner, 2026-11-10).
+// Embedded as text for the same reason as the notes; frontmatter and the maintenance part are left out.
+function gd_map_text($c) {
+    $cp = gd_ctx_path($c); if ($cp === '' || basename($cp) !== 'ATADAS.md') { return ''; }
+    $hp = gd_host_path(dirname($cp) . '/.claude/skills/mediaserver-tools/SKILL.md');
+    $t = $hp !== '' ? (string)@file_get_contents($hp, false, null, 0, 60000) : ''; if ($t === '') { return ''; }
+    $t = preg_replace('/\A---\n.*?\n---\n/s', '', $t);
+    $t = preg_replace('/^## Keeping it current.*\z/ms', '', $t);
+    return mb_substr(trim($t), 0, 14000);
+}
 function gd_ctx_path($c) {
     $x = trim((string)($c['ctx'] ?? 'auto'));
     if ($x === '' || $x === 'off') { return ''; }
@@ -18271,6 +18285,10 @@ function gd_prompt($kind, $now, $prev, $events, $c = null, $menu = '') {
     if ($notes !== '') { $p .= "The owner's notes about this server ({$ctx}) are below. What they describe as intended, decided or already known is not a finding: do not report it again " .
         "(for example a parity slot left empty on purpose, or a SMART value that is known and has not grown). Report it only if it changed since or the condition written next to it is met. " .
         "A finding that is already an open task in the notes stays a finding at its level, but give its item number and do not present it as new.\n<owner_notes>\n" . $notes . "\n</owner_notes>\n\n"; }
+    $map = gd_map_text($c);
+    if ($map !== '') { $p .= "Below is the map of the owner's plugins and services (which part, file, state file and service does what, and the chains with their boundary points). " .
+        "Use it to name the right part in a finding and to pick the read-only check at the right boundary; it says how things are meant to work, the snapshot says how they are now. " .
+        "Paths and commands in it are for the Claude Code sessions: give the owner only commands that read and run in the Unraid terminal.\n<system_map>\n" . $map . "\n</system_map>\n\n"; }
     $kn = gd_known();
     if ($kn) { $p .= "The owner marked these findings as known. Do not report them again unless their condition is met; then report it and say which condition:\n<owner_marked_known>\n" .
         implode("\n", array_map(function ($k) { return '- ' . $k['area'] . ': ' . $k['title'] . ' | why: ' . $k['why'] . ($k['again'] !== '' ? ' | report again only if: ' . $k['again'] : ''); }, $kn)) . "\n</owner_marked_known>\n\n"; }
