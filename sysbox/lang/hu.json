@@ -1942,6 +1942,9 @@
  "topic.services": {
   "text": "Seedbox, *arr, Jellyfin"
  },
+ "topic.home": {
+  "text": "Otthon"
+ },
  "verdict.amber": {
   "text": "Van mit megnézni."
  },

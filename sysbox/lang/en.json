@@ -2581,6 +2581,10 @@
   "text": "Seedbox, *arr, Jellyfin",
   "note": "topic of a finding; also a settings checkbox."
  },
+ "topic.home": {
+  "text": "Home",
+  "note": "topic of a finding: home devices (smart plugs, lamps, climate, Home Assistant, mains voltage) from the home check; no settings checkbox, it comes with the Router topic."
+ },
  "verdict.amber": {
   "text": "Something to look at.",
   "note": "start of the report summary."

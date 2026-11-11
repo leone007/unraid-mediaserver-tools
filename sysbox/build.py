@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.43">
+<!ENTITY version   "2026.10.44">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,9 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.44
+- Claude Guard: when the Router topic is on, the daily report also gets the network check (internet, main router) and the home check (the night at home: router and mesh node logs, Wi-Fi devices, every Home Assistant device, mains voltage) that the Claude Code sessions use, run in the claude container just before. Known and intended things marked in the home check are not reported. New finding topic: Home.
+
 ###2026.10.43
 - Claude Guard: besides the notes, Claude now also gets the system map of the plugins and services (which part does what, where to check), so findings name the right part and suggest the check at the right place.
 
