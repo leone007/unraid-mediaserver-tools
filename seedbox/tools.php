@@ -175,6 +175,14 @@ if ($op === 'find_get') {
             if (in_array($j['stage'], ['cleaned', 'removed'], true)) { $drop = true; }
             elseif ($j['stage'] !== 'failed') { $busy = st_tr('busy.repl', ['m' => $j['msg']]); }
         }
+        // a season pack replaces these episode torrents too: matched by the old torrent's hash or content path
+        foreach ((array)($s['packjobs'] ?? []) as $j) {
+            $hit = false;
+            foreach ((array)($j['old'] ?? []) as $o) { if (($it['old'] !== '' && strtolower($it['old']) === ($o['hash'] ?? '')) || ($o['path'] ?? '-') === $it['path']) { $hit = true; break; } }
+            if (!$hit) { continue; }
+            if ($j['stage'] === 'done') { $drop = true; }
+            elseif (!in_array($j['stage'], ['failed', 'blocked'], true)) { $busy = st_tr('busy.pack', ['m' => $j['msg']]); }
+        }
         if ($drop) { continue; }
         if ($busy !== '') { $it['busy'] = $busy; }
         elseif (in_array($it['path'], array_column($s['queue'], 'path'), true)) { $it['busy'] = st_tr('busy.queue'); }

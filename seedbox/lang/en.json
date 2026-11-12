@@ -276,6 +276,10 @@
   "text": "waiting in the queue",
   "note": "grey line of a Find my torrent row."
  },
+ "busy.pack": {
+  "text": "season pack: {m}",
+  "note": "grey line of a Find my torrent row while a season pack replaces its episode torrent."
+ },
  "busy.repl": {
   "text": "replacement: {m}",
   "note": "grey line of a Find my torrent row while its replacement runs."

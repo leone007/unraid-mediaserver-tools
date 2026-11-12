@@ -207,6 +207,9 @@
  "busy.queue": {
   "text": "vár a sorban"
  },
+ "busy.pack": {
+  "text": "évadpakk: {m}"
+ },
  "busy.repl": {
   "text": "csere: {m}"
  },

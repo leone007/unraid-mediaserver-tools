@@ -3,7 +3,7 @@
 <!ENTITY name      "qbittorrent_widget">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Seedbox">
-<!ENTITY version   "2026.10.99zzt">
+<!ENTITY version   "2026.10.99zzu">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,9 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.99zzu
+- Find my torrent: episode torrents that a started season pack replaces now leave the list like any started replacement (they stayed listed while the pack downloaded); they come back if the pack job fails and drop out when it is done
+
 ###2026.10.99zzt
 - autobrr season pack on Discord: when no replace choice can be made, the message now says why (for example: Sonarr says the season is still airing, E08 tomorrow; or Sonarr's search does not find the pack) instead of promising a Replace with pack row that never came
 
@@ -5574,6 +5577,14 @@ if ($op === 'find_get') {
             if (in_array($j['stage'], ['cleaned', 'removed'], true)) { $drop = true; }
             elseif ($j['stage'] !== 'failed') { $busy = st_tr('busy.repl', ['m' => $j['msg']]); }
         }
+        // a season pack replaces these episode torrents too: matched by the old torrent's hash or content path
+        foreach ((array)($s['packjobs'] ?? []) as $j) {
+            $hit = false;
+            foreach ((array)($j['old'] ?? []) as $o) { if (($it['old'] !== '' && strtolower($it['old']) === ($o['hash'] ?? '')) || ($o['path'] ?? '-') === $it['path']) { $hit = true; break; } }
+            if (!$hit) { continue; }
+            if ($j['stage'] === 'done') { $drop = true; }
+            elseif (!in_array($j['stage'], ['failed', 'blocked'], true)) { $busy = st_tr('busy.pack', ['m' => $j['msg']]); }
+        }
         if ($drop) { continue; }
         if ($busy !== '') { $it['busy'] = $busy; }
         elseif (in_array($it['path'], array_column($s['queue'], 'path'), true)) { $it['busy'] = st_tr('busy.queue'); }
@@ -6272,6 +6283,10 @@ function mt_i18n_js($dir, $name, $only = null) {
  "busy.queue": {
   "text": "waiting in the queue",
   "note": "grey line of a Find my torrent row."
+ },
+ "busy.pack": {
+  "text": "season pack: {m}",
+  "note": "grey line of a Find my torrent row while a season pack replaces its episode torrent."
  },
  "busy.repl": {
   "text": "replacement: {m}",
@@ -9006,6 +9021,9 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "busy.queue": {
   "text": "vár a sorban"
+ },
+ "busy.pack": {
+  "text": "évadpakk: {m}"
  },
  "busy.repl": {
   "text": "csere: {m}"
