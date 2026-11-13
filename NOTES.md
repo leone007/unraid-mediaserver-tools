@@ -398,3 +398,5 @@ Streambox Hungarian descriptions (item 147, 2026.10.14zy): hu_lib.php / hu_run.p
 - Copy without overwrite on the host: copy to `<dst>.sbtmp`, then `link()` to the final name (fails if it appeared meanwhile), never `rename`.
 - Settings in their own `subs.cfg`: `save.php` rewrites settings.cfg with only its own keys, so foreign keys there would be lost at the next Save.
 - Language (owner 2026-11-13, the repo is public): `subs_lang` (ISO 639-1, 24 languages; the code list is in subs_lib.php and subs_auto.py, keep them equal). feliratok.eu only for hu. Output `.<lang>.srt`.
+
+- Jellyfin Next Up (2026-11-13, Justified): the next episode after the HIGHEST-numbered played episode of the series, not the last one watched; a misclick that marks a later season played pins Next Up there. Fix: mark that season unplayed (season menu), Kodi/Kofin follows.
