@@ -32,6 +32,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends libicu72 libssl
        | tar xz -C /opt/microsoft/powershell/7 \
     && chmod 755 /opt/microsoft/powershell/7/pwsh && ln -s /opt/microsoft/powershell/7/pwsh /usr/local/bin/pwsh \
     && rm -rf /var/lib/apt/lists/*
+# PSScriptAnalyzer: lint, and with its compatibility rules a check against Windows PowerShell 5.1 (what Windows runs);
+# Pester: unit tests for the scripts' functions. Pinned, for all users (/usr/local/share/powershell/Modules).
+RUN pwsh -NoProfile -NonInteractive -Command "Set-PSRepository PSGallery -InstallationPolicy Trusted; \
+        Install-Module PSScriptAnalyzer -RequiredVersion 1.23.0 -Scope AllUsers; \
+        Install-Module Pester -RequiredVersion 5.6.1 -Scope AllUsers -SkipPublisherCheck" \
+    && chmod -R a+rX /usr/local/share/powershell
 
 # Claude Code itself
 RUN npm install -g @anthropic-ai/claude-code && npm cache clean --force
