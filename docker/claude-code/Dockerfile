@@ -23,6 +23,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip3 install --no-cache-dir --break-system-packages pypdf \
     && rm -rf /var/lib/apt/lists/*
 
+# PowerShell 7 (owner, 2026-11-13): to test the Praxisradar helper (Windows PowerShell scripts) here before it goes to
+# the clinic machine. Microsoft's tarball, pinned; pwsh in /opt/microsoft/powershell/7, linked to /usr/local/bin/pwsh.
+ENV POWERSHELL_TELEMETRY_OPTOUT=1
+RUN apt-get update && apt-get install -y --no-install-recommends libicu72 libssl3 \
+    && mkdir -p /opt/microsoft/powershell/7 \
+    && curl -fsSL https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-linux-x64.tar.gz \
+       | tar xz -C /opt/microsoft/powershell/7 \
+    && chmod 755 /opt/microsoft/powershell/7/pwsh && ln -s /opt/microsoft/powershell/7/pwsh /usr/local/bin/pwsh \
+    && rm -rf /var/lib/apt/lists/*
+
 # Claude Code itself
 RUN npm install -g @anthropic-ai/claude-code && npm cache clean --force
 
