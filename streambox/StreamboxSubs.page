@@ -1,0 +1,242 @@
+Menu="Utilities"
+Type="xmenu"
+Title="Subtitler"
+Icon="streambox.png"
+Markdown="false"
+---
+<?PHP
+// Hungarian subtitles (item 162): the tool page of subs_lib.php. Texts from the dictionary (lang/en.json, see i18n.php).
+require_once '/usr/local/emhttp/plugins/streambox/i18n.php';
+$sbs_lang = '/usr/local/emhttp/plugins/streambox/lang';
+$sbs_T = mt_i18n_t($sbs_lang);
+$sbs_t = function ($k, $v = []) use ($sbs_T) { return htmlspecialchars($sbs_T($k, $v), ENT_QUOTES); };
+$sbs_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$sbs_tok = is_array($sbs_var) ? (string)($sbs_var['csrf_token'] ?? '') : '';
+?>
+<style>
+/* the Dashboard tile look (common/tile.css, inserted by the build): Activity on top, then a band and a box per part */
+/*@@TILE_CSS@@*/
+#sbs{--sbs-line:rgba(128,128,128,.22)}
+#sbs .sbs-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
+#sbs .mt-band{margin-top:26px;padding:9px 12px}
+#sbs .mt-band span{font-weight:600}
+#sbs .mt-box>:first-child{border-top:0}
+#sbs .sbs-lead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 12px}
+#sbs .sbs-lead p{margin:0;max-width:95ch;flex:1 1 420px;white-space:normal}
+#sbs .sbs-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:9px 12px;border-top:1px solid var(--sbs-line)}
+#sbs .sbs-row small{display:block;opacity:.6;font-size:12px;line-height:1.45;margin-top:2px;white-space:normal;overflow-wrap:anywhere}
+#sbs .sbs-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+#sbs .sbs-status{display:flex;flex-wrap:wrap;gap:6px 18px;padding:7px 12px;border-top:1px solid var(--sbs-line);font-size:12px;opacity:.75}
+#sbs .sbs-status b{font-weight:600;font-variant-numeric:tabular-nums}
+#sbs .sbs-chip{display:inline-block;font-size:11px;padding:1px 7px;white-space:nowrap;background:rgba(128,128,128,.25)}
+#sbs .sbs-chip.g{background:rgba(63,162,74,.22);color:#7fd08a}#sbs .sbs-chip.a{background:rgba(217,146,31,.25);color:#f0b85a}
+#sbs .sbs-chip.r{background:rgba(229,83,75,.25);color:#ff8a83}#sbs .sbs-chip.b{background:rgba(74,144,226,.25);color:#8fbdf0}
+#sbs details.sbs-cat{margin:0;border-top:1px solid var(--sbs-line)}
+#sbs details.sbs-cat>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;padding:8px 12px;background:rgba(128,128,128,.16);font-size:12px}
+#sbs details.sbs-cat>summary::-webkit-details-marker{display:none}
+#sbs details.sbs-cat>summary::before{content:"\25B8";margin-right:6px;opacity:.6}
+#sbs details.sbs-cat[open]>summary::before{content:"\25BE"}
+#sbs details.sbs-cat>summary span{flex:1}
+#sbs details.sbs-cat>summary b{font-weight:400;opacity:.6}
+#sbs .sbs-conf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:rgba(230,138,0,.08);box-shadow:inset 3px 0 0 #e68a00;padding:8px 10px}
+#sbs .sbs-conf span{flex:1 1 260px;white-space:normal}
+#sbs input.sbs-ghost{color:inherit!important;opacity:.75;border-color:rgba(128,128,128,.45)!important}
+#sbs input.sbs-sm{padding:2px 8px!important;font-size:11px!important;letter-spacing:0!important;text-transform:none!important;margin:0!important;min-width:0}
+#sbs .sbs-set{display:grid;grid-template-columns:minmax(200px,280px) minmax(0,1fr);gap:4px 14px;align-items:center;padding:9px 12px;border-top:1px solid var(--sbs-line)}
+#sbs .sbs-set .lb{opacity:.75}
+#sbs .sbs-ctl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+#sbs .sbs-ctl input[type=number]{width:62px!important;margin:0}
+#sbs .sbs-ctl select{margin:0;min-width:0}
+#sbs .sbs-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+#sbs .sbs-msg{padding:8px 12px;font-size:12px}
+#sbs .sbs-ok{color:#3fa24a}#sbs .sbs-er{color:#e5534b}
+#sbs a.sbs-link{font-size:12px;white-space:nowrap}
+@media (max-width:860px){#sbs .sbs-row{grid-template-columns:1fr}#sbs .sbs-acts{justify-content:flex-start}#sbs .sbs-set{grid-template-columns:1fr}}
+</style>
+<div id="sbs">
+<p class="sbs-sub"><?=$sbs_t('subs.intro')?></p>
+<input type="hidden" id="sbs-tok" value="<?=htmlspecialchars($sbs_tok, ENT_QUOTES)?>">
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.activity')?></span><b id="sbs-aband"></b></div>
+<div class="mt-box" id="sbs-act"><div class="sbs-status"><?=$sbs_t('subs.loading')?></div></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.ready')?></span><b id="sbs-rband"></b></div>
+<div class="mt-box" id="sbs-ready"></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.wait')?></span><b id="sbs-wband"></b></div>
+<div class="mt-box" id="sbs-wait"></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.none')?></span><b id="sbs-nband"></b></div>
+<div class="mt-box" id="sbs-none"></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.settings')?></span><b id="sbs-sband"></b></div>
+<div class="mt-box" id="sbs-set"></div>
+</div>
+
+<?=mt_i18n_js($sbs_lang, 'sb', ['subs.'])?>
+<script>
+$(function () {
+  var T = function (k, v) { return MTL.t('sb', k, v); };
+  var URL = '/plugins/streambox/subs.php', TOK = $('#sbs-tok').val() || '', D = null, CONF = null, MSG = null, OPEN = {};
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  function tm(t) { if (!t) { return '-'; } var d = new Date(t * 1000); return d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}); }
+  function btn(cls, label, data, ghost) {
+    var a = ''; $.each(data || {}, function (k, v) { a += ' data-' + k + '="' + esc(v) + '"'; });
+    return '<input type="button" class="sbs-sm ' + cls + (ghost ? ' sbs-ghost' : '') + '" value="' + esc(label) + '"' + a + '>';
+  }
+  function row(stripe, main, sub, acts) {
+    return '<div class="sbs-row mt-s-' + stripe + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sbs-acts">' + (acts || '') + '</div></div>';
+  }
+  function cat(key, title, count, body) {
+    return '<details class="sbs-cat" data-k="' + esc(key) + '"' + (OPEN[key] ? ' open' : '') + '><summary><span>' + esc(title) + '</span><b>' + esc(count) + '</b></summary>' + body + '</details>';
+  }
+  // episodes of one season of one series (or one movie) in one group
+  function groups(rows) {
+    var g = [], by = {};
+    $.each(rows, function (i, r) {
+      var k = r.kind === 'episode' ? r.title + '|' + r.season : r.id;
+      if (!by[k]) { by[k] = {key: k, rows: [], label: r.kind === 'episode' ? T('subs.season', {t: r.title, n: r.season}) : r.label}; g.push(by[k]); }
+      by[k].rows.push(r);
+    });
+    return g;
+  }
+  function srcLine(r) {
+    var s = r.site === 'opensubtitles' ? 'OpenSubtitles' : (r.site || '');
+    var p = [s];
+    if (r.translator) { p.push(T('subs.translator', {n: r.translator})); }
+    p.push(T('subs.score', {n: r.score}));
+    if (Math.abs(r.ratio - 1) > 0.001) { p.push(T('subs.fps_fixed')); }
+    if (Math.abs(r.offset) >= 0.1) { p.push(T('subs.offset', {s: (r.offset > 0 ? '+' : '') + r.offset.toFixed(1)})); }
+    return esc(p.join(' · ')) + (r.url ? ' · <a class="sbs-link" href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(T('subs.source')) + '</a>' : '');
+  }
+  function LN() { return T('subs.lang.' + D.cfg.subs_lang); }   // the subtitle language's name
+  function render() {
+    var d = D, by = {ready: [], wait: [], none: [], done: []};
+    $.each(d.rows, function (i, r) {
+      if (r.st === 'ready') { by.ready.push(r); }
+      else if (r.st === 'wait' || r.st === 'search') { by.wait.push(r); }
+      else if (r.st === 'nohuman' || r.st === 'noref' || r.st === 'givenup') { by.none.push(r); }
+      else { by.done.push(r); }
+    });
+    // Activity: the running step, errors, the finished ones folded
+    var a = '';
+    if (d.run) { a += row('blue', esc(d.run.label), esc(T('subs.step_' + d.run.step)), '<span class="sbs-chip b">' + esc(T('subs.running')) + '</span>'); }
+    $.each(d.err, function (i, e) { a += row('red', esc(T('subs.err_' + e)), esc(T('subs.err_hint_' + e)), '<span class="sbs-chip r">' + esc(T('subs.failed')) + '</span>'); });
+    if (d.last_err) { a += row('red', esc(T('subs.err_run_' + d.last_err)), '', '<span class="sbs-chip r">' + esc(T('subs.failed')) + '</span>'); }
+    if (!d.jf) { a += row('red', esc(T('subs.err_jf')), '', ''); }
+    if (MSG) { a += row(MSG.ok ? 'green' : 'red', esc(MSG.text), '', ''); }
+    if (!d.on) { a += row('grey', esc(T('subs.off')), '', ''); }
+    else if (!a) { a += row('grey', esc(T('subs.idle')), esc(T('subs.last_run', {t: tm(d.last)})), ''); }
+    var fin = '';
+    $.each(by.done.slice().sort(function (x, y) { return y.t - x.t; }), function (i, r) {
+      var stripe = r.st === 'copied' ? 'green' : (r.st === 'has_hu' ? 'green' : 'grey');
+      fin += row(stripe, esc(r.label), esc(T('subs.done_' + r.st, {lang: LN()}) + (r.auto ? ' · ' + T('subs.auto') : '') + ' · ' + tm(r.t)), '');
+    });
+    if (fin) { a += cat('fin', T('subs.finished'), T('subs.n7', {n: by.done.length}), fin); }
+    $('#sbs-act').html(a);
+    $('#sbs-aband').text(d.run ? T('subs.n_running', {n: 1}) : T('subs.last_run', {t: tm(d.last)}));
+    // Ready to copy: one row per season or movie, the episodes folded under it
+    var gs = groups(by.ready), h = '', all = [];
+    $.each(by.ready, function (i, r) { all.push(r.id); });
+    if (gs.length) {
+      h += '<div class="sbs-lead"><p>' + esc(T('subs.ready_lead', {n: d.cfg.subs_auto, code: d.cfg.subs_lang})) + '</p>' + btn('sbs-copy', T('subs.copy_all'), {id: all.join(','), label: T('subs.all_label', {n: all.length})}) + '</div>';
+      $.each(gs, function (i, g) {
+        var ids = [], min = 100, eps = '';
+        $.each(g.rows, function (j, r) {
+          ids.push(r.id); min = Math.min(min, r.score);
+          eps += row(r.score >= d.cfg.subs_auto ? 'grey' : 'amber', esc(r.label), srcLine(r),
+            btn('sbs-copy', T('subs.copy'), {id: r.id, label: r.label}) + btn('sbs-op', T('subs.skip'), {op: 'skip', id: r.id}, true));
+        });
+        var first = g.rows[0];
+        var sub = (g.rows.length > 1 ? esc(T('subs.n_files', {n: g.rows.length})) + ' · ' + esc(T('subs.lowest', {n: min})) + ' · ' : '') + srcLine(first) + (first.pack ? '<br>' + esc(first.pack) : '');
+        h += row('purple', esc(g.label), sub,
+          btn('sbs-copy', T('subs.copy'), {id: ids.join(','), label: g.label}) + btn('sbs-op', T('subs.skip'), {op: 'skip', id: ids.join(',')}, true));
+        if (CONF && CONF.id === ids.join(',')) { h += confBox(); }
+        if (g.rows.length > 1) { h += cat('r' + g.key, T('subs.episodes'), g.rows.length, eps); }
+      });
+      if (CONF && CONF.id === all.join(',')) { h = confBox() + h; }
+    } else { h += '<div class="sbs-lead"><p>' + esc(T('subs.ready_none')) + '</p></div>'; }
+    h += '<div class="sbs-status"><span>' + T('subs.st_last', {t: '<b>' + esc(tm(d.last)) + '</b>'}) + '</span><span>' + T('subs.st_os', {n: '<b>' + d.os_used + '</b>', m: '<b>' + esc(d.cfg.subs_osmax) + '</b>'}) + '</span></div>';
+    $('#sbs-ready').html(h);
+    $('#sbs-rband').text(T('subs.n_files', {n: by.ready.length}));
+    // Waiting for Bazarr
+    var w = '<div class="sbs-lead"><p>' + esc(T('subs.wait_lead', {n: d.cfg.subs_grace, lang: LN()})) + '</p></div>', wr = '';
+    $.each(by.wait, function (i, r) {
+      var from = r.added + d.cfg.subs_grace * 60;
+      wr += row(r.st === 'search' ? 'blue' : 'grey', esc(r.label), esc(r.st === 'search' ? T('subs.searching') : T('subs.wait_from', {a: tm(r.added), t: tm(from)})),
+        r.st === 'search' ? '' : btn('sbs-op', T('subs.search_now'), {op: 'search', id: r.id}, true));
+    });
+    if (by.wait.length) { w += cat('wait', T('subs.new_imports'), by.wait.length, wr); }
+    $('#sbs-wait').html(w);
+    $('#sbs-wband').text(T('subs.wait_band', {n: by.wait.length, m: d.cfg.subs_grace}));
+    // No human subtitle
+    var n = '<div class="sbs-lead"><p>' + esc(T('subs.none_lead')) + '</p></div>', nr = '';
+    $.each(by.none, function (i, r) {
+      var why = r.st === 'noref' ? T('subs.noref') : (r.st === 'givenup' ? T('subs.givenup', {n: r.tries}) : T('subs.next_try', {n: r.tries, t: tm(r.next)}));
+      if (r.best) { why += ' · ' + T('subs.best_low', {n: r.best}); }
+      nr += row(r.st === 'noref' ? 'red' : 'amber', esc(r.label), esc(why),
+        btn('sbs-op', T('subs.search_now'), {op: 'search', id: r.id}, true) + btn('sbs-op', T('subs.keep_without'), {op: 'skip', id: r.id}, true));
+    });
+    if (by.none.length) { n += cat('none', T('subs.not_found'), by.none.length, nr); }
+    $('#sbs-none').html(n);
+    $('#sbs-nband').text(String(by.none.length));
+    if (!$('#sbs-set').children().length) { settings(); }
+  }
+  function confBox() {
+    return '<div class="sbs-conf"><span>' + esc(T('subs.confirm', {l: CONF.label, n: CONF.id.split(',').length, lang: LN()})) + '</span>'
+      + btn('sbs-yes', T('subs.copy')) + btn('sbs-no', T('subs.cancel'), null, true) + '</div>';
+  }
+  function settings() {
+    var c = D.cfg, opt = function (v, cur, l) { return '<option value="' + v + '"' + (String(cur) === v ? ' selected' : '') + '>' + esc(l) + '</option>'; };
+    var num = function (id, v, lo, hi) { return '<input type="number" id="' + id + '" min="' + lo + '" max="' + hi + '" value="' + esc(v) + '">'; };
+    var s = '';
+    var set = function (lb, ctl, hint) { s += '<div class="sbs-set"><div class="lb">' + esc(lb) + '</div><div class="sbs-ctl">' + ctl + '<span class="sbs-hint">' + esc(hint) + '</span></div></div>'; };
+    set(T('subs.s_on'), '<select id="sbs-on">' + opt('1', c.subs_on, T('subs.on')) + opt('0', c.subs_on, T('subs.off_s')) + '</select>', T('subs.s_on_hint'));
+    var lo = ''; $.each(D.langs, function (i, k) { lo += opt(k, c.subs_lang, T('subs.lang.' + k)); });
+    set(T('subs.s_lang'), '<select id="sbs-lang">' + lo + '</select>', T('subs.s_lang_hint'));
+    set(T('subs.s_copy'), '<select id="sbs-copy">' + opt('auto', c.subs_copy, T('subs.copy_auto')) + opt('ask', c.subs_copy, T('subs.copy_ask')) + '</select> ' + num('sbs-auto', c.subs_auto, 85, 100) + ' %', T('subs.s_copy_hint'));
+    set(T('subs.s_grace'), num('sbs-grace', c.subs_grace, 0, 2880) + ' ' + esc(T('subs.minutes')), T('subs.s_grace_hint'));
+    set(T('subs.s_src'), '<select id="sbs-src">' + opt('both', c.subs_src, T('subs.src_both')) + opt('feliratok', c.subs_src, T('subs.src_fel')) + '</select> ' + num('sbs-osmax', c.subs_osmax, 0, 20) + ' ' + esc(T('subs.per_day')), T('subs.s_src_hint'));
+    set(T('subs.s_min'), num('sbs-min', c.subs_min, 50, 100) + ' %', T('subs.s_min_hint'));
+    s += '<div class="sbs-lead"><p class="sbs-hint">' + esc(T('subs.s_dc_hint')) + '</p><input type="button" id="sbs-save" value="' + esc(T('subs.save')) + '"></div><div class="sbs-msg" id="sbs-smsg"></div>';
+    $('#sbs-set').html(s);
+    $('#sbs-sband').text(c.subs_on === '1' ? (c.subs_copy === 'auto' ? T('subs.sum_auto', {n: c.subs_auto}) : T('subs.sum_ask')) : T('subs.off_s'));
+  }
+  function load() {
+    $.getJSON(URL, {_: Date.now()}).done(function (d) { if (d && d.ok) { D = d; render(); } }).fail(function (x) { $('#sbs-act').html(row('red', esc(T('subs.e_load', {e: 'HTTP ' + x.status})), '', '')); });
+  }
+  function post(data, done) {
+    $.post(URL, $.extend({csrf_token: TOK}, data), null, 'json')
+      .done(function (r) { done(r || {ok: false, error: ''}); })
+      .fail(function (x) { done({ok: false, error: 'HTTP ' + x.status}); });
+  }
+  function errText(e) { var k = 'subs.e_' + e; var t = T(k, {lang: LN()}); return t === k ? String(e || T('subs.e_other')) : t; }
+  $('#sbs').on('toggle', 'details.sbs-cat', function () { OPEN[$(this).data('k')] = this.open; });
+  $('#sbs').on('click', '.sbs-copy', function () { CONF = {id: String($(this).data('id')), label: String($(this).data('label'))}; render(); });
+  $('#sbs').on('click', '.sbs-no', function () { CONF = null; render(); });
+  $('#sbs').on('click', '.sbs-yes', function () {
+    var c = CONF; CONF = null; $(this).prop('disabled', true);
+    post({op: 'copy', id: c.id}, function (r) {
+      MSG = r.ok ? {ok: true, text: T('subs.copied_n', {n: r.done})} : {ok: false, text: T('subs.copy_fail', {n: r.done || 0, e: errText(r.error)})};
+      load(); setTimeout(function () { MSG = null; }, 120000);
+    });
+  });
+  $('#sbs').on('click', '.sbs-op', function () {
+    var $b = $(this); $b.closest('.sbs-acts').find('input').prop('disabled', true);
+    post({op: $b.data('op'), id: String($b.data('id'))}, function (r) {
+      MSG = r.ok ? null : {ok: false, text: T('subs.op_fail', {e: errText(r.error)})};
+      load();
+    });
+  });
+  $('#sbs').on('click', '#sbs-save', function () {
+    var $b = $(this).prop('disabled', true);
+    post({op: 'save', subs_on: $('#sbs-on').val(), subs_lang: $('#sbs-lang').val(), subs_copy: $('#sbs-copy').val(), subs_auto: $('#sbs-auto').val(), subs_grace: $('#sbs-grace').val(),
+          subs_src: $('#sbs-src').val(), subs_osmax: $('#sbs-osmax').val(), subs_min: $('#sbs-min').val()}, function (r) {
+      $b.prop('disabled', false);
+      $('#sbs-smsg').attr('class', 'sbs-msg ' + (r.ok ? 'sbs-ok' : 'sbs-er')).text(r.ok ? T('subs.saved') : T('subs.not_saved', {e: errText(r.error)}));
+      if (r.ok) { $.getJSON(URL, {_: Date.now()}).done(function (d) { if (d && d.ok) { D = d; $('#sbs-set').empty(); render(); } }); }
+    });
+  });
+  load(); setInterval(function () { if (!CONF) { load(); } }, 30000);
+});
+</script>

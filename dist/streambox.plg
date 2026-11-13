@@ -3,7 +3,7 @@
 <!ENTITY name      "streambox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Streambox">
-<!ENTITY version   "2026.10.18">
+<!ENTITY version   "2026.10.19">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -17,6 +17,8 @@
 
 <CHANGES>
 ###&version;
+- New tool page Subtitler (Utilities): new movies and episodes without a subtitle in your language (Hungarian by default) get a human subtitle from feliratok.eu or OpenSubtitles, aligned to the video; at the auto score (95 percent) it is copied next to the video by itself, below it waits for your click, nothing is ever replaced; one Discord summary a day, errors at once. Needs the claude container with the hu-subsync skill
+###2026.10.18
 - Hungarian descriptions: Undo puts back only what was not edited by hand since; an item locked in Jellyfin (Lock this item) is left alone; a button error stays visible after the list reloads, in plain words instead of codes; the state file on the flash is written only when something changed
 ###2026.10.17
 - Hungarian descriptions: the cron run and the page buttons no longer overwrite each other's changes; a Claude run that times out is stopped inside the container too; a failed item can be skipped (taken off the list); the daily Discord line is tried again when Discord refuses it (up to 4 times a day)
@@ -5174,6 +5176,592 @@ function mt_i18n_js($dir, $name, $only = null) {
  "hu.dc_login": {
   "text": "⚠️ Hungarian descriptions stopped: Claude is not logged in. Log in again, then Retry on the Streambox page.",
   "note": "Discord daily line on a login problem"
+ },
+ "subs.intro": {
+  "text": "Subtitler: new movies and episodes without a subtitle in your language. After Bazarr had its chance, it finds a human subtitle (feliratok.eu for Hungarian, OpenSubtitles.com for every language) and aligns it to the video. Subtitles at or above the auto score are copied next to the video by themselves; the rest wait for your click. Nothing already there is ever replaced.",
+  "note": "intro line under the page title"
+ },
+ "subs.loading": {
+  "text": "Loading…",
+  "note": "placeholder while the page loads"
+ },
+ "subs.h.activity": {
+  "text": "Activity",
+  "note": "band title"
+ },
+ "subs.h.ready": {
+  "text": "Ready to copy",
+  "note": "band title: aligned human subtitles waiting to be copied next to the video"
+ },
+ "subs.h.wait": {
+  "text": "Waiting for Bazarr",
+  "note": "band title: new imports, Bazarr gets some minutes first"
+ },
+ "subs.h.none": {
+  "text": "No human subtitle",
+  "note": "band title: nothing found on the sites"
+ },
+ "subs.h.settings": {
+  "text": "Settings",
+  "note": "band title"
+ },
+ "subs.season": {
+  "text": "{t} · Season {n}",
+  "note": "one season of a series as a group title; t = series, n = season number"
+ },
+ "subs.translator": {
+  "text": "translator: {n}",
+  "note": "n = the translator's name as on the site or in the subtitle"
+ },
+ "subs.score": {
+  "text": "timing score {n} %",
+  "note": "how well the subtitle lines fit the English lines of the video"
+ },
+ "subs.fps_fixed": {
+  "text": "frame rate fixed",
+  "note": "the subtitle was made for 25 fps and was stretched to 23.976 (or back)"
+ },
+ "subs.offset": {
+  "text": "shifted {s} s",
+  "note": "s = seconds, with sign"
+ },
+ "subs.source": {
+  "text": "source",
+  "note": "link to the subtitle's page on the site"
+ },
+ "subs.step_ref": {
+  "text": "reading the English subtitle of the video",
+  "note": "running step; reads the whole video file, can take minutes"
+ },
+ "subs.step_search": {
+  "text": "searching feliratok.eu and OpenSubtitles",
+  "note": "running step"
+ },
+ "subs.step_align": {
+  "text": "aligning the candidates to the video",
+  "note": "running step"
+ },
+ "subs.running": {
+  "text": "running",
+  "note": "status chip"
+ },
+ "subs.failed": {
+  "text": "failed",
+  "note": "status chip"
+ },
+ "subs.err_fel": {
+  "text": "feliratok.eu does not answer",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_fel": {
+  "text": "The search goes on with OpenSubtitles; feliratok.eu is tried again in the next run.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_auth": {
+  "text": "OpenSubtitles refused the API key or the login",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_os_auth": {
+  "text": "Write the key again in the claude container: sh /mnt/user/data/DEV/os_key.sh. feliratok.eu still works.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_quota": {
+  "text": "OpenSubtitles: no downloads left today",
+  "note": "error row / Discord line; the daily download limit of the account is used up"
+ },
+ "subs.err_hint_os_quota": {
+  "text": "The account has 20 downloads a day, shared with Bazarr. Tomorrow it goes on.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_net": {
+  "text": "OpenSubtitles does not answer",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_os_net": {
+  "text": "Tried again in the next run.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_nokey": {
+  "text": "No OpenSubtitles key",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_os_nokey": {
+  "text": "Write it in the claude container: sh /mnt/user/data/DEV/os_key.sh, or choose feliratok.eu only in Settings.",
+  "note": "hint under the error"
+ },
+ "subs.err_run_docker": {
+  "text": "Docker is not available",
+  "note": "error row: the run could not start the worker"
+ },
+ "subs.err_run_ctstop": {
+  "text": "The claude container is not running",
+  "note": "error row / Discord line: the worker runs in it"
+ },
+ "subs.err_run_timeout": {
+  "text": "The last run took too long and was stopped",
+  "note": "error row / Discord line"
+ },
+ "subs.err_run_answer": {
+  "text": "The worker in the claude container gave no answer",
+  "note": "error row / Discord line; the script is missing or failed"
+ },
+ "subs.err_jf": {
+  "text": "Jellyfin did not answer: new imports are not seen now",
+  "note": "error row"
+ },
+ "subs.off": {
+  "text": "The subtitle search is off (Settings)",
+  "note": "activity row when switched off"
+ },
+ "subs.idle": {
+  "text": "Nothing to do now",
+  "note": "activity row when idle"
+ },
+ "subs.last_run": {
+  "text": "last run {t}",
+  "note": "t = date and time"
+ },
+ "subs.done_copied": {
+  "text": "copied in",
+  "note": "finished item: our subtitle is next to the video"
+ },
+ "subs.done_has_hu": {
+  "text": "got a {lang} subtitle from elsewhere (Bazarr)",
+  "note": "finished item"
+ },
+ "subs.done_skip": {
+  "text": "skipped",
+  "note": "finished item: the owner chose to keep it without"
+ },
+ "subs.done_gone": {
+  "text": "the video is gone",
+  "note": "finished item: the file was deleted or replaced"
+ },
+ "subs.done_givenup": {
+  "text": "given up after 30 days",
+  "note": "finished item: searched 30 days in vain"
+ },
+ "subs.auto": {
+  "text": "by itself",
+  "note": "a copy made without a click, at the auto score"
+ },
+ "subs.finished": {
+  "text": "Finished",
+  "note": "foldable bar title"
+ },
+ "subs.n7": {
+  "one": "{n} in 7 days",
+  "other": "{n} in 7 days",
+  "note": "foldable bar count"
+ },
+ "subs.n_running": {
+  "one": "{n} running",
+  "other": "{n} running",
+  "note": "band state"
+ },
+ "subs.ready_lead": {
+  "text": "Human subtitles aligned to the video. At {n} % and above they go in by themselves; these wait for you. Copy in puts a .{code}.srt next to each video and never replaces a file.",
+  "note": "lead line of the band; n = the auto score"
+ },
+ "subs.copy_all": {
+  "text": "Copy in all",
+  "note": "main button"
+ },
+ "subs.all_label": {
+  "one": "{n} subtitle",
+  "other": "{n} subtitles",
+  "note": "what Copy in all copies, in the confirm text"
+ },
+ "subs.copy": {
+  "text": "Copy in",
+  "note": "button: copy the subtitle next to the video"
+ },
+ "subs.skip": {
+  "text": "Skip",
+  "note": "button: do not copy this one"
+ },
+ "subs.n_files": {
+  "one": "{n} file",
+  "other": "{n} files",
+  "note": "count of subtitle files"
+ },
+ "subs.lowest": {
+  "text": "lowest {n} %",
+  "note": "the lowest timing score in the group"
+ },
+ "subs.episodes": {
+  "text": "Episode by episode",
+  "note": "foldable bar title"
+ },
+ "subs.ready_none": {
+  "text": "Nothing waits for you.",
+  "note": "empty state of the band"
+ },
+ "subs.st_last": {
+  "text": "Last run {t}",
+  "note": "status strip; t is bold"
+ },
+ "subs.st_os": {
+  "text": "OpenSubtitles downloads today {n} / {m}",
+  "note": "status strip: used / allowed for this tool"
+ },
+ "subs.wait_lead": {
+  "text": "Imports without a {lang} subtitle. Bazarr searches at import; this tool waits {n} minutes so it does not use the OpenSubtitles downloads twice.",
+  "note": "lead line; n = minutes"
+ },
+ "subs.searching": {
+  "text": "searching now",
+  "note": "item state"
+ },
+ "subs.wait_from": {
+  "text": "imported {a} · search from {t}",
+  "note": "a, t = date and time"
+ },
+ "subs.search_now": {
+  "text": "Search now",
+  "note": "button"
+ },
+ "subs.new_imports": {
+  "text": "New imports",
+  "note": "foldable bar title"
+ },
+ "subs.wait_band": {
+  "text": "{n} · {m} min",
+  "note": "band state: n items, m minutes wait"
+ },
+ "subs.none_lead": {
+  "text": "Nothing fitting on feliratok.eu or OpenSubtitles. Searched again every 6 hours for 7 days, then daily until 30 days.",
+  "note": "lead line of the band"
+ },
+ "subs.noref": {
+  "text": "no English subtitle in the video to align to (Bazarr's audio sync can help)",
+  "note": "reason"
+ },
+ "subs.givenup": {
+  "text": "searched {n} times in 30 days, given up",
+  "note": "reason"
+ },
+ "subs.next_try": {
+  "text": "searched {n} times · next {t}",
+  "note": "reason"
+ },
+ "subs.best_low": {
+  "text": "best fit only {n} %",
+  "note": "a subtitle was found but fits too badly"
+ },
+ "subs.keep_without": {
+  "text": "Keep without",
+  "note": "button: stop searching for this one"
+ },
+ "subs.not_found": {
+  "text": "Not found",
+  "note": "foldable bar title"
+ },
+ "subs.confirm": {
+  "text": "Copy {n} subtitle file(s) next to the videos of {l}? A {lang} subtitle already there is not replaced.",
+  "note": "inline confirmation"
+ },
+ "subs.cancel": {
+  "text": "Cancel",
+  "note": "button"
+ },
+ "subs.s_on": {
+  "text": "Background search",
+  "note": "setting label"
+ },
+ "subs.on": {
+  "text": "On",
+  "note": "select option"
+ },
+ "subs.off_s": {
+  "text": "Off",
+  "note": "select option / band state"
+ },
+ "subs.s_on_hint": {
+  "text": "Looks at new imports every 15 minutes.",
+  "note": "setting hint"
+ },
+ "subs.s_copy": {
+  "text": "Copy in",
+  "note": "setting label"
+ },
+ "subs.copy_auto": {
+  "text": "By itself at",
+  "note": "select option, followed by a percent field"
+ },
+ "subs.copy_ask": {
+  "text": "Always ask",
+  "note": "select option"
+ },
+ "subs.s_copy_hint": {
+  "text": "A subtitle with at least this timing score goes in by itself; below it waits for your click.",
+  "note": "setting hint"
+ },
+ "subs.s_grace": {
+  "text": "Bazarr first",
+  "note": "setting label"
+ },
+ "subs.minutes": {
+  "text": "minutes",
+  "note": "unit"
+ },
+ "subs.s_grace_hint": {
+  "text": "Bazarr searches right at import; this lets it finish first.",
+  "note": "setting hint"
+ },
+ "subs.s_src": {
+  "text": "Sources",
+  "note": "setting label"
+ },
+ "subs.src_both": {
+  "text": "feliratok.eu + OpenSubtitles",
+  "note": "select option"
+ },
+ "subs.src_fel": {
+  "text": "feliratok.eu only",
+  "note": "select option"
+ },
+ "subs.per_day": {
+  "text": "OpenSubtitles downloads a day",
+  "note": "unit after a number field"
+ },
+ "subs.s_src_hint": {
+  "text": "OpenSubtitles uses your key: 20 downloads a day, shared with Bazarr. This tool takes at most this many.",
+  "note": "setting hint"
+ },
+ "subs.s_min": {
+  "text": "Lowest timing score",
+  "note": "setting label"
+ },
+ "subs.s_min_hint": {
+  "text": "A subtitle below it is not offered: the item goes to No human subtitle.",
+  "note": "setting hint"
+ },
+ "subs.s_dc_hint": {
+  "text": "Discord: one summary a day after 09:00 on the channel of the Hungarian descriptions (Streambox settings); errors at once.",
+  "note": "hint above the Save button"
+ },
+ "subs.save": {
+  "text": "Save",
+  "note": "button"
+ },
+ "subs.sum_auto": {
+  "text": "by itself at {n} %",
+  "note": "band state"
+ },
+ "subs.sum_ask": {
+  "text": "always asks",
+  "note": "band state"
+ },
+ "subs.e_load": {
+  "text": "The page could not load the list: {e}",
+  "note": "error"
+ },
+ "subs.copied_n": {
+  "one": "{n} subtitle copied in",
+  "other": "{n} subtitles copied in",
+  "note": "message after Copy in"
+ },
+ "subs.copy_fail": {
+  "text": "Copied in: {n}. Not copied: {e}",
+  "note": "error after Copy in"
+ },
+ "subs.op_fail": {
+  "text": "Did not work: {e}",
+  "note": "error after a button"
+ },
+ "subs.saved": {
+  "text": "Saved",
+  "note": "message"
+ },
+ "subs.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message"
+ },
+ "subs.e_other": {
+  "text": "unknown error",
+  "note": "error reason"
+ },
+ "subs.e_state": {
+  "text": "it is not waiting for a copy any more",
+  "note": "error reason"
+ },
+ "subs.e_nofile": {
+  "text": "the aligned subtitle file is missing",
+  "note": "error reason"
+ },
+ "subs.e_novideo": {
+  "text": "the video is not there any more",
+  "note": "error reason"
+ },
+ "subs.e_exists": {
+  "text": "a {lang} subtitle is already next to the video",
+  "note": "error reason; nothing is overwritten"
+ },
+ "subs.e_copy": {
+  "text": "the file could not be written",
+  "note": "error reason"
+ },
+ "subs.e_gone": {
+  "text": "the item is not in the list any more",
+  "note": "error reason"
+ },
+ "subs.e_write": {
+  "text": "could not write the file",
+  "note": "error reason"
+ },
+ "subs.e_bad": {
+  "text": "bad request",
+  "note": "error reason"
+ },
+ "subs.e_csrf": {
+  "text": "the page is old, reload it",
+  "note": "error reason"
+ },
+ "subs.e_value": {
+  "text": "a number is out of range",
+  "note": "error reason"
+ },
+ "subs.e_min_auto": {
+  "text": "the lowest score cannot be above the auto score",
+  "note": "error reason"
+ },
+ "subs.dc_head": {
+  "text": "**{lang_cap} subtitles, last 24 hours**",
+  "note": "Discord: first line of the daily summary (Markdown bold)"
+ },
+ "subs.dc_err_head": {
+  "text": "**{lang_cap} subtitles: problem**",
+  "note": "Discord: first line of an error message"
+ },
+ "subs.dc_auto": {
+  "one": "Copied in by itself: {list}",
+  "other": "Copied in by itself ({n}): {list}",
+  "note": "Discord line of the daily summary; list = titles"
+ },
+ "subs.dc_hand": {
+  "one": "Copied in by you: {list}",
+  "other": "Copied in by you ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.dc_ready": {
+  "one": "Waits for your click: {list}",
+  "other": "Wait for your click ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.dc_none": {
+  "one": "No human subtitle yet: {list}",
+  "other": "No human subtitle yet ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.dc_bazarr": {
+  "one": "Bazarr found it: {list}",
+  "other": "Bazarr found them ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.lang.hu": {
+  "text": "Hungarian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.en": {
+  "text": "English",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.de": {
+  "text": "German",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.fr": {
+  "text": "French",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.es": {
+  "text": "Spanish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.it": {
+  "text": "Italian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.nl": {
+  "text": "Dutch",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.pl": {
+  "text": "Polish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.cs": {
+  "text": "Czech",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sk": {
+  "text": "Slovak",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.ro": {
+  "text": "Romanian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.pt": {
+  "text": "Portuguese",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sv": {
+  "text": "Swedish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.da": {
+  "text": "Danish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.no": {
+  "text": "Norwegian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.fi": {
+  "text": "Finnish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.el": {
+  "text": "Greek",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.tr": {
+  "text": "Turkish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.hr": {
+  "text": "Croatian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sr": {
+  "text": "Serbian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sl": {
+  "text": "Slovenian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.bg": {
+  "text": "Bulgarian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.ru": {
+  "text": "Russian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.uk": {
+  "text": "Ukrainian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.s_lang": {
+  "text": "Language",
+  "note": "setting label: the subtitle language"
+ },
+ "subs.s_lang_hint": {
+  "text": "The subtitles are searched in this language. feliratok.eu is used only for Hungarian; every other language comes from OpenSubtitles.",
+  "note": "setting hint"
  }
 }
 ]]></INLINE>
@@ -6423,6 +7011,448 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "hu.dc_login": {
   "text": "⚠️ A magyar leírások leálltak: Claude nincs bejelentkezve. Jelentkezz be újra, aztán Újra a Streambox oldalán."
+ },
+ "subs.intro": {
+  "text": "Subtitler: új filmek és epizódok a választott nyelvű felirat nélkül. Ha a Bazarr nem talált, emberi feliratot keres (magyarhoz a feliratok.eu-n, minden nyelvhez az OpenSubtitles.com-on), és a videóhoz igazítja. Az automatikus pontszámot elérő feliratok maguktól kerülnek a videó mellé, a többi a kattintásodra vár. Meglévő feliratot soha nem cserél le."
+ },
+ "subs.loading": {
+  "text": "Betöltés…"
+ },
+ "subs.h.activity": {
+  "text": "Tevékenység"
+ },
+ "subs.h.ready": {
+  "text": "Bemásolásra kész"
+ },
+ "subs.h.wait": {
+  "text": "Várakozás a Bazarrra"
+ },
+ "subs.h.none": {
+  "text": "Nincs emberi felirat"
+ },
+ "subs.h.settings": {
+  "text": "Beállítások"
+ },
+ "subs.season": {
+  "text": "{t} · {n}. évad"
+ },
+ "subs.translator": {
+  "text": "fordító: {n}"
+ },
+ "subs.score": {
+  "text": "időzítés {n} %"
+ },
+ "subs.fps_fixed": {
+  "text": "képkocka-arány javítva"
+ },
+ "subs.offset": {
+  "text": "{s} mp eltolás"
+ },
+ "subs.source": {
+  "text": "forrás"
+ },
+ "subs.step_ref": {
+  "text": "a videó angol feliratának kiolvasása"
+ },
+ "subs.step_search": {
+  "text": "keresés a feliratok.eu-n és az OpenSubtitles-ön"
+ },
+ "subs.step_align": {
+  "text": "a jelöltek illesztése a videóhoz"
+ },
+ "subs.running": {
+  "text": "fut"
+ },
+ "subs.failed": {
+  "text": "hiba"
+ },
+ "subs.err_fel": {
+  "text": "A feliratok.eu nem válaszol"
+ },
+ "subs.err_hint_fel": {
+  "text": "A keresés az OpenSubtitles-szel folytatódik, a feliratok.eu-t a következő körben újra próbálja."
+ },
+ "subs.err_os_auth": {
+  "text": "Az OpenSubtitles nem fogadta el az API-kulcsot vagy a belépést"
+ },
+ "subs.err_hint_os_auth": {
+  "text": "Írd be újra a kulcsot a claude konténerben: sh /mnt/user/data/DEV/os_key.sh. A feliratok.eu közben működik."
+ },
+ "subs.err_os_quota": {
+  "text": "OpenSubtitles: mára elfogyott a letöltés"
+ },
+ "subs.err_hint_os_quota": {
+  "text": "A fióknak napi 20 letöltése van, a Bazarrral közösen. Holnap folytatódik."
+ },
+ "subs.err_os_net": {
+  "text": "Az OpenSubtitles nem válaszol"
+ },
+ "subs.err_hint_os_net": {
+  "text": "A következő körben újra próbálja."
+ },
+ "subs.err_os_nokey": {
+  "text": "Nincs OpenSubtitles-kulcs"
+ },
+ "subs.err_hint_os_nokey": {
+  "text": "Írd be a claude konténerben: sh /mnt/user/data/DEV/os_key.sh, vagy a Beállításokban válaszd a „csak feliratok.eu”-t."
+ },
+ "subs.err_run_docker": {
+  "text": "A Docker nem érhető el"
+ },
+ "subs.err_run_ctstop": {
+  "text": "A claude konténer nem fut"
+ },
+ "subs.err_run_timeout": {
+  "text": "Az utolsó kör túl sokáig tartott, leállt"
+ },
+ "subs.err_run_answer": {
+  "text": "A claude konténerben futó feldolgozó nem válaszolt"
+ },
+ "subs.err_jf": {
+  "text": "A Jellyfin nem válaszolt: az új importok most nem látszanak"
+ },
+ "subs.off": {
+  "text": "A feliratkeresés ki van kapcsolva (Beállítások)"
+ },
+ "subs.idle": {
+  "text": "Most nincs teendő"
+ },
+ "subs.last_run": {
+  "text": "utolsó kör: {t}"
+ },
+ "subs.done_copied": {
+  "text": "bemásolva"
+ },
+ "subs.done_has_hu": {
+  "text": "máshonnan kapott {lang} feliratot (Bazarr)"
+ },
+ "subs.done_skip": {
+  "text": "kihagyva"
+ },
+ "subs.done_gone": {
+  "text": "a videó már nincs meg"
+ },
+ "subs.done_givenup": {
+  "text": "30 nap után feladva"
+ },
+ "subs.auto": {
+  "text": "magától"
+ },
+ "subs.finished": {
+  "text": "Befejezett"
+ },
+ "subs.n7": {
+  "one": "{n} 7 nap alatt",
+  "other": "{n} 7 nap alatt"
+ },
+ "subs.n_running": {
+  "one": "{n} fut",
+  "other": "{n} fut"
+ },
+ "subs.ready_lead": {
+  "text": "Videóhoz igazított emberi feliratok. {n} % fölött maguktól bekerülnek, ezek rád várnak. A bemásolás minden videó mellé egy .{code}.srt-t tesz, és soha nem cserél le fájlt."
+ },
+ "subs.copy_all": {
+  "text": "Mind bemásolása"
+ },
+ "subs.all_label": {
+  "one": "{n} felirat",
+  "other": "{n} felirat"
+ },
+ "subs.copy": {
+  "text": "Bemásolás"
+ },
+ "subs.skip": {
+  "text": "Kihagyás"
+ },
+ "subs.n_files": {
+  "one": "{n} fájl",
+  "other": "{n} fájl"
+ },
+ "subs.lowest": {
+  "text": "legalacsonyabb {n} %"
+ },
+ "subs.episodes": {
+  "text": "Epizódonként"
+ },
+ "subs.ready_none": {
+  "text": "Semmi nem vár rád."
+ },
+ "subs.st_last": {
+  "text": "Utolsó kör {t}"
+ },
+ "subs.st_os": {
+  "text": "OpenSubtitles-letöltés ma {n} / {m}"
+ },
+ "subs.wait_lead": {
+  "text": "{lang} felirat nélküli importok. A Bazarr importkor keres; ez az eszköz {n} percet vár, hogy ne használja el kétszer az OpenSubtitles-letöltéseket."
+ },
+ "subs.searching": {
+  "text": "keresés most"
+ },
+ "subs.wait_from": {
+  "text": "importálva {a} · keresés ettől: {t}"
+ },
+ "subs.search_now": {
+  "text": "Keresés most"
+ },
+ "subs.new_imports": {
+  "text": "Új importok"
+ },
+ "subs.wait_band": {
+  "text": "{n} · {m} perc"
+ },
+ "subs.none_lead": {
+  "text": "Nincs illő felirat a feliratok.eu-n és az OpenSubtitles-ön. 7 napig 6 óránként, utána 30 napig naponta újra keres."
+ },
+ "subs.noref": {
+  "text": "a videóban nincs angol felirat, amihez igazíthatna (a Bazarr hang szerinti szinkronja segíthet)"
+ },
+ "subs.givenup": {
+  "text": "30 nap alatt {n} keresés, feladva"
+ },
+ "subs.next_try": {
+  "text": "{n} keresés · következő: {t}"
+ },
+ "subs.best_low": {
+  "text": "a legjobb is csak {n} %"
+ },
+ "subs.keep_without": {
+  "text": "Felirat nélkül marad"
+ },
+ "subs.not_found": {
+  "text": "Nem található"
+ },
+ "subs.confirm": {
+  "text": "Bemásolod a(z) {l} {n} feliratfájlját a videók mellé? A már ott lévő {lang} feliratot nem cseréli le."
+ },
+ "subs.cancel": {
+  "text": "Mégse"
+ },
+ "subs.s_on": {
+  "text": "Háttérkeresés"
+ },
+ "subs.on": {
+  "text": "Be"
+ },
+ "subs.off_s": {
+  "text": "Ki"
+ },
+ "subs.s_on_hint": {
+  "text": "15 percenként megnézi az új importokat."
+ },
+ "subs.s_copy": {
+  "text": "Bemásolás"
+ },
+ "subs.copy_auto": {
+  "text": "Magától, ha legalább"
+ },
+ "subs.copy_ask": {
+  "text": "Mindig kérdez"
+ },
+ "subs.s_copy_hint": {
+  "text": "Az ennyi időzítési pontot elérő felirat magától bekerül, az alatta lévő a kattintásodra vár."
+ },
+ "subs.s_grace": {
+  "text": "Előbb a Bazarr"
+ },
+ "subs.minutes": {
+  "text": "perc"
+ },
+ "subs.s_grace_hint": {
+  "text": "A Bazarr importkor azonnal keres; ennyi időt hagy neki."
+ },
+ "subs.s_src": {
+  "text": "Források"
+ },
+ "subs.src_both": {
+  "text": "feliratok.eu + OpenSubtitles"
+ },
+ "subs.src_fel": {
+  "text": "csak feliratok.eu"
+ },
+ "subs.per_day": {
+  "text": "OpenSubtitles-letöltés naponta"
+ },
+ "subs.s_src_hint": {
+  "text": "Az OpenSubtitles a kulcsodat használja: napi 20 letöltés, a Bazarrral közösen. Ez az eszköz legfeljebb ennyit vesz el."
+ },
+ "subs.s_min": {
+  "text": "Legalacsonyabb időzítési pont"
+ },
+ "subs.s_min_hint": {
+  "text": "Az ez alatti feliratot nem ajánlja fel: a tétel a Nincs emberi felirat sávba kerül."
+ },
+ "subs.s_dc_hint": {
+  "text": "Discord: naponta egy összefoglaló 9 után a magyar leírások csatornájára (Streambox-beállítások); a hibák azonnal."
+ },
+ "subs.save": {
+  "text": "Mentés"
+ },
+ "subs.sum_auto": {
+  "text": "magától {n} % fölött"
+ },
+ "subs.sum_ask": {
+  "text": "mindig kérdez"
+ },
+ "subs.e_load": {
+  "text": "Az oldal nem tudta betölteni a listát: {e}"
+ },
+ "subs.copied_n": {
+  "one": "{n} felirat bemásolva",
+  "other": "{n} felirat bemásolva"
+ },
+ "subs.copy_fail": {
+  "text": "Bemásolva: {n}. Nem sikerült: {e}"
+ },
+ "subs.op_fail": {
+  "text": "Nem sikerült: {e}"
+ },
+ "subs.saved": {
+  "text": "Mentve"
+ },
+ "subs.not_saved": {
+  "text": "Nincs mentve: {e}"
+ },
+ "subs.e_other": {
+  "text": "ismeretlen hiba"
+ },
+ "subs.e_state": {
+  "text": "már nem vár bemásolásra"
+ },
+ "subs.e_nofile": {
+  "text": "hiányzik az igazított feliratfájl"
+ },
+ "subs.e_novideo": {
+  "text": "a videó már nincs ott"
+ },
+ "subs.e_exists": {
+  "text": "a videó mellett már van {lang} felirat"
+ },
+ "subs.e_copy": {
+  "text": "a fájlt nem sikerült kiírni"
+ },
+ "subs.e_gone": {
+  "text": "a tétel már nincs a listában"
+ },
+ "subs.e_write": {
+  "text": "nem sikerült kiírni a fájlt"
+ },
+ "subs.e_bad": {
+  "text": "hibás kérés"
+ },
+ "subs.e_csrf": {
+  "text": "az oldal régi, töltsd újra"
+ },
+ "subs.e_value": {
+  "text": "egy szám a megengedett tartományon kívül esik"
+ },
+ "subs.e_min_auto": {
+  "text": "a legalacsonyabb pont nem lehet nagyobb az automatikusnál"
+ },
+ "subs.dc_head": {
+  "text": "**{lang_cap} feliratok, az elmúlt 24 óra**"
+ },
+ "subs.dc_err_head": {
+  "text": "**{lang_cap} feliratok: hiba**"
+ },
+ "subs.dc_auto": {
+  "one": "Magától bemásolva: {list}",
+  "other": "Magától bemásolva ({n}): {list}"
+ },
+ "subs.dc_hand": {
+  "one": "Te másoltad be: {list}",
+  "other": "Te másoltad be ({n}): {list}"
+ },
+ "subs.dc_ready": {
+  "one": "A kattintásodra vár: {list}",
+  "other": "A kattintásodra vár ({n}): {list}"
+ },
+ "subs.dc_none": {
+  "one": "Még nincs emberi felirat: {list}",
+  "other": "Még nincs emberi felirat ({n}): {list}"
+ },
+ "subs.dc_bazarr": {
+  "one": "A Bazarr megtalálta: {list}",
+  "other": "A Bazarr megtalálta ({n}): {list}"
+ },
+ "subs.lang.hu": {
+  "text": "magyar"
+ },
+ "subs.lang.en": {
+  "text": "angol"
+ },
+ "subs.lang.de": {
+  "text": "német"
+ },
+ "subs.lang.fr": {
+  "text": "francia"
+ },
+ "subs.lang.es": {
+  "text": "spanyol"
+ },
+ "subs.lang.it": {
+  "text": "olasz"
+ },
+ "subs.lang.nl": {
+  "text": "holland"
+ },
+ "subs.lang.pl": {
+  "text": "lengyel"
+ },
+ "subs.lang.cs": {
+  "text": "cseh"
+ },
+ "subs.lang.sk": {
+  "text": "szlovák"
+ },
+ "subs.lang.ro": {
+  "text": "román"
+ },
+ "subs.lang.pt": {
+  "text": "portugál"
+ },
+ "subs.lang.sv": {
+  "text": "svéd"
+ },
+ "subs.lang.da": {
+  "text": "dán"
+ },
+ "subs.lang.no": {
+  "text": "norvég"
+ },
+ "subs.lang.fi": {
+  "text": "finn"
+ },
+ "subs.lang.el": {
+  "text": "görög"
+ },
+ "subs.lang.tr": {
+  "text": "török"
+ },
+ "subs.lang.hr": {
+  "text": "horvát"
+ },
+ "subs.lang.sr": {
+  "text": "szerb"
+ },
+ "subs.lang.sl": {
+  "text": "szlovén"
+ },
+ "subs.lang.bg": {
+  "text": "bolgár"
+ },
+ "subs.lang.ru": {
+  "text": "orosz"
+ },
+ "subs.lang.uk": {
+  "text": "ukrán"
+ },
+ "subs.s_lang": {
+  "text": "Nyelv"
+ },
+ "subs.s_lang_hint": {
+  "text": "Ilyen nyelvű feliratot keres. A feliratok.eu-t csak magyarhoz használja, minden más nyelv az OpenSubtitles-ről jön."
  }
 }
 ]]></INLINE>
@@ -7681,6 +8711,624 @@ hu_out(['ok' => true, 'on' => nf_on_hu($cfg['hu_on']), 'mode' => $cfg['hu_mode']
 ]]></INLINE>
 </FILE>
 
+<FILE Name="&plugdir;/subs_lib.php">
+<INLINE><![CDATA[<?php
+// Subtitler (item 162): new movies and episodes in Jellyfin without a subtitle in the chosen language (Hungarian by default) go to the
+// worker in the claude container (hu-subsync skill, subs_auto.py) through docker exec. Bazarr gets subs_grace minutes
+// first; the worker searches feliratok.eu and OpenSubtitles.com and aligns the best one to the video's English timing.
+// Copying the subtitle next to the video happens here on the host (the container sees the media read only): by itself
+// at subs_auto % and above when subs_copy = auto (the owner's deliberate exception to the click rule, 2026-11-13), else
+// on the owner's click. Never over an existing file. Discord: one summary a day after 09:00 (dc_hu), errors at once.
+require_once __DIR__ . '/hu_lib.php';   // wk_cfg, wk_http, wk_ts, wk_tz, hu_docker, hu_dc_t, nf_on_hu
+
+const SUBS_CT = 'claude';
+const SUBS_LOOK_DAYS = 14;         // Jellyfin items added in the last 14 days are looked at
+const SUBS_MEDIA_HOST = '/mnt/user/data';   // /srv/data in the container
+const SUBS_MEDIA_CT = '/srv/data';
+const SUBS_WORK_CT = '/work/subsync';
+// the subtitle language (a setting since 2026-11-13: the repo is public, not every user is Hungarian): ISO 639-1 -> the
+// codes Jellyfin or a file name may carry it with (639-2 B and T, the English name); the same list is in subs_auto.py
+const SUBS_LANGS = ['hu' => 'hun hungarian magyar', 'en' => 'eng english', 'de' => 'ger deu german', 'fr' => 'fre fra french', 'es' => 'spa spanish',
+    'it' => 'ita italian', 'nl' => 'dut nld dutch', 'pl' => 'pol polish', 'cs' => 'cze ces czech', 'sk' => 'slo slk slovak', 'ro' => 'rum ron romanian',
+    'pt' => 'por portuguese', 'sv' => 'swe swedish', 'da' => 'dan danish', 'no' => 'nor nob norwegian', 'fi' => 'fin finnish', 'el' => 'gre ell greek',
+    'tr' => 'tur turkish', 'hr' => 'hrv croatian', 'sr' => 'srp serbian', 'sl' => 'slv slovenian', 'bg' => 'bul bulgarian', 'ru' => 'rus russian', 'uk' => 'ukr ukrainian'];
+
+function subs_cfg_file() { return getenv('SB_SUBS_CFG') ?: '/boot/config/plugins/streambox/subs.cfg'; }
+function subs_cfg() {
+    $c = ['subs_on' => '1', 'subs_lang' => 'hu', 'subs_copy' => 'auto', 'subs_auto' => '95', 'subs_grace' => '60', 'subs_src' => 'both', 'subs_min' => '85',
+          'subs_osmax' => '8', 'subs_dir' => '/mnt/user/data/DEV/subsync',
+          'subs_script' => '/work/unraid-mediaserver-tools/.claude/skills/hu-subsync/scripts/subs_auto.py'];
+    $f = subs_cfg_file();
+    if (is_file($f)) { $x = @parse_ini_file($f, false, INI_SCANNER_RAW); if (is_array($x)) { $c = array_merge($c, $x); } }
+    $w = wk_cfg();   // Jellyfin address and key, dc_hu
+    foreach (['jf_host', 'jf_port', 'jf_key', 'dc_hu'] as $k) { $c[$k] = (string)($w[$k] ?? ''); }
+    $c['subs_copy'] = $c['subs_copy'] === 'ask' ? 'ask' : 'auto';
+    $c['subs_src'] = $c['subs_src'] === 'feliratok' ? 'feliratok' : 'both';
+    if (!isset(SUBS_LANGS[$c['subs_lang']])) { $c['subs_lang'] = 'hu'; }
+    return $c;
+}
+// the settings the page may change, checked; returns the error key or ''
+function subs_cfg_save($in) {
+    $c = subs_cfg();
+    $int = function ($k, $lo, $hi) use ($in, $c) { $v = (int)($in[$k] ?? $c[$k]); return ($v < $lo || $v > $hi) ? null : (string)$v; };
+    $lang = (string)($in['subs_lang'] ?? $c['subs_lang']);
+    $new = ['subs_on' => nf_on_hu($in['subs_on'] ?? $c['subs_on']) ? '1' : '0', 'subs_lang' => isset(SUBS_LANGS[$lang]) ? $lang : null,
+            'subs_copy' => ($in['subs_copy'] ?? $c['subs_copy']) === 'ask' ? 'ask' : 'auto',
+            'subs_auto' => $int('subs_auto', 85, 100), 'subs_grace' => $int('subs_grace', 0, 2880),
+            'subs_src' => ($in['subs_src'] ?? $c['subs_src']) === 'feliratok' ? 'feliratok' : 'both',
+            'subs_min' => $int('subs_min', 50, 100), 'subs_osmax' => $int('subs_osmax', 0, 20),
+            'subs_dir' => $c['subs_dir'], 'subs_script' => $c['subs_script']];
+    foreach ($new as $v) { if ($v === null) { return 'value'; } }
+    if ((int)$new['subs_min'] > (int)$new['subs_auto']) { return 'min_auto'; }
+    $t = ''; foreach ($new as $k => $v) { $t .= $k . '="' . str_replace('"', '', $v) . '"' . "\n"; }
+    return @file_put_contents(subs_cfg_file(), $t) === false ? 'write' : '';
+}
+
+// ---- paths between the container and the host ---------------------------------------------------------------------------------
+function subs_host_path($cfg, $p) {
+    $p = (string)$p;
+    $w = getenv('SB_SUBS_WORKCT') ?: SUBS_WORK_CT;   // tests: the worker's scratch folder
+    if (strpos($p, $w . '/') === 0) { return rtrim($cfg['subs_dir'], '/') . substr($p, strlen($w)); }
+    if (strpos($p, SUBS_MEDIA_CT . '/') === 0) { return (getenv('SB_SUBS_MEDIA') ?: SUBS_MEDIA_HOST) . substr($p, strlen(SUBS_MEDIA_CT)); }
+    return '';
+}
+function subs_state($cfg) {
+    $j = json_decode((string)@file_get_contents(rtrim($cfg['subs_dir'], '/') . '/auto/state.json'), true);
+    $s = is_array($j) ? $j : [];
+    return array_merge(['items' => [], 'err' => [], 'run' => null, 't' => 0, 'os_used' => 0], $s);
+}
+// a click for the worker (it is the only writer of state.json): ops/<time>_<rand>.json
+function subs_op($cfg, $op, $id, $extra = []) {
+    $d = rtrim($cfg['subs_dir'], '/') . '/auto/ops';
+    if (!is_dir($d)) { @mkdir($d, 0777, true); }
+    $f = $d . '/' . sprintf('%.6f', microtime(true)) . '_' . bin2hex(random_bytes(3)) . '.json';
+    $ok = @file_put_contents($f, json_encode(array_merge(['op' => $op, 'id' => $id], $extra))) !== false;
+    if ($ok) { @chmod($f, 0666); }
+    return $ok;
+}
+// clicks the worker has not read yet, by id (the page shows them at once)
+function subs_pending($cfg) {
+    $out = [];
+    foreach ((array)@glob(rtrim($cfg['subs_dir'], '/') . '/auto/ops/*.json') as $f) {
+        $o = json_decode((string)@file_get_contents($f), true);
+        if (is_array($o) && isset($o['id'], $o['op'])) { $out[(string)$o['id']] = (string)$o['op']; }
+    }
+    return $out;
+}
+// the host's own small state: copies made, the Discord days (flash, written only when it changes)
+function subs_host_file() { return getenv('SB_SUBS_HOST') ?: '/boot/config/plugins/streambox/subs_host.json'; }
+function subs_host() {
+    $j = json_decode((string)@file_get_contents(subs_host_file()), true);
+    return array_merge(['copied' => [], 'dc_day' => '', 'dc_try' => 0, 'dc_try_day' => '', 'err_day' => []], is_array($j) ? $j : []);
+}
+function subs_host_save($h) {
+    $f = subs_host_file(); $j = json_encode($h, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($j === false || $j === @file_get_contents($f)) { return; }
+    if (@file_put_contents($f . '.tmp', $j) !== false) { @rename($f . '.tmp', $f); }
+}
+function subs_lock() {
+    static $h = null;
+    if ($h === null) { $h = @fopen(getenv('SB_SUBS_HOST') ? subs_host_file() . '.lock' : '/tmp/streambox_subs_host.lock', 'c') ?: false; }
+    if ($h) { flock($h, LOCK_EX); }
+    return $h;
+}
+function subs_unlock($h) { if ($h) { flock($h, LOCK_UN); } }
+
+// ---- copying a subtitle next to its video ----------------------------------------------------------------------------------
+// '' or an error code: 'state' (not ready), 'nofile' (our aligned file is gone), 'novideo', 'exists' (a Hungarian .srt is
+// already there: never overwritten), 'copy'
+function subs_copy($cfg, $x, $auto) {
+    if (($x['st'] ?? '') !== 'ready') { return 'state'; }
+    $src = subs_host_path($cfg, $x['out'] ?? ''); $vid = subs_host_path($cfg, $x['video'] ?? '');
+    if ($src === '' || !is_file($src)) { return 'nofile'; }
+    if ($vid === '' || !is_file($vid)) { return 'novideo'; }
+    $dst = preg_replace('/\.[A-Za-z0-9]{2,4}$/', '', $vid) . '.' . $cfg['subs_lang'] . '.srt';
+    if (file_exists($dst)) { return 'exists'; }
+    $tmp = $dst . '.sbtmp';
+    if (!@copy($src, $tmp)) { @unlink($tmp); return 'copy'; }
+    // link() fails when the name appeared meanwhile: no overwrite even then
+    if (!@link($tmp, $dst)) { @unlink($tmp); return file_exists($dst) ? 'exists' : 'copy'; }
+    @unlink($tmp);
+    @chmod($dst, 0666); @chown($dst, 'nobody'); @chgrp($dst, 'users');
+    subs_op($cfg, 'copied', $x['id'], ['auto' => $auto ? 1 : 0]);
+    $lk = subs_lock(); $h = subs_host();
+    $h['copied'][] = ['id' => $x['id'], 'label' => (string)($x['label'] ?? ''), 't' => time(), 'auto' => $auto ? 1 : 0, 'score' => (int)($x['score'] ?? 0)];
+    $h['copied'] = array_values(array_filter($h['copied'], function ($c) { return ($c['t'] ?? 0) > time() - 30 * 86400; }));
+    subs_host_save($h); subs_unlock($lk);
+    return '';
+}
+
+// ---- Jellyfin: the new items without a Hungarian subtitle ---------------------------------------------------------------------
+function subs_jf($cfg, $path) {
+    if ((string)$cfg['jf_key'] === '' || !preg_match('/^[A-Za-z0-9.\-]+$/', (string)$cfg['jf_host'])) { return [null, 'nokey']; }
+    return wk_http('http://' . $cfg['jf_host'] . ':' . (int)$cfg['jf_port'] . $path, ['Authorization: MediaBrowser Token="' . $cfg['jf_key'] . '"'], 30);
+}
+function subs_has_lang($item, $lang) {
+    $codes = array_merge([$lang], explode(' ', SUBS_LANGS[$lang] ?? ''));
+    foreach ((array)($item['MediaStreams'] ?? []) as $s) {
+        if (($s['Type'] ?? '') !== 'Subtitle') { continue; }
+        $hay = strtolower((string)($s['Title'] ?? '') . ' ' . (string)($s['DisplayTitle'] ?? ''));
+        if (!empty($s['IsForced']) || strpos($hay, 'forced') !== false || strpos($hay, 'kényszer') !== false) { continue; }
+        $l = strtolower((string)($s['Language'] ?? ''));
+        if (in_array($l, $codes, true) || in_array(explode('-', $l)[0], $codes, true)) { return true; }
+    }
+    return false;
+}
+// [items for the worker] or null when Jellyfin did not answer
+function subs_scan($cfg, $now) {
+    [$j] = subs_jf($cfg, '/Items?IncludeItemTypes=Movie,Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=300'
+        . '&Fields=Path,MediaStreams,ProviderIds,DateCreated&EnableImages=false');
+    if (!is_array($j)) { return null; }
+    $imdb = null; $out = [];
+    foreach ((array)($j['Items'] ?? []) as $it) {
+        $id = (string)($it['Id'] ?? ''); $added = wk_ts($it['DateCreated'] ?? '');
+        if (!preg_match('/^[0-9a-f]{32}$/', $id) || !$added || $added < $now - SUBS_LOOK_DAYS * 86400) { continue; }
+        if (strpos((string)($it['Path'] ?? ''), '/media/') === false || subs_has_lang($it, $cfg['subs_lang'])) { continue; }
+        $ep = ($it['Type'] ?? '') === 'Episode';
+        $row = ['id' => $id, 'kind' => $ep ? 'episode' : 'movie', 'path' => (string)$it['Path'], 'added' => $added,
+                'name' => (string)($it['Name'] ?? ''), 'year' => (int)($it['ProductionYear'] ?? 0), 'imdb' => (string)($it['ProviderIds']['Imdb'] ?? '')];
+        if ($ep) {
+            if ($imdb === null) {   // the series' IMDb ids (OpenSubtitles finds episodes by the series id)
+                $imdb = [];
+                [$sl] = subs_jf($cfg, '/Items?IncludeItemTypes=Series&Recursive=true&Fields=ProviderIds&EnableImages=false');
+                foreach ((array)($sl['Items'] ?? []) as $x) { $imdb[(string)($x['Id'] ?? '')] = (string)($x['ProviderIds']['Imdb'] ?? ''); }
+            }
+            $row += ['series' => (string)($it['SeriesName'] ?? ''), 'season' => (int)($it['ParentIndexNumber'] ?? 0), 'episode' => (int)($it['IndexNumber'] ?? 0),
+                     'series_imdb' => $imdb[(string)($it['SeriesId'] ?? '')] ?? ''];
+            if ($row['season'] < 1 || $row['episode'] < 1) { continue; }   // specials and unnumbered files: not searched
+        }
+        $out[] = $row;
+    }
+    return $out;
+}
+
+// ---- the worker ------------------------------------------------------------------------------------------------------------
+// [answer array or null, error code '' | 'docker' | 'ctstop' | 'timeout' | 'answer', detail]
+function subs_worker($cfg, $items, $now) {
+    $in = json_encode(['now' => $now, 'items' => $items, 'cfg' => ['grace_min' => (int)$cfg['subs_grace'], 'min_score' => (int)$cfg['subs_min'],
+                       'sources' => $cfg['subs_src'], 'os_max' => (int)$cfg['subs_osmax'], 'budget_s' => 600, 'lang' => $cfg['subs_lang']]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $fake = getenv('SB_SUBS_FAKE');   // tests: a command that reads the same stdin (python3 subs_auto.py tick)
+    $d = $fake ? '' : hu_docker();
+    if (!$fake && $d === '') { return [null, 'docker', '']; }
+    if (!$fake) {
+        $o = []; @exec(escapeshellarg($d) . ' inspect -f {{.State.Running}} ' . SUBS_CT . ' 2>/dev/null', $o);
+        if (trim(implode('', $o)) !== 'true') { return [null, 'ctstop', '']; }
+    }
+    $pf = tempnam('/tmp', 'sbsubs'); file_put_contents($pf, $in);
+    $cmd = $fake ? $fake . ' < ' . escapeshellarg($pf) . ' 2>/dev/null'
+         : 'timeout 840 ' . escapeshellarg($d) . ' exec -i -u claude -e HOME=/home/claude -w /home/claude ' . SUBS_CT .
+           ' timeout -k 20 800 python3 ' . escapeshellarg($cfg['subs_script']) . ' tick < ' . escapeshellarg($pf) . ' 2>/dev/null';
+    $o = []; $rc = 0; @exec($cmd, $o, $rc); @unlink($pf);
+    if ($rc === 124) { return [null, 'timeout', '']; }
+    $last = json_decode((string)end($o), true);
+    if (!is_array($last) || empty($last['ok'])) { return [null, 'answer', mb_substr(implode(' ', $o), 0, 200)]; }
+    return [$last, '', ''];
+}
+function subs_run_file() { return getenv('SB_SUBS_RUN') ?: '/tmp/streambox_subs_run.json'; }
+
+// ---- one run: cron every 15 minutes, or the page's Search now -------------------------------------------------------------
+function subs_tick($cfg, $now) {
+    if (!nf_on_hu($cfg['subs_on'])) { return; }
+    $items = subs_scan($cfg, $now);
+    [$ans, $err, $detail] = subs_worker($cfg, $items ?? [], $now);
+    @file_put_contents(subs_run_file(), json_encode(['t' => $now, 'jf' => $items === null ? 0 : 1, 'n' => is_array($items) ? count($items) : 0,
+                                                     'err' => $err, 'detail' => $detail, 'ans' => $ans]));
+    if ($cfg['subs_copy'] === 'auto') {
+        $st = subs_state($cfg); $pend = subs_pending($cfg);
+        foreach ($st['items'] as $x) {
+            if (($x['st'] ?? '') === 'ready' && (int)($x['score'] ?? 0) >= (int)$cfg['subs_auto'] && !isset($pend[$x['id']]) && empty($x['nocopy'])) {
+                subs_copy($cfg, $x, true);
+            }
+        }
+    }
+    subs_dc_errors($cfg, $now, $err);
+    subs_daily($cfg, $now);
+}
+
+// ---- Discord (dc_hu, the Discord language) ----------------------------------------------------------------------------------
+function subs_dc_send($cfg, $text) {
+    $hook = trim((string)$cfg['dc_hu']);
+    if (!preg_match('#^https://(?:discord|discordapp)\.com/api/webhooks/\d{15,25}/[A-Za-z0-9_\-]{20,120}$#', $hook)) { return 0; }
+    $fake = getenv('SB_SUBS_DC');   // tests: the message goes to this file
+    if ($fake) { file_put_contents($fake, $text . "\n---\n", FILE_APPEND); return 204; }
+    $ch = curl_init($hook);
+    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode(['content' => mb_substr($text, 0, 1900), 'allowed_mentions' => ['parse' => []]], JSON_UNESCAPED_UNICODE)]);
+    curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    return $code;
+}
+// errors at once, each kind at most once a day: the worker's (OpenSubtitles key or quota, feliratok.eu down) and the run's
+function subs_dc_errors($cfg, $now, $runErr) {
+    $st = subs_state($cfg); $codes = array_keys((array)$st['err']);
+    if (in_array($runErr, ['ctstop', 'timeout', 'answer'], true)) { $codes[] = 'run_' . $runErr; }
+    if (!$codes || hu_quiet($now)) { return; }
+    $today = date('Y-m-d', $now);
+    $lk = subs_lock(); $h = subs_host(); $send = [];
+    foreach ($codes as $c) { if (($h['err_day'][$c] ?? '') !== $today) { $send[] = $c; } }
+    if (!$send) { subs_unlock($lk); return; }
+    $lines = [hu_dc_t('subs.dc_err_head', subs_lang_vars($cfg))];
+    foreach ($send as $c) { $lines[] = '• ' . hu_dc_t('subs.err_' . $c); }
+    $code = subs_dc_send($cfg, implode("\n", $lines));
+    if ($code >= 200 && $code < 300) { foreach ($send as $c) { $h['err_day'][$c] = $today; } }
+    subs_host_save($h); subs_unlock($lk);
+}
+// {lang} and {lang_cap} (sentence start: "Magyar feliratok") in the Discord language
+function subs_lang_vars($cfg) { $l = hu_dc_t('subs.lang.' . $cfg['subs_lang']); return ['lang' => $l, 'lang_cap' => mb_strtoupper(mb_substr($l, 0, 1)) . mb_substr($l, 1)]; }
+function subs_list($a, $max = 8) { return implode(', ', array_slice($a, 0, $max)) . (count($a) > $max ? ' …' : ''); }
+// episodes of one season in one entry: "Tulsa King S01 (9)"
+function subs_group_labels($xs) {
+    $g = [];
+    foreach ($xs as $x) {
+        $k = ($x['kind'] ?? '') === 'episode' ? sprintf('%s S%02d', $x['title'] ?? '', (int)($x['season'] ?? 0)) : (string)($x['label'] ?? '');
+        $g[$k][] = (string)($x['label'] ?? $k);
+    }
+    $out = [];
+    foreach ($g as $k => $l) { $out[] = count($l) > 1 ? $k . ' (' . count($l) . ')' : $l[0]; }
+    return $out;
+}
+function subs_daily($cfg, $now) {
+    $today = date('Y-m-d', $now);
+    $h = subs_host();
+    if ($h['dc_day'] === $today || (int)date('G', $now) < 9 || hu_quiet($now)) { return; }
+    $st = subs_state($cfg); $since = $now - 86400; $pend = subs_pending($cfg);
+    $copiedIds = array_flip(array_map(function ($c) { return (string)$c['id']; }, $h['copied']));
+    $auto = []; $hand = []; $ready = []; $none = []; $bazarr = [];
+    foreach ($h['copied'] as $c) { if (($c['t'] ?? 0) > $since) { $x = $st['items'][$c['id']] ?? ['label' => $c['label']]; if (!empty($c['auto'])) { $auto[] = $x; } else { $hand[] = $x; } } }
+    foreach ($st['items'] as $x) {
+        $s = $x['st'] ?? '';
+        if ($s === 'ready' && !isset($pend[$x['id']]) && !isset($copiedIds[$x['id']])) { $ready[] = $x; }
+        elseif (in_array($s, ['nohuman', 'noref'], true) && ($x['found'] ?? 0) > $since) { $none[] = $x; }
+        elseif ($s === 'has_hu' && ($x['t'] ?? 0) > $since) { $bazarr[] = $x; }
+    }
+    $lines = [];
+    if ($auto) { $lines[] = hu_dc_t('subs.dc_auto', ['n' => count($auto), 'list' => subs_list(subs_group_labels($auto))]); }
+    if ($hand) { $lines[] = hu_dc_t('subs.dc_hand', ['n' => count($hand), 'list' => subs_list(subs_group_labels($hand))]); }
+    if ($ready) { $lines[] = hu_dc_t('subs.dc_ready', ['n' => count($ready), 'list' => subs_list(subs_group_labels($ready))]); }
+    if ($none) { $lines[] = hu_dc_t('subs.dc_none', ['n' => count($none), 'list' => subs_list(subs_group_labels($none))]); }
+    if ($bazarr) { $lines[] = hu_dc_t('subs.dc_bazarr', ['n' => count($bazarr), 'list' => subs_list(subs_group_labels($bazarr))]); }
+    $lk = subs_lock(); $h = subs_host();
+    if (!$lines) { $h['dc_day'] = $today; subs_host_save($h); subs_unlock($lk); return; }
+    $code = subs_dc_send($cfg, hu_dc_t('subs.dc_head', subs_lang_vars($cfg)) . "\n" . implode("\n", $lines));
+    // sent, or 4 tries today (429, Discord down, a deleted webhook): done for today; else the next run tries again
+    $h['dc_try'] = $h['dc_try_day'] === $today ? (int)$h['dc_try'] + 1 : 1; $h['dc_try_day'] = $today;
+    if (($code >= 200 && $code < 300) || $h['dc_try'] >= 4 || $code === 0) { $h['dc_day'] = $today; }
+    subs_host_save($h); subs_unlock($lk);
+}
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/subs_run.php">
+<INLINE><![CDATA[<?php
+// Started by cron every 15 minutes (and by the page's Search now in the background): Hungarian subtitles (item 162), see subs_lib.php.
+if (PHP_SAPI !== 'cli') { exit(1); } // cron only, not a web page
+require_once __DIR__ . '/subs_lib.php';
+wk_tz();
+$lk = fopen('/tmp/streambox_subs.lock', 'c');
+if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) { exit(0); }   // one run at a time (aligning reads whole videos)
+subs_tick(subs_cfg(), time());
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/subs.php">
+<INLINE><![CDATA[<?php
+// Hungarian subtitles (item 162) for the tool page: GET = the state as rows; POST op=copy (ids, comma separated) | skip | search
+// (id) | save (the settings). Copy is the owner's click (the click rule): never over an existing subtitle; Skip and Search
+// go to the worker as op files; Search also starts a run now in the background.
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+require_once __DIR__ . '/subs_lib.php';
+wk_tz();
+function subs_out($a) { echo json_encode($a, JSON_UNESCAPED_UNICODE); exit; }
+
+$cfg = subs_cfg();
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    // CSRF as save.php: Unraid's prepend checks csrf_token and removes it; without it only an AJAX request is accepted
+    $var = @parse_ini_file('/var/local/emhttp/var.ini'); $tok = is_array($var) ? (string)($var['csrf_token'] ?? '') : '';
+    $sent = (string)($_POST['csrf_token'] ?? '');
+    if ($sent !== '' ? ($tok === '' || !hash_equals($tok, $sent)) : (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest')) { http_response_code(403); subs_out(['ok' => false, 'error' => 'csrf']); }
+    $op = (string)($_POST['op'] ?? '');
+    if ($op === 'save') { $e = subs_cfg_save($_POST); subs_out(['ok' => $e === '', 'error' => $e]); }
+    $ids = array_values(array_filter(explode(',', (string)($_POST['id'] ?? '')), function ($i) { return (bool)preg_match('/^[0-9a-f]{32}$/', $i); }));
+    if (!$ids || !in_array($op, ['copy', 'skip', 'search'], true)) { subs_out(['ok' => false, 'error' => 'bad']); }
+    $st = subs_state($cfg); $errs = []; $done = 0;
+    foreach ($ids as $id) {
+        $x = $st['items'][$id] ?? null;
+        if (!$x) { $errs[] = 'gone'; continue; }
+        if ($op === 'copy') { $e = subs_copy($cfg, $x, false); if ($e === '') { $done++; } else { $errs[] = $e; } }
+        else { if (subs_op($cfg, $op, $id)) { $done++; } else { $errs[] = 'write'; } }
+    }
+    if ($op === 'search' && $done) { exec('/usr/bin/php ' . escapeshellarg(__DIR__ . '/subs_run.php') . ' > /dev/null 2>&1 &'); }
+    subs_out(['ok' => !$errs, 'done' => $done, 'error' => $errs ? $errs[0] : '', 'errors' => count($errs)]);
+}
+
+$st = subs_state($cfg); $pend = subs_pending($cfg); $now = time(); $rows = [];
+$run = json_decode((string)@file_get_contents(subs_run_file()), true);
+foreach ($st['items'] as $x) {
+    $s = (string)($x['st'] ?? '');
+    $p = $pend[$x['id']] ?? '';
+    if ($p === 'skip') { $s = 'skip'; } elseif ($p === 'copied') { $s = 'copied'; } elseif ($p === 'search' && $s !== 'ready') { $s = 'search'; }
+    if (in_array($s, ['has_hu', 'copied', 'skip', 'gone', 'givenup'], true) && (int)($x['t'] ?? 0) < $now - 7 * 86400) { continue; }
+    $src = (array)($x['src'] ?? []);
+    $rows[] = ['id' => $x['id'], 'st' => $s, 'label' => (string)($x['label'] ?? ''), 'title' => (string)($x['title'] ?? ''), 'kind' => (string)($x['kind'] ?? ''),
+               'season' => (int)($x['season'] ?? 0), 'episode' => (int)($x['episode'] ?? 0), 'added' => (int)($x['added'] ?? 0), 't' => (int)($x['t'] ?? 0),
+               'score' => (int)($x['score'] ?? 0), 'best' => (int)($x['best'] ?? 0), 'tries' => (int)($x['tries'] ?? 0), 'next' => (int)($x['next'] ?? 0),
+               'ratio' => (float)($x['ratio'] ?? 1), 'offset' => (float)($x['offset'] ?? 0), 'auto' => !empty($x['auto']),
+               'site' => (string)($src['site'] ?? ''), 'pack' => (string)($src['name'] ?? ''), 'translator' => (string)($src['translator'] ?? ''),
+               'url' => preg_match('#^https://#', (string)($src['url'] ?? '')) ? (string)$src['url'] : '', 'err' => (string)($x['err'] ?? '')];
+}
+usort($rows, function ($a, $b) { return [$a['title'], $a['season'], $a['episode']] <=> [$b['title'], $b['season'], $b['episode']]; });
+subs_out(['ok' => true, 'on' => nf_on_hu($cfg['subs_on']), 'cfg' => array_intersect_key($cfg, array_flip(['subs_on', 'subs_lang', 'subs_copy', 'subs_auto', 'subs_grace', 'subs_src', 'subs_min', 'subs_osmax'])),
+          'run' => $st['run'], 'last' => (int)($run['t'] ?? 0), 'last_err' => (string)($run['err'] ?? ''), 'jf' => (int)($run['jf'] ?? 1), 'state_t' => (int)$st['t'],
+          'err' => array_keys((array)$st['err']), 'os_used' => (int)$st['os_used'], 'rows' => $rows, 'now' => $now, 'langs' => array_keys(SUBS_LANGS)]);
+]]></INLINE>
+</FILE>
+
+<FILE Name="&plugdir;/StreamboxSubs.page">
+<INLINE><![CDATA[Menu="Utilities"
+Type="xmenu"
+Title="Subtitler"
+Icon="streambox.png"
+Markdown="false"
+---
+<?PHP
+// Hungarian subtitles (item 162): the tool page of subs_lib.php. Texts from the dictionary (lang/en.json, see i18n.php).
+require_once '/usr/local/emhttp/plugins/streambox/i18n.php';
+$sbs_lang = '/usr/local/emhttp/plugins/streambox/lang';
+$sbs_T = mt_i18n_t($sbs_lang);
+$sbs_t = function ($k, $v = []) use ($sbs_T) { return htmlspecialchars($sbs_T($k, $v), ENT_QUOTES); };
+$sbs_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$sbs_tok = is_array($sbs_var) ? (string)($sbs_var['csrf_token'] ?? '') : '';
+?>
+<style>
+/* the Dashboard tile look (common/tile.css, inserted by the build): Activity on top, then a band and a box per part */
+/* Shared tile look (the Sysbox / Diskbox style): dark section bands, the content in a box under them, colored left stripes on rows.
+   Used by Seedbox and Streambox; the build copies this block into each plugin's page where the marker below stands. */
+.mt-band{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(0,0,0,.25);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;margin-top:14px}
+.mt-band.mt-first{margin-top:6px}
+.mt-band span{opacity:.75}
+.mt-band b{font-weight:400;opacity:.5;text-transform:none;letter-spacing:0;text-align:right}
+.mt-band.mt-red span{color:#e5534b;opacity:1}
+.mt-box{background:rgba(128,128,128,.12);margin-top:8px}
+.mt-cols{display:grid;gap:8px;align-items:center;padding:6px 10px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(128,128,128,.2)}
+.mt-cols>div{opacity:.6}
+.mt-r{display:grid;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid rgba(128,128,128,.2)}
+.mt-box>.mt-r:first-child,.mt-cols+.mt-r{border-top:0}
+.mt-s-orange{background:rgba(245,165,36,.10);box-shadow:inset 3px 0 0 #f5a524}
+.mt-s-blue{background:rgba(74,144,226,.10);box-shadow:inset 3px 0 0 #4a90e2}
+.mt-s-green{background:rgba(63,162,74,.10);box-shadow:inset 3px 0 0 #3fa24a}
+.mt-s-red{background:rgba(229,83,75,.14);box-shadow:inset 3px 0 0 #e5534b}
+.mt-s-amber{background:rgba(224,160,48,.12);box-shadow:inset 3px 0 0 #d9921f}
+.mt-s-purple{background:rgba(150,120,230,.10);box-shadow:inset 3px 0 0 #9a7de6}
+.mt-s-grey{background:rgba(128,128,128,.08);box-shadow:inset 3px 0 0 #8a8a8a}
+.mt-box .mt-n{background:none}
+.mt-note{padding:8px 10px;text-align:center;font-style:italic;opacity:.6}
+#sbs{--sbs-line:rgba(128,128,128,.22)}
+#sbs .sbs-sub{opacity:.65;margin:4px 0 0;max-width:120ch}
+#sbs .mt-band{margin-top:26px;padding:9px 12px}
+#sbs .mt-band span{font-weight:600}
+#sbs .mt-box>:first-child{border-top:0}
+#sbs .sbs-lead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:10px 12px}
+#sbs .sbs-lead p{margin:0;max-width:95ch;flex:1 1 420px;white-space:normal}
+#sbs .sbs-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:9px 12px;border-top:1px solid var(--sbs-line)}
+#sbs .sbs-row small{display:block;opacity:.6;font-size:12px;line-height:1.45;margin-top:2px;white-space:normal;overflow-wrap:anywhere}
+#sbs .sbs-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+#sbs .sbs-status{display:flex;flex-wrap:wrap;gap:6px 18px;padding:7px 12px;border-top:1px solid var(--sbs-line);font-size:12px;opacity:.75}
+#sbs .sbs-status b{font-weight:600;font-variant-numeric:tabular-nums}
+#sbs .sbs-chip{display:inline-block;font-size:11px;padding:1px 7px;white-space:nowrap;background:rgba(128,128,128,.25)}
+#sbs .sbs-chip.g{background:rgba(63,162,74,.22);color:#7fd08a}#sbs .sbs-chip.a{background:rgba(217,146,31,.25);color:#f0b85a}
+#sbs .sbs-chip.r{background:rgba(229,83,75,.25);color:#ff8a83}#sbs .sbs-chip.b{background:rgba(74,144,226,.25);color:#8fbdf0}
+#sbs details.sbs-cat{margin:0;border-top:1px solid var(--sbs-line)}
+#sbs details.sbs-cat>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:8px;padding:8px 12px;background:rgba(128,128,128,.16);font-size:12px}
+#sbs details.sbs-cat>summary::-webkit-details-marker{display:none}
+#sbs details.sbs-cat>summary::before{content:"\25B8";margin-right:6px;opacity:.6}
+#sbs details.sbs-cat[open]>summary::before{content:"\25BE"}
+#sbs details.sbs-cat>summary span{flex:1}
+#sbs details.sbs-cat>summary b{font-weight:400;opacity:.6}
+#sbs .sbs-conf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:rgba(230,138,0,.08);box-shadow:inset 3px 0 0 #e68a00;padding:8px 10px}
+#sbs .sbs-conf span{flex:1 1 260px;white-space:normal}
+#sbs input.sbs-ghost{color:inherit!important;opacity:.75;border-color:rgba(128,128,128,.45)!important}
+#sbs input.sbs-sm{padding:2px 8px!important;font-size:11px!important;letter-spacing:0!important;text-transform:none!important;margin:0!important;min-width:0}
+#sbs .sbs-set{display:grid;grid-template-columns:minmax(200px,280px) minmax(0,1fr);gap:4px 14px;align-items:center;padding:9px 12px;border-top:1px solid var(--sbs-line)}
+#sbs .sbs-set .lb{opacity:.75}
+#sbs .sbs-ctl{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+#sbs .sbs-ctl input[type=number]{width:62px!important;margin:0}
+#sbs .sbs-ctl select{margin:0;min-width:0}
+#sbs .sbs-hint{flex:1 1 100%;opacity:.55;font-size:12px}
+#sbs .sbs-msg{padding:8px 12px;font-size:12px}
+#sbs .sbs-ok{color:#3fa24a}#sbs .sbs-er{color:#e5534b}
+#sbs a.sbs-link{font-size:12px;white-space:nowrap}
+@media (max-width:860px){#sbs .sbs-row{grid-template-columns:1fr}#sbs .sbs-acts{justify-content:flex-start}#sbs .sbs-set{grid-template-columns:1fr}}
+</style>
+<div id="sbs">
+<p class="sbs-sub"><?=$sbs_t('subs.intro')?></p>
+<input type="hidden" id="sbs-tok" value="<?=htmlspecialchars($sbs_tok, ENT_QUOTES)?>">
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.activity')?></span><b id="sbs-aband"></b></div>
+<div class="mt-box" id="sbs-act"><div class="sbs-status"><?=$sbs_t('subs.loading')?></div></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.ready')?></span><b id="sbs-rband"></b></div>
+<div class="mt-box" id="sbs-ready"></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.wait')?></span><b id="sbs-wband"></b></div>
+<div class="mt-box" id="sbs-wait"></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.none')?></span><b id="sbs-nband"></b></div>
+<div class="mt-box" id="sbs-none"></div>
+
+<div class="mt-band"><span><?=$sbs_t('subs.h.settings')?></span><b id="sbs-sband"></b></div>
+<div class="mt-box" id="sbs-set"></div>
+</div>
+
+<?=mt_i18n_js($sbs_lang, 'sb', ['subs.'])?>
+<script>
+$(function () {
+  var T = function (k, v) { return MTL.t('sb', k, v); };
+  var URL = '/plugins/streambox/subs.php', TOK = $('#sbs-tok').val() || '', D = null, CONF = null, MSG = null, OPEN = {};
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  function tm(t) { if (!t) { return '-'; } var d = new Date(t * 1000); return d.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}); }
+  function btn(cls, label, data, ghost) {
+    var a = ''; $.each(data || {}, function (k, v) { a += ' data-' + k + '="' + esc(v) + '"'; });
+    return '<input type="button" class="sbs-sm ' + cls + (ghost ? ' sbs-ghost' : '') + '" value="' + esc(label) + '"' + a + '>';
+  }
+  function row(stripe, main, sub, acts) {
+    return '<div class="sbs-row mt-s-' + stripe + '"><div>' + main + (sub ? '<small>' + sub + '</small>' : '') + '</div><div class="sbs-acts">' + (acts || '') + '</div></div>';
+  }
+  function cat(key, title, count, body) {
+    return '<details class="sbs-cat" data-k="' + esc(key) + '"' + (OPEN[key] ? ' open' : '') + '><summary><span>' + esc(title) + '</span><b>' + esc(count) + '</b></summary>' + body + '</details>';
+  }
+  // episodes of one season of one series (or one movie) in one group
+  function groups(rows) {
+    var g = [], by = {};
+    $.each(rows, function (i, r) {
+      var k = r.kind === 'episode' ? r.title + '|' + r.season : r.id;
+      if (!by[k]) { by[k] = {key: k, rows: [], label: r.kind === 'episode' ? T('subs.season', {t: r.title, n: r.season}) : r.label}; g.push(by[k]); }
+      by[k].rows.push(r);
+    });
+    return g;
+  }
+  function srcLine(r) {
+    var s = r.site === 'opensubtitles' ? 'OpenSubtitles' : (r.site || '');
+    var p = [s];
+    if (r.translator) { p.push(T('subs.translator', {n: r.translator})); }
+    p.push(T('subs.score', {n: r.score}));
+    if (Math.abs(r.ratio - 1) > 0.001) { p.push(T('subs.fps_fixed')); }
+    if (Math.abs(r.offset) >= 0.1) { p.push(T('subs.offset', {s: (r.offset > 0 ? '+' : '') + r.offset.toFixed(1)})); }
+    return esc(p.join(' · ')) + (r.url ? ' · <a class="sbs-link" href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(T('subs.source')) + '</a>' : '');
+  }
+  function LN() { return T('subs.lang.' + D.cfg.subs_lang); }   // the subtitle language's name
+  function render() {
+    var d = D, by = {ready: [], wait: [], none: [], done: []};
+    $.each(d.rows, function (i, r) {
+      if (r.st === 'ready') { by.ready.push(r); }
+      else if (r.st === 'wait' || r.st === 'search') { by.wait.push(r); }
+      else if (r.st === 'nohuman' || r.st === 'noref' || r.st === 'givenup') { by.none.push(r); }
+      else { by.done.push(r); }
+    });
+    // Activity: the running step, errors, the finished ones folded
+    var a = '';
+    if (d.run) { a += row('blue', esc(d.run.label), esc(T('subs.step_' + d.run.step)), '<span class="sbs-chip b">' + esc(T('subs.running')) + '</span>'); }
+    $.each(d.err, function (i, e) { a += row('red', esc(T('subs.err_' + e)), esc(T('subs.err_hint_' + e)), '<span class="sbs-chip r">' + esc(T('subs.failed')) + '</span>'); });
+    if (d.last_err) { a += row('red', esc(T('subs.err_run_' + d.last_err)), '', '<span class="sbs-chip r">' + esc(T('subs.failed')) + '</span>'); }
+    if (!d.jf) { a += row('red', esc(T('subs.err_jf')), '', ''); }
+    if (MSG) { a += row(MSG.ok ? 'green' : 'red', esc(MSG.text), '', ''); }
+    if (!d.on) { a += row('grey', esc(T('subs.off')), '', ''); }
+    else if (!a) { a += row('grey', esc(T('subs.idle')), esc(T('subs.last_run', {t: tm(d.last)})), ''); }
+    var fin = '';
+    $.each(by.done.slice().sort(function (x, y) { return y.t - x.t; }), function (i, r) {
+      var stripe = r.st === 'copied' ? 'green' : (r.st === 'has_hu' ? 'green' : 'grey');
+      fin += row(stripe, esc(r.label), esc(T('subs.done_' + r.st, {lang: LN()}) + (r.auto ? ' · ' + T('subs.auto') : '') + ' · ' + tm(r.t)), '');
+    });
+    if (fin) { a += cat('fin', T('subs.finished'), T('subs.n7', {n: by.done.length}), fin); }
+    $('#sbs-act').html(a);
+    $('#sbs-aband').text(d.run ? T('subs.n_running', {n: 1}) : T('subs.last_run', {t: tm(d.last)}));
+    // Ready to copy: one row per season or movie, the episodes folded under it
+    var gs = groups(by.ready), h = '', all = [];
+    $.each(by.ready, function (i, r) { all.push(r.id); });
+    if (gs.length) {
+      h += '<div class="sbs-lead"><p>' + esc(T('subs.ready_lead', {n: d.cfg.subs_auto, code: d.cfg.subs_lang})) + '</p>' + btn('sbs-copy', T('subs.copy_all'), {id: all.join(','), label: T('subs.all_label', {n: all.length})}) + '</div>';
+      $.each(gs, function (i, g) {
+        var ids = [], min = 100, eps = '';
+        $.each(g.rows, function (j, r) {
+          ids.push(r.id); min = Math.min(min, r.score);
+          eps += row(r.score >= d.cfg.subs_auto ? 'grey' : 'amber', esc(r.label), srcLine(r),
+            btn('sbs-copy', T('subs.copy'), {id: r.id, label: r.label}) + btn('sbs-op', T('subs.skip'), {op: 'skip', id: r.id}, true));
+        });
+        var first = g.rows[0];
+        var sub = (g.rows.length > 1 ? esc(T('subs.n_files', {n: g.rows.length})) + ' · ' + esc(T('subs.lowest', {n: min})) + ' · ' : '') + srcLine(first) + (first.pack ? '<br>' + esc(first.pack) : '');
+        h += row('purple', esc(g.label), sub,
+          btn('sbs-copy', T('subs.copy'), {id: ids.join(','), label: g.label}) + btn('sbs-op', T('subs.skip'), {op: 'skip', id: ids.join(',')}, true));
+        if (CONF && CONF.id === ids.join(',')) { h += confBox(); }
+        if (g.rows.length > 1) { h += cat('r' + g.key, T('subs.episodes'), g.rows.length, eps); }
+      });
+      if (CONF && CONF.id === all.join(',')) { h = confBox() + h; }
+    } else { h += '<div class="sbs-lead"><p>' + esc(T('subs.ready_none')) + '</p></div>'; }
+    h += '<div class="sbs-status"><span>' + T('subs.st_last', {t: '<b>' + esc(tm(d.last)) + '</b>'}) + '</span><span>' + T('subs.st_os', {n: '<b>' + d.os_used + '</b>', m: '<b>' + esc(d.cfg.subs_osmax) + '</b>'}) + '</span></div>';
+    $('#sbs-ready').html(h);
+    $('#sbs-rband').text(T('subs.n_files', {n: by.ready.length}));
+    // Waiting for Bazarr
+    var w = '<div class="sbs-lead"><p>' + esc(T('subs.wait_lead', {n: d.cfg.subs_grace, lang: LN()})) + '</p></div>', wr = '';
+    $.each(by.wait, function (i, r) {
+      var from = r.added + d.cfg.subs_grace * 60;
+      wr += row(r.st === 'search' ? 'blue' : 'grey', esc(r.label), esc(r.st === 'search' ? T('subs.searching') : T('subs.wait_from', {a: tm(r.added), t: tm(from)})),
+        r.st === 'search' ? '' : btn('sbs-op', T('subs.search_now'), {op: 'search', id: r.id}, true));
+    });
+    if (by.wait.length) { w += cat('wait', T('subs.new_imports'), by.wait.length, wr); }
+    $('#sbs-wait').html(w);
+    $('#sbs-wband').text(T('subs.wait_band', {n: by.wait.length, m: d.cfg.subs_grace}));
+    // No human subtitle
+    var n = '<div class="sbs-lead"><p>' + esc(T('subs.none_lead')) + '</p></div>', nr = '';
+    $.each(by.none, function (i, r) {
+      var why = r.st === 'noref' ? T('subs.noref') : (r.st === 'givenup' ? T('subs.givenup', {n: r.tries}) : T('subs.next_try', {n: r.tries, t: tm(r.next)}));
+      if (r.best) { why += ' · ' + T('subs.best_low', {n: r.best}); }
+      nr += row(r.st === 'noref' ? 'red' : 'amber', esc(r.label), esc(why),
+        btn('sbs-op', T('subs.search_now'), {op: 'search', id: r.id}, true) + btn('sbs-op', T('subs.keep_without'), {op: 'skip', id: r.id}, true));
+    });
+    if (by.none.length) { n += cat('none', T('subs.not_found'), by.none.length, nr); }
+    $('#sbs-none').html(n);
+    $('#sbs-nband').text(String(by.none.length));
+    if (!$('#sbs-set').children().length) { settings(); }
+  }
+  function confBox() {
+    return '<div class="sbs-conf"><span>' + esc(T('subs.confirm', {l: CONF.label, n: CONF.id.split(',').length, lang: LN()})) + '</span>'
+      + btn('sbs-yes', T('subs.copy')) + btn('sbs-no', T('subs.cancel'), null, true) + '</div>';
+  }
+  function settings() {
+    var c = D.cfg, opt = function (v, cur, l) { return '<option value="' + v + '"' + (String(cur) === v ? ' selected' : '') + '>' + esc(l) + '</option>'; };
+    var num = function (id, v, lo, hi) { return '<input type="number" id="' + id + '" min="' + lo + '" max="' + hi + '" value="' + esc(v) + '">'; };
+    var s = '';
+    var set = function (lb, ctl, hint) { s += '<div class="sbs-set"><div class="lb">' + esc(lb) + '</div><div class="sbs-ctl">' + ctl + '<span class="sbs-hint">' + esc(hint) + '</span></div></div>'; };
+    set(T('subs.s_on'), '<select id="sbs-on">' + opt('1', c.subs_on, T('subs.on')) + opt('0', c.subs_on, T('subs.off_s')) + '</select>', T('subs.s_on_hint'));
+    var lo = ''; $.each(D.langs, function (i, k) { lo += opt(k, c.subs_lang, T('subs.lang.' + k)); });
+    set(T('subs.s_lang'), '<select id="sbs-lang">' + lo + '</select>', T('subs.s_lang_hint'));
+    set(T('subs.s_copy'), '<select id="sbs-copy">' + opt('auto', c.subs_copy, T('subs.copy_auto')) + opt('ask', c.subs_copy, T('subs.copy_ask')) + '</select> ' + num('sbs-auto', c.subs_auto, 85, 100) + ' %', T('subs.s_copy_hint'));
+    set(T('subs.s_grace'), num('sbs-grace', c.subs_grace, 0, 2880) + ' ' + esc(T('subs.minutes')), T('subs.s_grace_hint'));
+    set(T('subs.s_src'), '<select id="sbs-src">' + opt('both', c.subs_src, T('subs.src_both')) + opt('feliratok', c.subs_src, T('subs.src_fel')) + '</select> ' + num('sbs-osmax', c.subs_osmax, 0, 20) + ' ' + esc(T('subs.per_day')), T('subs.s_src_hint'));
+    set(T('subs.s_min'), num('sbs-min', c.subs_min, 50, 100) + ' %', T('subs.s_min_hint'));
+    s += '<div class="sbs-lead"><p class="sbs-hint">' + esc(T('subs.s_dc_hint')) + '</p><input type="button" id="sbs-save" value="' + esc(T('subs.save')) + '"></div><div class="sbs-msg" id="sbs-smsg"></div>';
+    $('#sbs-set').html(s);
+    $('#sbs-sband').text(c.subs_on === '1' ? (c.subs_copy === 'auto' ? T('subs.sum_auto', {n: c.subs_auto}) : T('subs.sum_ask')) : T('subs.off_s'));
+  }
+  function load() {
+    $.getJSON(URL, {_: Date.now()}).done(function (d) { if (d && d.ok) { D = d; render(); } }).fail(function (x) { $('#sbs-act').html(row('red', esc(T('subs.e_load', {e: 'HTTP ' + x.status})), '', '')); });
+  }
+  function post(data, done) {
+    $.post(URL, $.extend({csrf_token: TOK}, data), null, 'json')
+      .done(function (r) { done(r || {ok: false, error: ''}); })
+      .fail(function (x) { done({ok: false, error: 'HTTP ' + x.status}); });
+  }
+  function errText(e) { var k = 'subs.e_' + e; var t = T(k, {lang: LN()}); return t === k ? String(e || T('subs.e_other')) : t; }
+  $('#sbs').on('toggle', 'details.sbs-cat', function () { OPEN[$(this).data('k')] = this.open; });
+  $('#sbs').on('click', '.sbs-copy', function () { CONF = {id: String($(this).data('id')), label: String($(this).data('label'))}; render(); });
+  $('#sbs').on('click', '.sbs-no', function () { CONF = null; render(); });
+  $('#sbs').on('click', '.sbs-yes', function () {
+    var c = CONF; CONF = null; $(this).prop('disabled', true);
+    post({op: 'copy', id: c.id}, function (r) {
+      MSG = r.ok ? {ok: true, text: T('subs.copied_n', {n: r.done})} : {ok: false, text: T('subs.copy_fail', {n: r.done || 0, e: errText(r.error)})};
+      load(); setTimeout(function () { MSG = null; }, 120000);
+    });
+  });
+  $('#sbs').on('click', '.sbs-op', function () {
+    var $b = $(this); $b.closest('.sbs-acts').find('input').prop('disabled', true);
+    post({op: $b.data('op'), id: String($b.data('id'))}, function (r) {
+      MSG = r.ok ? null : {ok: false, text: T('subs.op_fail', {e: errText(r.error)})};
+      load();
+    });
+  });
+  $('#sbs').on('click', '#sbs-save', function () {
+    var $b = $(this).prop('disabled', true);
+    post({op: 'save', subs_on: $('#sbs-on').val(), subs_lang: $('#sbs-lang').val(), subs_copy: $('#sbs-copy').val(), subs_auto: $('#sbs-auto').val(), subs_grace: $('#sbs-grace').val(),
+          subs_src: $('#sbs-src').val(), subs_osmax: $('#sbs-osmax').val(), subs_min: $('#sbs-min').val()}, function (r) {
+      $b.prop('disabled', false);
+      $('#sbs-smsg').attr('class', 'sbs-msg ' + (r.ok ? 'sbs-ok' : 'sbs-er')).text(r.ok ? T('subs.saved') : T('subs.not_saved', {e: errText(r.error)}));
+      if (r.ok) { $.getJSON(URL, {_: Date.now()}).done(function (d) { if (d && d.ok) { D = d; $('#sbs-set').empty(); render(); } }); }
+    });
+  });
+  load(); setInterval(function () { if (!CONF) { load(); } }, 30000);
+});
+</script>
+]]></INLINE>
+</FILE>
+
 <FILE Name="&plugdir;/notify_lib.php">
 <INLINE><![CDATA[<?php
 // Discord notifier helpers (Streambox): Hungarian cards for new movies and seasons.
@@ -8514,6 +10162,8 @@ cat > /boot/config/plugins/streambox/streambox.cron <<CRON
 */2 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/week_web.php >/dev/null 2>&1
 # Streambox: Hungarian descriptions, Claude translates English or empty ones (only when switched on; not 22-06)
 7,22,37,52 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/hu_run.php >/dev/null 2>&1
+# Streambox: Subtitler, new imports without a subtitle in the chosen language (worker in the claude container; only when switched on)
+4,19,34,49 * * * * $PHPBIN /usr/local/emhttp/plugins/streambox/subs_run.php >/dev/null 2>&1
 CRON
 # update_cron reads the plugin link in /var/log/plugins, which appears only after the install scripts
 # have finished, so wait for it in the background.

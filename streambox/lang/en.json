@@ -1651,5 +1651,591 @@
  "hu.dc_login": {
   "text": "⚠️ Hungarian descriptions stopped: Claude is not logged in. Log in again, then Retry on the Streambox page.",
   "note": "Discord daily line on a login problem"
+ },
+ "subs.intro": {
+  "text": "Subtitler: new movies and episodes without a subtitle in your language. After Bazarr had its chance, it finds a human subtitle (feliratok.eu for Hungarian, OpenSubtitles.com for every language) and aligns it to the video. Subtitles at or above the auto score are copied next to the video by themselves; the rest wait for your click. Nothing already there is ever replaced.",
+  "note": "intro line under the page title"
+ },
+ "subs.loading": {
+  "text": "Loading…",
+  "note": "placeholder while the page loads"
+ },
+ "subs.h.activity": {
+  "text": "Activity",
+  "note": "band title"
+ },
+ "subs.h.ready": {
+  "text": "Ready to copy",
+  "note": "band title: aligned human subtitles waiting to be copied next to the video"
+ },
+ "subs.h.wait": {
+  "text": "Waiting for Bazarr",
+  "note": "band title: new imports, Bazarr gets some minutes first"
+ },
+ "subs.h.none": {
+  "text": "No human subtitle",
+  "note": "band title: nothing found on the sites"
+ },
+ "subs.h.settings": {
+  "text": "Settings",
+  "note": "band title"
+ },
+ "subs.season": {
+  "text": "{t} · Season {n}",
+  "note": "one season of a series as a group title; t = series, n = season number"
+ },
+ "subs.translator": {
+  "text": "translator: {n}",
+  "note": "n = the translator's name as on the site or in the subtitle"
+ },
+ "subs.score": {
+  "text": "timing score {n} %",
+  "note": "how well the subtitle lines fit the English lines of the video"
+ },
+ "subs.fps_fixed": {
+  "text": "frame rate fixed",
+  "note": "the subtitle was made for 25 fps and was stretched to 23.976 (or back)"
+ },
+ "subs.offset": {
+  "text": "shifted {s} s",
+  "note": "s = seconds, with sign"
+ },
+ "subs.source": {
+  "text": "source",
+  "note": "link to the subtitle's page on the site"
+ },
+ "subs.step_ref": {
+  "text": "reading the English subtitle of the video",
+  "note": "running step; reads the whole video file, can take minutes"
+ },
+ "subs.step_search": {
+  "text": "searching feliratok.eu and OpenSubtitles",
+  "note": "running step"
+ },
+ "subs.step_align": {
+  "text": "aligning the candidates to the video",
+  "note": "running step"
+ },
+ "subs.running": {
+  "text": "running",
+  "note": "status chip"
+ },
+ "subs.failed": {
+  "text": "failed",
+  "note": "status chip"
+ },
+ "subs.err_fel": {
+  "text": "feliratok.eu does not answer",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_fel": {
+  "text": "The search goes on with OpenSubtitles; feliratok.eu is tried again in the next run.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_auth": {
+  "text": "OpenSubtitles refused the API key or the login",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_os_auth": {
+  "text": "Write the key again in the claude container: sh /mnt/user/data/DEV/os_key.sh. feliratok.eu still works.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_quota": {
+  "text": "OpenSubtitles: no downloads left today",
+  "note": "error row / Discord line; the daily download limit of the account is used up"
+ },
+ "subs.err_hint_os_quota": {
+  "text": "The account has 20 downloads a day, shared with Bazarr. Tomorrow it goes on.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_net": {
+  "text": "OpenSubtitles does not answer",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_os_net": {
+  "text": "Tried again in the next run.",
+  "note": "hint under the error"
+ },
+ "subs.err_os_nokey": {
+  "text": "No OpenSubtitles key",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_os_nokey": {
+  "text": "Write it in the claude container: sh /mnt/user/data/DEV/os_key.sh, or choose feliratok.eu only in Settings.",
+  "note": "hint under the error"
+ },
+ "subs.err_run_docker": {
+  "text": "Docker is not available",
+  "note": "error row: the run could not start the worker"
+ },
+ "subs.err_run_ctstop": {
+  "text": "The claude container is not running",
+  "note": "error row / Discord line: the worker runs in it"
+ },
+ "subs.err_run_timeout": {
+  "text": "The last run took too long and was stopped",
+  "note": "error row / Discord line"
+ },
+ "subs.err_run_answer": {
+  "text": "The worker in the claude container gave no answer",
+  "note": "error row / Discord line; the script is missing or failed"
+ },
+ "subs.err_jf": {
+  "text": "Jellyfin did not answer: new imports are not seen now",
+  "note": "error row"
+ },
+ "subs.off": {
+  "text": "The subtitle search is off (Settings)",
+  "note": "activity row when switched off"
+ },
+ "subs.idle": {
+  "text": "Nothing to do now",
+  "note": "activity row when idle"
+ },
+ "subs.last_run": {
+  "text": "last run {t}",
+  "note": "t = date and time"
+ },
+ "subs.done_copied": {
+  "text": "copied in",
+  "note": "finished item: our subtitle is next to the video"
+ },
+ "subs.done_has_hu": {
+  "text": "got a {lang} subtitle from elsewhere (Bazarr)",
+  "note": "finished item"
+ },
+ "subs.done_skip": {
+  "text": "skipped",
+  "note": "finished item: the owner chose to keep it without"
+ },
+ "subs.done_gone": {
+  "text": "the video is gone",
+  "note": "finished item: the file was deleted or replaced"
+ },
+ "subs.done_givenup": {
+  "text": "given up after 30 days",
+  "note": "finished item: searched 30 days in vain"
+ },
+ "subs.auto": {
+  "text": "by itself",
+  "note": "a copy made without a click, at the auto score"
+ },
+ "subs.finished": {
+  "text": "Finished",
+  "note": "foldable bar title"
+ },
+ "subs.n7": {
+  "one": "{n} in 7 days",
+  "other": "{n} in 7 days",
+  "note": "foldable bar count"
+ },
+ "subs.n_running": {
+  "one": "{n} running",
+  "other": "{n} running",
+  "note": "band state"
+ },
+ "subs.ready_lead": {
+  "text": "Human subtitles aligned to the video. At {n} % and above they go in by themselves; these wait for you. Copy in puts a .{code}.srt next to each video and never replaces a file.",
+  "note": "lead line of the band; n = the auto score"
+ },
+ "subs.copy_all": {
+  "text": "Copy in all",
+  "note": "main button"
+ },
+ "subs.all_label": {
+  "one": "{n} subtitle",
+  "other": "{n} subtitles",
+  "note": "what Copy in all copies, in the confirm text"
+ },
+ "subs.copy": {
+  "text": "Copy in",
+  "note": "button: copy the subtitle next to the video"
+ },
+ "subs.skip": {
+  "text": "Skip",
+  "note": "button: do not copy this one"
+ },
+ "subs.n_files": {
+  "one": "{n} file",
+  "other": "{n} files",
+  "note": "count of subtitle files"
+ },
+ "subs.lowest": {
+  "text": "lowest {n} %",
+  "note": "the lowest timing score in the group"
+ },
+ "subs.episodes": {
+  "text": "Episode by episode",
+  "note": "foldable bar title"
+ },
+ "subs.ready_none": {
+  "text": "Nothing waits for you.",
+  "note": "empty state of the band"
+ },
+ "subs.st_last": {
+  "text": "Last run {t}",
+  "note": "status strip; t is bold"
+ },
+ "subs.st_os": {
+  "text": "OpenSubtitles downloads today {n} / {m}",
+  "note": "status strip: used / allowed for this tool"
+ },
+ "subs.wait_lead": {
+  "text": "Imports without a {lang} subtitle. Bazarr searches at import; this tool waits {n} minutes so it does not use the OpenSubtitles downloads twice.",
+  "note": "lead line; n = minutes"
+ },
+ "subs.searching": {
+  "text": "searching now",
+  "note": "item state"
+ },
+ "subs.wait_from": {
+  "text": "imported {a} · search from {t}",
+  "note": "a, t = date and time"
+ },
+ "subs.search_now": {
+  "text": "Search now",
+  "note": "button"
+ },
+ "subs.new_imports": {
+  "text": "New imports",
+  "note": "foldable bar title"
+ },
+ "subs.wait_band": {
+  "text": "{n} · {m} min",
+  "note": "band state: n items, m minutes wait"
+ },
+ "subs.none_lead": {
+  "text": "Nothing fitting on feliratok.eu or OpenSubtitles. Searched again every 6 hours for 7 days, then daily until 30 days.",
+  "note": "lead line of the band"
+ },
+ "subs.noref": {
+  "text": "no English subtitle in the video to align to (Bazarr's audio sync can help)",
+  "note": "reason"
+ },
+ "subs.givenup": {
+  "text": "searched {n} times in 30 days, given up",
+  "note": "reason"
+ },
+ "subs.next_try": {
+  "text": "searched {n} times · next {t}",
+  "note": "reason"
+ },
+ "subs.best_low": {
+  "text": "best fit only {n} %",
+  "note": "a subtitle was found but fits too badly"
+ },
+ "subs.keep_without": {
+  "text": "Keep without",
+  "note": "button: stop searching for this one"
+ },
+ "subs.not_found": {
+  "text": "Not found",
+  "note": "foldable bar title"
+ },
+ "subs.confirm": {
+  "text": "Copy {n} subtitle file(s) next to the videos of {l}? A {lang} subtitle already there is not replaced.",
+  "note": "inline confirmation"
+ },
+ "subs.cancel": {
+  "text": "Cancel",
+  "note": "button"
+ },
+ "subs.s_on": {
+  "text": "Background search",
+  "note": "setting label"
+ },
+ "subs.on": {
+  "text": "On",
+  "note": "select option"
+ },
+ "subs.off_s": {
+  "text": "Off",
+  "note": "select option / band state"
+ },
+ "subs.s_on_hint": {
+  "text": "Looks at new imports every 15 minutes.",
+  "note": "setting hint"
+ },
+ "subs.s_copy": {
+  "text": "Copy in",
+  "note": "setting label"
+ },
+ "subs.copy_auto": {
+  "text": "By itself at",
+  "note": "select option, followed by a percent field"
+ },
+ "subs.copy_ask": {
+  "text": "Always ask",
+  "note": "select option"
+ },
+ "subs.s_copy_hint": {
+  "text": "A subtitle with at least this timing score goes in by itself; below it waits for your click.",
+  "note": "setting hint"
+ },
+ "subs.s_grace": {
+  "text": "Bazarr first",
+  "note": "setting label"
+ },
+ "subs.minutes": {
+  "text": "minutes",
+  "note": "unit"
+ },
+ "subs.s_grace_hint": {
+  "text": "Bazarr searches right at import; this lets it finish first.",
+  "note": "setting hint"
+ },
+ "subs.s_src": {
+  "text": "Sources",
+  "note": "setting label"
+ },
+ "subs.src_both": {
+  "text": "feliratok.eu + OpenSubtitles",
+  "note": "select option"
+ },
+ "subs.src_fel": {
+  "text": "feliratok.eu only",
+  "note": "select option"
+ },
+ "subs.per_day": {
+  "text": "OpenSubtitles downloads a day",
+  "note": "unit after a number field"
+ },
+ "subs.s_src_hint": {
+  "text": "OpenSubtitles uses your key: 20 downloads a day, shared with Bazarr. This tool takes at most this many.",
+  "note": "setting hint"
+ },
+ "subs.s_min": {
+  "text": "Lowest timing score",
+  "note": "setting label"
+ },
+ "subs.s_min_hint": {
+  "text": "A subtitle below it is not offered: the item goes to No human subtitle.",
+  "note": "setting hint"
+ },
+ "subs.s_dc_hint": {
+  "text": "Discord: one summary a day after 09:00 on the channel of the Hungarian descriptions (Streambox settings); errors at once.",
+  "note": "hint above the Save button"
+ },
+ "subs.save": {
+  "text": "Save",
+  "note": "button"
+ },
+ "subs.sum_auto": {
+  "text": "by itself at {n} %",
+  "note": "band state"
+ },
+ "subs.sum_ask": {
+  "text": "always asks",
+  "note": "band state"
+ },
+ "subs.e_load": {
+  "text": "The page could not load the list: {e}",
+  "note": "error"
+ },
+ "subs.copied_n": {
+  "one": "{n} subtitle copied in",
+  "other": "{n} subtitles copied in",
+  "note": "message after Copy in"
+ },
+ "subs.copy_fail": {
+  "text": "Copied in: {n}. Not copied: {e}",
+  "note": "error after Copy in"
+ },
+ "subs.op_fail": {
+  "text": "Did not work: {e}",
+  "note": "error after a button"
+ },
+ "subs.saved": {
+  "text": "Saved",
+  "note": "message"
+ },
+ "subs.not_saved": {
+  "text": "Not saved: {e}",
+  "note": "message"
+ },
+ "subs.e_other": {
+  "text": "unknown error",
+  "note": "error reason"
+ },
+ "subs.e_state": {
+  "text": "it is not waiting for a copy any more",
+  "note": "error reason"
+ },
+ "subs.e_nofile": {
+  "text": "the aligned subtitle file is missing",
+  "note": "error reason"
+ },
+ "subs.e_novideo": {
+  "text": "the video is not there any more",
+  "note": "error reason"
+ },
+ "subs.e_exists": {
+  "text": "a {lang} subtitle is already next to the video",
+  "note": "error reason; nothing is overwritten"
+ },
+ "subs.e_copy": {
+  "text": "the file could not be written",
+  "note": "error reason"
+ },
+ "subs.e_gone": {
+  "text": "the item is not in the list any more",
+  "note": "error reason"
+ },
+ "subs.e_write": {
+  "text": "could not write the file",
+  "note": "error reason"
+ },
+ "subs.e_bad": {
+  "text": "bad request",
+  "note": "error reason"
+ },
+ "subs.e_csrf": {
+  "text": "the page is old, reload it",
+  "note": "error reason"
+ },
+ "subs.e_value": {
+  "text": "a number is out of range",
+  "note": "error reason"
+ },
+ "subs.e_min_auto": {
+  "text": "the lowest score cannot be above the auto score",
+  "note": "error reason"
+ },
+ "subs.dc_head": {
+  "text": "**{lang_cap} subtitles, last 24 hours**",
+  "note": "Discord: first line of the daily summary (Markdown bold)"
+ },
+ "subs.dc_err_head": {
+  "text": "**{lang_cap} subtitles: problem**",
+  "note": "Discord: first line of an error message"
+ },
+ "subs.dc_auto": {
+  "one": "Copied in by itself: {list}",
+  "other": "Copied in by itself ({n}): {list}",
+  "note": "Discord line of the daily summary; list = titles"
+ },
+ "subs.dc_hand": {
+  "one": "Copied in by you: {list}",
+  "other": "Copied in by you ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.dc_ready": {
+  "one": "Waits for your click: {list}",
+  "other": "Wait for your click ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.dc_none": {
+  "one": "No human subtitle yet: {list}",
+  "other": "No human subtitle yet ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.dc_bazarr": {
+  "one": "Bazarr found it: {list}",
+  "other": "Bazarr found them ({n}): {list}",
+  "note": "Discord line"
+ },
+ "subs.lang.hu": {
+  "text": "Hungarian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.en": {
+  "text": "English",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.de": {
+  "text": "German",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.fr": {
+  "text": "French",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.es": {
+  "text": "Spanish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.it": {
+  "text": "Italian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.nl": {
+  "text": "Dutch",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.pl": {
+  "text": "Polish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.cs": {
+  "text": "Czech",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sk": {
+  "text": "Slovak",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.ro": {
+  "text": "Romanian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.pt": {
+  "text": "Portuguese",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sv": {
+  "text": "Swedish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.da": {
+  "text": "Danish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.no": {
+  "text": "Norwegian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.fi": {
+  "text": "Finnish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.el": {
+  "text": "Greek",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.tr": {
+  "text": "Turkish",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.hr": {
+  "text": "Croatian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sr": {
+  "text": "Serbian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.sl": {
+  "text": "Slovenian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.bg": {
+  "text": "Bulgarian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.ru": {
+  "text": "Russian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.lang.uk": {
+  "text": "Ukrainian",
+  "note": "language name: the subtitle language setting; used inside sentences ({lang}), so in Hungarian lower case"
+ },
+ "subs.s_lang": {
+  "text": "Language",
+  "note": "setting label: the subtitle language"
+ },
+ "subs.s_lang_hint": {
+  "text": "The subtitles are searched in this language. feliratok.eu is used only for Hungarian; every other language comes from OpenSubtitles.",
+  "note": "setting hint"
  }
 }
