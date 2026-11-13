@@ -3,7 +3,7 @@
 # marker) back into dist/streambox.plg, adds the files listed in NEW that are not in it yet, and bumps the version.
 import re,sys,os
 D=os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..'))+'/'
-NEW=['hu_lib.php','hu_run.php','hu.php','week_lib.php','week.php','week_late.php','week_web.php','week_web.js','jx_lib.php','jx_web.js','lang.php','lang_block.php','lang_save.php','i18n.php','lang/en.json','lang/hu.json']
+NEW=['hu_lib.php','hu_run.php','hu.php','subs_lib.php','subs_run.php','subs.php','StreamboxSubs.page','week_lib.php','week.php','week_late.php','week_web.php','week_web.js','jx_lib.php','jx_web.js','lang.php','lang_block.php','lang_save.php','i18n.php','lang/en.json','lang/hu.json']
 COMMON=['lang.php','lang_block.php','lang_save.php','i18n.php']   # shared with the other plugins: taken from common/   # inserted before notify_lib.php when missing
 ver,change=sys.argv[1],sys.argv[2]
 P=D+'dist/streambox.plg'
@@ -11,7 +11,7 @@ s=open(P,encoding='utf-8').read()
 
 def src(f):
     t=open(D+('common/' if f in COMMON else 'streambox/')+f,encoding='utf-8').read()
-    if f=='streambox.page': t=t.replace('/*@@TILE_CSS@@*/',open(D+'common/tile.css',encoding='utf-8').read().strip())
+    if f in ('streambox.page','StreamboxSubs.page'): t=t.replace('/*@@TILE_CSS@@*/',open(D+'common/tile.css',encoding='utf-8').read().strip())
     assert ']]>' not in t, f
     return t
 
