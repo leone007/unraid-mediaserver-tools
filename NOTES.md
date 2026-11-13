@@ -400,3 +400,5 @@ Streambox Hungarian descriptions (item 147, 2026.10.14zy): hu_lib.php / hu_run.p
 - Language (owner 2026-11-13, the repo is public): `subs_lang` (ISO 639-1, 24 languages; the code list is in subs_lib.php and subs_auto.py, keep them equal). feliratok.eu only for hu. Output `.<lang>.srt`.
 
 - Jellyfin Next Up (2026-11-13, Justified): the next episode after the HIGHEST-numbered played episode of the series, not the last one watched; a misclick that marks a later season played pins Next Up there. Fix: mark that season unplayed (season menu), Kodi/Kofin follows.
+
+- Subtitle translation experiment (item 163, 2026-11-13, /work/subsync/corpus): general rules learned from professional English+Hungarian pairs help (avg chrF +0.6, 4 of 5 series); a style "profile" written by the model hurts (avg -0.9); a series glossary does not raise chrF but makes terms consistent. "Translate by function, shorter" pulls away from literal translators (MobLand): shorten only when the reading time needs it. One-reference chrF varies 0.1-0.7 between identical runs and more between prompts: compare averages over several series, never one series.
