@@ -1653,7 +1653,7 @@
   "note": "Discord daily line on a login problem"
  },
  "subs.intro": {
-  "text": "Subtitler: new movies and episodes without a subtitle in your language. After Bazarr had its chance, it finds a human subtitle (feliratok.eu for Hungarian, OpenSubtitles.com for every language) and aligns it to the video. Subtitles at or above the auto score are copied next to the video by themselves; the rest wait for your click. Nothing already there is ever replaced.",
+  "text": "Subtitler: new movies and episodes without a subtitle in your language. After Bazarr had its chance, it finds a human subtitle (feliratok.eu for Hungarian, OpenSubtitles.com for every language) and aligns it to the video; when there is none, Claude translates the English one. Subtitles at or above the auto score are copied next to the video by themselves; the rest wait for your click. Nothing already there is ever replaced.",
   "note": "intro line under the page title"
  },
  "subs.loading": {
@@ -1835,7 +1835,7 @@
   "note": "band state"
  },
  "subs.ready_lead": {
-  "text": "Human subtitles aligned to the video. At {n} % and above they go in by themselves; these wait for you. Copy in puts a .{code}.srt next to each video and never replaces a file.",
+  "text": "Aligned human subtitles and Claude translations. At {n} % and above they go in by themselves; these wait for you. Copy in puts a .{code}.srt (Claude: .{code}.claude.srt) next to each video and never replaces a file.",
   "note": "lead line of the band; n = the auto score"
  },
  "subs.copy_all": {
@@ -2237,5 +2237,128 @@
  "subs.s_lang_hint": {
   "text": "The subtitles are searched in this language. feliratok.eu is used only for Hungarian; every other language comes from OpenSubtitles.",
   "note": "setting hint"
+ },
+ "subs.done_audio": {
+  "text": "the audio is already {lang}: no subtitle needed",
+  "note": "finished item: e.g. a Hungarian TV recording needs no Hungarian subtitle; lang = language name"
+ },
+ "subs.tl_running": {
+  "text": "Claude is translating",
+  "note": "activity row: a Claude translation of this episode is running"
+ },
+ "subs.tl_step_start": {
+  "text": "starting",
+  "note": "translation step"
+ },
+ "subs.tl_step_research": {
+  "text": "reading up on the plot and the characters",
+  "note": "translation step"
+ },
+ "subs.tl_step_translate": {
+  "text": "translating, {d} of {t} lines done",
+  "note": "translation step"
+ },
+ "subs.tl_step_revise": {
+  "text": "fixing the lines the check flagged",
+  "note": "translation step"
+ },
+ "subs.by_claude": {
+  "text": "Claude translation · quality {n} %",
+  "note": "source line of a Claude translation; quality = share of lines without a remark"
+ },
+ "subs.tl_remarks": {
+  "text": "{r} of {l} lines with a remark",
+  "note": "lines the check flagged after the fix round"
+ },
+ "subs.over_claude": {
+  "text": "A human subtitle for an episode Claude translated: look at it before copying (both files stay).",
+  "note": "note on a ready row; it is never copied by itself"
+ },
+ "subs.tl_wait": {
+  "text": "Claude translates it next",
+  "note": "item state: queued for a Claude translation"
+ },
+ "subs.translate_now": {
+  "text": "Translate now",
+  "note": "button: queue a Claude translation first"
+ },
+ "subs.done_tlcopied": {
+  "text": "Claude translation copied in; the search for a human one goes on",
+  "note": "finished item"
+ },
+ "subs.noengtext": {
+  "text": "no English text subtitle in the video, Claude cannot translate it",
+  "note": "reason (only image subtitles)"
+ },
+ "subs.tl_failed": {
+  "text": "Claude translation failed: {e}",
+  "note": "reason"
+ },
+ "subs.none_lead_tl": {
+  "text": "Nothing fitting on feliratok.eu or OpenSubtitles. Claude translates these (the daily limit is in Settings); the search for a human subtitle goes on for 30 days.",
+  "note": "lead line when Claude translation is on"
+ },
+ "subs.s_tl": {
+  "text": "Claude translation",
+  "note": "setting label"
+ },
+ "subs.tl_auto": {
+  "text": "By itself",
+  "note": "select option"
+ },
+ "subs.tl_click": {
+  "text": "On click",
+  "note": "select option"
+ },
+ "subs.per_day_eps": {
+  "text": "episodes a day, with",
+  "note": "between the number field and the model select"
+ },
+ "subs.s_tl_hint": {
+  "text": "When no human subtitle is found, Claude translates the English one on its own timing (your Claude plan). Saved as .claude.srt; a human subtitle found later is offered next to it. Today: {n}.",
+  "note": "setting hint; n = translations started today"
+ },
+ "subs.model.claude-opus-5-5": {
+  "text": "Opus 5.5",
+  "note": "model name"
+ },
+ "subs.model.claude-sonnet-5-5": {
+  "text": "Sonnet 5.5 (uses less of the plan)",
+  "note": "model name"
+ },
+ "subs.err_claude_login": {
+  "text": "Claude is not logged in in the claude container",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_claude_login": {
+  "text": "Translations wait. Log in again in the container (/login); the search goes on meanwhile.",
+  "note": "hint"
+ },
+ "subs.err_claude_limit": {
+  "text": "The Claude plan limit is reached",
+  "note": "error row / Discord line"
+ },
+ "subs.err_hint_claude_limit": {
+  "text": "Translations wait and are tried again in an hour.",
+  "note": "hint"
+ },
+ "subs.dc_over_head": {
+  "text": "**{lang_cap} subtitles: a human one arrived**",
+  "note": "Discord: first line of the at-once message"
+ },
+ "subs.dc_claude_auto": {
+  "one": "Claude translated and copied in: {list}",
+  "other": "Claude translated and copied in ({n}): {list}",
+  "note": "Discord line; list = titles (translator in brackets)"
+ },
+ "subs.dc_claude_ready": {
+  "one": "Claude translation waits for your look: {list}",
+  "other": "Claude translations wait for your look ({n}): {list}",
+  "note": "Discord line; list = titles (translator in brackets)"
+ },
+ "subs.dc_over": {
+  "one": "Human subtitle for a Claude translation, look at it on the Subtitler page: {list}",
+  "other": "Human subtitles for Claude translations ({n}), look at them on the Subtitler page: {list}",
+  "note": "Discord line; list = titles (translator in brackets)"
  }
 }

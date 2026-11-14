@@ -14,6 +14,7 @@ const SUBS_MEDIA_CT = '/srv/data';
 const SUBS_WORK_CT = '/work/subsync';
 // the subtitle language (a setting since 2026-11-13: the repo is public, not every user is Hungarian): ISO 639-1 -> the
 // codes Jellyfin or a file name may carry it with (639-2 B and T, the English name); the same list is in subs_auto.py
+const SUBS_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5'];   // the Claude translation's model (a Subtitler setting)
 const SUBS_LANGS = ['hu' => 'hun hungarian magyar', 'en' => 'eng english', 'de' => 'ger deu german', 'fr' => 'fre fra french', 'es' => 'spa spanish',
     'it' => 'ita italian', 'nl' => 'dut nld dutch', 'pl' => 'pol polish', 'cs' => 'cze ces czech', 'sk' => 'slo slk slovak', 'ro' => 'rum ron romanian',
     'pt' => 'por portuguese', 'sv' => 'swe swedish', 'da' => 'dan danish', 'no' => 'nor nob norwegian', 'fi' => 'fin finnish', 'el' => 'gre ell greek',
@@ -22,7 +23,7 @@ const SUBS_LANGS = ['hu' => 'hun hungarian magyar', 'en' => 'eng english', 'de' 
 function subs_cfg_file() { return getenv('SB_SUBS_CFG') ?: '/boot/config/plugins/streambox/subs.cfg'; }
 function subs_cfg() {
     $c = ['subs_on' => '1', 'subs_lang' => 'hu', 'subs_copy' => 'auto', 'subs_auto' => '95', 'subs_grace' => '60', 'subs_src' => 'both', 'subs_min' => '85',
-          'subs_osmax' => '8', 'subs_dir' => '/mnt/user/data/DEV/subsync',
+          'subs_osmax' => '8', 'subs_tl' => 'auto', 'subs_tlmax' => '6', 'subs_tlmodel' => 'claude-opus-5-5', 'subs_dir' => '/mnt/user/data/DEV/subsync',
           'subs_script' => '/work/unraid-mediaserver-tools/.claude/skills/hu-subsync/scripts/subs_auto.py'];
     $f = subs_cfg_file();
     if (is_file($f)) { $x = @parse_ini_file($f, false, INI_SCANNER_RAW); if (is_array($x)) { $c = array_merge($c, $x); } }
@@ -31,6 +32,8 @@ function subs_cfg() {
     $c['subs_copy'] = $c['subs_copy'] === 'ask' ? 'ask' : 'auto';
     $c['subs_src'] = $c['subs_src'] === 'feliratok' ? 'feliratok' : 'both';
     if (!isset(SUBS_LANGS[$c['subs_lang']])) { $c['subs_lang'] = 'hu'; }
+    if (!in_array($c['subs_tl'], ['auto', 'click', 'off'], true)) { $c['subs_tl'] = 'auto'; }
+    if (!in_array($c['subs_tlmodel'], SUBS_MODELS, true)) { $c['subs_tlmodel'] = SUBS_MODELS[0]; }
     return $c;
 }
 // the settings the page may change, checked; returns the error key or ''
@@ -43,6 +46,9 @@ function subs_cfg_save($in) {
             'subs_auto' => $int('subs_auto', 85, 100), 'subs_grace' => $int('subs_grace', 0, 2880),
             'subs_src' => ($in['subs_src'] ?? $c['subs_src']) === 'feliratok' ? 'feliratok' : 'both',
             'subs_min' => $int('subs_min', 50, 100), 'subs_osmax' => $int('subs_osmax', 0, 20),
+            'subs_tl' => in_array($in['subs_tl'] ?? $c['subs_tl'], ['auto', 'click', 'off'], true) ? (string)($in['subs_tl'] ?? $c['subs_tl']) : null,
+            'subs_tlmax' => $int('subs_tlmax', 0, 50),
+            'subs_tlmodel' => in_array($in['subs_tlmodel'] ?? $c['subs_tlmodel'], SUBS_MODELS, true) ? (string)($in['subs_tlmodel'] ?? $c['subs_tlmodel']) : null,
             'subs_dir' => $c['subs_dir'], 'subs_script' => $c['subs_script']];
     foreach ($new as $v) { if ($v === null) { return 'value'; } }
     if ((int)$new['subs_min'] > (int)$new['subs_auto']) { return 'min_auto'; }
@@ -108,7 +114,8 @@ function subs_copy($cfg, $x, $auto) {
     $src = subs_host_path($cfg, $x['out'] ?? ''); $vid = subs_host_path($cfg, $x['video'] ?? '');
     if ($src === '' || !is_file($src)) { return 'nofile'; }
     if ($vid === '' || !is_file($vid)) { return 'novideo'; }
-    $dst = preg_replace('/\.[A-Za-z0-9]{2,4}$/', '', $vid) . '.' . $cfg['subs_lang'] . '.srt';
+    // a Claude translation is named as such (Jellyfin shows it as a subtitle in that language; Bazarr keeps looking for a human one)
+    $dst = preg_replace('/\.[A-Za-z0-9]{2,4}$/', '', $vid) . '.' . $cfg['subs_lang'] . ((($x['by'] ?? '') === 'claude') ? '.claude' : '') . '.srt';
     if (file_exists($dst)) { return 'exists'; }
     $tmp = $dst . '.sbtmp';
     if (!@copy($src, $tmp)) { @unlink($tmp); return 'copy'; }
@@ -118,7 +125,8 @@ function subs_copy($cfg, $x, $auto) {
     @chmod($dst, 0666); @chown($dst, 'nobody'); @chgrp($dst, 'users');
     subs_op($cfg, 'copied', $x['id'], ['auto' => $auto ? 1 : 0]);
     $lk = subs_lock(); $h = subs_host();
-    $h['copied'][] = ['id' => $x['id'], 'label' => (string)($x['label'] ?? ''), 't' => time(), 'auto' => $auto ? 1 : 0, 'score' => (int)($x['score'] ?? 0)];
+    $h['copied'][] = ['id' => $x['id'], 'label' => (string)($x['label'] ?? ''), 't' => time(), 'auto' => $auto ? 1 : 0, 'score' => (int)($x['score'] ?? 0),
+                      'claude' => (($x['by'] ?? '') === 'claude') ? 1 : 0];
     $h['copied'] = array_values(array_filter($h['copied'], function ($c) { return ($c['t'] ?? 0) > time() - 30 * 86400; }));
     subs_host_save($h); subs_unlock($lk);
     return '';
@@ -172,7 +180,8 @@ function subs_scan($cfg, $now) {
 // [answer array or null, error code '' | 'docker' | 'ctstop' | 'timeout' | 'answer', detail]
 function subs_worker($cfg, $items, $now) {
     $in = json_encode(['now' => $now, 'items' => $items, 'cfg' => ['grace_min' => (int)$cfg['subs_grace'], 'min_score' => (int)$cfg['subs_min'],
-                       'sources' => $cfg['subs_src'], 'os_max' => (int)$cfg['subs_osmax'], 'budget_s' => 600, 'lang' => $cfg['subs_lang']]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                       'sources' => $cfg['subs_src'], 'os_max' => (int)$cfg['subs_osmax'], 'budget_s' => 600, 'lang' => $cfg['subs_lang'], 'audio_skip' => 1,
+                       'tl' => $cfg['subs_tl'], 'tl_max' => (int)$cfg['subs_tlmax'], 'tl_model' => $cfg['subs_tlmodel']]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $fake = getenv('SB_SUBS_FAKE');   // tests: a command that reads the same stdin (python3 subs_auto.py tick)
     $d = $fake ? '' : hu_docker();
     if (!$fake && $d === '') { return [null, 'docker', '']; }
@@ -202,12 +211,14 @@ function subs_tick($cfg, $now) {
     if ($cfg['subs_copy'] === 'auto') {
         $st = subs_state($cfg); $pend = subs_pending($cfg);
         foreach ($st['items'] as $x) {
-            if (($x['st'] ?? '') === 'ready' && (int)($x['score'] ?? 0) >= (int)$cfg['subs_auto'] && !isset($pend[$x['id']]) && empty($x['nocopy'])) {
+            // a human subtitle for an episode Claude translated is never copied by itself (owner 2026-11-13: he decides)
+            if (($x['st'] ?? '') === 'ready' && (int)($x['score'] ?? 0) >= (int)$cfg['subs_auto'] && !isset($pend[$x['id']]) && empty($x['nocopy']) && empty($x['over_claude'])) {
                 subs_copy($cfg, $x, true);
             }
         }
     }
     subs_dc_errors($cfg, $now, $err);
+    subs_dc_over($cfg, $now);
     subs_daily($cfg, $now);
 }
 
@@ -240,6 +251,20 @@ function subs_dc_errors($cfg, $now, $runErr) {
 }
 // {lang} and {lang_cap} (sentence start: "Magyar feliratok") in the Discord language
 function subs_lang_vars($cfg) { $l = hu_dc_t('subs.lang.' . $cfg['subs_lang']); return ['lang' => $l, 'lang_cap' => mb_strtoupper(mb_substr($l, 0, 1)) . mb_substr($l, 1)]; }
+// at once (a decision): a human subtitle turned up for an episode Claude translated; each item once
+function subs_dc_over($cfg, $now) {
+    if (hu_quiet($now)) { return; }
+    $st = subs_state($cfg); $lk = subs_lock(); $h = subs_host(); $new = [];
+    $sent = (array)($h['dc_over'] ?? []);
+    foreach ($st['items'] as $x) { if (($x['st'] ?? '') === 'ready' && !empty($x['over_claude']) && !isset($sent[$x['id']])) { $new[] = $x; } }
+    if (!$new) { subs_unlock($lk); return; }
+    $tr = [];
+    foreach ($new as $x) { $t = (string)($x['src']['translator'] ?? ''); $tr[] = (string)$x['label'] . ($t !== '' ? ' (' . $t . ')' : ''); }
+    $code = subs_dc_send($cfg, hu_dc_t('subs.dc_over_head', subs_lang_vars($cfg)) . "\n" . hu_dc_t('subs.dc_over', ['n' => count($new), 'list' => subs_list($tr)]));
+    if (($code >= 200 && $code < 300) || $code === 0) { foreach ($new as $x) { $sent[$x['id']] = $now; } }
+    $h['dc_over'] = array_filter($sent, function ($t) use ($now) { return $t > $now - 40 * 86400; });
+    subs_host_save($h); subs_unlock($lk);
+}
 function subs_list($a, $max = 8) { return implode(', ', array_slice($a, 0, $max)) . (count($a) > $max ? ' …' : ''); }
 // episodes of one season in one entry: "Tulsa King S01 (9)"
 function subs_group_labels($xs) {
@@ -258,16 +283,22 @@ function subs_daily($cfg, $now) {
     if ($h['dc_day'] === $today || (int)date('G', $now) < 9 || hu_quiet($now)) { return; }
     $st = subs_state($cfg); $since = $now - 86400; $pend = subs_pending($cfg);
     $copiedIds = array_flip(array_map(function ($c) { return (string)$c['id']; }, $h['copied']));
-    $auto = []; $hand = []; $ready = []; $none = []; $bazarr = [];
-    foreach ($h['copied'] as $c) { if (($c['t'] ?? 0) > $since) { $x = $st['items'][$c['id']] ?? ['label' => $c['label']]; if (!empty($c['auto'])) { $auto[] = $x; } else { $hand[] = $x; } } }
+    $auto = []; $hand = []; $ready = []; $none = []; $bazarr = []; $cauto = []; $cready = [];
+    foreach ($h['copied'] as $c) {
+        if (($c['t'] ?? 0) <= $since) { continue; }
+        $x = $st['items'][$c['id']] ?? ['label' => $c['label']];
+        if (!empty($c['claude']) && !empty($c['auto'])) { $cauto[] = $x; } elseif (!empty($c['auto'])) { $auto[] = $x; } else { $hand[] = $x; }
+    }
     foreach ($st['items'] as $x) {
         $s = $x['st'] ?? '';
-        if ($s === 'ready' && !isset($pend[$x['id']]) && !isset($copiedIds[$x['id']])) { $ready[] = $x; }
-        elseif (in_array($s, ['nohuman', 'noref'], true) && ($x['found'] ?? 0) > $since) { $none[] = $x; }
+        if ($s === 'ready' && !isset($pend[$x['id']]) && !isset($copiedIds[$x['id']]) && empty($x['over_claude'])) { if (($x['by'] ?? '') === 'claude') { $cready[] = $x; } else { $ready[] = $x; } }
+        elseif (in_array($s, ['nohuman', 'noref', 'tl_wait', 'tl_run'], true) && ($x['found'] ?? 0) > $since) { $none[] = $x; }
         elseif ($s === 'has_hu' && ($x['t'] ?? 0) > $since) { $bazarr[] = $x; }
     }
     $lines = [];
     if ($auto) { $lines[] = hu_dc_t('subs.dc_auto', ['n' => count($auto), 'list' => subs_list(subs_group_labels($auto))]); }
+    if ($cauto) { $lines[] = hu_dc_t('subs.dc_claude_auto', ['n' => count($cauto), 'list' => subs_list(subs_group_labels($cauto))]); }
+    if ($cready) { $lines[] = hu_dc_t('subs.dc_claude_ready', ['n' => count($cready), 'list' => subs_list(subs_group_labels($cready))]); }
     if ($hand) { $lines[] = hu_dc_t('subs.dc_hand', ['n' => count($hand), 'list' => subs_list(subs_group_labels($hand))]); }
     if ($ready) { $lines[] = hu_dc_t('subs.dc_ready', ['n' => count($ready), 'list' => subs_list(subs_group_labels($ready))]); }
     if ($none) { $lines[] = hu_dc_t('subs.dc_none', ['n' => count($none), 'list' => subs_list(subs_group_labels($none))]); }

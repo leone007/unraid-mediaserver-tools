@@ -101,13 +101,17 @@ $(function () {
     return g;
   }
   function srcLine(r) {
+    if (r.by === 'claude') {   // a Claude translation: its quality, not a timing score
+      return esc(T('subs.by_claude', {n: r.score}) + (r.tl_remarks ? ' · ' + T('subs.tl_remarks', {r: r.tl_remarks, l: r.tl_lines}) : ''));
+    }
     var s = r.site === 'opensubtitles' ? 'OpenSubtitles' : (r.site || '');
     var p = [s];
     if (r.translator) { p.push(T('subs.translator', {n: r.translator})); }
     p.push(T('subs.score', {n: r.score}));
     if (Math.abs(r.ratio - 1) > 0.001) { p.push(T('subs.fps_fixed')); }
     if (Math.abs(r.offset) >= 0.1) { p.push(T('subs.offset', {s: (r.offset > 0 ? '+' : '') + r.offset.toFixed(1)})); }
-    return esc(p.join(' · ')) + (r.url ? ' · <a class="sbs-link" href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(T('subs.source')) + '</a>' : '');
+    return esc(p.join(' · ')) + (r.url ? ' · <a class="sbs-link" href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(T('subs.source')) + '</a>' : '')
+      + (r.over ? '<br><b>' + esc(T('subs.over_claude')) + '</b>' : '');
   }
   function LN() { return T('subs.lang.' + D.cfg.subs_lang); }   // the subtitle language's name
   function render() {
@@ -115,12 +119,17 @@ $(function () {
     $.each(d.rows, function (i, r) {
       if (r.st === 'ready') { by.ready.push(r); }
       else if (r.st === 'wait' || r.st === 'search') { by.wait.push(r); }
-      else if (r.st === 'nohuman' || r.st === 'noref' || r.st === 'givenup') { by.none.push(r); }
+      else if (r.st === 'nohuman' || r.st === 'noref' || r.st === 'givenup' || r.st === 'tl_wait') { by.none.push(r); }
+      else if (r.st === 'tl_run') { by.tl = r; }
       else { by.done.push(r); }
     });
     // Activity: the running step, errors, the finished ones folded
     var a = '';
     if (d.run) { a += row('blue', esc(d.run.label), esc(T('subs.step_' + d.run.step)), '<span class="sbs-chip b">' + esc(T('subs.running')) + '</span>'); }
+    if (by.tl) {
+      var ts = by.tl.tl_step || {}, stp = ts.step === 'translate' && ts.total ? T('subs.tl_step_translate', {d: ts.done || 0, t: ts.total}) : T('subs.tl_step_' + (ts.step || 'start'));
+      a += row('blue', esc(by.tl.label), esc(T('subs.tl_running') + ' · ' + stp), '<span class="sbs-chip b">' + esc(T('subs.running')) + '</span>');
+    }
     $.each(d.err, function (i, e) { a += row('red', esc(T('subs.err_' + e)), esc(T('subs.err_hint_' + e)), '<span class="sbs-chip r">' + esc(T('subs.failed')) + '</span>'); });
     if (d.last_err) { a += row('red', esc(T('subs.err_run_' + d.last_err)), '', '<span class="sbs-chip r">' + esc(T('subs.failed')) + '</span>'); }
     if (!d.jf) { a += row('red', esc(T('subs.err_jf')), '', ''); }
@@ -129,12 +138,12 @@ $(function () {
     else if (!a) { a += row('grey', esc(T('subs.idle')), esc(T('subs.last_run', {t: tm(d.last)})), ''); }
     var fin = '';
     $.each(by.done.slice().sort(function (x, y) { return y.t - x.t; }), function (i, r) {
-      var stripe = r.st === 'copied' ? 'green' : (r.st === 'has_hu' ? 'green' : 'grey');
+      var stripe = (r.st === 'copied' || r.st === 'has_hu' || r.st === 'tlcopied') ? 'green' : 'grey';
       fin += row(stripe, esc(r.label), esc(T('subs.done_' + r.st, {lang: LN()}) + (r.auto ? ' · ' + T('subs.auto') : '') + ' · ' + tm(r.t)), '');
     });
     if (fin) { a += cat('fin', T('subs.finished'), T('subs.n7', {n: by.done.length}), fin); }
     $('#sbs-act').html(a);
-    $('#sbs-aband').text(d.run ? T('subs.n_running', {n: 1}) : T('subs.last_run', {t: tm(d.last)}));
+    $('#sbs-aband').text((d.run || by.tl) ? T('subs.n_running', {n: (d.run ? 1 : 0) + (by.tl ? 1 : 0)}) : T('subs.last_run', {t: tm(d.last)}));
     // Ready to copy: one row per season or movie, the episodes folded under it
     var gs = groups(by.ready), h = '', all = [];
     $.each(by.ready, function (i, r) { all.push(r.id); });
@@ -144,7 +153,7 @@ $(function () {
         var ids = [], min = 100, eps = '';
         $.each(g.rows, function (j, r) {
           ids.push(r.id); min = Math.min(min, r.score);
-          eps += row(r.score >= d.cfg.subs_auto ? 'grey' : 'amber', esc(r.label), srcLine(r),
+          eps += row(r.over ? 'amber' : (r.score >= d.cfg.subs_auto ? 'grey' : 'amber'), esc(r.label), srcLine(r),
             btn('sbs-copy', T('subs.copy'), {id: r.id, label: r.label}) + btn('sbs-op', T('subs.skip'), {op: 'skip', id: r.id}, true));
         });
         var first = g.rows[0];
@@ -170,12 +179,15 @@ $(function () {
     $('#sbs-wait').html(w);
     $('#sbs-wband').text(T('subs.wait_band', {n: by.wait.length, m: d.cfg.subs_grace}));
     // No human subtitle
-    var n = '<div class="sbs-lead"><p>' + esc(T('subs.none_lead')) + '</p></div>', nr = '';
+    var n = '<div class="sbs-lead"><p>' + esc(T(d.cfg.subs_tl === 'off' ? 'subs.none_lead' : 'subs.none_lead_tl')) + '</p></div>', nr = '';
     $.each(by.none, function (i, r) {
-      var why = r.st === 'noref' ? T('subs.noref') : (r.st === 'givenup' ? T('subs.givenup', {n: r.tries}) : T('subs.next_try', {n: r.tries, t: tm(r.next)}));
+      var why = r.st === 'noref' ? T('subs.noref') : (r.st === 'givenup' ? T('subs.givenup', {n: r.tries}) : (r.st === 'tl_wait' ? T('subs.tl_wait') : T('subs.next_try', {n: r.tries, t: tm(r.next)})));
       if (r.best) { why += ' · ' + T('subs.best_low', {n: r.best}); }
-      nr += row(r.st === 'noref' ? 'red' : 'amber', esc(r.label), esc(why),
-        btn('sbs-op', T('subs.search_now'), {op: 'search', id: r.id}, true) + btn('sbs-op', T('subs.keep_without'), {op: 'skip', id: r.id}, true));
+      if (r.noeng) { why += ' · ' + T('subs.noengtext'); }
+      else if (r.tl_err && r.st !== 'tl_wait') { why += ' · ' + T('subs.tl_failed', {e: r.tl_err}); }
+      var tl = (d.cfg.subs_tl !== 'off' && r.st !== 'tl_wait' && r.st !== 'noref' && !r.noeng) ? btn('sbs-op', T('subs.translate_now'), {op: 'translate', id: r.id}, true) : '';
+      nr += row(r.st === 'noref' ? 'red' : (r.st === 'tl_wait' ? 'blue' : 'amber'), esc(r.label), esc(why),
+        tl + btn('sbs-op', T('subs.search_now'), {op: 'search', id: r.id}, true) + btn('sbs-op', T('subs.keep_without'), {op: 'skip', id: r.id}, true));
     });
     if (by.none.length) { n += cat('none', T('subs.not_found'), by.none.length, nr); }
     $('#sbs-none').html(n);
@@ -198,6 +210,9 @@ $(function () {
     set(T('subs.s_grace'), num('sbs-grace', c.subs_grace, 0, 2880) + ' ' + esc(T('subs.minutes')), T('subs.s_grace_hint'));
     set(T('subs.s_src'), '<select id="sbs-src">' + opt('both', c.subs_src, T('subs.src_both')) + opt('feliratok', c.subs_src, T('subs.src_fel')) + '</select> ' + num('sbs-osmax', c.subs_osmax, 0, 20) + ' ' + esc(T('subs.per_day')), T('subs.s_src_hint'));
     set(T('subs.s_min'), num('sbs-min', c.subs_min, 50, 100) + ' %', T('subs.s_min_hint'));
+    var mo = ''; $.each(D.models, function (i, k) { mo += opt(k, c.subs_tlmodel, T('subs.model.' + k)); });
+    set(T('subs.s_tl'), '<select id="sbs-tl">' + opt('auto', c.subs_tl, T('subs.tl_auto')) + opt('click', c.subs_tl, T('subs.tl_click')) + opt('off', c.subs_tl, T('subs.off_s')) + '</select> '
+      + num('sbs-tlmax', c.subs_tlmax, 0, 50) + ' ' + esc(T('subs.per_day_eps')) + ' <select id="sbs-tlmodel">' + mo + '</select>', T('subs.s_tl_hint', {n: D.tl_count}));
     s += '<div class="sbs-lead"><p class="sbs-hint">' + esc(T('subs.s_dc_hint')) + '</p><input type="button" id="sbs-save" value="' + esc(T('subs.save')) + '"></div><div class="sbs-msg" id="sbs-smsg"></div>';
     $('#sbs-set').html(s);
     $('#sbs-sband').text(c.subs_on === '1' ? (c.subs_copy === 'auto' ? T('subs.sum_auto', {n: c.subs_auto}) : T('subs.sum_ask')) : T('subs.off_s'));
@@ -231,7 +246,8 @@ $(function () {
   $('#sbs').on('click', '#sbs-save', function () {
     var $b = $(this).prop('disabled', true);
     post({op: 'save', subs_on: $('#sbs-on').val(), subs_lang: $('#sbs-lang').val(), subs_copy: $('#sbs-copy').val(), subs_auto: $('#sbs-auto').val(), subs_grace: $('#sbs-grace').val(),
-          subs_src: $('#sbs-src').val(), subs_osmax: $('#sbs-osmax').val(), subs_min: $('#sbs-min').val()}, function (r) {
+          subs_src: $('#sbs-src').val(), subs_osmax: $('#sbs-osmax').val(), subs_min: $('#sbs-min').val(),
+          subs_tl: $('#sbs-tl').val(), subs_tlmax: $('#sbs-tlmax').val(), subs_tlmodel: $('#sbs-tlmodel').val()}, function (r) {
       $b.prop('disabled', false);
       $('#sbs-smsg').attr('class', 'sbs-msg ' + (r.ok ? 'sbs-ok' : 'sbs-er')).text(r.ok ? T('subs.saved') : T('subs.not_saved', {e: errText(r.error)}));
       if (r.ok) { $.getJSON(URL, {_: Date.now()}).done(function (d) { if (d && d.ok) { D = d; $('#sbs-set').empty(); render(); } }); }

@@ -1243,7 +1243,7 @@
   "text": "⚠️ A magyar leírások leálltak: Claude nincs bejelentkezve. Jelentkezz be újra, aztán Újra a Streambox oldalán."
  },
  "subs.intro": {
-  "text": "Subtitler: új filmek és epizódok a választott nyelvű felirat nélkül. Ha a Bazarr nem talált, emberi feliratot keres (magyarhoz a feliratok.eu-n, minden nyelvhez az OpenSubtitles.com-on), és a videóhoz igazítja. Az automatikus pontszámot elérő feliratok maguktól kerülnek a videó mellé, a többi a kattintásodra vár. Meglévő feliratot soha nem cserél le."
+  "text": "Subtitler: új filmek és epizódok a választott nyelvű felirat nélkül. Ha a Bazarr nem talált, emberi feliratot keres (magyarhoz a feliratok.eu-n, minden nyelvhez az OpenSubtitles.com-on), és a videóhoz igazítja; ha nincs, Claude lefordítja az angolt. Az automatikus pontszámot elérő feliratok maguktól kerülnek a videó mellé, a többi a kattintásodra vár. Meglévő feliratot soha nem cserél le."
  },
  "subs.loading": {
   "text": "Betöltés…"
@@ -1380,7 +1380,7 @@
   "other": "{n} fut"
  },
  "subs.ready_lead": {
-  "text": "Videóhoz igazított emberi feliratok. {n} % fölött maguktól bekerülnek, ezek rád várnak. A bemásolás minden videó mellé egy .{code}.srt-t tesz, és soha nem cserél le fájlt."
+  "text": "Videóhoz igazított emberi feliratok és Claude-fordítások. {n} % fölött maguktól bekerülnek, ezek rád várnak. A bemásolás minden videó mellé egy .{code}.srt-t (Claude: .{code}.claude.srt) tesz, és soha nem cserél le fájlt."
  },
  "subs.copy_all": {
   "text": "Mind bemásolása"
@@ -1683,5 +1683,98 @@
  },
  "subs.s_lang_hint": {
   "text": "Ilyen nyelvű feliratot keres. A feliratok.eu-t csak magyarhoz használja, minden más nyelv az OpenSubtitles-ről jön."
+ },
+ "subs.done_audio": {
+  "text": "a hangja már {lang}: nem kell felirat"
+ },
+ "subs.tl_running": {
+  "text": "Claude fordítja"
+ },
+ "subs.tl_step_start": {
+  "text": "indul"
+ },
+ "subs.tl_step_research": {
+  "text": "utánanéz a cselekménynek és a szereplőknek"
+ },
+ "subs.tl_step_translate": {
+  "text": "fordítás, {d} / {t} sor kész"
+ },
+ "subs.tl_step_revise": {
+  "text": "az ellenőrzésen fennakadt sorok javítása"
+ },
+ "subs.by_claude": {
+  "text": "Claude-fordítás · minőség {n} %"
+ },
+ "subs.tl_remarks": {
+  "text": "{l} sorból {r} sorhoz van megjegyzés"
+ },
+ "subs.over_claude": {
+  "text": "Emberi felirat egy Claude által fordított epizódhoz: bemásolás előtt nézd meg (mindkét fájl megmarad)."
+ },
+ "subs.tl_wait": {
+  "text": "Claude hamarosan lefordítja"
+ },
+ "subs.translate_now": {
+  "text": "Fordítás most"
+ },
+ "subs.done_tlcopied": {
+  "text": "Claude-fordítás bemásolva; az emberi felirat keresése folytatódik"
+ },
+ "subs.noengtext": {
+  "text": "a videóban nincs szöveges angol felirat, Claude nem tudja lefordítani"
+ },
+ "subs.tl_failed": {
+  "text": "a Claude-fordítás nem sikerült: {e}"
+ },
+ "subs.none_lead_tl": {
+  "text": "Nincs illő felirat a feliratok.eu-n és az OpenSubtitles-ön. Ezeket Claude lefordítja (a napi keret a Beállításokban); az emberi felirat keresése 30 napig folytatódik."
+ },
+ "subs.s_tl": {
+  "text": "Claude-fordítás"
+ },
+ "subs.tl_auto": {
+  "text": "Magától"
+ },
+ "subs.tl_click": {
+  "text": "Kattintásra"
+ },
+ "subs.per_day_eps": {
+  "text": "epizód naponta, ezzel:"
+ },
+ "subs.s_tl_hint": {
+  "text": "Ha nincs emberi felirat, Claude lefordítja az angolt a saját időzítésén (a Claude-előfizetésed terhére). .claude.srt néven kerül be; a később talált emberi felirat mellé ajánlva. Ma: {n}."
+ },
+ "subs.model.claude-opus-5-5": {
+  "text": "Opus 5.5"
+ },
+ "subs.model.claude-sonnet-5-5": {
+  "text": "Sonnet 5.5 (kevesebbet fogyaszt)"
+ },
+ "subs.err_claude_login": {
+  "text": "A claude konténerben a Claude nincs bejelentkezve"
+ },
+ "subs.err_hint_claude_login": {
+  "text": "A fordítások várnak. Lépj be újra a konténerben (/login); a keresés közben megy tovább."
+ },
+ "subs.err_claude_limit": {
+  "text": "Elfogyott a Claude-előfizetés kerete"
+ },
+ "subs.err_hint_claude_limit": {
+  "text": "A fordítások várnak, egy óra múlva újra próbálja."
+ },
+ "subs.dc_over_head": {
+  "text": "**{lang_cap} feliratok: megjött az emberi**"
+ },
+ "subs.dc_claude_auto": {
+  "one": "Claude lefordította és bemásolva: {list}",
+  "other": "Claude lefordította és bemásolva ({n}): {list}"
+ },
+ "subs.dc_claude_ready": {
+  "one": "Claude-fordítás vár a pillantásodra: {list}",
+  "other": "Claude-fordítások várnak a pillantásodra ({n}): {list}"
+ },
+ "subs.dc_over": {
+  "one": "Emberi felirat egy Claude-fordításhoz, nézd meg a Subtitler oldalon: {list}",
+  "other": "Emberi feliratok Claude-fordításokhoz ({n}), nézd meg a Subtitler oldalon: {list}"
  }
 }
