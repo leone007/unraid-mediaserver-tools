@@ -1,5 +1,5 @@
 diff --git a/1080i/DialogPlayerProcessInfo.xml b/1080i/DialogPlayerProcessInfo.xml
-index 40e301a..1d5401f 100644
+index 40e301a..e3cb5e0 100644
 --- a/1080i/DialogPlayerProcessInfo.xml
 +++ b/1080i/DialogPlayerProcessInfo.xml
 @@ -12,21 +12,16 @@
@@ -223,7 +223,7 @@ index 40e301a..1d5401f 100644
                              <textcolor>dialog_fg_90</textcolor>
 -                            <label>[B]$LOCALIZE[460][/B][CR]$INFO[Player.Process(audiodecoder)]$INFO[Player.Process(audiobitspersample),$COMMA , $LOCALIZE[31263]]$INFO[Player.Process(audiosamplerate),$COMMA , $LOCALIZE[31262]]$INFO[VideoPlayer.AudioBitrate,$COMMA , kb/s]$INFO[Player.Process(audiochannels),[CR],]</label>
 -                            <visible>!VideoPlayer.Content(livetv)</visible>
-+                            <label>[B]$LOCALIZE[31902][/B][CR]$INFO[System.ScreenResolution]$INFO[System.FPS,  |  $LOCALIZE[31903] , $LOCALIZE[31259]]</label>
++                            <label>[B]$LOCALIZE[31902][/B][CR]$INFO[System.ScreenResolution]$INFO[System.FPS,[CR]$LOCALIZE[31903] , $LOCALIZE[31259]]</label>
                          </control>
                          <control type="textbox">
                              <height>auto</height>
@@ -236,10 +236,10 @@ index 40e301a..1d5401f 100644
                      </control>
                  </control>
 diff --git a/1080i/Includes_Labels.xml b/1080i/Includes_Labels.xml
-index 1138f53..35eccea 100644
+index 1138f53..87b1fd2 100644
 --- a/1080i/Includes_Labels.xml
 +++ b/1080i/Includes_Labels.xml
-@@ -964,6 +964,22 @@
+@@ -964,6 +964,23 @@
          <value>SDR</value>
      </variable>
  
@@ -251,6 +251,7 @@ index 1138f53..35eccea 100644
 +    </variable>
 +
 +    <variable name="Label_JellynasChapter">
++        <value condition="Integer.IsGreater(Player.ChapterCount,1) + [String.IsEmpty(Player.ChapterName) | String.StartsWith(Player.ChapterName,Chapter) | String.StartsWith(Player.ChapterName,Fejezet)]">$LOCALIZE[31910] $INFO[Player.Chapter]/$INFO[Player.ChapterCount]</value>
 +        <value condition="Integer.IsGreater(Player.ChapterCount,1)">$LOCALIZE[31910] $INFO[Player.Chapter]/$INFO[Player.ChapterCount]$INFO[Player.ChapterName, ,]</value>
 +    </variable>
 +

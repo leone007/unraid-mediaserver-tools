@@ -52,7 +52,7 @@ Patches:
   edge, the green text badge 14 px from the bottom and left edge, both on the same card (This week shows both);
   Catalog details (`jellynas.kind=catalog`): no Trailer and Wiki buttons, Play only with `jellynas.playable`.
 - `09-hu-season-labels.patch` (2.12.12.28): the Hungarian episode badges say évad, not szezon: Sorozatnyitó, Évadnyitó, Évadközi nyitó, Sorozatzáró, Évadzáró, Évadközi záró (upstream hu_hu strings 31210-31218 said Szezon bemutató, Szezon finálé, Rész bemutató).
-- `10-process-info.patch` (2.12.12.29): Player process info (O key) is one window for films and live TV: the PVR tuner rows (signal, SNR, BER, mux...) are gone (pvr.kofin has none); new rows Audio | Subtitle, Display (screen mode + render fps), Playback | Cache (Direct Play / Transcode guessed from the played URL, cache level), Ends at | Chapter (films) or Channel | Programme ends (live TV). Strings 31900-31913 (en_gb, hu_hu).
+- `10-process-info.patch` (2.12.12.29): Player process info (O key) is one window for films and live TV: the PVR tuner rows (signal, SNR, BER, mux...) are gone (pvr.kofin has none); new rows Audio | Subtitle, Display (screen mode + render fps), Playback | Cache (Direct Play / Transcode guessed from the played URL, cache level), Ends at | Chapter (films) or Channel | Programme ends (live TV). Strings 31900-31913 (en_gb, hu_hu). 2.12.12.30: render fps on its own line; a chapter name that is only Chapter N / Fejezet N is not shown.
 
 The menus and widgets are shared with Arctic Fuse 2 (script.skinvariables keeps them under the upstream skin id);
 the skin settings (`addon_data/<skin id>/settings.xml`) are per skin id and are copied once by hand.
