@@ -1,0 +1,420 @@
+diff --git a/1080i/DialogPlayerProcessInfo.xml b/1080i/DialogPlayerProcessInfo.xml
+index 40e301a..1d5401f 100644
+--- a/1080i/DialogPlayerProcessInfo.xml
++++ b/1080i/DialogPlayerProcessInfo.xml
+@@ -12,21 +12,16 @@
+         <control type="group">
+             <left>view_pad</left>
+             <control type="group">
+-                <include content="OSD_Dialog_Background_Blur" condition="!VideoPlayer.Content(livetv)">
+-                    <param name="diffuse">diffuse/dialog_w1280_h510.png</param>
+-                </include>
+-                <include content="OSD_Dialog_Background_Blur" condition="VideoPlayer.Content(livetv)">
++                <!-- JELLYNAS: one window for films and live TV (pvr.kofin has no tuner data) -->
++                <include content="OSD_Dialog_Background_Blur">
+                     <param name="diffuse">diffuse/dialog_w1280_h740.png</param>
+                 </include>
+                 <include content="Animation_SlideIn_Dialog">
+                     <param name="posy">48</param>
+                     <param name="windowopen_delay">200</param>
+                 </include>
+-                <include content="Object_Height" condition="VideoPlayer.Content(livetv)">
+-                    <param name="height">740</param>
+-                </include>
+                 <include>OSD_Stream_Selector_Divider</include>
+-                <height>510</height>
++                <height>740</height>
+                 <width>1280</width>
+                 <left>-40</left>
+                 <bottom>160</bottom>
+@@ -44,6 +39,7 @@
+                         <width>50%</width>
+                         <itemgap>12</itemgap>
+                         <orientation>vertical</orientation>
++
+                         <control type="textbox">
+                             <height>auto</height>
+                             <aligny>center</aligny>
+@@ -51,38 +47,7 @@
+                             <align>right</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamServiceName,[B]$LOCALIZE[19099][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="textbox">
+-                            <height>auto</height>
+-                            <aligny>center</aligny>
+-                            <autoscroll>false</autoscroll>
+-                            <align>right</align>
+-                            <font>font_mini</font>
+-                            <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamProviderName,[B]$LOCALIZE[19101][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="textbox">
+-                            <height>auto</height>
+-                            <aligny>center</aligny>
+-                            <autoscroll>false</autoscroll>
+-                            <align>right</align>
+-                            <font>font_mini</font>
+-                            <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamBer,[B]$LOCALIZE[19010][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="textbox">
+-                            <height>auto</height>
+-                            <aligny>center</aligny>
+-                            <autoscroll>false</autoscroll>
+-                            <align>right</align>
+-                            <font>font_mini</font>
+-                            <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamUnc,[B]$LOCALIZE[19011][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[31216][/B][CR]$INFO[Player.Process(videodecoder),]$VAR[Label_VideoHWDecoder, (,)]$INFO[Player.Process(amlogic.displaymode),[CR],]</label>
+                         </control>
+                         <control type="textbox">
+                             <height>auto</height>
+@@ -91,8 +56,7 @@
+                             <align>right</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamMux,[B]$LOCALIZE[19100][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[31119] | $LOCALIZE[31217][/B][CR]$INFO[Player.Process(amlogic.pixformat),,  ]$INFO[Player.Process(pixformat)]$INFO[Player.Process(amlogic.eoft_gamut),[CR],]</label>
+                         </control>
+                         <control type="textbox">
+                             <height>auto</height>
+@@ -101,10 +65,8 @@
+                             <align>right</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamStatus,[B]$LOCALIZE[19007][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[20474] | $LOCALIZE[16038][/B][CR]$VAR[Label_VideoHDRCodec]$INFO[Player.Process(deintmethod),  |  ,]</label>
+                         </control>
+-
+                         <control type="textbox">
+                             <height>auto</height>
+                             <aligny>center</aligny>
+@@ -112,8 +74,7 @@
+                             <align>right</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>[B]$LOCALIZE[31216][/B][CR]$INFO[Player.Process(videodecoder),]$VAR[Label_VideoHWDecoder, (,)]$INFO[Player.Process(amlogic.displaymode),[CR],]</label>
+-                            <visible>!VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[31904][/B][CR]$VAR[Label_JellynasPlayMethod,,  |  ]$INFO[Player.CacheLevel,$LOCALIZE[31905] ,%]</label>
+                         </control>
+                         <control type="textbox">
+                             <height>auto</height>
+@@ -122,7 +83,7 @@
+                             <align>right</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>[B]$LOCALIZE[31119] | $LOCALIZE[31217][/B][CR]$INFO[Player.Process(amlogic.pixformat),,  ]$INFO[Player.Process(pixformat)]$INFO[Player.Process(amlogic.eoft_gamut),[CR],]</label>
++                            <label>[B]$LOCALIZE[31908][/B][CR]$INFO[Player.FinishTime]$INFO[Player.TimeRemaining, (, $LOCALIZE[31909])]$VAR[Label_JellynasChapter,  |  ,]</label>
+                             <visible>!VideoPlayer.Content(livetv)</visible>
+                         </control>
+                         <control type="textbox">
+@@ -132,8 +93,8 @@
+                             <align>right</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>[B]$LOCALIZE[20474] | $LOCALIZE[16038][/B][CR]$VAR[Label_VideoHDRCodec]$INFO[Player.Process(deintmethod),  |  ,]</label>
+-                            <visible>!VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[31911][/B][CR]$INFO[VideoPlayer.ChannelName]$INFO[PVR.EpgEventFinishTime,  |  $LOCALIZE[31912] ,]$INFO[PVR.EpgEventRemainingTime, (, $LOCALIZE[31909])]</label>
++                            <visible>VideoPlayer.Content(livetv)</visible>
+                         </control>
+                     </control>
+                     <control type="grouplist">
+@@ -142,6 +103,7 @@
+                         <width>50%</width>
+                         <itemgap>12</itemgap>
+                         <orientation>vertical</orientation>
++
+                         <control type="textbox">
+                             <height>auto</height>
+                             <aligny>center</aligny>
+@@ -149,58 +111,7 @@
+                             <align>left</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamDevice,[B]$LOCALIZE[19006][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="textbox">
+-                            <height>auto</height>
+-                            <aligny>center</aligny>
+-                            <autoscroll>false</autoscroll>
+-                            <align>left</align>
+-                            <font>font_mini</font>
+-                            <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamEncryptionName,[B]$LOCALIZE[19015][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="textbox">
+-                            <height>auto</height>
+-                            <aligny>center</aligny>
+-                            <autoscroll>false</autoscroll>
+-                            <align>left</align>
+-                            <font>font_mini</font>
+-                            <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamSignal,[B]$LOCALIZE[19008][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="group">
+-                            <height>40</height>
+-                            <control type="progress">
+-                                <top>0</top>
+-                                <width>400</width>
+-                                <height>18</height>
+-                                <info>PVR.ActStreamProgrSignal</info>
+-                            </control>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="textbox">
+-                            <height>auto</height>
+-                            <aligny>center</aligny>
+-                            <autoscroll>false</autoscroll>
+-                            <align>left</align>
+-                            <font>font_mini</font>
+-                            <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamSNR,[B]$LOCALIZE[19009][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
+-                        </control>
+-                        <control type="group">
+-                            <height>30</height>
+-                            <control type="progress">
+-                                <top>0</top>
+-                                <width>400</width>
+-                                <height>18</height>
+-                                <info>PVR.ActStreamProgrSNR</info>
+-                            </control>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[38031][/B][CR]$INFO[Player.Process(videowidth),,x]$INFO[Player.Process(videoheight),, $LOCALIZE[31261]]$INFO[Player.Process(videodar),$COMMA , $LOCALIZE[31260]]$INFO[Player.Process(videofps),$COMMA , $LOCALIZE[31259]]$INFO[VideoPlayer.VideoBitrate,$COMMA , kb/s]</label>
+                         </control>
+                         <control type="textbox">
+                             <height>auto</height>
+@@ -209,10 +120,8 @@
+                             <align>left</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>$INFO[PVR.ActStreamClient,[B]$LOCALIZE[19012][/B][CR]]</label>
+-                            <visible>VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[460][/B][CR]$INFO[Player.Process(audiodecoder)]$INFO[Player.Process(audiobitspersample),$COMMA , $LOCALIZE[31263]]$INFO[Player.Process(audiosamplerate),$COMMA , $LOCALIZE[31262]]$INFO[VideoPlayer.AudioBitrate,$COMMA , kb/s]$INFO[Player.Process(audiochannels),[CR],]</label>
+                         </control>
+-
+                         <control type="textbox">
+                             <height>auto</height>
+                             <aligny>center</aligny>
+@@ -220,8 +129,7 @@
+                             <align>left</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>[B]$LOCALIZE[38031][/B][CR]$INFO[Player.Process(videowidth),,x]$INFO[Player.Process(videoheight),, $LOCALIZE[31261]]$INFO[Player.Process(videodar),$COMMA , $LOCALIZE[31260]]$INFO[Player.Process(videofps),$COMMA , $LOCALIZE[31259]]$INFO[VideoPlayer.VideoBitrate,$COMMA , kb/s]</label>
+-                            <visible>!VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[31900][/B][CR]$INFO[VideoPlayer.AudioLanguage]$VAR[Label_JellynasSubtitle,  |  ,]</label>
+                         </control>
+                         <control type="textbox">
+                             <height>auto</height>
+@@ -230,8 +138,7 @@
+                             <align>left</align>
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+-                            <label>[B]$LOCALIZE[460][/B][CR]$INFO[Player.Process(audiodecoder)]$INFO[Player.Process(audiobitspersample),$COMMA , $LOCALIZE[31263]]$INFO[Player.Process(audiosamplerate),$COMMA , $LOCALIZE[31262]]$INFO[VideoPlayer.AudioBitrate,$COMMA , kb/s]$INFO[Player.Process(audiochannels),[CR],]</label>
+-                            <visible>!VideoPlayer.Content(livetv)</visible>
++                            <label>[B]$LOCALIZE[31902][/B][CR]$INFO[System.ScreenResolution]$INFO[System.FPS,  |  $LOCALIZE[31903] , $LOCALIZE[31259]]</label>
+                         </control>
+                         <control type="textbox">
+                             <height>auto</height>
+@@ -241,7 +148,6 @@
+                             <font>font_mini</font>
+                             <textcolor>dialog_fg_90</textcolor>
+                             <label>[B]$LOCALIZE[31256][/B][CR]$LOCALIZE[31117]: $INFO[system.memory(used)] / $INFO[system.memory(total)] - $INFO[System.Memory(used.percent)][CR]$LOCALIZE[31258]:$INFO[System.CpuFrequency, , ]$VAR[Label_System_Temp, , ]$INFO[System.CpuUsage, ,]</label>
+-                            <visible>!VideoPlayer.Content(livetv)</visible>
+                         </control>
+                     </control>
+                 </control>
+diff --git a/1080i/Includes_Labels.xml b/1080i/Includes_Labels.xml
+index 1138f53..35eccea 100644
+--- a/1080i/Includes_Labels.xml
++++ b/1080i/Includes_Labels.xml
+@@ -964,6 +964,22 @@
+         <value>SDR</value>
+     </variable>
+ 
++    <!-- JELLYNAS: Player process info (patch 10) -->
++    <variable name="Label_JellynasPlayMethod">
++        <value condition="VideoPlayer.Content(livetv)"></value>
++        <value condition="String.Contains(Player.Filenameandpath,master.m3u8) | String.Contains(Player.Filenameandpath,/hls) | String.Contains(Player.Filenameandpath,transcod)">[COLOR FFF0B43C]$LOCALIZE[31907][/COLOR]</value>
++        <value>[COLOR FF3ECF7A]$LOCALIZE[31906][/COLOR]</value>
++    </variable>
++
++    <variable name="Label_JellynasChapter">
++        <value condition="Integer.IsGreater(Player.ChapterCount,1)">$LOCALIZE[31910] $INFO[Player.Chapter]/$INFO[Player.ChapterCount]$INFO[Player.ChapterName, ,]</value>
++    </variable>
++
++    <variable name="Label_JellynasSubtitle">
++        <value condition="VideoPlayer.SubtitlesEnabled + !String.IsEmpty(VideoPlayer.SubtitlesLanguage)">$LOCALIZE[31901] $INFO[VideoPlayer.SubtitlesLanguage]</value>
++        <value>$LOCALIZE[31901] $LOCALIZE[31913]</value>
++    </variable>
++
+     <variable name="Label_VideoHWDecoder">
+         <value condition="Player.Process(videohwdecoder)">HW</value>
+         <value>SW</value>
+diff --git a/language/resource.language.en_gb/strings.po b/language/resource.language.en_gb/strings.po
+index 4ec56e4..f4a7dc3 100644
+--- a/language/resource.language.en_gb/strings.po
++++ b/language/resource.language.en_gb/strings.po
+@@ -2868,3 +2868,73 @@ msgstr ""
+ msgctxt "#31597"
+ msgid "Confirmation"
+ msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31900"
++msgid "Audio | Subtitle"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31901"
++msgid "Subtitle"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31902"
++msgid "Display"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31903"
++msgid "render"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31904"
++msgid "Playback | Cache"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31905"
++msgid "Cache"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31906"
++msgid "Direct Play"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31907"
++msgid "Transcode"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31908"
++msgid "Ends at | Chapter"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31909"
++msgid "left"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31910"
++msgid "Chapter"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31911"
++msgid "Channel | Programme ends"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31912"
++msgid "ends"
++msgstr ""
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31913"
++msgid "off"
++msgstr ""
+diff --git a/language/resource.language.hu_hu/strings.po b/language/resource.language.hu_hu/strings.po
+index f712636..c6e65e0 100644
+--- a/language/resource.language.hu_hu/strings.po
++++ b/language/resource.language.hu_hu/strings.po
+@@ -2858,3 +2858,73 @@ msgstr "Nyomd lefelé"
+ msgctxt "#31595"
+ msgid "Press right"
+ msgstr "Nyomd jobbra"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31900"
++msgid "Audio | Subtitle"
++msgstr "Hang | Felirat"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31901"
++msgid "Subtitle"
++msgstr "Felirat"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31902"
++msgid "Display"
++msgstr "Kijelző"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31903"
++msgid "render"
++msgstr "renderelés"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31904"
++msgid "Playback | Cache"
++msgstr "Lejátszás | Puffer"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31905"
++msgid "Cache"
++msgstr "Puffer"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31906"
++msgid "Direct Play"
++msgstr "Direct Play"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31907"
++msgid "Transcode"
++msgstr "Átkódolás"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31908"
++msgid "Ends at | Chapter"
++msgstr "Vége | Fejezet"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31909"
++msgid "left"
++msgstr "van hátra"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31910"
++msgid "Chapter"
++msgstr "Fejezet"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31911"
++msgid "Channel | Programme ends"
++msgstr "Csatorna | Műsor vége"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31912"
++msgid "ends"
++msgstr "vége"
++
++#: /1080i/DialogPlayerProcessInfo.xml
++msgctxt "#31913"
++msgid "off"
++msgstr "ki"
