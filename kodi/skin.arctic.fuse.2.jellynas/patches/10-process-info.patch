@@ -264,7 +264,7 @@ index 1138f53..87b1fd2 100644
          <value condition="Player.Process(videohwdecoder)">HW</value>
          <value>SW</value>
 diff --git a/language/resource.language.en_gb/strings.po b/language/resource.language.en_gb/strings.po
-index 4ec56e4..f4a7dc3 100644
+index 4ec56e4..6356e3e 100644
 --- a/language/resource.language.en_gb/strings.po
 +++ b/language/resource.language.en_gb/strings.po
 @@ -2868,3 +2868,73 @@ msgstr ""
@@ -289,7 +289,7 @@ index 4ec56e4..f4a7dc3 100644
 +
 +#: /1080i/DialogPlayerProcessInfo.xml
 +msgctxt "#31903"
-+msgid "render"
++msgid "GUI"
 +msgstr ""
 +
 +#: /1080i/DialogPlayerProcessInfo.xml
@@ -342,7 +342,7 @@ index 4ec56e4..f4a7dc3 100644
 +msgid "off"
 +msgstr ""
 diff --git a/language/resource.language.hu_hu/strings.po b/language/resource.language.hu_hu/strings.po
-index f712636..c6e65e0 100644
+index f712636..dccdd99 100644
 --- a/language/resource.language.hu_hu/strings.po
 +++ b/language/resource.language.hu_hu/strings.po
 @@ -2858,3 +2858,73 @@ msgstr "Nyomd lefelé"
@@ -367,8 +367,8 @@ index f712636..c6e65e0 100644
 +
 +#: /1080i/DialogPlayerProcessInfo.xml
 +msgctxt "#31903"
-+msgid "render"
-+msgstr "renderelés"
++msgid "GUI"
++msgstr "GUI"
 +
 +#: /1080i/DialogPlayerProcessInfo.xml
 +msgctxt "#31904"
