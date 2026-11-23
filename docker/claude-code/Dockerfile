@@ -39,15 +39,43 @@ RUN pwsh -NoProfile -NonInteractive -Command "Set-PSRepository PSGallery -Instal
         Install-Module Pester -RequiredVersion 5.6.1 -Scope AllUsers -SkipPublisherCheck" \
     && chmod -R a+rX /usr/local/share/powershell
 
+# C toolchain for Rust (owner, 2026-11-23): the Praxisradar server's crates (ring, sqlite) build C code. build-essential for
+# the Linux tests, mingw-w64 to compile the Windows praxisradar-server.exe here (target x86_64-pc-windows-gnu) before CI.
+# Rust itself (rustup) lives in the home and survives a re-create.
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential mingw-w64 pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Development kit (owner, 2026-11-23: "everything that seems useful, no need to be modest"). Grouped by purpose.
+# - Tauri desktop app (Praxisradar, desktop/src-tauri): its Linux build libraries, so `cargo check/test` of the app runs here
+#   and not only in CI; xvfb + webkit2gtk-driver for headless runs and tauri-driver e2e.
+# - Windows builds from Linux: clang/lld/llvm for cargo-xwin (the MSVC target CI uses; cargo-xwin itself goes to the
+#   home with `cargo install`), nasm/cmake for crates with C/asm, NSIS for the Tauri setup.exe, osslsigncode for
+#   signing later, wine64 to start the Windows exes for a smoke test (not a real Windows: no CryptoAPI roots etc.).
+# - Office files: LibreOffice headless (MedMax xlsx, docx/pdf conversion), Python openpyxl/pandas for fake test exports.
+# - PDF and scans: tesseract with Hungarian, ocrmypdf, qpdf, ghostscript (NEAK letters, law texts, scanned documents).
+# - Debugging and network: strace, lsof, nmap (own LAN only), traceroute, whois, file, tree, dos2unix, bc.
+# - PHP extras for plugin tests: sqlite3, zip, gd.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libsoup-3.0-dev \
+        webkit2gtk-driver xvfb xauth \
+        clang lld llvm nasm cmake nsis osslsigncode wine64 \
+        libreoffice-calc-nogui libreoffice-writer-nogui \
+        python3-openpyxl python3-pandas python3-numpy python3-matplotlib python3-requests python3-yaml python3-lxml python3-bs4 \
+        tesseract-ocr tesseract-ocr-hun ocrmypdf qpdf ghostscript \
+        strace lsof nmap traceroute whois file tree dos2unix bc \
+        php-sqlite3 php-zip php-gd \
+    && rm -rf /var/lib/apt/lists/*
+
 # Claude Code itself
 RUN npm install -g @anthropic-ai/claude-code && npm cache clean --force
 
 # Playwright with Chromium (and the system libraries it needs) for render tests of the plugin pages: screenshots
 # against mock data. The browser goes to /ms-playwright (in the image, readable by user 99), so it survives a re-create.
 # Use it with: NODE_PATH=$(npm root -g) node render.js
+# WebKit too (owner, 2026-11-23): the family iPhones run Safari, so pages can be checked in a Safari-like engine.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN npm install -g playwright@1.56.0 \
-    && npx -y playwright@1.56.0 install --with-deps chromium \
+    && npx -y playwright@1.56.0 install --with-deps chromium webkit \
     && chmod -R a+rX /ms-playwright \
     && npm cache clean --force && rm -rf /var/lib/apt/lists/*
 

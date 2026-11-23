@@ -53,7 +53,7 @@ docker build --no-cache -t claude-code-unraid:local /mnt/user/data/DEV/unraid-me
 ```
 then in the Docker tab restart the container (Force update). The login and settings stay.
 
-The image also has the diagnostic tools the work needs (PDF text, mediainfo/ffprobe, mkvtoolnix, dig, mtr, iperf3, upsc, shellcheck, xmllint, sqlite3, pandoc, ImageMagick, PowerShell 7 as `pwsh` with PSScriptAnalyzer and Pester for testing Windows scripts); they are part of the image, so a rebuild keeps them. The template mounts /var/log read only at /srv/log (an existing container: add the path in the Docker tab, Edit, Add another Path).
+The image also has the diagnostic tools the work needs (PDF text, mediainfo/ffprobe, mkvtoolnix, dig, mtr, iperf3, upsc, shellcheck, xmllint, sqlite3, pandoc, ImageMagick, PowerShell 7 as `pwsh` with PSScriptAnalyzer and Pester for testing Windows scripts) and, since 2026-11-23, a full build kit: gcc, mingw-w64 (Windows server exe), clang/lld/llvm/nsis/osslsigncode/wine64, the Tauri Linux libraries, LibreOffice headless, tesseract (Hungarian), ocrmypdf, Python openpyxl/pandas, Playwright WebKit, strace/nmap; memory 8 GB (Rust/WebKit builds); they are part of the image, so a rebuild keeps them. The template mounts /var/log read only at /srv/log (an existing container: add the path in the Docker tab, Edit, Add another Path).
 
 ## Handing work over from a chat session
 

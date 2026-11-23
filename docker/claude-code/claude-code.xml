@@ -14,7 +14,7 @@
   <WebUI/>
   <TemplateURL/>
   <Icon/>
-  <ExtraParams>--memory=4g --cpus=2 --restart=unless-stopped</ExtraParams>
+  <ExtraParams>--memory=8g --cpus=4 --restart=unless-stopped</ExtraParams>
   <PostArgs/>
   <CPUset/>
   <DateInstalled/>
