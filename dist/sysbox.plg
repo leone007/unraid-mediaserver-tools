@@ -3,7 +3,7 @@
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.44">
+<!ENTITY version   "2026.10.45">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -16,6 +16,10 @@
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.45
+- Claude Guard: new Claude login band. It shows when the claude.ai login of the claude container ends (amber within 7 days, red within 2). Renew login sends /login to the running Claude session, shows the sign-in link to open, takes the code claude.ai gives, and turns Remote Control back on. The conversation of the running session is kept.
+- Claude button tooltip: a line with the login end date, amber within 7 days.
+
 ###2026.10.44
 - Claude Guard: when the Router topic is on, the daily report also gets the network check (internet, main router) and the home check (the night at home: router and mesh node logs, Wi-Fi devices, every Home Assistant device, mains voltage) that the Claude Code sessions use, run in the claude container just before. Known and intended things marked in the home check are not reported. New finding topic: Home.
 
@@ -9687,6 +9691,158 @@ function mt_i18n_js($dir, $name, $only = null) {
  "cpe.not_gone": {
   "text": "This source is still chosen or was deleted already.",
   "note": "Snapshots page: error of Delete from off-site."
+ },
+ "lg.h": {
+  "text": "Claude login",
+  "note": "band title on the Claude Guard page: the claude.ai login of the claude container"
+ },
+ "lg.ok": {
+  "text": "ok",
+  "note": "band state when the login has more than 7 days left"
+ },
+ "lg.ends_in": {
+  "text": "ends in {n} days",
+  "note": "band state, {n} = whole days left"
+ },
+ "lg.valid": {
+  "text": "Login valid until {t}",
+  "note": "row title, {t} = weekday, date and time"
+ },
+ "lg.ends": {
+  "text": "Login ends {t}",
+  "note": "row title within 7 days, {t} = weekday, date and time"
+ },
+ "lg.expired": {
+  "text": "Login expired {t}",
+  "note": "row title after expiry"
+ },
+ "lg.left": {
+  "text": "{n} days left",
+  "note": "row detail, {n} = whole days left"
+ },
+ "lg.renew_now": {
+  "text": "renew it now",
+  "note": "row detail after expiry"
+ },
+ "lg.not_running": {
+  "text": "Claude is not running in the tmux session",
+  "note": "row detail when the claude process is not running"
+ },
+ "lg.morning": {
+  "text": "renew it before then (a morning is best)",
+  "note": "row hint within 7 days; the owner prefers mornings"
+ },
+ "lg.unknown": {
+  "text": "Login date unknown",
+  "note": "row title when the credentials file cannot be read"
+ },
+ "lg.unknown_sub": {
+  "text": "The credentials file of the claude container could not be read",
+  "note": "row detail for the unknown state"
+ },
+ "lg.renew": {
+  "text": "Renew login",
+  "note": "button: starts /login in the running Claude session"
+ },
+ "lg.again": {
+  "text": "Start again",
+  "note": "button after a failed renewal"
+ },
+ "lg.confirm": {
+  "text": "Send /login to the running Claude session now? Use it when Claude is not working on something.",
+  "note": "confirm dialog before /login is typed into the session"
+ },
+ "lg.starting": {
+  "text": "Starting…",
+  "note": "button text while /login starts"
+ },
+ "lg.step2": {
+  "text": "step 2 of 3",
+  "note": "band state while waiting for the code"
+ },
+ "lg.s1": {
+  "text": "1. Open this link and sign in on claude.ai",
+  "note": "step 1 title"
+ },
+ "lg.s2": {
+  "text": "2. Paste the code claude.ai shows",
+  "note": "step 2 title"
+ },
+ "lg.s3": {
+  "text": "3. After the code, Sysbox turns Remote Control back on by itself.",
+  "note": "step 3 note"
+ },
+ "lg.code_ph": {
+  "text": "Authentication code",
+  "note": "placeholder of the code field"
+ },
+ "lg.send": {
+  "text": "Send code",
+  "note": "button: types the code into the session"
+ },
+ "lg.cancel": {
+  "text": "Cancel",
+  "note": "button: cancels /login (Escape)"
+ },
+ "lg.open": {
+  "text": "Open",
+  "note": "button: opens the login link"
+ },
+ "lg.checking": {
+  "text": "Checking…",
+  "note": "button text while the code is checked"
+ },
+ "lg.renewed": {
+  "text": "renewed",
+  "note": "band state after success"
+ },
+ "lg.renewed_t": {
+  "text": "Login renewed · valid until {t}",
+  "note": "row title after success"
+ },
+ "lg.rc_on": {
+  "text": "Remote Control on · the running session kept its conversation",
+  "note": "row detail after success"
+ },
+ "lg.rc_check": {
+  "text": "Login renewed; check Remote Control (Claude button)",
+  "note": "row detail when the remote control address did not appear"
+ },
+ "lg.failed": {
+  "text": "failed",
+  "note": "band state after a failure"
+ },
+ "lg.failed_t": {
+  "text": "The login was not renewed",
+  "note": "row title after a failure"
+ },
+ "lg.failed_sub": {
+  "text": "The login link expires after a few minutes. Start again; if it fails twice, open the terminal (Claude button) and run /login there.",
+  "note": "row detail after a failure"
+ },
+ "cl.e_notrun": {
+  "text": "Claude is not running in the tmux session; start it with the Claude button first.",
+  "note": "error from claude.php"
+ },
+ "cl.e_nolink": {
+  "text": "The login link did not appear within 20 seconds.",
+  "note": "error from claude.php"
+ },
+ "cl.e_badcode": {
+  "text": "The code has characters a login code does not have.",
+  "note": "error from claude.php: code failed the allowed-characters check"
+ },
+ "cl.e_codefail": {
+  "text": "The code was not accepted (or the link expired).",
+  "note": "error from claude.php"
+ },
+ "cl.login": {
+  "text": "Login valid until {t} ({d} d)",
+  "note": "header button tooltip line; {t} = weekday and time, {d} = days left"
+ },
+ "cl.login_warn": {
+  "text": "Login ends {t} ({d} d) · renew on Tools › Claude Guard",
+  "note": "header button tooltip line within 7 days"
  }
 }
 ]]></INLINE>
@@ -14152,6 +14308,120 @@ function mt_i18n_js($dir, $name, $only = null) {
  },
  "cpe.not_gone": {
   "text": "Ez a forrás még ki van választva, vagy már törölve lett."
+ },
+ "lg.h": {
+  "text": "Claude-belépés"
+ },
+ "lg.ok": {
+  "text": "rendben"
+ },
+ "lg.ends_in": {
+  "text": "{n} nap múlva lejár"
+ },
+ "lg.valid": {
+  "text": "A belépés érvényes eddig: {t}"
+ },
+ "lg.ends": {
+  "text": "A belépés lejár: {t}"
+ },
+ "lg.expired": {
+  "text": "A belépés lejárt: {t}"
+ },
+ "lg.left": {
+  "text": "még {n} nap"
+ },
+ "lg.renew_now": {
+  "text": "újítsd meg most"
+ },
+ "lg.not_running": {
+  "text": "a Claude nem fut a tmux munkamenetben"
+ },
+ "lg.morning": {
+  "text": "addig újítsd meg (lehetőleg délelőtt)"
+ },
+ "lg.unknown": {
+  "text": "A belépés lejárata nem ismert"
+ },
+ "lg.unknown_sub": {
+  "text": "A claude konténer hitelesítő fájlja nem olvasható"
+ },
+ "lg.renew": {
+  "text": "Belépés megújítása"
+ },
+ "lg.again": {
+  "text": "Újrakezdés"
+ },
+ "lg.confirm": {
+  "text": "Elküldjem most a /login parancsot a futó Claude-nak? Akkor használd, amikor a Claude épp nem dolgozik."
+ },
+ "lg.starting": {
+  "text": "Indul…"
+ },
+ "lg.step2": {
+  "text": "2. lépés a 3-ból"
+ },
+ "lg.s1": {
+  "text": "1. Nyisd meg ezt a linket, és lépj be a claude.ai-on"
+ },
+ "lg.s2": {
+  "text": "2. Másold be a claude.ai által mutatott kódot"
+ },
+ "lg.s3": {
+  "text": "3. A kód után a Sysbox magától visszakapcsolja a Remote Controlt."
+ },
+ "lg.code_ph": {
+  "text": "Hitelesítő kód"
+ },
+ "lg.send": {
+  "text": "Kód elküldése"
+ },
+ "lg.cancel": {
+  "text": "Mégse"
+ },
+ "lg.open": {
+  "text": "Megnyitás"
+ },
+ "lg.checking": {
+  "text": "Ellenőrzés…"
+ },
+ "lg.renewed": {
+  "text": "megújítva"
+ },
+ "lg.renewed_t": {
+  "text": "Belépés megújítva · érvényes eddig: {t}"
+ },
+ "lg.rc_on": {
+  "text": "Remote Control be · a futó munkamenet megtartotta a beszélgetést"
+ },
+ "lg.rc_check": {
+  "text": "A belépés megújult; nézd meg a Remote Controlt (Claude gomb)"
+ },
+ "lg.failed": {
+  "text": "sikertelen"
+ },
+ "lg.failed_t": {
+  "text": "A belépés nem újult meg"
+ },
+ "lg.failed_sub": {
+  "text": "A belépési link néhány perc után lejár. Kezdd újra; ha kétszer nem sikerül, nyisd meg a terminált (Claude gomb), és ott futtasd a /login parancsot."
+ },
+ "cl.e_notrun": {
+  "text": "A Claude nem fut a tmux munkamenetben; előbb indítsd el a Claude gombbal."
+ },
+ "cl.e_nolink": {
+  "text": "A belépési link 20 másodpercen belül nem jelent meg."
+ },
+ "cl.e_badcode": {
+  "text": "A kódban olyan karakter van, ami belépési kódban nem lehet."
+ },
+ "cl.e_codefail": {
+  "text": "A kódot nem fogadta el (vagy lejárt a link)."
+ },
+ "cl.login": {
+  "text": "Belépés érvényes eddig: {t} ({d} nap)"
+ },
+ "cl.login_warn": {
+  "text": "Belépés lejár: {t} ({d} nap) · megújítás: Tools › Claude Guard"
  }
 }
 ]]></INLINE>
@@ -14818,7 +15088,7 @@ function ClaudeButton() {
   function pct(v) { return (Math.round(v * 10) / 10).toString() + '%'; }
   function when(ts) { var d = new Date(ts * 1000); return T('cl.dow.' + ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d.getDay()]) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function text(r) {
-    if (!r || !r.ok) { return base + '\n' + ((r && r.error) || T('cl.no_usage')); }
+    if (!r || !r.ok) { return base + '\n' + ((r && r.error) || T('cl.no_usage')) + (r && r.login_exp ? '\n' + T('cl.login', { t: when(r.login_exp), d: Math.max(0, Math.floor((r.login_exp - Date.now() / 1000) / 86400)) }) : ''); }
     var t = [base];
     if (r.expired) { t.push(T('cl.week_new', { t: when(r.reset) })); }
     else {
@@ -14827,6 +15097,7 @@ function ClaudeButton() {
       t.push(T('cl.avg', { p: pct(r.avg), q: pct(r.quota) }));
     }
     if (r.five) { t.push(T('cl.five', { p: pct(r.five.pct), left: left(r.five.reset - r.now) })); }
+    if (r.login_exp) { var dl = Math.floor((r.login_exp - r.now) / 86400); t.push(T(dl <= 7 ? 'cl.login_warn' : 'cl.login', { t: when(r.login_exp), d: Math.max(0, dl) })); }
     t.push(T('cl.updated', { t: ago(r.now - r.seen) }));
     return t.join('\n');
   }
@@ -14903,7 +15174,8 @@ if (($_POST['op'] ?? '') === 'usage') {
     $d = sx_docker();
     $dir = $d !== '' ? cl_usage_dir($d) : '';
     $u = $dir !== '' ? cl_usage($dir, time()) : null;
-    sx_json($u ? ['ok' => true] + $u : ['ok' => false, 'error' => sx_tr('cl.e_nodata')]);
+    $exp = $d !== '' ? cl_creds_exp($d) : null;
+    sx_json($u ? ['ok' => true, 'login_exp' => $exp] + $u : ['ok' => false, 'login_exp' => $exp, 'error' => sx_tr('cl.e_nodata')]);
 }
 
 function cl_run($cmd, &$rc = null) { $o = []; @exec($cmd . ' 2>&1', $o, $rc); return trim(implode("\n", $o)); }
@@ -14914,6 +15186,78 @@ function cl_exec($d, $args, &$rc = null) {
 function cl_url($d) {
     $t = cl_exec($d, 'tmux capture-pane -p -J -S -3000 -t ' . CL_TMUX);
     return preg_match_all('#https://claude\.ai/code[A-Za-z0-9/_\-?=&.%]*#', $t, $m) ? end($m[0]) : '';
+}
+
+// ---- login renewal (Claude Guard page, the "Claude login" band): the refresh token date, and a guided /login in the running
+// session. The date is read from ~/.claude/.credentials.json through the /home/claude mount; only the number leaves this file,
+// never a token. The keys go to the tmux session with send-keys -l (literal), the code is checked against a fixed alphabet.
+function cl_creds_exp($d) {
+    $u = cl_usage_dir($d);
+    if ($u === '') { return null; }
+    $j = json_decode((string)@file_get_contents(substr($u, 0, -strlen('/usage')) . '/.claude/.credentials.json'), true);
+    $rt = is_array($j) ? ($j['claudeAiOauth']['refreshTokenExpiresAt'] ?? null) : null;
+    return is_numeric($rt) ? (int)floor($rt / 1000) : null;
+}
+function cl_pane($d) { return cl_exec($d, 'tmux capture-pane -p -J -S -300 -t ' . CL_TMUX); }
+// the newest OAuth link in the pane; a link the screen wrapped hard (item 145) is joined from the following URL-only lines
+function cl_oauth($t) {
+    $L = preg_split('/\r?\n/', $t); $url = '';
+    foreach ($L as $i => $l) {
+        if (!preg_match('#https://claude\.ai/oauth/authorize\S*#', $l, $m)) { continue; }
+        $u = $m[0];
+        for ($k = $i + 1; $k < count($L); $k++) {
+            $n = trim($L[$k], " \t|\u{2502}");
+            if ($n === '' || !preg_match('#^[A-Za-z0-9%&=_\-.~+/:?]+$#', $n)) { break; }
+            $u .= $n;
+        }
+        $url = $u;
+    }
+    return $url;
+}
+function cl_running($d) {
+    cl_exec($d, 'tmux has-session -t ' . CL_TMUX, $rc);
+    return $rc === 0 && stripos(cl_exec($d, 'tmux display-message -p -t ' . CL_TMUX . ' ' . escapeshellarg('#{pane_current_command}')), 'claude') !== false;
+}
+function cl_keys($d, $text, $enter = true) {
+    cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' -l ' . escapeshellarg($text));
+    if ($enter) { usleep(300000); cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' Enter'); }
+}
+$op = (string)($_POST['op'] ?? '');
+if (in_array($op, ['login_status', 'login_start', 'login_code', 'login_cancel'], true)) {
+    $d = sx_docker();
+    if ($d === '') { sx_json(['ok' => false, 'error' => sx_tr('cl.e_docker')]); }
+    $base = ['now' => time(), 'exp' => cl_creds_exp($d)];
+    if ($op === 'login_status') { sx_json(['ok' => true, 'running' => cl_running($d)] + $base); }
+    if (!cl_running($d)) { sx_json(['ok' => false, 'error' => sx_tr('cl.e_notrun')] + $base); }
+    if ($op === 'login_cancel') { cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' Escape'); sx_json(['ok' => true] + $base); }
+    if ($op === 'login_start') {
+        $before = cl_oauth(cl_pane($d));
+        cl_keys($d, '/login');
+        $menu = false;
+        for ($i = 0; $i < 20; $i++) {
+            sleep(1); $t = cl_pane($d); $u = cl_oauth($t);
+            if ($u !== '' && $u !== $before) { sx_json(['ok' => true, 'url' => $u] + $base); }
+            // the login method menu: the first item (Claude account with subscription) is selected; Enter takes it
+            if (!$menu && preg_match('/Claude account with subscription|Select login method/i', $t)) { cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' Enter'); $menu = true; }
+        }
+        sx_json(['ok' => false, 'error' => sx_tr('cl.e_nolink')] + $base);
+    }
+    // login_code
+    $code = trim((string)($_POST['code'] ?? ''));
+    if (!preg_match('/^[A-Za-z0-9#_\-.~]{8,600}$/', $code)) { sx_json(['ok' => false, 'error' => sx_tr('cl.e_badcode')] + $base); }
+    $exp0 = $base['exp'];
+    cl_keys($d, $code);
+    for ($i = 0; $i < 25; $i++) {
+        sleep(1);
+        $exp = cl_creds_exp($d);
+        if ($exp !== null && $exp !== $exp0) {
+            sleep(2); cl_keys($d, '/remote-control');
+            $url = ''; for ($k = 0; $k < 12 && $url === ''; $k++) { sleep(1); $url = cl_url($d); }
+            sx_json(['ok' => true, 'renewed' => true, 'exp' => $exp, 'now' => time(), 'url' => $url]);
+        }
+        if (preg_match('/OAuth error|Invalid code|Login failed|authentication failed/i', cl_exec($d, 'tmux capture-pane -p -J -S -20 -t ' . CL_TMUX))) { break; }
+    }
+    sx_json(['ok' => false, 'error' => sx_tr('cl.e_codefail')] + $base);
 }
 
 $d = sx_docker();
@@ -17569,6 +17913,8 @@ require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
 $gdm_lang = '/usr/local/emhttp/plugins/sysbox/lang';
 $gdm_T = mt_i18n_t($gdm_lang);
 $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k, $v), ENT_QUOTES); };
+$gdm_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$gdm_tok = is_array($gdm_var) ? (string)($gdm_var['csrf_token'] ?? '') : '';
 ?>
 <style>
 /* the Dashboard tile look (common/tile.css, inserted by the build): Activity on top, then a band and a box per part */
@@ -17650,6 +17996,13 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-conf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:rgba(229,83,75,.08);box-shadow:inset 3px 0 0 #e5534b;padding:8px 10px}
 #gdm .gdm-conf span{flex:1 1 260px;white-space:normal}
 #gdm .gdm-acts.gdm-row2{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}
+#gdm .gdm-lg{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:8px 10px}
+#gdm .gdm-lg small{display:block;opacity:.65;font-size:12px;white-space:normal}
+#gdm .gdm-lg .gdm-link{word-break:break-all;font-size:12px}
+#gdm .gdm-lgcode{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+#gdm .gdm-lgcode input[type=text]{margin:0;flex:1 1 220px;min-width:0}
+#gdm .mt-band.gdm-b-green b{color:#3fa24a;opacity:1}#gdm .mt-band.gdm-b-amber b{color:#d9921f;opacity:1}#gdm .mt-band.gdm-b-red b{color:#e5534b;opacity:1}
+@media (max-width:860px){#gdm .gdm-lg{grid-template-columns:1fr}}
 @media (max-width:860px){#gdm .gdm-it{grid-template-columns:1fr}#gdm .gdm-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap}#gdm .gdm-set{grid-template-columns:1fr}}
 </style>
 <div id="gdm">
@@ -17657,6 +18010,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.activity')?></span><b id="gdm-aband"></b></div>
 <div class="mt-box" id="gdm-act"><div class="gdm-status gdm-mut"><?=$gdm_t('gdm.loading')?></div></div>
+
+<div class="mt-band" id="gdm-lgb"><span><?=$gdm_t('lg.h')?></span><b id="gdm-lgband"></b></div>
+<div class="mt-box" id="gdm-lg"><div class="gdm-status gdm-mut"><?=$gdm_t('gdm.loading')?></div></div>
 
 <div class="mt-band" id="gdm-rb"><span id="gdm-rtitle"><?=$gdm_t('gdm.h.latest')?></span><b id="gdm-rband"></b></div>
 <div class="mt-box" id="gdm-rep"></div>
@@ -17679,6 +18035,59 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 </div>
 
 <?=mt_i18n_js($gdm_lang, 'gdm')?>
+<script>
+// ---- Claude login (item: renew the claude.ai login from here). claude.php: login_status / login_start / login_code / login_cancel.
+$(function () {
+  var T = function (k, v) { return MTL.t('gdm', k, v); };
+  var TOK = <?=json_encode($gdm_tok)?>, URL = '/plugins/sysbox/claude.php', STEP = 'idle', LINK = '';
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;'); }
+  function api(op, data) { return $.post(URL, $.extend({op: op, csrf_token: TOK}, data || {}), null, 'json'); }
+  function two(n) { return ('0' + n).slice(-2); }
+  function when(t) { var d = new Date(t * 1000); return T('dow.' + ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d.getDay()]) + ' ' + two(d.getMonth() + 1) + '-' + two(d.getDate()) + ' ' + two(d.getHours()) + ':' + two(d.getMinutes()); }
+  function band(cls, txt) { $('#gdm-lgb').attr('class', 'mt-band' + (cls ? ' gdm-b-' + cls : '')); $('#gdm-lgband').text(txt || ''); }
+  function row(stripe, title, sub, btn) { return '<div class="gdm-lg s-' + stripe + '"><div><b>' + title + '</b><small>' + sub + '</small></div><div>' + (btn || '') + '</div></div>'; }
+  function draw(r, extra) {
+    if (STEP === 'link') { return; }
+    if (!r || r.exp == null) { band('', ''); $('#gdm-lg').html(row('grey', esc(T('lg.unknown')), esc((r && r.error) || T('lg.unknown_sub')), '<input type="button" class="gdm-lgstart" value="' + esc(T('lg.renew')) + '">')); return; }
+    var left = (r.exp - (r.now || Date.now() / 1000)) / 86400, d = Math.max(0, Math.floor(left));
+    var lv = left <= 2 ? 'red' : left <= 7 ? 'amber' : 'green';
+    band(lv, left <= 7 ? T('lg.ends_in', { n: d }) : T('lg.ok'));
+    var title = left <= 0 ? T('lg.expired', { t: when(r.exp) }) : left <= 7 ? T('lg.ends', { t: when(r.exp) }) : T('lg.valid', { t: when(r.exp) });
+    var sub = (extra ? extra + ' · ' : '') + (left > 0 ? T('lg.left', { n: d }) : T('lg.renew_now')) + (r.running === false ? ' · ' + T('lg.not_running') : '') + (left <= 7 && left > 0 ? ' · ' + T('lg.morning') : '');
+    $('#gdm-lg').html(row(lv === 'green' ? 'green' : lv === 'amber' ? 'amber' : 'red', esc(title), esc(sub), '<input type="button" class="gdm-lgstart' + (left <= 7 ? '' : ' gdm-ghost') + '" value="' + esc(T('lg.renew')) + '">'));
+  }
+  function load(extra) { api('login_status').done(function (r) { draw(r, extra); }).fail(function () { draw(null); }); }
+  function fail(msg) {
+    STEP = 'idle'; band('red', T('lg.failed'));
+    $('#gdm-lg').html(row('red', esc(T('lg.failed_t')), esc(msg) + ' · ' + esc(T('lg.failed_sub')), '<input type="button" class="gdm-lgstart" value="' + esc(T('lg.again')) + '">'));
+  }
+  $(document).on('click', '#gdm .gdm-lgstart', function () {
+    if (!confirm(T('lg.confirm'))) { return; }
+    $(this).prop('disabled', true).val(T('lg.starting'));
+    api('login_start').done(function (r) {
+      if (!r.ok) { fail(r.error); return; }
+      STEP = 'link'; LINK = r.url; band('', T('lg.step2'));
+      $('#gdm-lg').html('<div class="gdm-lg s-blue"><div><b>' + esc(T('lg.s1')) + '</b><small class="gdm-link"><a href="' + esc(LINK) + '" target="_blank" rel="noopener">' + esc(LINK) + '</a></small>' +
+        '<b style="display:block;margin-top:10px">' + esc(T('lg.s2')) + '</b><div class="gdm-lgcode"><input type="text" id="gdm-lgc" autocomplete="off" spellcheck="false" placeholder="' + esc(T('lg.code_ph')) + '">' +
+        '<input type="button" id="gdm-lgsend" value="' + esc(T('lg.send')) + '"><input type="button" id="gdm-lgcancel" class="gdm-ghost" value="' + esc(T('lg.cancel')) + '"></div>' +
+        '<small>' + esc(T('lg.s3')) + '</small></div><div><a href="' + esc(LINK) + '" target="_blank" rel="noopener"><input type="button" class="gdm-ghost" value="' + esc(T('lg.open')) + '"></a></div></div>');
+    }).fail(function (x) { fail('HTTP ' + (x && x.status)); });
+  });
+  $(document).on('click', '#gdm-lgsend', function () {
+    var c = $.trim($('#gdm-lgc').val());
+    if (!c) { return; }
+    $(this).prop('disabled', true).val(T('lg.checking'));
+    api('login_code', {code: c}).done(function (r) {
+      STEP = 'idle';
+      if (!r.ok) { fail(r.error); return; }
+      band('green', T('lg.renewed'));
+      $('#gdm-lg').html(row('green', esc(T('lg.renewed_t', { t: when(r.exp) })), esc(r.url ? T('lg.rc_on') : T('lg.rc_check')), '<input type="button" class="gdm-lgstart gdm-ghost" value="' + esc(T('lg.renew')) + '">'));
+    }).fail(function (x) { fail('HTTP ' + (x && x.status)); });
+  });
+  $(document).on('click', '#gdm-lgcancel', function () { STEP = 'idle'; api('login_cancel').always(function () { load(); }); });
+  load();
+});
+</script>
 <script>
 $(function () {
   var T = function (k, v) { return MTL.t('gdm', k, v); };

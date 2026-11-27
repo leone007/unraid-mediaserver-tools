@@ -5927,5 +5927,157 @@
  "cpe.not_gone": {
   "text": "This source is still chosen or was deleted already.",
   "note": "Snapshots page: error of Delete from off-site."
+ },
+ "lg.h": {
+  "text": "Claude login",
+  "note": "band title on the Claude Guard page: the claude.ai login of the claude container"
+ },
+ "lg.ok": {
+  "text": "ok",
+  "note": "band state when the login has more than 7 days left"
+ },
+ "lg.ends_in": {
+  "text": "ends in {n} days",
+  "note": "band state, {n} = whole days left"
+ },
+ "lg.valid": {
+  "text": "Login valid until {t}",
+  "note": "row title, {t} = weekday, date and time"
+ },
+ "lg.ends": {
+  "text": "Login ends {t}",
+  "note": "row title within 7 days, {t} = weekday, date and time"
+ },
+ "lg.expired": {
+  "text": "Login expired {t}",
+  "note": "row title after expiry"
+ },
+ "lg.left": {
+  "text": "{n} days left",
+  "note": "row detail, {n} = whole days left"
+ },
+ "lg.renew_now": {
+  "text": "renew it now",
+  "note": "row detail after expiry"
+ },
+ "lg.not_running": {
+  "text": "Claude is not running in the tmux session",
+  "note": "row detail when the claude process is not running"
+ },
+ "lg.morning": {
+  "text": "renew it before then (a morning is best)",
+  "note": "row hint within 7 days; the owner prefers mornings"
+ },
+ "lg.unknown": {
+  "text": "Login date unknown",
+  "note": "row title when the credentials file cannot be read"
+ },
+ "lg.unknown_sub": {
+  "text": "The credentials file of the claude container could not be read",
+  "note": "row detail for the unknown state"
+ },
+ "lg.renew": {
+  "text": "Renew login",
+  "note": "button: starts /login in the running Claude session"
+ },
+ "lg.again": {
+  "text": "Start again",
+  "note": "button after a failed renewal"
+ },
+ "lg.confirm": {
+  "text": "Send /login to the running Claude session now? Use it when Claude is not working on something.",
+  "note": "confirm dialog before /login is typed into the session"
+ },
+ "lg.starting": {
+  "text": "Starting…",
+  "note": "button text while /login starts"
+ },
+ "lg.step2": {
+  "text": "step 2 of 3",
+  "note": "band state while waiting for the code"
+ },
+ "lg.s1": {
+  "text": "1. Open this link and sign in on claude.ai",
+  "note": "step 1 title"
+ },
+ "lg.s2": {
+  "text": "2. Paste the code claude.ai shows",
+  "note": "step 2 title"
+ },
+ "lg.s3": {
+  "text": "3. After the code, Sysbox turns Remote Control back on by itself.",
+  "note": "step 3 note"
+ },
+ "lg.code_ph": {
+  "text": "Authentication code",
+  "note": "placeholder of the code field"
+ },
+ "lg.send": {
+  "text": "Send code",
+  "note": "button: types the code into the session"
+ },
+ "lg.cancel": {
+  "text": "Cancel",
+  "note": "button: cancels /login (Escape)"
+ },
+ "lg.open": {
+  "text": "Open",
+  "note": "button: opens the login link"
+ },
+ "lg.checking": {
+  "text": "Checking…",
+  "note": "button text while the code is checked"
+ },
+ "lg.renewed": {
+  "text": "renewed",
+  "note": "band state after success"
+ },
+ "lg.renewed_t": {
+  "text": "Login renewed · valid until {t}",
+  "note": "row title after success"
+ },
+ "lg.rc_on": {
+  "text": "Remote Control on · the running session kept its conversation",
+  "note": "row detail after success"
+ },
+ "lg.rc_check": {
+  "text": "Login renewed; check Remote Control (Claude button)",
+  "note": "row detail when the remote control address did not appear"
+ },
+ "lg.failed": {
+  "text": "failed",
+  "note": "band state after a failure"
+ },
+ "lg.failed_t": {
+  "text": "The login was not renewed",
+  "note": "row title after a failure"
+ },
+ "lg.failed_sub": {
+  "text": "The login link expires after a few minutes. Start again; if it fails twice, open the terminal (Claude button) and run /login there.",
+  "note": "row detail after a failure"
+ },
+ "cl.e_notrun": {
+  "text": "Claude is not running in the tmux session; start it with the Claude button first.",
+  "note": "error from claude.php"
+ },
+ "cl.e_nolink": {
+  "text": "The login link did not appear within 20 seconds.",
+  "note": "error from claude.php"
+ },
+ "cl.e_badcode": {
+  "text": "The code has characters a login code does not have.",
+  "note": "error from claude.php: code failed the allowed-characters check"
+ },
+ "cl.e_codefail": {
+  "text": "The code was not accepted (or the link expired).",
+  "note": "error from claude.php"
+ },
+ "cl.login": {
+  "text": "Login valid until {t} ({d} d)",
+  "note": "header button tooltip line; {t} = weekday and time, {d} = days left"
+ },
+ "cl.login_warn": {
+  "text": "Login ends {t} ({d} d) · renew on Tools › Claude Guard",
+  "note": "header button tooltip line within 7 days"
  }
 }

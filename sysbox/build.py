@@ -23,7 +23,7 @@ out=r'''<?xml version='1.0' standalone='yes'?>
 <!ENTITY name      "sysbox">
 <!ENTITY author    "leone007">
 <!ENTITY title     "Sysbox">
-<!ENTITY version   "2026.10.44">
+<!ENTITY version   "2026.10.45">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY cfgdir    "/boot/config/plugins/&name;">
 ]>
@@ -36,6 +36,10 @@ out=r'''<?xml version='1.0' standalone='yes'?>
         pluginURL="https://raw.githubusercontent.com/leone007/unraid-mediaserver-tools/main/dist/&name;.plg">
 
 <CHANGES>
+###2026.10.45
+- Claude Guard: new Claude login band. It shows when the claude.ai login of the claude container ends (amber within 7 days, red within 2). Renew login sends /login to the running Claude session, shows the sign-in link to open, takes the code claude.ai gives, and turns Remote Control back on. The conversation of the running session is kept.
+- Claude button tooltip: a line with the login end date, amber within 7 days.
+
 ###2026.10.44
 - Claude Guard: when the Router topic is on, the daily report also gets the network check (internet, main router) and the home check (the night at home: router and mesh node logs, Wi-Fi devices, every Home Assistant device, mains voltage) that the Claude Code sessions use, run in the claude container just before. Known and intended things marked in the home check are not reported. New finding topic: Home.
 

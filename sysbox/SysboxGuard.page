@@ -10,6 +10,8 @@ require_once '/usr/local/emhttp/plugins/sysbox/i18n.php';
 $gdm_lang = '/usr/local/emhttp/plugins/sysbox/lang';
 $gdm_T = mt_i18n_t($gdm_lang);
 $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k, $v), ENT_QUOTES); };
+$gdm_var = @parse_ini_file('/var/local/emhttp/var.ini');
+$gdm_tok = is_array($gdm_var) ? (string)($gdm_var['csrf_token'] ?? '') : '';
 ?>
 <style>
 /* the Dashboard tile look (common/tile.css, inserted by the build): Activity on top, then a band and a box per part */
@@ -71,6 +73,13 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 #gdm .gdm-conf{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:rgba(229,83,75,.08);box-shadow:inset 3px 0 0 #e5534b;padding:8px 10px}
 #gdm .gdm-conf span{flex:1 1 260px;white-space:normal}
 #gdm .gdm-acts.gdm-row2{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}
+#gdm .gdm-lg{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:8px 10px}
+#gdm .gdm-lg small{display:block;opacity:.65;font-size:12px;white-space:normal}
+#gdm .gdm-lg .gdm-link{word-break:break-all;font-size:12px}
+#gdm .gdm-lgcode{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+#gdm .gdm-lgcode input[type=text]{margin:0;flex:1 1 220px;min-width:0}
+#gdm .mt-band.gdm-b-green b{color:#3fa24a;opacity:1}#gdm .mt-band.gdm-b-amber b{color:#d9921f;opacity:1}#gdm .mt-band.gdm-b-red b{color:#e5534b;opacity:1}
+@media (max-width:860px){#gdm .gdm-lg{grid-template-columns:1fr}}
 @media (max-width:860px){#gdm .gdm-it{grid-template-columns:1fr}#gdm .gdm-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap}#gdm .gdm-set{grid-template-columns:1fr}}
 </style>
 <div id="gdm">
@@ -78,6 +87,9 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 
 <div class="mt-band"><span><?=$gdm_t('gdm.h.activity')?></span><b id="gdm-aband"></b></div>
 <div class="mt-box" id="gdm-act"><div class="gdm-status gdm-mut"><?=$gdm_t('gdm.loading')?></div></div>
+
+<div class="mt-band" id="gdm-lgb"><span><?=$gdm_t('lg.h')?></span><b id="gdm-lgband"></b></div>
+<div class="mt-box" id="gdm-lg"><div class="gdm-status gdm-mut"><?=$gdm_t('gdm.loading')?></div></div>
 
 <div class="mt-band" id="gdm-rb"><span id="gdm-rtitle"><?=$gdm_t('gdm.h.latest')?></span><b id="gdm-rband"></b></div>
 <div class="mt-box" id="gdm-rep"></div>
@@ -100,6 +112,59 @@ $gdm_t = function ($k, $v = []) use ($gdm_T) { return htmlspecialchars($gdm_T($k
 </div>
 
 <?=mt_i18n_js($gdm_lang, 'gdm')?>
+<script>
+// ---- Claude login (item: renew the claude.ai login from here). claude.php: login_status / login_start / login_code / login_cancel.
+$(function () {
+  var T = function (k, v) { return MTL.t('gdm', k, v); };
+  var TOK = <?=json_encode($gdm_tok)?>, URL = '/plugins/sysbox/claude.php', STEP = 'idle', LINK = '';
+  function esc(s) { return $('<div>').text(s == null ? '' : String(s)).html().replace(/"/g, '&quot;'); }
+  function api(op, data) { return $.post(URL, $.extend({op: op, csrf_token: TOK}, data || {}), null, 'json'); }
+  function two(n) { return ('0' + n).slice(-2); }
+  function when(t) { var d = new Date(t * 1000); return T('dow.' + ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d.getDay()]) + ' ' + two(d.getMonth() + 1) + '-' + two(d.getDate()) + ' ' + two(d.getHours()) + ':' + two(d.getMinutes()); }
+  function band(cls, txt) { $('#gdm-lgb').attr('class', 'mt-band' + (cls ? ' gdm-b-' + cls : '')); $('#gdm-lgband').text(txt || ''); }
+  function row(stripe, title, sub, btn) { return '<div class="gdm-lg s-' + stripe + '"><div><b>' + title + '</b><small>' + sub + '</small></div><div>' + (btn || '') + '</div></div>'; }
+  function draw(r, extra) {
+    if (STEP === 'link') { return; }
+    if (!r || r.exp == null) { band('', ''); $('#gdm-lg').html(row('grey', esc(T('lg.unknown')), esc((r && r.error) || T('lg.unknown_sub')), '<input type="button" class="gdm-lgstart" value="' + esc(T('lg.renew')) + '">')); return; }
+    var left = (r.exp - (r.now || Date.now() / 1000)) / 86400, d = Math.max(0, Math.floor(left));
+    var lv = left <= 2 ? 'red' : left <= 7 ? 'amber' : 'green';
+    band(lv, left <= 7 ? T('lg.ends_in', { n: d }) : T('lg.ok'));
+    var title = left <= 0 ? T('lg.expired', { t: when(r.exp) }) : left <= 7 ? T('lg.ends', { t: when(r.exp) }) : T('lg.valid', { t: when(r.exp) });
+    var sub = (extra ? extra + ' · ' : '') + (left > 0 ? T('lg.left', { n: d }) : T('lg.renew_now')) + (r.running === false ? ' · ' + T('lg.not_running') : '') + (left <= 7 && left > 0 ? ' · ' + T('lg.morning') : '');
+    $('#gdm-lg').html(row(lv === 'green' ? 'green' : lv === 'amber' ? 'amber' : 'red', esc(title), esc(sub), '<input type="button" class="gdm-lgstart' + (left <= 7 ? '' : ' gdm-ghost') + '" value="' + esc(T('lg.renew')) + '">'));
+  }
+  function load(extra) { api('login_status').done(function (r) { draw(r, extra); }).fail(function () { draw(null); }); }
+  function fail(msg) {
+    STEP = 'idle'; band('red', T('lg.failed'));
+    $('#gdm-lg').html(row('red', esc(T('lg.failed_t')), esc(msg) + ' · ' + esc(T('lg.failed_sub')), '<input type="button" class="gdm-lgstart" value="' + esc(T('lg.again')) + '">'));
+  }
+  $(document).on('click', '#gdm .gdm-lgstart', function () {
+    if (!confirm(T('lg.confirm'))) { return; }
+    $(this).prop('disabled', true).val(T('lg.starting'));
+    api('login_start').done(function (r) {
+      if (!r.ok) { fail(r.error); return; }
+      STEP = 'link'; LINK = r.url; band('', T('lg.step2'));
+      $('#gdm-lg').html('<div class="gdm-lg s-blue"><div><b>' + esc(T('lg.s1')) + '</b><small class="gdm-link"><a href="' + esc(LINK) + '" target="_blank" rel="noopener">' + esc(LINK) + '</a></small>' +
+        '<b style="display:block;margin-top:10px">' + esc(T('lg.s2')) + '</b><div class="gdm-lgcode"><input type="text" id="gdm-lgc" autocomplete="off" spellcheck="false" placeholder="' + esc(T('lg.code_ph')) + '">' +
+        '<input type="button" id="gdm-lgsend" value="' + esc(T('lg.send')) + '"><input type="button" id="gdm-lgcancel" class="gdm-ghost" value="' + esc(T('lg.cancel')) + '"></div>' +
+        '<small>' + esc(T('lg.s3')) + '</small></div><div><a href="' + esc(LINK) + '" target="_blank" rel="noopener"><input type="button" class="gdm-ghost" value="' + esc(T('lg.open')) + '"></a></div></div>');
+    }).fail(function (x) { fail('HTTP ' + (x && x.status)); });
+  });
+  $(document).on('click', '#gdm-lgsend', function () {
+    var c = $.trim($('#gdm-lgc').val());
+    if (!c) { return; }
+    $(this).prop('disabled', true).val(T('lg.checking'));
+    api('login_code', {code: c}).done(function (r) {
+      STEP = 'idle';
+      if (!r.ok) { fail(r.error); return; }
+      band('green', T('lg.renewed'));
+      $('#gdm-lg').html(row('green', esc(T('lg.renewed_t', { t: when(r.exp) })), esc(r.url ? T('lg.rc_on') : T('lg.rc_check')), '<input type="button" class="gdm-lgstart gdm-ghost" value="' + esc(T('lg.renew')) + '">'));
+    }).fail(function (x) { fail('HTTP ' + (x && x.status)); });
+  });
+  $(document).on('click', '#gdm-lgcancel', function () { STEP = 'idle'; api('login_cancel').always(function () { load(); }); });
+  load();
+});
+</script>
 <script>
 $(function () {
   var T = function (k, v) { return MTL.t('gdm', k, v); };

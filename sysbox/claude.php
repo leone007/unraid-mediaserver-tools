@@ -53,7 +53,8 @@ if (($_POST['op'] ?? '') === 'usage') {
     $d = sx_docker();
     $dir = $d !== '' ? cl_usage_dir($d) : '';
     $u = $dir !== '' ? cl_usage($dir, time()) : null;
-    sx_json($u ? ['ok' => true] + $u : ['ok' => false, 'error' => sx_tr('cl.e_nodata')]);
+    $exp = $d !== '' ? cl_creds_exp($d) : null;
+    sx_json($u ? ['ok' => true, 'login_exp' => $exp] + $u : ['ok' => false, 'login_exp' => $exp, 'error' => sx_tr('cl.e_nodata')]);
 }
 
 function cl_run($cmd, &$rc = null) { $o = []; @exec($cmd . ' 2>&1', $o, $rc); return trim(implode("\n", $o)); }
@@ -64,6 +65,78 @@ function cl_exec($d, $args, &$rc = null) {
 function cl_url($d) {
     $t = cl_exec($d, 'tmux capture-pane -p -J -S -3000 -t ' . CL_TMUX);
     return preg_match_all('#https://claude\.ai/code[A-Za-z0-9/_\-?=&.%]*#', $t, $m) ? end($m[0]) : '';
+}
+
+// ---- login renewal (Claude Guard page, the "Claude login" band): the refresh token date, and a guided /login in the running
+// session. The date is read from ~/.claude/.credentials.json through the /home/claude mount; only the number leaves this file,
+// never a token. The keys go to the tmux session with send-keys -l (literal), the code is checked against a fixed alphabet.
+function cl_creds_exp($d) {
+    $u = cl_usage_dir($d);
+    if ($u === '') { return null; }
+    $j = json_decode((string)@file_get_contents(substr($u, 0, -strlen('/usage')) . '/.claude/.credentials.json'), true);
+    $rt = is_array($j) ? ($j['claudeAiOauth']['refreshTokenExpiresAt'] ?? null) : null;
+    return is_numeric($rt) ? (int)floor($rt / 1000) : null;
+}
+function cl_pane($d) { return cl_exec($d, 'tmux capture-pane -p -J -S -300 -t ' . CL_TMUX); }
+// the newest OAuth link in the pane; a link the screen wrapped hard (item 145) is joined from the following URL-only lines
+function cl_oauth($t) {
+    $L = preg_split('/\r?\n/', $t); $url = '';
+    foreach ($L as $i => $l) {
+        if (!preg_match('#https://claude\.ai/oauth/authorize\S*#', $l, $m)) { continue; }
+        $u = $m[0];
+        for ($k = $i + 1; $k < count($L); $k++) {
+            $n = trim($L[$k], " \t|\u{2502}");
+            if ($n === '' || !preg_match('#^[A-Za-z0-9%&=_\-.~+/:?]+$#', $n)) { break; }
+            $u .= $n;
+        }
+        $url = $u;
+    }
+    return $url;
+}
+function cl_running($d) {
+    cl_exec($d, 'tmux has-session -t ' . CL_TMUX, $rc);
+    return $rc === 0 && stripos(cl_exec($d, 'tmux display-message -p -t ' . CL_TMUX . ' ' . escapeshellarg('#{pane_current_command}')), 'claude') !== false;
+}
+function cl_keys($d, $text, $enter = true) {
+    cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' -l ' . escapeshellarg($text));
+    if ($enter) { usleep(300000); cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' Enter'); }
+}
+$op = (string)($_POST['op'] ?? '');
+if (in_array($op, ['login_status', 'login_start', 'login_code', 'login_cancel'], true)) {
+    $d = sx_docker();
+    if ($d === '') { sx_json(['ok' => false, 'error' => sx_tr('cl.e_docker')]); }
+    $base = ['now' => time(), 'exp' => cl_creds_exp($d)];
+    if ($op === 'login_status') { sx_json(['ok' => true, 'running' => cl_running($d)] + $base); }
+    if (!cl_running($d)) { sx_json(['ok' => false, 'error' => sx_tr('cl.e_notrun')] + $base); }
+    if ($op === 'login_cancel') { cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' Escape'); sx_json(['ok' => true] + $base); }
+    if ($op === 'login_start') {
+        $before = cl_oauth(cl_pane($d));
+        cl_keys($d, '/login');
+        $menu = false;
+        for ($i = 0; $i < 20; $i++) {
+            sleep(1); $t = cl_pane($d); $u = cl_oauth($t);
+            if ($u !== '' && $u !== $before) { sx_json(['ok' => true, 'url' => $u] + $base); }
+            // the login method menu: the first item (Claude account with subscription) is selected; Enter takes it
+            if (!$menu && preg_match('/Claude account with subscription|Select login method/i', $t)) { cl_exec($d, 'tmux send-keys -t ' . CL_TMUX . ' Enter'); $menu = true; }
+        }
+        sx_json(['ok' => false, 'error' => sx_tr('cl.e_nolink')] + $base);
+    }
+    // login_code
+    $code = trim((string)($_POST['code'] ?? ''));
+    if (!preg_match('/^[A-Za-z0-9#_\-.~]{8,600}$/', $code)) { sx_json(['ok' => false, 'error' => sx_tr('cl.e_badcode')] + $base); }
+    $exp0 = $base['exp'];
+    cl_keys($d, $code);
+    for ($i = 0; $i < 25; $i++) {
+        sleep(1);
+        $exp = cl_creds_exp($d);
+        if ($exp !== null && $exp !== $exp0) {
+            sleep(2); cl_keys($d, '/remote-control');
+            $url = ''; for ($k = 0; $k < 12 && $url === ''; $k++) { sleep(1); $url = cl_url($d); }
+            sx_json(['ok' => true, 'renewed' => true, 'exp' => $exp, 'now' => time(), 'url' => $url]);
+        }
+        if (preg_match('/OAuth error|Invalid code|Login failed|authentication failed/i', cl_exec($d, 'tmux capture-pane -p -J -S -20 -t ' . CL_TMUX))) { break; }
+    }
+    sx_json(['ok' => false, 'error' => sx_tr('cl.e_codefail')] + $base);
 }
 
 $d = sx_docker();

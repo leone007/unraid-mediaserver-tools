@@ -34,7 +34,7 @@ function ClaudeButton() {
   function pct(v) { return (Math.round(v * 10) / 10).toString() + '%'; }
   function when(ts) { var d = new Date(ts * 1000); return T('cl.dow.' + ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d.getDay()]) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function text(r) {
-    if (!r || !r.ok) { return base + '\n' + ((r && r.error) || T('cl.no_usage')); }
+    if (!r || !r.ok) { return base + '\n' + ((r && r.error) || T('cl.no_usage')) + (r && r.login_exp ? '\n' + T('cl.login', { t: when(r.login_exp), d: Math.max(0, Math.floor((r.login_exp - Date.now() / 1000) / 86400)) }) : ''); }
     var t = [base];
     if (r.expired) { t.push(T('cl.week_new', { t: when(r.reset) })); }
     else {
@@ -43,6 +43,7 @@ function ClaudeButton() {
       t.push(T('cl.avg', { p: pct(r.avg), q: pct(r.quota) }));
     }
     if (r.five) { t.push(T('cl.five', { p: pct(r.five.pct), left: left(r.five.reset - r.now) })); }
+    if (r.login_exp) { var dl = Math.floor((r.login_exp - r.now) / 86400); t.push(T(dl <= 7 ? 'cl.login_warn' : 'cl.login', { t: when(r.login_exp), d: Math.max(0, dl) })); }
     t.push(T('cl.updated', { t: ago(r.now - r.seen) }));
     return t.join('\n');
   }

@@ -4454,5 +4454,119 @@
  },
  "cpe.not_gone": {
   "text": "Ez a forrás még ki van választva, vagy már törölve lett."
+ },
+ "lg.h": {
+  "text": "Claude-belépés"
+ },
+ "lg.ok": {
+  "text": "rendben"
+ },
+ "lg.ends_in": {
+  "text": "{n} nap múlva lejár"
+ },
+ "lg.valid": {
+  "text": "A belépés érvényes eddig: {t}"
+ },
+ "lg.ends": {
+  "text": "A belépés lejár: {t}"
+ },
+ "lg.expired": {
+  "text": "A belépés lejárt: {t}"
+ },
+ "lg.left": {
+  "text": "még {n} nap"
+ },
+ "lg.renew_now": {
+  "text": "újítsd meg most"
+ },
+ "lg.not_running": {
+  "text": "a Claude nem fut a tmux munkamenetben"
+ },
+ "lg.morning": {
+  "text": "addig újítsd meg (lehetőleg délelőtt)"
+ },
+ "lg.unknown": {
+  "text": "A belépés lejárata nem ismert"
+ },
+ "lg.unknown_sub": {
+  "text": "A claude konténer hitelesítő fájlja nem olvasható"
+ },
+ "lg.renew": {
+  "text": "Belépés megújítása"
+ },
+ "lg.again": {
+  "text": "Újrakezdés"
+ },
+ "lg.confirm": {
+  "text": "Elküldjem most a /login parancsot a futó Claude-nak? Akkor használd, amikor a Claude épp nem dolgozik."
+ },
+ "lg.starting": {
+  "text": "Indul…"
+ },
+ "lg.step2": {
+  "text": "2. lépés a 3-ból"
+ },
+ "lg.s1": {
+  "text": "1. Nyisd meg ezt a linket, és lépj be a claude.ai-on"
+ },
+ "lg.s2": {
+  "text": "2. Másold be a claude.ai által mutatott kódot"
+ },
+ "lg.s3": {
+  "text": "3. A kód után a Sysbox magától visszakapcsolja a Remote Controlt."
+ },
+ "lg.code_ph": {
+  "text": "Hitelesítő kód"
+ },
+ "lg.send": {
+  "text": "Kód elküldése"
+ },
+ "lg.cancel": {
+  "text": "Mégse"
+ },
+ "lg.open": {
+  "text": "Megnyitás"
+ },
+ "lg.checking": {
+  "text": "Ellenőrzés…"
+ },
+ "lg.renewed": {
+  "text": "megújítva"
+ },
+ "lg.renewed_t": {
+  "text": "Belépés megújítva · érvényes eddig: {t}"
+ },
+ "lg.rc_on": {
+  "text": "Remote Control be · a futó munkamenet megtartotta a beszélgetést"
+ },
+ "lg.rc_check": {
+  "text": "A belépés megújult; nézd meg a Remote Controlt (Claude gomb)"
+ },
+ "lg.failed": {
+  "text": "sikertelen"
+ },
+ "lg.failed_t": {
+  "text": "A belépés nem újult meg"
+ },
+ "lg.failed_sub": {
+  "text": "A belépési link néhány perc után lejár. Kezdd újra; ha kétszer nem sikerül, nyisd meg a terminált (Claude gomb), és ott futtasd a /login parancsot."
+ },
+ "cl.e_notrun": {
+  "text": "A Claude nem fut a tmux munkamenetben; előbb indítsd el a Claude gombbal."
+ },
+ "cl.e_nolink": {
+  "text": "A belépési link 20 másodpercen belül nem jelent meg."
+ },
+ "cl.e_badcode": {
+  "text": "A kódban olyan karakter van, ami belépési kódban nem lehet."
+ },
+ "cl.e_codefail": {
+  "text": "A kódot nem fogadta el (vagy lejárt a link)."
+ },
+ "cl.login": {
+  "text": "Belépés érvényes eddig: {t} ({d} nap)"
+ },
+ "cl.login_warn": {
+  "text": "Belépés lejár: {t} ({d} nap) · megújítás: Tools › Claude Guard"
  }
 }
