@@ -2,9 +2,10 @@
 """JELLY branding textures (patch 11) from the owner's images in forras/ -> files/media/jellynas/.
 
 jelly_loading.jpg  1920x1080 loading background (from forras/jelly_betoltes.webp)
-jelly_badge.png    144x144 round JELLY badge, real alpha: plain LANCZOS from the 512 source (shown at 72 px)
-avatar_mask.png    132x132 rounded square (diffuse mask of the Jellyfin user picture, shown at 66 px)
-avatar_frame.png   152x152 rounded-square neon frame, cyan -> pink, transparent inside (shown at 76 px)
+jelly_badge.png    160x160 round JELLY badge, real alpha: plain LANCZOS from the 512 source (shown at 80 px)
+avatar_mask.png    156x156 rounded square (diffuse mask of the Jellyfin user picture, shown at 78 px)
+avatar_frame.png   176x176 rounded-square neon frame, cyan -> pink, transparent inside (shown at 88 px: the line's
+                   outer edge is 80 px = the search button's focus circle, AF2 circlebutton.png 160 px with an 80 px disc)
 spinner.png        72x72 ring with a cyan arc (rotated by the skin, shown at 36 px)
 Everything is 2x the skin size, pre-filtered here: Kodi draws GUI textures bilinear WITHOUT mipmaps, so a texture
 much bigger than its drawn size aliases (4x looked jagged on the Fire TV Stick 4K Max, 2026-11-28). Never more than 2x.
@@ -21,7 +22,8 @@ CYAN, PINK = (51, 214, 255), (255, 63, 191)
 
 K = 2                                   # texture pixels per skin pixel (never more than 2: no mipmaps in Kodi)
 SS = 2                                  # supersampling of the drawn shapes (K * SS = 4x the skin size)
-F, PIC, RAD = 76 * K, 66 * K, 12 * K    # frame 76 px, picture 66 px, corner radius 12 px (skin px)
+F, PIC, RAD = 88 * K, 78 * K, 14 * K    # frame box 88 px (line outer edge 80), picture 78 px, corner radius 14 px (skin px)
+BADGE = 80                               # badge 80 px = the search circle
 
 
 def rounded(size, inset, radius, width=0):
@@ -52,7 +54,7 @@ def main():
     bg = Image.open(os.path.join(SRC, 'jelly_betoltes.webp')).convert('RGB').resize((1920, 1080), Image.LANCZOS)
     bg.save(os.path.join(OUT, 'jelly_loading.jpg'), quality=86, optimize=True, progressive=False)
 
-    badge = Image.open(os.path.join(SRC, 'jelly_badge_512.png')).convert('RGBA').resize((72 * K, 72 * K), Image.LANCZOS)
+    badge = Image.open(os.path.join(SRC, 'jelly_badge_512.png')).convert('RGBA').resize((BADGE * K, BADGE * K), Image.LANCZOS)
     # no sharpening: LANCZOS at 2x is sharp enough; an unsharp mask gave light halos around the letters (2.12.12.34)
     badge.save(os.path.join(OUT, 'jelly_badge.png'), optimize=True)
 

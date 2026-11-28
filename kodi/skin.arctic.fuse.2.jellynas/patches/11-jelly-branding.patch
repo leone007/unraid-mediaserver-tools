@@ -12,7 +12,7 @@ index 9d430a1..c428bf8 100644
      </include>
  
 diff --git a/1080i/Includes_Home.xml b/1080i/Includes_Home.xml
-index 6c8bef7..acc2a98 100644
+index 6c8bef7..7b47fa3 100644
 --- a/1080i/Includes_Home.xml
 +++ b/1080i/Includes_Home.xml
 @@ -258,7 +258,7 @@
@@ -24,19 +24,20 @@ index 6c8bef7..acc2a98 100644
                  <ondown>SetFocus(300,0,absolute)</ondown>
              </control>
  
-@@ -421,25 +421,24 @@
+@@ -421,25 +421,25 @@
                          </include>
                      </control>
  
 +                    <!-- JELLYNAS: the Jellyfin user's picture (add-on: Home property JellynasUser.Image, else the
-+                         Kodi profile picture), rounded square 66 px in a 76 px neon frame (search circle = 80 px) -->
++                         Kodi profile picture), rounded square 78 px in a neon frame whose line is 80 px outside = the search
++                         button's focus circle (circlebutton.png 160 px, 80 px disc); same centre x (100 from the menu's right) -->
                      <control type="group">
                          <centerright>20</centerright>
                          <centertop>50%</centertop>
 -                        <height>50</height>
 -                        <width>50</width>
-+                        <height>76</height>
-+                        <width>76</width>
++                        <height>88</height>
++                        <width>88</width>
                          <control type="image">
 -                            <include content="Dimension_Padding">
 -                                <param name="pad">-40</param>
@@ -46,8 +47,8 @@ index 6c8bef7..acc2a98 100644
 -                            <texture colordiffuse="dialog_fg_100">diffuse/circle/circle_50.png</texture>
 +                            <left>5</left>
 +                            <top>5</top>
-+                            <width>66</width>
-+                            <height>66</height>
++                            <width>78</width>
++                            <height>78</height>
 +                            <aspectratio scalediffuse="false">scale</aspectratio>
 +                            <texture diffuse="jellynas/avatar_mask.png" background="true">$VAR[Image_JellynasUser]</texture>
 +                        </control>
@@ -63,7 +64,7 @@ index 6c8bef7..acc2a98 100644
                      </control>
  
                  </control>
-@@ -454,9 +453,10 @@
+@@ -454,9 +454,10 @@
                  <include>Dimension_Bottombar</include>
                  <control type="group">
                      <left>view_menu_main_head_x</left>
@@ -75,7 +76,7 @@ index 6c8bef7..acc2a98 100644
                          <include content="View_Furniture_Bottom_ViewLine" condition="$PARAM[include_label]">
                              <param name="label">$PARAM[label]</param>
                              <param name="fade_condition">false</param>
-@@ -466,18 +466,12 @@
+@@ -466,18 +467,12 @@
                      <control type="group">
                          <centertop>50%</centertop>
                          <centerright>20</centerright>
@@ -86,9 +87,9 @@ index 6c8bef7..acc2a98 100644
 -                            <aspectratio>keep</aspectratio>
 -                            <bordersize>-16</bordersize>
 -                        </control>
-+                        <width>72</width>
-+                        <height>72</height>
-+                        <!-- JELLYNAS: round JELLY badge (72 px, the Kodi logo's drawn size; texture 512 px for 4K) instead of the Kodi logo -->
++                        <width>80</width>
++                        <height>80</height>
++                        <!-- JELLYNAS: round JELLY badge instead of the Kodi logo, 80 px = the search button's focus circle, same centre x -->
                          <control type="image">
 -                            <texture colordiffuse="$VAR[ColorGradient]">special://skin/extras/icons/kodi.png</texture>
 +                            <texture>jellynas/jelly_badge.png</texture>
@@ -98,7 +99,7 @@ index 6c8bef7..acc2a98 100644
                          </control>
                      </control>
                  </control>
-@@ -491,7 +485,7 @@
+@@ -491,7 +486,7 @@
              <left>-view_menu_main</left>
              <include condition="!Skin.HasSetting(SideMenu.DisableProfileLogo) | [Skin.HasSetting(SideMenu.DisableSearchAndOptions) + $EXP[Exp_HomeMenu_IsExpanded]]">Home_Menu_Vert_Header</include>
              <include condition="!Skin.HasSetting(SideMenu.DisableSearchAndOptions)">Home_Menu_Vert_Search</include>
