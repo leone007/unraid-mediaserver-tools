@@ -2,12 +2,13 @@
 """JELLY branding textures (patch 11) from the owner's images in forras/ -> files/media/jellynas/.
 
 jelly_loading.jpg  1920x1080 loading background (from forras/jelly_betoltes.webp)
-jelly_badge.png    512x512 round JELLY badge, real alpha: the source as is (shown at 72 px; 4K GUI = 144 px)
-avatar_mask.png    264x264 rounded square (diffuse mask of the Jellyfin user picture, shown at 66 px)
-avatar_frame.png   304x304 rounded-square neon frame, cyan -> pink, transparent inside (shown at 76 px)
-spinner.png        144x144 ring with a cyan arc (rotated by the skin, shown at 36 px)
-Everything is 4x the skin size: Kodi on a 4K TV draws the 1080 skin at 2160 (2x), so 4x stays sharp.
-Lines are drawn at 4x more again and reduced with LANCZOS (anti-aliased, crisp).
+jelly_badge.png    144x144 round JELLY badge, real alpha: LANCZOS from the 512 source + light unsharp mask (shown at 72 px)
+avatar_mask.png    132x132 rounded square (diffuse mask of the Jellyfin user picture, shown at 66 px)
+avatar_frame.png   152x152 rounded-square neon frame, cyan -> pink, transparent inside (shown at 76 px)
+spinner.png        72x72 ring with a cyan arc (rotated by the skin, shown at 36 px)
+Everything is 2x the skin size, pre-filtered here: Kodi draws GUI textures bilinear WITHOUT mipmaps, so a texture
+much bigger than its drawn size aliases (4x looked jagged on the Fire TV Stick 4K Max, 2026-11-28). Never more than 2x.
+Shapes are drawn at 4x the skin size and reduced with LANCZOS (anti-aliased, crisp).
 Run: python3 kodi/skin.arctic.fuse.2.jellynas/gen_jelly_media.py
 """
 import os
@@ -18,8 +19,8 @@ SRC = os.path.join(HERE, 'forras')
 OUT = os.path.join(HERE, 'files', 'media', 'jellynas')
 CYAN, PINK = (51, 214, 255), (255, 63, 191)
 
-K = 4                                   # texture pixels per skin pixel
-SS = 4                                  # supersampling of the drawn shapes
+K = 2                                   # texture pixels per skin pixel (never more than 2: no mipmaps in Kodi)
+SS = 2                                  # supersampling of the drawn shapes (K * SS = 4x the skin size)
 F, PIC, RAD = 76 * K, 66 * K, 12 * K    # frame 76 px, picture 66 px, corner radius 12 px (skin px)
 
 
@@ -51,7 +52,9 @@ def main():
     bg = Image.open(os.path.join(SRC, 'jelly_betoltes.webp')).convert('RGB').resize((1920, 1080), Image.LANCZOS)
     bg.save(os.path.join(OUT, 'jelly_loading.jpg'), quality=86, optimize=True, progressive=False)
 
-    badge = Image.open(os.path.join(SRC, 'jelly_badge_512.png')).convert('RGBA')   # 512 px source, no resampling
+    badge = Image.open(os.path.join(SRC, 'jelly_badge_512.png')).convert('RGBA').resize((72 * K, 72 * K), Image.LANCZOS)
+    rgb = badge.convert('RGB').filter(ImageFilter.UnsharpMask(radius=0.8, percent=60, threshold=1))
+    badge = Image.merge('RGBA', rgb.split() + (badge.split()[3],))
     badge.save(os.path.join(OUT, 'jelly_badge.png'), optimize=True)
 
     m = rounded(PIC, 0, RAD)
