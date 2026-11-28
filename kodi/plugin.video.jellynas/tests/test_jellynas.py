@@ -9,6 +9,7 @@ PROFILE = tempfile.mkdtemp(prefix='jellynas_')
 SEEN = []          # (method, path, query, auth) of every request the plugin made
 NOW = time.time()
 LANG = {'lang': '0'}
+USER_TAG = ['ptag1']   # the stub user's PrimaryImageTag (None = no picture)
 
 
 # ---- stub Jellyfin ----
@@ -63,7 +64,9 @@ class H(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
         body = None
-        if u.path == '/health':
+        if u.path == '/Users/u1':
+            body = {'Id': 'u1', 'Name': 'leone007', 'PrimaryImageTag': USER_TAG[0]} if USER_TAG[0] else {'Id': 'u1', 'Name': 'leone007'}
+        elif u.path == '/health':
             body = {'ok': True}
         elif u.path == '/UserItems/Resume':
             body = {'Items': RESUME}
@@ -456,6 +459,27 @@ ok(v5.tag.d.get('plot') == 'Episode overview v5' and v5.tag.d['video'] and v5.ta
 ok(noc.tag.d.get('plot', '').startswith('Nocturne · S01E03'), 'week: no Jellyfin overview: the made-up text stays')
 gp = [x for x in items if x[1].label == 'Gengszter'][0][1]
 ok('Episode overview' not in gp.tag.d.get('plot', ''), 'week: a season pack card has no single episode overview')
+
+# Jellyfin user picture for the skin's side menu (Home properties, read once, again after 6 h)
+ok(HOMEPROPS.get('JellynasUser.Image') == URL + '/Users/u1/Images/Primary?tag=ptag1&quality=90' and HOMEPROPS.get('JellynasUser.Name') == 'leone007',
+   'user: picture URL with the primary image tag and the name as Home properties')
+n = len([s for s in SEEN if s[1] == '/Users/u1'])
+run('?mode=resume')
+ok(n == 1 and len([s for s in SEEN if s[1] == '/Users/u1']) == 1, 'user: read once, not at every row (%d reads)' % n)
+USER_TAG[0] = None
+HOMEPROPS['JellynasUser.Rev'] = '1|u1'   # older than 6 h
+run('?mode=resume')
+ok(HOMEPROPS.get('JellynasUser.Image') == '' and HOMEPROPS.get('JellynasUser.Name') == 'leone007', 'user: no picture tag -> empty property (the skin falls back)')
+real_jf = jellynas.jf
+def jf_user_fail(c, path, **q):
+    if path.startswith('/Users/'):
+        raise OSError('timed out')
+    return real_jf(c, path, **q)
+jellynas.jf = jf_user_fail
+HOMEPROPS['JellynasUser.Rev'] = '1|u1'
+items = run('?mode=resume')
+jellynas.jf = real_jf
+ok(len(items) == 2 and HOMEPROPS.get('JellynasUser.Fail', '').isdigit(), 'user: a failed read does not break the row, retried after 10 min')
 
 ok(not [s for s in SEEN if s[0] != 'GET' and s[1] != '/request'], 'only GET requests (but the catalog request to the proxy)')
 ok(all(s[4].startswith('JELLYNAS/') for s in SEEN), 'own User-Agent (the proxy refuses Python-urllib)')

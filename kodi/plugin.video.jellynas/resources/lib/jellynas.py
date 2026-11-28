@@ -120,6 +120,30 @@ def jf(c, path, **params):
     return get_json('%s%s?%s' % (c['srv'], path, urllib.parse.urlencode(params)), c['hdr'])
 
 
+def user_props(c):
+    """Home properties JellynasUser.Image / JellynasUser.Name for the skin's side menu (the Jellyfin user's picture instead
+    of the Kodi profile picture; empty = the skin's fallback). One user per device: read once per Kodi run, again after
+    6 hours; after a failed read not again for 10 minutes. GET /Users/<id> only."""
+    win = xbmcgui.Window(10000)
+    t, _, uid = win.getProperty('JellynasUser.Rev').partition('|')
+    if uid == c['uid'] and t.isdigit() and time.time() - int(t) < 6 * 3600:
+        return
+    f = win.getProperty('JellynasUser.Fail')
+    if f.isdigit() and time.time() - int(f) < 600:
+        return
+    try:
+        u = jf(c, '/Users/%s' % c['uid'])
+    except Exception as x:  # noqa: BLE001 - the picture must never break a row
+        log('user: %s' % x)
+        win.setProperty('JellynasUser.Fail', '%d' % time.time())
+        return
+    tag = u.get('PrimaryImageTag') if isinstance(u, dict) else None
+    win.setProperty('JellynasUser.Image', '%s/Users/%s/Images/Primary?tag=%s&quality=90' % (c['srv'], c['uid'], tag) if tag else '')
+    win.setProperty('JellynasUser.Name', (u.get('Name') or '') if isinstance(u, dict) else '')
+    win.setProperty('JellynasUser.Rev', '%d|%s' % (time.time(), c['uid']))
+    win.setProperty('JellynasUser.Fail', '')
+
+
 def cached(name, url, ttl):
     """A public Streambox file, kept in the addon profile for ttl seconds (the old copy when the server does not answer)."""
     fn = os.path.join(PROFILE, name)
@@ -839,6 +863,7 @@ def main(argv):
         xbmcgui.Dialog().notification('JELLYNAS', L(30010), xbmcgui.NOTIFICATION_WARNING, 5000)
         ok = False
     else:
+        user_props(c)
         try:
             if mode == 'pick':   # RunPlugin from the skin's grid bar: a dialog, no directory
                 do_pick(c, q)
