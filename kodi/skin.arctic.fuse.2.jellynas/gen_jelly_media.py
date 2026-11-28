@@ -2,7 +2,7 @@
 """JELLY branding textures (patch 11) from the owner's images in forras/ -> files/media/jellynas/.
 
 jelly_loading.jpg  1920x1080 loading background (from forras/jelly_betoltes.webp)
-jelly_badge.png    144x144 round JELLY badge, real alpha: LANCZOS from the 512 source + light unsharp mask (shown at 72 px)
+jelly_badge.png    144x144 round JELLY badge, real alpha: plain LANCZOS from the 512 source (shown at 72 px)
 avatar_mask.png    132x132 rounded square (diffuse mask of the Jellyfin user picture, shown at 66 px)
 avatar_frame.png   152x152 rounded-square neon frame, cyan -> pink, transparent inside (shown at 76 px)
 spinner.png        72x72 ring with a cyan arc (rotated by the skin, shown at 36 px)
@@ -53,8 +53,7 @@ def main():
     bg.save(os.path.join(OUT, 'jelly_loading.jpg'), quality=86, optimize=True, progressive=False)
 
     badge = Image.open(os.path.join(SRC, 'jelly_badge_512.png')).convert('RGBA').resize((72 * K, 72 * K), Image.LANCZOS)
-    rgb = badge.convert('RGB').filter(ImageFilter.UnsharpMask(radius=0.8, percent=60, threshold=1))
-    badge = Image.merge('RGBA', rgb.split() + (badge.split()[3],))
+    # no sharpening: LANCZOS at 2x is sharp enough; an unsharp mask gave light halos around the letters (2.12.12.34)
     badge.save(os.path.join(OUT, 'jelly_badge.png'), optimize=True)
 
     m = rounded(PIC, 0, RAD)
