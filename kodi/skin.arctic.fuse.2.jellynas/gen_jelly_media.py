@@ -2,10 +2,12 @@
 """JELLY branding textures (patch 11) from the owner's images in forras/ -> files/media/jellynas/.
 
 jelly_loading.jpg  1920x1080 loading background (from forras/jelly_betoltes.webp)
-jelly_badge.png    256x256 round JELLY badge, real alpha (from forras/jelly_badge_512.png)
-avatar_mask.png    rounded square (diffuse mask of the Jellyfin user picture)
-avatar_frame.png   rounded-square neon frame, cyan -> pink, transparent inside
-spinner.png        ring with a cyan arc (rotated by the skin)
+jelly_badge.png    512x512 round JELLY badge, real alpha: the source as is (shown at 72 px; 4K GUI = 144 px)
+avatar_mask.png    264x264 rounded square (diffuse mask of the Jellyfin user picture, shown at 66 px)
+avatar_frame.png   304x304 rounded-square neon frame, cyan -> pink, transparent inside (shown at 76 px)
+spinner.png        144x144 ring with a cyan arc (rotated by the skin, shown at 36 px)
+Everything is 4x the skin size: Kodi on a 4K TV draws the 1080 skin at 2160 (2x), so 4x stays sharp.
+Lines are drawn at 4x more again and reduced with LANCZOS (anti-aliased, crisp).
 Run: python3 kodi/skin.arctic.fuse.2.jellynas/gen_jelly_media.py
 """
 import os
@@ -16,19 +18,22 @@ SRC = os.path.join(HERE, 'forras')
 OUT = os.path.join(HERE, 'files', 'media', 'jellynas')
 CYAN, PINK = (51, 214, 255), (255, 63, 191)
 
-# Frame geometry (2x of the skin size: frame 76 px, picture 66 px inside it)
-F, PIC, RAD = 152, 132, 24
+K = 4                                   # texture pixels per skin pixel
+SS = 4                                  # supersampling of the drawn shapes
+F, PIC, RAD = 76 * K, 66 * K, 12 * K    # frame 76 px, picture 66 px, corner radius 12 px (skin px)
 
 
 def rounded(size, inset, radius, width=0):
-    m = Image.new('L', (size, size), 0)
+    """A rounded square (filled, or a ring of the given width), drawn SS times larger and reduced: smooth edges."""
+    s = size * SS
+    m = Image.new('L', (s, s), 0)
     d = ImageDraw.Draw(m)
-    box = (inset, inset, size - 1 - inset, size - 1 - inset)
+    box = (inset * SS, inset * SS, s - 1 - inset * SS, s - 1 - inset * SS)
     if width:
-        d.rounded_rectangle(box, radius, outline=255, width=width)
+        d.rounded_rectangle(box, radius * SS, outline=255, width=width * SS)
     else:
-        d.rounded_rectangle(box, radius, fill=255)
-    return m
+        d.rounded_rectangle(box, radius * SS, fill=255)
+    return m.resize((size, size), Image.LANCZOS)
 
 
 def gradient(size):
@@ -46,25 +51,28 @@ def main():
     bg = Image.open(os.path.join(SRC, 'jelly_betoltes.webp')).convert('RGB').resize((1920, 1080), Image.LANCZOS)
     bg.save(os.path.join(OUT, 'jelly_loading.jpg'), quality=86, optimize=True, progressive=False)
 
-    badge = Image.open(os.path.join(SRC, 'jelly_badge_512.png')).convert('RGBA').resize((256, 256), Image.LANCZOS)
+    badge = Image.open(os.path.join(SRC, 'jelly_badge_512.png')).convert('RGBA')   # 512 px source, no resampling
     badge.save(os.path.join(OUT, 'jelly_badge.png'), optimize=True)
 
-    m = rounded(128, 0, 24)
+    m = rounded(PIC, 0, RAD)
     Image.merge('RGBA', (m, m, m, m)).save(os.path.join(OUT, 'avatar_mask.png'), optimize=True)
 
-    inset = (F - PIC) // 2 - 3            # the ring overlaps the picture edge by about 3 px (2x)
-    ring = rounded(F, inset, RAD + 3, width=6)
-    glow = ring.filter(ImageFilter.GaussianBlur(5)).point(lambda v: min(255, int(v * 1.6)))
-    alpha = ImageChops.lighter(ring, glow.point(lambda v: int(v * 0.55)))
+    inset = (F - PIC) // 2 - K            # the ring overlaps the picture edge by 1 skin px
+    ring = rounded(F, inset, RAD + K, width=2 * K)          # 2 skin px neon line (1 px at 1080, 4 px in the texture)
+    core = rounded(F, inset + K // 2, RAD + K, width=K)     # a brighter inner core of the line
+    glow = ring.filter(ImageFilter.GaussianBlur(2.5 * K)).point(lambda v: min(255, int(v * 1.5)))
+    alpha = ImageChops.lighter(ImageChops.lighter(ring, core), glow.point(lambda v: int(v * 0.5)))
     frame = gradient(F).convert('RGBA')
     frame.putalpha(alpha)
     frame.save(os.path.join(OUT, 'avatar_frame.png'), optimize=True)
 
-    S = 96
+    S = 36 * K * SS
     sp = Image.new('RGBA', (S, S), (0, 0, 0, 0))
     d = ImageDraw.Draw(sp)
-    d.ellipse((6, 6, S - 7, S - 7), outline=(255, 255, 255, 70), width=7)
-    d.arc((6, 6, S - 7, S - 7), -90, 30, fill=CYAN + (255,), width=7)
+    w, b = 3 * K * SS, 2 * K * SS
+    d.ellipse((b, b, S - 1 - b, S - 1 - b), outline=(255, 255, 255, 70), width=w)
+    d.arc((b, b, S - 1 - b, S - 1 - b), -90, 30, fill=CYAN + (255,), width=w)
+    sp = sp.resize((36 * K, 36 * K), Image.LANCZOS)
     sp.save(os.path.join(OUT, 'spinner.png'), optimize=True)
     for f in sorted(os.listdir(OUT)):
         print('OK   %s %d bytes' % (f, os.path.getsize(os.path.join(OUT, f))))

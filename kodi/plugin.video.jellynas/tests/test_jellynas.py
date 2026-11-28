@@ -461,7 +461,7 @@ gp = [x for x in items if x[1].label == 'Gengszter'][0][1]
 ok('Episode overview' not in gp.tag.d.get('plot', ''), 'week: a season pack card has no single episode overview')
 
 # Jellyfin user picture for the skin's side menu (Home properties, read once, again after 6 h)
-ok(HOMEPROPS.get('JellynasUser.Image') == URL + '/Users/u1/Images/Primary?tag=ptag1&quality=90' and HOMEPROPS.get('JellynasUser.Name') == 'leone007',
+ok(HOMEPROPS.get('JellynasUser.Image') == URL + '/Users/u1/Images/Primary?tag=ptag1&maxWidth=512&maxHeight=512&quality=95' and HOMEPROPS.get('JellynasUser.Name') == 'leone007',
    'user: picture URL with the primary image tag and the name as Home properties')
 n = len([s for s in SEEN if s[1] == '/Users/u1'])
 run('?mode=resume')

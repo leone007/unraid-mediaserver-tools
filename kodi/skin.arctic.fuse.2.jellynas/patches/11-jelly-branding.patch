@@ -12,7 +12,7 @@ index 9d430a1..c428bf8 100644
      </include>
  
 diff --git a/1080i/Includes_Home.xml b/1080i/Includes_Home.xml
-index 6c8bef7..7d72823 100644
+index 6c8bef7..acc2a98 100644
 --- a/1080i/Includes_Home.xml
 +++ b/1080i/Includes_Home.xml
 @@ -258,7 +258,7 @@
@@ -63,21 +63,37 @@ index 6c8bef7..7d72823 100644
                      </control>
  
                  </control>
-@@ -468,16 +467,11 @@
+@@ -454,9 +453,10 @@
+                 <include>Dimension_Bottombar</include>
+                 <control type="group">
+                     <left>view_menu_main_head_x</left>
+-                    <animation effect="fade" start="100" end="70" condition="true">Conditional</animation>
+                     <include>Dimension_Furniture_Gutters</include>
+                     <control type="group">
++                        <!-- JELLYNAS: the 70 % fade only on the label, not on the badge -->
++                        <animation effect="fade" start="100" end="70" condition="true">Conditional</animation>
+                         <include content="View_Furniture_Bottom_ViewLine" condition="$PARAM[include_label]">
+                             <param name="label">$PARAM[label]</param>
+                             <param name="fade_condition">false</param>
+@@ -466,18 +466,12 @@
+                     <control type="group">
+                         <centertop>50%</centertop>
                          <centerright>20</centerright>
-                         <width>40</width>
-                         <height>40</height>
-+                        <!-- JELLYNAS: round JELLY badge (72 px) instead of the Kodi logo -->
-                         <control type="image">
+-                        <width>40</width>
+-                        <height>40</height>
+-                        <control type="image">
 -                            <texture colordiffuse="$VAR[ColorHighlight]">special://skin/extras/icons/kodi.png</texture>
 -                            <aspectratio>keep</aspectratio>
 -                            <bordersize>-16</bordersize>
 -                        </control>
--                        <control type="image">
++                        <width>72</width>
++                        <height>72</height>
++                        <!-- JELLYNAS: round JELLY badge (72 px, the Kodi logo's drawn size; texture 512 px for 4K) instead of the Kodi logo -->
+                         <control type="image">
 -                            <texture colordiffuse="$VAR[ColorGradient]">special://skin/extras/icons/kodi.png</texture>
 +                            <texture>jellynas/jelly_badge.png</texture>
                              <aspectratio>keep</aspectratio>
-                             <bordersize>-16</bordersize>
+-                            <bordersize>-16</bordersize>
 -                            <animation effect="fade" end="33" condition="true">Conditional</animation>
                          </control>
                      </control>

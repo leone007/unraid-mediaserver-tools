@@ -138,7 +138,8 @@ def user_props(c):
         win.setProperty('JellynasUser.Fail', '%d' % time.time())
         return
     tag = u.get('PrimaryImageTag') if isinstance(u, dict) else None
-    win.setProperty('JellynasUser.Image', '%s/Users/%s/Images/Primary?tag=%s&quality=90' % (c['srv'], c['uid'], tag) if tag else '')
+    # up to 512 px, quality 95: sharp on a 4K TV (shown at 66 px = 132 px at 2160p)
+    win.setProperty('JellynasUser.Image', '%s/Users/%s/Images/Primary?tag=%s&maxWidth=512&maxHeight=512&quality=95' % (c['srv'], c['uid'], tag) if tag else '')
     win.setProperty('JellynasUser.Name', (u.get('Name') or '') if isinstance(u, dict) else '')
     win.setProperty('JellynasUser.Rev', '%d|%s' % (time.time(), c['uid']))
     win.setProperty('JellynasUser.Fail', '')
